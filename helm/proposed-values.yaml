@@ -1,0 +1,190 @@
+proxy:
+  service:
+    type: ClusterIP
+
+hub:
+  db:
+    type: sqlite-memory
+  config:
+    JupyterHub:
+      authenticator_class: dummy
+    DummyAuthenticator:
+      password: demo
+  extraConfig:
+    00-context-aware-recommender: |
+      import html
+      import re
+
+      PROFILE_RESOURCES = {
+          "small": {
+              "cpu_guarantee": 0.1,
+              "cpu_limit": 0.5,
+              "mem_guarantee": "256M",
+              "mem_limit": "384M",
+          },
+          "medium": {
+              "cpu_guarantee": 0.5,
+              "cpu_limit": 1,
+              "mem_guarantee": "768M",
+              "mem_limit": "1G",
+          },
+          "large": {
+              "cpu_guarantee": 1.5,
+              "cpu_limit": 2,
+              "mem_guarantee": "1536M",
+              "mem_limit": "2G",
+          },
+      }
+
+      GPU_TERMS = ("torch", "tensorflow", "cuda", "gpu", "deep learning", "resnet", "bert")
+      TRAINING_TERMS = ("train", "training", "fit", ".fit(", "sklearn", "scikit-learn", "xgboost", "model")
+      DATA_TERMS = ("pandas", "read_csv", "dataframe", "csv", "parquet")
+
+      def _contains_any(text, terms):
+          found = []
+          for term in terms:
+              if term.startswith("."):
+                  if term in text:
+                      found.append(term)
+                  continue
+              pattern = r"(?<![a-z0-9_])" + re.escape(term) + r"(?![a-z0-9_])"
+              if re.search(pattern, text):
+                  found.append(term)
+          return found
+
+      def recommend_profile(intent="", dataset_size_gb=0.0, code_context=""):
+          text = f"{intent}\n{code_context}".lower()
+          reasons = []
+
+          gpu_hits = _contains_any(text, GPU_TERMS)
+          if gpu_hits:
+              return "gpu_or_large", [
+                  "GPU/deep-learning context detected: " + ", ".join(gpu_hits[:4]),
+                  "Demo environment has no real GPU, so this maps to Large resources.",
+              ]
+
+          score = 0
+          if dataset_size_gb >= 2.0:
+              score += 3
+              reasons.append("dataset size >= 2GB")
+          elif dataset_size_gb >= 0.5:
+              score += 1
+              reasons.append("dataset size >= 0.5GB")
+
+          data_hits = _contains_any(text, DATA_TERMS)
+          if data_hits:
+              score += 1
+              reasons.append("data-processing context detected: " + ", ".join(data_hits[:4]))
+
+          training_hits = _contains_any(text, TRAINING_TERMS)
+          if training_hits:
+              score += 2
+              reasons.append("training/modeling context detected: " + ", ".join(training_hits[:4]))
+
+          if score >= 3:
+              return "large", reasons
+          if score >= 1:
+              return "medium", reasons
+          reasons.append("basic/light workload context")
+          return "small", reasons
+
+      async def context_options_form(spawner):
+          return """
+          <label for="intent"><strong>What are you trying to do?</strong></label>
+          <textarea name="intent" rows="3" style="width: 100%" placeholder="Example: I will train a scikit-learn model on a 1.5GB CSV dataset"></textarea>
+          <br/><br/>
+          <label for="dataset_size_gb"><strong>Estimated dataset size in GB</strong></label>
+          <input name="dataset_size_gb" type="number" min="0" step="0.1" value="0.1" style="width: 12em"/>
+          <br/><br/>
+          <label for="code_context"><strong>Optional imports / code context</strong></label>
+          <textarea name="code_context" rows="6" style="width: 100%" placeholder="import pandas as pd&#10;from sklearn.ensemble import RandomForestClassifier&#10;model.fit(X, y)"></textarea>
+          """
+
+      def context_options_from_form(spawner, formdata):
+          def first(name, default=""):
+              value = formdata.get(name, [default])[0]
+              if isinstance(value, bytes):
+                  return value.decode("utf-8")
+              return value
+
+          raw_dataset_size = first("dataset_size_gb", "0")
+          try:
+              dataset_size_gb = float(raw_dataset_size or 0)
+          except ValueError:
+              dataset_size_gb = 0.0
+
+          return {
+              "intent": first("intent"),
+              "dataset_size_gb": dataset_size_gb,
+              "code_context": first("code_context"),
+          }
+
+      async def context_pre_spawn_hook(spawner):
+          user_options = spawner.user_options or {}
+          intent = user_options.get("intent", "")
+          dataset_size_gb = user_options.get("dataset_size_gb", 0.0)
+          code_context = user_options.get("code_context", "")
+          recommended_profile, reasons = recommend_profile(intent, dataset_size_gb, code_context)
+
+          resource_profile = "large" if recommended_profile == "gpu_or_large" else recommended_profile
+          resources = PROFILE_RESOURCES[resource_profile]
+          spawner.cpu_guarantee = resources["cpu_guarantee"]
+          spawner.cpu_limit = resources["cpu_limit"]
+          spawner.mem_guarantee = resources["mem_guarantee"]
+          spawner.mem_limit = resources["mem_limit"]
+
+          reason_text = "; ".join(reasons)
+          escaped_reason_text = html.escape(reason_text)
+          environment = dict(spawner.environment or {})
+          environment.update({
+              "RECOMMENDED_PROFILE": recommended_profile,
+              "RECOMMENDATION_REASONS": reason_text,
+              "CONTEXT_INTENT": intent,
+              "CONTEXT_DATASET_SIZE_GB": str(dataset_size_gb),
+          })
+          spawner.environment = environment
+
+          annotations = dict(spawner.extra_annotations or {})
+          annotations.update({
+              "z2jh-context-demo.local/recommended-profile": recommended_profile,
+              "z2jh-context-demo.local/recommendation-reasons": escaped_reason_text[:240],
+          })
+          spawner.extra_annotations = annotations
+
+          spawner.log.info(
+              "Context-aware recommendation for %s: %s (%s)",
+              spawner.user.name,
+              recommended_profile,
+              reason_text,
+          )
+
+      c.KubeSpawner.options_form = context_options_form
+      c.KubeSpawner.options_from_form = context_options_from_form
+      c.KubeSpawner.pre_spawn_hook = context_pre_spawn_hook
+
+singleuser:
+  storage:
+    type: none
+    extraVolumes:
+      - name: demo-workload
+        configMap:
+          name: demo-workload
+          defaultMode: 493
+      - name: demo-notebooks
+        configMap:
+          name: demo-notebooks
+    extraVolumeMounts:
+      - name: demo-workload
+        mountPath: /home/jovyan/demo/workload
+        readOnly: true
+      - name: demo-notebooks
+        mountPath: /home/jovyan/demo/notebooks
+        readOnly: true
+  image:
+    name: quay.io/jupyter/scipy-notebook
+    tag: latest
+  defaultUrl: /lab
+
+prePuller:
+  hook:
+    enabled: false

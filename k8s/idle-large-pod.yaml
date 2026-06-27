@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: idle-large-example
+  labels:
+    app.kubernetes.io/name: z2jh-context-demo
+    demo: overprovisioning
+spec:
+  restartPolicy: Never
+  containers:
+    - name: idle
+      image: busybox:1.36
+      command: ["sh", "-c", "echo idle large profile; sleep infinity"]
+      resources:
+        requests:
+          cpu: "1500m"
+          memory: "1536Mi"
+        limits:
+          cpu: "2"
+          memory: "2Gi"
+

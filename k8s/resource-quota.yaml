@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: overprovisioning-request-quota
+spec:
+  hard:
+    requests.cpu: "2"
+    requests.memory: "2Gi"
+    pods: "10"
+

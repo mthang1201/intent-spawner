@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: idle-small-example
+  labels:
+    app.kubernetes.io/name: z2jh-context-demo
+    demo: right-sized-idle
+spec:
+  restartPolicy: Never
+  containers:
+    - name: idle
+      image: busybox:1.36
+      command: ["sh", "-c", "echo idle small profile; sleep 600"]
+      resources:
+        requests:
+          cpu: "100m"
+          memory: "256Mi"
+        limits:
+          cpu: "500m"
+          memory: "384Mi"
+

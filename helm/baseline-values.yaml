@@ -1,0 +1,71 @@
+proxy:
+  service:
+    type: ClusterIP
+
+hub:
+  db:
+    type: sqlite-memory
+  config:
+    JupyterHub:
+      authenticator_class: dummy
+    DummyAuthenticator:
+      password: demo
+
+singleuser:
+  storage:
+    type: none
+    extraVolumes:
+      - name: demo-workload
+        configMap:
+          name: demo-workload
+          defaultMode: 493
+      - name: demo-notebooks
+        configMap:
+          name: demo-notebooks
+    extraVolumeMounts:
+      - name: demo-workload
+        mountPath: /home/jovyan/demo/workload
+        readOnly: true
+      - name: demo-notebooks
+        mountPath: /home/jovyan/demo/notebooks
+        readOnly: true
+  image:
+    name: quay.io/jupyter/scipy-notebook
+    tag: latest
+  defaultUrl: /lab
+  profileList:
+    - display_name: "Small: low CPU/RAM"
+      description: "For basic Python and light notebooks. Intentionally too small for the OOM demo."
+      slug: small
+      default: true
+      kubespawner_override:
+        cpu_guarantee: 0.1
+        cpu_limit: 0.5
+        mem_guarantee: 256M
+        mem_limit: 384M
+        environment:
+          SELECTED_STATIC_PROFILE: small
+    - display_name: "Medium: moderate CPU/RAM"
+      description: "For medium data exploration and pandas workloads."
+      slug: medium
+      kubespawner_override:
+        cpu_guarantee: 0.5
+        cpu_limit: 1
+        mem_guarantee: 768M
+        mem_limit: 1G
+        environment:
+          SELECTED_STATIC_PROFILE: medium
+    - display_name: "Large: high CPU/RAM"
+      description: "For training-like workloads. Users may choose this defensively even when idle."
+      slug: large
+      kubespawner_override:
+        cpu_guarantee: 1.5
+        cpu_limit: 2
+        mem_guarantee: 1536M
+        mem_limit: 2G
+        environment:
+          SELECTED_STATIC_PROFILE: large
+
+prePuller:
+  hook:
+    enabled: false
