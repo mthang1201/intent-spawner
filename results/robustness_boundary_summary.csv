@@ -1,0 +1,10 @@
+acceptable_profile_count,acceptable_profile_rate,category,method,over_profile_count,policy_warning_count,policy_warning_rate,run_count,success_count,under_profile_count
+5,1.0,boundary,static_manual,0,0,0.0,5,5,0
+5,1.0,boundary,intent_only,0,0,0.0,5,5,0
+5,1.0,boundary,context_aware,0,0,0.0,5,5,0
+5,1.0,conflicting_signal,static_manual,0,0,0.0,5,5,0
+5,1.0,conflicting_signal,intent_only,0,0,0.0,5,5,0
+5,1.0,conflicting_signal,context_aware,0,0,0.0,5,5,0
+5,1.0,policy,static_manual,0,0,0.0,5,5,0
+0,0.0,policy,intent_only,0,0,0.0,5,5,5
+5,1.0,policy,context_aware,0,5,1.0,5,5,0

@@ -1,0 +1,4 @@
+acceptable_profile_count,acceptable_profile_rate,median_memory_request_to_peak_ratio,median_time_to_success_seconds,memory_waste_missing,method,over_profile_count,over_profile_rate,policy_warning_count,policy_warning_rate,run_count,success_count,success_rate,time_to_success_missing,under_profile_count,under_profile_rate
+60,1.0,34.857143,0.00459,0,static_manual,0,0.0,0,0.0,60,60,1.0,0,0,0.0
+40,0.666667,23.528571,0.004788,0,intent_only,0,0.0,0,0.0,60,60,1.0,0,20,0.333333
+60,1.0,34.857143,0.004789,0,context_aware,0,0.0,5,0.083333,60,60,1.0,0,0,0.0

@@ -1,0 +1,4 @@
+failure_count,failure_rate,method,missing_oom_status_count,oom_killed_count,oom_killed_rate,run_count,timeout_count,timeout_rate
+0,0.0,static_manual,0,0,0.0,60,0,0.0
+0,0.0,intent_only,0,0,0.0,60,0,0.0
+0,0.0,context_aware,0,0,0.0,60,0,0.0

@@ -1,0 +1,4 @@
+method,pending_time_iqr,pending_time_mean,pending_time_median,pending_time_missing,pending_time_n,pending_time_stddev
+static_manual,,,,60,0,
+intent_only,,,,60,0,
+context_aware,,,,60,0,

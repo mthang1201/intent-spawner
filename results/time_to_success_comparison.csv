@@ -1,0 +1,4 @@
+method,time_to_success_iqr,time_to_success_mean,time_to_success_median,time_to_success_missing,time_to_success_n,time_to_success_stddev
+static_manual,0.0288,0.235823,0.00459,0,60,0.718565
+intent_only,0.028935,0.240198,0.004788,0,60,0.731592
+context_aware,0.02901,0.240396,0.004789,0,60,0.733294

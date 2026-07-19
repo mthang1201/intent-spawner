@@ -1,0 +1,4 @@
+method,restart_or_respawn_iqr,restart_or_respawn_mean,restart_or_respawn_median,restart_or_respawn_missing,restart_or_respawn_n,restart_or_respawn_stddev
+static_manual,0.0,0.0,0.0,0,60,0.0
+intent_only,0.0,0.0,0.0,0,60,0.0
+context_aware,0.0,0.0,0.0,0,60,0.0

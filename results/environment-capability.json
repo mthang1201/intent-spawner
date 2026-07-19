@@ -1,0 +1,65 @@
+{
+  "container_runtime": "docker-orbstack",
+  "cpu_count": 8,
+  "disk_free_report": {
+    "available": true,
+    "returncode": 0,
+    "stderr": "",
+    "stdout": "Filesystem   1024-blocks      Used Available Capacity iused     ifree %iused  Mounted on\n/dev/disk3s5   239362496 181072800  36447200    84% 1557728 364472000    0%   /System/Volumes/Data"
+  },
+  "docker_available": true,
+  "full_cluster_resource_experiment_blocker": "Kubernetes Metrics API is unavailable; kubectl top nodes and kubectl top pods -A --containers must succeed before live resource-metric claims are supported.",
+  "git_commit": "fea62042374075e0abc724d2dfcd7752cb3bf865",
+  "git_dirty": false,
+  "helm_available": true,
+  "helm_version": "v4.2.0+g0646808",
+  "jupyterhub_chart_4_0_0_available": true,
+  "k3d_available": false,
+  "k3d_status": {
+    "available": false,
+    "returncode": null,
+    "stderr": "command not found",
+    "stdout": ""
+  },
+  "kind_available": false,
+  "kind_status": {
+    "available": false,
+    "returncode": null,
+    "stderr": "command not found",
+    "stdout": ""
+  },
+  "kubectl_available": true,
+  "kubectl_cluster_accessible": true,
+  "kubectl_context": "orbstack",
+  "kubectl_top_nodes": {
+    "available": true,
+    "returncode": 1,
+    "stderr": "error: Metrics API not available",
+    "stdout": ""
+  },
+  "memory_bytes": 17179869184,
+  "metrics_api_available": false,
+  "metrics_api_service": {
+    "available": true,
+    "returncode": 1,
+    "stderr": "Error from server (NotFound): apiservices.apiregistration.k8s.io \"v1beta1.metrics.k8s.io\" not found",
+    "stdout": ""
+  },
+  "minikube_available": true,
+  "minikube_status": {
+    "available": true,
+    "returncode": 0,
+    "stderr": "E0719 21:05:42.203613   95892 status.go:179] status error: host: state: unknown state \"minikube\": docker container inspect minikube --format={{.State.Status}}: exit status 1\nstdout:\n\n\nstderr:\nError response from daemon: No such container: minikube\nE0719 21:05:42.203638   95892 status.go:126] status error: host: state: unknown state \"minikube\": docker container inspect minikube --format={{.State.Status}}: exit status 1\nstdout:\n\n\nstderr:\nError response from daemon: No such container: minikube",
+    "stdout": ""
+  },
+  "node_summary": {
+    "available": true,
+    "returncode": 0,
+    "stderr": "",
+    "stdout": "NAME       STATUS   ROLES                  AGE   VERSION        INTERNAL-IP     EXTERNAL-IP   OS-IMAGE   KERNEL-VERSION                             CONTAINER-RUNTIME\norbstack   Ready    control-plane,master   63d   v1.33.9+orb1   192.168.139.2   <none>        OrbStack   7.0.5-orbstack-00330-ge3df4e19b0a0-dirty   docker://29.4.0"
+  },
+  "orbstack_cli_available": true,
+  "platform": "macOS-15.3.2-arm64-arm-64bit-Mach-O",
+  "python_version": "3.14.5",
+  "timestamp": "2026-07-19T14:05:42Z"
+}
