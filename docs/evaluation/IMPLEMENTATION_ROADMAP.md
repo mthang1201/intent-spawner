@@ -22,7 +22,9 @@ Observed structure:
 - No CI configuration, Prometheus-backed metrics collector, cluster-mutating
   experiment runner, or history store was found.
 
-Important working-tree note: during this audit, `helm/proposed-values.yaml` was already modified before documentation changes. The current worktree version has `context_options_from_form(*args, **kwargs)`, which is more tolerant of JupyterHub callback argument shape than the committed `HEAD` version. Treat that as pre-existing local code state unless intentionally included in a later code commit.
+This roadmap predates the reproducibility packaging pass. Treat `README.md`,
+`docs/ARTIFACT_MANIFEST.md`, and `docs/evaluation/RESULTS.md` as the current
+artifact entry points.
 
 ## Implemented / Not Implemented / Uncertain Matrix
 
@@ -32,16 +34,16 @@ Important working-tree note: during this audit, `helm/proposed-values.yaml` was 
 | Proposed intent/context spawn form | Implemented | `helm/proposed-values.yaml` sets `c.KubeSpawner.options_form`. | `rg -n "options_form|intent|code_context|dataset_size_gb" helm/proposed-values.yaml` |
 | Pre-spawn resource override before pod creation | Implemented | `context_pre_spawn_hook` sets `cpu_guarantee`, `cpu_limit`, `mem_guarantee`, and `mem_limit`. | `rg -n "pre_spawn_hook|cpu_guarantee|mem_guarantee|mem_limit" helm/proposed-values.yaml` |
 | Explainable recommendation | Implemented for demo | Reasons are returned by the recommender and written to env vars/annotations. | `python3 recommender/recommender.py --intent "train sklearn model" --dataset-gb 1.5 --code-context "import pandas as pd; model.fit(X, y)"` |
-| Standalone recommender tests | Implemented | Four pytest cases cover rule categories. | `python -m pytest recommender/test_recommender.py` |
+| Standalone recommender tests | Implemented | Four pytest cases cover rule categories. | `.venv/bin/python -m pytest recommender/test_recommender.py` |
 | GPU-like decision | Partially implemented | Recommender can return `gpu_or_large`; Helm maps it to Large resources because demo has no GPU profile. | `python3 recommender/recommender.py --intent "deep learning" --code-context "import torch; model.cuda()"` |
 | Admin policy engine | Not substantially implemented | Allowed profile mapping is hard-coded as `PROFILE_RESOURCES`; no external policy file, admission check, quota-aware policy, or per-admin configuration exists. | `rg -n "policy|quota|allowed|PROFILE_RESOURCES" . -g "!*.ipynb"` |
 | History-aware provisioning | Not substantially implemented | Slides/prose mention history, but there is no storage model, event capture, feature store, metrics import, or history-based rule path in code. | `rg -n "history|historical|peak|restart|pending|OOM|usage" . -g "!*.ipynb" -g "!*__pycache__*"` |
 | Metrics collection | Not implemented | Docs mention optional `kubectl top`; no Prometheus, metrics-server deployment, scraper, or result writer exists. Current cluster reports Metrics API unavailable. | `rg -n "metrics|prometheus|kubectl top|result" . -g "!*.ipynb"` and `kubectl top nodes` |
 | Baseline mode | Manually runnable | `scripts/install-baseline.sh` installs `helm/baseline-values.yaml`. | `bash -n scripts/install-baseline.sh` and `helm template ... --values helm/baseline-values.yaml` |
-| Intent-only mode | Implemented for experiment records | `experiments.methods` supports `intent_only`, which uses intent text only and passes no dataset-size or code-context signal to the recommender. JupyterHub itself still uses one proposed spawn form. | `python3 -m experiments.recorder --workload-id ml_sklearn_fit_small --method intent_only --repeat-index 0 --environment-id local-smoke --no-append` |
+| Intent-only mode | Implemented for experiment records | `experiments.methods` supports `intent_only`, which uses intent text only and passes no dataset-size or code-context signal to the recommender. JupyterHub itself still uses one proposed spawn form. | `.venv/bin/python -m experiments.recorder --workload-id ml_sklearn_fit_small --method intent_only --repeat-index 0 --environment-id local-smoke --no-append` |
 | Context-aware mode | Manually runnable | Proposed Helm config combines intent, dataset size, and code context. | `bash -n scripts/install-proposed.sh` and `helm template ... --values helm/proposed-values.yaml` |
-| Experiment automation | Implemented for local synthetic benchmark orchestration | `experiments.runner` supports method/workload/category selection, repeats, seeds, timeouts, smoke/full/dry-run modes, resume, unique run directories, and derived CSV aggregation. It does not create Kubernetes pods. | `python3 -m experiments.runner --smoke --dry-run --environment-id local-smoke` |
-| Machine-readable experiment outputs | Implemented for normalized records | `experiments.recorder` and `experiments.runner` emit schema-versioned JSONL records and preserve supporting stdout/stderr artifacts for attempted local runs. | `python3 -m experiments.runner --smoke --environment-id local-smoke` |
+| Experiment automation | Implemented for local synthetic benchmark orchestration | `experiments.runner` supports method/workload/category selection, repeats, seeds, timeouts, smoke/full/dry-run modes, resume, unique run directories, and derived CSV aggregation. It does not create Kubernetes pods. | `.venv/bin/python -m experiments.runner --smoke --dry-run --environment-id local-smoke` |
+| Machine-readable experiment outputs | Implemented for normalized records | `experiments.recorder` and `experiments.runner` emit schema-versioned JSONL records and preserve supporting stdout/stderr artifacts for attempted local runs. | `.venv/bin/python -m experiments.runner --smoke --environment-id local-smoke` |
 | Local Kubernetes environment | Available in this audit environment | `scripts/check-cluster.sh` reports context `orbstack` and one Ready node. | `bash scripts/check-cluster.sh` |
 | Metrics API in local cluster | Not available in this audit environment | `kubectl top nodes` returns `Metrics API not available`. | `kubectl top nodes` |
 | CI | Not implemented | No `.github/`, tox, nox, pre-commit, or project metadata was found. | `find . -maxdepth 4 -type f -path "./.github/*" -o -name "tox.ini" -o -name "noxfile.py" -o -name ".pre-commit-config.yaml"` |

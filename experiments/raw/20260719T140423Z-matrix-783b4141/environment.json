@@ -1,0 +1,20 @@
+{
+  "environment_id": "local-benchmark-orbstack-no-metrics",
+  "git_branch": "codex/evaluation-analysis-run",
+  "git_commit": "fea62042374075e0abc724d2dfcd7752cb3bf865",
+  "git_dirty": false,
+  "helm_version": "v4.2.0+g0646808",
+  "kubectl_context": "orbstack",
+  "manifest_path": "benchmarks/workloads.yaml",
+  "methods": [
+    "context_aware",
+    "intent_only",
+    "static_manual"
+  ],
+  "planned_run_count": 180,
+  "platform": "macOS-15.3.2-arm64-arm-64bit-Mach-O",
+  "python_version": "3.14.5",
+  "timeout_seconds": null,
+  "timestamp": "2026-07-19T14:04:23Z",
+  "workload_count": 12
+}

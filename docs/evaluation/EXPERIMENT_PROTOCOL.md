@@ -81,43 +81,43 @@ current manifest this is approximately 10-12 workloads x 3 methods x 5 repeats.
 Run a smoke validation before any full run:
 
 ```bash
-python3 -m experiments.runner --smoke --environment-id local-smoke
+.venv/bin/python -m experiments.runner --smoke --environment-id local-smoke
 ```
 
 Preview a complete matrix without executing workloads:
 
 ```bash
-python3 -m experiments.runner --full-matrix --repeats 5 --seed 20260719 --dry-run --environment-id local-benchmark
+.venv/bin/python -m experiments.runner --full-matrix --repeats 5 --seed 20260719 --dry-run --environment-id local-benchmark
 ```
 
 Run one method across selected workloads:
 
 ```bash
-python3 -m experiments.runner --method intent_only --repeats 5 --seed 20260719 --environment-id local-benchmark
+.venv/bin/python -m experiments.runner --method intent_only --repeats 5 --seed 20260719 --environment-id local-benchmark
 ```
 
 Run one workload across all methods:
 
 ```bash
-python3 -m experiments.runner --workload-id ml_sklearn_fit_medium --repeats 5 --seed 20260719 --environment-id local-benchmark
+.venv/bin/python -m experiments.runner --workload-id ml_sklearn_fit_medium --repeats 5 --seed 20260719 --environment-id local-benchmark
 ```
 
 Run the complete matrix:
 
 ```bash
-python3 -m experiments.runner --full-matrix --repeats 5 --seed 20260719 --timeout 120 --environment-id local-benchmark
+.venv/bin/python -m experiments.runner --full-matrix --repeats 5 --seed 20260719 --timeout 120 --environment-id local-benchmark
 ```
 
 Resume an interrupted matrix from its existing immutable run directory:
 
 ```bash
-python3 -m experiments.runner --resume --experiment-dir experiments/raw/<experiment-dir> --environment-id local-benchmark
+.venv/bin/python -m experiments.runner --resume --experiment-dir experiments/raw/<experiment-dir> --environment-id local-benchmark
 ```
 
 Aggregate completed raw records:
 
 ```bash
-python3 -m experiments.runner --aggregate --experiment-dir experiments/raw/<experiment-dir> --csv-out experiments/summaries/<experiment-dir>.csv
+.venv/bin/python -m experiments.runner --aggregate --experiment-dir experiments/raw/<experiment-dir> --csv-out experiments/summaries/<experiment-dir>.csv
 ```
 
 ## Repeats And Seeds

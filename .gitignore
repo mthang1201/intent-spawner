@@ -4,5 +4,11 @@ __pycache__/
 .venv/
 experiments/raw/*
 !experiments/raw/README.md
+!experiments/raw/20260719T140417Z-smoke-171688c0/
+!experiments/raw/20260719T140417Z-smoke-171688c0/**
+!experiments/raw/20260719T140423Z-matrix-783b4141/
+!experiments/raw/20260719T140423Z-matrix-783b4141/**
+!experiments/raw/20260719T140431Z-matrix-aed48949/
+!experiments/raw/20260719T140431Z-matrix-aed48949/**
 experiments/summaries/*
 !experiments/summaries/README.md

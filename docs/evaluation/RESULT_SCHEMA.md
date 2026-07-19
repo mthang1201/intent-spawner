@@ -10,7 +10,7 @@ appended without rewriting earlier records. The formal schema is versioned as
 CSV summaries are derived with:
 
 ```bash
-python3 -m experiments.export_results_csv \
+.venv/bin/python -m experiments.export_results_csv \
   --raw-jsonl experiments/raw/results.jsonl \
   --csv-out experiments/summaries/results.csv
 ```
@@ -125,7 +125,7 @@ not infer usage from requests, limits, workload class, or expected profile.
 This command records one safe local workload without a live cluster:
 
 ```bash
-python3 -m experiments.runner \
+.venv/bin/python -m experiments.runner \
   --smoke \
   --environment-id local-smoke
 ```
@@ -133,7 +133,7 @@ python3 -m experiments.runner \
 The lower-level single-record command remains available:
 
 ```bash
-python3 -m experiments.recorder \
+.venv/bin/python -m experiments.recorder \
   --workload-id light_basic_python \
   --method context_aware \
   --repeat-index 0 \
