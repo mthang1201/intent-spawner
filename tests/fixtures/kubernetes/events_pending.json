@@ -1,0 +1,22 @@
+{
+  "apiVersion": "v1",
+  "items": [
+    {
+      "count": 2,
+      "firstTimestamp": "2026-07-19T04:10:01Z",
+      "lastTimestamp": "2026-07-19T04:10:10Z",
+      "message": "0/1 nodes are available: insufficient memory.",
+      "reason": "FailedScheduling",
+      "type": "Warning"
+    },
+    {
+      "count": 1,
+      "firstTimestamp": "2026-07-19T04:10:15Z",
+      "lastTimestamp": "2026-07-19T04:10:15Z",
+      "message": "Successfully assigned z2jh-context-demo/oom-pod-001 to fixture-node",
+      "reason": "Scheduled",
+      "type": "Normal"
+    }
+  ],
+  "kind": "EventList"
+}

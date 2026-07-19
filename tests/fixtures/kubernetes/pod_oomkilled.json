@@ -1,0 +1,71 @@
+{
+  "apiVersion": "v1",
+  "kind": "Pod",
+  "metadata": {
+    "annotations": {
+      "z2jh-context-demo.local/recommended-profile": "small"
+    },
+    "creationTimestamp": "2026-07-19T04:10:00Z",
+    "name": "oom-pod-001",
+    "namespace": "z2jh-context-demo"
+  },
+  "spec": {
+    "containers": [
+      {
+        "env": [
+          {
+            "name": "SELECTED_STATIC_PROFILE",
+            "value": "small"
+          }
+        ],
+        "name": "workload",
+        "resources": {
+          "limits": {
+            "cpu": "500m",
+            "memory": "384M"
+          },
+          "requests": {
+            "cpu": "100m",
+            "memory": "256M"
+          }
+        }
+      }
+    ]
+  },
+  "status": {
+    "conditions": [
+      {
+        "lastTransitionTime": "2026-07-19T04:10:15Z",
+        "status": "True",
+        "type": "PodScheduled"
+      },
+      {
+        "lastTransitionTime": "2026-07-19T04:10:42Z",
+        "reason": "ContainersNotReady",
+        "status": "False",
+        "type": "Ready"
+      }
+    ],
+    "containerStatuses": [
+      {
+        "lastState": {
+          "terminated": {
+            "exitCode": 137,
+            "finishedAt": "2026-07-19T04:10:42Z",
+            "reason": "OOMKilled",
+            "startedAt": "2026-07-19T04:10:18Z"
+          }
+        },
+        "name": "workload",
+        "restartCount": 1,
+        "state": {
+          "waiting": {
+            "reason": "CrashLoopBackOff"
+          }
+        }
+      }
+    ],
+    "phase": "Failed",
+    "startTime": "2026-07-19T04:10:18Z"
+  }
+}

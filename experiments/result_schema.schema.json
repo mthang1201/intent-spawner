@@ -1,0 +1,257 @@
+{
+  "$id": "https://example.invalid/intent-spawner/result-schema/1.0.0",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "applied_profile": {
+      "enum": [
+        "small",
+        "medium",
+        "large",
+        null
+      ],
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "cleanup_status": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "context_signal_summary": {
+      "type": "object"
+    },
+    "cpu_limit_m": {
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+    "cpu_request_m": {
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+    "dataset_size_hint_gb": {
+      "type": [
+        "number",
+        "null"
+      ]
+    },
+    "environment_id": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "error_message": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "exit_code": {
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+    "exit_reason": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "git_commit": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "input_intent": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "kubernetes_evidence": {
+      "type": "object"
+    },
+    "memory_limit_mi": {
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+    "memory_request_mi": {
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+    "method": {
+      "enum": [
+        "static_manual",
+        "intent_only",
+        "context_aware"
+      ],
+      "type": "string"
+    },
+    "oom_killed": {
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
+    "peak_cpu_m": {
+      "type": [
+        "number",
+        "null"
+      ]
+    },
+    "peak_memory_mi": {
+      "type": [
+        "number",
+        "null"
+      ]
+    },
+    "pod_pending_duration_seconds": {
+      "type": [
+        "number",
+        "null"
+      ]
+    },
+    "policy_warnings": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "random_seed": {
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+    "recommendation_reasons": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "recommended_profile": {
+      "enum": [
+        "small",
+        "medium",
+        "large",
+        "gpu_or_large",
+        null
+      ],
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "repeat_index": {
+      "minimum": 0,
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+    "resource_measurement_source": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "restart_or_respawn_count": {
+      "minimum": 0,
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+    "run_id": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "schema_version": {
+      "const": "1.0.0"
+    },
+    "success": {
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
+    "supporting_log_paths": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "time_to_success_seconds": {
+      "type": [
+        "number",
+        "null"
+      ]
+    },
+    "timeout": {
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
+    "timestamp": {
+      "format": "date-time",
+      "type": "string"
+    },
+    "workload_id": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "workload_runtime_seconds": {
+      "type": [
+        "number",
+        "null"
+      ]
+    }
+  },
+  "required": [
+    "schema_version",
+    "run_id",
+    "timestamp",
+    "git_commit",
+    "environment_id",
+    "method",
+    "workload_id",
+    "repeat_index",
+    "random_seed",
+    "input_intent",
+    "dataset_size_hint_gb",
+    "context_signal_summary",
+    "recommended_profile",
+    "applied_profile",
+    "recommendation_reasons",
+    "policy_warnings",
+    "cpu_request_m",
+    "cpu_limit_m",
+    "memory_request_mi",
+    "memory_limit_mi",
+    "peak_cpu_m",
+    "peak_memory_mi",
+    "resource_measurement_source",
+    "pod_pending_duration_seconds",
+    "workload_runtime_seconds",
+    "time_to_success_seconds",
+    "oom_killed",
+    "exit_reason",
+    "exit_code",
+    "restart_or_respawn_count",
+    "success",
+    "timeout",
+    "cleanup_status",
+    "error_message",
+    "supporting_log_paths",
+    "kubernetes_evidence"
+  ],
+  "title": "Intent Spawner Experiment Result",
+  "type": "object"
+}

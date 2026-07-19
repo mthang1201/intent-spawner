@@ -1,0 +1,27 @@
+{
+  "snapshots": [
+    {
+      "containers": [
+        {
+          "container": "notebook",
+          "cpu": "25m",
+          "memory": "180Mi"
+        }
+      ],
+      "sample_index": 0,
+      "timestamp": "2026-07-19T04:00:10Z"
+    },
+    {
+      "containers": [
+        {
+          "container": "notebook",
+          "cpu": "42m",
+          "memory": "212Mi"
+        }
+      ],
+      "sample_index": 1,
+      "timestamp": "2026-07-19T04:00:20Z"
+    }
+  ],
+  "source": "metrics_server"
+}

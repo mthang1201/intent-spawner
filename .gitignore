@@ -1,0 +1,8 @@
+.DS_Store
+__pycache__/
+.pytest_cache/
+.venv/
+experiments/raw/*
+!experiments/raw/README.md
+experiments/summaries/*
+!experiments/summaries/README.md
