@@ -79,13 +79,30 @@ def _contains_any(text: str, terms: Iterable[str]) -> list[str]:
     return found
 
 
+def _coerce_dataset_size_gb(value: float | int | str | None) -> float:
+    """Treat missing, invalid, or negative dataset-size hints as unknown."""
+
+    if value in (None, ""):
+        return 0.0
+
+    try:
+        dataset_size_gb = float(value)
+    except (TypeError, ValueError):
+        return 0.0
+
+    if dataset_size_gb < 0:
+        return 0.0
+    return dataset_size_gb
+
+
 def recommend_profile(
     intent: str = "",
-    dataset_size_gb: float = 0.0,
+    dataset_size_gb: float | int | str | None = 0.0,
     code_context: str = "",
 ) -> Recommendation:
     """Return a recommended profile and human-readable reasons."""
 
+    dataset_size_gb = _coerce_dataset_size_gb(dataset_size_gb)
     text = _normalize_text([intent, code_context])
     reasons: list[str] = []
 
@@ -146,4 +163,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

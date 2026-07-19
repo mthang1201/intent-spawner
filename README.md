@@ -160,8 +160,16 @@ Run local tests:
 
 ```bash
 python3 -m pip install -r requirements-dev.txt
-python3 -m pytest recommender/test_recommender.py
+make check
 ```
+
+`make check` runs unit tests, Python syntax checks, shell syntax checks,
+cluster-free Helm/KubeSpawner/YAML smoke tests, Helm rendering when `helm` is
+available, and Kubernetes manifest client dry-runs when `kubectl` is available.
+It intentionally skips cluster-mutating demo execution.
+
+Invalid, missing, or negative dataset-size hints are treated as unknown (`0GB`)
+so malformed spawn-form input cannot crash recommendation.
 
 ## Safety Notes
 

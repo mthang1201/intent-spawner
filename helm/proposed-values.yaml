@@ -100,7 +100,16 @@ hub:
           <textarea name="code_context" rows="6" style="width: 100%" placeholder="import pandas as pd&#10;from sklearn.ensemble import RandomForestClassifier&#10;model.fit(X, y)"></textarea>
           """
 
-      def context_options_from_form(spawner, formdata):
+      def context_options_from_form(*args, **kwargs):
+          formdata = kwargs.get("formdata")
+          if formdata is None:
+              for arg in reversed(args):
+                  if isinstance(arg, dict):
+                      formdata = arg
+                      break
+          if formdata is None:
+              formdata = {}
+
           def first(name, default=""):
               value = formdata.get(name, [default])[0]
               if isinstance(value, bytes):
