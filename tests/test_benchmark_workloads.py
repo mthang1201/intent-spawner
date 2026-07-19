@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 import yaml
 
-from benchmarks.workload_runner import SCALES, WORKLOAD_PLANS, run_workload
+from benchmarks.workload_runner import EXIT_USAGE, SCALES, WORKLOAD_PLANS, main, run_workload
 from recommender.recommender import recommend_profile
 
 
@@ -175,3 +175,25 @@ def test_reproducible_data_generation_for_representative_workload():
     assert first["deterministic_digest"] == second["deterministic_digest"]
     assert first["result"] == second["result"]
     assert first["deterministic_digest"] != third["deterministic_digest"]
+    assert isinstance(first["runtime"]["max_rss_bytes"], int)
+    assert first["runtime"]["max_rss_bytes"] > 0
+    assert "max_rss_platform_units" not in first["runtime"]
+
+
+def test_metadata_output_is_immutable(tmp_path):
+    output_path = tmp_path / "metadata.json"
+    args = [
+        "--workload-id",
+        "light_basic_python",
+        "--scale",
+        "tiny",
+        "--seed",
+        "1101",
+        "--metadata-out",
+        str(output_path),
+    ]
+
+    assert main(args) == 0
+    original = output_path.read_bytes()
+    assert main(args) == EXIT_USAGE
+    assert output_path.read_bytes() == original

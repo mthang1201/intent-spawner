@@ -6,8 +6,8 @@
 - `helm/`: Zero to JupyterHub values for the baseline static profile demo and proposed context-aware pre-spawn demo.
 - `recommender/`: standalone rule-based recommender and unit tests.
 - `scripts/`: cluster checks, install/uninstall helpers, demo pod launchers, and capacity-value generation.
-- `workload/`: bounded Python workloads used by demo notebooks and demo pods.
-- `notebooks/`: small Jupyter notebooks that call the workload scripts inside JupyterHub.
+- `workload/`: bounded Python workloads used by demo pods and JupyterLab terminals.
+- `benchmarks/`: deterministic synthetic workload manifest and runner.
 - `k8s/`: standalone Kubernetes manifests for request/quota demonstrations.
 - `docs/evaluation/`: research evaluation planning and future experiment documentation.
 
@@ -64,6 +64,6 @@ Use `bash scripts/check-cluster.sh` only when read-only cluster inspection is ac
 - Use bounded workloads only. Keep memory targets capped and documented.
 - Preserve raw outputs from every experiment run before creating summaries.
 - Never fabricate experimental results. If a result is illustrative, label it as simulated or example data.
-- Clearly distinguish observed results from simulated examples in notebooks, reports, slides, and roadmaps.
+- Clearly distinguish observed results from simulated examples in reports, slides, and roadmaps.
 - Avoid storing raw notebooks, raw code snippets, dataset contents, usernames beyond what is needed for audit, secrets, or sensitive user data.
 - Prefer storing derived features, recommendation inputs that are safe to retain, policy versions, pod/resource events, and aggregate metrics.

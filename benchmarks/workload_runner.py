@@ -90,10 +90,11 @@ def _digest(payload: dict[str, object]) -> str:
 
 def _usage_metadata() -> dict[str, object]:
     usage = resource.getrusage(resource.RUSAGE_SELF)
+    max_rss_bytes = usage.ru_maxrss if sys.platform == "darwin" else usage.ru_maxrss * 1024
     return {
         "user_cpu_seconds": round(usage.ru_utime, 6),
         "system_cpu_seconds": round(usage.ru_stime, 6),
-        "max_rss_platform_units": usage.ru_maxrss,
+        "max_rss_bytes": max_rss_bytes,
     }
 
 
@@ -350,11 +351,15 @@ def main(argv: list[str] | None = None) -> int:
     if args.metadata_out:
         output_path = Path(args.metadata_out)
         output_path.parent.mkdir(parents=True, exist_ok=True)
-        output_path.write_text(encoded + "\n", encoding="utf-8")
+        try:
+            with output_path.open("x", encoding="utf-8") as handle:
+                handle.write(encoded + "\n")
+        except FileExistsError:
+            print(f"refusing to overwrite existing metadata: {output_path}", file=sys.stderr)
+            return EXIT_USAGE
     print(encoded)
     return 0
 
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

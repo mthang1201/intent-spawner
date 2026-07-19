@@ -8,7 +8,16 @@ The baseline asks: **Which hardware profile do you want?**
 
 The proposed layer asks: **What are you trying to do?**
 
-The demo shows why static profile selection is brittle: users can choose too little memory and hit a late OOM, or choose Large defensively and reduce cluster concurrency even when their workload is light. The proposed method uses an explainable rule-based analyzer to recommend Small, Medium, Large, or GPU-or-Large before KubeSpawner creates the pod.
+The repository demonstrates two resource-allocation failure mechanisms: a
+bounded workload can exceed a Small memory limit, and idle pods with large
+requests can reduce schedulable concurrency. The proposed method uses an
+explainable rule-based analyzer to recommend Small, Medium, Large, or
+GPU-or-Large before KubeSpawner creates the pod.
+
+This is a prototype and benchmark definition, not a completed comparative
+evaluation. No merged raw result set supports claims that the proposed method
+reduces OOMs, waste, pending time, or time to success. See
+`docs/evaluation/FINAL_AUDIT.md` for the claim boundary.
 
 ## Prerequisites
 
@@ -18,11 +27,9 @@ The demo shows why static profile selection is brittle: users can choose too lit
 - `python3`.
 - Optional: metrics-server for `kubectl top`.
 
-Verified local context while creating this demo:
-
-- Kubernetes context: `orbstack`
-- Node: single OrbStack node, Ready
-- Namespace used by all resources: `z2jh-context-demo`
+All resources use the `z2jh-context-demo` namespace. Run the cluster check to
+inspect the active context rather than relying on a committed cluster name or
+capacity snapshot.
 
 ## Quickstart
 
@@ -39,7 +46,9 @@ bash scripts/install-baseline.sh
 bash scripts/port-forward.sh
 ```
 
-Open `http://127.0.0.1:8000`, log in with any username and password `demo`, then choose Small, Medium, or Large.
+Open `http://127.0.0.1:8000`, enter any username and any non-empty password,
+then choose Small, Medium, or Large. DummyAuthenticator is intentionally
+insecure and this demo must remain local-only.
 
 Run the underprovisioning demo:
 
@@ -101,13 +110,16 @@ kubectl describe pod -n z2jh-context-demo -l component=singleuser-server
 kubectl exec -n z2jh-context-demo deploy/hub -- grep -R "Context-aware recommendation" /srv/jupyterhub 2>/dev/null || true
 ```
 
-## Expected Observations
+## Demonstration Hypotheses
 
-| Scenario | Static Z2JH | Proposed Layer | Observable Metric |
-| --- | --- | --- | --- |
-| Underprovisioning | Small chosen manually, OOMKilled | intent/code recommends Large | OOMKilled count, rerun avoided |
-| Overprovisioning | Large idle users block capacity | light intent recommends Small | requested CPU/RAM reduced |
-| Defensive overrequesting | user always picks Large | recommendation explains fit | request/usage ratio |
+The scripts expose mechanisms and candidate metrics. They do not run paired or
+repeated trials, so the proposed-layer outcomes below remain hypotheses.
+
+| Scenario | Demonstrated mechanism | Hypothesis requiring comparative trials |
+| --- | --- | --- |
+| Underprovisioning | A bounded workload can be OOMKilled with the Small limit. | Context-aware selection lowers OOM and rerun counts. |
+| Overprovisioning | Large idle requests can make additional pods Pending. | Recommendations lower requests without increasing failures. |
+| Defensive overrequesting | A light workload can run in a Large-request pod. | Recommendations lower request-to-usage waste. |
 
 ## Repository Layout
 
@@ -118,8 +130,11 @@ CLEANUP.md
 helm/
   baseline-values.yaml
   proposed-values.yaml
-  generated-values.yaml
+benchmarks/
+  workloads.yaml
+  workload_runner.py
 scripts/
+  check.sh
   check-cluster.sh
   install-baseline.sh
   install-proposed.sh
@@ -130,10 +145,6 @@ scripts/
   watch-pods.sh
   generate-capacity-values.py
   port-forward.sh
-notebooks/
-  01_oom_late_failure.ipynb
-  02_light_eda_large_waste.ipynb
-  03_proposed_intent_training.ipynb
 workload/
   oom_late_failure.py
   light_eda.py
@@ -145,6 +156,10 @@ k8s/
   idle-large-pod.yaml
   idle-small-pod.yaml
   resource-quota.yaml
+docs/evaluation/
+  BENCHMARK_DESIGN.md
+  IMPLEMENTATION_ROADMAP.md
+  FINAL_AUDIT.md
 ```
 
 ## Recommender Rules
@@ -168,6 +183,18 @@ cluster-free Helm/KubeSpawner/YAML smoke tests, Helm rendering when `helm` is
 available, and Kubernetes manifest client dry-runs when `kubectl` is available.
 It intentionally skips cluster-mutating demo execution.
 
+Run a deterministic benchmark smoke workload:
+
+```bash
+python3 -m benchmarks.workload_runner \
+  --workload-id light_basic_python --scale tiny --seed 1101
+```
+
+The 12 benchmark commands validate synthetic workload execution and
+deterministic metadata only; they do not compare provisioning methods. There is
+currently no supported result- or figure-regeneration command because no
+comparative results are merged.
+
 Invalid, missing, or negative dataset-size hints are treated as unknown (`0GB`)
 so malformed spawn-form input cannot crash recommendation.
 
@@ -177,6 +204,16 @@ so malformed spawn-form input cannot crash recommendation.
 - The OOM demo is intended to fail inside a low-memory pod, not on the host.
 - Idle pods use `sleep infinity` only in namespace `z2jh-context-demo`.
 - Cleanup deletes only `z2jh-context-demo`.
+- Demo and single-user images are pinned by digest.
+- Raw intent and code context are evaluated in memory and are not copied into
+  pod environment variables or logs. See `docs/DATA_GOVERNANCE.md`.
+
+## License Status
+
+The benchmark manifest declares its generated synthetic data has no external
+data license dependency. That declaration is not a license grant. The
+repository itself does not yet include a project software license; obtain the
+author's license decision before redistribution.
 
 ## Cleanup
 

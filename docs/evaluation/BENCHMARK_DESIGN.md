@@ -12,6 +12,22 @@ The workload manifest is `benchmarks/workloads.yaml`. The executable helper is
 seeds, and either held in memory or written only to temporary files that are
 deleted before process exit.
 
+## Method Isolation Status
+
+The manifest separates intent, dataset-size, and code-context fields, but the
+repository does not yet implement a comparative method runner:
+
+- static/manual is a JupyterHub profile-selection demo, not an automated
+  baseline condition;
+- intent-only is not a named runnable mode, so isolation from code context has
+  not been demonstrated;
+- context-aware is implemented and consumes intent, dataset size, and code
+  context in `helm/proposed-values.yaml`;
+- history-aware behavior is not implemented or evaluated.
+
+Consequently, the benchmark supports workload-definition and deterministic
+execution claims only. It does not support comparisons among these methods.
+
 ## Why Each Workload Exists
 
 `light_basic_python` is the control case for a genuinely small interactive
@@ -89,8 +105,8 @@ The benchmark can support non-cluster claims such as:
 - benchmark categories and edge cases are represented;
 - the synthetic runner can execute representative workloads and emit JSON
   metadata;
-- recommendation inputs can be evaluated consistently across static/manual,
-  intent-only, and context-aware modes.
+- the manifest provides separated recommendation-input fields for a future
+  static/manual, intent-only, and context-aware evaluator.
 
 ## What The Benchmark Cannot Prove
 
@@ -127,4 +143,3 @@ RQ5 asks about safety and policy boundaries. The GPU-disallowed policy workload
 tests whether a strong recommendation signal can still be constrained by an
 allowed profile policy and represented without executing GPU code or storing raw
 notebooks.
-

@@ -21,9 +21,6 @@ kubectl create namespace "$NAMESPACE" --dry-run=client -o yaml | kubectl apply -
 printf '\n+ kubectl create configmap demo-workload --from-file=%q --namespace %q --dry-run=client -o yaml | kubectl apply -f -\n' "$ROOT_DIR/workload" "$NAMESPACE"
 kubectl create configmap demo-workload --from-file="$ROOT_DIR/workload" --namespace "$NAMESPACE" --dry-run=client -o yaml | kubectl apply -f -
 
-printf '\n+ kubectl create configmap demo-notebooks --from-file=%q --namespace %q --dry-run=client -o yaml | kubectl apply -f -\n' "$ROOT_DIR/notebooks" "$NAMESPACE"
-kubectl create configmap demo-notebooks --from-file="$ROOT_DIR/notebooks" --namespace "$NAMESPACE" --dry-run=client -o yaml | kubectl apply -f -
-
 run helm repo add jupyterhub https://hub.jupyter.org/helm-chart/ --force-update
 run helm repo update
 
@@ -45,6 +42,6 @@ Proposed method installed.
 Next:
   bash scripts/port-forward.sh
   Open http://127.0.0.1:8000
-  Login with any username and password: demo
+  This local-only demo uses DummyAuthenticator; enter any username and any non-empty password.
   Enter: I will train a scikit-learn model on a 1.5GB CSV dataset
 EOF
