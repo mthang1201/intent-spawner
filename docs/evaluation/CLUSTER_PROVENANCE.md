@@ -57,3 +57,29 @@ After validation, the disposable profile is deleted with:
 minikube delete -p intent-spawner-eval
 kubectl config use-context orbstack
 ```
+
+## Capacity-v2 blocker-resolution rerun
+
+On 2026-07-20, the capacity experiment was rerun independently from the
+historical corpus. Protocol 2.0.0 was committed at
+`f759c45a3246916d2a9f9048ffaab17bbbea6982`; its 20 GiB/20,480 MiB preflight
+unit correction was committed at
+`ca2e74b2043a5ea85a68119097d6c325fe84c294` before any recorded pod ran.
+
+The rerun used only the disposable `intent-spawner-capacity-v2` profile and
+`z2jh-context-demo` namespace. Its sanitized environment record retains the
+Minikube driver, 6 CPU/6144 MiB/20 GiB profile inputs, Kubernetes v1.33.1,
+containerd 1.7.27, kubelet system reservation, 6 CPU/6088560Ki allocatable node
+resources, profile table, method order, Git commit, and exact local image ID
+`sha256:bee0fc6942d2c9001053b1923d6ea23a2c34fb8735853ffc0ee806e5e5aede83`.
+It excludes host paths, IP addresses, SSH material, node names, and machine
+identifiers.
+
+A single bounded non-root smoke pod completed with exit code 0 and zero
+restarts, then was deleted. The full 9-batch/108-pod run completed with zero
+pod failures and zero cleanup failures. Raw evidence is retained at
+`results/cluster/raw/capacity-v2-ca2e74b-seed20260721/`; historical capacity
+evidence remains separately labeled supplementary. After validation found no
+remaining pods, `minikube delete -p intent-spawner-capacity-v2` removed the new
+profile, `orbstack` was restored as the current context, and the pre-existing
+`minikube` profile remained present.

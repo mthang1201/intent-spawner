@@ -186,7 +186,8 @@ make regenerate-cluster-results
 ```
 
 The cluster corpus contains 108 three-profile ground-truth pod runs, 180
-comparative pod runs, and nine capacity batches covering 108 pods. See
+comparative pod runs, nine principal capacity-v2 batches covering 108 pods,
+and nine historical capacity batches retained as supplementary evidence. See
 `docs/evaluation/CLUSTER_RESULTS.md` for the audit-corrected interpretation.
 The exact historical capacity batch generator was not committed at the
 evaluated source revision, so those capacity observations are descriptive and
@@ -284,7 +285,8 @@ derived outputs, validation commands, and known generated files.
   changed.
 - The exact historical capacity batch generator is missing, so that corpus is
   supplementary rather than principal evidence. The committed capacity-v2
-  runner and predeclared protocol are the reproducible replacement.
+  runner and predeclared protocol produced the separately retained principal
+  controlled-environment corpus; it is not a production-density study.
 - GPU behavior is represented as a recommendation and policy signal only; no
   GPU workload is executed.
 - The prototype is rule-based and does not implement history-aware evaluation.

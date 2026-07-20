@@ -232,6 +232,23 @@ namespace:
 minikube delete -p intent-spawner-capacity-v2
 ```
 
+### Capacity-v2 execution record
+
+The protocol was preregistered in `f759c45a3246916d2a9f9048ffaab17bbbea6982`.
+An empty-cluster preflight then showed that Minikube records the documented
+`--disk-size=20g` setting as 20,480 MiB, not 20,000 MiB. No experiment pod or
+raw record existed at that point. The unit expectation was corrected and
+committed in `ca2e74b2043a5ea85a68119097d6c325fe84c294` before execution.
+
+The bounded smoke pod succeeded and was deleted. The full run used image
+`intent-spawner-cluster-eval:capacity-v2-ca2e74b2043a` with local image ID
+`sha256:bee0fc6942d2c9001053b1923d6ea23a2c34fb8735853ffc0ee806e5e5aede83`.
+All 108 pods in all nine batches succeeded; every exact-label batch cleanup
+succeeded. The validated raw directory is
+`results/cluster/raw/capacity-v2-ca2e74b-seed20260721/`. After validation, the
+named Minikube profile was deleted and the prior `orbstack` context restored;
+the pre-existing `minikube` profile was not changed or deleted.
+
 ## Integrity and cleanup
 
 Plans are written before execution. Run order and unsuccessful attempts are

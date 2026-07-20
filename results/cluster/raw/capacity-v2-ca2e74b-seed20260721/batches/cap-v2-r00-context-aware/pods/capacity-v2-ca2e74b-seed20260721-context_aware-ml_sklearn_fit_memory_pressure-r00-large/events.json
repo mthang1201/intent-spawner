@@ -1,0 +1,139 @@
+{
+  "apiVersion": "v1",
+  "items": [
+    {
+      "apiVersion": "v1",
+      "count": 1,
+      "eventTime": null,
+      "firstTimestamp": "2026-07-20T06:58:19Z",
+      "involvedObject": {
+        "apiVersion": "v1",
+        "kind": "Pod",
+        "name": "ce-c7ae8f97e7c7ce2e80c0",
+        "namespace": "z2jh-context-demo",
+        "resourceVersion": "937",
+        "uid": "cb457101-ad54-463d-9c78-595b6abf50cb"
+      },
+      "kind": "Event",
+      "lastTimestamp": "2026-07-20T06:58:19Z",
+      "message": "Successfully assigned z2jh-context-demo/ce-c7ae8f97e7c7ce2e80c0 to intent-spawner-capacity-v2",
+      "metadata": {
+        "creationTimestamp": "2026-07-20T06:58:19Z",
+        "name": "ce-c7ae8f97e7c7ce2e80c0.18c3ed374ea272af",
+        "namespace": "z2jh-context-demo",
+        "resourceVersion": "939",
+        "uid": "aac13ac5-7088-42a2-aa77-c40c75a4bf31"
+      },
+      "reason": "Scheduled",
+      "reportingComponent": "default-scheduler",
+      "reportingInstance": "",
+      "source": {
+        "component": "default-scheduler"
+      },
+      "type": "Normal"
+    },
+    {
+      "apiVersion": "v1",
+      "count": 1,
+      "eventTime": null,
+      "firstTimestamp": "2026-07-20T06:58:19Z",
+      "involvedObject": {
+        "apiVersion": "v1",
+        "fieldPath": "spec.containers{benchmark}",
+        "kind": "Pod",
+        "name": "ce-c7ae8f97e7c7ce2e80c0",
+        "namespace": "z2jh-context-demo",
+        "resourceVersion": "938",
+        "uid": "cb457101-ad54-463d-9c78-595b6abf50cb"
+      },
+      "kind": "Event",
+      "lastTimestamp": "2026-07-20T06:58:19Z",
+      "message": "Container image \"intent-spawner-cluster-eval:capacity-v2-ca2e74b2043a\" already present on machine",
+      "metadata": {
+        "creationTimestamp": "2026-07-20T06:58:19Z",
+        "name": "ce-c7ae8f97e7c7ce2e80c0.18c3ed376a088567",
+        "namespace": "z2jh-context-demo",
+        "resourceVersion": "967",
+        "uid": "b7091f7b-16fd-4b50-8b34-bb778cf621b6"
+      },
+      "reason": "Pulled",
+      "reportingComponent": "kubelet",
+      "reportingInstance": "intent-spawner-capacity-v2",
+      "source": {
+        "component": "kubelet",
+        "host": "intent-spawner-capacity-v2"
+      },
+      "type": "Normal"
+    },
+    {
+      "apiVersion": "v1",
+      "count": 1,
+      "eventTime": null,
+      "firstTimestamp": "2026-07-20T06:58:19Z",
+      "involvedObject": {
+        "apiVersion": "v1",
+        "fieldPath": "spec.containers{benchmark}",
+        "kind": "Pod",
+        "name": "ce-c7ae8f97e7c7ce2e80c0",
+        "namespace": "z2jh-context-demo",
+        "resourceVersion": "938",
+        "uid": "cb457101-ad54-463d-9c78-595b6abf50cb"
+      },
+      "kind": "Event",
+      "lastTimestamp": "2026-07-20T06:58:19Z",
+      "message": "Created container: benchmark",
+      "metadata": {
+        "creationTimestamp": "2026-07-20T06:58:19Z",
+        "name": "ce-c7ae8f97e7c7ce2e80c0.18c3ed376d31a4a7",
+        "namespace": "z2jh-context-demo",
+        "resourceVersion": "969",
+        "uid": "242c0719-cc2e-4fee-84c1-dbe80d64e142"
+      },
+      "reason": "Created",
+      "reportingComponent": "kubelet",
+      "reportingInstance": "intent-spawner-capacity-v2",
+      "source": {
+        "component": "kubelet",
+        "host": "intent-spawner-capacity-v2"
+      },
+      "type": "Normal"
+    },
+    {
+      "apiVersion": "v1",
+      "count": 1,
+      "eventTime": null,
+      "firstTimestamp": "2026-07-20T06:58:19Z",
+      "involvedObject": {
+        "apiVersion": "v1",
+        "fieldPath": "spec.containers{benchmark}",
+        "kind": "Pod",
+        "name": "ce-c7ae8f97e7c7ce2e80c0",
+        "namespace": "z2jh-context-demo",
+        "resourceVersion": "938",
+        "uid": "cb457101-ad54-463d-9c78-595b6abf50cb"
+      },
+      "kind": "Event",
+      "lastTimestamp": "2026-07-20T06:58:19Z",
+      "message": "Started container benchmark",
+      "metadata": {
+        "creationTimestamp": "2026-07-20T06:58:19Z",
+        "name": "ce-c7ae8f97e7c7ce2e80c0.18c3ed3770d043f4",
+        "namespace": "z2jh-context-demo",
+        "resourceVersion": "973",
+        "uid": "8b58deb6-26d6-4780-ba71-ca389d3936f5"
+      },
+      "reason": "Started",
+      "reportingComponent": "kubelet",
+      "reportingInstance": "intent-spawner-capacity-v2",
+      "source": {
+        "component": "kubelet",
+        "host": "intent-spawner-capacity-v2"
+      },
+      "type": "Normal"
+    }
+  ],
+  "kind": "List",
+  "metadata": {
+    "resourceVersion": ""
+  }
+}

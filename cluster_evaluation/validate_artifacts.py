@@ -15,7 +15,7 @@ from cluster_evaluation.policies import PROFILE_RESOURCES
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_GROUND = ROOT / "results/cluster/raw/ground-truth-39b6973-seed20260720"
 DEFAULT_COMPARATIVE = ROOT / "results/cluster/raw/comparative-39b6973-seed20260720"
-DEFAULT_CAPACITY = ROOT / "results/cluster/raw/capacity-39b6973-seed20260721"
+DEFAULT_CAPACITY = ROOT / "results/cluster/raw/capacity-v2-ca2e74b-seed20260721"
 RESOURCE_FIELDS = (
     "cpu_request_m",
     "cpu_limit_m",

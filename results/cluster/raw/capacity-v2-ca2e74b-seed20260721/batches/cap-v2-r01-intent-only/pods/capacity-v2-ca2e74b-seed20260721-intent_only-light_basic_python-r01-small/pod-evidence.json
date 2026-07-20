@@ -1,0 +1,109 @@
+{
+  "annotations": {
+    "z2jh-context-demo.local/applied-profile": "small",
+    "z2jh-context-demo.local/method": "intent_only",
+    "z2jh-context-demo.local/run-id": "capacity-v2-ca2e74b-seed20260721-intent_only-light_basic_python-r01-small"
+  },
+  "container_image": "intent-spawner-cluster-eval:capacity-v2-ca2e74b2043a",
+  "container_image_id": "sha256:bee0fc6942d2c9001053b1923d6ea23a2c34fb8735853ffc0ee806e5e5aede83",
+  "environment_variables": {
+    "CONTEXT_DATASET_SIZE_GB": "0.01",
+    "RECOMMENDED_PROFILE": "small"
+  },
+  "events": [
+    {
+      "count": 1,
+      "first_timestamp": "2026-07-20T06:59:09Z",
+      "last_timestamp": "2026-07-20T06:59:09Z",
+      "message": "Successfully assigned z2jh-context-demo/ce-d687f6943bea63babb98 to intent-spawner-capacity-v2",
+      "reason": "Scheduled",
+      "type": "Normal"
+    },
+    {
+      "count": 1,
+      "first_timestamp": "2026-07-20T06:59:10Z",
+      "last_timestamp": "2026-07-20T06:59:10Z",
+      "message": "Container image \"intent-spawner-cluster-eval:capacity-v2-ca2e74b2043a\" already present on machine",
+      "reason": "Pulled",
+      "type": "Normal"
+    },
+    {
+      "count": 1,
+      "first_timestamp": "2026-07-20T06:59:10Z",
+      "last_timestamp": "2026-07-20T06:59:10Z",
+      "message": "Created container: benchmark",
+      "reason": "Created",
+      "type": "Normal"
+    },
+    {
+      "count": 1,
+      "first_timestamp": "2026-07-20T06:59:10Z",
+      "last_timestamp": "2026-07-20T06:59:10Z",
+      "message": "Started container benchmark",
+      "reason": "Started",
+      "type": "Normal"
+    }
+  ],
+  "namespace": "z2jh-context-demo",
+  "oom_killed": false,
+  "phase": "Succeeded",
+  "phase_transitions": [
+    {
+      "condition": "PodReadyToStartContainers",
+      "last_transition_time": "2026-07-20T06:59:32Z",
+      "message": null,
+      "reason": null,
+      "status": "False"
+    },
+    {
+      "condition": "Initialized",
+      "last_transition_time": "2026-07-20T06:59:09Z",
+      "message": null,
+      "reason": "PodCompleted",
+      "status": "True"
+    },
+    {
+      "condition": "Ready",
+      "last_transition_time": "2026-07-20T06:59:31Z",
+      "message": null,
+      "reason": "PodCompleted",
+      "status": "False"
+    },
+    {
+      "condition": "ContainersReady",
+      "last_transition_time": "2026-07-20T06:59:31Z",
+      "message": null,
+      "reason": "PodCompleted",
+      "status": "False"
+    },
+    {
+      "condition": "PodScheduled",
+      "last_transition_time": "2026-07-20T06:59:09Z",
+      "message": null,
+      "reason": null,
+      "status": "True"
+    }
+  ],
+  "pod_name": "ce-d687f6943bea63babb98",
+  "pod_pending_duration_seconds": 0.0,
+  "requests_limits": {
+    "cpu_limit_m": 500,
+    "cpu_request_m": 100,
+    "memory_limit_mi": 366,
+    "memory_request_mi": 244
+  },
+  "restart_count": 0,
+  "scheduling_or_pending_reasons": [],
+  "termination_exit_code": 0,
+  "termination_reason": "Completed",
+  "time_to_success_seconds": 21.0,
+  "timing_durations_are_quantized": true,
+  "timing_source_timestamps": {
+    "container_finished_at": "2026-07-20T06:59:30Z",
+    "container_started_at": "2026-07-20T06:59:10Z",
+    "pod_created_at": "2026-07-20T06:59:09Z",
+    "pod_scheduled_at": "2026-07-20T06:59:09Z"
+  },
+  "timing_timestamp_resolution_seconds": 1.0,
+  "workload_runtime_seconds": 20.0
+}

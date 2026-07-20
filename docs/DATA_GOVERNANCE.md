@@ -33,7 +33,10 @@ does not collect data from deployed users.
   FailedScheduling reasons, quantized Pending duration, explicitly typed cgroup
   CPU statistics, cgroup memory peaks, and aggregate concurrency samples. The
   historical capacity generator source is missing; that corpus is retained as
-  supplementary evidence, not repaired by backfilled provenance.
+  supplementary evidence, not repaired by backfilled provenance. Capacity-v2
+  separately retains a sanitized Minikube profile, exact local image ID, and
+  committed runner revision; it omits IP addresses, host mount paths, SSH
+  material, and machine identifiers.
 - Sanitized Kubernetes fixture data in tests. The fixture schema keeps selected
   pod status, event, and metric fields needed for parser tests.
 

@@ -33,8 +33,10 @@ The cluster matrix observed no OOM and therefore cannot estimate OOM reduction.
 Its cgroup-v2 memory values are genuine memory peaks. Its CPU values are either
 full-window averages or interval sample maxima, not a continuous peak time
 series. Historical capacity concurrency is supplementary because the evaluated
-batch-generator source was not committed; capacity-v2 is evaluated separately
-from its committed protocol.
+batch-generator source was not committed. Capacity-v2 was evaluated separately
+from committed protocol `ca2e74b2043a`; it supports only controlled
+request-reservation observations on that disposable single-node environment,
+not a production-density conclusion.
 
 ## Local-Cluster Limitations
 

@@ -53,7 +53,7 @@ efficiency, real-user accuracy, or causal generalization.
 | Kubernetes raw validation and regeneration | Implemented | `cluster_evaluation/validate_artifacts.py`, `cluster_evaluation/analyze.py` |
 | Kubernetes cgroup measurements | Memory peaks implemented; CPU reconciled | `results/cluster/raw/`; zero Metrics Server job snapshots, 86/288 interval sample maxima, 202 full-window averages, and no genuine CPU peaks |
 | Historical capacity reproduction | Permanently unavailable | Raw plan/batches remain supplementary; no runner tied to evaluated commit was recovered |
-| Capacity-v2 runner | Implemented and preregistered; execution pending | `cluster_evaluation/capacity_runner.py`, protocol 2.0.0, tests and dry run |
+| Capacity-v2 runner | Implemented, preregistered, and executed | Protocol commit `ca2e74b2043a`; 9 batches/108 pods, 0 failures, 0 cleanup failures |
 | History-aware method | Not implemented or evaluated | No history collection, storage, or decision path |
 | Project software license | Not resolved | No project license file |
 
@@ -98,16 +98,15 @@ result is supplementary and excluded from principal claims. See
 
 ## Remaining Evaluation Work
 
-1. Execute the committed capacity-v2 protocol on the named disposable cluster
-   and retain its new raw corpus separately from historical evidence.
-2. Use longer, resource-representative workloads and a time-series metrics
+1. Use longer, resource-representative workloads and a time-series metrics
    source before making performance or utilization claims.
-3. Add OOM-producing cases if the thesis needs an OOM-reduction claim.
-4. Report uncertainty and sensitivity to workload mix, thresholds, static
+2. Add OOM-producing cases if the thesis needs an OOM-reduction claim.
+3. Report uncertainty and sensitivity to workload mix, thresholds, static
    assignments, and cluster capacity.
-5. Resolve the project software license before redistribution.
-6. Treat any real-user study as a separate ethics, consent, privacy, and
+4. Resolve the project software license before redistribution.
+5. Treat any real-user study as a separate ethics, consent, privacy, and
    retention project.
 
-Capacity-v2 execution must remain separate from the historical corpus and must
-record the exact committed runner revision.
+Capacity-v2 remains separate from the historical corpus and records the exact
+committed runner revision, local image ID, sanitized profile, per-pod evidence,
+and cleanup outcome.

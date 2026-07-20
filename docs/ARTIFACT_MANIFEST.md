@@ -57,13 +57,20 @@
 - `results/cluster/raw/capacity-39b6973-seed20260721`: nine batch outcomes and
   108 per-pod capacity observations. The exact evaluated batch generator is not
   present; this corpus is supplementary and not principal claim support.
+- `results/cluster/raw/capacity-v2-ca2e74b-seed20260721`: principal controlled
+  capacity evidence generated from committed protocol 2.0.0 at
+  `ca2e74b2043a5ea85a68119097d6c325fe84c294`; 9 counterbalanced batches, 108
+  per-pod outcomes, sanitized Minikube/image provenance, and successful
+  exact-label cleanup for every batch.
 - `docs/evaluation/RAW_EVIDENCE_SHA256SUMS.before-0ffbd9a.txt`: file-by-file
   baseline recorded before blocker resolution.
 - `docs/evaluation/RAW_EVIDENCE_SHA256SUMS.txt`: current file-by-file raw
   integrity manifest.
 
-Raw records include the source `git_commit` used when they were generated. New
-raw runs are ignored by default unless explicitly reviewed and force-added.
+Raw records include the source `git_commit` used when they were generated. The
+current manifest covers 1,877 tracked raw files; the pre-audit baseline covers
+1,541 files and remains independently verified. New raw runs are ignored by
+default unless explicitly reviewed and force-added.
 
 ## Derived Outputs
 

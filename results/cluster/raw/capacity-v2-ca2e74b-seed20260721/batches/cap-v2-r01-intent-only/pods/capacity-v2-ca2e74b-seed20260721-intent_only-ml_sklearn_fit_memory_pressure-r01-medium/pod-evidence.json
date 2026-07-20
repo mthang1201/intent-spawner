@@ -1,0 +1,119 @@
+{
+  "annotations": {
+    "z2jh-context-demo.local/applied-profile": "medium",
+    "z2jh-context-demo.local/method": "intent_only",
+    "z2jh-context-demo.local/run-id": "capacity-v2-ca2e74b-seed20260721-intent_only-ml_sklearn_fit_memory_pressure-r01-medium"
+  },
+  "container_image": "intent-spawner-cluster-eval:capacity-v2-ca2e74b2043a",
+  "container_image_id": "sha256:bee0fc6942d2c9001053b1923d6ea23a2c34fb8735853ffc0ee806e5e5aede83",
+  "environment_variables": {
+    "CONTEXT_DATASET_SIZE_GB": "2.4",
+    "RECOMMENDED_PROFILE": "medium"
+  },
+  "events": [
+    {
+      "count": 3,
+      "first_timestamp": "2026-07-20T06:59:10Z",
+      "last_timestamp": "2026-07-20T06:59:31Z",
+      "message": "0/1 nodes are available: 1 Insufficient memory. preemption: 0/1 nodes are available: 1 No preemption victims found for incoming pod.",
+      "reason": "FailedScheduling",
+      "type": "Warning"
+    },
+    {
+      "count": 1,
+      "first_timestamp": "2026-07-20T06:59:31Z",
+      "last_timestamp": "2026-07-20T06:59:31Z",
+      "message": "Successfully assigned z2jh-context-demo/ce-9b4bde0545d2b0f27513 to intent-spawner-capacity-v2",
+      "reason": "Scheduled",
+      "type": "Normal"
+    },
+    {
+      "count": 1,
+      "first_timestamp": "2026-07-20T06:59:32Z",
+      "last_timestamp": "2026-07-20T06:59:32Z",
+      "message": "Container image \"intent-spawner-cluster-eval:capacity-v2-ca2e74b2043a\" already present on machine",
+      "reason": "Pulled",
+      "type": "Normal"
+    },
+    {
+      "count": 1,
+      "first_timestamp": "2026-07-20T06:59:32Z",
+      "last_timestamp": "2026-07-20T06:59:32Z",
+      "message": "Created container: benchmark",
+      "reason": "Created",
+      "type": "Normal"
+    },
+    {
+      "count": 1,
+      "first_timestamp": "2026-07-20T06:59:32Z",
+      "last_timestamp": "2026-07-20T06:59:32Z",
+      "message": "Started container benchmark",
+      "reason": "Started",
+      "type": "Normal"
+    }
+  ],
+  "namespace": "z2jh-context-demo",
+  "oom_killed": false,
+  "phase": "Succeeded",
+  "phase_transitions": [
+    {
+      "condition": "PodReadyToStartContainers",
+      "last_transition_time": "2026-07-20T06:59:55Z",
+      "message": null,
+      "reason": null,
+      "status": "False"
+    },
+    {
+      "condition": "Initialized",
+      "last_transition_time": "2026-07-20T06:59:31Z",
+      "message": null,
+      "reason": "PodCompleted",
+      "status": "True"
+    },
+    {
+      "condition": "Ready",
+      "last_transition_time": "2026-07-20T06:59:54Z",
+      "message": null,
+      "reason": "PodCompleted",
+      "status": "False"
+    },
+    {
+      "condition": "ContainersReady",
+      "last_transition_time": "2026-07-20T06:59:54Z",
+      "message": null,
+      "reason": "PodCompleted",
+      "status": "False"
+    },
+    {
+      "condition": "PodScheduled",
+      "last_transition_time": "2026-07-20T06:59:31Z",
+      "message": null,
+      "reason": null,
+      "status": "True"
+    }
+  ],
+  "pod_name": "ce-9b4bde0545d2b0f27513",
+  "pod_pending_duration_seconds": 21.0,
+  "requests_limits": {
+    "cpu_limit_m": 1000,
+    "cpu_request_m": 500,
+    "memory_limit_mi": 953,
+    "memory_request_mi": 732
+  },
+  "restart_count": 0,
+  "scheduling_or_pending_reasons": [
+    "FailedScheduling: 0/1 nodes are available: 1 Insufficient memory. preemption: 0/1 nodes are available: 1 No preemption victims found for incoming pod."
+  ],
+  "termination_exit_code": 0,
+  "termination_reason": "Completed",
+  "time_to_success_seconds": 44.0,
+  "timing_durations_are_quantized": true,
+  "timing_source_timestamps": {
+    "container_finished_at": "2026-07-20T06:59:54Z",
+    "container_started_at": "2026-07-20T06:59:32Z",
+    "pod_created_at": "2026-07-20T06:59:10Z",
+    "pod_scheduled_at": "2026-07-20T06:59:31Z"
+  },
+  "timing_timestamp_resolution_seconds": 1.0,
+  "workload_runtime_seconds": 22.0
+}

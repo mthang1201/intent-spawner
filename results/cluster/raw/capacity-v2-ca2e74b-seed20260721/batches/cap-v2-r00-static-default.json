@@ -1,0 +1,1547 @@
+{
+  "batch_id": "cap-v2-r00-static-default",
+  "capacity_schema_version": "2.0.0",
+  "cleanup_selector": "z2jh-context-demo.local/capacity-experiment=capacity-v2-ca2e74b-seed20260721",
+  "cleanup_status": "completed",
+  "completed": 12,
+  "experiment_id": "capacity-v2-ca2e74b-seed20260721",
+  "failed": 0,
+  "git_commit": "ca2e74b2043a5ea85a68119097d6c325fe84c294",
+  "hold_seconds": 20.0,
+  "launch_concurrency": 12,
+  "max_concurrent_running": 7,
+  "method": "static_default",
+  "pending_sample_count": 120,
+  "pending_samples": [
+    {
+      "failed": 0,
+      "pending": 10,
+      "running": 2,
+      "succeeded": 0,
+      "timestamp": "2026-07-20T06:56:41.018Z",
+      "unknown": 0
+    },
+    {
+      "failed": 0,
+      "pending": 10,
+      "running": 2,
+      "succeeded": 0,
+      "timestamp": "2026-07-20T06:56:41.372Z",
+      "unknown": 0
+    },
+    {
+      "failed": 0,
+      "pending": 10,
+      "running": 2,
+      "succeeded": 0,
+      "timestamp": "2026-07-20T06:56:41.741Z",
+      "unknown": 0
+    },
+    {
+      "failed": 0,
+      "pending": 5,
+      "running": 7,
+      "succeeded": 0,
+      "timestamp": "2026-07-20T06:56:42.131Z",
+      "unknown": 0
+    },
+    {
+      "failed": 0,
+      "pending": 5,
+      "running": 7,
+      "succeeded": 0,
+      "timestamp": "2026-07-20T06:56:42.513Z",
+      "unknown": 0
+    },
+    {
+      "failed": 0,
+      "pending": 5,
+      "running": 7,
+      "succeeded": 0,
+      "timestamp": "2026-07-20T06:56:42.909Z",
+      "unknown": 0
+    },
+    {
+      "failed": 0,
+      "pending": 5,
+      "running": 7,
+      "succeeded": 0,
+      "timestamp": "2026-07-20T06:56:43.297Z",
+      "unknown": 0
+    },
+    {
+      "failed": 0,
+      "pending": 5,
+      "running": 7,
+      "succeeded": 0,
+      "timestamp": "2026-07-20T06:56:43.683Z",
+      "unknown": 0
+    },
+    {
+      "failed": 0,
+      "pending": 5,
+      "running": 7,
+      "succeeded": 0,
+      "timestamp": "2026-07-20T06:56:44.045Z",
+      "unknown": 0
+    },
+    {
+      "failed": 0,
+      "pending": 5,
+      "running": 7,
+      "succeeded": 0,
+      "timestamp": "2026-07-20T06:56:44.440Z",
+      "unknown": 0
+    },
+    {
+      "failed": 0,
+      "pending": 5,
+      "running": 7,
+      "succeeded": 0,
+      "timestamp": "2026-07-20T06:56:44.835Z",
+      "unknown": 0
+    },
+    {
+      "failed": 0,
+      "pending": 5,
+      "running": 7,
+      "succeeded": 0,
+      "timestamp": "2026-07-20T06:56:45.259Z",
+      "unknown": 0
+    },
+    {
+      "failed": 0,
+      "pending": 5,
+      "running": 7,
+      "succeeded": 0,
+      "timestamp": "2026-07-20T06:56:45.655Z",
+      "unknown": 0
+    },
+    {
+      "failed": 0,
+      "pending": 5,
+      "running": 7,
+      "succeeded": 0,
+      "timestamp": "2026-07-20T06:56:46.054Z",
+      "unknown": 0
+    },
+    {
+      "failed": 0,
+      "pending": 5,
+      "running": 7,
+      "succeeded": 0,
+      "timestamp": "2026-07-20T06:56:46.428Z",
+      "unknown": 0
+    },
+    {
+      "failed": 0,
+      "pending": 5,
+      "running": 7,
+      "succeeded": 0,
+      "timestamp": "2026-07-20T06:56:46.799Z",
+      "unknown": 0
+    },
+    {
+      "failed": 0,
+      "pending": 5,
+      "running": 7,
+      "succeeded": 0,
+      "timestamp": "2026-07-20T06:56:47.188Z",
+      "unknown": 0
+    },
+    {
+      "failed": 0,
+      "pending": 5,
+      "running": 7,
+      "succeeded": 0,
+      "timestamp": "2026-07-20T06:56:47.582Z",
+      "unknown": 0
+    },
+    {
+      "failed": 0,
+      "pending": 5,
+      "running": 7,
+      "succeeded": 0,
+      "timestamp": "2026-07-20T06:56:47.961Z",
+      "unknown": 0
+    },
+    {
+      "failed": 0,
+      "pending": 5,
+      "running": 7,
+      "succeeded": 0,
+      "timestamp": "2026-07-20T06:56:48.343Z",
+      "unknown": 0
+    },
+    {
+      "failed": 0,
+      "pending": 5,
+      "running": 7,
+      "succeeded": 0,
+      "timestamp": "2026-07-20T06:56:48.738Z",
+      "unknown": 0
+    },
+    {
+      "failed": 0,
+      "pending": 5,
+      "running": 7,
+      "succeeded": 0,
+      "timestamp": "2026-07-20T06:56:49.116Z",
+      "unknown": 0
+    },
+    {
+      "failed": 0,
+      "pending": 5,
+      "running": 7,
+      "succeeded": 0,
+      "timestamp": "2026-07-20T06:56:49.486Z",
+      "unknown": 0
+    },
+    {
+      "failed": 0,
+      "pending": 5,
+      "running": 7,
+      "succeeded": 0,
+      "timestamp": "2026-07-20T06:56:49.880Z",
+      "unknown": 0
+    },
+    {
+      "failed": 0,
+      "pending": 5,
+      "running": 7,
+      "succeeded": 0,
+      "timestamp": "2026-07-20T06:56:50.285Z",
+      "unknown": 0
+    },
+    {
+      "failed": 0,
+      "pending": 5,
+      "running": 7,
+      "succeeded": 0,
+      "timestamp": "2026-07-20T06:56:50.712Z",
+      "unknown": 0
+    },
+    {
+      "failed": 0,
+      "pending": 5,
+      "running": 7,
+      "succeeded": 0,
+      "timestamp": "2026-07-20T06:56:51.113Z",
+      "unknown": 0
+    },
+    {
+      "failed": 0,
+      "pending": 5,
+      "running": 7,
+      "succeeded": 0,
+      "timestamp": "2026-07-20T06:56:51.499Z",
+      "unknown": 0
+    },
+    {
+      "failed": 0,
+      "pending": 5,
+      "running": 7,
+      "succeeded": 0,
+      "timestamp": "2026-07-20T06:56:51.885Z",
+      "unknown": 0
+    },
+    {
+      "failed": 0,
+      "pending": 5,
+      "running": 7,
+      "succeeded": 0,
+      "timestamp": "2026-07-20T06:56:52.278Z",
+      "unknown": 0
+    },
+    {
+      "failed": 0,
+      "pending": 5,
+      "running": 7,
+      "succeeded": 0,
+      "timestamp": "2026-07-20T06:56:52.672Z",
+      "unknown": 0
+    },
+    {
+      "failed": 0,
+      "pending": 5,
+      "running": 7,
+      "succeeded": 0,
+      "timestamp": "2026-07-20T06:56:53.064Z",
+      "unknown": 0
+    },
+    {
+      "failed": 0,
+      "pending": 5,
+      "running": 7,
+      "succeeded": 0,
+      "timestamp": "2026-07-20T06:56:53.424Z",
+      "unknown": 0
+    },
+    {
+      "failed": 0,
+      "pending": 5,
+      "running": 7,
+      "succeeded": 0,
+      "timestamp": "2026-07-20T06:56:53.815Z",
+      "unknown": 0
+    },
+    {
+      "failed": 0,
+      "pending": 5,
+      "running": 7,
+      "succeeded": 0,
+      "timestamp": "2026-07-20T06:56:54.204Z",
+      "unknown": 0
+    },
+    {
+      "failed": 0,
+      "pending": 5,
+      "running": 7,
+      "succeeded": 0,
+      "timestamp": "2026-07-20T06:56:54.599Z",
+      "unknown": 0
+    },
+    {
+      "failed": 0,
+      "pending": 5,
+      "running": 7,
+      "succeeded": 0,
+      "timestamp": "2026-07-20T06:56:54.999Z",
+      "unknown": 0
+    },
+    {
+      "failed": 0,
+      "pending": 5,
+      "running": 7,
+      "succeeded": 0,
+      "timestamp": "2026-07-20T06:56:55.394Z",
+      "unknown": 0
+    },
+    {
+      "failed": 0,
+      "pending": 5,
+      "running": 7,
+      "succeeded": 0,
+      "timestamp": "2026-07-20T06:56:55.817Z",
+      "unknown": 0
+    },
+    {
+      "failed": 0,
+      "pending": 5,
+      "running": 7,
+      "succeeded": 0,
+      "timestamp": "2026-07-20T06:56:56.211Z",
+      "unknown": 0
+    },
+    {
+      "failed": 0,
+      "pending": 5,
+      "running": 7,
+      "succeeded": 0,
+      "timestamp": "2026-07-20T06:56:56.595Z",
+      "unknown": 0
+    },
+    {
+      "failed": 0,
+      "pending": 5,
+      "running": 7,
+      "succeeded": 0,
+      "timestamp": "2026-07-20T06:56:56.983Z",
+      "unknown": 0
+    },
+    {
+      "failed": 0,
+      "pending": 5,
+      "running": 7,
+      "succeeded": 0,
+      "timestamp": "2026-07-20T06:56:57.379Z",
+      "unknown": 0
+    },
+    {
+      "failed": 0,
+      "pending": 5,
+      "running": 7,
+      "succeeded": 0,
+      "timestamp": "2026-07-20T06:56:57.784Z",
+      "unknown": 0
+    },
+    {
+      "failed": 0,
+      "pending": 5,
+      "running": 7,
+      "succeeded": 0,
+      "timestamp": "2026-07-20T06:56:58.168Z",
+      "unknown": 0
+    },
+    {
+      "failed": 0,
+      "pending": 5,
+      "running": 7,
+      "succeeded": 0,
+      "timestamp": "2026-07-20T06:56:58.561Z",
+      "unknown": 0
+    },
+    {
+      "failed": 0,
+      "pending": 5,
+      "running": 7,
+      "succeeded": 0,
+      "timestamp": "2026-07-20T06:56:58.959Z",
+      "unknown": 0
+    },
+    {
+      "failed": 0,
+      "pending": 5,
+      "running": 7,
+      "succeeded": 0,
+      "timestamp": "2026-07-20T06:56:59.346Z",
+      "unknown": 0
+    },
+    {
+      "failed": 0,
+      "pending": 5,
+      "running": 7,
+      "succeeded": 0,
+      "timestamp": "2026-07-20T06:56:59.740Z",
+      "unknown": 0
+    },
+    {
+      "failed": 0,
+      "pending": 5,
+      "running": 7,
+      "succeeded": 0,
+      "timestamp": "2026-07-20T06:57:00.137Z",
+      "unknown": 0
+    },
+    {
+      "failed": 0,
+      "pending": 5,
+      "running": 7,
+      "succeeded": 0,
+      "timestamp": "2026-07-20T06:57:00.530Z",
+      "unknown": 0
+    },
+    {
+      "failed": 0,
+      "pending": 5,
+      "running": 7,
+      "succeeded": 0,
+      "timestamp": "2026-07-20T06:57:00.899Z",
+      "unknown": 0
+    },
+    {
+      "failed": 0,
+      "pending": 5,
+      "running": 7,
+      "succeeded": 0,
+      "timestamp": "2026-07-20T06:57:01.386Z",
+      "unknown": 0
+    },
+    {
+      "failed": 0,
+      "pending": 5,
+      "running": 7,
+      "succeeded": 0,
+      "timestamp": "2026-07-20T06:57:01.771Z",
+      "unknown": 0
+    },
+    {
+      "failed": 0,
+      "pending": 5,
+      "running": 7,
+      "succeeded": 0,
+      "timestamp": "2026-07-20T06:57:02.155Z",
+      "unknown": 0
+    },
+    {
+      "failed": 0,
+      "pending": 5,
+      "running": 7,
+      "succeeded": 0,
+      "timestamp": "2026-07-20T06:57:02.550Z",
+      "unknown": 0
+    },
+    {
+      "failed": 0,
+      "pending": 5,
+      "running": 7,
+      "succeeded": 0,
+      "timestamp": "2026-07-20T06:57:02.949Z",
+      "unknown": 0
+    },
+    {
+      "failed": 0,
+      "pending": 5,
+      "running": 0,
+      "succeeded": 7,
+      "timestamp": "2026-07-20T06:57:03.329Z",
+      "unknown": 0
+    },
+    {
+      "failed": 0,
+      "pending": 5,
+      "running": 0,
+      "succeeded": 7,
+      "timestamp": "2026-07-20T06:57:03.705Z",
+      "unknown": 0
+    },
+    {
+      "failed": 0,
+      "pending": 0,
+      "running": 5,
+      "succeeded": 7,
+      "timestamp": "2026-07-20T06:57:04.068Z",
+      "unknown": 0
+    },
+    {
+      "failed": 0,
+      "pending": 0,
+      "running": 5,
+      "succeeded": 7,
+      "timestamp": "2026-07-20T06:57:04.427Z",
+      "unknown": 0
+    },
+    {
+      "failed": 0,
+      "pending": 0,
+      "running": 5,
+      "succeeded": 7,
+      "timestamp": "2026-07-20T06:57:04.789Z",
+      "unknown": 0
+    },
+    {
+      "failed": 0,
+      "pending": 0,
+      "running": 5,
+      "succeeded": 7,
+      "timestamp": "2026-07-20T06:57:05.143Z",
+      "unknown": 0
+    },
+    {
+      "failed": 0,
+      "pending": 0,
+      "running": 5,
+      "succeeded": 7,
+      "timestamp": "2026-07-20T06:57:05.506Z",
+      "unknown": 0
+    },
+    {
+      "failed": 0,
+      "pending": 0,
+      "running": 5,
+      "succeeded": 7,
+      "timestamp": "2026-07-20T06:57:05.870Z",
+      "unknown": 0
+    },
+    {
+      "failed": 0,
+      "pending": 0,
+      "running": 5,
+      "succeeded": 7,
+      "timestamp": "2026-07-20T06:57:06.270Z",
+      "unknown": 0
+    },
+    {
+      "failed": 0,
+      "pending": 0,
+      "running": 5,
+      "succeeded": 7,
+      "timestamp": "2026-07-20T06:57:06.664Z",
+      "unknown": 0
+    },
+    {
+      "failed": 0,
+      "pending": 0,
+      "running": 5,
+      "succeeded": 7,
+      "timestamp": "2026-07-20T06:57:07.047Z",
+      "unknown": 0
+    },
+    {
+      "failed": 0,
+      "pending": 0,
+      "running": 5,
+      "succeeded": 7,
+      "timestamp": "2026-07-20T06:57:07.441Z",
+      "unknown": 0
+    },
+    {
+      "failed": 0,
+      "pending": 0,
+      "running": 5,
+      "succeeded": 7,
+      "timestamp": "2026-07-20T06:57:07.846Z",
+      "unknown": 0
+    },
+    {
+      "failed": 0,
+      "pending": 0,
+      "running": 5,
+      "succeeded": 7,
+      "timestamp": "2026-07-20T06:57:08.240Z",
+      "unknown": 0
+    },
+    {
+      "failed": 0,
+      "pending": 0,
+      "running": 5,
+      "succeeded": 7,
+      "timestamp": "2026-07-20T06:57:08.643Z",
+      "unknown": 0
+    },
+    {
+      "failed": 0,
+      "pending": 0,
+      "running": 5,
+      "succeeded": 7,
+      "timestamp": "2026-07-20T06:57:09.038Z",
+      "unknown": 0
+    },
+    {
+      "failed": 0,
+      "pending": 0,
+      "running": 5,
+      "succeeded": 7,
+      "timestamp": "2026-07-20T06:57:09.436Z",
+      "unknown": 0
+    },
+    {
+      "failed": 0,
+      "pending": 0,
+      "running": 5,
+      "succeeded": 7,
+      "timestamp": "2026-07-20T06:57:09.833Z",
+      "unknown": 0
+    },
+    {
+      "failed": 0,
+      "pending": 0,
+      "running": 5,
+      "succeeded": 7,
+      "timestamp": "2026-07-20T06:57:10.230Z",
+      "unknown": 0
+    },
+    {
+      "failed": 0,
+      "pending": 0,
+      "running": 5,
+      "succeeded": 7,
+      "timestamp": "2026-07-20T06:57:10.623Z",
+      "unknown": 0
+    },
+    {
+      "failed": 0,
+      "pending": 0,
+      "running": 5,
+      "succeeded": 7,
+      "timestamp": "2026-07-20T06:57:11.013Z",
+      "unknown": 0
+    },
+    {
+      "failed": 0,
+      "pending": 0,
+      "running": 5,
+      "succeeded": 7,
+      "timestamp": "2026-07-20T06:57:11.398Z",
+      "unknown": 0
+    },
+    {
+      "failed": 0,
+      "pending": 0,
+      "running": 5,
+      "succeeded": 7,
+      "timestamp": "2026-07-20T06:57:11.790Z",
+      "unknown": 0
+    },
+    {
+      "failed": 0,
+      "pending": 0,
+      "running": 5,
+      "succeeded": 7,
+      "timestamp": "2026-07-20T06:57:12.180Z",
+      "unknown": 0
+    },
+    {
+      "failed": 0,
+      "pending": 0,
+      "running": 5,
+      "succeeded": 7,
+      "timestamp": "2026-07-20T06:57:12.574Z",
+      "unknown": 0
+    },
+    {
+      "failed": 0,
+      "pending": 0,
+      "running": 5,
+      "succeeded": 7,
+      "timestamp": "2026-07-20T06:57:12.967Z",
+      "unknown": 0
+    },
+    {
+      "failed": 0,
+      "pending": 0,
+      "running": 5,
+      "succeeded": 7,
+      "timestamp": "2026-07-20T06:57:13.364Z",
+      "unknown": 0
+    },
+    {
+      "failed": 0,
+      "pending": 0,
+      "running": 5,
+      "succeeded": 7,
+      "timestamp": "2026-07-20T06:57:13.768Z",
+      "unknown": 0
+    },
+    {
+      "failed": 0,
+      "pending": 0,
+      "running": 5,
+      "succeeded": 7,
+      "timestamp": "2026-07-20T06:57:14.159Z",
+      "unknown": 0
+    },
+    {
+      "failed": 0,
+      "pending": 0,
+      "running": 5,
+      "succeeded": 7,
+      "timestamp": "2026-07-20T06:57:14.548Z",
+      "unknown": 0
+    },
+    {
+      "failed": 0,
+      "pending": 0,
+      "running": 5,
+      "succeeded": 7,
+      "timestamp": "2026-07-20T06:57:14.940Z",
+      "unknown": 0
+    },
+    {
+      "failed": 0,
+      "pending": 0,
+      "running": 5,
+      "succeeded": 7,
+      "timestamp": "2026-07-20T06:57:15.331Z",
+      "unknown": 0
+    },
+    {
+      "failed": 0,
+      "pending": 0,
+      "running": 5,
+      "succeeded": 7,
+      "timestamp": "2026-07-20T06:57:15.744Z",
+      "unknown": 0
+    },
+    {
+      "failed": 0,
+      "pending": 0,
+      "running": 5,
+      "succeeded": 7,
+      "timestamp": "2026-07-20T06:57:16.137Z",
+      "unknown": 0
+    },
+    {
+      "failed": 0,
+      "pending": 0,
+      "running": 5,
+      "succeeded": 7,
+      "timestamp": "2026-07-20T06:57:16.536Z",
+      "unknown": 0
+    },
+    {
+      "failed": 0,
+      "pending": 0,
+      "running": 5,
+      "succeeded": 7,
+      "timestamp": "2026-07-20T06:57:16.930Z",
+      "unknown": 0
+    },
+    {
+      "failed": 0,
+      "pending": 0,
+      "running": 5,
+      "succeeded": 7,
+      "timestamp": "2026-07-20T06:57:17.317Z",
+      "unknown": 0
+    },
+    {
+      "failed": 0,
+      "pending": 0,
+      "running": 5,
+      "succeeded": 7,
+      "timestamp": "2026-07-20T06:57:17.706Z",
+      "unknown": 0
+    },
+    {
+      "failed": 0,
+      "pending": 0,
+      "running": 5,
+      "succeeded": 7,
+      "timestamp": "2026-07-20T06:57:18.098Z",
+      "unknown": 0
+    },
+    {
+      "failed": 0,
+      "pending": 0,
+      "running": 5,
+      "succeeded": 7,
+      "timestamp": "2026-07-20T06:57:18.488Z",
+      "unknown": 0
+    },
+    {
+      "failed": 0,
+      "pending": 0,
+      "running": 5,
+      "succeeded": 7,
+      "timestamp": "2026-07-20T06:57:18.884Z",
+      "unknown": 0
+    },
+    {
+      "failed": 0,
+      "pending": 0,
+      "running": 5,
+      "succeeded": 7,
+      "timestamp": "2026-07-20T06:57:19.278Z",
+      "unknown": 0
+    },
+    {
+      "failed": 0,
+      "pending": 0,
+      "running": 5,
+      "succeeded": 7,
+      "timestamp": "2026-07-20T06:57:19.671Z",
+      "unknown": 0
+    },
+    {
+      "failed": 0,
+      "pending": 0,
+      "running": 5,
+      "succeeded": 7,
+      "timestamp": "2026-07-20T06:57:20.069Z",
+      "unknown": 0
+    },
+    {
+      "failed": 0,
+      "pending": 0,
+      "running": 5,
+      "succeeded": 7,
+      "timestamp": "2026-07-20T06:57:20.462Z",
+      "unknown": 0
+    },
+    {
+      "failed": 0,
+      "pending": 0,
+      "running": 5,
+      "succeeded": 7,
+      "timestamp": "2026-07-20T06:57:20.847Z",
+      "unknown": 0
+    },
+    {
+      "failed": 0,
+      "pending": 0,
+      "running": 5,
+      "succeeded": 7,
+      "timestamp": "2026-07-20T06:57:21.231Z",
+      "unknown": 0
+    },
+    {
+      "failed": 0,
+      "pending": 0,
+      "running": 5,
+      "succeeded": 7,
+      "timestamp": "2026-07-20T06:57:21.641Z",
+      "unknown": 0
+    },
+    {
+      "failed": 0,
+      "pending": 0,
+      "running": 5,
+      "succeeded": 7,
+      "timestamp": "2026-07-20T06:57:22.025Z",
+      "unknown": 0
+    },
+    {
+      "failed": 0,
+      "pending": 0,
+      "running": 5,
+      "succeeded": 7,
+      "timestamp": "2026-07-20T06:57:22.420Z",
+      "unknown": 0
+    },
+    {
+      "failed": 0,
+      "pending": 0,
+      "running": 5,
+      "succeeded": 7,
+      "timestamp": "2026-07-20T06:57:22.815Z",
+      "unknown": 0
+    },
+    {
+      "failed": 0,
+      "pending": 0,
+      "running": 5,
+      "succeeded": 7,
+      "timestamp": "2026-07-20T06:57:23.208Z",
+      "unknown": 0
+    },
+    {
+      "failed": 0,
+      "pending": 0,
+      "running": 5,
+      "succeeded": 7,
+      "timestamp": "2026-07-20T06:57:23.603Z",
+      "unknown": 0
+    },
+    {
+      "failed": 0,
+      "pending": 0,
+      "running": 5,
+      "succeeded": 7,
+      "timestamp": "2026-07-20T06:57:23.980Z",
+      "unknown": 0
+    },
+    {
+      "failed": 0,
+      "pending": 0,
+      "running": 5,
+      "succeeded": 7,
+      "timestamp": "2026-07-20T06:57:24.373Z",
+      "unknown": 0
+    },
+    {
+      "failed": 0,
+      "pending": 0,
+      "running": 5,
+      "succeeded": 7,
+      "timestamp": "2026-07-20T06:57:24.764Z",
+      "unknown": 0
+    },
+    {
+      "failed": 0,
+      "pending": 0,
+      "running": 2,
+      "succeeded": 10,
+      "timestamp": "2026-07-20T06:57:25.136Z",
+      "unknown": 0
+    },
+    {
+      "failed": 0,
+      "pending": 0,
+      "running": 2,
+      "succeeded": 10,
+      "timestamp": "2026-07-20T06:57:25.532Z",
+      "unknown": 0
+    },
+    {
+      "failed": 0,
+      "pending": 0,
+      "running": 2,
+      "succeeded": 10,
+      "timestamp": "2026-07-20T06:57:25.919Z",
+      "unknown": 0
+    },
+    {
+      "failed": 0,
+      "pending": 0,
+      "running": 1,
+      "succeeded": 11,
+      "timestamp": "2026-07-20T06:57:26.314Z",
+      "unknown": 0
+    },
+    {
+      "failed": 0,
+      "pending": 0,
+      "running": 1,
+      "succeeded": 11,
+      "timestamp": "2026-07-20T06:57:26.701Z",
+      "unknown": 0
+    },
+    {
+      "failed": 0,
+      "pending": 0,
+      "running": 1,
+      "succeeded": 11,
+      "timestamp": "2026-07-20T06:57:27.077Z",
+      "unknown": 0
+    },
+    {
+      "failed": 0,
+      "pending": 0,
+      "running": 0,
+      "succeeded": 12,
+      "timestamp": "2026-07-20T06:57:27.463Z",
+      "unknown": 0
+    }
+  ],
+  "phase_sample_interval_seconds": 0.3,
+  "pods": [
+    {
+      "applied_profile": "medium",
+      "benchmark_runtime_seconds": 0.006484,
+      "cgroup_metrics": {
+        "cpu_full_window_average_m": 34.146,
+        "cpu_interval_sample_max_m": 568.501,
+        "measurement_window_seconds": 20.008192,
+        "memory_peak_file_available": true,
+        "peak_memory_mi": 15.449,
+        "sample_count": 1740,
+        "sample_interval_seconds": 0.01,
+        "source": "cgroup_v2_in_container"
+      },
+      "container_image": "intent-spawner-cluster-eval:capacity-v2-ca2e74b2043a",
+      "container_image_id": "sha256:bee0fc6942d2c9001053b1923d6ea23a2c34fb8735853ffc0ee806e5e5aede83",
+      "exit_code": 0,
+      "exit_reason": "Completed",
+      "method": "static_default",
+      "pending_reasons": [],
+      "pending_seconds": 0.0,
+      "phase": "Succeeded",
+      "recommended_profile": "medium",
+      "repeat_index": 0,
+      "requests_limits": {
+        "cpu_limit_m": 1000,
+        "cpu_request_m": 500,
+        "memory_limit_mi": 953,
+        "memory_request_mi": 732
+      },
+      "run_id": "capacity-v2-ca2e74b-seed20260721-static_default-data_dataframe_join_medium-r00-medium",
+      "success": true,
+      "supporting_log_paths": [
+        "results/cluster/raw/capacity-v2-ca2e74b-seed20260721/batches/cap-v2-r00-static-default/pods/capacity-v2-ca2e74b-seed20260721-static_default-data_dataframe_join_medium-r00-medium/pod.log",
+        "results/cluster/raw/capacity-v2-ca2e74b-seed20260721/batches/cap-v2-r00-static-default/pods/capacity-v2-ca2e74b-seed20260721-static_default-data_dataframe_join_medium-r00-medium/pod-evidence.json",
+        "results/cluster/raw/capacity-v2-ca2e74b-seed20260721/batches/cap-v2-r00-static-default/pods/capacity-v2-ca2e74b-seed20260721-static_default-data_dataframe_join_medium-r00-medium/events.json"
+      ],
+      "timing_durations_are_quantized": true,
+      "timing_source_timestamps": {
+        "container_finished_at": "2026-07-20T06:57:00Z",
+        "container_started_at": "2026-07-20T06:56:40Z",
+        "pod_created_at": "2026-07-20T06:56:40Z",
+        "pod_scheduled_at": "2026-07-20T06:56:40Z"
+      },
+      "timing_timestamp_resolution_seconds": 1.0,
+      "workload_id": "data_dataframe_join_medium"
+    },
+    {
+      "applied_profile": "medium",
+      "benchmark_runtime_seconds": 0.012269,
+      "cgroup_metrics": {
+        "cpu_full_window_average_m": 34.053,
+        "cpu_interval_sample_max_m": 243.489,
+        "measurement_window_seconds": 20.012628,
+        "memory_peak_file_available": true,
+        "peak_memory_mi": 15.191,
+        "sample_count": 1735,
+        "sample_interval_seconds": 0.01,
+        "source": "cgroup_v2_in_container"
+      },
+      "container_image": "intent-spawner-cluster-eval:capacity-v2-ca2e74b2043a",
+      "container_image_id": "sha256:bee0fc6942d2c9001053b1923d6ea23a2c34fb8735853ffc0ee806e5e5aede83",
+      "exit_code": 0,
+      "exit_reason": "Completed",
+      "method": "static_default",
+      "pending_reasons": [],
+      "pending_seconds": 0.0,
+      "phase": "Succeeded",
+      "recommended_profile": "medium",
+      "repeat_index": 0,
+      "requests_limits": {
+        "cpu_limit_m": 1000,
+        "cpu_request_m": 500,
+        "memory_limit_mi": 953,
+        "memory_request_mi": 732
+      },
+      "run_id": "capacity-v2-ca2e74b-seed20260721-static_default-data_large_aggregation-r00-medium",
+      "success": true,
+      "supporting_log_paths": [
+        "results/cluster/raw/capacity-v2-ca2e74b-seed20260721/batches/cap-v2-r00-static-default/pods/capacity-v2-ca2e74b-seed20260721-static_default-data_large_aggregation-r00-medium/pod.log",
+        "results/cluster/raw/capacity-v2-ca2e74b-seed20260721/batches/cap-v2-r00-static-default/pods/capacity-v2-ca2e74b-seed20260721-static_default-data_large_aggregation-r00-medium/pod-evidence.json",
+        "results/cluster/raw/capacity-v2-ca2e74b-seed20260721/batches/cap-v2-r00-static-default/pods/capacity-v2-ca2e74b-seed20260721-static_default-data_large_aggregation-r00-medium/events.json"
+      ],
+      "timing_durations_are_quantized": true,
+      "timing_source_timestamps": {
+        "container_finished_at": "2026-07-20T06:57:00Z",
+        "container_started_at": "2026-07-20T06:56:40Z",
+        "pod_created_at": "2026-07-20T06:56:40Z",
+        "pod_scheduled_at": "2026-07-20T06:56:40Z"
+      },
+      "timing_timestamp_resolution_seconds": 1.0,
+      "workload_id": "data_large_aggregation"
+    },
+    {
+      "applied_profile": "medium",
+      "benchmark_runtime_seconds": 0.144986,
+      "cgroup_metrics": {
+        "cpu_full_window_average_m": 39.766,
+        "cpu_interval_sample_max_m": 1230.792,
+        "measurement_window_seconds": 20.145314,
+        "memory_peak_file_available": true,
+        "peak_memory_mi": 14.988,
+        "sample_count": 1744,
+        "sample_interval_seconds": 0.01,
+        "source": "cgroup_v2_in_container"
+      },
+      "container_image": "intent-spawner-cluster-eval:capacity-v2-ca2e74b2043a",
+      "container_image_id": "sha256:bee0fc6942d2c9001053b1923d6ea23a2c34fb8735853ffc0ee806e5e5aede83",
+      "exit_code": 0,
+      "exit_reason": "Completed",
+      "method": "static_default",
+      "pending_reasons": [],
+      "pending_seconds": 0.0,
+      "phase": "Succeeded",
+      "recommended_profile": "medium",
+      "repeat_index": 0,
+      "requests_limits": {
+        "cpu_limit_m": 1000,
+        "cpu_request_m": 500,
+        "memory_limit_mi": 953,
+        "memory_request_mi": 732
+      },
+      "run_id": "capacity-v2-ca2e74b-seed20260721-static_default-ml_sklearn_fit_medium-r00-medium",
+      "success": true,
+      "supporting_log_paths": [
+        "results/cluster/raw/capacity-v2-ca2e74b-seed20260721/batches/cap-v2-r00-static-default/pods/capacity-v2-ca2e74b-seed20260721-static_default-ml_sklearn_fit_medium-r00-medium/pod.log",
+        "results/cluster/raw/capacity-v2-ca2e74b-seed20260721/batches/cap-v2-r00-static-default/pods/capacity-v2-ca2e74b-seed20260721-static_default-ml_sklearn_fit_medium-r00-medium/pod-evidence.json",
+        "results/cluster/raw/capacity-v2-ca2e74b-seed20260721/batches/cap-v2-r00-static-default/pods/capacity-v2-ca2e74b-seed20260721-static_default-ml_sklearn_fit_medium-r00-medium/events.json"
+      ],
+      "timing_durations_are_quantized": true,
+      "timing_source_timestamps": {
+        "container_finished_at": "2026-07-20T06:57:01Z",
+        "container_started_at": "2026-07-20T06:56:41Z",
+        "pod_created_at": "2026-07-20T06:56:40Z",
+        "pod_scheduled_at": "2026-07-20T06:56:40Z"
+      },
+      "timing_timestamp_resolution_seconds": 1.0,
+      "workload_id": "ml_sklearn_fit_medium"
+    },
+    {
+      "applied_profile": "medium",
+      "benchmark_runtime_seconds": 0.007319,
+      "cgroup_metrics": {
+        "cpu_full_window_average_m": 33.597,
+        "cpu_interval_sample_max_m": 682.77,
+        "measurement_window_seconds": 20.012358,
+        "memory_peak_file_available": true,
+        "peak_memory_mi": 17.887,
+        "sample_count": 1734,
+        "sample_interval_seconds": 0.01,
+        "source": "cgroup_v2_in_container"
+      },
+      "container_image": "intent-spawner-cluster-eval:capacity-v2-ca2e74b2043a",
+      "container_image_id": "sha256:bee0fc6942d2c9001053b1923d6ea23a2c34fb8735853ffc0ee806e5e5aede83",
+      "exit_code": 0,
+      "exit_reason": "Completed",
+      "method": "static_default",
+      "pending_reasons": [],
+      "pending_seconds": 0.0,
+      "phase": "Succeeded",
+      "recommended_profile": "medium",
+      "repeat_index": 0,
+      "requests_limits": {
+        "cpu_limit_m": 1000,
+        "cpu_request_m": 500,
+        "memory_limit_mi": 953,
+        "memory_request_mi": 732
+      },
+      "run_id": "capacity-v2-ca2e74b-seed20260721-static_default-light_small_csv_read-r00-medium",
+      "success": true,
+      "supporting_log_paths": [
+        "results/cluster/raw/capacity-v2-ca2e74b-seed20260721/batches/cap-v2-r00-static-default/pods/capacity-v2-ca2e74b-seed20260721-static_default-light_small_csv_read-r00-medium/pod.log",
+        "results/cluster/raw/capacity-v2-ca2e74b-seed20260721/batches/cap-v2-r00-static-default/pods/capacity-v2-ca2e74b-seed20260721-static_default-light_small_csv_read-r00-medium/pod-evidence.json",
+        "results/cluster/raw/capacity-v2-ca2e74b-seed20260721/batches/cap-v2-r00-static-default/pods/capacity-v2-ca2e74b-seed20260721-static_default-light_small_csv_read-r00-medium/events.json"
+      ],
+      "timing_durations_are_quantized": true,
+      "timing_source_timestamps": {
+        "container_finished_at": "2026-07-20T06:57:01Z",
+        "container_started_at": "2026-07-20T06:56:40Z",
+        "pod_created_at": "2026-07-20T06:56:40Z",
+        "pod_scheduled_at": "2026-07-20T06:56:40Z"
+      },
+      "timing_timestamp_resolution_seconds": 1.0,
+      "workload_id": "light_small_csv_read"
+    },
+    {
+      "applied_profile": "medium",
+      "benchmark_runtime_seconds": 0.000888,
+      "cgroup_metrics": {
+        "cpu_full_window_average_m": 33.325,
+        "cpu_interval_sample_max_m": 233.257,
+        "measurement_window_seconds": 20.001717,
+        "memory_peak_file_available": true,
+        "peak_memory_mi": 17.633,
+        "sample_count": 1732,
+        "sample_interval_seconds": 0.01,
+        "source": "cgroup_v2_in_container"
+      },
+      "container_image": "intent-spawner-cluster-eval:capacity-v2-ca2e74b2043a",
+      "container_image_id": "sha256:bee0fc6942d2c9001053b1923d6ea23a2c34fb8735853ffc0ee806e5e5aede83",
+      "exit_code": 0,
+      "exit_reason": "Completed",
+      "method": "static_default",
+      "pending_reasons": [],
+      "pending_seconds": 0.0,
+      "phase": "Succeeded",
+      "recommended_profile": "medium",
+      "repeat_index": 0,
+      "requests_limits": {
+        "cpu_limit_m": 1000,
+        "cpu_request_m": 500,
+        "memory_limit_mi": 953,
+        "memory_request_mi": 732
+      },
+      "run_id": "capacity-v2-ca2e74b-seed20260721-static_default-light_basic_python-r00-medium",
+      "success": true,
+      "supporting_log_paths": [
+        "results/cluster/raw/capacity-v2-ca2e74b-seed20260721/batches/cap-v2-r00-static-default/pods/capacity-v2-ca2e74b-seed20260721-static_default-light_basic_python-r00-medium/pod.log",
+        "results/cluster/raw/capacity-v2-ca2e74b-seed20260721/batches/cap-v2-r00-static-default/pods/capacity-v2-ca2e74b-seed20260721-static_default-light_basic_python-r00-medium/pod-evidence.json",
+        "results/cluster/raw/capacity-v2-ca2e74b-seed20260721/batches/cap-v2-r00-static-default/pods/capacity-v2-ca2e74b-seed20260721-static_default-light_basic_python-r00-medium/events.json"
+      ],
+      "timing_durations_are_quantized": true,
+      "timing_source_timestamps": {
+        "container_finished_at": "2026-07-20T06:57:01Z",
+        "container_started_at": "2026-07-20T06:56:40Z",
+        "pod_created_at": "2026-07-20T06:56:40Z",
+        "pod_scheduled_at": "2026-07-20T06:56:40Z"
+      },
+      "timing_timestamp_resolution_seconds": 1.0,
+      "workload_id": "light_basic_python"
+    },
+    {
+      "applied_profile": "medium",
+      "benchmark_runtime_seconds": 0.010784,
+      "cgroup_metrics": {
+        "cpu_full_window_average_m": 34.833,
+        "cpu_interval_sample_max_m": 671.682,
+        "measurement_window_seconds": 20.011047,
+        "memory_peak_file_available": true,
+        "peak_memory_mi": 16.098,
+        "sample_count": 1742,
+        "sample_interval_seconds": 0.01,
+        "source": "cgroup_v2_in_container"
+      },
+      "container_image": "intent-spawner-cluster-eval:capacity-v2-ca2e74b2043a",
+      "container_image_id": "sha256:bee0fc6942d2c9001053b1923d6ea23a2c34fb8735853ffc0ee806e5e5aede83",
+      "exit_code": 0,
+      "exit_reason": "Completed",
+      "method": "static_default",
+      "pending_reasons": [],
+      "pending_seconds": 0.0,
+      "phase": "Succeeded",
+      "recommended_profile": "medium",
+      "repeat_index": 0,
+      "requests_limits": {
+        "cpu_limit_m": 1000,
+        "cpu_request_m": 500,
+        "memory_limit_mi": 953,
+        "memory_request_mi": 732
+      },
+      "run_id": "capacity-v2-ca2e74b-seed20260721-static_default-data_pandas_read_transform-r00-medium",
+      "success": true,
+      "supporting_log_paths": [
+        "results/cluster/raw/capacity-v2-ca2e74b-seed20260721/batches/cap-v2-r00-static-default/pods/capacity-v2-ca2e74b-seed20260721-static_default-data_pandas_read_transform-r00-medium/pod.log",
+        "results/cluster/raw/capacity-v2-ca2e74b-seed20260721/batches/cap-v2-r00-static-default/pods/capacity-v2-ca2e74b-seed20260721-static_default-data_pandas_read_transform-r00-medium/pod-evidence.json",
+        "results/cluster/raw/capacity-v2-ca2e74b-seed20260721/batches/cap-v2-r00-static-default/pods/capacity-v2-ca2e74b-seed20260721-static_default-data_pandas_read_transform-r00-medium/events.json"
+      ],
+      "timing_durations_are_quantized": true,
+      "timing_source_timestamps": {
+        "container_finished_at": "2026-07-20T06:57:01Z",
+        "container_started_at": "2026-07-20T06:56:40Z",
+        "pod_created_at": "2026-07-20T06:56:40Z",
+        "pod_scheduled_at": "2026-07-20T06:56:40Z"
+      },
+      "timing_timestamp_resolution_seconds": 1.0,
+      "workload_id": "data_pandas_read_transform"
+    },
+    {
+      "applied_profile": "medium",
+      "benchmark_runtime_seconds": 0.045527,
+      "cgroup_metrics": {
+        "cpu_full_window_average_m": 35.129,
+        "cpu_interval_sample_max_m": 1654.024,
+        "measurement_window_seconds": 20.045981,
+        "memory_peak_file_available": true,
+        "peak_memory_mi": 14.887,
+        "sample_count": 1742,
+        "sample_interval_seconds": 0.01,
+        "source": "cgroup_v2_in_container"
+      },
+      "container_image": "intent-spawner-cluster-eval:capacity-v2-ca2e74b2043a",
+      "container_image_id": "sha256:bee0fc6942d2c9001053b1923d6ea23a2c34fb8735853ffc0ee806e5e5aede83",
+      "exit_code": 0,
+      "exit_reason": "Completed",
+      "method": "static_default",
+      "pending_reasons": [],
+      "pending_seconds": 0.0,
+      "phase": "Succeeded",
+      "recommended_profile": "medium",
+      "repeat_index": 0,
+      "requests_limits": {
+        "cpu_limit_m": 1000,
+        "cpu_request_m": 500,
+        "memory_limit_mi": 953,
+        "memory_request_mi": 732
+      },
+      "run_id": "capacity-v2-ca2e74b-seed20260721-static_default-boundary_above_0_5_conflicting-r00-medium",
+      "success": true,
+      "supporting_log_paths": [
+        "results/cluster/raw/capacity-v2-ca2e74b-seed20260721/batches/cap-v2-r00-static-default/pods/capacity-v2-ca2e74b-seed20260721-static_default-boundary_above_0_5_conflicting-r00-medium/pod.log",
+        "results/cluster/raw/capacity-v2-ca2e74b-seed20260721/batches/cap-v2-r00-static-default/pods/capacity-v2-ca2e74b-seed20260721-static_default-boundary_above_0_5_conflicting-r00-medium/pod-evidence.json",
+        "results/cluster/raw/capacity-v2-ca2e74b-seed20260721/batches/cap-v2-r00-static-default/pods/capacity-v2-ca2e74b-seed20260721-static_default-boundary_above_0_5_conflicting-r00-medium/events.json"
+      ],
+      "timing_durations_are_quantized": true,
+      "timing_source_timestamps": {
+        "container_finished_at": "2026-07-20T06:57:01Z",
+        "container_started_at": "2026-07-20T06:56:41Z",
+        "pod_created_at": "2026-07-20T06:56:40Z",
+        "pod_scheduled_at": "2026-07-20T06:56:40Z"
+      },
+      "timing_timestamp_resolution_seconds": 1.0,
+      "workload_id": "boundary_above_0_5_conflicting"
+    },
+    {
+      "applied_profile": "medium",
+      "benchmark_runtime_seconds": 2.237743,
+      "cgroup_metrics": {
+        "cpu_full_window_average_m": 133.015,
+        "cpu_interval_sample_max_m": 1377.98,
+        "measurement_window_seconds": 22.238652,
+        "memory_peak_file_available": true,
+        "peak_memory_mi": 210.805,
+        "sample_count": 1814,
+        "sample_interval_seconds": 0.01,
+        "source": "cgroup_v2_in_container"
+      },
+      "container_image": "intent-spawner-cluster-eval:capacity-v2-ca2e74b2043a",
+      "container_image_id": "sha256:bee0fc6942d2c9001053b1923d6ea23a2c34fb8735853ffc0ee806e5e5aede83",
+      "exit_code": 0,
+      "exit_reason": "Completed",
+      "method": "static_default",
+      "pending_reasons": [
+        "FailedScheduling: 0/1 nodes are available: 1 Insufficient memory. preemption: 0/1 nodes are available: 1 No preemption victims found for incoming pod."
+      ],
+      "pending_seconds": 22.0,
+      "phase": "Succeeded",
+      "recommended_profile": "medium",
+      "repeat_index": 0,
+      "requests_limits": {
+        "cpu_limit_m": 1000,
+        "cpu_request_m": 500,
+        "memory_limit_mi": 953,
+        "memory_request_mi": 732
+      },
+      "run_id": "capacity-v2-ca2e74b-seed20260721-static_default-ml_sklearn_fit_memory_pressure-r00-medium",
+      "success": true,
+      "supporting_log_paths": [
+        "results/cluster/raw/capacity-v2-ca2e74b-seed20260721/batches/cap-v2-r00-static-default/pods/capacity-v2-ca2e74b-seed20260721-static_default-ml_sklearn_fit_memory_pressure-r00-medium/pod.log",
+        "results/cluster/raw/capacity-v2-ca2e74b-seed20260721/batches/cap-v2-r00-static-default/pods/capacity-v2-ca2e74b-seed20260721-static_default-ml_sklearn_fit_memory_pressure-r00-medium/pod-evidence.json",
+        "results/cluster/raw/capacity-v2-ca2e74b-seed20260721/batches/cap-v2-r00-static-default/pods/capacity-v2-ca2e74b-seed20260721-static_default-ml_sklearn_fit_memory_pressure-r00-medium/events.json"
+      ],
+      "timing_durations_are_quantized": true,
+      "timing_source_timestamps": {
+        "container_finished_at": "2026-07-20T06:57:25Z",
+        "container_started_at": "2026-07-20T06:57:03Z",
+        "pod_created_at": "2026-07-20T06:56:40Z",
+        "pod_scheduled_at": "2026-07-20T06:57:02Z"
+      },
+      "timing_timestamp_resolution_seconds": 1.0,
+      "workload_id": "ml_sklearn_fit_memory_pressure"
+    },
+    {
+      "applied_profile": "medium",
+      "benchmark_runtime_seconds": 0.000767,
+      "cgroup_metrics": {
+        "cpu_full_window_average_m": 33.447,
+        "cpu_interval_sample_max_m": 206.772,
+        "measurement_window_seconds": 20.001682,
+        "memory_peak_file_available": true,
+        "peak_memory_mi": 16.02,
+        "sample_count": 1720,
+        "sample_interval_seconds": 0.01,
+        "source": "cgroup_v2_in_container"
+      },
+      "container_image": "intent-spawner-cluster-eval:capacity-v2-ca2e74b2043a",
+      "container_image_id": "sha256:bee0fc6942d2c9001053b1923d6ea23a2c34fb8735853ffc0ee806e5e5aede83",
+      "exit_code": 0,
+      "exit_reason": "Completed",
+      "method": "static_default",
+      "pending_reasons": [
+        "FailedScheduling: 0/1 nodes are available: 1 Insufficient memory. preemption: 0/1 nodes are available: 1 No preemption victims found for incoming pod."
+      ],
+      "pending_seconds": 22.0,
+      "phase": "Succeeded",
+      "recommended_profile": "medium",
+      "repeat_index": 0,
+      "requests_limits": {
+        "cpu_limit_m": 1000,
+        "cpu_request_m": 500,
+        "memory_limit_mi": 953,
+        "memory_request_mi": 732
+      },
+      "run_id": "capacity-v2-ca2e74b-seed20260721-static_default-policy_gpu_disallowed-r00-medium",
+      "success": true,
+      "supporting_log_paths": [
+        "results/cluster/raw/capacity-v2-ca2e74b-seed20260721/batches/cap-v2-r00-static-default/pods/capacity-v2-ca2e74b-seed20260721-static_default-policy_gpu_disallowed-r00-medium/pod.log",
+        "results/cluster/raw/capacity-v2-ca2e74b-seed20260721/batches/cap-v2-r00-static-default/pods/capacity-v2-ca2e74b-seed20260721-static_default-policy_gpu_disallowed-r00-medium/pod-evidence.json",
+        "results/cluster/raw/capacity-v2-ca2e74b-seed20260721/batches/cap-v2-r00-static-default/pods/capacity-v2-ca2e74b-seed20260721-static_default-policy_gpu_disallowed-r00-medium/events.json"
+      ],
+      "timing_durations_are_quantized": true,
+      "timing_source_timestamps": {
+        "container_finished_at": "2026-07-20T06:57:23Z",
+        "container_started_at": "2026-07-20T06:57:03Z",
+        "pod_created_at": "2026-07-20T06:56:40Z",
+        "pod_scheduled_at": "2026-07-20T06:57:02Z"
+      },
+      "timing_timestamp_resolution_seconds": 1.0,
+      "workload_id": "policy_gpu_disallowed"
+    },
+    {
+      "applied_profile": "medium",
+      "benchmark_runtime_seconds": 0.007482,
+      "cgroup_metrics": {
+        "cpu_full_window_average_m": 34.065,
+        "cpu_interval_sample_max_m": 221.969,
+        "measurement_window_seconds": 20.008937,
+        "memory_peak_file_available": true,
+        "peak_memory_mi": 15.367,
+        "sample_count": 1739,
+        "sample_interval_seconds": 0.01,
+        "source": "cgroup_v2_in_container"
+      },
+      "container_image": "intent-spawner-cluster-eval:capacity-v2-ca2e74b2043a",
+      "container_image_id": "sha256:bee0fc6942d2c9001053b1923d6ea23a2c34fb8735853ffc0ee806e5e5aede83",
+      "exit_code": 0,
+      "exit_reason": "Completed",
+      "method": "static_default",
+      "pending_reasons": [
+        "FailedScheduling: 0/1 nodes are available: 1 Insufficient memory. preemption: 0/1 nodes are available: 1 No preemption victims found for incoming pod."
+      ],
+      "pending_seconds": 23.0,
+      "phase": "Succeeded",
+      "recommended_profile": "medium",
+      "repeat_index": 0,
+      "requests_limits": {
+        "cpu_limit_m": 1000,
+        "cpu_request_m": 500,
+        "memory_limit_mi": 953,
+        "memory_request_mi": 732
+      },
+      "run_id": "capacity-v2-ca2e74b-seed20260721-static_default-ml_sklearn_fit_small-r00-medium",
+      "success": true,
+      "supporting_log_paths": [
+        "results/cluster/raw/capacity-v2-ca2e74b-seed20260721/batches/cap-v2-r00-static-default/pods/capacity-v2-ca2e74b-seed20260721-static_default-ml_sklearn_fit_small-r00-medium/pod.log",
+        "results/cluster/raw/capacity-v2-ca2e74b-seed20260721/batches/cap-v2-r00-static-default/pods/capacity-v2-ca2e74b-seed20260721-static_default-ml_sklearn_fit_small-r00-medium/pod-evidence.json",
+        "results/cluster/raw/capacity-v2-ca2e74b-seed20260721/batches/cap-v2-r00-static-default/pods/capacity-v2-ca2e74b-seed20260721-static_default-ml_sklearn_fit_small-r00-medium/events.json"
+      ],
+      "timing_durations_are_quantized": true,
+      "timing_source_timestamps": {
+        "container_finished_at": "2026-07-20T06:57:23Z",
+        "container_started_at": "2026-07-20T06:57:03Z",
+        "pod_created_at": "2026-07-20T06:56:40Z",
+        "pod_scheduled_at": "2026-07-20T06:57:03Z"
+      },
+      "timing_timestamp_resolution_seconds": 1.0,
+      "workload_id": "ml_sklearn_fit_small"
+    },
+    {
+      "applied_profile": "medium",
+      "benchmark_runtime_seconds": 0.001446,
+      "cgroup_metrics": {
+        "cpu_full_window_average_m": 32.602,
+        "cpu_interval_sample_max_m": 167.307,
+        "measurement_window_seconds": 20.008848,
+        "memory_peak_file_available": true,
+        "peak_memory_mi": 15.801,
+        "sample_count": 1718,
+        "sample_interval_seconds": 0.01,
+        "source": "cgroup_v2_in_container"
+      },
+      "container_image": "intent-spawner-cluster-eval:capacity-v2-ca2e74b2043a",
+      "container_image_id": "sha256:bee0fc6942d2c9001053b1923d6ea23a2c34fb8735853ffc0ee806e5e5aede83",
+      "exit_code": 0,
+      "exit_reason": "Completed",
+      "method": "static_default",
+      "pending_reasons": [
+        "FailedScheduling: 0/1 nodes are available: 1 Insufficient memory. preemption: 0/1 nodes are available: 1 No preemption victims found for incoming pod."
+      ],
+      "pending_seconds": 23.0,
+      "phase": "Succeeded",
+      "recommended_profile": "medium",
+      "repeat_index": 0,
+      "requests_limits": {
+        "cpu_limit_m": 1000,
+        "cpu_request_m": 500,
+        "memory_limit_mi": 953,
+        "memory_request_mi": 732
+      },
+      "run_id": "capacity-v2-ca2e74b-seed20260721-static_default-light_visual_aggregation-r00-medium",
+      "success": true,
+      "supporting_log_paths": [
+        "results/cluster/raw/capacity-v2-ca2e74b-seed20260721/batches/cap-v2-r00-static-default/pods/capacity-v2-ca2e74b-seed20260721-static_default-light_visual_aggregation-r00-medium/pod.log",
+        "results/cluster/raw/capacity-v2-ca2e74b-seed20260721/batches/cap-v2-r00-static-default/pods/capacity-v2-ca2e74b-seed20260721-static_default-light_visual_aggregation-r00-medium/pod-evidence.json",
+        "results/cluster/raw/capacity-v2-ca2e74b-seed20260721/batches/cap-v2-r00-static-default/pods/capacity-v2-ca2e74b-seed20260721-static_default-light_visual_aggregation-r00-medium/events.json"
+      ],
+      "timing_durations_are_quantized": true,
+      "timing_source_timestamps": {
+        "container_finished_at": "2026-07-20T06:57:23Z",
+        "container_started_at": "2026-07-20T06:57:03Z",
+        "pod_created_at": "2026-07-20T06:56:40Z",
+        "pod_scheduled_at": "2026-07-20T06:57:03Z"
+      },
+      "timing_timestamp_resolution_seconds": 1.0,
+      "workload_id": "light_visual_aggregation"
+    },
+    {
+      "applied_profile": "medium",
+      "benchmark_runtime_seconds": 0.002241,
+      "cgroup_metrics": {
+        "cpu_full_window_average_m": 33.051,
+        "cpu_interval_sample_max_m": 153.048,
+        "measurement_window_seconds": 20.004781,
+        "memory_peak_file_available": true,
+        "peak_memory_mi": 15.438,
+        "sample_count": 1732,
+        "sample_interval_seconds": 0.01,
+        "source": "cgroup_v2_in_container"
+      },
+      "container_image": "intent-spawner-cluster-eval:capacity-v2-ca2e74b2043a",
+      "container_image_id": "sha256:bee0fc6942d2c9001053b1923d6ea23a2c34fb8735853ffc0ee806e5e5aede83",
+      "exit_code": 0,
+      "exit_reason": "Completed",
+      "method": "static_default",
+      "pending_reasons": [
+        "FailedScheduling: 0/1 nodes are available: 1 Insufficient memory. preemption: 0/1 nodes are available: 1 No preemption victims found for incoming pod."
+      ],
+      "pending_seconds": 23.0,
+      "phase": "Succeeded",
+      "recommended_profile": "medium",
+      "repeat_index": 0,
+      "requests_limits": {
+        "cpu_limit_m": 1000,
+        "cpu_request_m": 500,
+        "memory_limit_mi": 953,
+        "memory_request_mi": 732
+      },
+      "run_id": "capacity-v2-ca2e74b-seed20260721-static_default-boundary_below_0_5_ambiguous-r00-medium",
+      "success": true,
+      "supporting_log_paths": [
+        "results/cluster/raw/capacity-v2-ca2e74b-seed20260721/batches/cap-v2-r00-static-default/pods/capacity-v2-ca2e74b-seed20260721-static_default-boundary_below_0_5_ambiguous-r00-medium/pod.log",
+        "results/cluster/raw/capacity-v2-ca2e74b-seed20260721/batches/cap-v2-r00-static-default/pods/capacity-v2-ca2e74b-seed20260721-static_default-boundary_below_0_5_ambiguous-r00-medium/pod-evidence.json",
+        "results/cluster/raw/capacity-v2-ca2e74b-seed20260721/batches/cap-v2-r00-static-default/pods/capacity-v2-ca2e74b-seed20260721-static_default-boundary_below_0_5_ambiguous-r00-medium/events.json"
+      ],
+      "timing_durations_are_quantized": true,
+      "timing_source_timestamps": {
+        "container_finished_at": "2026-07-20T06:57:23Z",
+        "container_started_at": "2026-07-20T06:57:03Z",
+        "pod_created_at": "2026-07-20T06:56:40Z",
+        "pod_scheduled_at": "2026-07-20T06:57:03Z"
+      },
+      "timing_timestamp_resolution_seconds": 1.0,
+      "workload_id": "boundary_below_0_5_ambiguous"
+    }
+  ],
+  "population_size": 12,
+  "protocol_version": "2.0.0",
+  "recorded_at": "2026-07-20T06:57:29.599Z",
+  "repeat_index": 0,
+  "started_at": "2026-07-20T06:56:40.009Z"
+}
