@@ -9,7 +9,8 @@ import subprocess
 from typing import Any
 
 
-SCHEMA_VERSION = "1.0.0"
+SCHEMA_VERSION = "2.0.0"
+LEGACY_SCHEMA_VERSION = "1.0.0"
 
 METHODS = ("static_manual", "intent_only", "context_aware")
 
@@ -55,7 +56,11 @@ REQUIRED_FIELDS = (
     "cpu_limit_m",
     "memory_request_mi",
     "memory_limit_mi",
-    "peak_cpu_m",
+    "cpu_usage_m",
+    "cpu_measurement_statistic",
+    "cpu_sampling_interval_seconds",
+    "cpu_measurement_window_seconds",
+    "cpu_measurement_source",
     "peak_memory_mi",
     "resource_measurement_source",
     "pod_pending_duration_seconds",
@@ -92,7 +97,9 @@ NUMBER_OR_NULL_FIELDS = {
     "cpu_limit_m",
     "memory_request_mi",
     "memory_limit_mi",
-    "peak_cpu_m",
+    "cpu_usage_m",
+    "cpu_sampling_interval_seconds",
+    "cpu_measurement_window_seconds",
     "peak_memory_mi",
     "pod_pending_duration_seconds",
     "workload_runtime_seconds",
@@ -110,7 +117,7 @@ CSV_FIELDS = REQUIRED_FIELDS
 
 JSON_SCHEMA: dict[str, Any] = {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
-    "$id": "https://example.invalid/intent-spawner/result-schema/1.0.0",
+    "$id": "https://example.invalid/intent-spawner/result-schema/2.0.0",
     "title": "Intent Spawner Experiment Result",
     "type": "object",
     "additionalProperties": False,
@@ -142,7 +149,20 @@ JSON_SCHEMA: dict[str, Any] = {
         "cpu_limit_m": {"type": ["integer", "null"]},
         "memory_request_mi": {"type": ["integer", "null"]},
         "memory_limit_mi": {"type": ["integer", "null"]},
-        "peak_cpu_m": {"type": ["number", "null"]},
+        "cpu_usage_m": {"type": ["number", "null"]},
+        "cpu_measurement_statistic": {
+            "type": "string",
+            "enum": [
+                "genuine_cgroup_peak",
+                "sample_maximum",
+                "sampled_instantaneous",
+                "full_window_average",
+                "unavailable",
+            ],
+        },
+        "cpu_sampling_interval_seconds": {"type": ["number", "null"], "minimum": 0},
+        "cpu_measurement_window_seconds": {"type": ["number", "null"], "minimum": 0},
+        "cpu_measurement_source": {"type": "string", "minLength": 1},
         "peak_memory_mi": {"type": ["number", "null"]},
         "resource_measurement_source": {"type": "string", "minLength": 1},
         "pod_pending_duration_seconds": {"type": ["number", "null"]},
@@ -188,6 +208,8 @@ def empty_record() -> dict[str, Any]:
     record["recommendation_reasons"] = []
     record["policy_warnings"] = []
     record["context_signal_summary"] = {}
+    record["cpu_measurement_statistic"] = "unavailable"
+    record["cpu_measurement_source"] = "not_available"
     record["resource_measurement_source"] = "not_available"
     record["timeout"] = False
     record["cleanup_status"] = "not_started"
@@ -236,6 +258,47 @@ def validate_record(record: dict[str, Any]) -> None:
 
     if record["applied_profile"] not in (None, "small", "medium", "large"):
         raise ValueError("applied_profile must be small, medium, large, or null")
+
+    allowed_statistics = {
+        "genuine_cgroup_peak",
+        "sample_maximum",
+        "sampled_instantaneous",
+        "full_window_average",
+        "unavailable",
+    }
+    if record["cpu_measurement_statistic"] not in allowed_statistics:
+        raise ValueError("unsupported cpu_measurement_statistic")
+    if record["cpu_measurement_statistic"] == "unavailable" and record["cpu_usage_m"] is not None:
+        raise ValueError("unavailable CPU measurement cannot have cpu_usage_m")
+    if record["cpu_measurement_statistic"] != "unavailable" and record["cpu_usage_m"] is None:
+        raise ValueError("available CPU measurement requires cpu_usage_m")
+
+
+def migrate_record(record: dict[str, Any]) -> dict[str, Any]:
+    """Return a current-schema compatibility view without rewriting raw input."""
+
+    if record.get("schema_version") == SCHEMA_VERSION:
+        return dict(record)
+    if record.get("schema_version") != LEGACY_SCHEMA_VERSION:
+        raise ValueError(f"unsupported schema_version {record.get('schema_version')!r}")
+
+    migrated = dict(record)
+    legacy_cpu = migrated.pop("peak_cpu_m", None)
+    source = str(migrated.get("resource_measurement_source") or "not_available")
+    migrated.update(
+        {
+            "schema_version": SCHEMA_VERSION,
+            "cpu_usage_m": legacy_cpu,
+            "cpu_measurement_statistic": (
+                "sample_maximum" if legacy_cpu is not None else "unavailable"
+            ),
+            "cpu_sampling_interval_seconds": None,
+            "cpu_measurement_window_seconds": None,
+            "cpu_measurement_source": source if legacy_cpu is not None else "not_available",
+        }
+    )
+    validate_record(migrated)
+    return migrated
 
 
 def write_json_schema(path: Path) -> None:

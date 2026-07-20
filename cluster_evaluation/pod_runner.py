@@ -40,7 +40,7 @@ def _cpu_usage_usec() -> int | None:
 class CgroupSampler:
     def __init__(self, interval_seconds: float) -> None:
         self.interval_seconds = interval_seconds
-        self.peak_cpu_m: float | None = None
+        self.cpu_interval_sample_max_m: float | None = None
         self.peak_memory_bytes: int | None = None
         self.sample_count = 0
         self._stop = threading.Event()
@@ -77,12 +77,17 @@ class CgroupSampler:
             "source": "cgroup_v2_in_container",
             "sample_interval_seconds": self.interval_seconds,
             "sample_count": self.sample_count,
-            "peak_cpu_m": None if self.peak_cpu_m is None else round(self.peak_cpu_m, 3),
-            "full_window_average_cpu_m": (
+            "cpu_interval_sample_max_m": (
+                None
+                if self.cpu_interval_sample_max_m is None
+                else round(self.cpu_interval_sample_max_m, 3)
+            ),
+            "cpu_full_window_average_m": (
                 None
                 if full_window_average_cpu_m is None
                 else round(full_window_average_cpu_m, 3)
             ),
+            "measurement_window_seconds": round(stopped_at - self._started_at, 6),
             "peak_memory_mi": (
                 None
                 if self.peak_memory_bytes is None
@@ -102,7 +107,9 @@ class CgroupSampler:
                 self.peak_memory_bytes = max(self.peak_memory_bytes or 0, memory)
             if cpu is not None and previous_cpu is not None and now > previous_time:
                 cpu_m = ((cpu - previous_cpu) / 1_000_000) / (now - previous_time) * 1000
-                self.peak_cpu_m = max(self.peak_cpu_m or 0.0, cpu_m)
+                self.cpu_interval_sample_max_m = max(
+                    self.cpu_interval_sample_max_m or 0.0, cpu_m
+                )
             if cpu is not None:
                 previous_cpu = cpu
             previous_time = now
@@ -127,7 +134,7 @@ def main() -> int:
         time.sleep(args.hold_seconds)
     cgroup = sampler.stop()
     payload = {
-        "pod_runner_schema_version": "1.0.0",
+        "pod_runner_schema_version": "2.0.0",
         "workload": workload,
         "cgroup_metrics": cgroup,
         "workload_elapsed_seconds": round(workload_finished - started, 6),

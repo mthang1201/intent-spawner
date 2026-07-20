@@ -8,6 +8,7 @@ from pathlib import Path
 import subprocess
 from typing import Any
 
+from cluster_evaluation.result_compat import cpu_reconciliation, normalize_cpu_measurement
 from cluster_evaluation.policies import PROFILE_RESOURCES
 
 
@@ -127,7 +128,9 @@ def _validate_pod_matrix(
     return records, commit
 
 
-def _validate_capacity(directory: Path, *, expected_commit: str) -> tuple[list[dict[str, Any]], int]:
+def _validate_capacity_v1(
+    directory: Path, *, expected_commit: str
+) -> tuple[list[dict[str, Any]], int, str]:
     environment = _read_json(directory / "environment.json")
     plan = _read_jsonl(directory / "matrix.jsonl")
     batches = _read_jsonl(directory / "results.jsonl")
@@ -158,7 +161,136 @@ def _validate_capacity(directory: Path, *, expected_commit: str) -> tuple[list[d
     _require(len(set(plan_ids)) == len(plan_ids), f"{directory.name}: duplicate plan run IDs")
     _require(len(set(pod_ids)) == len(pod_ids), f"{directory.name}: duplicate recorded pod run IDs")
     _require(set(plan_ids) == set(pod_ids), f"{directory.name}: plan and recorded pod IDs do not reconcile")
-    return batches, len(pod_ids)
+    return batches, len(pod_ids), expected_commit
+
+
+def _validate_capacity_v2(directory: Path) -> tuple[list[dict[str, Any]], int, str]:
+    environment = _read_json(directory / "environment.json")
+    plan = _read_jsonl(directory / "matrix.jsonl")
+    batches = _read_jsonl(directory / "results.jsonl")
+    commit = str(environment.get("git_commit") or "")
+    _require(environment.get("protocol_version") == "2.0.0", f"{directory.name}: wrong protocol")
+    _require(environment.get("git_dirty") is False, f"{directory.name}: environment was dirty")
+    _require(bool(commit), f"{directory.name}: missing evaluated commit")
+    _require(len(plan) == 108, f"{directory.name}: planned {len(plan)}, expected 108 pods")
+    _require(len(batches) == 9, f"{directory.name}: recorded {len(batches)}, expected 9 batches")
+    _require(environment.get("population_size") == 12, f"{directory.name}: wrong population")
+    _require(environment.get("launch_concurrency") == 12, f"{directory.name}: wrong concurrency")
+    _require(environment.get("repeats") == 3, f"{directory.name}: wrong repeat count")
+    _require(environment.get("namespace") == "z2jh-context-demo", f"{directory.name}: wrong namespace")
+    _require(
+        environment.get("required_context") == "intent-spawner-capacity-v2",
+        f"{directory.name}: wrong disposable context",
+    )
+    _require(
+        environment.get("namespace_safety_label")
+        == "z2jh-context-demo.local/disposable-capacity-v2=true",
+        f"{directory.name}: missing namespace safety control",
+    )
+    _require(environment.get("node_count") == 1, f"{directory.name}: node count is not controlled")
+    _require(
+        environment.get("node_allocatable", {}).get("cpu") == "6",
+        f"{directory.name}: allocatable CPU differs",
+    )
+    _require(
+        environment.get("node_allocatable", {}).get("memory") == "6088560Ki",
+        f"{directory.name}: allocatable memory differs",
+    )
+    _require(environment.get("profile_resources") == PROFILE_RESOURCES, f"{directory.name}: profile table differs")
+    _require(environment.get("capacity_hold_seconds") == 20.0, f"{directory.name}: wrong hold")
+    _require(
+        environment.get("phase_sample_interval_seconds") == 0.3,
+        f"{directory.name}: wrong sample interval",
+    )
+    _require(environment.get("resource_quota") == "none", f"{directory.name}: quota differs")
+    _require(
+        environment.get("method_order_by_repeat")
+        == [
+            ["static_default", "intent_only", "context_aware"],
+            ["intent_only", "context_aware", "static_default"],
+            ["context_aware", "static_default", "intent_only"],
+        ],
+        f"{directory.name}: method order differs",
+    )
+    profile = environment.get("minikube_profile", {})
+    _require(
+        {
+            "name": profile.get("name"),
+            "cpus": profile.get("cpus"),
+            "memory_mb": profile.get("memory_mb"),
+            "disk_size_mb": profile.get("disk_size_mb"),
+            "driver": profile.get("driver"),
+            "kubernetes_version": profile.get("kubernetes_version"),
+            "container_runtime": profile.get("container_runtime"),
+        }
+        == {
+            "name": "intent-spawner-capacity-v2",
+            "cpus": 6,
+            "memory_mb": 6144,
+            "disk_size_mb": 20000,
+            "driver": "docker",
+            "kubernetes_version": "v1.33.1",
+            "container_runtime": "containerd",
+        },
+        f"{directory.name}: Minikube profile differs",
+    )
+    image = str(environment.get("container_image") or "")
+    image_metadata = environment.get("container_image_metadata", {})
+    _require(commit[:12] in image, f"{directory.name}: image is not tied to commit")
+    _require(
+        image_metadata.get("reference") == image
+        and str(image_metadata.get("local_image_id") or "").startswith("sha256:"),
+        f"{directory.name}: exact local image identity is missing",
+    )
+
+    plan_ids = [str(item.get("run_id")) for item in plan]
+    pod_ids: list[str] = []
+    for batch in batches:
+        batch_id = str(batch["batch_id"])
+        sidecar = directory / "batches" / f"{batch_id}.json"
+        _require(_read_json(sidecar) == batch, f"{batch_id}: batch sidecar differs from JSONL")
+        _require(batch.get("capacity_schema_version") == "2.0.0", f"{batch_id}: wrong schema")
+        _require(batch.get("protocol_version") == "2.0.0", f"{batch_id}: wrong protocol")
+        _require(batch.get("git_commit") == commit, f"{batch_id}: commit differs")
+        _require(batch.get("population_size") == 12, f"{batch_id}: population is not 12")
+        _require(batch.get("launch_concurrency") == 12, f"{batch_id}: concurrency is not 12")
+        _require(batch.get("hold_seconds") == 20.0, f"{batch_id}: hold differs")
+        _require(
+            batch.get("phase_sample_interval_seconds") == 0.3,
+            f"{batch_id}: sample interval differs",
+        )
+        _require(batch.get("completed", 0) + batch.get("failed", 0) == 12, f"{batch_id}: outcomes do not reconcile")
+        _require(batch.get("cleanup_status") == "completed", f"{batch_id}: cleanup failed")
+        _require(batch.get("pending_sample_count") == len(batch.get("pending_samples", [])), f"{batch_id}: sample count differs")
+        pods = batch.get("pods", [])
+        _require(len(pods) == 12, f"{batch_id}: does not retain 12 pods")
+        for pod in pods:
+            pod_ids.append(str(pod["run_id"]))
+            expected = _expected_resources(pod["applied_profile"])
+            _require(pod.get("requests_limits") == expected, f"{pod['run_id']}: resources differ")
+            _require(pod.get("container_image") == image, f"{pod['run_id']}: image differs")
+            _require(bool(pod.get("container_image_id")), f"{pod['run_id']}: image ID missing")
+            for supporting in pod.get("supporting_log_paths", []):
+                supporting_path = Path(supporting)
+                _require(not supporting_path.is_absolute() and ".." not in supporting_path.parts, f"{pod['run_id']}: unsafe path")
+                _require((ROOT / supporting_path).is_file(), f"{pod['run_id']}: missing {supporting}")
+    _require(len(set(plan_ids)) == len(plan_ids), f"{directory.name}: duplicate plan IDs")
+    _require(len(set(pod_ids)) == len(pod_ids), f"{directory.name}: duplicate pod IDs")
+    _require(set(plan_ids) == set(pod_ids), f"{directory.name}: plan and pods differ")
+    return batches, len(pod_ids), commit
+
+
+def _validate_capacity(
+    directory: Path, *, historical_commit: str
+) -> tuple[list[dict[str, Any]], int, str, str]:
+    environment = _read_json(directory / "environment.json")
+    if environment.get("protocol_version") == "2.0.0":
+        batches, pods, commit = _validate_capacity_v2(directory)
+        return batches, pods, commit, "reproducible_v2"
+    batches, pods, commit = _validate_capacity_v1(
+        directory, expected_commit=historical_commit
+    )
+    return batches, pods, commit, "historical_runner_unavailable"
 
 
 def validate(
@@ -173,8 +305,17 @@ def validate(
         comparative, expected_count=180, expected_kind="comparative"
     )
     _require(ground_commit == comparative_commit, "ground-truth and comparative commits differ")
-    capacity_batches, capacity_pods = _validate_capacity(capacity, expected_commit=ground_commit)
+    for record in ground_records + comparative_records:
+        try:
+            normalize_cpu_measurement(record, root=ROOT)
+        except ValueError as exc:
+            raise ArtifactIntegrityError(f"{record.get('run_id')}: {exc}") from exc
+    reconciliation = cpu_reconciliation(ground_records + comparative_records)
+    capacity_batches, capacity_pods, capacity_commit, capacity_provenance = _validate_capacity(
+        capacity, historical_commit=ground_commit
+    )
     _validate_git_commit(ground_commit)
+    _validate_git_commit(capacity_commit)
 
     pod_records = ground_records + comparative_records
     return {
@@ -183,17 +324,15 @@ def validate(
         "comparative_records": len(comparative_records),
         "capacity_batches": len(capacity_batches),
         "capacity_pods": capacity_pods,
+        "capacity_git_commit": capacity_commit,
+        "capacity_provenance": capacity_provenance,
         "failed_pod_runs": sum(record.get("success") is not True for record in pod_records),
         "timed_out_pod_runs": sum(bool(record.get("timeout")) for record in pod_records),
         "oom_killed_pod_runs": sum(bool(record.get("oom_killed")) for record in pod_records),
-        "periodically_sampled_cpu_records": sum(
-            int(record.get("cgroup_sample_count") or 0) > 0 for record in pod_records
-        ),
-        "historical_full_window_cpu_values_mislabeled_as_peak": sum(
-            int(record.get("cgroup_sample_count") or 0) == 0
-            and record.get("peak_cpu_m") is not None
-            for record in pod_records
-        ),
+        "genuine_cgroup_cpu_peak_records": reconciliation["genuine_cgroup_peak"],
+        "full_window_average_cpu_records": reconciliation["average"],
+        "sampled_cpu_records": reconciliation["sampled_instantaneous"],
+        "unavailable_cpu_records": reconciliation["unavailable"],
         "cleanup_failures": sum(record.get("cleanup_status") != "completed" for record in pod_records)
         + sum(batch.get("cleanup_status") != "completed" for batch in capacity_batches),
         "status": "pass",

@@ -7,7 +7,7 @@ from pathlib import Path
 import pytest
 
 from experiments.jsonl_io import append_jsonl, export_csv, read_jsonl
-from experiments.kubernetes_evidence import extract_metric_peaks, extract_pod_evidence, load_json
+from experiments.kubernetes_evidence import extract_metric_samples, extract_pod_evidence, load_json
 from experiments.recorder import build_record, run_local_workload, workload_by_id
 from experiments.result_schema import JSON_SCHEMA, REQUIRED_FIELDS, SCHEMA_VERSION, validate_record
 
@@ -72,17 +72,25 @@ def test_kubernetes_fixture_records_oom_and_pending_reasons():
     assert any("FailedScheduling" in reason for reason in evidence["scheduling_or_pending_reasons"])
 
 
-def test_metric_snapshot_peaks_are_observed_not_invented():
-    peaks = extract_metric_peaks(fixture("metrics_succeeded.json"))
-    missing = extract_metric_peaks(None)
+def test_metric_snapshot_statistics_are_observed_not_invented():
+    samples = extract_metric_samples(fixture("metrics_succeeded.json"))
+    missing = extract_metric_samples(None)
 
-    assert peaks == {
-        "peak_cpu_m": 42,
+    assert samples == {
+        "cpu_usage_m": 42,
+        "cpu_measurement_statistic": "sample_maximum",
+        "cpu_sampling_interval_seconds": None,
+        "cpu_measurement_window_seconds": None,
+        "cpu_measurement_source": "metrics_server",
         "peak_memory_mi": 212,
         "resource_measurement_source": "metrics_server",
     }
     assert missing == {
-        "peak_cpu_m": None,
+        "cpu_usage_m": None,
+        "cpu_measurement_statistic": "unavailable",
+        "cpu_sampling_interval_seconds": None,
+        "cpu_measurement_window_seconds": None,
+        "cpu_measurement_source": "not_available",
         "peak_memory_mi": None,
         "resource_measurement_source": "not_available",
     }
@@ -108,7 +116,8 @@ def test_build_record_contains_required_fields_and_policy_fallback():
     assert record["recommended_profile"] == "gpu_or_large"
     assert record["applied_profile"] == "medium"
     assert record["policy_warnings"]
-    assert record["peak_cpu_m"] == 42
+    assert record["cpu_usage_m"] == 42
+    assert record["cpu_measurement_statistic"] == "sample_maximum"
     assert record["success"] is True
 
 

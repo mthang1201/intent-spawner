@@ -35,6 +35,13 @@
 - `tests/`: unit tests and sanitized parser fixtures.
 - `cluster_evaluation/validate_artifacts.py`: reconciles every preserved cluster
   plan, result, sidecar, applied-resource observation, and supporting path.
+- `cluster_evaluation/result_compat.py`: preserves schema-1 CPU values while
+  exposing their actual average or sampled-maximum semantics.
+- `cluster_evaluation/timing.py`: versioned interval-censored timing rule.
+- `cluster_evaluation/capacity_runner.py`: preregistered capacity-v2 runner with
+  dry-run and exact-label cleanup paths.
+- `cluster_evaluation/raw_integrity.py`: verifies every tracked raw file against
+  `docs/evaluation/RAW_EVIDENCE_SHA256SUMS.txt`.
 
 ## Preserved Raw Evidence
 
@@ -49,7 +56,11 @@
   outcomes and supporting evidence.
 - `results/cluster/raw/capacity-39b6973-seed20260721`: nine batch outcomes and
   108 per-pod capacity observations. The exact evaluated batch generator is not
-  present and this provenance limitation is part of the final audit.
+  present; this corpus is supplementary and not principal claim support.
+- `docs/evaluation/RAW_EVIDENCE_SHA256SUMS.before-0ffbd9a.txt`: file-by-file
+  baseline recorded before blocker resolution.
+- `docs/evaluation/RAW_EVIDENCE_SHA256SUMS.txt`: current file-by-file raw
+  integrity manifest.
 
 Raw records include the source `git_commit` used when they were generated. New
 raw runs are ignored by default unless explicitly reviewed and force-added.
@@ -63,7 +74,7 @@ raw runs are ignored by default unless explicitly reviewed and force-added.
   records plus the environment capability report.
 - `results/cluster/derived/`: Kubernetes-backed tables and SVG figures.
 - `benchmarks/observed_resource_envelopes.yaml`: raw-run-linked operational
-  envelopes with the final-audit timestamp-resolution guard.
+  envelopes using timing rule 2.0.0 without an offset or arbitrary guard.
 - `docs/evaluation/CLUSTER_RESULTS.md`: generated, scoped Kubernetes report.
 
 ## Reproduction Commands
@@ -80,6 +91,8 @@ bash scripts/check.sh
   --environment-report results/environment-capability.json \
   --overwrite
 make validate-cluster-results
+make validate-raw-integrity
+make capacity-dry-run
 make regenerate-cluster-results
 ```
 

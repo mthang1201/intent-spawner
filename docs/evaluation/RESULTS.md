@@ -24,7 +24,7 @@ These results are derived from immutable local synthetic benchmark records. They
 - Memory bytes: 17179869184
 - Metrics API available: False
 
-**Blocker:** Kubernetes resource metrics are unavailable in this environment. `kubectl top nodes` failed, so peak Kubernetes CPU/memory, Pending-time, OOMKilled, and restart/respawn comparisons cannot be claimed from live cluster evidence.
+**Blocker:** Kubernetes resource metrics are unavailable in this environment. `kubectl top nodes` failed, so Kubernetes CPU samples, memory peaks, Pending-time, OOMKilled, and restart/respawn comparisons cannot be claimed from live cluster evidence.
 
 Exact preflight command that must succeed in a suitable cluster-backed environment:
 
@@ -37,11 +37,11 @@ kubectl top nodes && kubectl top pods -A --containers
 - Local synthetic records completed: 180/180; failures: 0/180.
 - Median time to success was 0.004771 seconds with IQR 0.029014 across non-missing local timings.
 - Median memory request-to-peak ratio was 34.857143 with IQR 24.980952 using Python `resource.getrusage` peak RSS.
-- Missing CPU peak measurements: 180/180. Missing Kubernetes Pending-time measurements: 180/180.
+- Missing CPU usage measurements: 180/180. Missing Kubernetes Pending-time measurements: 180/180.
 
 Run counts and exclusions:
 
-| method | planned_count | recorded_count | successful_count | failed_count | timeout_count | excluded_count | missing_peak_cpu_count | missing_pending_time_count |
+| method | planned_count | recorded_count | successful_count | failed_count | timeout_count | excluded_count | missing_cpu_usage_count | missing_pending_time_count |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | static_manual | 60 | 60 | 60 | 0 | 0 | 0 | 60 | 60 |
 | intent_only | 60 | 60 | 60 | 0 | 0 | 0 | 60 | 60 |
@@ -78,7 +78,7 @@ The memory waste-ratio table is useful for comparing profile conservatism in thi
 
 - The benchmark uses generated synthetic data and local Python processes.
 - Dataset size values are declared hints, not measured data sizes.
-- Peak memory is process-level RSS; peak CPU is unavailable here.
+- Peak memory is process-level RSS; CPU usage is unavailable here.
 - The full live-cluster experiment remains blocked until a working resource-metric source is present and Kubernetes pod evidence is collected.
 
 ## Generated Outputs

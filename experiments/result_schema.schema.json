@@ -1,5 +1,5 @@
 {
-  "$id": "https://example.invalid/intent-spawner/result-schema/1.0.0",
+  "$id": "https://example.invalid/intent-spawner/result-schema/2.0.0",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "additionalProperties": false,
   "properties": {
@@ -28,9 +28,43 @@
         "null"
       ]
     },
+    "cpu_measurement_source": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "cpu_measurement_statistic": {
+      "enum": [
+        "genuine_cgroup_peak",
+        "sample_maximum",
+        "sampled_instantaneous",
+        "full_window_average",
+        "unavailable"
+      ],
+      "type": "string"
+    },
+    "cpu_measurement_window_seconds": {
+      "minimum": 0,
+      "type": [
+        "number",
+        "null"
+      ]
+    },
     "cpu_request_m": {
       "type": [
         "integer",
+        "null"
+      ]
+    },
+    "cpu_sampling_interval_seconds": {
+      "minimum": 0,
+      "type": [
+        "number",
+        "null"
+      ]
+    },
+    "cpu_usage_m": {
+      "type": [
+        "number",
         "null"
       ]
     },
@@ -101,12 +135,6 @@
         "null"
       ]
     },
-    "peak_cpu_m": {
-      "type": [
-        "number",
-        "null"
-      ]
-    },
     "peak_memory_mi": {
       "type": [
         "number",
@@ -173,7 +201,7 @@
       "type": "string"
     },
     "schema_version": {
-      "const": "1.0.0"
+      "const": "2.0.0"
     },
     "success": {
       "type": [
@@ -235,7 +263,11 @@
     "cpu_limit_m",
     "memory_request_mi",
     "memory_limit_mi",
-    "peak_cpu_m",
+    "cpu_usage_m",
+    "cpu_measurement_statistic",
+    "cpu_sampling_interval_seconds",
+    "cpu_measurement_window_seconds",
+    "cpu_measurement_source",
     "peak_memory_mi",
     "resource_measurement_source",
     "pod_pending_duration_seconds",

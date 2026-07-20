@@ -156,7 +156,13 @@ def _pod_name(run_id: str) -> str:
     return "ce-" + hashlib.sha256(run_id.encode("utf-8")).hexdigest()[:20]
 
 
-def build_pod_spec(item: PlanItem, workload: dict[str, Any], image: str, hold_seconds: float = 0) -> dict[str, Any]:
+def build_pod_spec(
+    item: PlanItem,
+    workload: dict[str, Any],
+    image: str,
+    hold_seconds: float = 0,
+    namespace: str = NAMESPACE,
+) -> dict[str, Any]:
     resources = PROFILE_RESOURCES[item.applied_profile]
     scale = str(workload["workload"]["scale"])
     env = [
@@ -170,7 +176,7 @@ def build_pod_spec(item: PlanItem, workload: dict[str, Any], image: str, hold_se
         "kind": "Pod",
         "metadata": {
             "name": _pod_name(item.run_id),
-            "namespace": NAMESPACE,
+            "namespace": namespace,
             "annotations": {
                 "z2jh-context-demo.local/run-id": item.run_id,
                 "z2jh-context-demo.local/method": item.method,
@@ -276,7 +282,9 @@ def _parse_cpu_quantity_m(value: str | None) -> float | None:
     return float(value) * 1000
 
 
-def _metric_server_peaks(snapshots: list[dict[str, Any]]) -> tuple[float | None, float | None]:
+def _metric_server_sample_maxima(
+    snapshots: list[dict[str, Any]],
+) -> tuple[float | None, float | None]:
     cpus: list[float] = []
     memories: list[int] = []
     for snapshot in snapshots:
@@ -340,13 +348,22 @@ def run_item(
     if final_pod is None:
         final_pod = _get_json(["get", "pod", pod_name, "-n", NAMESPACE])
     evidence = extract_pod_evidence(final_pod, events)
-    server_peak_cpu, server_peak_memory = _metric_server_peaks(snapshots)
+    server_cpu_sample_max, server_memory_sample_max = _metric_server_sample_maxima(snapshots)
 
     delete = _run_kubectl(["delete", "pod", pod_name, "-n", NAMESPACE, "--wait=true", "--timeout=60s"])
     cleanup_status = "completed" if delete.returncode == 0 else "failed"
     cgroup = (pod_payload or {}).get("cgroup_metrics", {})
     resources = PROFILE_RESOURCES[item.applied_profile]
-    peak_cpu = cgroup.get("peak_cpu_m")
+    cpu_sample_max = cgroup.get("cpu_interval_sample_max_m")
+    cpu_average = cgroup.get("cpu_full_window_average_m")
+    cpu_usage = cpu_sample_max if cpu_sample_max is not None else cpu_average
+    cpu_statistic = (
+        "sample_maximum"
+        if cpu_sample_max is not None
+        else "full_window_average"
+        if cpu_average is not None
+        else "unavailable"
+    )
     peak_memory = cgroup.get("peak_memory_mi")
     success = bool(
         not timed_out
@@ -359,7 +376,7 @@ def run_item(
         for name in ("pod.log", "pod-evidence.json", "metrics-server-snapshots.json")
     ]
     record = {
-        "cluster_schema_version": "1.0.0",
+        "cluster_schema_version": "2.0.0",
         "run_id": item.run_id,
         "experiment_kind": item.experiment_kind,
         "plan_index": item.plan_index,
@@ -380,13 +397,25 @@ def run_item(
         "cpu_limit_m": resources["cpu_limit_m"],
         "memory_request_mi": resources["memory_request_mi"],
         "memory_limit_mi": resources["memory_limit_mi"],
-        "peak_cpu_m": peak_cpu,
+        "cpu_usage_m": cpu_usage,
+        "cpu_measurement_statistic": cpu_statistic,
+        "cpu_sampling_interval_seconds": (
+            cgroup.get("sample_interval_seconds") if cpu_sample_max is not None else None
+        ),
+        "cpu_measurement_window_seconds": cgroup.get("measurement_window_seconds"),
+        "cpu_measurement_source": (
+            "cgroup_v2_cpu_stat_interval_delta"
+            if cpu_sample_max is not None
+            else "cgroup_v2_cpu_stat_full_window_delta"
+            if cpu_average is not None
+            else "not_available"
+        ),
         "peak_memory_mi": peak_memory,
         "resource_measurement_source": cgroup.get("source", "not_available"),
         "cgroup_sample_interval_seconds": cgroup.get("sample_interval_seconds"),
         "cgroup_sample_count": cgroup.get("sample_count"),
-        "metrics_server_peak_cpu_m": server_peak_cpu,
-        "metrics_server_peak_memory_mi": server_peak_memory,
+        "metrics_server_cpu_sample_max_m": server_cpu_sample_max,
+        "metrics_server_memory_sample_max_mi": server_memory_sample_max,
         "metrics_server_snapshot_count": len(snapshots),
         "pod_pending_duration_seconds": evidence.get("pod_pending_duration_seconds"),
         "pending_reasons": evidence.get("scheduling_or_pending_reasons", []),

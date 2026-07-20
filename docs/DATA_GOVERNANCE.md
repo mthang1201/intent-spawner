@@ -30,9 +30,10 @@ does not collect data from deployed users.
   capacity/allocatable quantities, architecture, Kubernetes/runtime versions,
   kernel/OS version, evaluated commit, image ID, and Metrics Server image.
 - Capacity records: generic run IDs, profile resources, phase/outcome,
-  FailedScheduling reasons, Pending duration, cgroup peaks, and aggregate
-  concurrency samples. The historical capacity generator source is missing;
-  this is a provenance limitation, not a privacy exception.
+  FailedScheduling reasons, quantized Pending duration, explicitly typed cgroup
+  CPU statistics, cgroup memory peaks, and aggregate concurrency samples. The
+  historical capacity generator source is missing; that corpus is retained as
+  supplementary evidence, not repaired by backfilled provenance.
 - Sanitized Kubernetes fixture data in tests. The fixture schema keeps selected
   pod status, event, and metric fields needed for parser tests.
 

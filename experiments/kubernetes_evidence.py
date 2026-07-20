@@ -63,7 +63,10 @@ def _seconds_between(start: str | None, end: str | None) -> float | None:
     ended = _parse_timestamp(end)
     if started is None or ended is None:
         return None
-    return max(0.0, round((ended - started).total_seconds(), 6))
+    seconds = round((ended - started).total_seconds(), 6)
+    if seconds < 0:
+        raise ValueError(f"inconsistent timestamps: end {end!r} precedes start {start!r}")
+    return seconds
 
 
 def _safe_metadata_name(value: str | None) -> str | None:
@@ -199,6 +202,10 @@ def extract_pod_evidence(
     return {
         "pod_name": _safe_metadata_name(metadata.get("name")),
         "namespace": _safe_metadata_name(metadata.get("namespace")),
+        "container_image": containers[0].get("image") if containers else None,
+        "container_image_id": (
+            container_statuses[0].get("imageID") if container_statuses else None
+        ),
         "phase": status.get("phase"),
         "phase_transitions": _phase_transitions(pod_json),
         "events": events,
@@ -208,6 +215,14 @@ def extract_pod_evidence(
         "requests_limits": resources,
         "annotations": _safe_annotations(metadata.get("annotations")),
         "environment_variables": _safe_env(containers),
+        "timing_source_timestamps": {
+            "pod_created_at": creation_time,
+            "pod_scheduled_at": scheduled_time,
+            "container_started_at": termination["started_at"],
+            "container_finished_at": termination["finished_at"],
+        },
+        "timing_timestamp_resolution_seconds": 1.0,
+        "timing_durations_are_quantized": True,
         "scheduling_or_pending_reasons": _pending_reasons(pod_json, events),
         "pod_pending_duration_seconds": _seconds_between(creation_time, scheduled_time),
         "workload_runtime_seconds": _seconds_between(termination["started_at"], termination["finished_at"]),
@@ -220,10 +235,14 @@ def extract_pod_evidence(
     }
 
 
-def extract_metric_peaks(metrics_json: dict[str, Any] | None) -> dict[str, Any]:
+def extract_metric_samples(metrics_json: dict[str, Any] | None) -> dict[str, Any]:
     if metrics_json is None:
         return {
-            "peak_cpu_m": None,
+            "cpu_usage_m": None,
+            "cpu_measurement_statistic": "unavailable",
+            "cpu_sampling_interval_seconds": None,
+            "cpu_measurement_window_seconds": None,
+            "cpu_measurement_source": "not_available",
             "peak_memory_mi": None,
             "resource_measurement_source": "not_available",
         }
@@ -242,7 +261,11 @@ def extract_metric_peaks(metrics_json: dict[str, Any] | None) -> dict[str, Any]:
                 memory_values.append(memory)
 
     return {
-        "peak_cpu_m": max(cpu_values) if cpu_values else None,
+        "cpu_usage_m": max(cpu_values) if cpu_values else None,
+        "cpu_measurement_statistic": "sample_maximum" if cpu_values else "unavailable",
+        "cpu_sampling_interval_seconds": None,
+        "cpu_measurement_window_seconds": None,
+        "cpu_measurement_source": source if cpu_values else "not_available",
         "peak_memory_mi": max(memory_values) if memory_values else None,
         "resource_measurement_source": source if cpu_values or memory_values else "not_available",
     }

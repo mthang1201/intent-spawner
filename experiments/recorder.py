@@ -13,7 +13,7 @@ from uuid import uuid4
 import yaml
 
 from experiments.jsonl_io import append_jsonl
-from experiments.kubernetes_evidence import extract_metric_peaks, extract_pod_evidence, load_json
+from experiments.kubernetes_evidence import extract_metric_samples, extract_pod_evidence, load_json
 from experiments.kubernetes_evidence import collect_kubernetes_artifacts
 from experiments.methods import METHODS, decide_method
 from experiments.result_schema import (
@@ -154,7 +154,7 @@ def build_record(
     resources = PROFILE_RESOURCES.get(decision.applied_profile or "", {})
     k8s_evidence = extract_pod_evidence(pod_json, events_json)
     k8s_resources = k8s_evidence.get("requests_limits", {})
-    metric_peaks = extract_metric_peaks(metrics_json)
+    metric_samples = extract_metric_samples(metrics_json)
 
     record = empty_record()
     record.update(
@@ -178,9 +178,13 @@ def build_record(
             "cpu_limit_m": k8s_resources.get("cpu_limit_m") or resources.get("cpu_limit_m"),
             "memory_request_mi": k8s_resources.get("memory_request_mi") or resources.get("memory_request_mi"),
             "memory_limit_mi": k8s_resources.get("memory_limit_mi") or resources.get("memory_limit_mi"),
-            "peak_cpu_m": metric_peaks["peak_cpu_m"],
-            "peak_memory_mi": metric_peaks["peak_memory_mi"],
-            "resource_measurement_source": metric_peaks["resource_measurement_source"],
+            "cpu_usage_m": metric_samples["cpu_usage_m"],
+            "cpu_measurement_statistic": metric_samples["cpu_measurement_statistic"],
+            "cpu_sampling_interval_seconds": metric_samples["cpu_sampling_interval_seconds"],
+            "cpu_measurement_window_seconds": metric_samples["cpu_measurement_window_seconds"],
+            "cpu_measurement_source": metric_samples["cpu_measurement_source"],
+            "peak_memory_mi": metric_samples["peak_memory_mi"],
+            "resource_measurement_source": metric_samples["resource_measurement_source"],
             "pod_pending_duration_seconds": k8s_evidence.get("pod_pending_duration_seconds"),
             "workload_runtime_seconds": k8s_evidence.get("workload_runtime_seconds"),
             "time_to_success_seconds": k8s_evidence.get("time_to_success_seconds"),

@@ -30,9 +30,11 @@ The matrix uses repeated deterministic runs, but it is still small. The
 reported comparisons should be read as artifact evidence for the prototype and
 analysis pipeline, not as a definitive statistical proof of production impact.
 The cluster matrix observed no OOM and therefore cannot estimate OOM reduction.
-Its peak values are cgroup observations, not a monitoring-system time series.
-Capacity concurrency is descriptive because the evaluated batch-generator
-source was not committed.
+Its cgroup-v2 memory values are genuine memory peaks. Its CPU values are either
+full-window averages or interval sample maxima, not a continuous peak time
+series. Historical capacity concurrency is supplementary because the evaluated
+batch-generator source was not committed; capacity-v2 is evaluated separately
+from its committed protocol.
 
 ## Local-Cluster Limitations
 
@@ -41,10 +43,10 @@ OrbStack, kind, minikube, or k3d. Local clusters have simpler scheduling,
 storage, image-cache, and contention behavior than production clusters. The
 Kubernetes-backed environment had Metrics Server, but it retained zero per-job
 snapshots because the jobs were short. Cgroup-v2 `memory.peak` provides a
-pod-boundary memory peak. Only 86/288 jobs had a periodic 10ms CPU sample; the
-other 202 historical `peak_cpu_m` values are full-window averages and cannot be
-used as CPU peaks. The Helm demo and preserved evaluation are not the same
-deployment path.
+pod-boundary memory peak. CPU reconciliation contains 202 full-window averages
+and 86 maxima of 10 ms interval-delta samples; there are no genuine cgroup CPU
+peaks. Neither CPU class supports a peak-based waste claim. The Helm demo and
+preserved evaluation are not the same deployment path.
 
 ## Synthetic-Workload Limitations
 
@@ -85,10 +87,11 @@ Short workloads may make runtime and peak measurements noisy.
 
 Kubernetes creation and termination timestamps are quantized to one second in
 the retained corpus. The original envelope analysis treated `1.0` versus `0.0`
-second medians as a 100% improvement. The final audit added a disclosed
-measurement-adequacy guard and regenerated derived outputs without editing raw
-records. Because the guard is post hoc, the corrected acceptable-profile rates
-remain diagnostic rather than confirmatory.
+second medians as a 100% improvement, and a later arbitrary minimum-delta guard
+was post hoc. Timing rule 2.0.0 removes that guard. It treats each duration as
+an interval, keeps zero valid, keeps missing values missing, rejects negative
+timestamps, and adds no offset or smoothing. Method-level medians remain
+indistinguishable at this resolution; no method timing advantage is supported.
 
 ## GPU Scope
 

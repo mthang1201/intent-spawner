@@ -40,7 +40,7 @@ environment.
   a local Kubernetes cluster such as OrbStack, kind, minikube, or k3d.
 - Optional for live resource-metric claims: Kubernetes Metrics API or a
   Prometheus-equivalent collection path. Without metrics, local synthetic runs
-  still work, but peak Kubernetes CPU/memory claims must not be made.
+  still work, but Kubernetes CPU-sample or memory-peak claims must not be made.
 
 The Helm demo uses the JupyterHub chart version `4.0.0`, namespace
 `z2jh-context-demo`, and release name `context-demo` unless overridden by
@@ -275,15 +275,16 @@ derived outputs, validation commands, and known generated files.
 - The Kubernetes evaluation is a single-node, synthetic Minikube experiment,
   not a live multi-user JupyterHub or production deployment.
 - Metrics Server was available in the Kubernetes environment but captured zero
-  per-job snapshots for the short jobs. Cluster peak values come from retained
-  cgroup-v2 counters; memory peak is valid, but only 86/288 jobs have a sampled
-  CPU peak. The other historical CPU values are full-job averages.
-- The final audit found one-second Kubernetes timestamp quantization in the
-  original acceptable-envelope analysis and added a disclosed measurement
-  adequacy guard. Raw observations were not changed.
-- The exact historical capacity batch generator is missing, so the retained
-  concurrency/Pending observations are not independently reproducible end to
-  end.
+  per-job snapshots for the short jobs. Cgroup-v2 `memory.peak` is valid. CPU
+  reconciliation identifies 202 full-window averages and 86 maxima of 10 ms
+  interval samples; neither class is a continuous CPU peak.
+- Timing rule 2.0.0 interprets one-second Kubernetes durations as intervals,
+  accepts zero as valid, rejects negative timestamps, and adds no smoothing,
+  continuity correction, or arbitrary offset. Raw observations were not
+  changed.
+- The exact historical capacity batch generator is missing, so that corpus is
+  supplementary rather than principal evidence. The committed capacity-v2
+  runner and predeclared protocol are the reproducible replacement.
 - GPU behavior is represented as a recommendation and policy signal only; no
   GPU workload is executed.
 - The prototype is rule-based and does not implement history-aware evaluation.

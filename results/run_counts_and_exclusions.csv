@@ -1,4 +1,4 @@
-excluded_count,failed_count,method,missing_peak_cpu_count,missing_peak_memory_count,missing_pending_time_count,missing_restart_count,planned_count,recorded_count,successful_count,timeout_count
+excluded_count,failed_count,method,missing_cpu_usage_count,missing_peak_memory_count,missing_pending_time_count,missing_restart_count,planned_count,recorded_count,successful_count,timeout_count
 0,0,static_manual,60,0,60,0,60,60,60,0
 0,0,intent_only,60,0,60,0,60,60,60,0
 0,0,context_aware,60,0,60,0,60,60,60,0

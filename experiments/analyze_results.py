@@ -177,8 +177,8 @@ def _enrich_records(records: list[dict[str, Any]], manifest: dict[str, Any]) -> 
         if record["memory_request_mi"] is not None and record["peak_memory_mi"]:
             memory_waste_ratio = record["memory_request_mi"] / record["peak_memory_mi"]
         cpu_waste_ratio = None
-        if record["cpu_request_m"] is not None and record["peak_cpu_m"]:
-            cpu_waste_ratio = record["cpu_request_m"] / record["peak_cpu_m"]
+        if record["cpu_request_m"] is not None and record["cpu_usage_m"]:
+            cpu_waste_ratio = record["cpu_request_m"] / record["cpu_usage_m"]
         row = dict(record)
         row.update(
             {
@@ -188,12 +188,12 @@ def _enrich_records(records: list[dict[str, Any]], manifest: dict[str, Any]) -> 
                 "expected_pressure_type": workload["expected_pressure_type"],
                 "recommendation_outcome": _recommendation_outcome(record["applied_profile"], acceptable),
                 "profile_delta": _profile_delta(record["applied_profile"], acceptable),
-                "missing_peak_cpu": record["peak_cpu_m"] is None,
+                "missing_cpu_usage": record["cpu_usage_m"] is None,
                 "missing_peak_memory": record["peak_memory_mi"] is None,
                 "missing_pending_time": record["pod_pending_duration_seconds"] is None,
                 "missing_restart_count": record["restart_or_respawn_count"] is None,
                 "memory_request_to_peak_ratio": round(memory_waste_ratio, 6) if memory_waste_ratio is not None else None,
-                "cpu_request_to_peak_ratio": round(cpu_waste_ratio, 6) if cpu_waste_ratio is not None else None,
+                "cpu_request_to_observed_ratio": round(cpu_waste_ratio, 6) if cpu_waste_ratio is not None else None,
                 "excluded_from_comparative_summary": False,
                 "exclusion_reason": None,
             }
@@ -211,8 +211,8 @@ def _summary_rows(records: list[dict[str, Any]]) -> list[dict[str, Any]]:
         "recommendation_outcome",
         "profile_delta",
         "memory_request_to_peak_ratio",
-        "cpu_request_to_peak_ratio",
-        "missing_peak_cpu",
+        "cpu_request_to_observed_ratio",
+        "missing_cpu_usage",
         "missing_peak_memory",
         "missing_pending_time",
         "missing_restart_count",
@@ -241,7 +241,7 @@ def _run_count_rows(records: list[dict[str, Any]], matrix: list[dict[str, Any]])
                 "failed_count": sum(1 for record in items if record["success"] is False),
                 "timeout_count": sum(1 for record in items if record["timeout"] is True),
                 "excluded_count": sum(1 for record in items if record["excluded_from_comparative_summary"]),
-                "missing_peak_cpu_count": sum(1 for record in items if record["missing_peak_cpu"]),
+                "missing_cpu_usage_count": sum(1 for record in items if record["missing_cpu_usage"]),
                 "missing_peak_memory_count": sum(1 for record in items if record["missing_peak_memory"]),
                 "missing_pending_time_count": sum(1 for record in items if record["missing_pending_time"]),
                 "missing_restart_count": sum(1 for record in items if record["missing_restart_count"]),
@@ -255,7 +255,7 @@ def _run_count_rows(records: list[dict[str, Any]], matrix: list[dict[str, Any]])
         "failed_count": sum(row["failed_count"] for row in rows),
         "timeout_count": sum(row["timeout_count"] for row in rows),
         "excluded_count": sum(row["excluded_count"] for row in rows),
-        "missing_peak_cpu_count": sum(row["missing_peak_cpu_count"] for row in rows),
+        "missing_cpu_usage_count": sum(row["missing_cpu_usage_count"] for row in rows),
         "missing_peak_memory_count": sum(row["missing_peak_memory_count"] for row in rows),
         "missing_pending_time_count": sum(row["missing_pending_time_count"] for row in rows),
         "missing_restart_count": sum(row["missing_restart_count"] for row in rows),
@@ -298,12 +298,12 @@ def _waste_rows(records: list[dict[str, Any]]) -> list[dict[str, Any]]:
     rows = []
     for (method,), items in _group(records, "method").items():
         memory = _summary_stats(record["memory_request_to_peak_ratio"] for record in items)
-        cpu = _summary_stats(record["cpu_request_to_peak_ratio"] for record in items)
+        cpu = _summary_stats(record["cpu_request_to_observed_ratio"] for record in items)
         rows.append(
             {
                 "method": method,
                 **{f"memory_request_to_peak_{key}": value for key, value in memory.items()},
-                **{f"cpu_request_to_peak_{key}": value for key, value in cpu.items()},
+                **{f"cpu_request_to_observed_{key}": value for key, value in cpu.items()},
             }
         )
     return sorted(rows, key=lambda row: _method_sort_key(row["method"]))
@@ -317,10 +317,14 @@ def _scatter_rows(records: list[dict[str, Any]]) -> list[dict[str, Any]]:
             "workload_id": record["workload_id"],
             "repeat_index": record["repeat_index"],
             "cpu_request_m": record["cpu_request_m"],
-            "peak_cpu_m": record["peak_cpu_m"],
+            "cpu_usage_m": record["cpu_usage_m"],
+            "cpu_measurement_statistic": record["cpu_measurement_statistic"],
+            "cpu_sampling_interval_seconds": record["cpu_sampling_interval_seconds"],
+            "cpu_measurement_window_seconds": record["cpu_measurement_window_seconds"],
+            "cpu_measurement_source": record["cpu_measurement_source"],
             "memory_request_mi": record["memory_request_mi"],
             "peak_memory_mi": record["peak_memory_mi"],
-            "cpu_request_to_peak_ratio": record["cpu_request_to_peak_ratio"],
+            "cpu_request_to_observed_ratio": record["cpu_request_to_observed_ratio"],
             "memory_request_to_peak_ratio": record["memory_request_to_peak_ratio"],
             "resource_measurement_source": record["resource_measurement_source"],
         }
@@ -564,7 +568,7 @@ def _write_results_md(
     time_stats = _summary_stats(record["time_to_success_seconds"] for record in records)
     memory_stats = _summary_stats(record["memory_request_to_peak_ratio"] for record in records)
     pending_missing = sum(1 for record in records if record["pod_pending_duration_seconds"] is None)
-    cpu_missing = sum(1 for record in records if record["peak_cpu_m"] is None)
+    cpu_missing = sum(1 for record in records if record["cpu_usage_m"] is None)
     metric_blocker = capability_report and capability_report.get("metrics_api_available") is False
     lines = [
         "# Evaluation Results",
@@ -607,7 +611,7 @@ def _write_results_md(
             lines.extend(
                 [
                     "",
-                    "**Blocker:** Kubernetes resource metrics are unavailable in this environment. `kubectl top nodes` failed, so peak Kubernetes CPU/memory, Pending-time, OOMKilled, and restart/respawn comparisons cannot be claimed from live cluster evidence.",
+                    "**Blocker:** Kubernetes resource metrics are unavailable in this environment. `kubectl top nodes` failed, so Kubernetes CPU samples, memory peaks, Pending-time, OOMKilled, and restart/respawn comparisons cannot be claimed from live cluster evidence.",
                     "",
                     "Exact preflight command that must succeed in a suitable cluster-backed environment:",
                     "",
@@ -624,7 +628,7 @@ def _write_results_md(
             f"- Local synthetic records completed: {successes}/{total}; failures: {failures}/{total}.",
             f"- Median time to success was {time_stats['median']} seconds with IQR {time_stats['iqr']} across non-missing local timings.",
             f"- Median memory request-to-peak ratio was {memory_stats['median']} with IQR {memory_stats['iqr']} using Python `resource.getrusage` peak RSS.",
-            f"- Missing CPU peak measurements: {cpu_missing}/{total}. Missing Kubernetes Pending-time measurements: {pending_missing}/{total}.",
+            f"- Missing CPU usage measurements: {cpu_missing}/{total}. Missing Kubernetes Pending-time measurements: {pending_missing}/{total}.",
             "",
             "Run counts and exclusions:",
             "",
@@ -638,7 +642,7 @@ def _write_results_md(
                     "failed_count",
                     "timeout_count",
                     "excluded_count",
-                    "missing_peak_cpu_count",
+                    "missing_cpu_usage_count",
                     "missing_pending_time_count",
                 ],
             ),
@@ -681,7 +685,7 @@ def _write_results_md(
             "",
             "- The benchmark uses generated synthetic data and local Python processes.",
             "- Dataset size values are declared hints, not measured data sizes.",
-            "- Peak memory is process-level RSS; peak CPU is unavailable here.",
+            "- Peak memory is process-level RSS; CPU usage is unavailable here.",
             "- The full live-cluster experiment remains blocked until a working resource-metric source is present and Kubernetes pod evidence is collected.",
             "",
             "## Generated Outputs",

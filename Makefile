@@ -1,10 +1,19 @@
-.PHONY: check validate-cluster-results regenerate-cluster-results
+.PHONY: check validate-cluster-results validate-raw-integrity capacity-dry-run regenerate-cluster-results
 
 check:
 	bash scripts/check.sh
 
 validate-cluster-results:
 	.venv/bin/python -m cluster_evaluation.validate_artifacts
+
+validate-raw-integrity:
+	.venv/bin/python -m cluster_evaluation.raw_integrity
+
+capacity-dry-run:
+	.venv/bin/python -m cluster_evaluation.capacity_runner \
+		--experiment-id capacity-v2-dry-run \
+		--image intent-spawner-cluster-eval:capacity-v2 \
+		--dry-run
 
 regenerate-cluster-results: validate-cluster-results
 	.venv/bin/python -m cluster_evaluation.analyze \

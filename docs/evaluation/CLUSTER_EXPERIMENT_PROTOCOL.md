@@ -52,18 +52,21 @@ The applied profile changes the pod's first-container requests and limits:
 Every normalized record is checked against the sanitized pod evidence. A label
 without matching resources is not an evaluated application of a profile.
 
-## Peak measurement
+## CPU and memory measurement semantics
 
 Metrics Server snapshots are retained when its API reports a running pod.
 Because its scrape cadence can miss short jobs, it is not treated as a precise
 peak collector. Each benchmark container also samples its own cgroup-v2
 `cpu.stat` and `memory.current` every 10ms and reads `memory.peak` before exit.
 For the historical evaluated corpus, jobs shorter than one interval stored the
-start-to-finish cgroup CPU delta in `peak_cpu_m`. The final audit determined
-that this is an average, not a peak: 202/288 records are affected and their CPU
-peak must be treated as missing. Current code stores that observation as
-`full_window_average_cpu_m` and leaves `peak_cpu_m` null unless at least one
-periodic sample exists.
+start-to-finish cgroup CPU delta in the legacy `peak_cpu_m` field. That value is
+a full-window average: 202/288 records are affected. The immutable bytes remain
+unchanged, while the schema-2 compatibility view exposes the values only as
+`cpu_measurement_statistic="full_window_average"`. The other 86 values are
+maxima over retained 10 ms interval-delta samples and are exposed as
+`sample_maximum`, not continuous CPU peaks. No CPU-peak or CPU-waste claim is
+derived from either class. Future records use `cpu_usage_m` plus explicit
+statistic, interval, window, and source fields.
 The cgroup is the Kubernetes container's resource-accounting boundary. Records
 identify the source and preserve nulls if these files are unavailable.
 
@@ -96,18 +99,24 @@ are fixed before the sweep is inspected. The manifest's
 to this derivation. Each observed envelope lists all supporting run IDs and
 flags the pre-existing expectation as not operationally grounded.
 
-### Final-audit measurement correction
+### Timing analysis rule 2.0.0
 
-The preregistered 20% threshold above was not changed. The final audit found
-that Kubernetes creation and termination timestamps in the retained records
-have one-second resolution. Five short-workload acceptances were caused by
-`1.0` versus `0.0` second medians and were not measurement-valid. The corrected
-analysis requires an observed time-to-success difference greater than two
-seconds before the time branch can accept a larger profile, accounting for two
-independently quantized endpoints. This adequacy guard was added after results
-were observed, is recorded as such, and must not be presented as preregistered.
-The raw records are unchanged; per-profile output records the guard and
-acceptance basis.
+The 20% threshold above is unchanged. Rule 2.0.0 replaces the undocumented
+post-hoc adequacy guard with a versioned rule declared before the capacity-v2
+rerun. Kubernetes creation, scheduling, start, and finish timestamps have
+one-second resolution in the retained corpus. A duration `d` is therefore
+reported as the interval `[max(0, d - 1), d + 1)` seconds. Zero is a valid
+observation and is not changed to 0.5 or any other offset. Missing observations
+stay missing; negative or reversed timestamps fail validation.
+
+For median comparisons, the analysis reports the median observed duration and
+the medians of the lower and upper interval bounds. A candidate clears the
+unchanged 20% branch only if its upper bound is at most 80% of the baseline
+lower bound. If the intervals overlap at that threshold, the timing source
+cannot distinguish the profiles. No smoothing, continuity correction, or
+arbitrary minimum delta is used. Local monotonic benchmark runtimes remain a
+separate higher-resolution diagnostic and are not substituted for Kubernetes
+time to success.
 
 ## Fair comparative methods
 
@@ -128,7 +137,7 @@ The historical `static_manual` local result is retained only as synthetic
 evidence; because it reads expected acceptable profiles, it is an oracle-style
 policy and is excluded from the cluster comparison.
 
-## Capacity-pressure experiment
+## Historical capacity-pressure experiment
 
 The separately reported capacity experiment launches the same population of 12
 validated workloads for each method. All pods use the same image and benchmark
@@ -145,9 +154,83 @@ Pending reason. Density is not inferred from profile labels.
 
 The historical capacity plan, batch records, per-pod outcomes, and environment
 record are retained, but the exact batch-generator source is absent from
-evaluated commit `39b6973`. Consequently the observations can describe this
-controlled run but cannot pass an exact end-to-end reproduction gate or support
-a general cluster-density claim.
+evaluated commit `39b6973`. Git history, branches, reflogs, ignored/untracked
+files, targeted shell history, raw metadata, and unreachable Git objects were
+searched without recovering code tied to the run. The historical result is
+therefore non-reproducible supplementary evidence and is excluded from
+principal claim support.
+
+## Capacity protocol 2.0.0
+
+This protocol and `cluster_evaluation.capacity_runner` must be committed in a
+clean tree before execution. It fixes the following controls:
+
+- one disposable Minikube profile/context named `intent-spawner-capacity-v2`;
+- namespace `z2jh-context-demo`, labeled
+  `z2jh-context-demo.local/disposable-capacity-v2=true`;
+- one node with exactly 6 allocatable CPUs and 6088560Ki allocatable memory;
+- the committed Small/Medium/Large request and limit table;
+- all 12 manifest workloads launched concurrently once per batch;
+- three repeats and the counterbalanced method orders recorded in environment
+  metadata;
+- a 20-second post-workload hold and 0.3-second phase sampling;
+- `PodScheduled` conditions and namespace-scoped pod events as Pending-reason
+  sources;
+- exclusive-create raw files, per-pod logs/evidence/events, batch sidecars, Git
+  and environment metadata, and exact-label cleanup after every batch. The
+  environment record contains a sanitized Minikube profile, exact local image
+  ID, image tag tied to the first 12 characters of the committed protocol, node
+  capacity/allocatable resources, Kubernetes/runtime versions, and network
+  configuration without host paths, node names, or machine identifiers.
+
+The disposable environment is created with:
+
+```bash
+minikube start -p intent-spawner-capacity-v2 \
+  --driver=docker \
+  --kubernetes-version=v1.33.1 \
+  --cpus=6 \
+  --memory=6144mb \
+  --disk-size=20g \
+  --container-runtime=containerd \
+  --extra-config=kubelet.system-reserved=cpu=2,memory=2Gi
+kubectl --context intent-spawner-capacity-v2 create namespace z2jh-context-demo
+kubectl --context intent-spawner-capacity-v2 label namespace z2jh-context-demo \
+  z2jh-context-demo.local/disposable-capacity-v2=true
+CAPACITY_SHORT="$(git rev-parse --short=12 HEAD)"
+docker build -f cluster_evaluation/Dockerfile \
+  -t "intent-spawner-cluster-eval:capacity-v2-${CAPACITY_SHORT}" .
+minikube image load -p intent-spawner-capacity-v2 \
+  "intent-spawner-cluster-eval:capacity-v2-${CAPACITY_SHORT}"
+```
+
+The non-mutating plan check and full reproducibility command are:
+
+```bash
+.venv/bin/python -m cluster_evaluation.capacity_runner \
+  --experiment-id capacity-v2-preregistered \
+  --image "intent-spawner-cluster-eval:capacity-v2-${CAPACITY_SHORT}" \
+  --dry-run
+
+.venv/bin/python -m cluster_evaluation.capacity_runner \
+  --experiment-id capacity-v2-preregistered \
+  --experiment-dir results/cluster/raw/capacity-v2-preregistered \
+  --image "intent-spawner-cluster-eval:capacity-v2-${CAPACITY_SHORT}" \
+  --repeats 3 --seed 20260721 --hold-seconds 20 \
+  --sample-interval-seconds 0.3 \
+  --expected-node-cpu 6 --expected-node-memory-ki 6088560
+```
+
+If interrupted, cleanup is restricted to the experiment label in the protected
+namespace:
+
+```bash
+.venv/bin/python -m cluster_evaluation.capacity_runner \
+  --experiment-id capacity-v2-preregistered \
+  --image "intent-spawner-cluster-eval:capacity-v2-${CAPACITY_SHORT}" \
+  --cleanup-only
+minikube delete -p intent-spawner-capacity-v2
+```
 
 ## Integrity and cleanup
 
@@ -158,5 +241,5 @@ never overwritten. Raw notebook code, datasets, full pod objects, node names,
 UIDs, secrets, and user identifiers are not stored.
 
 Pods are deleted only after evidence collection. Cleanup status is part of the
-record. The final teardown deletes only the named disposable Minikube profile
-and restores the pre-existing `orbstack` context.
+record. The final teardown deletes only the named disposable Minikube profile;
+no existing Minikube or OrbStack profile is modified or removed.

@@ -1,5 +1,11 @@
 # Final Independent Research-Artifact Audit
 
+> Historical audit notice: this report records the blockers at audited commit
+> `92a9c25`. Blocker remediation is tracked in
+> `AUDIT_BLOCKER_RESOLUTION.md`; the historical findings below are preserved
+> for provenance and are not a statement that current source still lacks the
+> schema-v2 timing/CPU rules or capacity-v2 runner.
+
 Audit date: 2026-07-20 (Asia/Ho_Chi_Minh)
 
 Exact audited commit: `92a9c25b53d8437a448c21a29b3d4269f000c691`

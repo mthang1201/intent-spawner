@@ -4,7 +4,7 @@
 
 Raw experiment output uses newline-delimited JSON (`.jsonl`) so each run can be
 appended without rewriting earlier records. The formal schema is versioned as
-`1.0.0` in `experiments/result_schema.py` and mirrored in
+`2.0.0` in `experiments/result_schema.py` and mirrored in
 `experiments/result_schema.schema.json`.
 
 CSV summaries are derived with:
@@ -29,7 +29,7 @@ must never be guessed or replaced with illustrative values.
 
 | Field | Type | Unit | Nullable | Source |
 | --- | --- | --- | --- | --- |
-| `schema_version` | string | none | no | Constant from `experiments.result_schema.SCHEMA_VERSION`; current value is `1.0.0`. |
+| `schema_version` | string | none | no | Constant from `experiments.result_schema.SCHEMA_VERSION`; current value is `2.0.0`. |
 | `run_id` | string | none | no | CLI argument or generated UTC timestamp plus workload ID. Must identify one attempted run. |
 | `timestamp` | string | ISO-8601 UTC | no | Recorder wall-clock time when the normalized record is built. |
 | `git_commit` | string | Git SHA | no | `git rev-parse HEAD` from the repository root. |
@@ -49,9 +49,13 @@ must never be guessed or replaced with illustrative values.
 | `cpu_limit_m` | integer | millicores | yes | Applied profile limit, or Kubernetes pod spec when captured. Null if unavailable. |
 | `memory_request_mi` | integer | MiB | yes | Applied memory request converted from Kubernetes quantity or profile policy. Decimal Kubernetes units such as `M` and `G` are converted to MiB. |
 | `memory_limit_mi` | integer | MiB | yes | Applied memory limit converted from Kubernetes quantity or profile policy. Null if unavailable. |
-| `peak_cpu_m` | number | millicores | yes | Observed peak CPU from metrics snapshots. Null when Prometheus or metrics-server data is unavailable. |
+| `cpu_usage_m` | number | millicores | yes | CPU observation whose exact statistic is declared by `cpu_measurement_statistic`; never assume it is a peak. |
+| `cpu_measurement_statistic` | string enum | none | no | One of `genuine_cgroup_peak`, `sample_maximum`, `sampled_instantaneous`, `full_window_average`, or `unavailable`. |
+| `cpu_sampling_interval_seconds` | number | seconds | yes | Interval between or covered by periodic samples when known. Null for full-window averages or unknown Metrics Server cadence. |
+| `cpu_measurement_window_seconds` | number | seconds | yes | Whole observation window for an average when retained. Null when unavailable. |
+| `cpu_measurement_source` | string | none | no | Specific CPU source, such as `metrics_server`, `cgroup_v2_cpu_stat_interval_delta`, `cgroup_v2_cpu_stat_full_window_delta`, or `not_available`. |
 | `peak_memory_mi` | number | MiB | yes | Observed peak memory from metrics snapshots, or local smoke-process `resource.getrusage` fallback. Null when unavailable. |
-| `resource_measurement_source` | string | none | no | `metrics_server`, `prometheus` if added later, `python_resource_getrusage` for local smoke fallback, or `not_available`. |
+| `resource_measurement_source` | string | none | no | Memory measurement source retained for compatibility: `metrics_server`, `prometheus` if added later, `python_resource_getrusage`, `cgroup_v2_in_container`, or `not_available`. CPU uses its own source field. |
 | `pod_pending_duration_seconds` | number | seconds | yes | Kubernetes pod creation timestamp to `PodScheduled=True`. Null without pod evidence or if unscheduled. |
 | `workload_runtime_seconds` | number | seconds | yes | Kubernetes container `startedAt` to `finishedAt`, or local workload runner elapsed seconds. |
 | `time_to_success_seconds` | number | seconds | yes | Pod creation to successful container finish, or local successful workload elapsed seconds. Null for failures/timeouts. |
@@ -76,6 +80,9 @@ When pod evidence is available, `kubernetes_evidence` includes:
 | `phase` | Current pod phase from `status.phase`. |
 | `phase_transitions` | Pod condition transition timestamps and reasons from `status.conditions`. Kubernetes does not preserve every historical phase; this records the available condition evidence. |
 | `events` | Sanitized event type, reason, message, count, and timestamps from `kubectl get events`. |
+| `timing_source_timestamps` | Sanitized pod creation, scheduling, container start, and container finish timestamps used to derive durations. Historical schema-1 records retained only the derived durations. |
+| `timing_timestamp_resolution_seconds` | Source timestamp resolution. Kubernetes container and condition timestamps in the retained corpus resolve to one second. |
+| `timing_durations_are_quantized` | Whether duration values inherit timestamp quantization. |
 | `termination_reason`, `termination_exit_code` | Container termination reason and exit code from current or last terminated state. |
 | `restart_count` | Sum of container restart counts. |
 | `requests_limits` | CPU and memory requests/limits from the first container. |
@@ -91,20 +98,39 @@ The live recorder path can collect read-only evidence with `--namespace` and
 `--pod-name`. It writes pod JSON, event JSON, pod logs, and metrics snapshots
 under `experiments/raw/<run_id>/<workload_id>/kubernetes/`.
 
+## CPU statistic compatibility
+
+Schema 1.0 used `peak_cpu_m`. `migrate_record` constructs a schema-2 compatibility
+view in memory and never rewrites raw JSONL. For the local corpus the legacy
+field is null, so it maps to `cpu_usage_m=null` and
+`cpu_measurement_statistic="unavailable"`.
+
+The cluster corpus uses `cluster_evaluation.result_compat`. Its 202 records
+with zero cgroup samples map the unchanged legacy value to
+`full_window_average`; 86 records with at least one 10 ms interval-delta sample
+map to `sample_maximum`. Neither mapping creates a continuous CPU peak. The
+compatibility table preserves the legacy source-field name, original numeric
+value, source, sample interval, and measurement window when the supporting pod
+log retained it.
+
 ## Resource Measurement Sources
 
-Preferred order for peak usage:
+CPU and memory statistics are selected independently:
 
-1. Prometheus query results, if a future evaluator provides them in the metrics
-   snapshot format and records `resource_measurement_source="prometheus"`.
-2. Metrics-server snapshots from `kubectl top pod --containers`.
-3. Local smoke fallback from Python `resource.getrusage`, which can report peak
-   memory for the local workload process but not Kubernetes pod CPU.
-4. `not_available`, with `peak_cpu_m=null` and `peak_memory_mi=null`.
+1. A future genuine CPU-peak source may use `genuine_cgroup_peak` only if the
+   source exposes an actual peak, not a sampled maximum or average.
+2. Metrics Server values are sampled usage. Selecting the largest retained
+   sample is `sample_maximum`, not a peak over unsampled time.
+3. Cgroup-v2 `cpu.stat` deltas over periodic intervals are sample maxima;
+   start-to-finish deltas are full-window averages. Cgroup-v2 `memory.peak` is
+   a genuine memory peak and remains named as such.
+4. Local `resource.getrusage` reports process peak RSS but no CPU observation.
+5. Missing CPU is `cpu_usage_m=null` with statistic `unavailable`; missing
+   memory remains `peak_memory_mi=null`.
 
-If metrics-server is unavailable, the recorder preserves the `kubectl top`
-error text in supporting logs and leaves missing peak fields as `null`. It must
-not infer usage from requests, limits, workload class, or expected profile.
+If Metrics Server is unavailable, the recorder preserves the `kubectl top`
+error text in supporting logs and leaves missing observations null. It must not
+infer usage from requests, limits, workload class, or expected profile.
 
 ## Privacy And Integrity Rules
 

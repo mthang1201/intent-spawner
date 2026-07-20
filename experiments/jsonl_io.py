@@ -7,7 +7,7 @@ import json
 from pathlib import Path
 from typing import Any, Iterable
 
-from experiments.result_schema import CSV_FIELDS, validate_record
+from experiments.result_schema import CSV_FIELDS, migrate_record, validate_record
 
 
 def append_jsonl(path: Path, record: dict[str, Any]) -> None:
@@ -31,8 +31,9 @@ def read_jsonl(path: Path) -> list[dict[str, Any]]:
                 record = json.loads(stripped)
             except json.JSONDecodeError as exc:
                 raise ValueError(f"{path}:{line_number}: invalid JSONL record") from exc
-            validate_record(record)
-            records.append(record)
+            migrated = migrate_record(record)
+            validate_record(migrated)
+            records.append(migrated)
     return records
 
 

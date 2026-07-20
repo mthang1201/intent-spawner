@@ -24,7 +24,8 @@ The repository now contains:
   aggregation commands;
 - data-governance and threats-to-validity documentation.
 - a preserved Kubernetes-backed corpus with independently swept profiles,
-  isolated operational methods, applied-resource evidence, cgroup peaks, and a
+  isolated operational methods, applied-resource evidence, typed cgroup
+  measurements, and a
   separate capacity-pressure record;
 - cluster raw-integrity validation and deterministic table/figure regeneration.
 
@@ -50,8 +51,9 @@ efficiency, real-user accuracy, or causal generalization.
 | Sanitized preserved evidence | Implemented | `experiments/raw/`, `results/` |
 | Kubernetes pod experiment orchestration | Implemented for ground-truth/comparative matrices | `cluster_evaluation/runner.py` |
 | Kubernetes raw validation and regeneration | Implemented | `cluster_evaluation/validate_artifacts.py`, `cluster_evaluation/analyze.py` |
-| Kubernetes cgroup peak observations | Memory implemented; CPU partial | `results/cluster/raw/`; zero Metrics Server job snapshots, 86/288 periodic CPU samples, and 202 historical CPU averages mislabeled as peaks |
-| Capacity batch reproduction | Blocked | Raw plan/batches exist, but evaluated generator source is absent |
+| Kubernetes cgroup measurements | Memory peaks implemented; CPU reconciled | `results/cluster/raw/`; zero Metrics Server job snapshots, 86/288 interval sample maxima, 202 full-window averages, and no genuine CPU peaks |
+| Historical capacity reproduction | Permanently unavailable | Raw plan/batches remain supplementary; no runner tied to evaluated commit was recovered |
+| Capacity-v2 runner | Implemented and preregistered; execution pending | `cluster_evaluation/capacity_runner.py`, protocol 2.0.0, tests and dry run |
 | History-aware method | Not implemented or evaluated | No history collection, storage, or decision path |
 | Project software license | Not resolved | No project license file |
 
@@ -90,14 +92,14 @@ recording, and exact regeneration of the committed local synthetic summaries.
 
 It does not support claims about representative production workloads,
 production cluster utilization, real users, GPU scheduling, OOM reduction, or
-the effectiveness of history-aware provisioning. The retained capacity result
-is descriptive rather than fully reproducible. See
+the effectiveness of history-aware provisioning. The historical capacity
+result is supplementary and excluded from principal claims. See
 `THREATS_TO_VALIDITY.md` and `RESULTS.md`.
 
 ## Remaining Evaluation Work
 
-1. Recreate and preregister the capacity runner, then repeat the capacity
-   experiment from committed source.
+1. Execute the committed capacity-v2 protocol on the named disposable cluster
+   and retain its new raw corpus separately from historical evidence.
 2. Use longer, resource-representative workloads and a time-series metrics
    source before making performance or utilization claims.
 3. Add OOM-producing cases if the thesis needs an OOM-reduction claim.
@@ -107,4 +109,5 @@ is descriptive rather than fully reproducible. See
 6. Treat any real-user study as a separate ethics, consent, privacy, and
    retention project.
 
-No new evaluation is performed by the branch-integration task.
+Capacity-v2 execution must remain separate from the historical corpus and must
+record the exact committed runner revision.
