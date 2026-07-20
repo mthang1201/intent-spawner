@@ -227,7 +227,7 @@ def _validate_capacity_v2(directory: Path) -> tuple[list[dict[str, Any]], int, s
             "name": "intent-spawner-capacity-v2",
             "cpus": 6,
             "memory_mb": 6144,
-            "disk_size_mb": 20000,
+            "disk_size_mb": 20480,
             "driver": "docker",
             "kubernetes_version": "v1.33.1",
             "container_runtime": "containerd",

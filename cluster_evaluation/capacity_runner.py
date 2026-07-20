@@ -527,7 +527,7 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--expected-container-runtime", default="containerd")
     parser.add_argument("--expected-minikube-cpus", type=int, default=6)
     parser.add_argument("--expected-minikube-memory-mb", type=int, default=6144)
-    parser.add_argument("--expected-minikube-disk-size-mb", type=int, default=20000)
+    parser.add_argument("--expected-minikube-disk-size-mb", type=int, default=20480)
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--cleanup-only", action="store_true")
     return parser.parse_args(argv)

@@ -255,7 +255,7 @@ def test_capacity_environment_sanitizes_minikube_profile(monkeypatch):
                 "Config": {
                     "CPUs": 6,
                     "Memory": 6144,
-                    "DiskSize": 20000,
+                    "DiskSize": 20480,
                     "Driver": "docker",
                     "KicBaseImage": "example.invalid/base@sha256:abc",
                     "MountString": "/Users/private:/host",
