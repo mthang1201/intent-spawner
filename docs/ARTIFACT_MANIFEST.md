@@ -83,6 +83,8 @@ default unless explicitly reviewed and force-added.
 - `benchmarks/observed_resource_envelopes.yaml`: raw-run-linked operational
   envelopes using timing rule 2.0.0 without an offset or arbitrary guard.
 - `docs/evaluation/CLUSTER_RESULTS.md`: generated, scoped Kubernetes report.
+- `docs/evaluation/AUDIT_BLOCKER_RESOLUTION.md`: exact-commit resolution,
+  checksum chain, rerun provenance, corrected claims, and verification record.
 
 ## Reproduction Commands
 
