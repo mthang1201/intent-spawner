@@ -17,7 +17,7 @@ def write_csv(path, data):
   w=csv.DictWriter(f,fieldnames=list(data[0]) if data else ["empty"]); w.writeheader(); w.writerows(data)
 def duration(a,b): return (datetime.fromisoformat(b.replace("Z","+00:00"))-datetime.fromisoformat(a.replace("Z","+00:00"))).total_seconds()
 def svg_bars(path,title,labels,values,ylabel):
- W,H=760,420; m=70; mx=max(values) if values else 1; bars=[]
+ W,H=760,420; m=70; mx=max(values) if values and max(values)>0 else 1; bars=[]
  for i,(lab,val) in enumerate(zip(labels,values)):
   x=m+i*(W-2*m)/len(values)+18; bw=(W-2*m)/len(values)-36; h=(H-2*m)*val/mx
   bars.append(f'<rect x="{x:.1f}" y="{H-m-h:.1f}" width="{bw:.1f}" height="{h:.1f}" fill="#2563eb"/><text x="{x+bw/2:.1f}" y="{H-m+20}" text-anchor="middle" font-size="12">{lab}</text><text x="{x+bw/2:.1f}" y="{H-m-h-7:.1f}" text-anchor="middle" font-size="12">{val:.3f}</text>')
