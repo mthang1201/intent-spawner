@@ -469,13 +469,14 @@ def main() -> int:
             json.loads(line)["run_id"] for line in results_path.read_text(encoding="utf-8").splitlines()
         } if results_path.exists() else set()
     else:
+        environment = _preflight(args.image)
         experiment_dir.mkdir(parents=True, exist_ok=False)
         plan = generate_plan(args.kind, args.repeats, args.seed, experiment_dir.name)
         _write_new(
             experiment_dir / "matrix.jsonl",
             "".join(json.dumps(asdict(item), sort_keys=True) + "\n" for item in plan),
         )
-        _write_json_new(experiment_dir / "environment.json", _preflight(args.image))
+        _write_json_new(experiment_dir / "environment.json", environment)
         completed = set()
 
     for item in plan:
