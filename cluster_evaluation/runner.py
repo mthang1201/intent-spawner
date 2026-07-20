@@ -442,7 +442,14 @@ def _preflight(image: str) -> dict[str, Any]:
         "namespace": NAMESPACE,
         "container_image": image,
         "git_commit": current_git_commit(ROOT),
-        "git_dirty": bool(subprocess.run(["git", "status", "--short"], cwd=ROOT, capture_output=True, text=True).stdout),
+        "git_dirty": bool(
+            subprocess.run(
+                ["git", "status", "--short", "--untracked-files=no"],
+                cwd=ROOT,
+                capture_output=True,
+                text=True,
+            ).stdout
+        ),
         "node_capacity": node["status"]["capacity"],
         "node_allocatable": node["status"]["allocatable"],
         "node_info": node["status"]["nodeInfo"],
