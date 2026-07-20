@@ -45,7 +45,7 @@ skip_check() {
 cd "$ROOT_DIR" || exit 1
 
 run_check "unit and smoke tests" "$PYTHON_BIN" -m pytest recommender tests
-run_check "Python syntax validation" "$PYTHON_BIN" -m compileall -q benchmarks experiments recommender workload scripts/generate-capacity-values.py tests
+run_check "Python syntax validation" "$PYTHON_BIN" -m compileall -q benchmarks cluster_evaluation experiments recommender workload scripts/generate-capacity-values.py tests
 run_check "shell syntax validation" bash -n scripts/check-cluster.sh scripts/check.sh scripts/demo-defensive-overrequesting.sh scripts/demo-overprovisioning.sh scripts/demo-underprovisioning.sh scripts/environment-report.sh scripts/install-baseline.sh scripts/install-proposed.sh scripts/port-forward.sh scripts/setup.sh scripts/uninstall.sh scripts/watch-pods.sh
 
 if command -v helm >/dev/null 2>&1; then
