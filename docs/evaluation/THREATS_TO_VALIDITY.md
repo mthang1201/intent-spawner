@@ -19,26 +19,31 @@ method isolation between `static_manual`, `intent_only`, and `context_aware`.
 
 ## External Validity
 
-The preserved results come from a local synthetic benchmark on one developer
-environment. They should not be generalized directly to production JupyterHub
-deployments, real notebook users, heterogeneous clusters, networked storage,
-larger datasets, or institution-specific profile policies.
+The preserved evidence includes a local process matrix and a separate
+single-node Minikube corpus. Neither should be generalized directly to
+production JupyterHub deployments, real notebook users, heterogeneous clusters,
+networked storage, larger datasets, or institution-specific profile policies.
 
 ## Conclusion Validity
 
 The matrix uses repeated deterministic runs, but it is still small. The
 reported comparisons should be read as artifact evidence for the prototype and
 analysis pipeline, not as a definitive statistical proof of production impact.
-Effect sizes involving live scheduling, OOMs, or peak Kubernetes usage remain
-unsupported when the relevant cluster evidence is absent.
+The cluster matrix observed no OOM and therefore cannot estimate OOM reduction.
+Its peak values are cgroup observations, not a monitoring-system time series.
+Capacity concurrency is descriptive because the evaluated batch-generator
+source was not committed.
 
 ## Local-Cluster Limitations
 
 The Helm demo targets disposable local Kubernetes environments such as
 OrbStack, kind, minikube, or k3d. Local clusters have simpler scheduling,
 storage, image-cache, and contention behavior than production clusters. The
-captured environment also lacked Metrics API support, so live peak CPU/memory
-and `kubectl top`-based claims are out of scope for the preserved results.
+Kubernetes-backed environment had Metrics Server, but it retained zero per-job
+snapshots because the jobs were short. Cgroup-v2 final counters and
+`memory.peak` provide pod-boundary observations; 202/288 jobs completed before
+one periodic 10ms sample. The Helm demo and preserved evaluation are not the
+same deployment path.
 
 ## Synthetic-Workload Limitations
 
@@ -76,6 +81,13 @@ Local runs use Python runtime and `resource.getrusage` signals as portable
 proxies. These are not equivalent to Kubernetes cgroup metrics or Prometheus
 time series. Missing metrics are represented as null rather than inferred.
 Short workloads may make runtime and peak measurements noisy.
+
+Kubernetes creation and termination timestamps are quantized to one second in
+the retained corpus. The original envelope analysis treated `1.0` versus `0.0`
+second medians as a 100% improvement. The final audit added a disclosed
+measurement-adequacy guard and regenerated derived outputs without editing raw
+records. Because the guard is post hoc, the corrected acceptable-profile rates
+remain diagnostic rather than confirmatory.
 
 ## GPU Scope
 

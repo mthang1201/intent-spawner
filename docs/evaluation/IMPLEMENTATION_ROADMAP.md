@@ -23,6 +23,10 @@ The repository now contains:
 - setup, verification, environment-reporting, resume, dry-run, smoke, and
   aggregation commands;
 - data-governance and threats-to-validity documentation.
+- a preserved Kubernetes-backed corpus with independently swept profiles,
+  isolated operational methods, applied-resource evidence, cgroup peaks, and a
+  separate capacity-pressure record;
+- cluster raw-integrity validation and deterministic table/figure regeneration.
 
 The preserved comparative run is local and synthetic. It is not a live
 multi-user Kubernetes evaluation and does not establish production cluster
@@ -44,8 +48,10 @@ efficiency, real-user accuracy, or causal generalization.
 | Runner, resume, dry-run | Implemented | `experiments/runner.py` |
 | Analysis regeneration | Implemented and tested | `experiments/analyze_results.py`, `tests/test_analysis_outputs.py` |
 | Sanitized preserved evidence | Implemented | `experiments/raw/`, `results/` |
-| Kubernetes experiment orchestration | Not implemented | Local runner starts bounded host processes only |
-| Reliable live usage metrics | Not implemented | Captured environment records Metrics API unavailable |
+| Kubernetes pod experiment orchestration | Implemented for ground-truth/comparative matrices | `cluster_evaluation/runner.py` |
+| Kubernetes raw validation and regeneration | Implemented | `cluster_evaluation/validate_artifacts.py`, `cluster_evaluation/analyze.py` |
+| Kubernetes cgroup peak observations | Implemented with limitations | `results/cluster/raw/`; zero Metrics Server job snapshots and 202/288 zero periodic samples |
+| Capacity batch reproduction | Blocked | Raw plan/batches exist, but evaluated generator source is absent |
 | History-aware method | Not implemented or evaluated | No history collection, storage, or decision path |
 | Project software license | Not resolved | No project license file |
 
@@ -82,19 +88,19 @@ The integrated artifact supports claims about deterministic method construction,
 profile recommendation, bounded local workload execution, schema-valid result
 recording, and exact regeneration of the committed local synthetic summaries.
 
-It does not support claims about representative production workloads, live
-cluster utilization, real users, GPU scheduling, reliable Kubernetes peak
-usage, or the effectiveness of history-aware provisioning. See
+It does not support claims about representative production workloads,
+production cluster utilization, real users, GPU scheduling, OOM reduction, or
+the effectiveness of history-aware provisioning. The retained capacity result
+is descriptive rather than fully reproducible. See
 `THREATS_TO_VALIDITY.md` and `RESULTS.md`.
 
 ## Remaining Evaluation Work
 
-1. Define a separately reviewed live Kubernetes protocol with bounded namespace
-   scope, fixed images, randomized or blocked execution order, and explicit
-   stopping/exclusion rules.
-2. Add a validated metrics source before making peak-usage claims.
-3. Run repeated live trials only on an isolated disposable cluster, preserving
-   raw outputs before analysis.
+1. Recreate and preregister the capacity runner, then repeat the capacity
+   experiment from committed source.
+2. Use longer, resource-representative workloads and a time-series metrics
+   source before making performance or utilization claims.
+3. Add OOM-producing cases if the thesis needs an OOM-reduction claim.
 4. Report uncertainty and sensitivity to workload mix, thresholds, static
    assignments, and cluster capacity.
 5. Resolve the project software license before redistribution.

@@ -4,10 +4,11 @@ This repository packages the graduation-thesis prototype:
 
 **Intent- and Context-Aware Profile Recommendation Layer for Zero to JupyterHub / KubeSpawner**
 
-The artifact compares static/manual profile selection with an explainable
-pre-spawn recommendation layer. It includes the demo Helm values, deterministic
-synthetic benchmark workloads, immutable raw result snapshots, derived tables
-and figures, and documentation for reproducing the local analysis.
+The artifact compares static profile selection with an explainable pre-spawn
+recommendation layer. It keeps three evidence classes separate: prototype
+mechanics, a local synthetic comparative matrix, and a scoped Kubernetes-backed
+evaluation on one disposable Minikube node. Each class has its own raw evidence,
+derived outputs, and claim boundary.
 
 ## Quick Start
 
@@ -16,6 +17,7 @@ git clone https://github.com/mthang1201/intent-spawner.git
 cd intent-spawner
 bash scripts/setup.sh
 bash scripts/check.sh
+make validate-cluster-results
 bash scripts/environment-report.sh --out /tmp/intent-spawner-environment.json --overwrite
 .venv/bin/python -m experiments.runner --smoke --environment-id local-smoke --timeout 60
 .venv/bin/python -m experiments.runner --full-matrix --repeats 5 --seed 20260719 --dry-run --environment-id local-dry-run
@@ -176,6 +178,20 @@ snapshot:
 For validation without modifying tracked files, write to `/tmp` as shown in the
 quick start.
 
+Validate and regenerate the preserved Kubernetes-backed corpus:
+
+```bash
+make validate-cluster-results
+make regenerate-cluster-results
+```
+
+The cluster corpus contains 108 three-profile ground-truth pod runs, 180
+comparative pod runs, and nine capacity batches covering 108 pods. See
+`docs/evaluation/CLUSTER_RESULTS.md` for the audit-corrected interpretation.
+The exact historical capacity batch generator was not committed at the
+evaluated source revision, so those capacity observations are descriptive and
+not a fully reproducible density result.
+
 ## Demo Workloads
 
 ```bash
@@ -217,6 +233,7 @@ find experiments/raw -mindepth 1 -maxdepth 1 \
 
 ```text
 benchmarks/                  Synthetic workload runner and manifest
+cluster_evaluation/          Kubernetes pod runner, policies, analysis, validation
 docs/                        Artifact, governance, and evaluation documents
 docs/evaluation/             Protocol, results, schema, threats, design notes
 experiments/                 Runner, recorder, schema, analysis code
@@ -226,6 +243,8 @@ helm/                        Baseline and proposed JupyterHub Helm values
 k8s/                         Demo Kubernetes manifests
 recommender/                 Rule-based recommendation prototype and tests
 results/                     Derived tables and SVG figures
+results/cluster/raw/         Preserved Kubernetes evidence and batch records
+results/cluster/derived/     Regenerated Kubernetes tables and figures
 scripts/                     Setup, verification, cluster, demo, and cleanup scripts
 tests/                       Unit tests and sanitized Kubernetes evidence fixtures
 workload/                    Original demo workload scripts
@@ -251,10 +270,19 @@ derived outputs, validation commands, and known generated files.
 
 ## Known Limitations
 
-- The preserved benchmark run is local and synthetic, not a live multi-user
-  Kubernetes workload.
-- Kubernetes Metrics API was unavailable in the captured environment, so the
-  committed analysis does not claim live cluster peak CPU/memory measurements.
+- The local 180-record benchmark and the Kubernetes-backed corpus are separate
+  evidence classes and cannot be used interchangeably.
+- The Kubernetes evaluation is a single-node, synthetic Minikube experiment,
+  not a live multi-user JupyterHub or production deployment.
+- Metrics Server was available in the Kubernetes environment but captured zero
+  per-job snapshots for the short jobs. Cluster peak values come from retained
+  cgroup-v2 counters; this is not Prometheus time-series evidence.
+- The final audit found one-second Kubernetes timestamp quantization in the
+  original acceptable-envelope analysis and added a disclosed measurement
+  adequacy guard. Raw observations were not changed.
+- The exact historical capacity batch generator is missing, so the retained
+  concurrency/Pending observations are not independently reproducible end to
+  end.
 - GPU behavior is represented as a recommendation and policy signal only; no
   GPU workload is executed.
 - The prototype is rule-based and does not implement history-aware evaluation.

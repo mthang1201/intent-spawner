@@ -55,6 +55,7 @@ def test_kubernetes_fixture_evidence_extracts_resources_status_and_sanitized_met
     }
     assert "SECRET_TOKEN" not in evidence["environment_variables"]
     assert "CONTEXT_INTENT" not in evidence["environment_variables"]
+    assert evidence["scheduling_or_pending_reasons"] == []
 
 
 def test_kubernetes_fixture_records_oom_and_pending_reasons():

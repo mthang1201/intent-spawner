@@ -161,7 +161,11 @@ def _events(events_json: dict[str, Any] | None) -> list[dict[str, Any]]:
 def _pending_reasons(pod: dict[str, Any], events: list[dict[str, Any]]) -> list[str]:
     reasons: list[str] = []
     for condition in pod.get("status", {}).get("conditions", []) or []:
-        if condition.get("status") == "False" and condition.get("reason"):
+        if (
+            condition.get("type") == "PodScheduled"
+            and condition.get("status") == "False"
+            and condition.get("reason")
+        ):
             reasons.append(str(condition["reason"]))
     for event in events:
         if event.get("reason") in {"FailedScheduling", "NotTriggerScaleUp", "FailedMount"}:

@@ -7,6 +7,7 @@ from cluster_evaluation.runner import (
     generate_plan,
     load_workloads,
 )
+from cluster_evaluation.validate_artifacts import validate
 
 
 def _workload(workload_id: str = "data_large_aggregation"):
@@ -97,3 +98,12 @@ def test_runner_source_does_not_allowlist_machine_identifiers():
     assert "bootID" not in source
     assert "machineID" not in source
     assert "systemUUID" not in source
+
+
+def test_preserved_cluster_artifacts_reconcile():
+    summary = validate()
+    assert summary["status"] == "pass"
+    assert summary["ground_truth_records"] == 108
+    assert summary["comparative_records"] == 180
+    assert summary["capacity_batches"] == 9
+    assert summary["capacity_pods"] == 108

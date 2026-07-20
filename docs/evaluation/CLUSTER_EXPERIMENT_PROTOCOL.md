@@ -93,6 +93,19 @@ are fixed before the sweep is inspected. The manifest's
 to this derivation. Each observed envelope lists all supporting run IDs and
 flags the pre-existing expectation as not operationally grounded.
 
+### Final-audit measurement correction
+
+The preregistered 20% threshold above was not changed. The final audit found
+that Kubernetes creation and termination timestamps in the retained records
+have one-second resolution. Five short-workload acceptances were caused by
+`1.0` versus `0.0` second medians and were not measurement-valid. The corrected
+analysis requires an observed time-to-success difference greater than two
+seconds before the time branch can accept a larger profile, accounting for two
+independently quantized endpoints. This adequacy guard was added after results
+were observed, is recorded as such, and must not be presented as preregistered.
+The raw records are unchanged; per-profile output records the guard and
+acceptance basis.
+
 ## Fair comparative methods
 
 The operational baseline is `static_default`, not `static_manual`. It applies
@@ -126,6 +139,12 @@ namespace, no ResourceQuota, and unchanged admission configuration for every
 method. It runs three repeats in counterbalanced method order. Reports must
 distinguish request reservation from cgroup utilization and must list every
 Pending reason. Density is not inferred from profile labels.
+
+The historical capacity plan, batch records, per-pod outcomes, and environment
+record are retained, but the exact batch-generator source is absent from
+evaluated commit `39b6973`. Consequently the observations can describe this
+controlled run but cannot pass an exact end-to-end reproduction gate or support
+a general cluster-density claim.
 
 ## Integrity and cleanup
 

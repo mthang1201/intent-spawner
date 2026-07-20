@@ -7,7 +7,8 @@
 - `helm/proposed-values.yaml`: proposed intent/context-aware JupyterHub values.
 - `k8s/`: demo pods and resource quota manifests.
 - `workload/`: original demo workload scripts.
-- `notebooks/`: demonstration notebooks, not benchmark data sources.
+- `cluster_evaluation/`: Kubernetes workload image, pod runner, method policies,
+  raw-integrity validator, and raw-to-derived analysis.
 
 ## Setup And Verification
 
@@ -32,6 +33,8 @@
 - `experiments/analyze_results.py`: table, figure, and report reproduction.
 - `experiments/capture_environment.py`: local capability report capture.
 - `tests/`: unit tests and sanitized parser fixtures.
+- `cluster_evaluation/validate_artifacts.py`: reconciles every preserved cluster
+  plan, result, sidecar, applied-resource observation, and supporting path.
 
 ## Preserved Raw Evidence
 
@@ -40,6 +43,13 @@
   evidence.
 - `experiments/raw/20260719T140431Z-matrix-aed48949`: full local synthetic
   matrix used to generate the committed analysis outputs.
+- `results/cluster/raw/ground-truth-39b6973-seed20260720`: 108 retained pod
+  outcomes and supporting evidence.
+- `results/cluster/raw/comparative-39b6973-seed20260720`: 180 retained pod
+  outcomes and supporting evidence.
+- `results/cluster/raw/capacity-39b6973-seed20260721`: nine batch outcomes and
+  108 per-pod capacity observations. The exact evaluated batch generator is not
+  present and this provenance limitation is part of the final audit.
 
 Raw records include the source `git_commit` used when they were generated. New
 raw runs are ignored by default unless explicitly reviewed and force-added.
@@ -51,6 +61,10 @@ raw runs are ignored by default unless explicitly reviewed and force-added.
 - `results/environment-capability.json`: captured environment capability report.
 - `docs/evaluation/RESULTS.md`: narrative analysis report generated from raw
   records plus the environment capability report.
+- `results/cluster/derived/`: Kubernetes-backed tables and SVG figures.
+- `benchmarks/observed_resource_envelopes.yaml`: raw-run-linked operational
+  envelopes with the final-audit timestamp-resolution guard.
+- `docs/evaluation/CLUSTER_RESULTS.md`: generated, scoped Kubernetes report.
 
 ## Reproduction Commands
 
@@ -65,6 +79,8 @@ bash scripts/check.sh
   --results-md /tmp/intent-spawner-results/RESULTS.md \
   --environment-report results/environment-capability.json \
   --overwrite
+make validate-cluster-results
+make regenerate-cluster-results
 ```
 
 ## Generated Files Not Normally Committed

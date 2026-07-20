@@ -1,6 +1,6 @@
 # Kubernetes Cluster Results
 
-Evaluated commit: `39b69731a9aeaa85247c01e946e26656beae6e64`. Evidence scope: one disposable ARM64 Minikube v1.33.1 node with 6 CPUs and 6088560Ki allocatable memory.
+Evaluated workload commit: `39b69731a9aeaa85247c01e946e26656beae6e64`. Evidence scope: one disposable ARM64 Minikube v1.33.1 node with 6 CPUs and 6088560Ki allocatable memory.
 
 ## Run accounting
 
@@ -12,26 +12,28 @@ Evaluated commit: `39b69731a9aeaa85247c01e946e26656beae6e64`. Evidence scope: on
 
 ## Ground truth
 
-All 12 workloads completed reliably under Small. The preregistered waste/time rule, not recommender output, determines the acceptable sets in `benchmarks/observed_resource_envelopes.yaml`. The prior manifest expectations are flagged as not operationally grounded.
+All 12 workloads completed reliably under Small. The manifest expectations were excluded from derivation. The preregistered 20% time-improvement branch was not measurement-valid for differences of two seconds or less because Kubernetes creation and termination timestamps have one-second resolution. The final audit therefore added a disclosed measurement-adequacy guard; this is a correction to analysis validity, not a newly optimized effect threshold.
 
 ## Comparative outcome
 
 | Method | Acceptable / 60 | Median waste | Median time-to-success (s) | OOM |
 | --- | ---: | ---: | ---: | ---: |
-| static_default | 20 | 0.979 | 1.000 | 0 |
-| intent_only | 40 | 0.958 | 1.000 | 0 |
-| context_aware | 25 | 0.979 | 1.000 | 0 |
+| static_default | 5 | 0.979 | 1.000 | 0 |
+| intent_only | 30 | 0.958 | 1.000 | 0 |
+| context_aware | 20 | 0.979 | 1.000 | 0 |
 
-An earlier 108-run ground-truth pilot completed successfully but is excluded from every table and figure because its environment file contained unnecessary machine identifiers. Its immutable raw directory is retained locally under `experiments/raw/` and no pilot value was copied into the sanitized matrix.
+An earlier 108-run ground-truth pilot is excluded from every table and figure because its environment file retained unnecessary machine identifiers. Its ignored raw directory remains local and no pilot value was copied into the sanitized matrix.
 
-All methods completed every run without OOM. Success alone therefore does not establish recommendation quality. Under the independently observed envelopes, larger profiles chiefly increased reservation waste.
+All methods completed every run without OOM. Success alone therefore does not establish recommendation quality. The workload implementations are much smaller than their declared dataset-size hints, so these acceptable-profile rates diagnose behavior on this synthetic suite rather than predictive accuracy for real notebooks.
 
 ## Capacity pressure
 
-Across three counterbalanced repeats, intent-only admitted 9 pods concurrently; static-default and context-aware admitted 7. All 12 pods per batch eventually completed. This is a scheduler reservation result under the tested requests and 20-second hold, not proof of production utilization or general cluster density.
+The retained records show median maximum concurrency of 9 pods for intent-only and 7 for static-default and context-aware across three counterbalanced repeats. Fifteen static-default pods, nine intent-only pods, and fifteen context-aware pods retained FailedScheduling evidence, with median queued Pending time of 22 seconds for each method. These are request-reservation observations under the fixed 20-second hold.
 
-## Limits
+The exact capacity batch generator is not present in evaluated commit `39b6973`; only its plan, nine immutable batch records, per-pod outcomes, and environment record are retained. The observation is therefore descriptive operational evidence, not a fully reproducible density result, and must not be generalized to production cluster density.
 
-The standard-library workloads are short and small relative to their declared dataset hints. Results apply only to this benchmark, image, profile table, and local single-node cluster. No history-aware or GPU evaluation was performed. Metrics Server verified pod telemetry; precise peaks use in-container cgroup-v2 observations.
+## Measurement limits
 
-Raw inputs: `results/cluster/raw/`. Every CSV row contains its supporting run IDs.
+The standard-library workloads are short and small relative to their declared dataset hints. Results apply only to this benchmark, image, profile table, and local single-node cluster. No history-aware or GPU evaluation was performed. Metrics Server availability was verified by a documented probe, but it captured zero per-job snapshots for the 288 short ground-truth/comparative pods. Reported precise peaks come from in-container cgroup-v2 counters; 202 jobs completed before one 10ms periodic sample and rely on the final CPU delta and `memory.peak` read.
+
+Raw inputs: `results/cluster/raw/`. `python -m cluster_evaluation.validate_artifacts` reconciles every retained plan, record, sidecar, resource mapping, and supporting path. Every derived CSV row contains supporting run IDs.

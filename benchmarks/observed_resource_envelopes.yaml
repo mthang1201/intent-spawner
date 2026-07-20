@@ -1,281 +1,413 @@
-schema_version: 1.0.0
+schema_version: 1.1.0
 evaluated_git_commit: 39b69731a9aeaa85247c01e946e26656beae6e64
 derivation: CLUSTER_EXPERIMENT_PROTOCOL.md preregistered reliability/time/waste rule
+  with the final-audit timestamp-resolution guard
 workloads:
 - workload_id: boundary_above_0_5_conflicting
   smallest_reliable_profile: small
   acceptable_profiles:
   - small
   manifest_expectation_status: not_operationally_grounded; excluded from derivation
+  time_measurement_status: Kubernetes creation/termination timestamps have one-second
+    resolution; the audit requires an observed delta greater than two seconds before
+    the preregistered 20% speed branch can accept a larger profile
   profiles:
     small:
       reliable: true
       tts: 1.0
+      benchmark_runtime: 0.098448
       waste: 0.934811
       run_ids:
       - ground-truth-39b6973-seed20260720-profile_sweep-boundary_above_0_5_conflicting-r00-small
       - ground-truth-39b6973-seed20260720-profile_sweep-boundary_above_0_5_conflicting-r01-small
       - ground-truth-39b6973-seed20260720-profile_sweep-boundary_above_0_5_conflicting-r02-small
+      time_improvement_fraction: 0.0
+      time_acceptance_measurement_adequate: false
+      acceptance_basis: smallest_reliable_profile
     medium:
       reliable: true
       tts: 1.0
+      benchmark_runtime: 0.050075
       waste: 0.976418
       run_ids:
       - ground-truth-39b6973-seed20260720-profile_sweep-boundary_above_0_5_conflicting-r00-medium
       - ground-truth-39b6973-seed20260720-profile_sweep-boundary_above_0_5_conflicting-r01-medium
       - ground-truth-39b6973-seed20260720-profile_sweep-boundary_above_0_5_conflicting-r02-medium
+      time_improvement_fraction: 0.0
+      time_acceptance_measurement_adequate: false
+      acceptance_basis: over_reserved
     large:
       reliable: true
       tts: 1.0
+      benchmark_runtime: 0.047455
       waste: 0.98945
       run_ids:
       - ground-truth-39b6973-seed20260720-profile_sweep-boundary_above_0_5_conflicting-r02-large
       - ground-truth-39b6973-seed20260720-profile_sweep-boundary_above_0_5_conflicting-r01-large
       - ground-truth-39b6973-seed20260720-profile_sweep-boundary_above_0_5_conflicting-r00-large
+      time_improvement_fraction: 0.0
+      time_acceptance_measurement_adequate: false
+      acceptance_basis: over_reserved
 - workload_id: boundary_below_0_5_ambiguous
   smallest_reliable_profile: small
   acceptable_profiles:
   - small
-  - medium
   manifest_expectation_status: not_operationally_grounded; excluded from derivation
+  time_measurement_status: Kubernetes creation/termination timestamps have one-second
+    resolution; the audit requires an observed delta greater than two seconds before
+    the preregistered 20% speed branch can accept a larger profile
   profiles:
     small:
       reliable: true
       tts: 1.0
+      benchmark_runtime: 0.002584
       waste: 0.934668
       run_ids:
       - ground-truth-39b6973-seed20260720-profile_sweep-boundary_below_0_5_ambiguous-r02-small
       - ground-truth-39b6973-seed20260720-profile_sweep-boundary_below_0_5_ambiguous-r00-small
       - ground-truth-39b6973-seed20260720-profile_sweep-boundary_below_0_5_ambiguous-r01-small
+      time_improvement_fraction: 0.0
+      time_acceptance_measurement_adequate: false
+      acceptance_basis: smallest_reliable_profile
     medium:
       reliable: true
       tts: 0.0
+      benchmark_runtime: 0.002549
       waste: 0.978794
       run_ids:
       - ground-truth-39b6973-seed20260720-profile_sweep-boundary_below_0_5_ambiguous-r00-medium
       - ground-truth-39b6973-seed20260720-profile_sweep-boundary_below_0_5_ambiguous-r02-medium
       - ground-truth-39b6973-seed20260720-profile_sweep-boundary_below_0_5_ambiguous-r01-medium
+      time_improvement_fraction: 1.0
+      time_acceptance_measurement_adequate: false
+      acceptance_basis: over_reserved
     large:
       reliable: true
       tts: 1.0
+      benchmark_runtime: 0.002447
       waste: 0.989039
       run_ids:
       - ground-truth-39b6973-seed20260720-profile_sweep-boundary_below_0_5_ambiguous-r01-large
       - ground-truth-39b6973-seed20260720-profile_sweep-boundary_below_0_5_ambiguous-r02-large
       - ground-truth-39b6973-seed20260720-profile_sweep-boundary_below_0_5_ambiguous-r00-large
+      time_improvement_fraction: 0.0
+      time_acceptance_measurement_adequate: false
+      acceptance_basis: over_reserved
 - workload_id: data_dataframe_join_medium
   smallest_reliable_profile: small
   acceptable_profiles:
   - small
   manifest_expectation_status: not_operationally_grounded; excluded from derivation
+  time_measurement_status: Kubernetes creation/termination timestamps have one-second
+    resolution; the audit requires an observed delta greater than two seconds before
+    the preregistered 20% speed branch can accept a larger profile
   profiles:
     small:
       reliable: true
       tts: 1.0
+      benchmark_runtime: 0.003811
       waste: 0.937164
       run_ids:
       - ground-truth-39b6973-seed20260720-profile_sweep-data_dataframe_join_medium-r00-small
       - ground-truth-39b6973-seed20260720-profile_sweep-data_dataframe_join_medium-r02-small
       - ground-truth-39b6973-seed20260720-profile_sweep-data_dataframe_join_medium-r01-small
+      time_improvement_fraction: 0.0
+      time_acceptance_measurement_adequate: false
+      acceptance_basis: smallest_reliable_profile
     medium:
       reliable: true
       tts: 1.0
+      benchmark_runtime: 0.003798
       waste: 0.979391
       run_ids:
       - ground-truth-39b6973-seed20260720-profile_sweep-data_dataframe_join_medium-r02-medium
       - ground-truth-39b6973-seed20260720-profile_sweep-data_dataframe_join_medium-r01-medium
       - ground-truth-39b6973-seed20260720-profile_sweep-data_dataframe_join_medium-r00-medium
+      time_improvement_fraction: 0.0
+      time_acceptance_measurement_adequate: false
+      acceptance_basis: over_reserved
     large:
       reliable: true
       tts: 1.0
+      benchmark_runtime: 0.003514
       waste: 0.989341
       run_ids:
       - ground-truth-39b6973-seed20260720-profile_sweep-data_dataframe_join_medium-r01-large
       - ground-truth-39b6973-seed20260720-profile_sweep-data_dataframe_join_medium-r00-large
       - ground-truth-39b6973-seed20260720-profile_sweep-data_dataframe_join_medium-r02-large
+      time_improvement_fraction: 0.0
+      time_acceptance_measurement_adequate: false
+      acceptance_basis: over_reserved
 - workload_id: data_large_aggregation
   smallest_reliable_profile: small
   acceptable_profiles:
   - small
-  - medium
   manifest_expectation_status: not_operationally_grounded; excluded from derivation
+  time_measurement_status: Kubernetes creation/termination timestamps have one-second
+    resolution; the audit requires an observed delta greater than two seconds before
+    the preregistered 20% speed branch can accept a larger profile
   profiles:
     small:
       reliable: true
       tts: 1.0
+      benchmark_runtime: 0.00529
       waste: 0.935098
       run_ids:
       - ground-truth-39b6973-seed20260720-profile_sweep-data_large_aggregation-r02-small
       - ground-truth-39b6973-seed20260720-profile_sweep-data_large_aggregation-r01-small
       - ground-truth-39b6973-seed20260720-profile_sweep-data_large_aggregation-r00-small
+      time_improvement_fraction: 0.0
+      time_acceptance_measurement_adequate: false
+      acceptance_basis: smallest_reliable_profile
     medium:
       reliable: true
       tts: 0.0
+      benchmark_runtime: 0.006392
       waste: 0.978719
       run_ids:
       - ground-truth-39b6973-seed20260720-profile_sweep-data_large_aggregation-r02-medium
       - ground-truth-39b6973-seed20260720-profile_sweep-data_large_aggregation-r00-medium
       - ground-truth-39b6973-seed20260720-profile_sweep-data_large_aggregation-r01-medium
+      time_improvement_fraction: 1.0
+      time_acceptance_measurement_adequate: false
+      acceptance_basis: over_reserved
     large:
       reliable: true
       tts: 1.0
+      benchmark_runtime: 0.006814
       waste: 0.989178
       run_ids:
       - ground-truth-39b6973-seed20260720-profile_sweep-data_large_aggregation-r02-large
       - ground-truth-39b6973-seed20260720-profile_sweep-data_large_aggregation-r00-large
       - ground-truth-39b6973-seed20260720-profile_sweep-data_large_aggregation-r01-large
+      time_improvement_fraction: 0.0
+      time_acceptance_measurement_adequate: false
+      acceptance_basis: over_reserved
 - workload_id: data_pandas_read_transform
   smallest_reliable_profile: small
   acceptable_profiles:
   - small
-  - medium
   manifest_expectation_status: not_operationally_grounded; excluded from derivation
+  time_measurement_status: Kubernetes creation/termination timestamps have one-second
+    resolution; the audit requires an observed delta greater than two seconds before
+    the preregistered 20% speed branch can accept a larger profile
   profiles:
     small:
       reliable: true
       tts: 1.0
+      benchmark_runtime: 0.011021
       waste: 0.936205
       run_ids:
       - ground-truth-39b6973-seed20260720-profile_sweep-data_pandas_read_transform-r00-small
       - ground-truth-39b6973-seed20260720-profile_sweep-data_pandas_read_transform-r01-small
       - ground-truth-39b6973-seed20260720-profile_sweep-data_pandas_read_transform-r02-small
+      time_improvement_fraction: 0.0
+      time_acceptance_measurement_adequate: false
+      acceptance_basis: smallest_reliable_profile
     medium:
       reliable: true
       tts: 0.0
+      benchmark_runtime: 0.01367
       waste: 0.97875
       run_ids:
       - ground-truth-39b6973-seed20260720-profile_sweep-data_pandas_read_transform-r01-medium
       - ground-truth-39b6973-seed20260720-profile_sweep-data_pandas_read_transform-r00-medium
       - ground-truth-39b6973-seed20260720-profile_sweep-data_pandas_read_transform-r02-medium
+      time_improvement_fraction: 1.0
+      time_acceptance_measurement_adequate: false
+      acceptance_basis: over_reserved
     large:
       reliable: true
       tts: 1.0
+      benchmark_runtime: 0.011279
       waste: 0.989474
       run_ids:
       - ground-truth-39b6973-seed20260720-profile_sweep-data_pandas_read_transform-r02-large
       - ground-truth-39b6973-seed20260720-profile_sweep-data_pandas_read_transform-r00-large
       - ground-truth-39b6973-seed20260720-profile_sweep-data_pandas_read_transform-r01-large
+      time_improvement_fraction: 0.0
+      time_acceptance_measurement_adequate: false
+      acceptance_basis: over_reserved
 - workload_id: light_basic_python
   smallest_reliable_profile: small
   acceptable_profiles:
   - small
   manifest_expectation_status: not_operationally_grounded; excluded from derivation
+  time_measurement_status: Kubernetes creation/termination timestamps have one-second
+    resolution; the audit requires an observed delta greater than two seconds before
+    the preregistered 20% speed branch can accept a larger profile
   profiles:
     small:
       reliable: true
       tts: 1.0
+      benchmark_runtime: 0.001095
       waste: 0.935611
       run_ids:
       - ground-truth-39b6973-seed20260720-profile_sweep-light_basic_python-r01-small
       - ground-truth-39b6973-seed20260720-profile_sweep-light_basic_python-r02-small
       - ground-truth-39b6973-seed20260720-profile_sweep-light_basic_python-r00-small
+      time_improvement_fraction: 0.0
+      time_acceptance_measurement_adequate: false
+      acceptance_basis: smallest_reliable_profile
     medium:
       reliable: true
       tts: 1.0
+      benchmark_runtime: 0.000915
       waste: 0.978755
       run_ids:
       - ground-truth-39b6973-seed20260720-profile_sweep-light_basic_python-r02-medium
       - ground-truth-39b6973-seed20260720-profile_sweep-light_basic_python-r01-medium
       - ground-truth-39b6973-seed20260720-profile_sweep-light_basic_python-r00-medium
+      time_improvement_fraction: 0.0
+      time_acceptance_measurement_adequate: false
+      acceptance_basis: over_reserved
     large:
       reliable: true
       tts: 1.0
+      benchmark_runtime: 0.000959
       waste: 0.989333
       run_ids:
       - ground-truth-39b6973-seed20260720-profile_sweep-light_basic_python-r01-large
       - ground-truth-39b6973-seed20260720-profile_sweep-light_basic_python-r02-large
       - ground-truth-39b6973-seed20260720-profile_sweep-light_basic_python-r00-large
+      time_improvement_fraction: 0.0
+      time_acceptance_measurement_adequate: false
+      acceptance_basis: over_reserved
 - workload_id: light_small_csv_read
   smallest_reliable_profile: small
   acceptable_profiles:
   - small
-  - large
   manifest_expectation_status: not_operationally_grounded; excluded from derivation
+  time_measurement_status: Kubernetes creation/termination timestamps have one-second
+    resolution; the audit requires an observed delta greater than two seconds before
+    the preregistered 20% speed branch can accept a larger profile
   profiles:
     small:
       reliable: true
       tts: 1.0
+      benchmark_runtime: 0.005357
       waste: 0.93723
       run_ids:
       - ground-truth-39b6973-seed20260720-profile_sweep-light_small_csv_read-r02-small
       - ground-truth-39b6973-seed20260720-profile_sweep-light_small_csv_read-r00-small
       - ground-truth-39b6973-seed20260720-profile_sweep-light_small_csv_read-r01-small
+      time_improvement_fraction: 0.0
+      time_acceptance_measurement_adequate: false
+      acceptance_basis: smallest_reliable_profile
     medium:
       reliable: true
       tts: 1.0
+      benchmark_runtime: 0.005075
       waste: 0.978867
       run_ids:
       - ground-truth-39b6973-seed20260720-profile_sweep-light_small_csv_read-r02-medium
       - ground-truth-39b6973-seed20260720-profile_sweep-light_small_csv_read-r01-medium
       - ground-truth-39b6973-seed20260720-profile_sweep-light_small_csv_read-r00-medium
+      time_improvement_fraction: 0.0
+      time_acceptance_measurement_adequate: false
+      acceptance_basis: over_reserved
     large:
       reliable: true
       tts: 0.0
+      benchmark_runtime: 0.004157
       waste: 0.989557
       run_ids:
       - ground-truth-39b6973-seed20260720-profile_sweep-light_small_csv_read-r00-large
       - ground-truth-39b6973-seed20260720-profile_sweep-light_small_csv_read-r01-large
       - ground-truth-39b6973-seed20260720-profile_sweep-light_small_csv_read-r02-large
+      time_improvement_fraction: 1.0
+      time_acceptance_measurement_adequate: false
+      acceptance_basis: over_reserved
 - workload_id: light_visual_aggregation
   smallest_reliable_profile: small
   acceptable_profiles:
   - small
   manifest_expectation_status: not_operationally_grounded; excluded from derivation
+  time_measurement_status: Kubernetes creation/termination timestamps have one-second
+    resolution; the audit requires an observed delta greater than two seconds before
+    the preregistered 20% speed branch can accept a larger profile
   profiles:
     small:
       reliable: true
       tts: 1.0
+      benchmark_runtime: 0.001787
       waste: 0.935545
       run_ids:
       - ground-truth-39b6973-seed20260720-profile_sweep-light_visual_aggregation-r02-small
       - ground-truth-39b6973-seed20260720-profile_sweep-light_visual_aggregation-r01-small
       - ground-truth-39b6973-seed20260720-profile_sweep-light_visual_aggregation-r00-small
+      time_improvement_fraction: 0.0
+      time_acceptance_measurement_adequate: false
+      acceptance_basis: smallest_reliable_profile
     medium:
       reliable: true
       tts: 1.0
+      benchmark_runtime: 0.001582
       waste: 0.978452
       run_ids:
       - ground-truth-39b6973-seed20260720-profile_sweep-light_visual_aggregation-r02-medium
       - ground-truth-39b6973-seed20260720-profile_sweep-light_visual_aggregation-r01-medium
       - ground-truth-39b6973-seed20260720-profile_sweep-light_visual_aggregation-r00-medium
+      time_improvement_fraction: 0.0
+      time_acceptance_measurement_adequate: false
+      acceptance_basis: over_reserved
     large:
       reliable: true
       tts: 1.0
+      benchmark_runtime: 0.002025
       waste: 0.989141
       run_ids:
       - ground-truth-39b6973-seed20260720-profile_sweep-light_visual_aggregation-r01-large
       - ground-truth-39b6973-seed20260720-profile_sweep-light_visual_aggregation-r00-large
       - ground-truth-39b6973-seed20260720-profile_sweep-light_visual_aggregation-r02-large
+      time_improvement_fraction: 0.0
+      time_acceptance_measurement_adequate: false
+      acceptance_basis: over_reserved
 - workload_id: ml_sklearn_fit_medium
   smallest_reliable_profile: small
   acceptable_profiles:
   - small
   manifest_expectation_status: not_operationally_grounded; excluded from derivation
+  time_measurement_status: Kubernetes creation/termination timestamps have one-second
+    resolution; the audit requires an observed delta greater than two seconds before
+    the preregistered 20% speed branch can accept a larger profile
   profiles:
     small:
       reliable: true
       tts: 1.0
+      benchmark_runtime: 0.313186
       waste: 0.93707
       run_ids:
       - ground-truth-39b6973-seed20260720-profile_sweep-ml_sklearn_fit_medium-r02-small
       - ground-truth-39b6973-seed20260720-profile_sweep-ml_sklearn_fit_medium-r00-small
       - ground-truth-39b6973-seed20260720-profile_sweep-ml_sklearn_fit_medium-r01-small
+      time_improvement_fraction: 0.0
+      time_acceptance_measurement_adequate: false
+      acceptance_basis: smallest_reliable_profile
     medium:
       reliable: true
       tts: 1.0
+      benchmark_runtime: 0.140582
       waste: 0.978847
       run_ids:
       - ground-truth-39b6973-seed20260720-profile_sweep-ml_sklearn_fit_medium-r02-medium
       - ground-truth-39b6973-seed20260720-profile_sweep-ml_sklearn_fit_medium-r01-medium
       - ground-truth-39b6973-seed20260720-profile_sweep-ml_sklearn_fit_medium-r00-medium
+      time_improvement_fraction: 0.0
+      time_acceptance_measurement_adequate: false
+      acceptance_basis: over_reserved
     large:
       reliable: true
       tts: 1.0
+      benchmark_runtime: 0.148717
       waste: 0.989572
       run_ids:
       - ground-truth-39b6973-seed20260720-profile_sweep-ml_sklearn_fit_medium-r00-large
       - ground-truth-39b6973-seed20260720-profile_sweep-ml_sklearn_fit_medium-r01-large
       - ground-truth-39b6973-seed20260720-profile_sweep-ml_sklearn_fit_medium-r02-large
+      time_improvement_fraction: 0.0
+      time_acceptance_measurement_adequate: false
+      acceptance_basis: over_reserved
 - workload_id: ml_sklearn_fit_memory_pressure
   smallest_reliable_profile: small
   acceptable_profiles:
@@ -283,89 +415,133 @@ workloads:
   - medium
   - large
   manifest_expectation_status: not_operationally_grounded; excluded from derivation
+  time_measurement_status: Kubernetes creation/termination timestamps have one-second
+    resolution; the audit requires an observed delta greater than two seconds before
+    the preregistered 20% speed branch can accept a larger profile
   profiles:
     small:
       reliable: true
       tts: 7.0
+      benchmark_runtime: 5.621342
       waste: 0.14916
       run_ids:
       - ground-truth-39b6973-seed20260720-profile_sweep-ml_sklearn_fit_memory_pressure-r00-small
       - ground-truth-39b6973-seed20260720-profile_sweep-ml_sklearn_fit_memory_pressure-r02-small
       - ground-truth-39b6973-seed20260720-profile_sweep-ml_sklearn_fit_memory_pressure-r01-small
+      time_improvement_fraction: 0.0
+      time_acceptance_measurement_adequate: false
+      acceptance_basis: smallest_reliable_profile
     medium:
       reliable: true
       tts: 3.0
+      benchmark_runtime: 2.285185
       waste: 0.716306
       run_ids:
       - ground-truth-39b6973-seed20260720-profile_sweep-ml_sklearn_fit_memory_pressure-r02-medium
       - ground-truth-39b6973-seed20260720-profile_sweep-ml_sklearn_fit_memory_pressure-r00-medium
       - ground-truth-39b6973-seed20260720-profile_sweep-ml_sklearn_fit_memory_pressure-r01-medium
+      time_improvement_fraction: 0.571429
+      time_acceptance_measurement_adequate: true
+      acceptance_basis: time
     large:
       reliable: true
       tts: 3.0
+      benchmark_runtime: 2.930414
       waste: 0.858017
       run_ids:
       - ground-truth-39b6973-seed20260720-profile_sweep-ml_sklearn_fit_memory_pressure-r00-large
       - ground-truth-39b6973-seed20260720-profile_sweep-ml_sklearn_fit_memory_pressure-r01-large
       - ground-truth-39b6973-seed20260720-profile_sweep-ml_sklearn_fit_memory_pressure-r02-large
+      time_improvement_fraction: 0.571429
+      time_acceptance_measurement_adequate: true
+      acceptance_basis: time
 - workload_id: ml_sklearn_fit_small
   smallest_reliable_profile: small
   acceptable_profiles:
   - small
-  - large
   manifest_expectation_status: not_operationally_grounded; excluded from derivation
+  time_measurement_status: Kubernetes creation/termination timestamps have one-second
+    resolution; the audit requires an observed delta greater than two seconds before
+    the preregistered 20% speed branch can accept a larger profile
   profiles:
     small:
       reliable: true
       tts: 1.0
+      benchmark_runtime: 0.004633
       waste: 0.937164
       run_ids:
       - ground-truth-39b6973-seed20260720-profile_sweep-ml_sklearn_fit_small-r00-small
       - ground-truth-39b6973-seed20260720-profile_sweep-ml_sklearn_fit_small-r01-small
       - ground-truth-39b6973-seed20260720-profile_sweep-ml_sklearn_fit_small-r02-small
+      time_improvement_fraction: 0.0
+      time_acceptance_measurement_adequate: false
+      acceptance_basis: smallest_reliable_profile
     medium:
       reliable: true
       tts: 1.0
+      benchmark_runtime: 0.006125
       waste: 0.978425
       run_ids:
       - ground-truth-39b6973-seed20260720-profile_sweep-ml_sklearn_fit_small-r01-medium
       - ground-truth-39b6973-seed20260720-profile_sweep-ml_sklearn_fit_small-r02-medium
       - ground-truth-39b6973-seed20260720-profile_sweep-ml_sklearn_fit_small-r00-medium
+      time_improvement_fraction: 0.0
+      time_acceptance_measurement_adequate: false
+      acceptance_basis: over_reserved
     large:
       reliable: true
       tts: 0.0
+      benchmark_runtime: 0.00657
       waste: 0.989589
       run_ids:
       - ground-truth-39b6973-seed20260720-profile_sweep-ml_sklearn_fit_small-r00-large
       - ground-truth-39b6973-seed20260720-profile_sweep-ml_sklearn_fit_small-r01-large
       - ground-truth-39b6973-seed20260720-profile_sweep-ml_sklearn_fit_small-r02-large
+      time_improvement_fraction: 1.0
+      time_acceptance_measurement_adequate: false
+      acceptance_basis: over_reserved
 - workload_id: policy_gpu_disallowed
   smallest_reliable_profile: small
   acceptable_profiles:
   - small
   manifest_expectation_status: not_operationally_grounded; excluded from derivation
+  time_measurement_status: Kubernetes creation/termination timestamps have one-second
+    resolution; the audit requires an observed delta greater than two seconds before
+    the preregistered 20% speed branch can accept a larger profile
   profiles:
     small:
       reliable: true
       tts: 1.0
+      benchmark_runtime: 0.000421
       waste: 0.936779
       run_ids:
       - ground-truth-39b6973-seed20260720-profile_sweep-policy_gpu_disallowed-r02-small
       - ground-truth-39b6973-seed20260720-profile_sweep-policy_gpu_disallowed-r00-small
       - ground-truth-39b6973-seed20260720-profile_sweep-policy_gpu_disallowed-r01-small
+      time_improvement_fraction: 0.0
+      time_acceptance_measurement_adequate: false
+      acceptance_basis: smallest_reliable_profile
     medium:
       reliable: true
       tts: 1.0
+      benchmark_runtime: 0.000437
       waste: 0.978959
       run_ids:
       - ground-truth-39b6973-seed20260720-profile_sweep-policy_gpu_disallowed-r00-medium
       - ground-truth-39b6973-seed20260720-profile_sweep-policy_gpu_disallowed-r01-medium
       - ground-truth-39b6973-seed20260720-profile_sweep-policy_gpu_disallowed-r02-medium
+      time_improvement_fraction: 0.0
+      time_acceptance_measurement_adequate: false
+      acceptance_basis: over_reserved
     large:
       reliable: true
       tts: 1.0
+      benchmark_runtime: 0.00038
       waste: 0.989624
       run_ids:
       - ground-truth-39b6973-seed20260720-profile_sweep-policy_gpu_disallowed-r00-large
       - ground-truth-39b6973-seed20260720-profile_sweep-policy_gpu_disallowed-r01-large
       - ground-truth-39b6973-seed20260720-profile_sweep-policy_gpu_disallowed-r02-large
+      time_improvement_fraction: 0.0
+      time_acceptance_measurement_adequate: false
+      acceptance_basis: over_reserved
