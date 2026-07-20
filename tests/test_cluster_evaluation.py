@@ -90,3 +90,10 @@ def test_cpu_quantity_parser_handles_metrics_api_units():
     assert _parse_cpu_quantity_m("500000n") == 0.5
     assert _parse_cpu_quantity_m("2500u") == 2.5
     assert _parse_cpu_quantity_m("1") == 1000
+
+
+def test_runner_source_does_not_allowlist_machine_identifiers():
+    source = __import__("inspect").getsource(__import__("cluster_evaluation.runner", fromlist=["x"])._preflight)
+    assert "bootID" not in source
+    assert "machineID" not in source
+    assert "systemUUID" not in source

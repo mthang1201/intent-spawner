@@ -436,6 +436,13 @@ def _preflight(image: str) -> dict[str, Any]:
     node = _get_json(["get", "node", REQUIRED_CONTEXT])
     if node is None:
         raise RuntimeError("evaluation node is unavailable")
+    node_info = node["status"]["nodeInfo"]
+    metrics_deployment = _get_json(["get", "deployment", "metrics-server", "-n", "kube-system"])
+    metrics_image = None
+    if metrics_deployment is not None:
+        containers = metrics_deployment.get("spec", {}).get("template", {}).get("spec", {}).get("containers", [])
+        if containers:
+            metrics_image = containers[0].get("image")
     return {
         "captured_at": _utc_now(),
         "required_context": REQUIRED_CONTEXT,
@@ -452,7 +459,18 @@ def _preflight(image: str) -> dict[str, Any]:
         ),
         "node_capacity": node["status"]["capacity"],
         "node_allocatable": node["status"]["allocatable"],
-        "node_info": node["status"]["nodeInfo"],
+        "node_info": {
+            key: node_info.get(key)
+            for key in (
+                "architecture",
+                "containerRuntimeVersion",
+                "kernelVersion",
+                "kubeletVersion",
+                "operatingSystem",
+                "osImage",
+            )
+        },
+        "metrics_server_image": metrics_image,
     }
 
 
