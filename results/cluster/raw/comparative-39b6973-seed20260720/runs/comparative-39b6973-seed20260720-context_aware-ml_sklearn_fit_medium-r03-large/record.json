@@ -1,0 +1,172 @@
+{
+  "applied_profile": "large",
+  "benchmark_runtime_seconds": 0.192695,
+  "cgroup_sample_count": 6,
+  "cgroup_sample_interval_seconds": 0.01,
+  "cleanup_status": "completed",
+  "cluster_schema_version": "1.0.0",
+  "container_image": "intent-spawner-cluster-eval:39b6973",
+  "container_image_id": "sha256:7891d2193ce73874c2fd48c8109d971a12252efa6b0e6e2ca709a9dc7e583ded",
+  "context_signal_summary": {
+    "dataset_size_signal_used": true,
+    "detected_terms": [
+      "pandas",
+      "fit",
+      "sklearn",
+      "model"
+    ],
+    "hint_count": 3,
+    "raw_context_available": true,
+    "raw_context_stored": false
+  },
+  "cpu_limit_m": 2000,
+  "cpu_request_m": 1500,
+  "environment_id": "minikube-intent-spawner-eval",
+  "exit_code": 0,
+  "exit_reason": "Completed",
+  "experiment_kind": "comparative",
+  "git_commit": "39b69731a9aeaa85247c01e946e26656beae6e64",
+  "kubernetes_evidence": {
+    "annotations": {
+      "z2jh-context-demo.local/applied-profile": "large",
+      "z2jh-context-demo.local/method": "context_aware",
+      "z2jh-context-demo.local/run-id": "comparative-39b6973-seed20260720-context_aware-ml_sklearn_fit_medium-r03-large"
+    },
+    "environment_variables": {
+      "CONTEXT_DATASET_SIZE_GB": "1.4",
+      "RECOMMENDED_PROFILE": "large"
+    },
+    "events": [
+      {
+        "count": 1,
+        "first_timestamp": "2026-07-20T05:00:32Z",
+        "last_timestamp": "2026-07-20T05:00:32Z",
+        "message": "Successfully assigned z2jh-context-demo/ce-ffa62f23b3a6a8831a2f to intent-spawner-eval",
+        "reason": "Scheduled",
+        "type": "Normal"
+      },
+      {
+        "count": 1,
+        "first_timestamp": "2026-07-20T05:00:33Z",
+        "last_timestamp": "2026-07-20T05:00:33Z",
+        "message": "Container image \"intent-spawner-cluster-eval:39b6973\" already present on machine",
+        "reason": "Pulled",
+        "type": "Normal"
+      },
+      {
+        "count": 1,
+        "first_timestamp": "2026-07-20T05:00:33Z",
+        "last_timestamp": "2026-07-20T05:00:33Z",
+        "message": "Created container: benchmark",
+        "reason": "Created",
+        "type": "Normal"
+      },
+      {
+        "count": 1,
+        "first_timestamp": "2026-07-20T05:00:33Z",
+        "last_timestamp": "2026-07-20T05:00:33Z",
+        "message": "Started container benchmark",
+        "reason": "Started",
+        "type": "Normal"
+      }
+    ],
+    "namespace": "z2jh-context-demo",
+    "oom_killed": false,
+    "phase": "Succeeded",
+    "phase_transitions": [
+      {
+        "condition": "PodReadyToStartContainers",
+        "last_transition_time": "2026-07-20T05:00:35Z",
+        "message": null,
+        "reason": null,
+        "status": "False"
+      },
+      {
+        "condition": "Initialized",
+        "last_transition_time": "2026-07-20T05:00:32Z",
+        "message": null,
+        "reason": "PodCompleted",
+        "status": "True"
+      },
+      {
+        "condition": "Ready",
+        "last_transition_time": "2026-07-20T05:00:34Z",
+        "message": null,
+        "reason": "PodCompleted",
+        "status": "False"
+      },
+      {
+        "condition": "ContainersReady",
+        "last_transition_time": "2026-07-20T05:00:34Z",
+        "message": null,
+        "reason": "PodCompleted",
+        "status": "False"
+      },
+      {
+        "condition": "PodScheduled",
+        "last_transition_time": "2026-07-20T05:00:32Z",
+        "message": null,
+        "reason": null,
+        "status": "True"
+      }
+    ],
+    "pod_name": "ce-ffa62f23b3a6a8831a2f",
+    "pod_pending_duration_seconds": 0.0,
+    "requests_limits": {
+      "cpu_limit_m": 2000,
+      "cpu_request_m": 1500,
+      "memory_limit_mi": 1907,
+      "memory_request_mi": 1464
+    },
+    "restart_count": 0,
+    "scheduling_or_pending_reasons": [
+      "PodCompleted",
+      "PodCompleted"
+    ],
+    "termination_exit_code": 0,
+    "termination_reason": "Completed",
+    "time_to_success_seconds": 1.0,
+    "workload_runtime_seconds": 0.0
+  },
+  "memory_limit_mi": 1907,
+  "memory_request_mi": 1464,
+  "memory_request_to_peak_ratio": 93.624097,
+  "memory_reservation_waste_ratio": 0.989319,
+  "method": "context_aware",
+  "metrics_server_peak_cpu_m": null,
+  "metrics_server_peak_memory_mi": null,
+  "metrics_server_snapshot_count": 0,
+  "oom_killed": false,
+  "peak_cpu_m": 1173.959,
+  "peak_memory_mi": 15.637,
+  "pending_reasons": [
+    "PodCompleted",
+    "PodCompleted"
+  ],
+  "plan_index": 80,
+  "pod_pending_duration_seconds": 0.0,
+  "policy_warnings": [],
+  "random_seed": 202607203105,
+  "recommendation_reasons": [
+    "dataset size >= 0.5GB",
+    "data-processing context detected: pandas, csv",
+    "training/modeling context detected: train, fit, .fit(, sklearn"
+  ],
+  "recommended_profile": "large",
+  "repeat_index": 3,
+  "resource_measurement_source": "cgroup_v2_in_container",
+  "restart_or_respawn_count": 0,
+  "run_id": "comparative-39b6973-seed20260720-context_aware-ml_sklearn_fit_medium-r03-large",
+  "success": true,
+  "supporting_log_paths": [
+    "results/cluster/raw/comparative-39b6973-seed20260720/runs/comparative-39b6973-seed20260720-context_aware-ml_sklearn_fit_medium-r03-large/pod.log",
+    "results/cluster/raw/comparative-39b6973-seed20260720/runs/comparative-39b6973-seed20260720-context_aware-ml_sklearn_fit_medium-r03-large/pod-evidence.json",
+    "results/cluster/raw/comparative-39b6973-seed20260720/runs/comparative-39b6973-seed20260720-context_aware-ml_sklearn_fit_medium-r03-large/metrics-server-snapshots.json"
+  ],
+  "time_to_success_seconds": 1.0,
+  "timeout": false,
+  "timestamp_created": "2026-07-20T05:00:32.743Z",
+  "timestamp_recorded": "2026-07-20T05:00:35.838Z",
+  "workload_id": "ml_sklearn_fit_medium",
+  "workload_runtime_seconds": 0.0
+}

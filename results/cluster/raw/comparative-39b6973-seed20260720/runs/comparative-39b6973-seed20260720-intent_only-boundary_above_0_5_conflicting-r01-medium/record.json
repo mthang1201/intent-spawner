@@ -1,0 +1,165 @@
+{
+  "applied_profile": "medium",
+  "benchmark_runtime_seconds": 0.060371,
+  "cgroup_sample_count": 2,
+  "cgroup_sample_interval_seconds": 0.01,
+  "cleanup_status": "completed",
+  "cluster_schema_version": "1.0.0",
+  "container_image": "intent-spawner-cluster-eval:39b6973",
+  "container_image_id": "sha256:7891d2193ce73874c2fd48c8109d971a12252efa6b0e6e2ca709a9dc7e583ded",
+  "context_signal_summary": {
+    "dataset_size_signal_used": false,
+    "detected_terms": [],
+    "hint_count": 0,
+    "raw_context_available": false,
+    "raw_context_stored": false
+  },
+  "cpu_limit_m": 1000,
+  "cpu_request_m": 500,
+  "environment_id": "minikube-intent-spawner-eval",
+  "exit_code": 0,
+  "exit_reason": "Completed",
+  "experiment_kind": "comparative",
+  "git_commit": "39b69731a9aeaa85247c01e946e26656beae6e64",
+  "kubernetes_evidence": {
+    "annotations": {
+      "z2jh-context-demo.local/applied-profile": "medium",
+      "z2jh-context-demo.local/method": "intent_only",
+      "z2jh-context-demo.local/run-id": "comparative-39b6973-seed20260720-intent_only-boundary_above_0_5_conflicting-r01-medium"
+    },
+    "environment_variables": {
+      "CONTEXT_DATASET_SIZE_GB": "0.51",
+      "RECOMMENDED_PROFILE": "medium"
+    },
+    "events": [
+      {
+        "count": 1,
+        "first_timestamp": "2026-07-20T05:03:08Z",
+        "last_timestamp": "2026-07-20T05:03:08Z",
+        "message": "Successfully assigned z2jh-context-demo/ce-d9859ba13db508aaddba to intent-spawner-eval",
+        "reason": "Scheduled",
+        "type": "Normal"
+      },
+      {
+        "count": 1,
+        "first_timestamp": "2026-07-20T05:03:09Z",
+        "last_timestamp": "2026-07-20T05:03:09Z",
+        "message": "Container image \"intent-spawner-cluster-eval:39b6973\" already present on machine",
+        "reason": "Pulled",
+        "type": "Normal"
+      },
+      {
+        "count": 1,
+        "first_timestamp": "2026-07-20T05:03:09Z",
+        "last_timestamp": "2026-07-20T05:03:09Z",
+        "message": "Created container: benchmark",
+        "reason": "Created",
+        "type": "Normal"
+      },
+      {
+        "count": 1,
+        "first_timestamp": "2026-07-20T05:03:09Z",
+        "last_timestamp": "2026-07-20T05:03:09Z",
+        "message": "Started container benchmark",
+        "reason": "Started",
+        "type": "Normal"
+      }
+    ],
+    "namespace": "z2jh-context-demo",
+    "oom_killed": false,
+    "phase": "Succeeded",
+    "phase_transitions": [
+      {
+        "condition": "PodReadyToStartContainers",
+        "last_transition_time": "2026-07-20T05:03:11Z",
+        "message": null,
+        "reason": null,
+        "status": "False"
+      },
+      {
+        "condition": "Initialized",
+        "last_transition_time": "2026-07-20T05:03:08Z",
+        "message": null,
+        "reason": "PodCompleted",
+        "status": "True"
+      },
+      {
+        "condition": "Ready",
+        "last_transition_time": "2026-07-20T05:03:10Z",
+        "message": null,
+        "reason": "PodCompleted",
+        "status": "False"
+      },
+      {
+        "condition": "ContainersReady",
+        "last_transition_time": "2026-07-20T05:03:10Z",
+        "message": null,
+        "reason": "PodCompleted",
+        "status": "False"
+      },
+      {
+        "condition": "PodScheduled",
+        "last_transition_time": "2026-07-20T05:03:08Z",
+        "message": null,
+        "reason": null,
+        "status": "True"
+      }
+    ],
+    "pod_name": "ce-d9859ba13db508aaddba",
+    "pod_pending_duration_seconds": 0.0,
+    "requests_limits": {
+      "cpu_limit_m": 1000,
+      "cpu_request_m": 500,
+      "memory_limit_mi": 953,
+      "memory_request_mi": 732
+    },
+    "restart_count": 0,
+    "scheduling_or_pending_reasons": [
+      "PodCompleted",
+      "PodCompleted"
+    ],
+    "termination_exit_code": 0,
+    "termination_reason": "Completed",
+    "time_to_success_seconds": 1.0,
+    "workload_runtime_seconds": 0.0
+  },
+  "memory_limit_mi": 953,
+  "memory_request_mi": 732,
+  "memory_request_to_peak_ratio": 46.361391,
+  "memory_reservation_waste_ratio": 0.97843,
+  "method": "intent_only",
+  "metrics_server_peak_cpu_m": null,
+  "metrics_server_peak_memory_mi": null,
+  "metrics_server_snapshot_count": 0,
+  "oom_killed": false,
+  "peak_cpu_m": 1013.277,
+  "peak_memory_mi": 15.789,
+  "pending_reasons": [
+    "PodCompleted",
+    "PodCompleted"
+  ],
+  "plan_index": 129,
+  "pod_pending_duration_seconds": 0.0,
+  "policy_warnings": [],
+  "random_seed": 202607205102,
+  "recommendation_reasons": [
+    "training/modeling context detected: train, model"
+  ],
+  "recommended_profile": "medium",
+  "repeat_index": 1,
+  "resource_measurement_source": "cgroup_v2_in_container",
+  "restart_or_respawn_count": 0,
+  "run_id": "comparative-39b6973-seed20260720-intent_only-boundary_above_0_5_conflicting-r01-medium",
+  "success": true,
+  "supporting_log_paths": [
+    "results/cluster/raw/comparative-39b6973-seed20260720/runs/comparative-39b6973-seed20260720-intent_only-boundary_above_0_5_conflicting-r01-medium/pod.log",
+    "results/cluster/raw/comparative-39b6973-seed20260720/runs/comparative-39b6973-seed20260720-intent_only-boundary_above_0_5_conflicting-r01-medium/pod-evidence.json",
+    "results/cluster/raw/comparative-39b6973-seed20260720/runs/comparative-39b6973-seed20260720-intent_only-boundary_above_0_5_conflicting-r01-medium/metrics-server-snapshots.json"
+  ],
+  "time_to_success_seconds": 1.0,
+  "timeout": false,
+  "timestamp_created": "2026-07-20T05:03:08.832Z",
+  "timestamp_recorded": "2026-07-20T05:03:11.894Z",
+  "workload_id": "boundary_above_0_5_conflicting",
+  "workload_runtime_seconds": 0.0
+}

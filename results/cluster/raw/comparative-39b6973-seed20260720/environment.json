@@ -1,0 +1,29 @@
+{
+  "captured_at": "2026-07-20T04:55:54.251Z",
+  "container_image": "intent-spawner-cluster-eval:39b6973",
+  "git_commit": "39b69731a9aeaa85247c01e946e26656beae6e64",
+  "git_dirty": false,
+  "metrics_server_image": "registry.k8s.io/metrics-server/metrics-server:v0.7.2@sha256:ffcb2bf004d6aa0a17d90e0247cf94f2865c8901dcab4427034c341951c239f9",
+  "namespace": "z2jh-context-demo",
+  "node_allocatable": {
+    "cpu": "6",
+    "ephemeral-storage": "64870340Ki",
+    "memory": "6088560Ki",
+    "pods": "110"
+  },
+  "node_capacity": {
+    "cpu": "8",
+    "ephemeral-storage": "64870340Ki",
+    "memory": "8185712Ki",
+    "pods": "110"
+  },
+  "node_info": {
+    "architecture": "arm64",
+    "containerRuntimeVersion": "containerd://1.7.27",
+    "kernelVersion": "7.0.5-orbstack-00330-ge3df4e19b0a0-dirty",
+    "kubeletVersion": "v1.33.1",
+    "operatingSystem": "linux",
+    "osImage": "Ubuntu 22.04.5 LTS"
+  },
+  "required_context": "intent-spawner-eval"
+}

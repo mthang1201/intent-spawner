@@ -1,0 +1,102 @@
+{
+  "annotations": {
+    "z2jh-context-demo.local/applied-profile": "large",
+    "z2jh-context-demo.local/method": "profile_sweep",
+    "z2jh-context-demo.local/run-id": "ground-truth-39b6973-seed20260720-profile_sweep-light_small_csv_read-r01-large"
+  },
+  "environment_variables": {
+    "CONTEXT_DATASET_SIZE_GB": "0.04",
+    "RECOMMENDED_PROFILE": "none"
+  },
+  "events": [
+    {
+      "count": 1,
+      "first_timestamp": "2026-07-20T04:52:04Z",
+      "last_timestamp": "2026-07-20T04:52:04Z",
+      "message": "Successfully assigned z2jh-context-demo/ce-e266b3f756b0a9c1e722 to intent-spawner-eval",
+      "reason": "Scheduled",
+      "type": "Normal"
+    },
+    {
+      "count": 1,
+      "first_timestamp": "2026-07-20T04:52:05Z",
+      "last_timestamp": "2026-07-20T04:52:05Z",
+      "message": "Container image \"intent-spawner-cluster-eval:39b6973\" already present on machine",
+      "reason": "Pulled",
+      "type": "Normal"
+    },
+    {
+      "count": 1,
+      "first_timestamp": "2026-07-20T04:52:05Z",
+      "last_timestamp": "2026-07-20T04:52:05Z",
+      "message": "Created container: benchmark",
+      "reason": "Created",
+      "type": "Normal"
+    },
+    {
+      "count": 1,
+      "first_timestamp": "2026-07-20T04:52:05Z",
+      "last_timestamp": "2026-07-20T04:52:05Z",
+      "message": "Started container benchmark",
+      "reason": "Started",
+      "type": "Normal"
+    }
+  ],
+  "namespace": "z2jh-context-demo",
+  "oom_killed": false,
+  "phase": "Succeeded",
+  "phase_transitions": [
+    {
+      "condition": "PodReadyToStartContainers",
+      "last_transition_time": "2026-07-20T04:52:07Z",
+      "message": null,
+      "reason": null,
+      "status": "False"
+    },
+    {
+      "condition": "Initialized",
+      "last_transition_time": "2026-07-20T04:52:04Z",
+      "message": null,
+      "reason": "PodCompleted",
+      "status": "True"
+    },
+    {
+      "condition": "Ready",
+      "last_transition_time": "2026-07-20T04:52:06Z",
+      "message": null,
+      "reason": "PodCompleted",
+      "status": "False"
+    },
+    {
+      "condition": "ContainersReady",
+      "last_transition_time": "2026-07-20T04:52:06Z",
+      "message": null,
+      "reason": "PodCompleted",
+      "status": "False"
+    },
+    {
+      "condition": "PodScheduled",
+      "last_transition_time": "2026-07-20T04:52:04Z",
+      "message": null,
+      "reason": null,
+      "status": "True"
+    }
+  ],
+  "pod_name": "ce-e266b3f756b0a9c1e722",
+  "pod_pending_duration_seconds": 0.0,
+  "requests_limits": {
+    "cpu_limit_m": 2000,
+    "cpu_request_m": 1500,
+    "memory_limit_mi": 1907,
+    "memory_request_mi": 1464
+  },
+  "restart_count": 0,
+  "scheduling_or_pending_reasons": [
+    "PodCompleted",
+    "PodCompleted"
+  ],
+  "termination_exit_code": 0,
+  "termination_reason": "Completed",
+  "time_to_success_seconds": 1.0,
+  "workload_runtime_seconds": 0.0
+}
