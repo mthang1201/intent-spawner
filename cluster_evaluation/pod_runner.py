@@ -58,18 +58,18 @@ class CgroupSampler:
         self._thread.join(timeout=max(1.0, self.interval_seconds * 4))
         stopped_at = time.monotonic()
         stopped_cpu_usec = _cpu_usage_usec()
+        full_window_average_cpu_m = None
         if (
             self._started_at is not None
             and self._started_cpu_usec is not None
             and stopped_cpu_usec is not None
             and stopped_at > self._started_at
         ):
-            full_window_cpu_m = (
+            full_window_average_cpu_m = (
                 ((stopped_cpu_usec - self._started_cpu_usec) / 1_000_000)
                 / (stopped_at - self._started_at)
                 * 1000
             )
-            self.peak_cpu_m = max(self.peak_cpu_m or 0.0, full_window_cpu_m)
         memory_peak = _read_int(CGROUP_ROOT / "memory.peak")
         if memory_peak is not None:
             self.peak_memory_bytes = max(self.peak_memory_bytes or 0, memory_peak)
@@ -78,6 +78,11 @@ class CgroupSampler:
             "sample_interval_seconds": self.interval_seconds,
             "sample_count": self.sample_count,
             "peak_cpu_m": None if self.peak_cpu_m is None else round(self.peak_cpu_m, 3),
+            "full_window_average_cpu_m": (
+                None
+                if full_window_average_cpu_m is None
+                else round(full_window_average_cpu_m, 3)
+            ),
             "peak_memory_mi": (
                 None
                 if self.peak_memory_bytes is None

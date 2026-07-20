@@ -58,9 +58,12 @@ Metrics Server snapshots are retained when its API reports a running pod.
 Because its scrape cadence can miss short jobs, it is not treated as a precise
 peak collector. Each benchmark container also samples its own cgroup-v2
 `cpu.stat` and `memory.current` every 10ms and reads `memory.peak` before exit.
-For jobs shorter than one interval, the start-to-finish cgroup CPU delta is the
-single sampling window, so a real observation is retained instead of a null or
-estimated value.
+For the historical evaluated corpus, jobs shorter than one interval stored the
+start-to-finish cgroup CPU delta in `peak_cpu_m`. The final audit determined
+that this is an average, not a peak: 202/288 records are affected and their CPU
+peak must be treated as missing. Current code stores that observation as
+`full_window_average_cpu_m` and leaves `peak_cpu_m` null unless at least one
+periodic sample exists.
 The cgroup is the Kubernetes container's resource-accounting boundary. Records
 identify the source and preserve nulls if these files are unavailable.
 

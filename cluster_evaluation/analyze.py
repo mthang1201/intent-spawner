@@ -467,7 +467,7 @@ def main() -> None:
             "",
             "## Measurement limits",
             "",
-            "The standard-library workloads are short and small relative to their declared dataset hints. Results apply only to this benchmark, image, profile table, and local single-node cluster. No history-aware or GPU evaluation was performed. Metrics Server availability was verified by a documented probe, but it captured zero per-job snapshots for the 288 short ground-truth/comparative pods. Reported precise peaks come from in-container cgroup-v2 counters; 202 jobs completed before one 10ms periodic sample and rely on the final CPU delta and `memory.peak` read.",
+            "The standard-library workloads are short and small relative to their declared dataset hints. Results apply only to this benchmark, image, profile table, and local single-node cluster. No history-aware or GPU evaluation was performed. Metrics Server availability was verified by a documented probe, but it captured zero per-job snapshots for the 288 short ground-truth/comparative pods. Memory peaks come from cgroup-v2 `memory.peak`. Only 86 jobs had at least one 10ms CPU sample. For the other 202, evaluated code stored the full-job CPU average in the historical `peak_cpu_m` field; those values must not be cited as CPU peaks. Current code preserves the average separately and leaves an unsampled peak missing.",
             "",
             "Raw inputs: `results/cluster/raw/`. `python -m cluster_evaluation.validate_artifacts` reconciles every retained plan, record, sidecar, resource mapping, and supporting path. Every derived CSV row contains supporting run IDs.",
         ]

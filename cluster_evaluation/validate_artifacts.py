@@ -186,6 +186,14 @@ def validate(
         "failed_pod_runs": sum(record.get("success") is not True for record in pod_records),
         "timed_out_pod_runs": sum(bool(record.get("timeout")) for record in pod_records),
         "oom_killed_pod_runs": sum(bool(record.get("oom_killed")) for record in pod_records),
+        "periodically_sampled_cpu_records": sum(
+            int(record.get("cgroup_sample_count") or 0) > 0 for record in pod_records
+        ),
+        "historical_full_window_cpu_values_mislabeled_as_peak": sum(
+            int(record.get("cgroup_sample_count") or 0) == 0
+            and record.get("peak_cpu_m") is not None
+            for record in pod_records
+        ),
         "cleanup_failures": sum(record.get("cleanup_status") != "completed" for record in pod_records)
         + sum(batch.get("cleanup_status") != "completed" for batch in capacity_batches),
         "status": "pass",

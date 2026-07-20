@@ -93,6 +93,21 @@ def test_cpu_quantity_parser_handles_metrics_api_units():
     assert _parse_cpu_quantity_m("1") == 1000
 
 
+def test_unsampled_cpu_average_is_not_reported_as_a_peak(monkeypatch):
+    from itertools import count
+
+    from cluster_evaluation import pod_runner
+
+    readings = count(1000, 100)
+    monkeypatch.setattr(pod_runner, "_cpu_usage_usec", lambda: next(readings))
+    sampler = pod_runner.CgroupSampler(60)
+    sampler.start()
+    result = sampler.stop()
+    assert result["sample_count"] == 0
+    assert result["peak_cpu_m"] is None
+    assert result["full_window_average_cpu_m"] is not None
+
+
 def test_runner_source_does_not_allowlist_machine_identifiers():
     source = __import__("inspect").getsource(__import__("cluster_evaluation.runner", fromlist=["x"])._preflight)
     assert "bootID" not in source
@@ -107,3 +122,5 @@ def test_preserved_cluster_artifacts_reconcile():
     assert summary["comparative_records"] == 180
     assert summary["capacity_batches"] == 9
     assert summary["capacity_pods"] == 108
+    assert summary["periodically_sampled_cpu_records"] == 86
+    assert summary["historical_full_window_cpu_values_mislabeled_as_peak"] == 202

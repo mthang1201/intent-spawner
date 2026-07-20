@@ -40,10 +40,11 @@ The Helm demo targets disposable local Kubernetes environments such as
 OrbStack, kind, minikube, or k3d. Local clusters have simpler scheduling,
 storage, image-cache, and contention behavior than production clusters. The
 Kubernetes-backed environment had Metrics Server, but it retained zero per-job
-snapshots because the jobs were short. Cgroup-v2 final counters and
-`memory.peak` provide pod-boundary observations; 202/288 jobs completed before
-one periodic 10ms sample. The Helm demo and preserved evaluation are not the
-same deployment path.
+snapshots because the jobs were short. Cgroup-v2 `memory.peak` provides a
+pod-boundary memory peak. Only 86/288 jobs had a periodic 10ms CPU sample; the
+other 202 historical `peak_cpu_m` values are full-window averages and cannot be
+used as CPU peaks. The Helm demo and preserved evaluation are not the same
+deployment path.
 
 ## Synthetic-Workload Limitations
 

@@ -50,7 +50,7 @@ efficiency, real-user accuracy, or causal generalization.
 | Sanitized preserved evidence | Implemented | `experiments/raw/`, `results/` |
 | Kubernetes pod experiment orchestration | Implemented for ground-truth/comparative matrices | `cluster_evaluation/runner.py` |
 | Kubernetes raw validation and regeneration | Implemented | `cluster_evaluation/validate_artifacts.py`, `cluster_evaluation/analyze.py` |
-| Kubernetes cgroup peak observations | Implemented with limitations | `results/cluster/raw/`; zero Metrics Server job snapshots and 202/288 zero periodic samples |
+| Kubernetes cgroup peak observations | Memory implemented; CPU partial | `results/cluster/raw/`; zero Metrics Server job snapshots, 86/288 periodic CPU samples, and 202 historical CPU averages mislabeled as peaks |
 | Capacity batch reproduction | Blocked | Raw plan/batches exist, but evaluated generator source is absent |
 | History-aware method | Not implemented or evaluated | No history collection, storage, or decision path |
 | Project software license | Not resolved | No project license file |

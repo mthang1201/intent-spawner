@@ -276,7 +276,8 @@ derived outputs, validation commands, and known generated files.
   not a live multi-user JupyterHub or production deployment.
 - Metrics Server was available in the Kubernetes environment but captured zero
   per-job snapshots for the short jobs. Cluster peak values come from retained
-  cgroup-v2 counters; this is not Prometheus time-series evidence.
+  cgroup-v2 counters; memory peak is valid, but only 86/288 jobs have a sampled
+  CPU peak. The other historical CPU values are full-job averages.
 - The final audit found one-second Kubernetes timestamp quantization in the
   original acceptable-envelope analysis and added a disclosed measurement
   adequacy guard. Raw observations were not changed.
