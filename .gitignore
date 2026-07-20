@@ -12,3 +12,4 @@ experiments/raw/*
 !experiments/raw/20260719T140431Z-matrix-aed48949/**
 experiments/summaries/*
 !experiments/summaries/README.md
+helm/generated-values.yaml

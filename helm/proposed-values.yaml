@@ -8,8 +8,6 @@ hub:
   config:
     JupyterHub:
       authenticator_class: dummy
-    DummyAuthenticator:
-      password: demo
   extraConfig:
     00-context-aware-recommender: |
       import html
@@ -53,6 +51,13 @@ hub:
           return found
 
       def recommend_profile(intent="", dataset_size_gb=0.0, code_context=""):
+          try:
+              dataset_size_gb = float(dataset_size_gb)
+          except (TypeError, ValueError):
+              dataset_size_gb = 0.0
+          if dataset_size_gb < 0:
+              dataset_size_gb = 0.0
+
           text = f"{intent}\n{code_context}".lower()
           reasons = []
 
@@ -100,7 +105,16 @@ hub:
           <textarea name="code_context" rows="6" style="width: 100%" placeholder="import pandas as pd&#10;from sklearn.ensemble import RandomForestClassifier&#10;model.fit(X, y)"></textarea>
           """
 
-      def context_options_from_form(spawner, formdata):
+      def context_options_from_form(*args, **kwargs):
+          formdata = kwargs.get("formdata")
+          if formdata is None:
+              for arg in reversed(args):
+                  if isinstance(arg, dict):
+                      formdata = arg
+                      break
+          if formdata is None:
+              formdata = {}
+
           def first(name, default=""):
               value = formdata.get(name, [default])[0]
               if isinstance(value, bytes):
@@ -110,7 +124,9 @@ hub:
           raw_dataset_size = first("dataset_size_gb", "0")
           try:
               dataset_size_gb = float(raw_dataset_size or 0)
-          except ValueError:
+          except (TypeError, ValueError):
+              dataset_size_gb = 0.0
+          if dataset_size_gb < 0:
               dataset_size_gb = 0.0
 
           return {
@@ -139,7 +155,6 @@ hub:
           environment.update({
               "RECOMMENDED_PROFILE": recommended_profile,
               "RECOMMENDATION_REASONS": reason_text,
-              "CONTEXT_INTENT": intent,
               "CONTEXT_DATASET_SIZE_GB": str(dataset_size_gb),
           })
           spawner.environment = environment
@@ -152,8 +167,7 @@ hub:
           spawner.extra_annotations = annotations
 
           spawner.log.info(
-              "Context-aware recommendation for %s: %s (%s)",
-              spawner.user.name,
+              "Context-aware recommendation: %s (%s)",
               recommended_profile,
               reason_text,
           )
@@ -170,19 +184,13 @@ singleuser:
         configMap:
           name: demo-workload
           defaultMode: 493
-      - name: demo-notebooks
-        configMap:
-          name: demo-notebooks
     extraVolumeMounts:
       - name: demo-workload
         mountPath: /home/jovyan/demo/workload
         readOnly: true
-      - name: demo-notebooks
-        mountPath: /home/jovyan/demo/notebooks
-        readOnly: true
   image:
     name: quay.io/jupyter/scipy-notebook
-    tag: latest
+    tag: "latest@sha256:e760028814b48e503f8991e20f89ad7ba2725b34ca7d937b104584b78f11169f"
   defaultUrl: /lab
 
 prePuller:

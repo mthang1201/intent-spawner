@@ -8,8 +8,6 @@ hub:
   config:
     JupyterHub:
       authenticator_class: dummy
-    DummyAuthenticator:
-      password: demo
 
 singleuser:
   storage:
@@ -19,19 +17,13 @@ singleuser:
         configMap:
           name: demo-workload
           defaultMode: 493
-      - name: demo-notebooks
-        configMap:
-          name: demo-notebooks
     extraVolumeMounts:
       - name: demo-workload
         mountPath: /home/jovyan/demo/workload
         readOnly: true
-      - name: demo-notebooks
-        mountPath: /home/jovyan/demo/notebooks
-        readOnly: true
   image:
     name: quay.io/jupyter/scipy-notebook
-    tag: latest
+    tag: "latest@sha256:e760028814b48e503f8991e20f89ad7ba2725b34ca7d937b104584b78f11169f"
   defaultUrl: /lab
   profileList:
     - display_name: "Small: low CPU/RAM"

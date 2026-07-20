@@ -14,7 +14,7 @@ bash scripts/port-forward.sh
 
 Expected output:
 
-- Current context is `orbstack`.
+- The command prints the active context; continue only on an isolated local cluster.
 - Namespace `z2jh-context-demo` exists.
 - JupyterHub is reachable at `http://127.0.0.1:8000`.
 - Spawn page shows Small, Medium, and Large profiles.
@@ -48,7 +48,9 @@ Expected output:
 
 Pain point:
 
-The user selected too little memory, but the error appears only after some execution time. The user loses progress and must restart and rerun.
+The configured Small limit is insufficient for this bounded workload. This
+demonstrates a late-failure mechanism; it does not measure real user state loss
+or rerun behavior.
 
 ## 3. Overprovisioning: Idle Large Users Block Capacity
 
@@ -77,11 +79,13 @@ Expected output:
 
 Pain point:
 
-Large idle sessions reserve schedulable capacity even when they do almost no work, reducing concurrency for other users.
+Large idle sessions reserve schedulable capacity even when they do almost no
+work. The script can demonstrate request-based scheduling pressure, but it does
+not measure production utilization.
 
 ## 4. Defensive Over-Requesting
 
-Goal: connect the previous two demos. After being OOMKilled on Small, users often choose Large "just in case."
+Goal: illustrate a hypothetical defensive Large choice for a light workload.
 
 Commands:
 
@@ -104,7 +108,8 @@ Expected output:
 
 Pain point:
 
-Once trust is broken by underprovisioning, users compensate by over-requesting resources for light work.
+The script shows the resource cost if a light workload is assigned Large. It
+does not establish how often real users make this choice or why.
 
 ## 5. Switch to Proposed Method
 
@@ -150,10 +155,10 @@ kubectl get pods -n z2jh-context-demo
 kubectl describe pod -n z2jh-context-demo -l component=singleuser-server | grep -A8 -E 'z2jh-context-demo.local/recommended-profile|Environment|RECOMMENDED_PROFILE'
 ```
 
-Inside JupyterLab, open:
+Inside JupyterLab, open a terminal and run:
 
-```text
-/home/jovyan/demo/notebooks/03_proposed_intent_training.ipynb
+```bash
+python /home/jovyan/demo/workload/train_like_workload.py
 ```
 
 Expected output:
@@ -169,10 +174,10 @@ The recommendation is explainable and visible in pod environment variables and a
 
 Goal: show the same class of training-like workload completes when the profile is recommended from context.
 
-Commands inside the proposed notebook:
+Command inside a proposed-profile JupyterLab terminal:
 
-```python
-!python /home/jovyan/demo/workload/train_like_workload.py
+```bash
+python /home/jovyan/demo/workload/train_like_workload.py
 ```
 
 Expected output:
@@ -182,5 +187,7 @@ Expected output:
 
 Closing sentence:
 
-The prototype does not require an LLM or real GPU. It demonstrates the thesis idea: profile selection can be derived from intent and context, reducing both late failures and defensive over-requesting.
-
+The prototype does not require an LLM or real GPU. It shows that rule-based
+intent and context signals can be translated into a pre-spawn resource profile.
+Whether this reduces late failures or defensive over-requesting remains an
+unevaluated research claim.

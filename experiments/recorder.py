@@ -211,8 +211,8 @@ def build_record(
             record["workload_runtime_seconds"] = runtime["elapsed_seconds"]
             if local_result["success"]:
                 record["time_to_success_seconds"] = runtime["elapsed_seconds"]
-        if runtime.get("max_rss_platform_units") is not None and record["resource_measurement_source"] == "not_available":
-            record["peak_memory_mi"] = _max_rss_to_mi(int(runtime["max_rss_platform_units"]))
+        if runtime.get("max_rss_bytes") is not None and record["resource_measurement_source"] == "not_available":
+            record["peak_memory_mi"] = int(runtime["max_rss_bytes"]) / 1024 / 1024
             record["resource_measurement_source"] = "python_resource_getrusage"
         record["oom_killed"] = local_result["exit_code"] == 137
         record["restart_or_respawn_count"] = 0
@@ -226,13 +226,6 @@ def build_record(
 
     validate_record(record)
     return record
-
-
-def _max_rss_to_mi(max_rss: int) -> int:
-    if sys.platform == "darwin":
-        return int(max_rss / 1024 / 1024)
-    return int(max_rss / 1024)
-
 
 def _parse_args(argv: list[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Record one normalized experiment result.")

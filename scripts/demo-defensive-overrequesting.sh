@@ -34,7 +34,7 @@ spec:
         defaultMode: 493
   containers:
     - name: workload
-      image: quay.io/jupyter/scipy-notebook:latest
+      image: quay.io/jupyter/scipy-notebook:latest@sha256:e760028814b48e503f8991e20f89ad7ba2725b34ca7d937b104584b78f11169f
       command: ["sh", "-c", "python /demo/workload/light_eda.py; echo sleeping for observation; sleep 600"]
       volumeMounts:
         - name: demo-workload
@@ -57,4 +57,3 @@ Observe:
   kubectl top pod ${POD_NAME} -n ${NAMESPACE}  # optional, only if metrics-server exists
   kubectl logs ${POD_NAME} -n ${NAMESPACE}
 EOF
-

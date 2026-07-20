@@ -5,7 +5,9 @@
 This benchmark suite defines deterministic workload scenarios for comparing
 static/manual, intent-only, and context-aware resource-profile selection. It is
 metadata-first on purpose: the repository can validate the benchmark shape
-without running a full Kubernetes experiment matrix or fabricating results.
+without running a Kubernetes experiment matrix or fabricating results. The
+integrated artifact also provides a local synthetic comparative runner; it is
+not a live multi-user Kubernetes evaluation.
 
 The workload manifest is `benchmarks/workloads.yaml`. The executable helper is
 `benchmarks/workload_runner.py`. All data is synthetic, generated from explicit
@@ -72,9 +74,9 @@ portable and deterministic, but it cannot reproduce every allocator behavior,
 native library thread pool, file format, or GPU scheduling constraint.
 
 Dataset-size hints are declared inputs, not measured file sizes. They represent
-what a user or notebook context might tell the recommender before spawn. Later
-experiments may compare declared hints with observed memory and runtime, but
-this task does not produce those results.
+what a user or notebook context might tell the recommender before spawn. The
+preserved local experiment compares these declared hints with bounded synthetic
+runtime behavior, not with production datasets.
 
 The suite is small by design. It covers representative decision boundaries and
 failure modes for the prototype, not the full space of notebook workloads,
@@ -96,8 +98,9 @@ The benchmark can support non-cluster claims such as:
 
 The benchmark alone cannot prove that context-aware selection reduces OOMs,
 improves cluster utilization, or improves real user experience. Those claims
-require later repeated Kubernetes experiments, raw output preservation, metrics
-collection or documented metrics absence, and statistical summaries.
+require repeated Kubernetes experiments, raw output preservation, metrics
+collection or documented metrics absence, and statistical summaries. The
+committed local synthetic results do not satisfy that stronger requirement.
 
 It also cannot prove history-aware behavior. The roadmap explicitly treats
 history-aware provisioning as future work, and this suite does not collect or
@@ -111,8 +114,8 @@ code-context hints, expected acceptable profiles, and a rationale.
 
 RQ2 asks whether recommendations reduce underprovisioning compared with static
 Small choices. The large aggregation and memory-pressure training workloads are
-the future trial candidates for that question, but no result files are created
-in this task.
+candidates for a future live Kubernetes trial; the current results are local
+synthetic evidence only.
 
 RQ3 asks whether recommendations reduce defensive over-requesting for light
 workloads. The three light workloads provide Small-compatible cases where a
@@ -127,4 +130,3 @@ RQ5 asks about safety and policy boundaries. The GPU-disallowed policy workload
 tests whether a strong recommendation signal can still be constrained by an
 allowed profile policy and represented without executing GPU code or storing raw
 notebooks.
-

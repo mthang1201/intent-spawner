@@ -91,8 +91,10 @@ bash scripts/install-baseline.sh
 bash scripts/port-forward.sh
 ```
 
-Open `http://127.0.0.1:8000`, log in with any username and password `demo`, and
-choose Small, Medium, or Large.
+Open `http://127.0.0.1:8000`, enter any username and any non-empty password,
+and choose Small, Medium, or Large. `DummyAuthenticator` is intentionally
+insecure; keep this demo on an isolated local cluster and use local port
+forwarding only.
 
 Install the proposed intent/context-aware form:
 
@@ -222,7 +224,6 @@ experiments/raw/             Preserved sanitized raw snapshots plus ignored new 
 experiments/summaries/       Ignored generated aggregate CSVs
 helm/                        Baseline and proposed JupyterHub Helm values
 k8s/                         Demo Kubernetes manifests
-notebooks/                   Demonstration notebooks, not benchmark inputs
 recommender/                 Rule-based recommendation prototype and tests
 results/                     Derived tables and SVG figures
 scripts/                     Setup, verification, cluster, demo, and cleanup scripts
@@ -284,3 +285,5 @@ See `docs/evaluation/THREATS_TO_VALIDITY.md` for the full validity discussion.
 - `docs/evaluation/EXPERIMENT_PROTOCOL.md`: experimental procedure.
 - `docs/evaluation/RESULT_SCHEMA.md`: raw record schema.
 - `docs/evaluation/RESULTS.md`: current derived analysis report.
+- `docs/evaluation/FINAL_AUDIT.md`: historical audit of the stale Chat 8 branch;
+  see its status notice before interpreting its findings.

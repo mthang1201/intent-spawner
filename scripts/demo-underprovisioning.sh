@@ -34,7 +34,7 @@ spec:
         defaultMode: 493
   containers:
     - name: workload
-      image: quay.io/jupyter/scipy-notebook:latest
+      image: quay.io/jupyter/scipy-notebook:latest@sha256:e760028814b48e503f8991e20f89ad7ba2725b34ca7d937b104584b78f11169f
       command: ["python", "/demo/workload/oom_late_failure.py"]
       env:
         - name: OOM_TARGET_MIB
@@ -63,4 +63,3 @@ Observe:
   kubectl describe pod ${POD_NAME} -n ${NAMESPACE} | grep -A8 -E 'Last State|Reason|OOMKilled'
   kubectl logs ${POD_NAME} -n ${NAMESPACE} --previous 2>/dev/null || kubectl logs ${POD_NAME} -n ${NAMESPACE}
 EOF
-
