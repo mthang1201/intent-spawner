@@ -62,10 +62,12 @@ For the historical evaluated corpus, jobs shorter than one interval stored the
 start-to-finish cgroup CPU delta in the legacy `peak_cpu_m` field. That value is
 a full-window average: 202/288 records are affected. The immutable bytes remain
 unchanged, while the schema-2 compatibility view exposes the values only as
-`cpu_measurement_statistic="full_window_average"`. The other 86 values are
-maxima over retained 10 ms interval-delta samples and are exposed as
-`sample_maximum`, not continuous CPU peaks. No CPU-peak or CPU-waste claim is
-derived from either class. Future records use `cpu_usage_m` plus explicit
+`cpu_measurement_statistic="full_window_average"`. For the other 86 values,
+the evaluated schema-1 stop path retained the maximum of the 10 ms
+interval-sample maximum and the full-window average. They are exposed as
+`legacy_interval_sample_or_full_window_maximum`, not as pure sample maxima or
+continuous CPU peaks. No CPU-peak or CPU-waste claim is derived from either
+historical class. Future records use `cpu_usage_m` plus explicit
 statistic, interval, window, and source fields.
 The cgroup is the Kubernetes container's resource-accounting boundary. Records
 identify the source and preserve nulls if these files are unavailable.
@@ -178,6 +180,9 @@ clean tree before execution. It fixes the following controls:
   sources;
 - exclusive-create raw files, per-pod logs/evidence/events, batch sidecars, Git
   and environment metadata, and exact-label cleanup after every batch. The
+  experiment directory must remain inside the repository so every retained
+  supporting path is repository-relative and portable; the runner rejects an
+  out-of-tree directory before preflight or pod creation. The
   environment record contains a sanitized Minikube profile, exact local image
   ID, image tag tied to the first 12 characters of the committed protocol, node
   capacity/allocatable resources, Kubernetes/runtime versions, and network

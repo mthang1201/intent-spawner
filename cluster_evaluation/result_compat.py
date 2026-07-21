@@ -14,6 +14,7 @@ CPU_RECONCILIATION_CATEGORIES = (
     "genuine_cgroup_peak",
     "average",
     "sampled_instantaneous",
+    "legacy_hybrid_maximum",
     "unavailable",
 )
 
@@ -94,11 +95,13 @@ def normalize_cpu_measurement(
     if sample_count > 0:
         return {
             "cpu_usage_m": legacy_value,
-            "cpu_measurement_statistic": "sample_maximum",
+            "cpu_measurement_statistic": "legacy_interval_sample_or_full_window_maximum",
             "cpu_sampling_interval_seconds": record.get("cgroup_sample_interval_seconds"),
-            "cpu_measurement_window_seconds": None,
-            "cpu_measurement_source": "cgroup_v2_cpu_stat_interval_delta",
-            "cpu_reconciliation_category": "sampled_instantaneous",
+            "cpu_measurement_window_seconds": _legacy_measurement_window(record, root),
+            "cpu_measurement_source": (
+                "cgroup_v2_cpu_stat_max_of_interval_samples_and_full_window_average"
+            ),
+            "cpu_reconciliation_category": "legacy_hybrid_maximum",
             "legacy_source_field": "peak_cpu_m",
         }
     return {

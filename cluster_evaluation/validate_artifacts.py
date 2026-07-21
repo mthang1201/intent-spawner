@@ -332,6 +332,7 @@ def validate(
         "genuine_cgroup_cpu_peak_records": reconciliation["genuine_cgroup_peak"],
         "full_window_average_cpu_records": reconciliation["average"],
         "sampled_cpu_records": reconciliation["sampled_instantaneous"],
+        "legacy_hybrid_cpu_records": reconciliation["legacy_hybrid_maximum"],
         "unavailable_cpu_records": reconciliation["unavailable"],
         "cleanup_failures": sum(record.get("cleanup_status") != "completed" for record in pod_records)
         + sum(batch.get("cleanup_status") != "completed" for batch in capacity_batches),

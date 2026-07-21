@@ -62,10 +62,13 @@ compatibility view now exposes what was actually measured:
 | --- | ---: | --- |
 | Genuine cgroup CPU peak | 0 | No peak claim is available |
 | Full-window cgroup CPU average | 202 | Average over the recorded container window |
-| Maximum of 10 ms interval-delta samples | 86 | Sample maximum, not a continuous peak |
+| Maximum of interval-sample maximum and full-window average | 86 | Legacy hybrid statistic, not a continuous peak or pure sample maximum |
 | Unavailable | 0 | Explicitly unavailable |
 
-Future local and cluster records use schema 2.0.0 fields
+The independent final audit corrected the initial compatibility label for the
+86 sampled legacy records after inspecting the evaluated schema-1 implementation:
+its stop path took the maximum of the interval-sample maximum and the full-window
+average. The raw bytes were not changed. Future local and cluster records use schema 2.0.0 fields
 `cpu_usage_m`, `cpu_measurement_statistic`, sampling interval, measurement
 window, and source. Analysis tables and prose no longer call the 202 averages
 peaks and make no CPU-peak or CPU-waste claim from either historical class.
@@ -164,8 +167,9 @@ used for mutations.
 The corrected artifact now makes only the following scoped statements:
 
 - memory peaks are cgroup-v2 `memory.peak` measurements;
-- CPU records comprise 202 full-window averages and 86 interval sample maxima,
-  with zero genuine continuous peaks;
+- CPU records comprise 202 full-window averages and 86 legacy hybrid maxima of
+  the interval-sample maximum and full-window average, with zero genuine
+  continuous peaks;
 - method-level time to success is indistinguishable at one-second resolution;
 - no OOM benefit is demonstrated because the evaluated matrices observed zero
   OOMs;

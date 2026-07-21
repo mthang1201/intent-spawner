@@ -568,6 +568,14 @@ def main(argv: list[str] | None = None) -> int:
         return 0 if result["status"] == "completed" else 1
     if args.experiment_dir is None:
         raise ValueError("--experiment-dir is required unless --dry-run or --cleanup-only is used")
+    output_dir = args.experiment_dir.resolve()
+    try:
+        output_dir.relative_to(ROOT)
+    except ValueError as exc:
+        raise ValueError(
+            "--experiment-dir must be inside the repository so retained supporting "
+            "paths remain relative and portable"
+        ) from exc
 
     environment = _preflight(
         context=args.context,
@@ -586,7 +594,6 @@ def main(argv: list[str] | None = None) -> int:
         expected_minikube_memory_mb=args.expected_minikube_memory_mb,
         expected_minikube_disk_size_mb=args.expected_minikube_disk_size_mb,
     )
-    output_dir = args.experiment_dir.resolve()
     output_dir.mkdir(parents=True, exist_ok=False)
     _write_json_new(output_dir / "environment.json", environment)
     _write_new(

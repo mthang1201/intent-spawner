@@ -277,8 +277,10 @@ derived outputs, validation commands, and known generated files.
   not a live multi-user JupyterHub or production deployment.
 - Metrics Server was available in the Kubernetes environment but captured zero
   per-job snapshots for the short jobs. Cgroup-v2 `memory.peak` is valid. CPU
-  reconciliation identifies 202 full-window averages and 86 maxima of 10 ms
-  interval samples; neither class is a continuous CPU peak.
+  reconciliation identifies 202 full-window averages and 86 legacy hybrid
+  maxima. For runs with periodic samples, the evaluated schema-1 code retained
+  the maximum of the interval-sample maximum and the full-window average, so
+  those 86 values cannot be labeled as sample maxima or continuous peaks.
 - Timing rule 2.0.0 interprets one-second Kubernetes durations as intervals,
   accepts zero as valid, rejects negative timestamps, and adds no smoothing,
   continuity correction, or arbitrary offset. Raw observations were not
@@ -317,5 +319,5 @@ See `docs/evaluation/THREATS_TO_VALIDITY.md` for the full validity discussion.
 - `docs/evaluation/EXPERIMENT_PROTOCOL.md`: experimental procedure.
 - `docs/evaluation/RESULT_SCHEMA.md`: raw record schema.
 - `docs/evaluation/RESULTS.md`: current derived analysis report.
-- `docs/evaluation/FINAL_AUDIT.md`: historical audit of the stale Chat 8 branch;
-  see its status notice before interpreting its findings.
+- `docs/evaluation/FINAL_AUDIT.md`: current independent audit, former-blocker
+  status, claim boundaries, validation record, and final defense checklist.

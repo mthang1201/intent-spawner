@@ -142,7 +142,8 @@ def test_preserved_cluster_artifacts_reconcile():
     assert summary["comparative_records"] == 180
     assert summary["capacity_batches"] == 9
     assert summary["capacity_pods"] == 108
-    assert summary["sampled_cpu_records"] == 86
+    assert summary["sampled_cpu_records"] == 0
+    assert summary["legacy_hybrid_cpu_records"] == 86
     assert summary["full_window_average_cpu_records"] == 202
     assert summary["genuine_cgroup_cpu_peak_records"] == 0
 
@@ -165,13 +166,22 @@ def test_historical_cpu_compatibility_reconciles_without_mutating_raw():
     assert reconciliation == {
         "genuine_cgroup_peak": 0,
         "average": 202,
-        "sampled_instantaneous": 86,
+        "sampled_instantaneous": 0,
+        "legacy_hybrid_maximum": 86,
         "unavailable": 0,
         "total_records": 288,
     }
     normalized = normalize_cpu_measurement(rows[0], root=ROOT)
     assert normalized["legacy_source_field"] == "peak_cpu_m"
     assert json.dumps(rows[0], sort_keys=True) == before
+
+    sampled_legacy = next(row for row in rows if row.get("cgroup_sample_count", 0) > 0)
+    normalized_sampled = normalize_cpu_measurement(sampled_legacy, root=ROOT)
+    assert (
+        normalized_sampled["cpu_measurement_statistic"]
+        == "legacy_interval_sample_or_full_window_maximum"
+    )
+    assert normalized_sampled["cpu_reconciliation_category"] == "legacy_hybrid_maximum"
 
 
 def test_zero_duration_is_valid_and_interval_censored_without_offset():
@@ -243,6 +253,20 @@ def test_capacity_runner_dry_run_is_cluster_free(capsys):
     assert payload["planned_pods"] == 108
     assert payload["planned_batches"] == 9
     assert payload["population_per_batch"] == 12
+
+
+def test_capacity_runner_rejects_out_of_tree_evidence_before_cluster_access(tmp_path):
+    with pytest.raises(ValueError, match="must be inside the repository"):
+        capacity_main(
+            [
+                "--experiment-id",
+                "capacity-v2-test",
+                "--experiment-dir",
+                str(tmp_path / "raw"),
+                "--image",
+                "example.invalid/eval:capacity-v2-test",
+            ]
+        )
 
 
 def test_capacity_environment_sanitizes_minikube_profile(monkeypatch):

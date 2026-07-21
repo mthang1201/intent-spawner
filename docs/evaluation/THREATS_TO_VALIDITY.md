@@ -31,8 +31,8 @@ reported comparisons should be read as artifact evidence for the prototype and
 analysis pipeline, not as a definitive statistical proof of production impact.
 The cluster matrix observed no OOM and therefore cannot estimate OOM reduction.
 Its cgroup-v2 memory values are genuine memory peaks. Its CPU values are either
-full-window averages or interval sample maxima, not a continuous peak time
-series. Historical capacity concurrency is supplementary because the evaluated
+full-window averages or legacy maxima combining the interval-sample maximum
+with the full-window average, not a continuous peak time series. Historical capacity concurrency is supplementary because the evaluated
 batch-generator source was not committed. Capacity-v2 was evaluated separately
 from committed protocol `ca2e74b2043a`; it supports only controlled
 request-reservation observations on that disposable single-node environment,
@@ -46,8 +46,9 @@ storage, image-cache, and contention behavior than production clusters. The
 Kubernetes-backed environment had Metrics Server, but it retained zero per-job
 snapshots because the jobs were short. Cgroup-v2 `memory.peak` provides a
 pod-boundary memory peak. CPU reconciliation contains 202 full-window averages
-and 86 maxima of 10 ms interval-delta samples; there are no genuine cgroup CPU
-peaks. Neither CPU class supports a peak-based waste claim. The Helm demo and
+and 86 legacy maxima of the interval-sample maximum and full-window average;
+there are no genuine cgroup CPU peaks. Neither CPU class supports a peak-based
+waste claim. The Helm demo and
 preserved evaluation are not the same deployment path.
 
 ## Synthetic-Workload Limitations

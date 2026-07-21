@@ -50,7 +50,7 @@ must never be guessed or replaced with illustrative values.
 | `memory_request_mi` | integer | MiB | yes | Applied memory request converted from Kubernetes quantity or profile policy. Decimal Kubernetes units such as `M` and `G` are converted to MiB. |
 | `memory_limit_mi` | integer | MiB | yes | Applied memory limit converted from Kubernetes quantity or profile policy. Null if unavailable. |
 | `cpu_usage_m` | number | millicores | yes | CPU observation whose exact statistic is declared by `cpu_measurement_statistic`; never assume it is a peak. |
-| `cpu_measurement_statistic` | string enum | none | no | One of `genuine_cgroup_peak`, `sample_maximum`, `sampled_instantaneous`, `full_window_average`, or `unavailable`. |
+| `cpu_measurement_statistic` | string enum | none | no | Schema 2 uses one of `genuine_cgroup_peak`, `sample_maximum`, `sampled_instantaneous`, `full_window_average`, or `unavailable`; the compatibility view may additionally expose `legacy_interval_sample_or_full_window_maximum`. |
 | `cpu_sampling_interval_seconds` | number | seconds | yes | Interval between or covered by periodic samples when known. Null for full-window averages or unknown Metrics Server cadence. |
 | `cpu_measurement_window_seconds` | number | seconds | yes | Whole observation window for an average when retained. Null when unavailable. |
 | `cpu_measurement_source` | string | none | no | Specific CPU source, such as `metrics_server`, `cgroup_v2_cpu_stat_interval_delta`, `cgroup_v2_cpu_stat_full_window_delta`, or `not_available`. |
@@ -108,7 +108,10 @@ field is null, so it maps to `cpu_usage_m=null` and
 The cluster corpus uses `cluster_evaluation.result_compat`. Its 202 records
 with zero cgroup samples map the unchanged legacy value to
 `full_window_average`; 86 records with at least one 10 ms interval-delta sample
-map to `sample_maximum`. Neither mapping creates a continuous CPU peak. The
+map to `legacy_interval_sample_or_full_window_maximum` because the evaluated
+code stored the maximum of the interval-sample maximum and the full-window
+average. Neither mapping creates a continuous CPU peak, and the hybrid value
+cannot be narrowed to one of its two inputs after the fact. The
 compatibility table preserves the legacy source-field name, original numeric
 value, source, sample interval, and measurement window when the supporting pod
 log retained it.

@@ -85,6 +85,9 @@ default unless explicitly reviewed and force-added.
 - `docs/evaluation/CLUSTER_RESULTS.md`: generated, scoped Kubernetes report.
 - `docs/evaluation/AUDIT_BLOCKER_RESOLUTION.md`: exact-commit resolution,
   checksum chain, rerun provenance, corrected claims, and verification record.
+- `docs/evaluation/FINAL_AUDIT.md`: current independent final verdict,
+  former-blocker status, clean validation record, claim matrix, and defense
+  checklist.
 
 ## Reproduction Commands
 
