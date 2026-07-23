@@ -1,323 +1,315 @@
 # Intent Spawner Research Artifact
 
-This repository packages the graduation-thesis prototype:
+This repository contains the graduation-thesis prototype:
 
-**Intent- and Context-Aware Profile Recommendation Layer for Zero to JupyterHub / KubeSpawner**
+> **Intent- and Context-Aware Profile Recommendation for Zero to JupyterHub
+> and KubeSpawner**
 
-The artifact compares static profile selection with an explainable pre-spawn
-recommendation layer. It keeps three evidence classes separate: prototype
-mechanics, a local synthetic comparative matrix, and a scoped Kubernetes-backed
-evaluation on one disposable Minikube node. Each class has its own raw evidence,
-derived outputs, and claim boundary.
+The prototype asks a user what they intend to do, optionally accepts a dataset
+size and lightweight code context, and recommends an explainable Kubernetes
+resource profile before JupyterHub starts the user's server.
 
-## Quick Start
+The repository is both a runnable demonstration and a research artifact. It
+contains three separate execution paths:
+
+1. an interactive Zero to JupyterHub demonstration;
+2. a portable local synthetic benchmark; and
+3. a preserved Kubernetes-backed evaluation corpus.
+
+These paths answer different questions and their results must not be treated as
+interchangeable.
+
+## Start Here
+
+If this is your first time in the repository:
+
+1. Read [Getting Started](docs/GETTING_STARTED.md) for setup and step-by-step
+   commands.
+2. Read [Architecture](docs/ARCHITECTURE.md) to understand the components and
+   data flows.
+3. Use [Demo Script](DEMO_SCRIPT.md) when presenting the live JupyterHub demo.
+4. Use [Cleanup](CLEANUP.md) after running anything on Kubernetes.
+
+The safest first run does not create Kubernetes resources:
 
 ```bash
 git clone https://github.com/mthang1201/intent-spawner.git
 cd intent-spawner
 bash scripts/setup.sh
 bash scripts/check.sh
-make validate-cluster-results
-bash scripts/environment-report.sh --out /tmp/intent-spawner-environment.json --overwrite
-.venv/bin/python -m experiments.runner --smoke --environment-id local-smoke --timeout 60
-.venv/bin/python -m experiments.runner --full-matrix --repeats 5 --seed 20260719 --dry-run --environment-id local-dry-run
-.venv/bin/python -m experiments.analyze_results \
-  --experiment-dir experiments/raw/20260719T140431Z-matrix-aed48949 \
-  --results-dir /tmp/intent-spawner-results \
-  --results-md /tmp/intent-spawner-results/RESULTS.md \
-  --environment-report results/environment-capability.json \
-  --overwrite
+.venv/bin/python -m experiments.runner \
+  --smoke \
+  --environment-id local-smoke \
+  --timeout 60
 ```
 
-Use `.venv/bin/python` explicitly if your shell does not activate the virtual
-environment.
+The smoke command writes a new ignored experiment directory under
+`experiments/raw/`. It does not create Kubernetes resources. If kubectl is
+installed, `scripts/check.sh` also performs API discovery for its manifest
+dry-run; use [Getting Started](docs/GETTING_STARTED.md#common-verification-problems)
+if the configured API server is offline.
 
-## Prerequisites
+## The Problem
 
-- Python 3.11 or newer. The artifact was validated locally with Python 3.14.5.
-- `bash`, `git`, and `pip`.
-- Optional for Helm/Kubernetes rendering and live demos: `helm`, `kubectl`, and
-  a local Kubernetes cluster such as OrbStack, kind, minikube, or k3d.
-- Optional for live resource-metric claims: Kubernetes Metrics API or a
-  Prometheus-equivalent collection path. Without metrics, local synthetic runs
-  still work, but Kubernetes CPU-sample or memory-peak claims must not be made.
+A conventional JupyterHub deployment often presents profiles such as Small,
+Medium, and Large. Users usually understand their task—exploring a CSV,
+training a model, or running basic Python—but may not know how much CPU and
+memory that task needs.
 
-The Helm demo uses the JupyterHub chart version `4.0.0`, namespace
-`z2jh-context-demo`, and release name `context-demo` unless overridden by
-environment variables.
+That mismatch can produce:
 
-## Setup
+- **underprovisioning**, where a workload fails after the user has already
+  started working;
+- **overprovisioning**, where idle sessions reserve more schedulable capacity
+  than they need; and
+- **defensive over-requesting**, where users choose Large to avoid an uncertain
+  failure.
+
+The proposed method moves the sizing decision into a pre-spawn recommendation
+layer. Its inputs are:
+
+- natural-language intent;
+- an estimated dataset size in GB; and
+- optional imports or code-context hints.
+
+The output is a profile name, human-readable reasons, and a resource
+configuration applied by KubeSpawner.
+
+## Three Evidence Paths
+
+| Path | Purpose | Requires Kubernetes | Output and claim boundary |
+| --- | --- | --- | --- |
+| Helm demo | Show the baseline and proposed user experience | Yes, disposable local cluster | Demonstrates mechanics and observable Kubernetes requests; it is not a production study |
+| Local synthetic benchmark | Compare `static_manual`, `intent_only`, and `context_aware` deterministically | No | Produces local synthetic records and process measurements; it does not prove cluster behavior |
+| Kubernetes evaluation | Evaluate `static_default`, `intent_only`, and `context_aware` with pod evidence | Yes for new runs; no for validating preserved results | Preserved single-node Minikube evidence; it does not establish production or multi-user performance |
+
+The committed local and Kubernetes results are different evidence classes.
+Never use a local process measurement as a Kubernetes scheduling or utilization
+measurement.
+
+## Quick Paths
+
+### Run without Kubernetes
+
+Set up the Python environment and validate the repository:
 
 ```bash
 bash scripts/setup.sh
+bash scripts/check.sh
 ```
 
-The setup script creates `.venv`, upgrades `pip`, and installs pinned
-dependencies from `requirements-dev.txt`, which includes runtime dependencies
-from `requirements.txt`.
+The setup and local benchmark do not need Kubernetes. When kubectl is present,
+the repository check expects its configured API server to be reachable for
+manifest discovery; all non-kubectl checks and the benchmark remain local.
+
+Preview the complete local experiment matrix without executing workloads:
+
+```bash
+.venv/bin/python -m experiments.runner \
+  --full-matrix \
+  --repeats 5 \
+  --seed 20260719 \
+  --dry-run \
+  --environment-id local-dry-run
+```
+
+See [Local Synthetic Benchmark](docs/GETTING_STARTED.md#path-a-local-synthetic-benchmark)
+for smoke, full-matrix, resume, aggregation, and analysis commands.
+
+### Run the interactive JupyterHub demo
+
+> **Safety:** use only a disposable local Kubernetes cluster. The install and
+> demo scripts create or update resources.
+
+```bash
+kubectl config current-context
+bash scripts/check-cluster.sh
+bash scripts/install-baseline.sh
+bash scripts/port-forward.sh
+```
+
+Open <http://127.0.0.1:8000>. The demo uses `DummyAuthenticator`: enter any
+username and any non-empty password. It is intentionally insecure and must not
+be exposed publicly.
+
+Continue with the
+[Interactive JupyterHub Demo](docs/GETTING_STARTED.md#path-b-interactive-jupyterhub-demo)
+or follow the presentation-oriented [Demo Script](DEMO_SCRIPT.md).
+
+### Validate preserved Kubernetes evidence
+
+These commands inspect committed evidence and do not create pods:
+
+```bash
+make validate-cluster-results
+make validate-raw-integrity
+```
+
+See
+[Preserved Kubernetes Evaluation](docs/GETTING_STARTED.md#path-c-preserved-kubernetes-evaluation)
+before regenerating derived results or starting a new experiment.
+
+## Prerequisites
+
+### Required for local setup
+
+- Python 3.11 or newer;
+- Bash;
+- Git; and
+- `pip` and Python `venv` support.
+
+The artifact was most recently validated locally with Python 3.14.5. Setup
+installs pinned dependencies from `requirements-dev.txt`.
+
+### Additional tools for the Helm demo
+
+- `kubectl`;
+- Helm;
+- a disposable local Kubernetes cluster, such as Minikube, kind, k3d, or
+  OrbStack; and
+- network access to pull the JupyterHub chart and container images.
+
+Metrics Server is optional for the demo. If it is unavailable, resource
+requests, limits, pod status, and events remain observable, but live usage
+claims must be reported as unavailable.
+
+### Additional tools for a new Kubernetes evaluation
+
+- Minikube;
+- Docker;
+- the exact environment and protocol controls described in
+  [Kubernetes Cluster Experiment Protocol](docs/evaluation/CLUSTER_EXPERIMENT_PROTOCOL.md).
+
+A new evaluation is an advanced, cluster-mutating workflow. Validating the
+preserved evidence does not require recreating its cluster.
+
+## Repository Defaults
+
+| Setting | Default |
+| --- | --- |
+| Kubernetes namespace | `z2jh-context-demo` |
+| Helm release | `context-demo` |
+| JupyterHub chart version | `4.0.0` |
+| Local JupyterHub URL | `http://127.0.0.1:8000` |
+| Python environment | `.venv` |
+| Baseline Helm values | `helm/baseline-values.yaml` |
+| Proposed Helm values | `helm/proposed-values.yaml` |
+
+The shell scripts allow selected overrides through environment variables such
+as `NAMESPACE`, `RELEASE`, `Z2JH_CHART_VERSION`, `LOCAL_PORT`, and `PYTHON`.
+Keep the documented defaults when reproducing the artifact unless the changed
+environment is explicitly recorded.
+
+## Repository Map
+
+| Path | Responsibility |
+| --- | --- |
+| `recommender/` | Standalone explainable rule-based recommender and unit tests |
+| `helm/` | Baseline static-profile and proposed context-aware JupyterHub values |
+| `scripts/` | Setup, validation, installation, observation, demo, and cleanup entry points |
+| `workload/` | Small bounded workloads mounted into demo pods and JupyterLab |
+| `benchmarks/` | Synthetic workload manifest and portable workload runner |
+| `experiments/` | Local matrix orchestration, recording, schema, export, and analysis |
+| `cluster_evaluation/` | Kubernetes pod runners, policies, evidence collection, validation, and analysis |
+| `k8s/` | Standalone manifests used for request and quota demonstrations |
+| `results/` | Derived local tables/figures and preserved cluster evidence |
+| `docs/evaluation/` | Protocols, result interpretation, audit records, and validity limits |
+| `tests/` | Unit tests and sanitized Kubernetes evidence fixtures |
+
+See [Architecture](docs/ARCHITECTURE.md) for component-level behavior and data
+flow.
 
 ## Verification
+
+Run:
 
 ```bash
 bash scripts/check.sh
 ```
 
-This runs unit tests, syntax checks, Helm template rendering when `helm` is on
-`PATH`, and Kubernetes client dry-run validation when `kubectl` is on `PATH`.
-It does not mutate the cluster unless `RUN_CLUSTER_CHECKS=1` is set, and even
-then it only runs read-only cluster inspection.
+The script performs:
 
-Record the local tool and cluster capability report:
+- unit and smoke tests;
+- preserved cluster artifact validation;
+- raw SHA-256 integrity validation;
+- a capacity-runner dry run;
+- Python and shell syntax checks;
+- Helm template rendering when Helm is available; and
+- Kubernetes client dry-run validation when kubectl is available.
 
-```bash
-bash scripts/environment-report.sh --out results/environment-capability.json --overwrite
-git rev-parse HEAD
-```
+It skips read-only live cluster inspection unless `RUN_CLUSTER_CHECKS=1` is
+set. It never runs cluster-mutating demo or experiment scripts.
 
-The raw experiment records also contain the `git_commit` used when the preserved
-synthetic results were generated.
-
-## Local Cluster
-
-For the UI and Helm demo path, start or select a disposable local cluster first:
+To capture a sanitized environment capability report without overwriting the
+committed report:
 
 ```bash
-kubectl config current-context
-bash scripts/check-cluster.sh
-```
-
-Install the baseline JupyterHub profile chooser:
-
-```bash
-bash scripts/install-baseline.sh
-bash scripts/port-forward.sh
-```
-
-Open `http://127.0.0.1:8000`, enter any username and any non-empty password,
-and choose Small, Medium, or Large. `DummyAuthenticator` is intentionally
-insecure; keep this demo on an isolated local cluster and use local port
-forwarding only.
-
-Install the proposed intent/context-aware form:
-
-```bash
-bash scripts/install-proposed.sh
-bash scripts/port-forward.sh
-```
-
-Example proposed-form input:
-
-```text
-Intent: I will train a scikit-learn model on a 1.5GB CSV dataset
-Dataset size: 1.5
-Code context:
-import pandas as pd
-from sklearn.ensemble import RandomForestClassifier
-df = pd.read_csv("data.csv")
-model.fit(X, y)
-```
-
-Inspect the spawned pod metadata:
-
-```bash
-kubectl describe pod -n z2jh-context-demo -l component=singleuser-server
-```
-
-## Smoke Test
-
-The smoke path uses synthetic local workload execution and does not require a
-cluster:
-
-```bash
-.venv/bin/python -m experiments.runner --smoke --environment-id local-smoke --timeout 60
-```
-
-It creates a new ignored directory under `experiments/raw/` and appends one
-schema-validated JSONL record.
-
-## Benchmark
-
-Preview the planned matrix without running workloads:
-
-```bash
-.venv/bin/python -m experiments.runner --full-matrix --repeats 5 --seed 20260719 --dry-run --environment-id local-dry-run
-```
-
-Run the full local synthetic matrix:
-
-```bash
-.venv/bin/python -m experiments.runner --full-matrix --repeats 5 --seed 20260719 --timeout 120 --environment-id local-benchmark
-```
-
-Resume an interrupted run:
-
-```bash
-.venv/bin/python -m experiments.runner --resume --experiment-dir experiments/raw/<experiment-id> --environment-id local-benchmark
-```
-
-Aggregate a raw run to a simple CSV:
-
-```bash
-.venv/bin/python -m experiments.runner --aggregate --experiment-dir experiments/raw/<experiment-id> --overwrite
-```
-
-## Analysis Reproduction
-
-Regenerate the committed result tables and SVG figures from the preserved raw
-snapshot:
-
-```bash
-.venv/bin/python -m experiments.analyze_results \
-  --experiment-dir experiments/raw/20260719T140431Z-matrix-aed48949 \
-  --results-dir results \
-  --results-md docs/evaluation/RESULTS.md \
-  --environment-report results/environment-capability.json \
+bash scripts/environment-report.sh \
+  --out /tmp/intent-spawner-environment.json \
   --overwrite
 ```
 
-For validation without modifying tracked files, write to `/tmp` as shown in the
-quick start.
+## Research Scope and Limitations
 
-Validate and regenerate the preserved Kubernetes-backed corpus:
+- The recommender is rule-based; it does not use an LLM.
+- No real GPU workload or GPU scheduling policy is evaluated.
+- The local benchmark uses generated data and standard-library workload
+  approximations.
+- The preserved Kubernetes corpus comes from controlled, single-node Minikube
+  experiments, not a live multi-user JupyterHub deployment.
+- The Helm demo and Kubernetes evaluation are separate execution paths.
+- The cluster corpus observed no OOM in the comparative matrix, so it does not
+  estimate an OOM-reduction rate.
+- Cgroup-v2 memory peaks are valid pod-boundary observations. Historical CPU
+  values have average or hybrid sampled-maximum semantics and are not
+  continuous peaks.
+- History-aware provisioning remains future work.
 
-```bash
-make validate-cluster-results
-make regenerate-cluster-results
-```
+Read [Threats to Validity](docs/evaluation/THREATS_TO_VALIDITY.md) and
+[Final Audit](docs/evaluation/FINAL_AUDIT.md) before presenting quantitative
+claims.
 
-The cluster corpus contains 108 three-profile ground-truth pod runs, 180
-comparative pod runs, nine principal capacity-v2 batches covering 108 pods,
-and nine historical capacity batches retained as supplementary evidence. See
-`docs/evaluation/CLUSTER_RESULTS.md` for the audit-corrected interpretation.
-The exact historical capacity batch generator was not committed at the
-evaluated source revision, so those capacity observations are descriptive and
-not a fully reproducible density result.
+## Data Safety
 
-## Demo Workloads
+Raw records are append-only evidence. Do not store or commit:
 
-```bash
-bash scripts/demo-underprovisioning.sh
-kubectl describe pod underprovision-small -n z2jh-context-demo
+- notebook contents or raw code;
+- datasets;
+- secrets or credentials;
+- usernames or longitudinal user identifiers; or
+- broad unsanitized Kubernetes metadata.
 
-bash scripts/demo-overprovisioning.sh
-kubectl describe pod idle-large-1 -n z2jh-context-demo
-
-bash scripts/demo-defensive-overrequesting.sh
-kubectl describe pod defensive-large-light -n z2jh-context-demo
-```
-
-If metrics-server is absent, use `kubectl describe` requests/limits and events
-instead of `kubectl top`.
+Store only permitted derived context features, allowlisted pod metadata,
+resource evidence, and aggregate results. See
+[Data Governance](docs/DATA_GOVERNANCE.md),
+[Local Experiment Data Guide](experiments/README.md), and
+[Derived Experiment Summaries](experiments/summaries/README.md).
 
 ## Cleanup
 
-Remove demo Kubernetes resources:
+After a Kubernetes demo:
 
 ```bash
 bash scripts/uninstall.sh
 ```
 
-Remove generated local artifact outputs:
+This deletes the configured demo namespace and does not delete the cluster or
+other namespaces. Read [Cleanup](CLEANUP.md) before removing local experiment
+outputs or working with preserved evidence.
 
-```bash
-rm -rf .venv .pytest_cache
-find . -type d -name __pycache__ -prune -exec rm -rf {} +
-find experiments/raw -mindepth 1 -maxdepth 1 \
-  ! -name README.md \
-  ! -name 20260719T140417Z-smoke-171688c0 \
-  ! -name 20260719T140423Z-matrix-783b4141 \
-  ! -name 20260719T140431Z-matrix-aed48949 \
-  -exec rm -rf {} +
-```
+## Documentation Index
 
-## Expected Directory Structure
-
-```text
-benchmarks/                  Synthetic workload runner and manifest
-cluster_evaluation/          Kubernetes pod runner, policies, analysis, validation
-docs/                        Artifact, governance, and evaluation documents
-docs/evaluation/             Protocol, results, schema, threats, design notes
-experiments/                 Runner, recorder, schema, analysis code
-experiments/raw/             Preserved sanitized raw snapshots plus ignored new runs
-experiments/summaries/       Ignored generated aggregate CSVs
-helm/                        Baseline and proposed JupyterHub Helm values
-k8s/                         Demo Kubernetes manifests
-recommender/                 Rule-based recommendation prototype and tests
-results/                     Derived tables and SVG figures
-results/cluster/raw/         Preserved Kubernetes evidence and batch records
-results/cluster/derived/     Regenerated Kubernetes tables and figures
-scripts/                     Setup, verification, cluster, demo, and cleanup scripts
-tests/                       Unit tests and sanitized Kubernetes evidence fixtures
-workload/                    Original demo workload scripts
-```
-
-## Raw Versus Derived Data Policy
-
-Raw records live under `experiments/raw/` as JSONL, environment JSON, matrix
-JSONL, and stdout/stderr artifacts. They are append-only evidence and should not
-be edited except for documented sanitization before publication.
-
-Derived outputs live under `results/`, `experiments/summaries/`, and
-`docs/evaluation/RESULTS.md`. They can be regenerated from raw records with
-`experiments.analyze_results` and should not replace the raw evidence.
-
-Raw notebook contents, datasets, secrets, usernames, and broad Kubernetes
-metadata are not collected or stored. See `docs/DATA_GOVERNANCE.md`.
-
-## Artifact Manifest
-
-See `docs/ARTIFACT_MANIFEST.md` for the source files, preserved raw snapshots,
-derived outputs, validation commands, and known generated files.
-
-## Known Limitations
-
-- The local 180-record benchmark and the Kubernetes-backed corpus are separate
-  evidence classes and cannot be used interchangeably.
-- The Kubernetes evaluation is a single-node, synthetic Minikube experiment,
-  not a live multi-user JupyterHub or production deployment.
-- Metrics Server was available in the Kubernetes environment but captured zero
-  per-job snapshots for the short jobs. Cgroup-v2 `memory.peak` is valid. CPU
-  reconciliation identifies 202 full-window averages and 86 legacy hybrid
-  maxima. For runs with periodic samples, the evaluated schema-1 code retained
-  the maximum of the interval-sample maximum and the full-window average, so
-  those 86 values cannot be labeled as sample maxima or continuous peaks.
-- Timing rule 2.0.0 interprets one-second Kubernetes durations as intervals,
-  accepts zero as valid, rejects negative timestamps, and adds no smoothing,
-  continuity correction, or arbitrary offset. Raw observations were not
-  changed.
-- The exact historical capacity batch generator is missing, so that corpus is
-  supplementary rather than principal evidence. The committed capacity-v2
-  runner and predeclared protocol produced the separately retained principal
-  controlled-environment corpus; it is not a production-density study.
-- GPU behavior is represented as a recommendation and policy signal only; no
-  GPU workload is executed.
-- The prototype is rule-based and does not implement history-aware evaluation.
-- Thresholds are fixed for the artifact, but conclusions remain sensitive to
-  workload mix and threshold choices.
-
-See `docs/evaluation/THREATS_TO_VALIDITY.md` for the full validity discussion.
-
-## Troubleshooting
-
-- `ModuleNotFoundError: yaml`: run `bash scripts/setup.sh` and use
-  `.venv/bin/python` or activate `.venv`.
-- `helm template` fails: check network access to `https://hub.jupyter.org` and
-  verify `helm version`.
-- `kubectl` dry-run fails: check `kubectl config current-context`; the client
-  can validate manifests without a live cluster when `--validate=false` is used.
-- `kubectl top` fails with `Metrics API not available`: install metrics-server
-  before making live resource-usage claims, or report the metric as unavailable.
-- JupyterHub install fails: run `bash scripts/uninstall.sh`, confirm the
-  namespace is disposable, then retry the baseline or proposed install.
-- Analysis refuses to overwrite files: pass `--overwrite` or choose a new
-  `--results-dir`.
-
-## Additional Documents
-
-- `DEMO_SCRIPT.md`: narrative demo flow.
-- `CLEANUP.md`: original demo cleanup notes.
-- `docs/evaluation/EXPERIMENT_PROTOCOL.md`: experimental procedure.
-- `docs/evaluation/RESULT_SCHEMA.md`: raw record schema.
-- `docs/evaluation/RESULTS.md`: current derived analysis report.
-- `docs/evaluation/FINAL_AUDIT.md`: current independent audit, former-blocker
-  status, claim boundaries, validation record, and final defense checklist.
+- [Getting Started](docs/GETTING_STARTED.md)
+- [Architecture](docs/ARCHITECTURE.md)
+- [Demo Script](DEMO_SCRIPT.md)
+- [Cleanup](CLEANUP.md)
+- [Local Experiment Data Guide](experiments/README.md)
+- [Artifact Manifest](docs/ARTIFACT_MANIFEST.md)
+- [Data Governance](docs/DATA_GOVERNANCE.md)
+- [Experiment Protocol](docs/evaluation/EXPERIMENT_PROTOCOL.md)
+- [Kubernetes Cluster Experiment Protocol](docs/evaluation/CLUSTER_EXPERIMENT_PROTOCOL.md)
+- [Result Schema](docs/evaluation/RESULT_SCHEMA.md)
+- [Local Results](docs/evaluation/RESULTS.md)
+- [Kubernetes Results](docs/evaluation/CLUSTER_RESULTS.md)
+- [Threats to Validity](docs/evaluation/THREATS_TO_VALIDITY.md)
+- [Final Audit](docs/evaluation/FINAL_AUDIT.md)

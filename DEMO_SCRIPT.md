@@ -1,193 +1,466 @@
 # Thesis Demo Script
 
-## 1. Static Profile Selection Problem
+This runbook is designed for a live presentation of the prototype. It provides
+the commands to run, the observation to point out, and the claim boundary for
+each scene.
 
-Goal: show that baseline Z2JH asks users to choose hardware even when they usually know their task better than CPU/RAM sizing.
+For installation background, see [Getting Started](docs/GETTING_STARTED.md).
+For component details, see [Architecture](docs/ARCHITECTURE.md). After the
+presentation, follow [Cleanup](CLEANUP.md).
 
-Commands:
+## Demo Story
+
+The presentation follows this sequence:
+
+1. show the baseline hardware-selection problem;
+2. demonstrate underprovisioning;
+3. demonstrate request-based scheduling pressure;
+4. illustrate defensive over-requesting;
+5. remove the temporary pressure resources;
+6. switch to the proposed intent/context form;
+7. verify that the recommendation is enforced; and
+8. run a bounded workload successfully.
+
+The demo establishes prototype mechanics. It does not reproduce the preserved
+Kubernetes evaluation or prove production-wide improvements.
+
+## Safety Gate
+
+> **Do not run this demo on a shared, staging, or production cluster.**
+
+The scripts create namespaces, ConfigMaps, pods, a Helm release, and possibly a
+ResourceQuota. Use only an isolated local cluster that you are authorized to
+delete.
+
+Defaults:
+
+| Setting | Value |
+| --- | --- |
+| Namespace | `z2jh-context-demo` |
+| Helm release | `context-demo` |
+| JupyterHub chart | `4.0.0` |
+| Browser URL | `http://127.0.0.1:8000` |
+| Authentication | Insecure local-only `DummyAuthenticator` |
+
+The demo stores no persistent JupyterHub user volume.
+
+## Before the Presentation
+
+### 1. Verify local setup
 
 ```bash
+bash scripts/setup.sh
+bash scripts/check.sh
+```
+
+Expected result: the check summary reports zero failures. Optional Helm or
+kubectl checks may be skipped only if those tools are not needed on the
+machine. They are required for the live demo.
+
+### 2. Verify the active cluster
+
+```bash
+kubectl config current-context
 bash scripts/check-cluster.sh
+```
+
+Say:
+
+> “The repository prints the current context before any demo mutation. This
+> presentation runs only inside the isolated demo namespace on a disposable
+> local cluster.”
+
+Stop if the context is not the intended local cluster.
+
+### 3. Prepare terminals
+
+Use:
+
+- **Terminal 1:** installs, demo commands, and inspection;
+- **Terminal 2:** port forwarding;
+- **Terminal 3:** optional pod watch; and
+- **Browser:** JupyterHub.
+
+In Terminal 3:
+
+```bash
+bash scripts/watch-pods.sh
+```
+
+Keep [Cleanup](CLEANUP.md) available in case the presentation is interrupted.
+
+## Scene 1: Baseline Static Profile Selection
+
+### Goal
+
+Show that the baseline asks the user to choose hardware even though the user
+usually understands the task better than Kubernetes resource quantities.
+
+### Run
+
+In Terminal 1:
+
+```bash
 bash scripts/install-baseline.sh
+kubectl get pods -n z2jh-context-demo
+```
+
+Expected result:
+
+- the Helm command completes with `Baseline installed.`;
+- Hub and proxy pods become Running; and
+- the `demo-workload` ConfigMap exists.
+
+If the install times out:
+
+```bash
+kubectl get pods -n z2jh-context-demo
+kubectl get events -n z2jh-context-demo --sort-by=.lastTimestamp
+```
+
+Look for image-pull failures, insufficient local-cluster resources, or network
+errors.
+
+### Open the UI
+
+In Terminal 2:
+
+```bash
 bash scripts/port-forward.sh
 ```
 
-Expected output:
+Open <http://127.0.0.1:8000>. Enter any username and any non-empty password.
 
-- The command prints the active context; continue only on an isolated local cluster.
-- Namespace `z2jh-context-demo` exists.
-- JupyterHub is reachable at `http://127.0.0.1:8000`.
-- Spawn page shows Small, Medium, and Large profiles.
+> `DummyAuthenticator` is intentionally insecure. Keep the endpoint on local
+> port forwarding and never expose it publicly.
 
-Explanation:
+The spawn page should display:
 
-The platform asks "Which hardware profile do you want?" This pushes resource-sizing responsibility onto the user.
+- Small: low CPU/RAM;
+- Medium: moderate CPU/RAM; and
+- Large: high CPU/RAM.
 
-## 2. Underprovisioning: Small Fails Late
+### Say
 
-Goal: demonstrate a user choosing Small, running a workload that looks fine at first, then losing state when the pod/kernel is OOMKilled.
+> “The platform asks ‘Which hardware profile do you want?’ The user must turn a
+> workload-level intention into CPU and memory sizing without direct evidence.”
 
-Commands:
+### Claim boundary
+
+This screen demonstrates the baseline interaction. It does not show how real
+users choose profiles or how often they choose incorrectly.
+
+## Scene 2: Underprovisioning and Late Failure
+
+### Goal
+
+Show a bounded workload that starts normally and then exceeds a Small memory
+limit.
+
+### Run
 
 ```bash
 bash scripts/demo-underprovisioning.sh
 kubectl get pods -n z2jh-context-demo -w
 ```
 
-Observation commands:
+Stop the watch with `Ctrl+C` after `underprovision-small` fails.
+
+### Verify
 
 ```bash
-kubectl describe pod underprovision-small -n z2jh-context-demo | grep -A8 -E 'Last State|Reason|OOMKilled'
-kubectl logs underprovision-small -n z2jh-context-demo --previous 2>/dev/null || kubectl logs underprovision-small -n z2jh-context-demo
+kubectl describe pod underprovision-small \
+  -n z2jh-context-demo |
+  grep -A8 -E 'Last State|Reason|OOMKilled'
+
+kubectl logs underprovision-small \
+  -n z2jh-context-demo \
+  --previous 2>/dev/null ||
+  kubectl logs underprovision-small -n z2jh-context-demo
 ```
 
-Expected output:
+Expected observation:
 
-- Pod starts and prints gradual `allocated_mib=...` messages.
-- Pod eventually becomes `Failed` or shows container `OOMKilled`.
+- the log shows `allocated_mib=32`, `allocated_mib=64`, and further gradual
+  allocations;
+- the container has a 384 MiB memory limit; and
+- the final status reports `OOMKilled` or exit code 137.
 
-Pain point:
+### Say
 
-The configured Small limit is insufficient for this bounded workload. This
-demonstrates a late-failure mechanism; it does not measure real user state loss
-or rerun behavior.
+> “The workload looked healthy while it allocated memory, but the resource
+> decision made before spawn caused a late container failure.”
 
-## 3. Overprovisioning: Idle Large Users Block Capacity
+### Claim boundary
 
-Goal: show that Kubernetes scheduling accounts for resource requests, not actual idle usage.
+This demonstrates an OOM mechanism with a controlled workload. It does not
+measure lost notebook state, user frustration, or time spent rerunning work.
 
-Commands:
+## Scene 3: Overprovisioning and Scheduling Pressure
+
+### Goal
+
+Show that Kubernetes schedules against requests even when a container is idle.
+
+### Run
 
 ```bash
 bash scripts/demo-overprovisioning.sh
-kubectl get pods -n z2jh-context-demo
+kubectl get pods -n z2jh-context-demo -l demo=overprovisioning
 ```
 
-Observation commands:
+The script requests 55% of the first node's allocatable CPU and memory for each
+of three idle pods.
+
+### Verify
 
 ```bash
-kubectl describe pod idle-large-1 -n z2jh-context-demo | grep -A8 Requests
-kubectl describe pod idle-large-2 -n z2jh-context-demo | grep -A12 -E 'Events|Insufficient|quota|Requests'
+kubectl describe pod idle-large-1 \
+  -n z2jh-context-demo |
+  grep -A8 Requests
+
+kubectl describe pod idle-large-2 \
+  -n z2jh-context-demo |
+  grep -A12 -E 'Events|Insufficient|quota|Requests'
+```
+
+Expected observation:
+
+- one or more pods are Pending because all requested resources do not fit; or
+- if the cluster admits every pod, the script applies
+  `overprovisioning-request-quota` and attempts an additional pod that should
+  be rejected or blocked.
+
+If Metrics Server is available:
+
+```bash
 kubectl top pods -n z2jh-context-demo
 ```
 
-Expected output:
+If the command reports `Metrics API not available`, do not infer usage. Point
+to pod requests, limits, scheduling status, and events instead.
 
-- One or more idle Large pods may be `Pending` due to insufficient requested CPU/RAM.
-- If OrbStack capacity allows all pods, the script applies a ResourceQuota fallback and shows a quota/request block.
-- `kubectl top` may show low actual usage if metrics-server is installed.
+### Say
 
-Pain point:
+> “The containers are deliberately idle, but their requests reduce the
+> capacity Kubernetes can offer to another session.”
 
-Large idle sessions reserve schedulable capacity even when they do almost no
-work. The script can demonstrate request-based scheduling pressure, but it does
-not measure production utilization.
+### Claim boundary
 
-## 4. Defensive Over-Requesting
+This demonstrates request-based scheduling pressure on the local demo cluster.
+It does not measure production utilization or multi-user arrival behavior.
 
-Goal: illustrate a hypothetical defensive Large choice for a light workload.
+## Scene 4: Defensive Over-Requesting
 
-Commands:
+### Goal
+
+Illustrate the resource cost of assigning a light task to the Large profile.
+
+### Run
 
 ```bash
 bash scripts/demo-defensive-overrequesting.sh
-kubectl get pods -n z2jh-context-demo
+kubectl logs defensive-large-light -n z2jh-context-demo
+kubectl describe pod defensive-large-light \
+  -n z2jh-context-demo |
+  grep -A8 Requests
 ```
 
-Observation commands:
+Expected observation:
+
+- the workload reports `Light EDA workload complete.`;
+- it processes only 10,000 generated values; and
+- the pod still requests 1500m CPU and 1536Mi memory.
+
+If Metrics Server is available:
 
 ```bash
-kubectl describe pod defensive-large-light -n z2jh-context-demo | grep -A8 Requests
-kubectl logs defensive-large-light -n z2jh-context-demo
+kubectl top pod defensive-large-light -n z2jh-context-demo
 ```
 
-Expected output:
+### Say
 
-- The workload prints a tiny EDA result.
-- The pod still requests Large-profile CPU/RAM.
+> “A lightweight task can reserve the Large profile when the sizing decision is
+> made defensively.”
 
-Pain point:
+### Claim boundary
 
-The script shows the resource cost if a light workload is assigned Large. It
-does not establish how often real users make this choice or why.
+The script shows the cost of this hypothetical assignment. It does not
+establish that real users make this choice or identify their motivation.
 
-## 5. Switch to Proposed Method
+## Scene 5: Remove Temporary Pressure Before Spawning
 
-Goal: replace hardware selection with intent and code context.
+The scheduling-pressure scene may leave large Pending pods and a restrictive
+ResourceQuota. Remove those temporary resources before demonstrating the
+proposed user-server spawn:
 
-Commands:
+```bash
+kubectl delete pod -n z2jh-context-demo \
+  -l demo=overprovisioning \
+  --ignore-not-found
+
+kubectl delete resourcequota overprovisioning-request-quota \
+  -n z2jh-context-demo \
+  --ignore-not-found
+
+kubectl delete pod defensive-large-light \
+  -n z2jh-context-demo \
+  --ignore-not-found
+```
+
+Verify:
+
+```bash
+kubectl get resourcequota,pods -n z2jh-context-demo
+```
+
+The Hub and proxy should remain. No overprovisioning quota should be listed.
+
+## Scene 6: Switch to the Proposed Method
+
+### Goal
+
+Replace direct hardware selection with inputs the user can describe naturally.
+
+### Run
 
 ```bash
 bash scripts/install-proposed.sh
+```
+
+This upgrades the same Helm release with `helm/proposed-values.yaml`.
+
+If port forwarding stopped during the upgrade, restart Terminal 2:
+
+```bash
 bash scripts/port-forward.sh
 ```
 
-Spawn form input:
+If an old baseline user server is still running, open `/hub/home`, stop that
+server, and start a new server so the proposed form and pre-spawn hook are used.
 
-- Intent: `I will train a scikit-learn model on a 1.5GB CSV dataset`
-- Dataset size: `1.5`
-- Code context:
+### Enter this example
 
-```python
+```text
+Intent:
+I will train a scikit-learn model on a 1.5GB CSV dataset
+
+Dataset size:
+1.5
+
+Code context:
 import pandas as pd
 from sklearn.ensemble import RandomForestClassifier
 df = pd.read_csv("data.csv")
 model.fit(X, y)
 ```
 
-Expected output:
+Expected observation:
 
-- The spawn page asks what the user is trying to do.
-- The user does not choose Small/Medium/Large manually.
+- the form asks what the user plans to do;
+- it does not ask the user to choose Small, Medium, or Large; and
+- the user server starts successfully.
 
-Explanation:
+### Say
 
-The system now asks the question the user can answer naturally, then translates it into KubeSpawner resources.
+> “The user supplies intent and lightweight context. The platform translates
+> those inputs into an approved resource profile before the pod is created.”
 
-## 6. Recommendation and Explainability
+## Scene 7: Explain and Verify the Recommendation
 
-Goal: prove the recommendation is applied to the single-user pod.
+### Goal
 
-Observation commands:
+Prove that the recommendation was applied to the Kubernetes pod, not merely
+displayed in the UI.
+
+### Run
 
 ```bash
-kubectl get pods -n z2jh-context-demo
-kubectl describe pod -n z2jh-context-demo -l component=singleuser-server | grep -A8 -E 'z2jh-context-demo.local/recommended-profile|Environment|RECOMMENDED_PROFILE'
+kubectl get pods -n z2jh-context-demo \
+  -l component=singleuser-server
+
+kubectl describe pod -n z2jh-context-demo \
+  -l component=singleuser-server |
+  grep -A8 -E \
+  'z2jh-context-demo.local/recommended-profile|Environment|RECOMMENDED_PROFILE|Requests|Limits'
 ```
 
-Inside JupyterLab, open a terminal and run:
+Expected observation:
+
+- `RECOMMENDED_PROFILE=large`;
+- reasons mention the dataset-size, data-processing, and training signals;
+- recommendation annotations are present; and
+- resources match the Large profile.
+
+### Say
+
+> “The rule is explainable. The selected profile, reasons, and enforced
+> requests are visible in pod metadata and configuration.”
+
+The reason strings are demo output, not a statistical explanation of model
+behavior. The prototype uses deterministic rules, not an LLM.
+
+## Scene 8: Complete the Bounded Workload
+
+In the JupyterLab terminal:
 
 ```bash
 python /home/jovyan/demo/workload/train_like_workload.py
 ```
 
-Expected output:
+Expected output includes:
 
-- `RECOMMENDED_PROFILE=large`
-- Reasons include dataset size and training/modeling context.
-
-Explanation:
-
-The recommendation is explainable and visible in pod environment variables and annotations.
-
-## 7. Workload Completes Without OOM
-
-Goal: show the same class of training-like workload completes when the profile is recommended from context.
-
-Command inside a proposed-profile JupyterLab terminal:
-
-```bash
-python /home/jovyan/demo/workload/train_like_workload.py
+```text
+RECOMMENDED_PROFILE=large
+allocated_mib=512
+Training-like workload finished without OOM.
 ```
 
-Expected output:
+### Say
 
-- The script prints incremental allocation up to the bounded target.
-- It finishes with `Training-like workload finished without OOM.`
+> “The proposed path applied a profile before spawn and the bounded
+> training-like workload completed within that profile.”
 
-Closing sentence:
+### Claim boundary
 
-The prototype does not require an LLM or real GPU. It shows that rule-based
-intent and context signals can be translated into a pre-spawn resource profile.
-Whether this reduces late failures or defensive over-requesting remains an
-unevaluated research claim.
+Do not say that this single run proves a reduction in OOM rate. The preserved
+comparative cluster matrix observed no OOM, so it cannot estimate an OOM
+reduction. The live run only demonstrates end-to-end mechanics.
+
+## Closing Summary
+
+Recommended closing statement:
+
+> “This artifact demonstrates that natural-language intent, dataset-size hints,
+> and lightweight code context can be converted into an explainable pre-spawn
+> KubeSpawner profile. It also provides separate local and Kubernetes evaluation
+> pipelines with preserved raw evidence. The results apply to controlled
+> synthetic workloads and a single-node Minikube environment, not directly to a
+> production multi-user JupyterHub.”
+
+Accurate defense points:
+
+- the prototype is rule-based and auditable;
+- the Helm path applies resources before pod creation;
+- raw and derived evidence are kept separate;
+- local and Kubernetes measurements are not mixed;
+- no real GPU behavior is evaluated;
+- no history-aware recommender is implemented; and
+- production performance remains future work.
+
+## End the Demo
+
+Stop port forwarding and pod watching with `Ctrl+C`, then:
+
+```bash
+bash scripts/uninstall.sh
+```
+
+Confirm deletion:
+
+```bash
+kubectl get namespace z2jh-context-demo
+```
+
+See [Cleanup](CLEANUP.md) for the exact deletion scope and local artifact
+cleanup.
