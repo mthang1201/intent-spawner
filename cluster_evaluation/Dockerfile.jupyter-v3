@@ -1,0 +1,14 @@
+FROM quay.io/jupyter/scipy-notebook@sha256:e760028814b48e503f8991e20f89ad7ba2725b34ca7d937b104584b78f11169f
+
+ARG VCS_REF
+ARG SOURCE_DATE_EPOCH
+LABEL org.opencontainers.image.revision="${VCS_REF}"
+LABEL org.opencontainers.image.source="intent-spawner protocol-v3 JupyterHub evaluation"
+
+USER root
+RUN pip install --no-cache-dir PyYAML==6.0.3
+COPY benchmarks/__init__.py benchmarks/resource_envelope_runner.py benchmarks/workloads-v3.yaml /opt/intent-spawner/benchmarks/
+COPY cluster_evaluation/__init__.py cluster_evaluation/pod_runner_v3.py /opt/intent-spawner/cluster_evaluation/
+RUN chown -R 1000:100 /opt/intent-spawner
+ENV PYTHONPATH=/opt/intent-spawner
+USER 1000

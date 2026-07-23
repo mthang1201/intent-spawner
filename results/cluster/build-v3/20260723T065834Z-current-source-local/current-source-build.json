@@ -1,0 +1,31 @@
+{
+  "schema_version": "1.0.0",
+  "protocol_version": "3.0.0",
+  "captured_at": "2026-07-23T06:58:34Z",
+  "git_commit": "fdc49d5b15b462da6547e31a7d821fe192bbf399",
+  "working_tree_clean": false,
+  "platform": "linux/arm64",
+  "registry_push_performed": false,
+  "direct_pod": {
+    "dockerfile": "cluster_evaluation/Dockerfile.v3",
+    "dockerfile_sha256": "03e2553e74ebf7b54a37ea2f270ddcc1314df780161e88310e55c86319f091f0",
+    "command": "docker buildx build --platform linux/arm64 --load --provenance=false --build-arg VCS_REF=fdc49d5b15b462da6547e31a7d821fe192bbf399 --tag intent-spawner-v3:audit2-fdc49d5-dirty --metadata-file /tmp/intent-spawner-v3-build2-metadata.json --iidfile /tmp/intent-spawner-v3-iid2.txt --file cluster_evaluation/Dockerfile.v3 .",
+    "local_tag": "docker.io/library/intent-spawner-v3:audit2-fdc49d5-dirty",
+    "configuration_digest": "sha256:a4a9e3c63a0619eb068ef6e4a1a007d0c12ab1f59d9a3e13b28d550799b39525",
+    "registry_manifest_digest": null,
+    "created": "2026-07-23T13:50:09.394939364+07:00"
+  },
+  "jupyterhub_singleuser": {
+    "dockerfile": "cluster_evaluation/Dockerfile.jupyter-v3",
+    "dockerfile_sha256": "b1a3c06f25ef0d5c9a40583d054027c7f342c6781f8f6dc5c6e2579774b8841d",
+    "command": "docker buildx build --platform linux/arm64 --load --provenance=false --build-arg VCS_REF=fdc49d5b15b462da6547e31a7d821fe192bbf399 --tag intent-spawner-jupyter-v3:audit-fdc49d5-dirty --metadata-file /tmp/intent-spawner-jupyter-v3-build-metadata.json --iidfile /tmp/intent-spawner-jupyter-v3-iid.txt --file cluster_evaluation/Dockerfile.jupyter-v3 .",
+    "local_tag": "docker.io/library/intent-spawner-jupyter-v3:audit-fdc49d5-dirty",
+    "configuration_digest": "sha256:4451e19b240738ce8123e166fd7fd157cd0bea50664994e2a17369b53ad78229",
+    "registry_manifest_digest": null,
+    "created": "2026-07-23T13:50:19.706542863+07:00"
+  },
+  "deployment_gate": {
+    "status": "blocked",
+    "reason": "No registry manifest digests exist; local configuration digests are not deployable immutable references."
+  }
+}

@@ -1,4 +1,4 @@
-.PHONY: check validate-cluster-results validate-raw-integrity capacity-dry-run regenerate-cluster-results
+.PHONY: check validate-cluster-results validate-raw-integrity capacity-dry-run v3-validate v3-dry-run v3-image-policy regenerate-cluster-results
 
 check:
 	bash scripts/check.sh
@@ -14,6 +14,25 @@ capacity-dry-run:
 		--experiment-id capacity-v2-dry-run \
 		--image intent-spawner-cluster-eval:capacity-v2 \
 		--dry-run
+
+v3-validate:
+	.venv/bin/python -m benchmarks.resource_envelope_runner --validate-only
+
+v3-dry-run: v3-validate
+	.venv/bin/python -m cluster_evaluation.runner_v3 \
+		--kind calibration --experiment-id v3-calibration-dry-run \
+		--image example.invalid/intent-spawner-v3@sha256:abc --dry-run
+	.venv/bin/python -m cluster_evaluation.runner_v3 \
+		--kind ground-truth --experiment-id v3-ground-truth-dry-run \
+		--image example.invalid/intent-spawner-v3@sha256:abc --dry-run
+	.venv/bin/python -m cluster_evaluation.runner_v3 \
+		--kind comparative --experiment-id v3-comparative-dry-run \
+		--image example.invalid/intent-spawner-v3@sha256:abc --dry-run
+	.venv/bin/python -m cluster_evaluation.jupyterhub_v3 \
+		--experiment-id v3-jupyterhub-dry-run --dry-run
+
+v3-image-policy:
+	.venv/bin/python -m cluster_evaluation.image_policy_v3
 
 regenerate-cluster-results: validate-cluster-results
 	.venv/bin/python -m cluster_evaluation.analyze \

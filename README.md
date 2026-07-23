@@ -16,6 +16,17 @@ contains three separate execution paths:
 2. a portable local synthetic benchmark; and
 3. a preserved Kubernetes-backed evaluation corpus.
 
+The repository also contains a preregistered, not-yet-executed v3
+resource-envelope protocol. V3 adds bounded memory pressure,
+calibration/hold-out isolation, and a separate JupyterHub fidelity path without
+changing the preserved v2 corpus. See
+[Resource-Envelope Protocol v3](docs/evaluation/RESOURCE_ENVELOPE_PROTOCOL_V3.md).
+The independent implementation audit is documented in
+[Protocol-v3 Implementation Audit](docs/evaluation/RESOURCE_ENVELOPE_V3_IMPLEMENTATION_AUDIT.md).
+As of 2026-07-23, this revision freezes the reviewed protocol-v3 source, but
+immutable registry images are still missing, so no real v3 cluster experiment
+has run.
+
 These paths answer different questions and their results must not be treated as
 interchangeable.
 
@@ -111,6 +122,13 @@ Preview the complete local experiment matrix without executing workloads:
   --seed 20260719 \
   --dry-run \
   --environment-id local-dry-run
+```
+
+Validate and preview every v3 matrix without allocating pressure memory or
+accessing Kubernetes:
+
+```bash
+make v3-dry-run
 ```
 
 See [Local Synthetic Benchmark](docs/GETTING_STARTED.md#path-a-local-synthetic-benchmark)

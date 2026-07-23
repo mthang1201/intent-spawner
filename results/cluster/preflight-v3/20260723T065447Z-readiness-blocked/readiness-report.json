@@ -1,0 +1,66 @@
+{
+  "schema_version": "3.0.0",
+  "protocol_version": "3.0.0",
+  "captured_at": "2026-07-23T06:54:47Z",
+  "status": "blocked_before_cluster_inspection",
+  "phase": "immutable_image_and_frozen_commit_gate",
+  "failed_preconditions": [
+    {
+      "precondition": "Both custom v3 images have immutable registry manifest references",
+      "observed": "Both images built locally, but RepoDigests is empty and no intended registry was configured. Only local configuration/image IDs exist.",
+      "why_blocking": "A Docker configuration digest is not a registry manifest digest and cannot defensibly be used as registry/repository@sha256 evidence.",
+      "minimal_remediation": "Choose the intended direct-pod and Jupyter repositories, freeze a clean commit, build and push once, and record the manifest digests returned by the registry."
+    },
+    {
+      "precondition": "Every critical v3 execution input is tracked by the recorded clean Git commit",
+      "observed": "The repository is on commit fdc49d5b15b462da6547e31a7d821fe192bbf399 with tracked modifications and untracked v3 execution sources.",
+      "why_blocking": "The recorded commit does not identify the exact source used to build or execute protocol v3.",
+      "minimal_remediation": "Review and commit the intended v3 implementation and documentation, then rebuild from that clean commit. Do not commit unrelated .codex-work or deliverable artifacts."
+    },
+    {
+      "precondition": "The v3 Helm single-user image is pinned as registry/repository@sha256:<manifest-digest>",
+      "observed": "helm/experiment-v3-values.yaml still contains intent-spawner-jupyter-eval:v3.",
+      "why_blocking": "The automated immutable-image policy correctly fails, so the rendered manifest is not admissible experiment evidence.",
+      "minimal_remediation": "After the registry push, put the exact digest reference in singleuser.image.name, leave singleuser.image.tag empty, render chart 4.0.0, and run image_policy_v3 against the rendered output."
+    }
+  ],
+  "cluster_environment_facts": {
+    "inspected": false,
+    "reason": "The prerequisite image and source-freeze gates failed before any Kubernetes context or API query was attempted."
+  },
+  "commands_executed": [
+    "Local unit and smoke tests",
+    "Local v2 checksum verification",
+    "Local Docker builds and in-container manifest-only validation",
+    "Local Helm template rendering from the existing placeholder configuration"
+  ],
+  "commands_not_executed": [
+    "kubectl config current-context for the v3 readiness run",
+    "kubectl get or kubectl auth can-i readiness inspection",
+    "docker push",
+    "helm upgrade --install",
+    "kubectl create",
+    "kubectl delete",
+    "kubectl exec",
+    "calibration workload execution",
+    "ground-truth workload execution",
+    "comparative workload execution",
+    "JupyterHub end-to-end execution",
+    "any memory-pressure allocation"
+  ],
+  "experiment_accounting": {
+    "calibration_expected": 24,
+    "calibration_actual": 0,
+    "ground_truth_expected": 120,
+    "ground_truth_actual": 0,
+    "comparative_expected": 120,
+    "comparative_actual": 0,
+    "jupyterhub_expected": 45,
+    "jupyterhub_actual": 0,
+    "replacements": 0,
+    "failures": 0,
+    "exclusions": 0,
+    "incomplete_started_trials": 0
+  },
+  "scientific_result_boundary": "No protocol-v3 workload ran. There are no observed peak-memory, OOM, performance, robustness, concordance, cost, or statistical results."
+}

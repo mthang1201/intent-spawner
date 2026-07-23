@@ -59,6 +59,14 @@ They avoid heavy dependencies and real datasets, which improves portability but
 misses native library behavior, pandas/scikit-learn allocator patterns, GPU
 kernels, file formats, I/O bottlenecks, and multi-user arrival patterns.
 
+Protocol v3 improves operational contrast by targeting total cgroup memory near
+the committed profile limits. It still uses synthetic computation and explicit
+pressure padding. This establishes controlled resource envelopes, not the
+claim that an equivalently sized real dataframe, model, allocator, or notebook
+will behave identically. Calibration records are excluded from v3 method
+comparisons, and noisy-input cases are reported as a separate robustness
+stratum.
+
 ## Threshold Sensitivity
 
 The recommender uses fixed rule thresholds such as the 0.5GB Medium signal and

@@ -1,0 +1,11 @@
+*
+!requirements.txt
+!benchmarks/
+benchmarks/*
+!benchmarks/__init__.py
+!benchmarks/resource_envelope_runner.py
+!benchmarks/workloads-v3.yaml
+!cluster_evaluation/
+cluster_evaluation/*
+!cluster_evaluation/__init__.py
+!cluster_evaluation/pod_runner_v3.py

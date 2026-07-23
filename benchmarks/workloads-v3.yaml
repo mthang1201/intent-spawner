@@ -1,0 +1,297 @@
+schema_version: "3.0.0"
+protocol_version: "3.0.0"
+description: "Preregistered bounded resource-envelope workloads for direct-pod and JupyterHub hold-out evaluation."
+master_seed: 20260723
+namespace: z2jh-context-demo
+synthetic_data_declaration: "Every value is generated deterministically by repository code. No external dataset is downloaded or read, no user data is used, and no generated dataset is retained."
+limits:
+  max_target_cgroup_mib: 1700
+  max_deadline_seconds: 120
+  allocation_chunk_mib: 8
+  allocation_overshoot_mib: 16
+  page_touch_bytes: 4096
+  memory_hold_seconds: 8
+  cpu_worker_count: 2
+  cgroup_sample_interval_seconds: 0.1
+target_bands:
+  small:
+    lower_mib: 315
+    upper_mib: 335
+  medium:
+    lower_mib: 820
+    upper_mib: 880
+  large:
+    lower_mib: 1600
+    upper_mib: 1700
+profiles:
+  small:
+    cpu_request: 100m
+    cpu_limit: 500m
+    memory_request: 256M
+    memory_limit: 384M
+  medium:
+    cpu_request: 500m
+    cpu_limit: "1"
+    memory_request: 768M
+    memory_limit: 1G
+  large:
+    cpu_request: 1500m
+    cpu_limit: "2"
+    memory_request: 1536M
+    memory_limit: 2G
+methods:
+  - static_default
+  - intent_only
+  - context_aware
+workloads:
+  - workload_id: cal_small_envelope
+    evaluation_set: calibration
+    calibration_profiles: [small]
+    operation: stream_aggregation
+    description: "Calibration control for a cgroup peak close to the Small limit."
+    intent: "Run a few basic Python calculations."
+    dataset_size_hint_gb: 0.05
+    code_context_hints: []
+    target_cgroup_mib: 325
+    target_band_mib: [315, 335]
+    hold_seconds: 8
+    max_allocation_mib: 341
+    work_units: 0
+    workload_deadline_seconds: 75
+    expected_signal_path: calibration_only
+    expected_minimum_profile: small
+    expected_method_profiles: {}
+    deterministic_seed: 7101
+    data_source: {type: synthetic, generated_shape: "bounded numeric stream plus page-touched anonymous memory"}
+    license: "Repository-generated synthetic data; no external dataset license applies."
+
+  - workload_id: cal_small_medium_boundary
+    evaluation_set: calibration
+    calibration_profiles: [small, medium]
+    operation: table_transform
+    description: "Calibration control that must OOM on Small and complete on Medium."
+    intent: "Summarize generated numeric records."
+    dataset_size_hint_gb: 0.8
+    code_context_hints: []
+    target_cgroup_mib: 850
+    target_band_mib: [820, 880]
+    hold_seconds: 8
+    max_allocation_mib: 866
+    work_units: 0
+    workload_deadline_seconds: 75
+    expected_signal_path: calibration_only
+    expected_minimum_profile: medium
+    expected_method_profiles: {}
+    deterministic_seed: 7102
+    data_source: {type: synthetic, generated_shape: "bounded tabular transform plus page-touched anonymous memory"}
+    license: "Repository-generated synthetic data; no external dataset license applies."
+
+  - workload_id: cal_medium_large_boundary
+    evaluation_set: calibration
+    calibration_profiles: [medium, large]
+    operation: materialization
+    description: "Calibration control that must OOM on Medium and complete on Large."
+    intent: "Materialize generated feature values."
+    dataset_size_hint_gb: 2.2
+    code_context_hints: ["import pandas as pd"]
+    target_cgroup_mib: 1650
+    target_band_mib: [1600, 1700]
+    hold_seconds: 8
+    max_allocation_mib: 1666
+    work_units: 0
+    workload_deadline_seconds: 90
+    expected_signal_path: calibration_only
+    expected_minimum_profile: large
+    expected_method_profiles: {}
+    deterministic_seed: 7103
+    data_source: {type: synthetic, generated_shape: "bounded feature materialization plus page-touched anonymous memory"}
+    license: "Repository-generated synthetic data; no external dataset license applies."
+
+  - workload_id: cal_cpu_units
+    evaluation_set: calibration
+    calibration_profiles: [small, medium, large]
+    operation: cpu_parallel
+    description: "Two-process deterministic CPU calibration with fixed work units."
+    intent: "Run a deterministic checksum benchmark."
+    dataset_size_hint_gb: 0.1
+    code_context_hints: ["model.fit(generated_features, generated_labels)"]
+    target_cgroup_mib: 0
+    target_band_mib: [0, 192]
+    hold_seconds: 0
+    max_allocation_mib: 192
+    work_units: 600
+    workload_deadline_seconds: 120
+    expected_signal_path: calibration_only
+    expected_minimum_profile: small
+    expected_method_profiles: {}
+    deterministic_seed: 7104
+    data_source: {type: synthetic, generated_shape: "two workers with 600 fixed integer-hash work units"}
+    license: "Repository-generated synthetic data; no external dataset license applies."
+
+  - workload_id: h01_small_stream
+    evaluation_set: holdout_core
+    sentinel_end_to_end: true
+    operation: stream_aggregation
+    description: "Light streaming aggregation with a real cgroup peak near the Small limit."
+    intent: "Run a few basic Python calculations and check a checksum."
+    dataset_size_hint_gb: 0.05
+    code_context_hints: []
+    target_cgroup_mib: 325
+    target_band_mib: [315, 335]
+    hold_seconds: 8
+    max_allocation_mib: 341
+    work_units: 0
+    workload_deadline_seconds: 75
+    expected_signal_path: truthful_light
+    expected_minimum_profile: small
+    expected_method_profiles: {static_default: medium, intent_only: small, context_aware: small}
+    deterministic_seed: 7201
+    data_source: {type: synthetic, generated_shape: "50,000 generated values plus bounded pressure padding"}
+    license: "Repository-generated synthetic data; no external dataset license applies."
+
+  - workload_id: h02_medium_size_signal
+    evaluation_set: holdout_core
+    sentinel_end_to_end: true
+    operation: table_transform
+    description: "Medium memory transform where only the declared size provides the Medium signal."
+    intent: "Summarize generated numeric records."
+    dataset_size_hint_gb: 0.8
+    code_context_hints: []
+    target_cgroup_mib: 850
+    target_band_mib: [820, 880]
+    hold_seconds: 8
+    max_allocation_mib: 866
+    work_units: 0
+    workload_deadline_seconds: 75
+    expected_signal_path: dataset_size_only
+    expected_minimum_profile: medium
+    expected_method_profiles: {static_default: medium, intent_only: small, context_aware: medium}
+    deterministic_seed: 7202
+    data_source: {type: synthetic, generated_shape: "45,000 generated rows plus bounded pressure padding"}
+    license: "Repository-generated synthetic data; no external dataset license applies."
+
+  - workload_id: h03_medium_code_signal
+    evaluation_set: holdout_core
+    sentinel_end_to_end: false
+    operation: table_join
+    description: "Medium memory join where code context provides the Medium signal."
+    intent: "Inspect generated values."
+    dataset_size_hint_gb: 0.1
+    code_context_hints: ["import pandas as pd", "pd.read_csv('generated.csv')"]
+    target_cgroup_mib: 850
+    target_band_mib: [820, 880]
+    hold_seconds: 8
+    max_allocation_mib: 866
+    work_units: 0
+    workload_deadline_seconds: 75
+    expected_signal_path: code_context_only
+    expected_minimum_profile: medium
+    expected_method_profiles: {static_default: medium, intent_only: small, context_aware: medium}
+    deterministic_seed: 7203
+    data_source: {type: synthetic, generated_shape: "36,000 left rows, 12,000 right rows, bounded pressure padding"}
+    license: "Repository-generated synthetic data; no external dataset license applies."
+
+  - workload_id: h04_large_honest
+    evaluation_set: holdout_core
+    sentinel_end_to_end: true
+    operation: sort_group
+    description: "Large aggregation with mutually consistent intent, size, and context."
+    intent: "Aggregate a larger CSV and compare group totals."
+    dataset_size_hint_gb: 2.2
+    code_context_hints: ["import pandas as pd", "df.groupby('group').amount.sum()"]
+    target_cgroup_mib: 1650
+    target_band_mib: [1600, 1700]
+    hold_seconds: 8
+    max_allocation_mib: 1666
+    work_units: 0
+    workload_deadline_seconds: 90
+    expected_signal_path: truthful_large
+    expected_minimum_profile: large
+    expected_method_profiles: {static_default: medium, intent_only: medium, context_aware: large}
+    deterministic_seed: 7204
+    data_source: {type: synthetic, generated_shape: "60,000 generated group records plus bounded pressure padding"}
+    license: "Repository-generated synthetic data; no external dataset license applies."
+
+  - workload_id: h05_large_context_recovery
+    evaluation_set: holdout_core
+    sentinel_end_to_end: true
+    operation: encoded_fit
+    description: "Large feature construction with a low size hint but strong code context."
+    intent: "Try a generated classifier."
+    dataset_size_hint_gb: 0.1
+    code_context_hints: ["import pandas as pd", "model.fit(generated_features, generated_labels)"]
+    target_cgroup_mib: 1650
+    target_band_mib: [1600, 1700]
+    hold_seconds: 8
+    max_allocation_mib: 1666
+    work_units: 0
+    workload_deadline_seconds: 90
+    expected_signal_path: context_recovers_low_size_hint
+    expected_minimum_profile: large
+    expected_method_profiles: {static_default: medium, intent_only: small, context_aware: large}
+    deterministic_seed: 7205
+    data_source: {type: synthetic, generated_shape: "bounded encoded features and optimizer passes plus pressure padding"}
+    license: "Repository-generated synthetic data; no external dataset license applies."
+
+  - workload_id: h06_cpu_parallel
+    evaluation_set: holdout_core
+    sentinel_end_to_end: true
+    operation: cpu_parallel
+    description: "Two-process deterministic CPU workload long enough for cgroup measurement."
+    intent: "Run a deterministic checksum benchmark."
+    dataset_size_hint_gb: 0.1
+    code_context_hints: ["model.fit(generated_features, generated_labels)"]
+    target_cgroup_mib: 0
+    target_band_mib: [0, 192]
+    hold_seconds: 0
+    max_allocation_mib: 192
+    work_units: 600
+    workload_deadline_seconds: 120
+    expected_signal_path: code_context_cpu_signal
+    expected_minimum_profile: small
+    expected_method_profiles: {static_default: medium, intent_only: small, context_aware: medium}
+    deterministic_seed: 7206
+    data_source: {type: synthetic, generated_shape: "two workers with 600 fixed integer-hash work units"}
+    license: "Repository-generated synthetic data; no external dataset license applies."
+
+  - workload_id: h07_noisy_overstated
+    evaluation_set: holdout_robustness
+    sentinel_end_to_end: false
+    operation: stream_aggregation
+    description: "Light workload with an intentionally overstated dataset-size hint."
+    intent: "Run a few basic Python calculations."
+    dataset_size_hint_gb: 3.0
+    code_context_hints: []
+    target_cgroup_mib: 325
+    target_band_mib: [315, 335]
+    hold_seconds: 8
+    max_allocation_mib: 341
+    work_units: 0
+    workload_deadline_seconds: 75
+    expected_signal_path: noisy_overstated_size
+    expected_minimum_profile: small
+    expected_method_profiles: {static_default: medium, intent_only: small, context_aware: large}
+    deterministic_seed: 7207
+    data_source: {type: synthetic, generated_shape: "50,000 generated values plus bounded pressure padding"}
+    license: "Repository-generated synthetic data; no external dataset license applies."
+
+  - workload_id: h08_hidden_large
+    evaluation_set: holdout_robustness
+    sentinel_end_to_end: false
+    operation: materialization
+    description: "Large real memory demand hidden behind uniformly light declared inputs."
+    intent: "Run a few basic Python calculations."
+    dataset_size_hint_gb: 0.1
+    code_context_hints: []
+    target_cgroup_mib: 1650
+    target_band_mib: [1600, 1700]
+    hold_seconds: 8
+    max_allocation_mib: 1666
+    work_units: 0
+    workload_deadline_seconds: 90
+    expected_signal_path: hidden_large_demand
+    expected_minimum_profile: large
+    expected_method_profiles: {static_default: medium, intent_only: small, context_aware: small}
+    deterministic_seed: 7208
+    data_source: {type: synthetic, generated_shape: "bounded materialized features plus pressure padding"}
+    license: "Repository-generated synthetic data; no external dataset license applies."

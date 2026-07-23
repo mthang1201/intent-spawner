@@ -132,6 +132,13 @@ Each workload uses deterministic seeds declared in `benchmarks/workloads.yaml`.
 Synthetic intent and code-context hints are authored examples, not extracted
 from real notebooks or users.
 
+Protocol v3 follows the same boundary. Its resource-envelope workloads retain
+page-touched anonymous memory only for a bounded eight-second hold and record
+useful allocation separately from pressure padding. The JupyterHub harness uses
+hashed synthetic usernames and an API token held only in process memory. Raw
+intent/code inputs, token values, Hub response headers, and real identities are
+not written to v3 evidence.
+
 ## Privacy Risks
 
 The main privacy risks are accidental collection of real notebook code,

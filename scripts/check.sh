@@ -51,6 +51,16 @@ run_check "capacity runner dry run" "$PYTHON_BIN" -m cluster_evaluation.capacity
   --experiment-id capacity-v2-dry-run \
   --image intent-spawner-cluster-eval:capacity-v2 \
   --dry-run
+run_check "v3 workload manifest validation" "$PYTHON_BIN" -m benchmarks.resource_envelope_runner \
+  --validate-only
+run_check "v3 direct-pod dry run" "$PYTHON_BIN" -m cluster_evaluation.runner_v3 \
+  --kind comparative \
+  --experiment-id v3-comparative-dry-run \
+  --image example.invalid/intent-spawner-v3@sha256:abc \
+  --dry-run
+run_check "v3 JupyterHub dry run" "$PYTHON_BIN" -m cluster_evaluation.jupyterhub_v3 \
+  --experiment-id v3-jupyterhub-dry-run \
+  --dry-run
 run_check "Python syntax validation" "$PYTHON_BIN" -m compileall -q benchmarks cluster_evaluation experiments recommender workload scripts/generate-capacity-values.py tests
 run_check "shell syntax validation" bash -n scripts/check-cluster.sh scripts/check.sh scripts/demo-defensive-overrequesting.sh scripts/demo-overprovisioning.sh scripts/demo-underprovisioning.sh scripts/environment-report.sh scripts/install-baseline.sh scripts/install-proposed.sh scripts/port-forward.sh scripts/setup.sh scripts/uninstall.sh scripts/watch-pods.sh
 
@@ -61,6 +71,9 @@ if command -v helm >/dev/null 2>&1; then
   run_check "proposed Helm render" bash -c \
     'helm template "$1" jupyterhub --repo https://hub.jupyter.org/helm-chart/ --version "$2" --namespace "$3" --values "$4" >/tmp/intent-spawner-proposed-render.yaml' \
     _ "$RELEASE" "$Z2JH_CHART_VERSION" "$NAMESPACE" "$ROOT_DIR/helm/proposed-values.yaml"
+  run_check "v3 experiment Helm render" bash -c \
+    'helm template "$1" jupyterhub --repo https://hub.jupyter.org/helm-chart/ --version "$2" --namespace "$3" --values "$4" >/tmp/intent-spawner-v3-render.yaml' \
+    _ "$RELEASE" "$Z2JH_CHART_VERSION" "$NAMESPACE" "$ROOT_DIR/helm/experiment-v3-values.yaml"
 else
   skip_check "Helm render validation" "helm is not installed or is not on PATH."
 fi

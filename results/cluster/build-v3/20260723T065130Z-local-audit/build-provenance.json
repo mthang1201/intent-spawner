@@ -1,0 +1,77 @@
+{
+  "schema_version": "1.0.0",
+  "protocol_version": "3.0.0",
+  "captured_at": "2026-07-23T06:51:30Z",
+  "git": {
+    "commit": "fdc49d5b15b462da6547e31a7d821fe192bbf399",
+    "commit_timestamp": "2026-07-23T11:41:50+07:00",
+    "working_tree_clean": false,
+    "tracked_changes_present": true,
+    "untracked_entries_present": true
+  },
+  "builder": {
+    "docker_client_version": "27.5.0",
+    "docker_server_version": "29.4.0",
+    "docker_buildx_version": "v0.33.0",
+    "driver": "docker",
+    "builder_instance": "orbstack",
+    "platform": "linux/arm64",
+    "build_context": ".",
+    "provenance_attestation": false,
+    "registry_push_performed": false,
+    "registry_push_reason": "No intended registry or repository was configured; no credentials or external registry were used."
+  },
+  "images": [
+    {
+      "role": "direct_pod",
+      "dockerfile": "cluster_evaluation/Dockerfile.v3",
+      "dockerfile_sha256": "c22ed07d83db30330bf0584d69a812ce70238c2a7b3a3a8d3c065dc3e008438d",
+      "dockerignore": "cluster_evaluation/Dockerfile.v3.dockerignore",
+      "dockerignore_sha256": "1b2845aada83a1fa7b9a0ef70ba34245cc8fd7389384d86f63c222e830137c05",
+      "build_arguments": {
+        "VCS_REF": "fdc49d5b15b462da6547e31a7d821fe192bbf399"
+      },
+      "full_build_command": "docker buildx build --platform linux/arm64 --load --provenance=false --build-arg VCS_REF=fdc49d5b15b462da6547e31a7d821fe192bbf399 --tag intent-spawner-v3:audit-fdc49d5-dirty --metadata-file /tmp/intent-spawner-v3-build-metadata.json --iidfile /tmp/intent-spawner-v3-iid.txt --file cluster_evaluation/Dockerfile.v3 .",
+      "local_tag": "docker.io/library/intent-spawner-v3:audit-fdc49d5-dirty",
+      "local_image_configuration_digest": "sha256:a4a9e3c63a0619eb068ef6e4a1a007d0c12ab1f59d9a3e13b28d550799b39525",
+      "registry_manifest_digest": null,
+      "immutable_registry_reference": null,
+      "repository_digests": [],
+      "created": "2026-07-23T13:50:09.394939364+07:00",
+      "size_bytes": 161172277,
+      "smoke_validation": "passed: resource_envelope_runner --validate-only reported 12 valid workloads"
+    },
+    {
+      "role": "jupyterhub_singleuser",
+      "dockerfile": "cluster_evaluation/Dockerfile.jupyter-v3",
+      "dockerfile_sha256": "b1a3c06f25ef0d5c9a40583d054027c7f342c6781f8f6dc5c6e2579774b8841d",
+      "dockerignore": "cluster_evaluation/Dockerfile.jupyter-v3.dockerignore",
+      "dockerignore_sha256": "d9d66cc7411e18850c72eeba8c126e7423026b59b1e6395d428744daa7419b40",
+      "build_arguments": {
+        "VCS_REF": "fdc49d5b15b462da6547e31a7d821fe192bbf399"
+      },
+      "full_build_command": "docker buildx build --platform linux/arm64 --load --provenance=false --build-arg VCS_REF=fdc49d5b15b462da6547e31a7d821fe192bbf399 --tag intent-spawner-jupyter-v3:audit-fdc49d5-dirty --metadata-file /tmp/intent-spawner-jupyter-v3-build-metadata.json --iidfile /tmp/intent-spawner-jupyter-v3-iid.txt --file cluster_evaluation/Dockerfile.jupyter-v3 .",
+      "local_tag": "docker.io/library/intent-spawner-jupyter-v3:audit-fdc49d5-dirty",
+      "local_image_configuration_digest": "sha256:4451e19b240738ce8123e166fd7fd157cd0bea50664994e2a17369b53ad78229",
+      "registry_manifest_digest": null,
+      "immutable_registry_reference": null,
+      "repository_digests": [],
+      "created": "2026-07-23T13:50:19.706542863+07:00",
+      "size_bytes": 3730543789,
+      "smoke_validation": "passed: resource_envelope_runner --validate-only reported 12 valid workloads"
+    }
+  ],
+  "source_inputs_sha256": {
+    "requirements.txt": "0969da99a0bc2a1b71ed50584560f4588a37567ac63af3ddbaf3c4617ca5621a",
+    "benchmarks/__init__.py": "9913ec6a32d3bca152592c76702ba2e93710c8409b23c4b67119a7880de47807",
+    "benchmarks/resource_envelope_runner.py": "72b4b60bfa2fea586fbbee3faa08d1b17a8c15865e76985aaf32c10ff99c948a",
+    "benchmarks/workloads-v3.yaml": "c8ddc79eb92709293c40ed538d50c3f6fa3d86c8b281ec61fde277609485a713",
+    "cluster_evaluation/__init__.py": "cd794b671b7fca8c73094518976726ec9e3a709052854c39954d7fbbadc37b8a",
+    "cluster_evaluation/pod_runner_v3.py": "1e691b7d7494b316eb9eb9f3afffbb3e63590a09d10d080289a18dbb51d2e3ac"
+  },
+  "immutable_digest_gate": {
+    "status": "blocked",
+    "reason": "A local Docker image ID/configuration digest is not a registry manifest digest and must not be substituted into a repository@sha256 reference.",
+    "required_remediation": "Choose the intended registry repositories, rebuild from a clean frozen commit, push once, record the returned manifest digests, and pin those exact repository@sha256 references."
+  }
+}

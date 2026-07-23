@@ -42,6 +42,26 @@
   dry-run and exact-label cleanup paths.
 - `cluster_evaluation/raw_integrity.py`: verifies every tracked raw file against
   `docs/evaluation/RAW_EVIDENCE_SHA256SUMS.txt`.
+- `benchmarks/workloads-v3.yaml` and
+  `benchmarks/resource_envelope_runner.py`: preregistered bounded calibration
+  and hold-out suite; validation mode does not allocate pressure.
+- `cluster_evaluation/runner_v3.py`, `pod_runner_v3.py`, and
+  `result_schema_v3.py`: separate v3 direct-pod planning, cgroup measurement,
+  safety gates, append-only evidence, and schema validation.
+- `cluster_evaluation/analyze_v3.py`: calibration gate, independent ground
+  truth, fixed-suite comparison, Wilson intervals, and workload-cluster
+  bootstrap analysis.
+- `cluster_evaluation/evidence_v3.py`: fail-closed v3 corpus completeness,
+  pairing, replacement, provenance, sidecar, and SHA-256 validation.
+- `cluster_evaluation/image_policy_v3.py`: immutable custom-image and rendered
+  Helm reference validation.
+- `cluster_evaluation/jupyterhub_v3.py` and
+  `helm/experiment-v3-values.yaml`: experiment-only end-to-end sentinel path.
+- `docs/evaluation/RESOURCE_ENVELOPE_PROTOCOL_V3.md`: preregistration, stopping
+  rules, measurement semantics, uncertainty, costs, and claim boundary.
+- `docs/evaluation/RESOURCE_ENVELOPE_V3_IMPLEMENTATION_AUDIT.md`: independent
+  implementation audit, blocked readiness decision, claim table, and
+  fail-closed reproduction sequence.
 
 ## Preserved Raw Evidence
 
@@ -105,6 +125,7 @@ bash scripts/check.sh
 make validate-cluster-results
 make validate-raw-integrity
 make capacity-dry-run
+make v3-dry-run
 make regenerate-cluster-results
 ```
 

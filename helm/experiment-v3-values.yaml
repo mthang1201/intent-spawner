@@ -1,0 +1,182 @@
+# Experiment-only JupyterHub configuration for protocol v3.
+# Build cluster_evaluation/Dockerfile.jupyter-v3 and replace the image name with
+# its verified immutable registry reference, leaving the tag empty. Never expose
+# this DummyAuthenticator deployment outside the disposable evaluation cluster.
+proxy:
+  service:
+    type: ClusterIP
+
+hub:
+  db:
+    type: sqlite-memory
+  config:
+    JupyterHub:
+      authenticator_class: dummy
+  extraConfig:
+    00-resource-envelope-v3: |
+      import html
+      import re
+
+      EVALUATION_METHODS = ("static_default", "intent_only", "context_aware")
+      PROFILE_RESOURCES = {
+          "small": {
+              "cpu_guarantee": 0.1,
+              "cpu_limit": 0.5,
+              "mem_guarantee": "256M",
+              "mem_limit": "384M",
+          },
+          "medium": {
+              "cpu_guarantee": 0.5,
+              "cpu_limit": 1,
+              "mem_guarantee": "768M",
+              "mem_limit": "1G",
+          },
+          "large": {
+              "cpu_guarantee": 1.5,
+              "cpu_limit": 2,
+              "mem_guarantee": "1536M",
+              "mem_limit": "2G",
+          },
+      }
+      GPU_TERMS = ("torch", "tensorflow", "cuda", "gpu", "deep learning", "resnet", "bert")
+      TRAINING_TERMS = ("train", "training", "fit", ".fit(", "sklearn", "scikit-learn", "xgboost", "model")
+      DATA_TERMS = ("pandas", "read_csv", "dataframe", "csv", "parquet")
+
+      def _contains_any(text, terms):
+          found = []
+          for term in terms:
+              if term.startswith("."):
+                  if term in text:
+                      found.append(term)
+                  continue
+              pattern = r"(?<![a-z0-9_])" + re.escape(term) + r"(?![a-z0-9_])"
+              if re.search(pattern, text):
+                  found.append(term)
+          return found
+
+      def recommend_profile(intent="", dataset_size_gb=0.0, code_context=""):
+          try:
+              dataset_size_gb = max(0.0, float(dataset_size_gb))
+          except (TypeError, ValueError):
+              dataset_size_gb = 0.0
+          text = f"{intent}\n{code_context}".lower()
+          gpu_hits = _contains_any(text, GPU_TERMS)
+          if gpu_hits:
+              return "large", ["GPU-like signal mapped to the approved Large CPU profile"]
+          score = 0
+          reasons = []
+          if dataset_size_gb >= 2.0:
+              score += 3
+              reasons.append("dataset size >= 2GB")
+          elif dataset_size_gb >= 0.5:
+              score += 1
+              reasons.append("dataset size >= 0.5GB")
+          data_hits = _contains_any(text, DATA_TERMS)
+          if data_hits:
+              score += 1
+              reasons.append("data context: " + ", ".join(data_hits[:4]))
+          training_hits = _contains_any(text, TRAINING_TERMS)
+          if training_hits:
+              score += 2
+              reasons.append("training context: " + ", ".join(training_hits[:4]))
+          if score >= 3:
+              return "large", reasons
+          if score >= 1:
+              return "medium", reasons
+          return "small", ["basic/light workload context"]
+
+      async def v3_options_form(spawner):
+          return """
+          <p><strong>Protocol-v3 experiment form; disposable cluster only.</strong></p>
+          <label>Evaluation method</label>
+          <select name="evaluation_method">
+            <option value="static_default">static_default</option>
+            <option value="intent_only">intent_only</option>
+            <option value="context_aware">context_aware</option>
+          </select><br/>
+          <label>Intent</label><textarea name="intent"></textarea><br/>
+          <label>Dataset size (GB)</label><input name="dataset_size_gb" type="number" min="0" step="0.1"/><br/>
+          <label>Code context</label><textarea name="code_context"></textarea><br/>
+          <label>Synthetic run ID</label><input name="run_id"/>
+          """
+
+      def v3_options_from_form(formdata):
+          def first(name, default=""):
+              value = formdata.get(name, [default])[0]
+              return value.decode("utf-8") if isinstance(value, bytes) else value
+          method = first("evaluation_method")
+          if method not in EVALUATION_METHODS:
+              raise ValueError("unsupported experiment method")
+          raw_size = first("dataset_size_gb", "0")
+          try:
+              size = max(0.0, float(raw_size or 0))
+          except (TypeError, ValueError):
+              size = 0.0
+          run_id = first("run_id")
+          if not re.fullmatch(r"[a-z0-9][a-z0-9.-]{0,62}", run_id):
+              raise ValueError("invalid synthetic run ID")
+          return {
+              "evaluation_method": method,
+              "intent": first("intent"),
+              "dataset_size_gb": size,
+              "code_context": first("code_context"),
+              "run_id": run_id,
+          }
+
+      async def v3_pre_spawn_hook(spawner):
+          options = spawner.user_options or {}
+          method = options.get("evaluation_method")
+          if method not in EVALUATION_METHODS:
+              raise ValueError("missing allowlisted v3 evaluation method")
+          if method == "static_default":
+              profile = "medium"
+              reasons = ["fixed deployment default is medium"]
+          elif method == "intent_only":
+              profile, reasons = recommend_profile(options.get("intent", ""), 0.0, "")
+          else:
+              profile, reasons = recommend_profile(
+                  options.get("intent", ""),
+                  options.get("dataset_size_gb", 0.0),
+                  options.get("code_context", ""),
+              )
+          resources = PROFILE_RESOURCES[profile]
+          spawner.cpu_guarantee = resources["cpu_guarantee"]
+          spawner.cpu_limit = resources["cpu_limit"]
+          spawner.mem_guarantee = resources["mem_guarantee"]
+          spawner.mem_limit = resources["mem_limit"]
+          reason_text = "; ".join(reasons)
+          environment = dict(spawner.environment or {})
+          environment.update({
+              "EVALUATION_METHOD": method,
+              "RECOMMENDED_PROFILE": profile,
+              "APPLIED_PROFILE": profile,
+          })
+          spawner.environment = environment
+          annotations = dict(spawner.extra_annotations or {})
+          annotations.update({
+              "z2jh-context-demo.local/experiment-v3": "true",
+              "z2jh-context-demo.local/evaluation-method": method,
+              "z2jh-context-demo.local/recommended-profile": profile,
+              "z2jh-context-demo.local/applied-profile": profile,
+              "z2jh-context-demo.local/run-id": options["run_id"],
+              "z2jh-context-demo.local/recommendation-reasons": html.escape(reason_text)[:240],
+          })
+          spawner.extra_annotations = annotations
+          spawner.log.info("v3 recommendation method=%s profile=%s", method, profile)
+
+      c.KubeSpawner.options_form = v3_options_form
+      c.KubeSpawner.options_from_form = v3_options_from_form
+      c.KubeSpawner.pre_spawn_hook = v3_pre_spawn_hook
+
+singleuser:
+  storage:
+    type: none
+  image:
+    name: intent-spawner-jupyter-eval
+    tag: "v3"
+    pullPolicy: IfNotPresent
+  defaultUrl: /lab
+
+prePuller:
+  hook:
+    enabled: false
