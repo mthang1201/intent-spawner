@@ -42,7 +42,9 @@ Defaults:
 | Browser URL | `http://127.0.0.1:8000` |
 | Authentication | Insecure local-only `DummyAuthenticator` |
 
-The demo stores no persistent JupyterHub user volume.
+The baseline stores no persistent JupyterHub user volume. The proposed install
+adds a bounded per-user `1Gi` PVC so Task D can demonstrate persistence across
+an explicit pod replacement; deleting the demo namespace deletes that claim.
 
 ## Before the Presentation
 
@@ -328,7 +330,8 @@ Replace direct hardware selection with inputs the user can describe naturally.
 bash scripts/install-proposed.sh
 ```
 
-This upgrades the same Helm release with `helm/proposed-values.yaml`.
+This upgrades the same Helm release with `helm/proposed-values.yaml` and the
+Task D overlay `helm/reprovision-values.yaml`.
 
 If port forwarding stopped during the upgrade, restart Terminal 2:
 
@@ -441,6 +444,58 @@ Do not say that this single run proves a reduction in OOM rate. The preserved
 comparative cluster matrix observed no OOM, so it cannot estimate an OOM
 reduction. The live run only demonstrates end-to-end mechanics.
 
+## Scene 9: Re-provision a Running Notebook
+
+### Goal
+
+Show that a user can preview a changed workload after spawn, replace the pod,
+and retain saved home-directory files while explicitly losing runtime state.
+
+### Run
+
+In the JupyterLab terminal:
+
+```bash
+printf 'persistent marker\n' > /home/jovyan/reprovision-marker.txt
+```
+
+Create a Python variable in a notebook kernel, then open
+<http://127.0.0.1:8000/hub/reprovision>. Enter a changed workload, select
+**Preview replacement**, and point out the current/proposed configuration and
+the red restart warning. Check the acknowledgement and confirm.
+
+In Terminal 1:
+
+```bash
+kubectl get pods,pvc -n z2jh-context-demo -w
+```
+
+After the replacement is ready, verify in its JupyterLab terminal:
+
+```bash
+cat /home/jovyan/reprovision-marker.txt
+```
+
+Expected observation:
+
+- the old pod terminates before the new pod starts;
+- the PVC name remains stable;
+- the saved marker file remains; and
+- the prior kernel variable and terminal processes no longer exist.
+
+### Say
+
+> “This is stop-and-recreate with persistent storage, not live migration. Saved
+> files in the mounted home directory survive; kernel memory, computations, and
+> processes do not.”
+
+### Claim boundary
+
+The demo does not prove zero downtime, automatic rollback, kernel checkpointing,
+or multi-Hub concurrency safety. If replacement spawn fails, the PVC remains,
+but the user must explicitly retry. See
+[Intent-aware Re-provisioning](docs/INTENT_AWARE_REPROVISIONING.md).
+
 ## Closing Summary
 
 Recommended closing statement:
@@ -456,6 +511,8 @@ Accurate defense points:
 
 - the prototype is rule-based and auditable;
 - the Helm path applies resources before pod creation;
+- running users can request an explicit stop-and-recreate transition with the
+  same PVC, but without kernel-state retention;
 - raw and derived evidence are kept separate;
 - local and Kubernetes measurements are not mixed;
 - no real GPU behavior is evaluated;

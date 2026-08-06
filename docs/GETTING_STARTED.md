@@ -11,6 +11,7 @@ Use the workflow that matches your goal:
 | Check Python, source, and preserved evidence | Setup and verification | No |
 | Explore recommendation and benchmark behavior | Path A: local synthetic benchmark | No |
 | Demonstrate the JupyterHub user experience | Path B: interactive JupyterHub demo | Yes |
+| Change a running notebook's workload | Path B10: intent-aware re-provisioning | Yes |
 | Audit or regenerate committed research outputs | Path C: preserved Kubernetes evaluation | No for validation |
 | Produce new Kubernetes evidence | Advanced protocol only | Yes, disposable Minikube |
 
@@ -21,6 +22,10 @@ that one check, not the local benchmark path.
 Return to the [main README](../README.md), read the
 [architecture guide](ARCHITECTURE.md), or use the
 [presentation runbook](../DEMO_SCRIPT.md) as needed.
+
+The stop/start design and persistence boundary for changing an already-running
+notebook are documented in
+[Intent-aware Re-provisioning](INTENT_AWARE_REPROVISIONING.md).
 
 ## 1. Clone and Inspect the Repository
 
@@ -320,7 +325,8 @@ The live demo uses:
 - JupyterHub chart version `4.0.0`;
 - a `ClusterIP` proxy accessed through local port forwarding;
 - `DummyAuthenticator`; and
-- no persistent user storage.
+- no persistent user storage in the baseline, then a bounded per-user `1Gi`
+  PVC in the proposed re-provisioning overlay.
 
 ### B1. Confirm the active cluster
 
@@ -560,7 +566,42 @@ The script is bounded and intended only for the demonstration.
 
 For a presentation-ready narrative, use [Demo Script](../DEMO_SCRIPT.md).
 
-### B10. Clean up
+### B10. Change the running workload
+
+First save a marker file inside a JupyterLab terminal:
+
+```bash
+printf 'persistent marker\n' > /home/jovyan/reprovision-marker.txt
+```
+
+Open <http://127.0.0.1:8000/hub/reprovision>. Describe a different workload,
+select **Preview replacement**, and review the current/proposed profile and
+image. The page explicitly warns that it cannot live-migrate the server and
+cannot retain kernel variables, active computations, or terminal processes.
+
+After saving all files, check the acknowledgement and select
+**Stop old pod and create replacement**. In another terminal, observe the
+ordered pod transition and stable claim:
+
+```bash
+kubectl get pods,pvc -n z2jh-context-demo -w
+```
+
+Expected result:
+
+- the old single-user pod terminates before the replacement starts;
+- the replacement uses the confirmed resource profile and image;
+- the per-user PVC name remains unchanged; and
+- `/home/jovyan/reprovision-marker.txt` exists in the replacement server.
+
+Kernel variables and running processes from the old pod must be treated as
+lost. If the replacement fails to schedule or pull its image, the server stays
+stopped, but the PVC remains for an explicit retry. There is no automatic
+rollback in this prototype. See
+[Intent-aware Re-provisioning](INTENT_AWARE_REPROVISIONING.md) for the state
+machine, concurrency rule, audit fields, and failure behavior.
+
+### B11. Clean up
 
 Stop port forwarding with `Ctrl+C`, then:
 

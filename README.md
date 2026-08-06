@@ -94,6 +94,12 @@ See [Resource-and-Image Recommendation Preview Design](docs/evaluation/RECOMMEND
 for the mapping, state machine, audit schema, scalability assessment, and
 production suitability limits.
 
+After an initial server starts, the proposed demo also supports an explicit
+intent-aware re-provisioning flow at `/hub/reprovision`: preview a changed
+workload, acknowledge the restart, stop the old pod, and create a replacement
+with the same per-user PVC. It does not live-migrate the pod or retain kernel
+state. See [Intent-aware Re-provisioning](docs/INTENT_AWARE_REPROVISIONING.md).
+
 ## Three Evidence Paths
 
 | Path | Purpose | Requires Kubernetes | Output and claim boundary |

@@ -33,6 +33,7 @@ run helm upgrade --install "$RELEASE" jupyterhub/jupyterhub \
   "${version_args[@]}" \
   --namespace "$NAMESPACE" \
   --values "$ROOT_DIR/helm/proposed-values.yaml" \
+  --values "$ROOT_DIR/helm/reprovision-values.yaml" \
   --wait \
   --timeout 10m
 
@@ -45,4 +46,6 @@ Next:
   This local-only demo uses DummyAuthenticator; enter any username and any non-empty password.
   Enter: I will train a scikit-learn model on a 1.5GB CSV dataset
   Then click Preview recommendation and Confirm recommendation; preview alone creates no pod.
+  After the server starts, open http://127.0.0.1:8000/hub/reprovision to preview and confirm a replacement pod.
+  Save files first: the PVC is retained, but kernels, terminals, and in-memory state are not.
 EOF

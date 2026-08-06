@@ -69,8 +69,8 @@ if command -v helm >/dev/null 2>&1; then
     'helm template "$1" jupyterhub --repo https://hub.jupyter.org/helm-chart/ --version "$2" --namespace "$3" --values "$4" >/tmp/intent-spawner-baseline-render.yaml' \
     _ "$RELEASE" "$Z2JH_CHART_VERSION" "$NAMESPACE" "$ROOT_DIR/helm/baseline-values.yaml"
   run_check "proposed Helm render" bash -c \
-    'helm template "$1" jupyterhub --repo https://hub.jupyter.org/helm-chart/ --version "$2" --namespace "$3" --values "$4" >/tmp/intent-spawner-proposed-render.yaml' \
-    _ "$RELEASE" "$Z2JH_CHART_VERSION" "$NAMESPACE" "$ROOT_DIR/helm/proposed-values.yaml"
+    'helm template "$1" jupyterhub --repo https://hub.jupyter.org/helm-chart/ --version "$2" --namespace "$3" --values "$4" --values "$5" >/tmp/intent-spawner-proposed-render.yaml' \
+    _ "$RELEASE" "$Z2JH_CHART_VERSION" "$NAMESPACE" "$ROOT_DIR/helm/proposed-values.yaml" "$ROOT_DIR/helm/reprovision-values.yaml"
   run_check "v3 experiment Helm render" bash -c \
     'helm template "$1" jupyterhub --repo https://hub.jupyter.org/helm-chart/ --version "$2" --namespace "$3" --values "$4" >/tmp/intent-spawner-v3-render.yaml' \
     _ "$RELEASE" "$Z2JH_CHART_VERSION" "$NAMESPACE" "$ROOT_DIR/helm/experiment-v3-values.yaml"

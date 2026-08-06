@@ -1,0 +1,351 @@
+# Task D overlay: add intent-aware re-provisioning to the proposed demo.
+# Apply after proposed-values.yaml so the existing recommender, policy validator,
+# preview builder, and form parser are available in the shared Hub config scope.
+hub:
+  extraConfig:
+    10-intent-aware-reprovisioning: |
+      import asyncio
+
+      REPROVISION_PREVIEW_VERSION = "intent-reprovision-preview-v1"
+      REPROVISION_TASKS = {}
+      REPROVISION_WARNINGS = [
+          "The running notebook pod will stop before the replacement pod starts.",
+          "Kernel variables, active computations, terminals, and other in-memory state will be lost.",
+          "This prototype does not provide live migration or kernel checkpoint/restore.",
+          "Files saved under /home/jovyan remain on the same PersistentVolumeClaim.",
+      ]
+
+      def _current_reprovision_state(user):
+          spawner = user.spawner
+          options = dict(getattr(spawner, "user_options", {}) or {})
+          return {
+              "event_id": options.get("event_id", ""),
+              "applied_profile": options.get("applied_profile", "unknown"),
+              "applied_image_id": options.get("applied_image_id", "unknown"),
+              "generation": int(options.get("reprovision_generation", 0) or 0),
+          }
+
+      def _normalized_reprovision_recommendation(values):
+          """Adapt both the original demo and the pluggable-backend preview."""
+
+          if "build_preview_payload" in globals():
+              preview = build_preview_payload(values)
+              recommendation = preview["recommendation"]
+              return {
+                  "recommended_profile": recommendation["profile"],
+                  "applied_profile": preview["applied_profile"],
+                  "recommended_image_id": recommendation["image_id"],
+                  "image_display_name": preview["image_display_name"],
+                  "policy_version": recommendation["policy_version"],
+                  "catalog_version": recommendation["catalog_version"],
+                  "reasons": recommendation["reasons"] + recommendation["image_reasons"],
+              }
+
+          # Compatibility with the original confirmed resource/image preview,
+          # where recommend_workload returns a dict and the preview was local.
+          if not isinstance(values, dict) or set(values) - {
+              "intent", "dataset_size_gb", "code_context"
+          }:
+              raise ValueError("invalid recommendation request")
+          intent = values.get("intent", "")
+          code_context = values.get("code_context", "")
+          if not isinstance(intent, str) or not isinstance(code_context, str):
+              raise ValueError("intent and code_context must be strings")
+          if len(intent) > 2000 or len(code_context) > 5000:
+              raise ValueError("workload context exceeds the supported preview size")
+          recommendation = recommend_workload(
+              intent,
+              values.get("dataset_size_gb", 0.0),
+              code_context,
+          )
+          return {
+              "recommended_profile": recommendation["profile"],
+              "applied_profile": recommendation["applied_profile"],
+              "recommended_image_id": recommendation["image_id"],
+              "image_display_name": IMAGE_CATALOG[recommendation["image_id"]]["display_name"],
+              "policy_version": RECOMMENDATION_POLICY_VERSION,
+              "catalog_version": IMAGE_CATALOG_VERSION,
+              "reasons": recommendation["profile_reasons"] + recommendation["image_reasons"],
+          }
+
+      def build_reprovision_preview(user, values):
+          current = _current_reprovision_state(user)
+          proposed = _normalized_reprovision_recommendation(values)
+          return {
+              "preview_version": REPROVISION_PREVIEW_VERSION,
+              "current": current,
+              "proposed": proposed,
+              "persistence": {
+                  "home_volume_retained": True,
+                  "kernel_state_retained": False,
+                  "live_migration": False,
+              },
+              "warnings": list(REPROVISION_WARNINGS),
+          }
+
+      def build_reprovision_options(user, values):
+          if not isinstance(values, dict):
+              raise ValueError("re-provision request must be a JSON object")
+          allowed = {
+              "action", "acknowledge_restart", "preview_version",
+              "intent", "dataset_size_gb", "code_context",
+              "override_profile", "override_image_id",
+              "expected_current_event_id", "expected_recommended_profile",
+              "expected_recommended_image_id", "expected_policy_version",
+              "expected_catalog_version",
+          }
+          if set(values) - allowed:
+              raise ValueError("re-provision request contains unsupported fields")
+          if values.get("preview_version") != REPROVISION_PREVIEW_VERSION:
+              raise ValueError("a current re-provision preview is required")
+          if values.get("acknowledge_restart") is not True:
+              raise ValueError("restart and kernel-state loss must be acknowledged")
+
+          current = _current_reprovision_state(user)
+          if values.get("expected_current_event_id", "") != current["event_id"]:
+              raise ValueError("running server changed after preview; preview again")
+
+          action = values.get("action")
+          formdata = {
+              "preview_version": [PREVIEW_VERSION],
+              "decision_action": [action],
+              "intent": [values.get("intent", "")],
+              "dataset_size_gb": [values.get("dataset_size_gb", 0.0)],
+              "code_context": [values.get("code_context", "")],
+              "override_profile": [values.get("override_profile", "")],
+              "override_image_id": [values.get("override_image_id", "")],
+          }
+          options = context_options_from_form(formdata)
+
+          expected = {
+              "recommended_profile": values.get("expected_recommended_profile"),
+              "recommended_image_id": values.get("expected_recommended_image_id"),
+              "policy_version": values.get("expected_policy_version"),
+              "catalog_version": values.get("expected_catalog_version"),
+          }
+          actual = {key: options[key] for key in expected}
+          if expected != actual:
+              raise ValueError("recommendation or policy changed after preview; preview again")
+
+          options.update({
+              "provisioning_mode": "reprovision",
+              "reprovision_generation": current["generation"] + 1,
+              "previous_event_id": current["event_id"],
+              "previous_applied_profile": current["applied_profile"],
+              "previous_applied_image_id": current["applied_image_id"],
+          })
+          return options
+
+      async def run_reprovision(handler, user, options):
+          """Stop fully, then start with new options; never overlap user pods."""
+
+          old_spawner = user.spawner
+          if not old_spawner.ready or old_spawner.pending:
+              raise RuntimeError("the current server is not ready for re-provisioning")
+
+          handler.log.info(
+              "reprovision_audit=%s",
+              json.dumps({
+                  "event": "reprovision_started",
+                  "event_id": options["event_id"],
+                  "generation": options["reprovision_generation"],
+                  "previous_event_id": options["previous_event_id"],
+                  "previous_applied_profile": options["previous_applied_profile"],
+                  "applied_profile": options["applied_profile"],
+                  "previous_applied_image_id": options["previous_applied_image_id"],
+                  "applied_image_id": options["applied_image_id"],
+                  "kernel_state_retained": False,
+                  "home_volume_retained": True,
+              }, sort_keys=True),
+          )
+
+          stop_future = await handler.stop_single_user(user)
+          # stop_single_user may return after slow_stop_timeout while Kubernetes
+          # is still deleting the old pod. Await its future before starting the
+          # replacement so a ReadWriteOnce PVC is never attached concurrently.
+          await stop_future
+          if await old_spawner.poll() is None:
+              raise RuntimeError("old notebook pod still exists after stop")
+          await handler.spawn_single_user(user, options=options)
+
+          handler.log.info(
+              "reprovision_audit=%s",
+              json.dumps({
+                  "event": "reprovision_completed",
+                  "event_id": options["event_id"],
+                  "generation": options["reprovision_generation"],
+                  "applied_profile": options["applied_profile"],
+                  "applied_image_id": options["applied_image_id"],
+              }, sort_keys=True),
+          )
+
+      def _reprovision_task_done(username, task, log):
+          REPROVISION_TASKS.pop(username, None)
+          try:
+              task.result()
+          except Exception:
+              log.exception("intent-aware re-provisioning failed for user %s", username)
+
+      def _reprovision_page(xsrf_token, hub_base_url):
+          endpoint = hub_base_url.rstrip("/") + "/reprovision"
+          escaped_endpoint = html.escape(endpoint, quote=True)
+          escaped_xsrf = html.escape(xsrf_token, quote=True)
+          return """
+          <!doctype html>
+          <html lang="en"><head><meta charset="utf-8"/>
+          <title>Change notebook workload</title></head>
+          <body style="max-width:880px;margin:2rem auto;font-family:sans-serif">
+          <main id="reprovision-flow">
+            <h1>Change notebook workload</h1>
+            <p>Describe the new workload, preview the replacement, then confirm the restart.</p>
+            <label for="intent"><strong>New workload intent</strong></label><br/>
+            <textarea id="intent" rows="3" maxlength="2000" style="width:100%"></textarea><br/><br/>
+            <label for="dataset"><strong>Estimated dataset size (GB)</strong></label>
+            <input id="dataset" type="number" min="0" step="0.1" value="0.1"/><br/><br/>
+            <label for="code"><strong>Optional imports / code context</strong></label><br/>
+            <textarea id="code" rows="5" maxlength="5000" style="width:100%"></textarea><br/><br/>
+            <button id="preview" type="button">Preview replacement</button>
+            <p id="error" role="alert" style="color:#a94442"></p>
+            <section id="result" hidden style="border:1px solid #bbb;padding:1rem">
+              <h2>Re-provision preview</h2>
+              <p><strong>Current:</strong> <span id="current"></span></p>
+              <p><strong>Proposed:</strong> <span id="proposed"></span></p>
+              <ul id="reasons"></ul>
+              <div style="border-left:4px solid #d9534f;padding-left:1rem">
+                <strong>Restart required — no live migration</strong>
+                <ul id="warnings"></ul>
+              </div>
+              <p><label><input id="ack" type="checkbox"/> I saved my files and understand that kernel and terminal state will be lost.</label></p>
+              <button id="confirm" type="button" disabled>Stop old pod and create replacement</button>
+            </section>
+          </main>
+          <script>
+          (() => {
+            const endpoint = "__ENDPOINT__";
+            const xsrf = "__XSRF__";
+            const intent = document.getElementById("intent"), dataset = document.getElementById("dataset"), code = document.getElementById("code");
+            const result = document.getElementById("result"), error = document.getElementById("error"), ack = document.getElementById("ack"), confirm = document.getElementById("confirm");
+            let preview = null;
+            const context = () => ({intent:intent.value,dataset_size_gb:dataset.value,code_context:code.value});
+            const request = async body => {
+              const response = await fetch(endpoint,{method:"POST",credentials:"same-origin",headers:{"Content-Type":"application/json","X-XSRFToken":xsrf},body:JSON.stringify(body)});
+              const payload = await response.json();
+              if (!response.ok) throw new Error(payload.error || "request failed");
+              return payload;
+            };
+            [intent,dataset,code].forEach(field => field.addEventListener("input",() => { preview=null; result.hidden=true; ack.checked=false; confirm.disabled=true; }));
+            ack.addEventListener("change",() => { confirm.disabled=!ack.checked || !preview; });
+            document.getElementById("preview").addEventListener("click",async() => {
+              error.textContent=""; result.hidden=true; ack.checked=false; confirm.disabled=true;
+              try {
+                preview=await request({action:"preview",...context()});
+                document.getElementById("current").textContent=preview.current.applied_profile+" / "+preview.current.applied_image_id;
+                document.getElementById("proposed").textContent=preview.proposed.applied_profile+" / "+preview.proposed.recommended_image_id;
+                document.getElementById("reasons").replaceChildren(...preview.proposed.reasons.map(text => {const li=document.createElement("li");li.textContent=text;return li;}));
+                document.getElementById("warnings").replaceChildren(...preview.warnings.map(text => {const li=document.createElement("li");li.textContent=text;return li;}));
+                result.hidden=false;
+              } catch(e) { preview=null; error.textContent=e.message; }
+            });
+            confirm.addEventListener("click",async() => {
+              confirm.disabled=true; error.textContent="";
+              try {
+                const p=preview.proposed;
+                const response=await request({action:"accept",acknowledge_restart:true,preview_version:preview.preview_version,expected_current_event_id:preview.current.event_id,expected_recommended_profile:p.recommended_profile,expected_recommended_image_id:p.recommended_image_id,expected_policy_version:p.policy_version,expected_catalog_version:p.catalog_version,...context()});
+                window.location.assign(response.progress_url);
+              } catch(e) { error.textContent=e.message; confirm.disabled=false; }
+            });
+          })();
+          </script></body></html>
+          """.replace("__ENDPOINT__", escaped_endpoint).replace("__XSRF__", escaped_xsrf)
+
+      class IntentReprovisionHandler(BaseHandler):
+          @web.authenticated
+          async def get(self):
+              user = self.current_user
+              if not user.running:
+                  raise web.HTTPError(409, "start a notebook server before re-provisioning")
+              token = self.xsrf_token.decode("ascii") if isinstance(self.xsrf_token, bytes) else str(self.xsrf_token)
+              self.finish(_reprovision_page(token, self.hub.base_url))
+
+          @web.authenticated
+          async def post(self):
+              user = self.current_user
+              if not user.running:
+                  self.set_status(409)
+                  self.finish(json.dumps({"error": "no running notebook server"}))
+                  return
+              try:
+                  values = json.loads(self.request.body.decode("utf-8"))
+                  action = values.pop("action", "")
+                  if action == "preview":
+                      payload = build_reprovision_preview(user, values)
+                  elif action in {"accept", "override"}:
+                      if user.name in REPROVISION_TASKS or user.spawner.pending:
+                          raise RuntimeError("a server transition is already in progress")
+                      values["action"] = action
+                      options = build_reprovision_options(user, values)
+                      task = asyncio.ensure_future(run_reprovision(self, user, options))
+                      REPROVISION_TASKS[user.name] = task
+                      task.add_done_callback(
+                          lambda completed, username=user.name, log=self.log:
+                              _reprovision_task_done(username, completed, log)
+                      )
+                      payload = {
+                          "status": "accepted",
+                          "event_id": options["event_id"],
+                          "progress_url": (
+                              self.hub.base_url.rstrip("/")
+                              + "/spawn-pending/"
+                              + user.escaped_name
+                          ),
+                      }
+                      self.set_status(202)
+                  else:
+                      raise ValueError("unsupported re-provision action")
+              except (UnicodeDecodeError, json.JSONDecodeError, TypeError, ValueError) as exc:
+                  self.set_status(400)
+                  payload = {"error": str(exc)}
+              except RuntimeError as exc:
+                  self.set_status(409)
+                  payload = {"error": str(exc)}
+              except Exception:
+                  self.log.exception("re-provision request failed")
+                  self.set_status(503)
+                  payload = {"error": "re-provisioning is temporarily unavailable"}
+              self.set_header("Content-Type", "application/json")
+              self.finish(json.dumps(payload))
+
+      _extra_handlers = list(getattr(c.JupyterHub, "extra_handlers", []) or [])
+      _extra_handlers.append((r"/reprovision", IntentReprovisionHandler))
+      c.JupyterHub.extra_handlers = _extra_handlers
+
+      _base_pre_spawn_hook = c.KubeSpawner.pre_spawn_hook
+
+      async def reprovision_pre_spawn_hook(spawner):
+          await _base_pre_spawn_hook(spawner)
+          options = spawner.user_options or {}
+          if options.get("provisioning_mode") != "reprovision":
+              return
+          environment = dict(spawner.environment or {})
+          environment.update({
+              "PROVISIONING_MODE": "reprovision",
+              "REPROVISION_GENERATION": str(options["reprovision_generation"]),
+              "JUPYTERHUB_REPROVISION_URL": "/hub/reprovision",
+          })
+          spawner.environment = environment
+          annotations = dict(spawner.extra_annotations or {})
+          annotations.update({
+              "z2jh-context-demo.local/provisioning-mode": "reprovision",
+              "z2jh-context-demo.local/reprovision-generation": str(options["reprovision_generation"]),
+              "z2jh-context-demo.local/previous-event-id": options["previous_event_id"],
+          })
+          spawner.extra_annotations = annotations
+
+      c.KubeSpawner.pre_spawn_hook = reprovision_pre_spawn_hook
+
+singleuser:
+  storage:
+    # The pod is disposable, but this per-user claim is stable across stops.
+    # Never delete the PVC as part of the re-provision transaction.
+    type: dynamic
+    capacity: 1Gi

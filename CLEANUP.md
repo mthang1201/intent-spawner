@@ -89,6 +89,8 @@ Deleting the namespace removes namespaced demo resources, including:
 
 - the `context-demo` Helm release state;
 - Hub, proxy, user, and demonstration pods;
+- per-user PersistentVolumeClaims created by the Task D re-provisioning overlay
+  (and, with the demo's dynamic provisioning/reclaim policy, their bound data);
 - Services and other namespaced JupyterHub objects;
 - the `demo-workload` ConfigMap;
 - demo ResourceQuotas; and
@@ -107,6 +109,10 @@ It does not delete or modify:
 - `.venv`;
 - local experiment outputs; or
 - preserved raw evidence.
+
+Stopping or re-provisioning an individual notebook does not delete its PVC.
+Deleting the whole demo namespace does. Copy any marker files or other demo data
+you intend to keep before running `scripts/uninstall.sh`.
 
 ## Local Python Cleanup
 
