@@ -155,7 +155,9 @@ Expected result:
 
 - JSON is printed to stdout;
 - the profile is `large`; and
-- the reasons identify dataset, data-processing, and training signals.
+- the image is `scipy-data-science`; and
+- the resource and image reasons identify dataset, data-processing, training,
+  and catalog capability signals.
 
 This command exercises the standalone recommender. The proposed Helm values
 contain a mirrored implementation for the live pre-spawn demo.
@@ -508,8 +510,13 @@ model.fit(X, y)
 Expected result:
 
 - the form asks about the task rather than asking the user to choose hardware;
-- the rule-based recommender selects `large`; and
-- the pre-spawn hook applies Large resources before the user pod is created.
+- **Preview recommendation** shows `large`, `scipy-data-science`, and their
+  explanations without creating a pod;
+- **Edit inputs** invalidates the preview and requires another preview;
+- **Manual Override** permits only the three resource profiles and catalog
+  image IDs; and
+- **Confirm recommendation** applies Large resources and the digest-pinned
+  SciPy image before the user pod is created.
 
 ### B9. Verify the applied recommendation
 
@@ -519,15 +526,22 @@ kubectl get pods -n z2jh-context-demo \
 
 kubectl describe pod -n z2jh-context-demo \
   -l component=singleuser-server |
-  grep -A8 -E \
-  'z2jh-context-demo.local/recommended-profile|Environment|RECOMMENDED_PROFILE|Requests|Limits'
+  grep -A18 -E \
+  'recommendation-action|recommended-profile|applied-profile|recommended-image|applied-image|Environment|RECOMMENDED_PROFILE|APPLIED_NOTEBOOK_IMAGE|Image:|Requests|Limits'
+
+kubectl logs -n z2jh-context-demo \
+  -l component=hub --tail=200 |
+  grep 'recommendation_audit='
 ```
 
 The pod should expose:
 
 - `RECOMMENDED_PROFILE=large`;
+- `APPLIED_NOTEBOOK_IMAGE=scipy-data-science`;
+- `RECOMMENDATION_ACTION=accept`;
 - human-readable `RECOMMENDATION_REASONS`;
-- recommendation annotations; and
+- recommended/applied profile and image annotations;
+- one structured Hub audit event; and
 - Large CPU and memory requests/limits.
 
 Inside a JupyterLab terminal, run:

@@ -4,13 +4,14 @@ import sys
 
 import pytest
 
-from recommender.recommender import recommend_profile
+from recommender.recommender import load_image_catalog, recommend_profile
 
 
 def test_basic_python_recommends_small():
     rec = recommend_profile("basic Python loops", 0.05, "print('hello')")
     assert rec.profile == "small"
     assert "basic/light workload context" in rec.reasons
+    assert rec.image_id == "minimal-python"
 
 
 def test_pandas_read_csv_08gb_recommends_medium():
@@ -20,6 +21,7 @@ def test_pandas_read_csv_08gb_recommends_medium():
         "import pandas as pd\ndf = pd.read_csv('data.csv')",
     )
     assert rec.profile == "medium"
+    assert rec.image_id == "scipy-data-science"
     assert any("dataset size >= 0.5GB" in reason for reason in rec.reasons)
 
 
@@ -30,6 +32,7 @@ def test_sklearn_train_fit_15gb_recommends_large():
         "import pandas as pd\nfrom sklearn.ensemble import RandomForestClassifier\nmodel.fit(X, y)",
     )
     assert rec.profile == "large"
+    assert rec.image_id == "scipy-data-science"
     assert any("training/modeling context" in reason for reason in rec.reasons)
 
 
@@ -40,6 +43,7 @@ def test_torch_cuda_deep_learning_recommends_gpu_or_large():
         "import torch\nmodel.cuda()",
     )
     assert rec.profile == "gpu_or_large"
+    assert rec.image_id == "pytorch-deep-learning"
     assert any("GPU/deep-learning context" in reason for reason in rec.reasons)
 
 
@@ -99,7 +103,7 @@ def test_conflicting_light_and_gpu_signals_preserve_gpu_safety_signal():
     ]
 
 
-@pytest.mark.parametrize("dataset_size_gb", [None, "", "not-a-number", -1])
+@pytest.mark.parametrize("dataset_size_gb", [None, "", "not-a-number", -1, float("inf"), float("nan")])
 def test_invalid_or_missing_dataset_size_is_treated_as_unknown(dataset_size_gb):
     rec = recommend_profile("basic Python loops", dataset_size_gb, "")
 
@@ -145,4 +149,38 @@ def test_cli_emits_machine_readable_explanation_json():
     payload = json.loads(result.stdout)
     assert payload["profile"] == "large"
     assert payload["score"] == 4
+    assert payload["image_id"] == "scipy-data-science"
+    assert payload["image_reference"].startswith("quay.io/jupyter/scipy-notebook@sha256:")
     assert any("training/modeling context" in reason for reason in payload["reasons"])
+
+
+def test_tensorflow_takes_higher_priority_than_generic_deep_learning_image():
+    rec = recommend_profile(
+        "train a deep learning classifier",
+        0.2,
+        "import tensorflow as tf\nfrom tensorflow import keras",
+    )
+
+    assert rec.profile == "gpu_or_large"
+    assert rec.image_id == "tensorflow-deep-learning"
+    assert any("tensorflow" in reason for reason in rec.image_reasons)
+
+
+def test_catalog_rejects_mutable_or_user_supplied_image_reference(tmp_path):
+    catalog = tmp_path / "catalog.yaml"
+    catalog.write_text(
+        "catalog_version: test\n"
+        "default_image: arbitrary\n"
+        "images:\n"
+        "  arbitrary:\n"
+        "    display_name: Arbitrary\n"
+        "    reference: user.example/notebook:latest\n"
+        "    description: Not immutable.\n"
+        "    capabilities: [python]\n"
+        "    match_terms: []\n"
+        "    priority: 0\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ValueError, match="immutable sha256"):
+        load_image_catalog(catalog)

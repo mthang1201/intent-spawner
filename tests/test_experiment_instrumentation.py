@@ -55,6 +55,10 @@ def test_kubernetes_fixture_evidence_extracts_resources_status_and_sanitized_met
     }
     assert "SECRET_TOKEN" not in evidence["environment_variables"]
     assert "CONTEXT_INTENT" not in evidence["environment_variables"]
+    assert evidence["environment_variables"]["RECOMMENDATION_ACTION"] == "accept"
+    assert evidence["environment_variables"]["APPLIED_PROFILE"] == "large"
+    assert evidence["environment_variables"]["RECOMMENDED_NOTEBOOK_IMAGE"] == "scipy-data-science"
+    assert evidence["environment_variables"]["APPLIED_NOTEBOOK_IMAGE"] == "scipy-data-science"
     assert evidence["scheduling_or_pending_reasons"] == []
 
 

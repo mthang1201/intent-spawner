@@ -44,4 +44,5 @@ Next:
   Open http://127.0.0.1:8000
   This local-only demo uses DummyAuthenticator; enter any username and any non-empty password.
   Enter: I will train a scikit-learn model on a 1.5GB CSV dataset
+  Then click Preview recommendation and Confirm recommendation; preview alone creates no pod.
 EOF

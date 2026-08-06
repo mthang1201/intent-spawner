@@ -2,9 +2,13 @@
 
 ## Source And Configuration
 
-- `recommender/`: rule-based profile recommender and tests.
+- `recommender/`: rule-based resource/image recommender, administrator image
+  catalog, and tests.
 - `helm/baseline-values.yaml`: baseline static-profile JupyterHub values.
 - `helm/proposed-values.yaml`: proposed intent/context-aware JupyterHub values.
+- `docs/evaluation/RECOMMENDATION_PREVIEW_DESIGN.md`: image mapping,
+  confirm-before-spawn state machine, audit schema, scalability assessment, and
+  production suitability boundary.
 - `k8s/`: demo pods and resource quota manifests.
 - `workload/`: original demo workload scripts.
 - `cluster_evaluation/`: Kubernetes workload image, pod runner, method policies,

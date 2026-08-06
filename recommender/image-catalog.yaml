@@ -1,0 +1,71 @@
+catalog_version: "2026-08-06.1"
+default_image: minimal-python
+images:
+  minimal-python:
+    display_name: Minimal Python
+    reference: quay.io/jupyter/minimal-notebook@sha256:a153ceb6b41db4f86b7d7dc20c7b63d08e75e2038d5e8758b954fda50ed2e18d
+    description: Lightweight Python, JupyterLab, and common command-line tools.
+    capabilities:
+      - python
+      - jupyterlab
+    match_terms: []
+    priority: 0
+  scipy-data-science:
+    display_name: SciPy Data Science
+    reference: quay.io/jupyter/scipy-notebook@sha256:1a91a693c8cb086f3607f2ed38a2743ecd53dd1dac2d3e84e6cd647b33fd2bba
+    description: NumPy, pandas, SciPy, scikit-learn, and visualization packages.
+    capabilities:
+      - numpy
+      - pandas
+      - scipy
+      - scikit-learn
+      - visualization
+    match_terms:
+      - pandas
+      - read_csv
+      - dataframe
+      - csv
+      - parquet
+      - train
+      - training
+      - fit
+      - .fit(
+      - sklearn
+      - scikit-learn
+      - xgboost
+      - model
+      - numpy
+      - scipy
+      - matplotlib
+      - seaborn
+    priority: 100
+  pytorch-deep-learning:
+    display_name: PyTorch Deep Learning
+    reference: quay.io/jupyter/pytorch-notebook@sha256:69c72823a4e0dbee17114bbe44d0377bc9a39504a76f6314995f7d5bfaa98d60
+    description: PyTorch and CUDA user-space libraries; this demo still grants no GPU device.
+    capabilities:
+      - pytorch
+      - cuda-userspace
+      - data-science
+    match_terms:
+      - torch
+      - pytorch
+      - cuda
+      - gpu
+      - deep learning
+      - resnet
+      - bert
+    priority: 200
+  tensorflow-deep-learning:
+    display_name: TensorFlow Deep Learning
+    reference: quay.io/jupyter/tensorflow-notebook@sha256:25ddc4f73bea5a252335775b59c0e1d4969bbf70ee78d3c6d1d9da02ce58fb68
+    description: TensorFlow and CUDA user-space libraries; this demo still grants no GPU device.
+    capabilities:
+      - tensorflow
+      - keras
+      - cuda-userspace
+      - data-science
+    match_terms:
+      - tensorflow
+      - keras
+    priority: 300

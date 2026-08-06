@@ -16,7 +16,8 @@ flowchart LR
 
     subgraph Demo["Interactive Helm demo"]
         Baseline["Baseline static profile form"]
-        Proposed["Proposed intent/context form"]
+        Proposed["Intent/context form and recommendation preview"]
+        Confirm["Confirm or allowlisted override"]
         Hook["KubeSpawner pre-spawn hook"]
         UserPod["JupyterHub user pod"]
     end
@@ -38,7 +39,7 @@ flowchart LR
     end
 
     User --> Baseline --> UserPod
-    User --> Proposed --> Hook --> UserPod
+    User --> Proposed --> Confirm --> Hook --> UserPod
 
     Manifest --> Methods --> LocalRunner --> LocalRaw --> LocalDerived
     Manifest --> Policies --> PodRunner --> Evidence --> ClusterRaw --> ClusterDerived
@@ -87,7 +88,11 @@ The rule set is intentionally small and explainable:
 | Total score 0 | Recommend `small` |
 
 Invalid, missing, or negative dataset-size inputs are treated as unknown
-(`0.0`). Reasons are kept as human-readable strings.
+(`0.0`). Reasons are kept as human-readable strings. A second deterministic
+rule set maps matched software capabilities to an immutable image in
+`recommender/image-catalog.yaml`; the default is `minimal-python`, data and
+classical-ML terms map to `scipy-data-science`, and framework-specific terms
+map to the PyTorch or TensorFlow catalog entries.
 
 The implementation under `helm/proposed-values.yaml` mirrors this logic inside
 JupyterHub `hub.extraConfig`. It is duplicated because the live Helm prototype
@@ -124,33 +129,38 @@ an identifying environment variable.
 sequenceDiagram
     actor User
     participant Form as Intent/context form
+    participant Preview as Recommendation preview
     participant Hook as Pre-spawn hook
     participant Rules as Rule-based recommender
     participant Spawner as KubeSpawner
     participant API as Kubernetes API
 
     User->>Form: Enter intent, dataset size, code hints
-    Form->>Hook: Store parsed user options
-    Hook->>Rules: Evaluate permitted inputs
-    Rules-->>Hook: Profile and explanation
-    Hook->>Spawner: Set requests, limits, env, annotations
+    Form->>Preview: Preview profile, image, explanation
+    User->>Preview: Confirm or allowlisted override
+    Preview->>Rules: Hub recomputes and validates decision
+    Rules-->>Hook: Derived decision, explanations, audit ID
+    Hook->>Spawner: Set requests, limits, image, env, annotations
     Spawner->>API: Create user pod
     API-->>User: Start JupyterLab
 ```
 
 The proposed Helm configuration provides:
 
-- an HTML options form;
-- input parsing and negative-size normalization;
+- an HTML form with Preview, Confirm, Edit, and Manual Override states;
+- input parsing, negative-size normalization, and server-side recomputation;
+- an administrator-owned immutable image allowlist;
 - a pre-spawn hook;
-- profile-to-resource mapping;
-- `RECOMMENDED_PROFILE`, `RECOMMENDATION_REASONS`, and
-  `CONTEXT_DATASET_SIZE_GB` environment variables; and
-- allowlisted `z2jh-context-demo.local/*` annotations.
+- profile-to-resource and image-ID-to-reference mapping;
+- derived recommendation/applied environment variables;
+- allowlisted `z2jh-context-demo.local/*` annotations; and
+- one structured accept/override audit event per confirmed spawn.
 
-The recommendation is applied before pod creation. The pod specification,
-environment, annotations, and Hub logs provide observable evidence that the
-choice was not only displayed but enforced.
+The recommendation is applied before pod creation only after confirmation.
+The pod specification, environment, annotations, and privacy-minimized Hub
+audit logs provide observable evidence that the reviewed choice was enforced.
+See [Recommendation Preview Design](evaluation/RECOMMENDATION_PREVIEW_DESIGN.md)
+for the state machine and scalability assessment.
 
 ### Demo support components
 

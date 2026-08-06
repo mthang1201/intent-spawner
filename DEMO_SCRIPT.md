@@ -17,8 +17,8 @@ The presentation follows this sequence:
 3. demonstrate request-based scheduling pressure;
 4. illustrate defensive over-requesting;
 5. remove the temporary pressure resources;
-6. switch to the proposed intent/context form;
-7. verify that the recommendation is enforced; and
+6. switch to the proposed intent/context form and preview the decision;
+7. confirm or demonstrate an allowlisted override, then verify enforcement; and
 8. run a bounded workload successfully.
 
 The demo establishes prototype mechanics. It does not reproduce the preserved
@@ -358,13 +358,21 @@ model.fit(X, y)
 Expected observation:
 
 - the form asks what the user plans to do;
-- it does not ask the user to choose Small, Medium, or Large; and
-- the user server starts successfully.
+- **Preview recommendation** shows Large resources, the SciPy notebook image,
+  and human-readable explanations;
+- no user pod is created while the preview is only being viewed; and
+- Confirm starts the user server successfully.
+
+Click **Preview recommendation**. Then click **Edit inputs** once to show that
+changing inputs invalidates the preview. Preview again. Optionally open
+**Manual Override** to show that both selectors contain only
+administrator-approved values, cancel it, and click **Confirm recommendation**.
 
 ### Say
 
-> “The user supplies intent and lightweight context. The platform translates
-> those inputs into an approved resource profile before the pod is created.”
+> “The user sees resources, software environment, and reasons before spawn.
+> They can edit or choose a bounded manual override; the Hub validates the
+> final decision again before KubeSpawner creates anything.”
 
 ## Scene 7: Explain and Verify the Recommendation
 
@@ -381,21 +389,27 @@ kubectl get pods -n z2jh-context-demo \
 
 kubectl describe pod -n z2jh-context-demo \
   -l component=singleuser-server |
-  grep -A8 -E \
-  'z2jh-context-demo.local/recommended-profile|Environment|RECOMMENDED_PROFILE|Requests|Limits'
+  grep -A18 -E \
+  'recommendation-action|recommended-profile|applied-profile|recommended-image|applied-image|Environment|RECOMMENDED_PROFILE|APPLIED_NOTEBOOK_IMAGE|Image:|Requests|Limits'
+
+kubectl logs -n z2jh-context-demo -l component=hub --tail=200 |
+  grep 'recommendation_audit='
 ```
 
 Expected observation:
 
 - `RECOMMENDED_PROFILE=large`;
+- `APPLIED_NOTEBOOK_IMAGE=scipy-data-science`;
 - reasons mention the dataset-size, data-processing, and training signals;
-- recommendation annotations are present; and
-- resources match the Large profile.
+- recommendation/applied annotations are present;
+- resources match the Large profile;
+- the pod image is the catalog-pinned SciPy notebook digest; and
+- the Hub log contains one privacy-minimized `accept` audit event.
 
 ### Say
 
-> “The rule is explainable. The selected profile, reasons, and enforced
-> requests are visible in pod metadata and configuration.”
+> “The rule is explainable. The recommended and applied profile/image, action,
+> reasons, and enforced pod specification are independently visible.”
 
 The reason strings are demo output, not a statistical explanation of model
 behavior. The prototype uses deterministic rules, not an LLM.

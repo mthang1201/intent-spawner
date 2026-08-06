@@ -58,10 +58,18 @@ operator-provided code-context text in the demo UI, but the experiment harness
 stores only a derived `context_signal_summary` such as detected term classes,
 hint counts, and whether a dataset-size signal was used.
 
-The JupyterHub demo evaluates raw intent and code context in memory. It copies
-only the selected profile, a matched-signal explanation, and normalized dataset
-size into the spawned pod. It does not copy raw intent or raw code context into
-pod environment variables, annotations, or recommender log messages.
+The JupyterHub demo evaluates raw intent and code context during form parsing.
+It returns only the derived recommended/applied profile and image IDs,
+explanations, score, catalog/policy versions, action, and random event ID in
+`user_options`. It does not copy raw intent or raw code context into the pod,
+annotations, or recommender log messages.
+
+Each confirmed spawn emits one structured `recommendation_decision` event with
+an `accept` or `override` action and derived change flags. Browser-side Edit is
+not logged. The event intentionally excludes usernames, raw intent, raw code,
+and dataset contents. Demo Hub logs are not a durable research datastore; a
+real-user study requires a controlled audit sink and an explicit retention and
+deletion schedule.
 
 ## Datasets
 

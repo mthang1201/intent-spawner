@@ -6,8 +6,10 @@ This repository contains the graduation-thesis prototype:
 > and KubeSpawner**
 
 The prototype asks a user what they intend to do, optionally accepts a dataset
-size and lightweight code context, and recommends an explainable Kubernetes
-resource profile before JupyterHub starts the user's server.
+size and lightweight code context, and previews an explainable Kubernetes
+resource profile plus an administrator-allowlisted notebook image. The user
+must confirm or manually override the recommendation before JupyterHub starts
+the server.
 
 The repository is both a runnable demonstration and a research artifact. It
 contains three separate execution paths:
@@ -83,8 +85,14 @@ layer. Its inputs are:
 - an estimated dataset size in GB; and
 - optional imports or code-context hints.
 
-The output is a profile name, human-readable reasons, and a resource
-configuration applied by KubeSpawner.
+The output is a profile, an immutable notebook image selected from the admin
+catalog, and human-readable reasons. The user can Confirm, Edit, or Manual
+Override before KubeSpawner applies the confirmed decision. Accept/override
+actions are recorded as privacy-minimized structured audit events.
+
+See [Resource-and-Image Recommendation Preview Design](docs/evaluation/RECOMMENDATION_PREVIEW_DESIGN.md)
+for the mapping, state machine, audit schema, scalability assessment, and
+production suitability limits.
 
 ## Three Evidence Paths
 
@@ -325,6 +333,7 @@ outputs or working with preserved evidence.
 - [Artifact Manifest](docs/ARTIFACT_MANIFEST.md)
 - [Data Governance](docs/DATA_GOVERNANCE.md)
 - [Experiment Protocol](docs/evaluation/EXPERIMENT_PROTOCOL.md)
+- [Recommendation Preview Design](docs/evaluation/RECOMMENDATION_PREVIEW_DESIGN.md)
 - [Kubernetes Cluster Experiment Protocol](docs/evaluation/CLUSTER_EXPERIMENT_PROTOCOL.md)
 - [Result Schema](docs/evaluation/RESULT_SCHEMA.md)
 - [Local Results](docs/evaluation/RESULTS.md)

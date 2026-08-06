@@ -20,6 +20,30 @@
             "value": "large"
           },
           {
+            "name": "APPLIED_PROFILE",
+            "value": "large"
+          },
+          {
+            "name": "RECOMMENDED_NOTEBOOK_IMAGE",
+            "value": "scipy-data-science"
+          },
+          {
+            "name": "APPLIED_NOTEBOOK_IMAGE",
+            "value": "scipy-data-science"
+          },
+          {
+            "name": "RECOMMENDATION_ACTION",
+            "value": "accept"
+          },
+          {
+            "name": "RECOMMENDATION_EVENT_ID",
+            "value": "00000000-0000-4000-8000-000000000001"
+          },
+          {
+            "name": "IMAGE_CATALOG_VERSION",
+            "value": "2026-08-06.1"
+          },
+          {
             "name": "RECOMMENDATION_REASONS",
             "value": "dataset size >= 0.5GB; training/modeling context detected"
           },

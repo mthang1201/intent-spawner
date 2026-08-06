@@ -87,7 +87,7 @@ When pod evidence is available, `kubernetes_evidence` includes:
 | `restart_count` | Sum of container restart counts. |
 | `requests_limits` | CPU and memory requests/limits from the first container. |
 | `annotations` | Allowlisted annotations only, currently keys starting with `z2jh-context-demo.local/`. |
-| `environment_variables` | Allowlisted environment variables only: `RECOMMENDED_PROFILE`, `RECOMMENDATION_REASONS`, `CONTEXT_DATASET_SIZE_GB`, and `SELECTED_STATIC_PROFILE`. |
+| `environment_variables` | Allowlisted environment variables only: recommendation action/event ID, recommended/applied profile and notebook image IDs, reasons, catalog version, normalized dataset size, and the historical static-profile marker. Raw intent and code are excluded. |
 | `scheduling_or_pending_reasons` | Unschedulable condition reasons and warning event messages such as `FailedScheduling`. |
 | `pod_pending_duration_seconds` | Derived scheduling latency. |
 | `workload_runtime_seconds` | Derived container runtime. |
