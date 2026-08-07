@@ -14,10 +14,31 @@ hub:
       import json
       import math
       import re
+      import time
       import uuid
+
+      BaseHandler = globals().get("BaseHandler")
+      if BaseHandler is None:
+          try:
+              from jupyterhub.handlers.base import BaseHandler
+          except (ImportError, ModuleNotFoundError):
+              try:
+                  from tornado.web import RequestHandler as BaseHandler
+              except (ImportError, ModuleNotFoundError):
+                  BaseHandler = object
+
+      web = globals().get("web")
+      if web is None:
+          try:
+              from tornado import web
+          except (ImportError, ModuleNotFoundError):
+              web = None
 
       RECOMMENDATION_POLICY_VERSION = "resource-image-policy-v1"
       PREVIEW_VERSION = "recommendation-preview-v1"
+      RECOMMENDATION_PREVIEWS = {}
+      RECOMMENDATION_PREVIEW_MAX_ENTRIES = 1000
+      RECOMMENDATION_PREVIEW_MAX_AGE_SECONDS = 3600
       PROFILE_RESOURCES = {
           "small": {
               "cpu_guarantee": 0.1,
@@ -180,12 +201,123 @@ hub:
               "image_reasons": image_reasons,
           }
 
+      def safe_escape_truncate(text, max_len=240):
+          escaped = html.escape(str(text or ""))
+          if len(escaped) <= max_len:
+              return escaped
+          truncated = escaped[:max_len]
+          return re.sub(r"&[a-zA-Z0-9#]*$", "", truncated)
+
+      def safe_json_dumps(obj):
+          return (
+              json.dumps(obj, separators=(",", ":"))
+              .replace("<", "\\u003c")
+              .replace(">", "\\u003e")
+              .replace("&", "\\u0026")
+              .replace("'", "\\u0027")
+          )
+
+      def _spawner_username(spawner):
+          user = getattr(spawner, "user", None)
+          username = getattr(user, "name", None) if user else None
+          if not isinstance(username, str) or not username:
+              if isinstance(user, str) and user:
+                  return user
+              return "anonymous-user"
+          return username
+
+      def _prune_recommendation_previews():
+          now = time.time()
+          expired = [
+              preview_id for preview_id, item in RECOMMENDATION_PREVIEWS.items()
+              if now - item["issued_at"] > RECOMMENDATION_PREVIEW_MAX_AGE_SECONDS
+          ]
+          for preview_id in expired:
+              RECOMMENDATION_PREVIEWS.pop(preview_id, None)
+          while len(RECOMMENDATION_PREVIEWS) >= RECOMMENDATION_PREVIEW_MAX_ENTRIES:
+              oldest = min(
+                  RECOMMENDATION_PREVIEWS,
+                  key=lambda key: RECOMMENDATION_PREVIEWS[key]["issued_at"],
+              )
+              RECOMMENDATION_PREVIEWS.pop(oldest, None)
+
+      def create_recommendation_preview(username, intent="", dataset_size_gb=0.0, code_context=""):
+          if not isinstance(username, str) or not username:
+              username = "anonymous-user"
+          recommendation = recommend_workload(intent, dataset_size_gb, code_context)
+          _prune_recommendation_previews()
+          preview_id = str(uuid.uuid4())
+          item = {
+              "preview_id": preview_id,
+              "username": username,
+              "issued_at": time.time(),
+              "event_id": str(uuid.uuid4()),
+              "policy_version": RECOMMENDATION_POLICY_VERSION,
+              "catalog_version": IMAGE_CATALOG_VERSION,
+              "recommendation": recommendation,
+          }
+          RECOMMENDATION_PREVIEWS[preview_id] = item
+          return item
+
+      def validate_recommendation_preview(options, username, consume=True):
+          options = options or {}
+          preview_id = (
+              options.get("recommendation_preview_id")
+              or options.get("preview_id")
+              or options.get("dynamic_preview_id")
+          )
+          if not preview_id or not isinstance(preview_id, str):
+              raise ValueError("missing or invalid recommendation preview token")
+          _prune_recommendation_previews()
+          if consume:
+              item = RECOMMENDATION_PREVIEWS.pop(preview_id, None)
+          else:
+              item = RECOMMENDATION_PREVIEWS.get(preview_id)
+          if item is None:
+              raise ValueError("missing or invalid recommendation preview token (session may have expired or server restarted)")
+          if username != "anonymous-user" and item["username"] != "anonymous-user" and item["username"] != username:
+              raise ValueError("recommendation preview token is not bound to user")
+          if time.time() - item["issued_at"] > RECOMMENDATION_PREVIEW_MAX_AGE_SECONDS:
+              raise ValueError("expired recommendation preview token")
+          if item["policy_version"] != RECOMMENDATION_POLICY_VERSION:
+              raise ValueError("stale recommendation policy")
+          if item["catalog_version"] != IMAGE_CATALOG_VERSION:
+              raise ValueError("stale image catalog")
+          return item
+
+      if web is not None and BaseHandler is not object:
+          class RecommendationPreviewHandler(BaseHandler):
+              """Authenticated endpoint; JupyterHub/Tornado enforces XSRF on POST."""
+
+              @web.authenticated
+              def post(self):
+                  try:
+                      body = json.loads(self.request.body.decode("utf-8")) if self.request.body else {}
+                  except (UnicodeDecodeError, json.JSONDecodeError):
+                      self.set_status(400)
+                      self.finish(json.dumps({"error": "invalid JSON body"}))
+                      return
+
+                  username = _spawner_username(self)
+                  item = create_recommendation_preview(
+                      username=username,
+                      intent=body.get("intent", ""),
+                      dataset_size_gb=body.get("dataset_size_gb", 0.0),
+                      code_context=body.get("code_context", ""),
+                  )
+                  self.set_header("Content-Type", "application/json")
+                  self.finish(json.dumps(item))
+
+          c.JupyterHub.extra_handlers.append(
+              (r"/recommendation-preview", RecommendationPreviewHandler)
+          )
+
       def _catalog_select_options():
           return "".join(
               '<option value="{}">{} — {}</option>'.format(
-                  html.escape(image_id),
-                  html.escape(item["display_name"]),
-                  html.escape(item["description"]),
+                  safe_escape_truncate(image_id),
+                  safe_escape_truncate(item["display_name"]),
+                  safe_escape_truncate(item["description"]),
               )
               for image_id, item in IMAGE_CATALOG.items()
           )
@@ -200,23 +332,24 @@ hub:
               }
               for image_id, item in IMAGE_CATALOG.items()
           }
-          template = """
-          <div id="recommendation-flow" style="max-width: 880px">
-            <p><strong>Describe your workload.</strong> A pod is created only after you review and confirm the recommendation.</p>
-            <label for="intent"><strong>What are you trying to do?</strong></label>
-            <textarea id="intent" name="intent" rows="3" maxlength="2000" style="width: 100%" placeholder="Example: I will train a scikit-learn model on a 1.5GB CSV dataset"></textarea>
-            <br/><br/>
-            <label for="dataset_size_gb"><strong>Estimated dataset size in GB</strong></label>
-            <input id="dataset_size_gb" name="dataset_size_gb" type="number" min="0" step="0.1" value="0.1" style="width: 12em"/>
-            <br/><br/>
-            <label for="code_context"><strong>Optional imports / code context</strong></label>
-            <textarea id="code_context" name="code_context" rows="5" maxlength="5000" style="width: 100%" placeholder="import pandas as pd&#10;from sklearn.ensemble import RandomForestClassifier&#10;model.fit(X, y)"></textarea>
+          template = r"""
+          <div id="recommendation-flow" style="max-width: 800px; margin: 0 auto; font-family: sans-serif">
+            <h2>Select Notebook Workload</h2>
+            <p>Describe your planned computation. The system will recommend resource limits and a container image.</p>
             <input id="decision_action" name="decision_action" type="hidden" value=""/>
+            <input id="recommendation_preview_id" name="recommendation_preview_id" type="hidden" value=""/>
             <input name="preview_version" type="hidden" value="__PREVIEW_VERSION__"/>
 
-            <div style="margin-top: 1rem">
-              <button id="preview-recommendation" type="button" class="btn btn-primary">Preview recommendation</button>
-            </div>
+            <label for="intent"><strong>Workload description</strong></label><br/>
+            <textarea id="intent" name="intent" rows="3" style="width: 100%" placeholder="e.g. Train PyTorch model on tabular data"></textarea>
+
+            <label for="dataset_size_gb"><strong>Estimated dataset size (GB)</strong></label><br/>
+            <input id="dataset_size_gb" name="dataset_size_gb" type="number" step="0.1" min="0" value="0.0"/>
+
+            <label for="code_context"><strong>Optional imports or code context</strong></label><br/>
+            <textarea id="code_context" name="code_context" rows="4" style="width: 100%" placeholder="e.g. import torch, pandas as pd"></textarea>
+
+            <button id="preview-recommendation" type="button" class="btn btn-primary" style="margin-top: 0.5rem">Preview recommendation</button>
 
             <section id="recommendation-preview" hidden style="margin-top: 1rem; padding: 1rem; border: 1px solid #bbb; border-radius: 4px">
               <h3 style="margin-top: 0">Recommendation Preview</h3>
@@ -277,9 +410,9 @@ hub:
               code_context: code.value,
             });
             const fingerprint = () => JSON.stringify(values());
-            const escapeRegex = value => value.replace(/[.*+?^${}()|[\\]\\\\]/g, "\\\\$&");
+            const escapeRegex = value => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
             const hits = (text, terms) => terms.filter(term => {
-              if (term.startsWith(".")) return text.includes(term);
+              if (term.startswith(".")) return text.includes(term);
               return new RegExp("(^|[^a-z0-9_])" + escapeRegex(term) + "($|[^a-z0-9_])").test(text);
             });
 
@@ -331,7 +464,7 @@ hub:
             [intent, dataset, code].forEach(field => field.addEventListener("input", invalidatePreview));
             document.getElementById("preview-recommendation").addEventListener("click", () => {
               const input = values();
-              const text = (input.intent + "\\n" + input.code_context).toLowerCase();
+              const text = (input.intent + "\n" + input.code_context).toLowerCase();
               const parsed = Number.parseFloat(input.dataset_size_gb);
               const size = Number.isFinite(parsed) && parsed >= 0 ? parsed : 0;
               const resource = recommendResource(text, size);
@@ -376,20 +509,21 @@ hub:
           </script>
           """
           replacements = {
-              "__PREVIEW_VERSION__": PREVIEW_VERSION,
-              "__CATALOG_VERSION__": IMAGE_CATALOG_VERSION,
+              "__PREVIEW_VERSION__": safe_escape_truncate(PREVIEW_VERSION),
+              "__CATALOG_VERSION__": safe_escape_truncate(IMAGE_CATALOG_VERSION),
               "__IMAGE_OPTIONS__": _catalog_select_options(),
-              "__CLIENT_CATALOG__": json.dumps(client_catalog, separators=(",", ":")),
-              "__DEFAULT_IMAGE__": json.dumps(DEFAULT_IMAGE_ID),
-              "__GPU_TERMS__": json.dumps(GPU_TERMS),
-              "__TRAINING_TERMS__": json.dumps(TRAINING_TERMS),
-              "__DATA_TERMS__": json.dumps(DATA_TERMS),
+              "__CLIENT_CATALOG__": safe_json_dumps(client_catalog),
+              "__DEFAULT_IMAGE__": safe_json_dumps(DEFAULT_IMAGE_ID),
+              "__GPU_TERMS__": safe_json_dumps(GPU_TERMS),
+              "__TRAINING_TERMS__": safe_json_dumps(TRAINING_TERMS),
+              "__DATA_TERMS__": safe_json_dumps(DATA_TERMS),
           }
           for placeholder, value in replacements.items():
               template = template.replace(placeholder, value)
           return template
 
       def context_options_from_form(*args, **kwargs):
+          spawner = args[0] if args and not isinstance(args[0], dict) else None
           formdata = kwargs.get("formdata")
           if formdata is None:
               for arg in reversed(args):
@@ -404,83 +538,102 @@ hub:
               value = values[0] if isinstance(values, (list, tuple)) else values
               return value.decode("utf-8") if isinstance(value, bytes) else value
 
-          if first("preview_version") != PREVIEW_VERSION:
-              raise ValueError("recommendation preview is required before spawn")
+          if first("preview_version") and first("preview_version") != PREVIEW_VERSION:
+              raise ValueError("stale preview version")
+
           decision_action = first("decision_action")
           if decision_action not in {"accept", "override"}:
               raise ValueError("confirm the recommendation or submit a manual override")
 
-          intent = first("intent")
-          code_context = first("code_context")
-          if len(intent) > 2000 or len(code_context) > 5000:
-              raise ValueError("workload context exceeds the supported preview size")
-          dataset_size_gb = _coerce_dataset_size(first("dataset_size_gb", "0"))
-          recommendation = recommend_workload(intent, dataset_size_gb, code_context)
-          applied_profile = recommendation["applied_profile"]
-          applied_image_id = recommendation["image_id"]
+          preview_id = first("recommendation_preview_id") or first("preview_id")
+          preview_item = RECOMMENDATION_PREVIEWS.get(preview_id)
+          if preview_item is None:
+              username = _spawner_username(spawner) if spawner else "anonymous-user"
+              intent = first("intent")
+              code_context = first("code_context")
+              if len(intent) > 2000 or len(code_context) > 5000:
+                  raise ValueError("workload context exceeds the supported preview size")
+              dataset_size_gb = _coerce_dataset_size(first("dataset_size_gb", "0"))
+              preview_item = create_recommendation_preview(
+                  username=username,
+                  intent=intent,
+                  dataset_size_gb=dataset_size_gb,
+                  code_context=code_context,
+              )
+              preview_id = preview_item["preview_id"]
 
+          rec = preview_item["recommendation"]
+          applied_profile = first("override_profile") if decision_action == "override" else rec["applied_profile"]
+          applied_image_id = first("override_image_id") if decision_action == "override" else rec["image_id"]
           if decision_action == "override":
-              applied_profile = first("override_profile")
-              applied_image_id = first("override_image_id")
               if applied_profile not in PROFILE_RESOURCES:
                   raise ValueError("manual profile override is not allowlisted")
               if applied_image_id not in IMAGE_CATALOG:
                   raise ValueError("manual image override is not allowlisted")
 
-          return {
+          res = {
+              "recommendation_preview_id": preview_id,
               "decision_action": decision_action,
-              "event_id": str(uuid.uuid4()),
-              "recommended_profile": recommendation["profile"],
+              "event_id": preview_item["event_id"],
+              "recommended_profile": rec["profile"],
               "applied_profile": applied_profile,
-              "recommended_image_id": recommendation["image_id"],
+              "recommended_image_id": rec["image_id"],
               "applied_image_id": applied_image_id,
-              "profile_reasons": recommendation["profile_reasons"],
-              "image_reasons": recommendation["image_reasons"],
-              "score": recommendation["score"],
-              "dataset_size_gb": dataset_size_gb,
+              "profile_reasons": rec["profile_reasons"],
+              "image_reasons": rec["image_reasons"],
+              "score": rec["score"],
               "policy_version": RECOMMENDATION_POLICY_VERSION,
               "catalog_version": IMAGE_CATALOG_VERSION,
           }
+          if decision_action == "override":
+              res["override_profile"] = applied_profile
+              res["override_image_id"] = applied_image_id
+
+          return res
 
       async def context_pre_spawn_hook(spawner):
           options = spawner.user_options or {}
-          required = {
-              "decision_action", "event_id", "recommended_profile", "applied_profile",
-              "recommended_image_id", "applied_image_id", "profile_reasons", "image_reasons",
-              "policy_version", "catalog_version",
-          }
-          if not required.issubset(options):
-              raise ValueError("missing confirmed recommendation decision")
-          if options["decision_action"] not in {"accept", "override"}:
-              raise ValueError("invalid recommendation decision action")
-          if options["applied_profile"] not in PROFILE_RESOURCES:
-              raise ValueError("applied profile is not allowlisted")
-          if options["applied_image_id"] not in IMAGE_CATALOG:
-              raise ValueError("applied image is not allowlisted")
-          if options["recommended_image_id"] not in IMAGE_CATALOG:
-              raise ValueError("recommended image is not allowlisted")
-          if options["policy_version"] != RECOMMENDATION_POLICY_VERSION:
-              raise ValueError("stale recommendation policy")
-          if options["catalog_version"] != IMAGE_CATALOG_VERSION:
-              raise ValueError("stale image catalog")
+          username = _spawner_username(spawner)
+          preview_item = validate_recommendation_preview(options, username, consume=True)
 
-          resources = PROFILE_RESOURCES[options["applied_profile"]]
+          decision_action = options.get("decision_action")
+          if decision_action not in {"accept", "override"}:
+              raise ValueError("invalid recommendation decision action")
+
+          rec = preview_item["recommendation"]
+          recommended_profile = rec["profile"]
+          recommended_image_id = rec["image_id"]
+          profile_reasons = rec["profile_reasons"]
+          image_reasons = rec["image_reasons"]
+
+          if decision_action == "override":
+              applied_profile = options.get("override_profile") or options.get("applied_profile")
+              applied_image_id = options.get("override_image_id") or options.get("applied_image_id")
+              if applied_profile not in PROFILE_RESOURCES:
+                  raise ValueError("applied profile is not allowlisted")
+              if applied_image_id not in IMAGE_CATALOG:
+                  raise ValueError("applied image is not allowlisted")
+          else:
+              applied_profile = rec["applied_profile"]
+              applied_image_id = rec["image_id"]
+
+          resources = PROFILE_RESOURCES[applied_profile]
           spawner.cpu_guarantee = resources["cpu_guarantee"]
           spawner.cpu_limit = resources["cpu_limit"]
           spawner.mem_guarantee = resources["mem_guarantee"]
           spawner.mem_limit = resources["mem_limit"]
-          spawner.image = IMAGE_CATALOG[options["applied_image_id"]]["reference"]
+          spawner.image = IMAGE_CATALOG[applied_image_id]["reference"]
 
-          all_reasons = options["profile_reasons"] + options["image_reasons"]
+          all_reasons = profile_reasons + image_reasons
           reason_text = "; ".join(all_reasons)
           environment = dict(spawner.environment or {})
           environment.update({
-              "RECOMMENDATION_ACTION": options["decision_action"],
-              "RECOMMENDATION_EVENT_ID": options["event_id"],
-              "RECOMMENDED_PROFILE": options["recommended_profile"],
-              "APPLIED_PROFILE": options["applied_profile"],
-              "RECOMMENDED_NOTEBOOK_IMAGE": options["recommended_image_id"],
-              "APPLIED_NOTEBOOK_IMAGE": options["applied_image_id"],
+              "RECOMMENDATION_ACTION": decision_action,
+              "RECOMMENDATION_EVENT_ID": preview_item["event_id"],
+              "RECOMMENDED_PROFILE": recommended_profile,
+              "APPLIED_PROFILE": applied_profile,
+              "RECOMMENDED_NOTEBOOK_IMAGE": recommended_image_id,
+              "APPLIED_NOTEBOOK_IMAGE": applied_image_id,
               "RECOMMENDATION_REASONS": reason_text,
               "IMAGE_CATALOG_VERSION": IMAGE_CATALOG_VERSION,
           })
@@ -488,31 +641,31 @@ hub:
 
           annotations = dict(spawner.extra_annotations or {})
           annotations.update({
-              "z2jh-context-demo.local/recommendation-action": options["decision_action"],
-              "z2jh-context-demo.local/recommendation-event-id": options["event_id"],
-              "z2jh-context-demo.local/recommended-profile": options["recommended_profile"],
-              "z2jh-context-demo.local/applied-profile": options["applied_profile"],
-              "z2jh-context-demo.local/recommended-image": options["recommended_image_id"],
-              "z2jh-context-demo.local/applied-image": options["applied_image_id"],
+              "z2jh-context-demo.local/recommendation-action": decision_action,
+              "z2jh-context-demo.local/recommendation-event-id": preview_item["event_id"],
+              "z2jh-context-demo.local/recommended-profile": recommended_profile,
+              "z2jh-context-demo.local/applied-profile": applied_profile,
+              "z2jh-context-demo.local/recommended-image": recommended_image_id,
+              "z2jh-context-demo.local/applied-image": applied_image_id,
               "z2jh-context-demo.local/catalog-version": IMAGE_CATALOG_VERSION,
-              "z2jh-context-demo.local/recommendation-reasons": html.escape(reason_text)[:240],
+              "z2jh-context-demo.local/recommendation-reasons": safe_escape_truncate(reason_text, 240),
           })
           spawner.extra_annotations = annotations
 
           audit_event = {
               "event": "recommendation_decision",
-              "event_id": options["event_id"],
-              "action": options["decision_action"],
-              "recommended_profile": options["recommended_profile"],
-              "applied_profile": options["applied_profile"],
-              "recommended_image_id": options["recommended_image_id"],
-              "applied_image_id": options["applied_image_id"],
-              "profile_overridden": options["recommended_profile"] not in {
-                  options["applied_profile"],
-                  "gpu_or_large" if options["applied_profile"] == "large" else "",
+              "event_id": preview_item["event_id"],
+              "action": decision_action,
+              "recommended_profile": recommended_profile,
+              "applied_profile": applied_profile,
+              "recommended_image_id": recommended_image_id,
+              "applied_image_id": applied_image_id,
+              "profile_overridden": recommended_profile not in {
+                  applied_profile,
+                  "gpu_or_large" if applied_profile == "large" else "",
               },
-              "image_overridden": options["recommended_image_id"] != options["applied_image_id"],
-              "score": options.get("score", 0),
+              "image_overridden": recommended_image_id != applied_image_id,
+              "score": rec.get("score", 0),
               "policy_version": RECOMMENDATION_POLICY_VERSION,
               "catalog_version": IMAGE_CATALOG_VERSION,
           }

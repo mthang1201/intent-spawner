@@ -17,11 +17,26 @@ hub:
       import html
       import json
       import math
+      import re
       import time
       import uuid
 
-      from jupyterhub.handlers.base import BaseHandler
-      from tornado import web
+      BaseHandler = globals().get("BaseHandler")
+      if BaseHandler is None:
+          try:
+              from jupyterhub.handlers.base import BaseHandler
+          except (ImportError, ModuleNotFoundError):
+              try:
+                  from tornado.web import RequestHandler as BaseHandler
+              except (ImportError, ModuleNotFoundError):
+                  BaseHandler = object
+
+      web = globals().get("web")
+      if web is None:
+          try:
+              from tornado import web
+          except (ImportError, ModuleNotFoundError):
+              web = None
 
       from recommender.dynamic_resources import (
           CATALOG_MODE,
@@ -31,6 +46,13 @@ hub:
           load_resource_policy,
           resource_policy_hash,
       )
+
+      def safe_escape_truncate(text, max_len=240):
+          escaped = html.escape(str(text or ""))
+          if len(escaped) <= max_len:
+              return escaped
+          truncated = escaped[:max_len]
+          return re.sub(r"&[a-zA-Z0-9#]*$", "", truncated)
 
       # Invalid admin policy, GPU/image cross-policy, or an unknown mode prevents
       # Hub startup. A file update requires a Hub restart; previews are in-memory
@@ -231,7 +253,7 @@ hub:
               raise ValueError("a current server-side dynamic preview is required")
           item = DYNAMIC_RESOURCE_PREVIEWS.get(preview_id)
           if item is None:
-              raise ValueError("dynamic preview is unknown or has already been used")
+              raise ValueError("dynamic preview is unknown, expired, invalidated by server restart, or has already been used")
           if item["expires_at"] <= time.monotonic():
               DYNAMIC_RESOURCE_PREVIEWS.pop(preview_id, None)
               raise ValueError("dynamic preview expired; preview again")
@@ -527,7 +549,7 @@ hub:
               "z2jh-context-demo.local/dynamic-policy-hash": DYNAMIC_RESOURCE_POLICY_HASH,
           })
           if decision.fallback_reason:
-              annotations["z2jh-context-demo.local/dynamic-fallback"] = decision.fallback_reason[:240]
+              annotations["z2jh-context-demo.local/dynamic-fallback"] = safe_escape_truncate(decision.fallback_reason, 240)
           spawner.extra_annotations = annotations
 
           spawner.log.info(

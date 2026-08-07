@@ -382,6 +382,8 @@ The artifact does not retain raw notebooks, raw code context, datasets,
 secrets, or user identities. Evaluation records store derived context terms,
 declared hints, resource evidence, and allowlisted metadata only.
 
+Preview options forms embed catalog definitions and script constants using context-safe JSON serialization (`safe_json_dumps`), replacing `<`/`>`/`&`/`'` with Unicode escape sequences (`\u003c`, `\u003e`, `\u0026`, `\u0027`) to prevent inline script XSS context breakout. Preview state is process-local for single-Hub deployment scope (`hub.replicas: 1`) and invalidates fail-closed on Hub restart.
+
 For complete rules, read [Data Governance](DATA_GOVERNANCE.md).
 
 ## What the Architecture Can Demonstrate

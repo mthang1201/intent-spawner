@@ -228,7 +228,7 @@ hub:
             const overrideProfile = document.getElementById("override_profile");
             const overrideImage = document.getElementById("override_image_id");
             const xsrf = form ? form.querySelector('input[name="_xsrf"]') : null;
-            const previewEndpoint = window.location.pathname.replace(/\/spawn.*$/, "/recommendation-preview");
+            const previewEndpoint = window.location.pathname.replace(/\\/spawn.*$/, "/recommendation-preview");
 
             let previewFingerprint = "";
             let previewGeneration = 0;

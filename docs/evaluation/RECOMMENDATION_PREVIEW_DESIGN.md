@@ -128,6 +128,19 @@ Hub log volume grows once per confirmed spawn, not per edit or keystroke. It is
 therefore proportional to spawn attempts and suitable for aggregation, subject
 to normal backpressure, retention, and delivery controls in the log pipeline.
 
+## Security and State Lifecycle Hardening
+
+The recommendation and dynamic preview flows incorporate explicit web security and state lifecycle controls:
+
+- **Context-Safe Inline Script Serialization**: Client-side catalog options and template parameters inserted into inline `<script>` blocks are serialized using `safe_json_dumps()`. This helper replaces `<`, `>`, `&`, and `'` with Unicode escape sequences (`\u003c`, `\u003e`, `\u0026`, `\u0027`). This prevents malicious payload strings (such as `</script><script>alert(1)</script>`) from escaping the script tag context (XSS vector mitigation).
+- **Single-Hub Scope & Fail-Closed Restart Invalidation**: Zero to JupyterHub operates under a single-Hub replica architecture (`hub.replicas: 1`). Preview state is maintained in-memory (`RECOMMENDATION_PREVIEWS`, `DYNAMIC_RESOURCE_PREVIEWS`). On Hub process restart or pod rollout, active preview tokens are safely invalidated fail-closed with explicit error messages (`ValueError("missing or invalid recommendation preview token (session may have expired or server restarted)")`), requiring the user to issue a fresh preview.
+- **Token Lifecycle Guarantees**:
+  - *One-time consumption*: Preview tokens are popped upon validation during spawn or re-provisioning.
+  - *Replay resistance*: Re-submitting a consumed preview token immediately fails validation.
+  - *TTL Expiration*: Previews expire after a bounded TTL (`RECOMMENDATION_PREVIEW_MAX_AGE_SECONDS = 3600`, `DYNAMIC_PREVIEW_TTL_SECONDS = 300`).
+  - *Multi-tab isolation*: Each preview request receives a unique UUID token, allowing parallel browser tabs to maintain isolated preview states without collision.
+  - *Memory bounds*: Active preview dictionaries strictly enforce upper size bounds (`MAX_ENTRIES = 1000`) by evicting oldest items based on `issued_at` timestamps.
+
 ## Suitability verdict and limitations
 
 The design is suitable for this thesis prototype and a small controlled

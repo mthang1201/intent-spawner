@@ -418,42 +418,34 @@ def test_replayed_dynamic_preview_token_consumed():
 def test_invalid_profile_or_non_allowlisted_image_rejected_in_hook():
     _, kube_spawner_config, namespace = load_reprovision_config()
 
+    preview1 = namespace["create_recommendation_preview"]("pytest-user", "intent", 0.1)
     invalid_profile_spawner = SimpleNamespace(
         user_options={
+            "recommendation_preview_id": preview1["preview_id"],
             "provisioning_mode": "reprovision",
-            "decision_action": "accept",
-            "event_id": "e1",
-            "recommended_profile": "small",
-            "applied_profile": "unapproved-huge",
-            "recommended_image_id": "minimal-python",
-            "applied_image_id": "minimal-python",
-            "profile_reasons": [],
-            "image_reasons": [],
-            "policy_version": namespace["RECOMMENDATION_POLICY_VERSION"],
-            "catalog_version": namespace["IMAGE_CATALOG_VERSION"],
+            "decision_action": "override",
+            "override_profile": "unapproved-huge",
+            "override_image_id": "minimal-python",
         },
         environment={},
         extra_annotations={},
+        user=SimpleNamespace(name="pytest-user"),
     )
     with pytest.raises(ValueError, match="applied profile is not allowlisted"):
         asyncio.run(kube_spawner_config.pre_spawn_hook(invalid_profile_spawner))
 
+    preview2 = namespace["create_recommendation_preview"]("pytest-user", "intent", 0.1)
     invalid_image_spawner = SimpleNamespace(
         user_options={
+            "recommendation_preview_id": preview2["preview_id"],
             "provisioning_mode": "reprovision",
-            "decision_action": "accept",
-            "event_id": "e1",
-            "recommended_profile": "small",
-            "applied_profile": "small",
-            "recommended_image_id": "malicious-image",
-            "applied_image_id": "malicious-image",
-            "profile_reasons": [],
-            "image_reasons": [],
-            "policy_version": namespace["RECOMMENDATION_POLICY_VERSION"],
-            "catalog_version": namespace["IMAGE_CATALOG_VERSION"],
+            "decision_action": "override",
+            "override_profile": "small",
+            "override_image_id": "malicious-image",
         },
         environment={},
         extra_annotations={},
+        user=SimpleNamespace(name="pytest-user"),
     )
     with pytest.raises(ValueError, match="applied image is not allowlisted"):
         asyncio.run(kube_spawner_config.pre_spawn_hook(invalid_image_spawner))

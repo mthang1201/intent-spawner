@@ -8,8 +8,22 @@ hub:
       import html
       import json
 
-      from jupyterhub.handlers.base import BaseHandler
-      from tornado import web
+      BaseHandler = globals().get("BaseHandler")
+      if BaseHandler is None:
+          try:
+              from jupyterhub.handlers.base import BaseHandler
+          except (ImportError, ModuleNotFoundError):
+              try:
+                  from tornado.web import RequestHandler as BaseHandler
+              except (ImportError, ModuleNotFoundError):
+                  BaseHandler = object
+
+      web = globals().get("web")
+      if web is None:
+          try:
+              from tornado import web
+          except (ImportError, ModuleNotFoundError):
+              web = None
 
       REPROVISION_PREVIEW_VERSION = "intent-reprovision-preview-v1"
       REPROVISION_TASKS = {}
@@ -241,10 +255,17 @@ hub:
           except Exception:
               log.exception("intent-aware re-provisioning failed for user %s", username)
 
+      def safe_json_dumps(obj):
+          return (
+              json.dumps(obj, separators=(",", ":"))
+              .replace("<", "\\u003c")
+              .replace(">", "\\u003e")
+              .replace("&", "\\u0026")
+              .replace("'", "\\u0027")
+          )
+
       def _reprovision_page(xsrf_token, hub_base_url):
           endpoint = hub_base_url.rstrip("/") + "/reprovision"
-          escaped_endpoint = html.escape(endpoint, quote=True)
-          escaped_xsrf = html.escape(xsrf_token, quote=True)
           return """
           <!doctype html>
           <html lang="en"><head><meta charset="utf-8"/>
@@ -276,8 +297,8 @@ hub:
           </main>
           <script>
           (() => {
-            const endpoint = "__ENDPOINT__";
-            const xsrf = "__XSRF__";
+            const endpoint = __ENDPOINT__;
+            const xsrf = __XSRF__;
             const intent = document.getElementById("intent"), dataset = document.getElementById("dataset"), code = document.getElementById("code");
             const result = document.getElementById("result"), error = document.getElementById("error"), ack = document.getElementById("ack"), confirm = document.getElementById("confirm");
             let preview = null;
@@ -311,7 +332,7 @@ hub:
             });
           })();
           </script></body></html>
-          """.replace("__ENDPOINT__", escaped_endpoint).replace("__XSRF__", escaped_xsrf)
+          """.replace("__ENDPOINT__", safe_json_dumps(endpoint)).replace("__XSRF__", safe_json_dumps(xsrf_token))
 
       class IntentReprovisionHandler(BaseHandler):
           @web.authenticated
