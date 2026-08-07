@@ -8,6 +8,8 @@ opt-in extension that emits validated KubeSpawner CPU, memory, and GPU values.
 from __future__ import annotations
 
 from dataclasses import dataclass
+import hashlib
+import json
 import math
 import os
 from pathlib import Path
@@ -21,6 +23,8 @@ DYNAMIC_MODE = "dynamic"
 RESOURCE_SELECTION_MODE_ENV_VAR = "RESOURCE_SELECTION_MODE"
 SUPPORTED_MODES = frozenset({CATALOG_MODE, DYNAMIC_MODE})
 DEFAULT_RESOURCE_POLICY_PATH = Path(__file__).with_name("resource-policy.yaml")
+KUBERNETES_MAX_QUANTITY = 2**63 - 1
+KUBERNETES_MAX_MEMORY_MIB = KUBERNETES_MAX_QUANTITY // (2**20)
 
 
 class ResourcePolicyError(ValueError):
@@ -148,8 +152,8 @@ class DynamicResourceSpec:
         """Return values suitable for KubeSpawner resource attributes."""
 
         values: dict[str, object] = {
-            "cpu_guarantee": self.cpu_request_millicores / 1000,
-            "cpu_limit": self.cpu_limit_millicores / 1000,
+            "cpu_guarantee": f"{self.cpu_request_millicores}m",
+            "cpu_limit": f"{self.cpu_limit_millicores}m",
             "mem_guarantee": f"{self.memory_request_mib}Mi",
             "mem_limit": f"{self.memory_limit_mib}Mi",
         }
@@ -166,6 +170,7 @@ class DynamicResourcePolicy:
     fallback_profile: str
     catalog_profile_allowlist: tuple[str, ...]
     gpu_resource_allowlist: tuple[str, ...]
+    gpu_image_allowlist: tuple[str, ...]
     cpu_request: QuantityBounds
     cpu_limit: QuantityBounds
     memory_request: QuantityBounds
@@ -221,9 +226,14 @@ def validate_resource_policy(raw: object) -> DynamicResourcePolicy:
         raise ResourcePolicyConfigurationError("default_mode must be catalog or dynamic")
 
     allowlist = _require_mapping(root["allowlist"], "allowlist")
-    _require_exact_keys(allowlist, {"catalog_profiles", "gpu_resources"}, "allowlist")
+    _require_exact_keys(
+        allowlist,
+        {"catalog_profiles", "gpu_resources", "gpu_images"},
+        "allowlist",
+    )
     profiles = allowlist["catalog_profiles"]
     gpu_resources = allowlist["gpu_resources"]
+    gpu_images = allowlist["gpu_images"]
     if not isinstance(profiles, list) or not profiles or not all(
         isinstance(value, str) and value.strip() for value in profiles
     ):
@@ -236,6 +246,12 @@ def validate_resource_policy(raw: object) -> DynamicResourcePolicy:
         raise ResourcePolicyConfigurationError("allowlist.gpu_resources must contain strings")
     if len(set(gpu_resources)) != len(gpu_resources):
         raise ResourcePolicyConfigurationError("allowlist.gpu_resources must not contain duplicates")
+    if not isinstance(gpu_images, list) or not all(
+        isinstance(value, str) and value.strip() for value in gpu_images
+    ):
+        raise ResourcePolicyConfigurationError("allowlist.gpu_images must contain strings")
+    if len(set(gpu_images)) != len(gpu_images):
+        raise ResourcePolicyConfigurationError("allowlist.gpu_images must not contain duplicates")
     fallback_profile = root["fallback_profile"]
     if fallback_profile not in profiles:
         raise ResourcePolicyConfigurationError("fallback_profile must be catalog-allowlisted")
@@ -268,6 +284,25 @@ def validate_resource_policy(raw: object) -> DynamicResourcePolicy:
         raise ResourcePolicyConfigurationError(
             "allowlist.gpu_resources is required when dynamic GPU count can exceed zero"
         )
+    if gpu_count.maximum > 0 and not gpu_images:
+        raise ResourcePolicyConfigurationError(
+            "allowlist.gpu_images is required when dynamic GPU count can exceed zero"
+        )
+    quantity_limits = (
+        (cpu_request.maximum, KUBERNETES_MAX_QUANTITY, "CPU request max"),
+        (cpu_limit.maximum, KUBERNETES_MAX_QUANTITY, "CPU limit max"),
+        (memory_request.maximum, KUBERNETES_MAX_MEMORY_MIB, "memory request max"),
+        (memory_limit.maximum, KUBERNETES_MAX_MEMORY_MIB, "memory limit max"),
+        (gpu_count.maximum, KUBERNETES_MAX_QUANTITY, "GPU count max"),
+        (quota.cpu_limit_millicores, KUBERNETES_MAX_QUANTITY, "CPU quota cap"),
+        (quota.memory_limit_mib, KUBERNETES_MAX_MEMORY_MIB, "memory quota cap"),
+        (quota.gpu_count, KUBERNETES_MAX_QUANTITY, "GPU quota cap"),
+    )
+    for value, maximum, label in quantity_limits:
+        if value > maximum:
+            raise ResourcePolicyConfigurationError(
+                f"{label} exceeds the Kubernetes quantity limit"
+            )
 
     return DynamicResourcePolicy(
         policy_version=policy_version,
@@ -275,6 +310,7 @@ def validate_resource_policy(raw: object) -> DynamicResourcePolicy:
         fallback_profile=fallback_profile,
         catalog_profile_allowlist=tuple(profiles),
         gpu_resource_allowlist=tuple(gpu_resources),
+        gpu_image_allowlist=tuple(gpu_images),
         cpu_request=cpu_request,
         cpu_limit=cpu_limit,
         memory_request=memory_request,
@@ -287,6 +323,31 @@ def validate_resource_policy(raw: object) -> DynamicResourcePolicy:
 def load_resource_policy(path: str | Path = DEFAULT_RESOURCE_POLICY_PATH) -> DynamicResourcePolicy:
     with Path(path).open(encoding="utf-8") as handle:
         return validate_resource_policy(yaml.safe_load(handle))
+
+
+def resource_policy_hash(policy: DynamicResourcePolicy) -> str:
+    """Return a semantic hash so previews bind to policy content, not a label."""
+
+    payload = {
+        "policy_version": policy.policy_version,
+        "default_mode": policy.default_mode,
+        "fallback_profile": policy.fallback_profile,
+        "allowlist": {
+            "catalog_profiles": list(policy.catalog_profile_allowlist),
+            "gpu_resources": list(policy.gpu_resource_allowlist),
+            "gpu_images": list(policy.gpu_image_allowlist),
+        },
+        "dynamic": {
+            "cpu_request": vars(policy.cpu_request),
+            "cpu_limit": vars(policy.cpu_limit),
+            "memory_request": vars(policy.memory_request),
+            "memory_limit": vars(policy.memory_limit),
+            "gpu_count": vars(policy.gpu_count),
+            "quota": vars(policy.quota),
+        },
+    }
+    canonical = json.dumps(payload, sort_keys=True, separators=(",", ":"))
+    return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
 
 
 def configured_resource_mode(
@@ -342,22 +403,32 @@ class ResourceSelector:
 
     @staticmethod
     def _coerce_dataset_size_gb(value: float | int | str | None) -> float:
-        try:
-            parsed = float(value or 0)
-        except (TypeError, ValueError):
+        if value in (None, ""):
             return 0.0
-        return parsed if math.isfinite(parsed) and parsed >= 0 else 0.0
+        if isinstance(value, bool):
+            raise DynamicResourceRejected("dataset size must be a finite non-negative number")
+        try:
+            parsed = float(value)
+        except (TypeError, ValueError):
+            raise DynamicResourceRejected(
+                "dataset size must be a finite non-negative number"
+            ) from None
+        if not math.isfinite(parsed) or parsed < 0:
+            raise DynamicResourceRejected("dataset size must be a finite non-negative number")
+        return parsed
 
     @staticmethod
     def _coerce_score(value: object) -> float:
+        if value in (None, ""):
+            return 0.0
         if isinstance(value, bool):
-            return 0.0
+            raise DynamicResourceRejected("score must be a finite non-negative number")
         try:
-            score = float(value or 0)
+            score = float(value)
         except (TypeError, ValueError):
-            return 0.0
+            raise DynamicResourceRejected("score must be a finite non-negative number") from None
         if not math.isfinite(score) or score < 0:
-            return 0.0
+            raise DynamicResourceRejected("score must be a finite non-negative number")
         return min(score, 10.0)
 
     def validate_dynamic_resources(
@@ -521,5 +592,6 @@ __all__ = [
     "ResourceSelector",
     "configured_resource_mode",
     "load_resource_policy",
+    "resource_policy_hash",
     "validate_resource_policy",
 ]

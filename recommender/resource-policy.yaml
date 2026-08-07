@@ -1,4 +1,4 @@
-policy_version: dynamic-resource-policy-v1
+policy_version: dynamic-resource-policy-v2
 
 # Catalog is deliberately the default so this stretch feature cannot change
 # the current spawn flow until an administrator opts in.
@@ -13,6 +13,9 @@ allowlist:
   # The demo cluster has no GPU node pool. An administrator must configure
   # both this allowlist and non-zero GPU bounds/quota before a GPU is emitted.
   gpu_resources: []
+  # Images approved for GPU device injection. The deployment adapter also
+  # verifies that every ID exists in the immutable notebook image catalog.
+  gpu_images: []
 
 dynamic:
   cpu_millicores:

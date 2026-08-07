@@ -20,7 +20,8 @@ This implementation provides:
   optional runtime quota headroom, and GPU resource names;
 - per-candidate fallback to the existing Catalog Mode mapping;
 - a reversible Catalog/Dynamic mode switch;
-- preview CLI, additive audit metadata, unit tests, and an opt-in Helm adapter.
+- authenticated, XSRF-protected browser preview, one-time confirmation binding,
+  preview CLI, additive audit metadata, tests, and an opt-in Helm adapter.
 
 It does not claim to predict true resource demand, discover GPU node capacity,
 reserve namespace quota, or eliminate Kubernetes admission races. The local
@@ -31,7 +32,8 @@ No cluster-mutating command was run while implementing Task E.
 
 ```mermaid
 flowchart TD
-    Recommendation["Existing validated recommendation"] --> Mode{"RESOURCE_SELECTION_MODE"}
+    Recommendation["Existing validated recommendation"] --> Preview["Server preview + user/policy binding"]
+    Preview --> Mode{"RESOURCE_SELECTION_MODE"}
     Mode -->|catalog, default| Catalog["Existing admin profile mapping"]
     Mode -->|dynamic, opt-in| Generate["Generate CPU/RAM/GPU target"]
     Generate --> Bounds["Round up to admin step"]
@@ -63,8 +65,9 @@ startup.
 | `fallback_profile` | Admin-approved last-resort catalog profile |
 | `allowlist.catalog_profiles` | Profiles that fallback is allowed to apply |
 | `allowlist.gpu_resources` | Ordered Kubernetes extended-resource names, such as `nvidia.com/gpu` |
+| `allowlist.gpu_images` | Notebook image IDs approved to receive a GPU device |
 | `dynamic.*.min/max/step` | Inclusive stepped range for each request, limit, or GPU count |
-| `dynamic.quota` | Conservative per-spawn caps checked before Kubernetes admission |
+| `dynamic.quota` | Static per-spawn policy caps checked before Kubernetes admission |
 
 Step alignment is relative to `min`, not zero. For example, `min: 256` and
 `step: 128` permit 256, 384, 512, and so on up to `max`. Generation always
@@ -80,6 +83,7 @@ change:
 allowlist:
   catalog_profiles: [small, medium, large]
   gpu_resources: [nvidia.com/gpu]
+  gpu_images: [pytorch-deep-learning]
 dynamic:
   gpu_count: {min: 0, max: 1, step: 1}
   quota:
@@ -88,7 +92,8 @@ dynamic:
     gpu_count: 1
 ```
 
-This only permits an extended-resource request. The cluster must separately
+This only permits an extended-resource request paired with an allowlisted
+notebook image. The cluster must separately
 have matching device-plugin, schedulable node, taint/toleration, and quota
 configuration.
 
@@ -105,8 +110,8 @@ CPU limit target = max(profile floor, aligned CPU request + 400m)
 RAM limit target = max(profile floor, aligned RAM request + 256MiB)
 ```
 
-Scores are defensively normalized to the range 0–10. Invalid or negative
-dataset/score hints become zero. Profile floors prevent a large-class decision
+Scores are bounded to the range 0–10. Malformed, negative, or non-finite
+dataset/score hints reject the dynamic candidate. Profile floors prevent a large-class decision
 from being reduced to a small allocation. The candidate is rejected rather
 than clamped when a target exceeds the maximum; silent clamping could disguise
 an allocation that the policy cannot safely satisfy.
@@ -135,11 +140,37 @@ snapshot. Another pod can consume quota between selection and pod creation.
 The selector therefore never claims to reserve quota; ResourceQuota admission
 remains the final enforcement point.
 
+The shipped Helm adapter does not query `ResourceQuota`, per-user usage, node
+capacity, or GPU availability. Its `dynamic.quota` values are static per-spawn
+ceilings, not evidence of remaining namespace quota. A caller may supply a
+`QuotaCaps` snapshot to the library, but the adapter currently does not do so.
+
+## Browser confirmation and replay protection
+
+Dynamic Mode replaces the client-only resource preview with an authenticated
+`/dynamic-resource-preview` request. JupyterHub/Tornado supplies authentication
+and XSRF enforcement. The Hub retains only derived recommendation fields, the
+resource decision, user identity, expiry, and semantic policy hash; raw intent
+and code are not retained in the preview record.
+
+The returned opaque preview ID is required by browser, re-provision, and direct
+spawn API paths. Pre-spawn validation binds it to the same user and derived
+recommendation, rejects expired or replayed IDs, compares a SHA-256 hash of the
+full resource policy (not only the administrator version label), regenerates
+the decision, and validates the candidate once more immediately before setting
+KubeSpawner attributes. Preview records are process-local and expire after 30
+minutes; a Hub restart or policy rollout invalidates all outstanding previews.
+
+CPU and memory assignments use canonical Kubernetes strings (`500m`, `768Mi`)
+instead of binary floating-point CPU values. Policy values beyond Kubernetes'
+representable quantity range fail during Hub configuration.
+
 Fallback is recorded through:
 
 - `RESOURCE_SELECTION_MODE_REQUESTED` and
   `RESOURCE_SELECTION_MODE_APPLIED` environment variables;
 - `z2jh-context-demo.local/resource-mode-*` annotations;
+- the semantic `dynamic-policy-hash` annotation and environment variable;
 - the truncated `dynamic-fallback` annotation when applicable; and
 - a structured `dynamic_resource_audit` Hub log event.
 
@@ -148,7 +179,8 @@ dynamic audit event.
 
 ## Mode transition and rollback
 
-The base installation stays in Catalog Mode:
+The base installation stays in Catalog Mode and does not load the dynamic
+policy or change the Catalog request path:
 
 ```bash
 bash scripts/install-proposed.sh

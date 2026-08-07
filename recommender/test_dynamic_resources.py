@@ -17,6 +17,7 @@ from recommender.dynamic_resources import (
     ResourceSelector,
     configured_resource_mode,
     load_resource_policy,
+    resource_policy_hash,
     validate_resource_policy,
 )
 
@@ -33,6 +34,7 @@ def raw_policy() -> dict:
 def gpu_enabled_policy():
     raw = deepcopy(raw_policy())
     raw["allowlist"]["gpu_resources"] = ["nvidia.com/gpu"]
+    raw["allowlist"]["gpu_images"] = ["pytorch-deep-learning"]
     raw["dynamic"]["gpu_count"]["max"] = 1
     raw["dynamic"]["quota"]["gpu_count"] = 1
     return validate_resource_policy(raw)
@@ -80,8 +82,8 @@ def test_dynamic_mode_generates_aligned_values_inside_every_policy_bound():
     assert resources.memory_limit_mib <= policy.quota.memory_limit_mib
     assert resources.gpu_count == 0
     assert resources.to_kubespawner_resources() == {
-        "cpu_guarantee": 0.5,
-        "cpu_limit": 0.9,
+        "cpu_guarantee": "500m",
+        "cpu_limit": "900m",
         "mem_guarantee": "768Mi",
         "mem_limit": "1024Mi",
     }
@@ -196,6 +198,78 @@ def test_candidate_validator_rejects_off_step_and_unallowlisted_gpu_values():
 
 
 @pytest.mark.parametrize(
+    ("field", "value"),
+    [
+        ("cpu_request_millicores", -100),
+        ("cpu_request_millicores", 0),
+        ("cpu_request_millicores", 100.0),
+        ("cpu_request_millicores", "100m"),
+        ("cpu_request_millicores", 101),
+        ("cpu_limit_millicores", 10**100),
+        ("memory_request_mib", "256Mi"),
+        ("memory_limit_mib", 384.5),
+        ("gpu_count", -1),
+        ("gpu_count", 2),
+    ],
+)
+def test_candidate_validator_rejects_malformed_negative_off_step_and_huge_values(
+    field, value
+):
+    selector = ResourceSelector(gpu_enabled_policy(), mode=DYNAMIC_MODE)
+    values = {
+        "cpu_request_millicores": 100,
+        "cpu_limit_millicores": 500,
+        "memory_request_mib": 256,
+        "memory_limit_mib": 384,
+        "gpu_count": 0,
+    }
+    values[field] = value
+
+    with pytest.raises(DynamicResourceRejected):
+        selector.validate_dynamic_resources(DynamicResourceSpec(**values))
+
+
+@pytest.mark.parametrize("value", ["bad", -1, float("nan"), float("inf"), "1e309"])
+def test_invalid_dataset_signals_fail_to_visible_catalog_fallback(value):
+    decision = ResourceSelector(load_resource_policy(), mode=DYNAMIC_MODE).select(
+        recommended_profile="small",
+        dataset_size_gb=value,
+    )
+
+    assert decision.applied_mode == CATALOG_MODE
+    assert decision.fallback_reason == "dataset size must be a finite non-negative number"
+
+
+def test_rounding_boundaries_are_deterministic_and_always_round_up():
+    selector = ResourceSelector(load_resource_policy(), mode=DYNAMIC_MODE)
+
+    below = selector.select(recommended_profile="small", dataset_size_gb="0.49999999999999994")
+    exact = selector.select(recommended_profile="small", dataset_size_gb="0.5")
+    above = selector.select(recommended_profile="small", dataset_size_gb="0.5000000000000001")
+
+    assert below.resources.cpu_request_millicores == 200
+    assert exact.resources.cpu_request_millicores == 200
+    assert above.resources.cpu_request_millicores == 300
+
+
+def test_overflow_like_policy_fails_at_configuration_not_resource_conversion():
+    policy = raw_policy()
+    policy["dynamic"]["cpu_millicores"]["limit"]["max"] = 10**100
+
+    with pytest.raises(ResourcePolicyConfigurationError, match="Kubernetes quantity limit"):
+        validate_resource_policy(policy)
+
+
+def test_semantic_policy_hash_changes_even_when_version_label_is_reused():
+    first = raw_policy()
+    second = deepcopy(first)
+    second["dynamic"]["cpu_millicores"]["request"]["max"] -= 100
+
+    assert resource_policy_hash(validate_resource_policy(first)) != resource_policy_hash(
+        validate_resource_policy(second)
+    )
+
+@pytest.mark.parametrize(
     ("mutate", "message"),
     [
         (
@@ -218,6 +292,13 @@ def test_candidate_validator_rejects_off_step_and_unallowlisted_gpu_values():
             lambda policy: policy["dynamic"]["gpu_count"].update(max=1),
             "gpu_resources is required",
         ),
+        (
+            lambda policy: (
+                policy["allowlist"].update(gpu_resources=["nvidia.com/gpu"]),
+                policy["dynamic"]["gpu_count"].update(max=1),
+            ),
+            "gpu_images is required",
+        ),
     ],
 )
 def test_invalid_admin_policy_fails_fast(mutate, message):
@@ -226,6 +307,16 @@ def test_invalid_admin_policy_fails_fast(mutate, message):
 
     with pytest.raises(ResourcePolicyConfigurationError, match=message):
         validate_resource_policy(policy)
+
+
+def test_missing_and_malformed_policy_fail_when_loaded(tmp_path):
+    with pytest.raises(FileNotFoundError):
+        load_resource_policy(tmp_path / "missing-policy.yaml")
+
+    malformed = tmp_path / "malformed-policy.yaml"
+    malformed.write_text("dynamic: [not, a, policy]\n", encoding="utf-8")
+    with pytest.raises(ResourcePolicyConfigurationError, match="fields are invalid"):
+        load_resource_policy(malformed)
 
 
 def test_unknown_recommendation_uses_admin_fallback_profile():

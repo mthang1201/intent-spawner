@@ -71,7 +71,7 @@ hub:
       def build_reprovision_preview(user, values):
           current = _current_reprovision_state(user)
           proposed = _normalized_reprovision_recommendation(values)
-          return {
+          preview = {
               "preview_version": REPROVISION_PREVIEW_VERSION,
               "current": current,
               "proposed": proposed,
@@ -82,6 +82,14 @@ hub:
               },
               "warnings": list(REPROVISION_WARNINGS),
           }
+          if "issue_dynamic_resource_preview" in globals():
+              dynamic_preview = issue_dynamic_resource_preview(user.name, values)
+              preview["dynamic_resource_preview"] = {
+                  "dynamic_preview_id": dynamic_preview["dynamic_preview_id"],
+                  "resource_decision": dynamic_preview["resource_decision"],
+                  "dynamic_policy_hash": dynamic_preview["dynamic_policy_hash"],
+              }
+          return preview
 
       def build_reprovision_options(user, values):
           if not isinstance(values, dict):
@@ -93,6 +101,7 @@ hub:
               "expected_current_event_id", "expected_recommended_profile",
               "expected_recommended_image_id", "expected_policy_version",
               "expected_catalog_version",
+              "dynamic_preview_id",
           }
           if set(values) - allowed:
               raise ValueError("re-provision request contains unsupported fields")
@@ -114,8 +123,11 @@ hub:
               "code_context": [values.get("code_context", "")],
               "override_profile": [values.get("override_profile", "")],
               "override_image_id": [values.get("override_image_id", "")],
+              "dynamic_preview_id": [values.get("dynamic_preview_id", "")],
           }
           options = context_options_from_form(formdata)
+          if "validate_dynamic_resource_preview" in globals():
+              validate_dynamic_resource_preview(options, user.name, consume=False)
 
           expected = {
               "recommended_profile": values.get("expected_recommended_profile"),
@@ -250,7 +262,7 @@ hub:
               confirm.disabled=true; error.textContent="";
               try {
                 const p=preview.proposed;
-                const response=await request({action:"accept",acknowledge_restart:true,preview_version:preview.preview_version,expected_current_event_id:preview.current.event_id,expected_recommended_profile:p.recommended_profile,expected_recommended_image_id:p.recommended_image_id,expected_policy_version:p.policy_version,expected_catalog_version:p.catalog_version,...context()});
+                const response=await request({action:"accept",acknowledge_restart:true,preview_version:preview.preview_version,expected_current_event_id:preview.current.event_id,expected_recommended_profile:p.recommended_profile,expected_recommended_image_id:p.recommended_image_id,expected_policy_version:p.policy_version,expected_catalog_version:p.catalog_version,dynamic_preview_id:preview.dynamic_resource_preview ? preview.dynamic_resource_preview.dynamic_preview_id : "",...context()});
                 window.location.assign(response.progress_url);
               } catch(e) { error.textContent=e.message; confirm.disabled=false; }
             });
