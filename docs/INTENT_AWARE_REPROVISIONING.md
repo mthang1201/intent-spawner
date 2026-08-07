@@ -78,96 +78,24 @@ stateDiagram-v2
     Previewed --> Running: Edit input or cancel
     Previewed --> Validated: Confirm and acknowledge restart
     Validated --> Rejected: Stale server, policy, catalog, or recommendation
-    Validated --> Stopping: Acquire per-user transition lock
-    Stopping --> Starting: Old stop future completes and pod poll confirms termination
-    Starting --> Running: Replacement becomes ready
-    Starting --> StoppedWithPVC: Replacement spawn fails
+    Validated --> Stopping: Acquire atomic per-user state lock (STOPPING)
+    Stopping --> Stopped: Old pod stop completes and poll confirms termination
+    Stopping --> Failed: Old pod stop fails or times out
+    Stopped --> Spawning: Initiate replacement spawn with new options
+    Spawning --> Completed: Replacement server becomes ready
+    Spawning --> RollingBack: Replacement spawn fails (ResourceQuota, K8s error)
+    RollingBack --> Completed: Automatic rollback to previous configuration succeeds
+    RollingBack --> Failed: Rollback spawn also fails
+    Completed --> Running: Transition completes and state lock is released
+    Failed --> [*]: Lock released deterministically for user recovery
 ```
 
 Preview is read-only. The irreversible boundary is confirmation: after trusted
 server-side recomputation and validation, the current pod is stopped. If the
-new spawn fails, the user has no running server, but the PVC remains available
-for a later retry through the ordinary spawn flow.
-
-## Request and stale-preview contract
-
-`POST /hub/reprovision` is an authenticated, same-origin, XSRF-protected Hub
-handler. The browser never supplies resource quantities or image references.
-
-Preview accepts only:
-
-- `action: preview`;
-- `intent`;
-- `dataset_size_gb`; and
-- `code_context`.
-
-Confirmation additionally carries:
-
-- `action: accept`;
-- the re-provision preview schema version;
-- an explicit restart acknowledgement;
-- the current server's recommendation event ID;
-- the previewed recommended profile and image ID; and
-- the previewed policy and catalog versions.
-
-The Hub recomputes through the configured backend and compares these fields.
-Any changed current event, recommendation, policy, or catalog rejects the
-confirmation and requires another preview. Submitted recommended values are
-never applied directly.
-
-When the dynamic resource allocation overlay is enabled, the preview token
-(`dynamic_preview_id`) is validated and consumed (single-use) upon confirmation,
-preventing preview token replay attacks.
-
-Only the derived decision enters `user_options`. Raw intent and code context do
-not enter pod environment, annotations, or audit records.
-
-## Stop/start transaction and PVC invariant
-
-The ordered transaction is:
-
-```text
-validate preview and allowlists
-  -> acquire in-Hub per-user task lock
-  -> request graceful stop
-  -> await the complete stop future
-  -> poll until the old pod is confirmed terminated (bounded timeout)
-  -> start the replacement with new user_options
-  -> let the existing pre-spawn policy apply resources and image
-```
-
-JupyterHub may return from its stop helper after `slow_stop_timeout` while the
-underlying pod is still terminating in Kubernetes. Task D awaits the returned
-future and performs a bounded polling loop (up to `slow_stop_timeout + 20s`)
-until `old_spawner.poll()` confirms the old pod is no longer running before
-invoking `spawn_single_user`.
-
-The overlay changes `singleuser.storage.type` from `none` to `dynamic` and
-requests a bounded `1Gi` home volume for the demo. KubeSpawner's stable
-per-user claim identity is independent of the disposable pod identity. The
-transaction never deletes a PVC. Namespace cleanup remains destructive and
-will delete the demo namespace and its claims, as documented in `CLEANUP.md`.
-
-The storage guarantee is limited to data actually flushed to the mounted home
-filesystem. Unsaved editor buffers, uncheckpointed notebooks, open file buffers,
-temporary container paths outside the mount, and kernel memory are not covered.
-
-### Operational Limitation — Multi-Node ReadWriteOnce PVC Attachment
-
-In multi-node Kubernetes clusters with `ReadWriteOnce` (RWO) storage classes (e.g. cloud block storage), Kubernetes cloud volume detachment can take 10 to 60 seconds after pod deletion. If the replacement pod is scheduled on a different worker node before the volume attachment is fully released, Kubernetes may emit a `Multi-Attach error for volume` until attachment cleanup completes. For production multi-node deployments, node affinity rules or storage attachment wait hooks should be configured.
-
-## Concurrency and idempotency
-
-The handler keeps at most one active re-provision task per username in the Hub
-process (`REPROVISION_TASKS`). A second request while the spawner is pending or the task lock exists
-returns a conflict (HTTP 409). A generation counter and previous/current event IDs make
-each accepted transition observable without recording a username in the custom
-audit payload.
-
-This lock is process-local. The evaluation and demo environment assumes a single Hub replica.
-A production multi-Hub design needs a durable operation record,
-distributed lock or compare-and-swap transition, idempotency key, and recovery
-worker before it can make the same concurrency guarantee across replicas.
+replacement spawn fails, an automatic **rollback** is initiated to respawn the
+user's server using their previous known-good resource profile and image. If
+rollback also fails, the state transitions to `FAILED`, audit events are logged,
+and locks are released so the user can re-trigger spawn from `/hub/home`.
 
 ## Audit events
 
@@ -176,6 +104,8 @@ Task D adds privacy-minimized `reprovision_audit=` events:
 - `reprovision_started` records event/generation IDs, previous and proposed
   profile/image IDs, and the explicit persistence boundary;
 - `reprovision_failed` records failure stage (`stop` or `spawn`) and error details if the transition fails;
+- `reprovision_rollback_started`, `reprovision_rolled_back`, and `reprovision_rollback_failed`
+  track automatic rollback progress on replacement spawn failures;
 - the existing `recommendation_decision` event is emitted by the reused
   pre-spawn hook; and
 - `reprovision_completed` records the replacement decision after spawn returns.
@@ -189,16 +119,10 @@ limitations in the recommendation preview design continue to apply.
 | Failure point | Old pod | PVC | Result |
 | --- | --- | --- | --- |
 | Invalid input, acknowledgement, allowlist, or stale preview | Running | Attached | Reject before mutation |
-| Concurrent transition | Running or already transitioning | Unchanged | Return conflict |
-| Old pod stop fails or times out | Not intentionally replaced | Retained | Task fails, lock released, `reprovision_failed` logged; user guided to `/hub/home` |
-| Replacement scheduling, quota, or image pull fails | Stopped | Retained | Standard spawn failure; lock released; user retry from `/hub/home` with saved files intact |
-| Hub restarts during the process | Indeterminate pod lifecycle | Retained by Kubernetes | No automatic transaction recovery in this prototype |
-
-There is no automatic rollback to the old image/profile after a replacement
-failure. A rollback is itself another pod creation and can fail for the same
-capacity or image reason; silently attempting it would also obscure the state
-shown to the user. The safe prototype boundary is to preserve the PVC, expose
-the standard spawn failure, release locks, and require an explicit retry.
+| Concurrent transition | Running or already transitioning | Unchanged | Return conflict (HTTP 409) |
+| Old pod stop fails or times out | Not intentionally replaced | Retained | Task fails, state lock released, `reprovision_failed` logged; user guided to `/hub/home` |
+| Replacement scheduling, quota, or image pull fails | Stopped | Retained | Triggers automatic rollback to previous profile/image. If rollback succeeds, server is restored with previous spec. If rollback fails, state lock released for user retry from `/hub/home`. |
+| Hub restarts during the process | Indeterminate pod lifecycle | Retained by Kubernetes | Pod state inspected from cluster; running pod adopted or unready spawner cleared for safe retry |
 
 ## Validation
 

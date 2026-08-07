@@ -489,6 +489,34 @@ hub:
       async def policy_bounded_resource_pre_spawn_hook(spawner):
           await _catalog_pre_spawn_hook(spawner)
           options = spawner.user_options or {}
+          if options.get("is_rollback") or options.get("decision_action") == "rollback":
+              _clear_previous_dynamic_gpu_resources(spawner)
+              profile = options.get("applied_profile", "small")
+              if profile in PROFILE_RESOURCES:
+                  resources = PROFILE_RESOURCES[profile]
+                  spawner.cpu_guarantee = resources["cpu_guarantee"]
+                  spawner.cpu_limit = resources["cpu_limit"]
+                  spawner.mem_guarantee = resources["mem_guarantee"]
+                  spawner.mem_limit = resources["mem_limit"]
+              environment = dict(spawner.environment or {})
+              environment.update({
+                  "RESOURCE_SELECTION_MODE_REQUESTED": CATALOG_MODE,
+                  "RESOURCE_SELECTION_MODE_APPLIED": CATALOG_MODE,
+                  "DYNAMIC_RESOURCE_POLICY_VERSION": DYNAMIC_RESOURCE_POLICY.policy_version,
+                  "DYNAMIC_RESOURCE_POLICY_HASH": DYNAMIC_RESOURCE_POLICY_HASH,
+              })
+              spawner.environment = environment
+              annotations = dict(spawner.extra_annotations or {})
+              annotations.update({
+                  "z2jh-context-demo.local/resource-mode-requested": CATALOG_MODE,
+                  "z2jh-context-demo.local/resource-mode-applied": CATALOG_MODE,
+                  "z2jh-context-demo.local/dynamic-policy-version": DYNAMIC_RESOURCE_POLICY.policy_version,
+                  "z2jh-context-demo.local/dynamic-policy-hash": DYNAMIC_RESOURCE_POLICY_HASH,
+                  "z2jh-context-demo.local/dynamic-fallback": "reprovision_rollback",
+              })
+              spawner.extra_annotations = annotations
+              return
+
           decision = validate_dynamic_resource_preview(
               options,
               _spawner_username(spawner),
@@ -523,6 +551,21 @@ hub:
               spawner.cpu_limit = resources["cpu_limit"]
               spawner.mem_guarantee = resources["mem_guarantee"]
               spawner.mem_limit = resources["mem_limit"]
+
+          # Ensure extra_resource_guarantees and extra_resource_limits strictly match for GPU resources
+          all_gpu_names = set(DYNAMIC_RESOURCE_POLICY.gpu_resource_allowlist)
+          guarantees = dict(getattr(spawner, "extra_resource_guarantees", {}) or {})
+          limits = dict(getattr(spawner, "extra_resource_limits", {}) or {})
+          for k in list(guarantees) + list(limits):
+              if k.endswith("/gpu") or "gpu" in k:
+                  all_gpu_names.add(k)
+          for gpu_name in all_gpu_names:
+              if gpu_name in guarantees or gpu_name in limits:
+                  count = guarantees.get(gpu_name, limits.get(gpu_name))
+                  guarantees[gpu_name] = count
+                  limits[gpu_name] = count
+                  spawner.extra_resource_guarantees = guarantees
+                  spawner.extra_resource_limits = limits
 
           environment = dict(spawner.environment or {})
           environment.update({

@@ -158,8 +158,9 @@ class DynamicResourceSpec:
             "mem_limit": f"{self.memory_limit_mib}Mi",
         }
         if self.gpu_count:
-            values["extra_resource_guarantees"] = {self.gpu_resource: self.gpu_count}
-            values["extra_resource_limits"] = {self.gpu_resource: self.gpu_count}
+            gpu_val = int(self.gpu_count)
+            values["extra_resource_guarantees"] = {self.gpu_resource: gpu_val}
+            values["extra_resource_limits"] = {self.gpu_resource: gpu_val}
         return values
 
 

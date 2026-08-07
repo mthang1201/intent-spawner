@@ -546,3 +546,34 @@ def test_browser_equivalent_post_requires_xsrf_and_accepts_correct_header(monkey
     assert json.loads(unavailable.body) == {
         "error": "dynamic resource preview is temporarily unavailable"
     }
+
+
+def test_gpu_resource_guarantees_and_limits_strictly_match(monkeypatch):
+    values, code, namespace = execute_overlay(monkeypatch)
+    preview = namespace["issue_dynamic_resource_preview"](
+        "pytest-user", {"intent": "gpu workload", "dataset_size_gb": "1.0", "code_context": ""}
+    )
+    formdata = {
+        "intent": ["gpu workload"],
+        "dataset_size_gb": ["1.0"],
+        "code_context": [""],
+        "decision_action": ["accept"],
+        "dynamic_preview_id": [preview["dynamic_preview_id"]],
+    }
+    options = namespace["c"].KubeSpawner.options_from_form(formdata)
+    spawner = SimpleNamespace(
+        user=SimpleNamespace(name="pytest-user"),
+        user_options=options,
+        environment={},
+        extra_annotations={},
+        extra_resource_guarantees={"nvidia.com/gpu": 1},
+        extra_resource_limits={},
+        log=SimpleNamespace(info=lambda *args, **kwargs: None),
+    )
+
+    asyncio.run(namespace["c"].KubeSpawner.pre_spawn_hook(spawner))
+
+    assert spawner.extra_resource_guarantees["nvidia.com/gpu"] == 1
+    assert spawner.extra_resource_limits["nvidia.com/gpu"] == 1
+    assert spawner.extra_resource_guarantees == spawner.extra_resource_limits
+

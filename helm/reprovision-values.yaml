@@ -27,6 +27,7 @@ hub:
 
       REPROVISION_PREVIEW_VERSION = "intent-reprovision-preview-v1"
       REPROVISION_TASKS = {}
+      REPROVISION_STATES = {}
       REPROVISION_WARNINGS = [
           "The running notebook pod will stop before the replacement pod starts.",
           "Kernel variables, active computations, terminals, and other in-memory state will be lost.",
@@ -168,12 +169,14 @@ hub:
           return options
 
       async def run_reprovision(handler, user, options):
-          """Stop fully, then start with new options; never overlap user pods."""
+          """Stop fully, then start with new options; roll back if replacement fails."""
 
           old_spawner = user.spawner
           if not old_spawner.ready or old_spawner.pending:
+              REPROVISION_STATES[user.name] = "FAILED"
               raise RuntimeError("the current server is not ready for re-provisioning")
 
+          REPROVISION_STATES[user.name] = "STOPPING"
           handler.log.info(
               "reprovision_audit=%s",
               json.dumps({
@@ -192,13 +195,10 @@ hub:
 
           try:
               stop_future = await handler.stop_single_user(user)
-              # stop_single_user may return after slow_stop_timeout while Kubernetes
-              # is still deleting the old pod. Await its future, then poll until
-              # the pod is confirmed stopped before starting the replacement.
-              await stop_future
+              timeout = float(getattr(old_spawner, "slow_stop_timeout", 10) or 10) + 20.0
+              await asyncio.wait_for(stop_future, timeout=timeout)
 
               poll_interval = 0.1
-              timeout = float(getattr(old_spawner, "slow_stop_timeout", 10) or 10) + 20.0
               deadline = asyncio.get_running_loop().time() + timeout
               stopped = False
               while asyncio.get_running_loop().time() < deadline:
@@ -210,6 +210,7 @@ hub:
               if not stopped:
                   raise RuntimeError("old notebook pod did not stop within the expected timeout")
           except Exception as exc:
+              REPROVISION_STATES[user.name] = "FAILED"
               handler.log.error(
                   "reprovision_audit=%s",
                   json.dumps({
@@ -222,9 +223,13 @@ hub:
               )
               raise
 
+          REPROVISION_STATES[user.name] = "STOPPED"
+          REPROVISION_STATES[user.name] = "SPAWNING"
+          spawn_error = None
           try:
               await handler.spawn_single_user(user, options=options)
           except Exception as exc:
+              spawn_error = exc
               handler.log.error(
                   "reprovision_audit=%s",
                   json.dumps({
@@ -235,8 +240,64 @@ hub:
                       "error": str(exc),
                   }, sort_keys=True),
               )
-              raise
 
+          if spawn_error is not None:
+              REPROVISION_STATES[user.name] = "ROLLING_BACK"
+              handler.log.info(
+                  "reprovision_audit=%s",
+                  json.dumps({
+                      "event": "reprovision_rollback_started",
+                      "event_id": options["event_id"],
+                      "generation": options["reprovision_generation"],
+                      "rollback_profile": options["previous_applied_profile"],
+                      "rollback_image_id": options["previous_applied_image_id"],
+                  }, sort_keys=True),
+              )
+              rollback_options = dict(options)
+              rollback_options.update({
+                  "applied_profile": options["previous_applied_profile"],
+                  "applied_image_id": options["previous_applied_image_id"],
+                  "recommended_profile": options["previous_applied_profile"],
+                  "recommended_image_id": options["previous_applied_image_id"],
+                  "decision_action": "rollback",
+                  "provisioning_mode": "reprovision_rollback",
+                  "is_rollback": True,
+              })
+              try:
+                  await handler.spawn_single_user(user, options=rollback_options)
+                  handler.log.info(
+                      "reprovision_audit=%s",
+                      json.dumps({
+                          "event": "reprovision_rolled_back",
+                          "event_id": options["event_id"],
+                          "generation": options["reprovision_generation"],
+                          "rollback_profile": options["previous_applied_profile"],
+                          "rollback_image_id": options["previous_applied_image_id"],
+                      }, sort_keys=True),
+                  )
+                  REPROVISION_STATES[user.name] = "COMPLETED"
+                  raise RuntimeError(
+                      f"Replacement notebook pod spawn failed ({spawn_error}); successfully rolled back to previous configuration ({options['previous_applied_profile']} / {options['previous_applied_image_id']})."
+                  )
+              except Exception as rollback_exc:
+                  if str(rollback_exc).startswith("Replacement notebook pod spawn failed"):
+                      raise
+                  REPROVISION_STATES[user.name] = "FAILED"
+                  handler.log.error(
+                      "reprovision_audit=%s",
+                      json.dumps({
+                          "event": "reprovision_rollback_failed",
+                          "event_id": options["event_id"],
+                          "generation": options["reprovision_generation"],
+                          "spawn_error": str(spawn_error),
+                          "rollback_error": str(rollback_exc),
+                      }, sort_keys=True),
+                  )
+                  raise RuntimeError(
+                      f"Replacement notebook pod spawn failed ({spawn_error}); automatic rollback to previous configuration also failed ({rollback_exc})."
+                  ) from rollback_exc
+
+          REPROVISION_STATES[user.name] = "COMPLETED"
           handler.log.info(
               "reprovision_audit=%s",
               json.dumps({
@@ -250,6 +311,7 @@ hub:
 
       def _reprovision_task_done(username, task, log):
           REPROVISION_TASKS.pop(username, None)
+          REPROVISION_STATES.pop(username, None)
           try:
               task.result()
           except Exception:
@@ -356,10 +418,16 @@ hub:
                   if action == "preview":
                       payload = build_reprovision_preview(user, values)
                   elif action == "accept":
-                      if user.name in REPROVISION_TASKS or user.spawner.pending:
+                      state = REPROVISION_STATES.get(user.name, "IDLE")
+                      if user.name in REPROVISION_TASKS or state in ("STOPPING", "STOPPED", "SPAWNING", "ROLLING_BACK") or user.spawner.pending:
                           raise RuntimeError("a server transition is already in progress")
+                      REPROVISION_STATES[user.name] = "STOPPING"
                       values["action"] = action
-                      options = build_reprovision_options(user, values)
+                      try:
+                          options = build_reprovision_options(user, values)
+                      except Exception:
+                          REPROVISION_STATES.pop(user.name, None)
+                          raise
                       task = asyncio.ensure_future(run_reprovision(self, user, options))
                       REPROVISION_TASKS[user.name] = task
                       task.add_done_callback(
@@ -399,8 +467,26 @@ hub:
       _base_pre_spawn_hook = c.KubeSpawner.pre_spawn_hook
 
       async def reprovision_pre_spawn_hook(spawner):
-          await _base_pre_spawn_hook(spawner)
           options = spawner.user_options or {}
+          if options.get("is_rollback") or options.get("decision_action") == "rollback":
+              mode = "reprovision_rollback"
+              environment = dict(spawner.environment or {})
+              environment.update({
+                  "PROVISIONING_MODE": mode,
+                  "REPROVISION_GENERATION": str(options.get("reprovision_generation", 0)),
+                  "JUPYTERHUB_REPROVISION_URL": "/hub/reprovision",
+              })
+              spawner.environment = environment
+              annotations = dict(spawner.extra_annotations or {})
+              annotations.update({
+                  "z2jh-context-demo.local/provisioning-mode": mode,
+                  "z2jh-context-demo.local/reprovision-generation": str(options.get("reprovision_generation", 0)),
+                  "z2jh-context-demo.local/previous-event-id": options.get("previous_event_id", ""),
+              })
+              spawner.extra_annotations = annotations
+              return
+
+          await _base_pre_spawn_hook(spawner)
           if options.get("provisioning_mode") != "reprovision":
               return
           environment = dict(spawner.environment or {})

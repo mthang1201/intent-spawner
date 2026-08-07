@@ -40,7 +40,7 @@ def running_user(options=None):
             "reprovision_generation": 0,
         },
     )
-    return SimpleNamespace(name="pytest-user", escaped_name="pytest-user", spawner=spawner)
+    return SimpleNamespace(name="pytest-user", escaped_name="pytest-user", running=True, spawner=spawner)
 
 
 def preview_values():
@@ -81,8 +81,8 @@ def test_reprovision_overlay_enables_stable_dynamic_home_storage_and_handler():
     assert any(path == r"/reprovision" for path, _ in namespace["c"].JupyterHub.extra_handlers)
 
     source = values["hub"]["extraConfig"]["10-intent-aware-reprovisioning"]
-    assert "await stop_future" in source
-    assert source.index("await stop_future") < source.index(
+    assert "stop_future" in source
+    assert source.index("stop_future") < source.index(
         "await handler.spawn_single_user"
     )
     assert "delete pvc" not in source.lower()
@@ -331,7 +331,61 @@ def test_stop_exception_releases_lock():
     assert user.name not in namespace["REPROVISION_TASKS"]
 
 
-def test_spawn_failure_releases_lock():
+def test_spawn_failure_triggers_successful_rollback():
+    _, _, namespace = load_reprovision_config()
+    user = running_user()
+    spawn_calls = []
+
+    async def stop_single_user(_user):
+        completed = asyncio.get_running_loop().create_future()
+        completed.set_result(None)
+        return completed
+
+    async def selective_spawn(spawn_user, options):
+        spawn_calls.append(dict(options))
+        if options.get("is_rollback"):
+            return
+        raise RuntimeError("insufficient CPU quota")
+
+    handler = SimpleNamespace(
+        stop_single_user=stop_single_user,
+        spawn_single_user=selective_spawn,
+        log=SimpleNamespace(
+            info=lambda *args, **kwargs: None,
+            error=lambda *args, **kwargs: None,
+            exception=lambda *args, **kwargs: None,
+        ),
+    )
+
+    options = {
+        "event_id": "test",
+        "reprovision_generation": 1,
+        "previous_event_id": "old",
+        "previous_applied_profile": "small",
+        "applied_profile": "large",
+        "previous_applied_image_id": "minimal-python",
+        "applied_image_id": "scipy-data-science",
+    }
+
+    async def scenario():
+        task = asyncio.create_task(namespace["run_reprovision"](handler, user, options))
+        namespace["REPROVISION_TASKS"][user.name] = task
+        task.add_done_callback(
+            lambda completed: namespace["_reprovision_task_done"](user.name, completed, handler.log)
+        )
+        with pytest.raises(RuntimeError, match="successfully rolled back to previous configuration"):
+            await task
+
+    asyncio.run(scenario())
+    assert user.name not in namespace["REPROVISION_TASKS"]
+    assert user.name not in namespace["REPROVISION_STATES"]
+    assert len(spawn_calls) == 2
+    assert spawn_calls[0]["applied_profile"] == "large"
+    assert spawn_calls[1]["applied_profile"] == "small"
+    assert spawn_calls[1]["is_rollback"] is True
+
+
+def test_spawn_failure_with_rollback_failure_releases_lock():
     _, _, namespace = load_reprovision_config()
     user = running_user()
 
@@ -341,7 +395,7 @@ def test_spawn_failure_releases_lock():
         return completed
 
     async def failing_spawn(*args, **kwargs):
-        raise RuntimeError("insufficient CPU quota")
+        raise RuntimeError("cluster out of memory")
 
     handler = SimpleNamespace(
         stop_single_user=stop_single_user,
@@ -369,11 +423,12 @@ def test_spawn_failure_releases_lock():
         task.add_done_callback(
             lambda completed: namespace["_reprovision_task_done"](user.name, completed, handler.log)
         )
-        with pytest.raises(RuntimeError, match="insufficient CPU quota"):
+        with pytest.raises(RuntimeError, match="automatic rollback to previous configuration also failed"):
             await task
 
     asyncio.run(scenario())
     assert user.name not in namespace["REPROVISION_TASKS"]
+    assert user.name not in namespace["REPROVISION_STATES"]
 
 
 def test_forged_override_action_rejected():
@@ -486,3 +541,56 @@ def test_reprovision_page_requires_explicit_kernel_state_loss_acknowledgement():
     assert 'id="confirm" type="button" disabled' in page
     assert 'const endpoint = "/hub/reprovision"' in page
     assert html.escape("xsrf-token", quote=True) in page
+
+
+def test_concurrent_reprovision_rejected_by_state_lock():
+    _, _, namespace = load_reprovision_config()
+    user = running_user()
+    namespace["REPROVISION_STATES"][user.name] = "STOPPING"
+
+    class StubHandler(namespace["IntentReprovisionHandler"]):
+        def __init__(self):
+            self._user = user
+            self.request = SimpleNamespace(body=json.dumps({"action": "accept"}).encode("utf-8"))
+            self.status_code = None
+            self.finished_payload = None
+
+        @property
+        def current_user(self):
+            return self._user
+
+        def set_status(self, code):
+            self.status_code = code
+
+        def set_header(self, name, value):
+            pass
+
+        def finish(self, payload):
+            self.finished_payload = payload
+
+    handler = StubHandler()
+    asyncio.run(handler.post())
+    assert handler.status_code == 409
+    assert "transition is already in progress" in handler.finished_payload
+
+
+def test_rollback_pre_spawn_hook_marks_rollback_mode():
+    _, kube_spawner_config, namespace = load_reprovision_config()
+    spawner = SimpleNamespace(
+        user_options={
+            "provisioning_mode": "reprovision_rollback",
+            "reprovision_generation": 2,
+            "previous_event_id": "old-event-123",
+            "is_rollback": True,
+        },
+        environment={},
+        extra_annotations={},
+        log=SimpleNamespace(info=lambda *args, **kwargs: None),
+    )
+
+    asyncio.run(kube_spawner_config.pre_spawn_hook(spawner))
+
+    assert spawner.environment["PROVISIONING_MODE"] == "reprovision_rollback"
+    assert spawner.environment["REPROVISION_GENERATION"] == "2"
+    assert spawner.extra_annotations["z2jh-context-demo.local/provisioning-mode"] == "reprovision_rollback"
+
