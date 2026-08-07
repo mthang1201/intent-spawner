@@ -1,0 +1,134 @@
+# Task E opt-in overlay. Apply after proposed-values.yaml. The base values stay
+# in Catalog Mode and are unchanged unless an administrator selects this file.
+hub:
+  extraEnv:
+    PYTHONPATH: /opt/intent-spawner
+    RESOURCE_SELECTION_MODE: dynamic
+  extraVolumes:
+    - name: recommender-runtime
+      configMap:
+        name: intent-spawner-recommender
+  extraVolumeMounts:
+    - name: recommender-runtime
+      mountPath: /opt/intent-spawner/recommender
+      readOnly: true
+  extraConfig:
+    01-policy-bounded-dynamic-resources: |
+      import json
+
+      from recommender.dynamic_resources import (
+          CATALOG_MODE,
+          DYNAMIC_MODE,
+          ResourceDecision,
+          ResourceSelector,
+          load_resource_policy,
+      )
+
+      # Invalid admin policy or an unknown mode prevents Hub startup. Per-spawn
+      # candidate rejection is handled by ResourceSelector's Catalog fallback.
+      DYNAMIC_RESOURCE_POLICY = load_resource_policy()
+      RESOURCE_SELECTOR = ResourceSelector(DYNAMIC_RESOURCE_POLICY)
+
+      def select_resource_decision(options, *, mode=None, quota_headroom=None):
+          return RESOURCE_SELECTOR.select(
+              recommended_profile=options.get("recommended_profile", ""),
+              score=options.get("score"),
+              dataset_size_gb=options.get("dataset_size_gb", 0.0),
+              mode=mode,
+              quota_headroom=quota_headroom,
+          )
+
+      # The current server-side preview remains compatible. Dynamic details are
+      # additive, and the existing profile/image fields retain their schema.
+      _base_build_preview_payload = globals().get("build_preview_payload")
+      if callable(_base_build_preview_payload):
+          def build_preview_payload(values):
+              payload = _base_build_preview_payload(values)
+              recommendation = dict(payload["recommendation"])
+              decision = RESOURCE_SELECTOR.select(
+                  recommended_profile=recommendation["profile"],
+                  score=recommendation.get("score"),
+                  dataset_size_gb=values.get("dataset_size_gb", 0.0),
+              )
+              recommendation["reasons"] = list(recommendation["reasons"]) + list(decision.reasons)
+              payload["recommendation"] = recommendation
+              payload["resource_decision"] = decision.to_dict()
+              return payload
+
+      _catalog_pre_spawn_hook = c.KubeSpawner.pre_spawn_hook
+
+      async def policy_bounded_resource_pre_spawn_hook(spawner):
+          await _catalog_pre_spawn_hook(spawner)
+          options = spawner.user_options or {}
+
+          # Manual Override is an explicit catalog choice. It remains unchanged
+          # even when the deployment opts into Dynamic Mode.
+          if options.get("decision_action") == "override":
+              decision = ResourceDecision(
+                  requested_mode=RESOURCE_SELECTOR.mode,
+                  applied_mode=CATALOG_MODE,
+                  catalog_profile=options["applied_profile"],
+                  resources=None,
+                  reasons=("Manual Override preserves the selected allowlisted catalog profile.",),
+                  policy_version=DYNAMIC_RESOURCE_POLICY.policy_version,
+                  fallback_reason="manual catalog override",
+              )
+          else:
+              decision = select_resource_decision(options)
+
+          if decision.applied_mode == DYNAMIC_MODE:
+              generated = decision.resources.to_kubespawner_resources()
+              spawner.cpu_guarantee = generated["cpu_guarantee"]
+              spawner.cpu_limit = generated["cpu_limit"]
+              spawner.mem_guarantee = generated["mem_guarantee"]
+              spawner.mem_limit = generated["mem_limit"]
+              for attribute in ("extra_resource_guarantees", "extra_resource_limits"):
+                  if attribute in generated:
+                      current = dict(getattr(spawner, attribute, {}) or {})
+                      current.update(generated[attribute])
+                      setattr(spawner, attribute, current)
+          elif decision.catalog_profile != options.get("applied_profile"):
+              # Defensive fallback for an unrecognized backend profile. Normal
+              # validated recommendations already use the same catalog profile.
+              resources = PROFILE_RESOURCES[decision.catalog_profile]
+              spawner.cpu_guarantee = resources["cpu_guarantee"]
+              spawner.cpu_limit = resources["cpu_limit"]
+              spawner.mem_guarantee = resources["mem_guarantee"]
+              spawner.mem_limit = resources["mem_limit"]
+
+          environment = dict(spawner.environment or {})
+          environment.update({
+              "RESOURCE_SELECTION_MODE_REQUESTED": decision.requested_mode,
+              "RESOURCE_SELECTION_MODE_APPLIED": decision.applied_mode,
+              "DYNAMIC_RESOURCE_POLICY_VERSION": decision.policy_version,
+          })
+          if decision.resources:
+              environment.update({
+                  "APPLIED_CPU_REQUEST_MILLICORES": str(decision.resources.cpu_request_millicores),
+                  "APPLIED_CPU_LIMIT_MILLICORES": str(decision.resources.cpu_limit_millicores),
+                  "APPLIED_MEMORY_REQUEST_MIB": str(decision.resources.memory_request_mib),
+                  "APPLIED_MEMORY_LIMIT_MIB": str(decision.resources.memory_limit_mib),
+                  "APPLIED_GPU_COUNT": str(decision.resources.gpu_count),
+              })
+          spawner.environment = environment
+
+          annotations = dict(spawner.extra_annotations or {})
+          annotations.update({
+              "z2jh-context-demo.local/resource-mode-requested": decision.requested_mode,
+              "z2jh-context-demo.local/resource-mode-applied": decision.applied_mode,
+              "z2jh-context-demo.local/dynamic-policy-version": decision.policy_version,
+          })
+          if decision.fallback_reason:
+              annotations["z2jh-context-demo.local/dynamic-fallback"] = decision.fallback_reason[:240]
+          spawner.extra_annotations = annotations
+
+          spawner.log.info(
+              "dynamic_resource_audit=%s",
+              json.dumps({
+                  "event": "resource_mode_decision",
+                  "event_id": options.get("event_id"),
+                  **decision.to_dict(),
+              }, sort_keys=True),
+          )
+
+      c.KubeSpawner.pre_spawn_hook = policy_bounded_resource_pre_spawn_hook

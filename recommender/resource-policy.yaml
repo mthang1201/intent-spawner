@@ -1,0 +1,45 @@
+policy_version: dynamic-resource-policy-v1
+
+# Catalog is deliberately the default so this stretch feature cannot change
+# the current spawn flow until an administrator opts in.
+default_mode: catalog
+fallback_profile: small
+
+allowlist:
+  catalog_profiles:
+    - small
+    - medium
+    - large
+  # The demo cluster has no GPU node pool. An administrator must configure
+  # both this allowlist and non-zero GPU bounds/quota before a GPU is emitted.
+  gpu_resources: []
+
+dynamic:
+  cpu_millicores:
+    request:
+      min: 100
+      max: 1500
+      step: 100
+    limit:
+      min: 500
+      max: 2000
+      step: 100
+  memory_mib:
+    request:
+      min: 256
+      max: 1536
+      step: 128
+    limit:
+      min: 384
+      max: 2048
+      step: 128
+  gpu_count:
+    min: 0
+    max: 0
+    step: 1
+  quota:
+    # Conservative per-spawn policy caps. Kubernetes ResourceQuota admission
+    # remains authoritative for concurrent namespace consumption.
+    cpu_limit_millicores: 2000
+    memory_limit_mib: 2048
+    gpu_count: 0
