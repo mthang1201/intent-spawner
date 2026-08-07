@@ -370,7 +370,8 @@ hub:
               self.set_header("Content-Type", "application/json")
               self.finish(json.dumps(payload))
 
-      _extra_handlers = list(getattr(c.JupyterHub, "extra_handlers", []) or [])
+      _raw_handlers = getattr(c.JupyterHub, "extra_handlers", [])
+      _extra_handlers = list(_raw_handlers) if isinstance(_raw_handlers, (list, tuple)) else []
       _extra_handlers.append((r"/reprovision", IntentReprovisionHandler))
       c.JupyterHub.extra_handlers = _extra_handlers
 
