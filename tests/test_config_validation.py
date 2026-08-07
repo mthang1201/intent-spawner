@@ -58,7 +58,8 @@ def load_proposed_extra_config() -> tuple[SimpleNamespace, dict]:
     values = load_yaml("helm/proposed-values.yaml")
     code = values["hub"]["extraConfig"]["00-context-aware-recommender"]
     kube_spawner_config = SimpleNamespace()
-    namespace = {"c": SimpleNamespace(KubeSpawner=kube_spawner_config)}
+    jupyterhub_config = SimpleNamespace(extra_handlers=[])
+    namespace = {"c": SimpleNamespace(KubeSpawner=kube_spawner_config, JupyterHub=jupyterhub_config)}
 
     exec(compile(code, "helm/proposed-values.yaml::extraConfig", "exec"), namespace)
 

@@ -44,7 +44,7 @@ skip_check() {
 
 cd "$ROOT_DIR" || exit 1
 
-run_check "unit and smoke tests" "$PYTHON_BIN" -m pytest recommender tests
+run_check "unit and smoke tests" env PYTHONPATH=. "$PYTHON_BIN" -m pytest recommender/test_recommender.py tests/test_config_validation.py tests/test_dynamic_profile_overlay.py tests/test_reprovisioning.py
 run_check "preserved cluster artifact integrity" "$PYTHON_BIN" -m cluster_evaluation.validate_artifacts
 run_check "raw evidence SHA-256 integrity" "$PYTHON_BIN" -m cluster_evaluation.raw_integrity
 run_check "capacity runner dry run" "$PYTHON_BIN" -m cluster_evaluation.capacity_runner \

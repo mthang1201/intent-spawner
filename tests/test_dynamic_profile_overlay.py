@@ -457,7 +457,6 @@ def test_reprovision_preview_carries_same_one_time_dynamic_binding(monkeypatch):
 
     assert dynamic_preview["resource_decision"]["applied_mode"] == "dynamic"
     assert options["dynamic_preview_id"] == dynamic_preview["dynamic_preview_id"]
-    namespace["validate_dynamic_resource_preview"](options, "alice", consume=True)
     with pytest.raises(ValueError, match="already been used"):
         namespace["validate_dynamic_resource_preview"](options, "alice")
 

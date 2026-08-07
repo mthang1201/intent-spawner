@@ -5,6 +5,11 @@ hub:
   extraConfig:
     10-intent-aware-reprovisioning: |
       import asyncio
+      import html
+      import json
+
+      from jupyterhub.handlers.base import BaseHandler
+      from tornado import web
 
       REPROVISION_PREVIEW_VERSION = "intent-reprovision-preview-v1"
       REPROVISION_TASKS = {}
@@ -97,7 +102,6 @@ hub:
           allowed = {
               "action", "acknowledge_restart", "preview_version",
               "intent", "dataset_size_gb", "code_context",
-              "override_profile", "override_image_id",
               "expected_current_event_id", "expected_recommended_profile",
               "expected_recommended_image_id", "expected_policy_version",
               "expected_catalog_version",
@@ -105,6 +109,8 @@ hub:
           }
           if set(values) - allowed:
               raise ValueError("re-provision request contains unsupported fields")
+          if values.get("action") != "accept":
+              raise ValueError("only accept action is supported for re-provisioning")
           if values.get("preview_version") != REPROVISION_PREVIEW_VERSION:
               raise ValueError("a current re-provision preview is required")
           if values.get("acknowledge_restart") is not True:
@@ -121,13 +127,12 @@ hub:
               "intent": [values.get("intent", "")],
               "dataset_size_gb": [values.get("dataset_size_gb", 0.0)],
               "code_context": [values.get("code_context", "")],
-              "override_profile": [values.get("override_profile", "")],
-              "override_image_id": [values.get("override_image_id", "")],
               "dynamic_preview_id": [values.get("dynamic_preview_id", "")],
           }
           options = context_options_from_form(formdata)
+          options["dynamic_preview_id"] = values.get("dynamic_preview_id", "")
           if "validate_dynamic_resource_preview" in globals():
-              validate_dynamic_resource_preview(options, user.name, consume=False)
+              validate_dynamic_resource_preview(options, user.name, consume=True)
 
           expected = {
               "recommended_profile": values.get("expected_recommended_profile"),
@@ -171,14 +176,52 @@ hub:
               }, sort_keys=True),
           )
 
-          stop_future = await handler.stop_single_user(user)
-          # stop_single_user may return after slow_stop_timeout while Kubernetes
-          # is still deleting the old pod. Await its future before starting the
-          # replacement so a ReadWriteOnce PVC is never attached concurrently.
-          await stop_future
-          if await old_spawner.poll() is None:
-              raise RuntimeError("old notebook pod still exists after stop")
-          await handler.spawn_single_user(user, options=options)
+          try:
+              stop_future = await handler.stop_single_user(user)
+              # stop_single_user may return after slow_stop_timeout while Kubernetes
+              # is still deleting the old pod. Await its future, then poll until
+              # the pod is confirmed stopped before starting the replacement.
+              await stop_future
+
+              poll_interval = 0.1
+              timeout = float(getattr(old_spawner, "slow_stop_timeout", 10) or 10) + 20.0
+              deadline = asyncio.get_running_loop().time() + timeout
+              stopped = False
+              while asyncio.get_running_loop().time() < deadline:
+                  if await old_spawner.poll() is not None:
+                      stopped = True
+                      break
+                  await asyncio.sleep(poll_interval)
+
+              if not stopped:
+                  raise RuntimeError("old notebook pod did not stop within the expected timeout")
+          except Exception as exc:
+              handler.log.error(
+                  "reprovision_audit=%s",
+                  json.dumps({
+                      "event": "reprovision_failed",
+                      "stage": "stop",
+                      "event_id": options["event_id"],
+                      "generation": options["reprovision_generation"],
+                      "error": str(exc),
+                  }, sort_keys=True),
+              )
+              raise
+
+          try:
+              await handler.spawn_single_user(user, options=options)
+          except Exception as exc:
+              handler.log.error(
+                  "reprovision_audit=%s",
+                  json.dumps({
+                      "event": "reprovision_failed",
+                      "stage": "spawn",
+                      "event_id": options["event_id"],
+                      "generation": options["reprovision_generation"],
+                      "error": str(exc),
+                  }, sort_keys=True),
+              )
+              raise
 
           handler.log.info(
               "reprovision_audit=%s",
@@ -284,14 +327,14 @@ hub:
               user = self.current_user
               if not user.running:
                   self.set_status(409)
-                  self.finish(json.dumps({"error": "no running notebook server"}))
+                  self.finish(json.dumps({"error": "no running notebook server. Return to the Home page (/hub/home) or Spawn page (/hub/spawn) to start your notebook server."}))
                   return
               try:
                   values = json.loads(self.request.body.decode("utf-8"))
                   action = values.pop("action", "")
                   if action == "preview":
                       payload = build_reprovision_preview(user, values)
-                  elif action in {"accept", "override"}:
+                  elif action == "accept":
                       if user.name in REPROVISION_TASKS or user.spawner.pending:
                           raise RuntimeError("a server transition is already in progress")
                       values["action"] = action
