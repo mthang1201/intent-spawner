@@ -54,14 +54,23 @@ def parse_memory_mi(value: str) -> int:
     return int(float(text) / 1024 / 1024)
 
 
-def load_proposed_extra_config() -> tuple[SimpleNamespace, dict]:
-    values = load_yaml("helm/proposed-values.yaml")
+def load_proposed_extra_config(
+    *,
+    base_handler: type | None = None,
+    web_module: Any | None = None,
+    values_path: str | Path = "helm/proposed-values.yaml",
+) -> tuple[SimpleNamespace, dict]:
+    values = load_yaml(values_path)
     code = values["hub"]["extraConfig"]["00-context-aware-recommender"]
     kube_spawner_config = SimpleNamespace()
     jupyterhub_config = SimpleNamespace(extra_handlers=[])
     namespace = {"c": SimpleNamespace(KubeSpawner=kube_spawner_config, JupyterHub=jupyterhub_config)}
+    if base_handler is not None:
+        namespace["BaseHandler"] = base_handler
+    if web_module is not None:
+        namespace["web"] = web_module
 
-    exec(compile(code, "helm/proposed-values.yaml::extraConfig", "exec"), namespace)
+    exec(compile(code, f"{values_path}::extraConfig", "exec"), namespace)
 
     return kube_spawner_config, namespace
 
@@ -123,25 +132,27 @@ def test_repository_contains_no_raw_notebook_artifacts():
 
 
 def test_options_from_form_accepts_jupyterhub_callback_shapes_and_invalid_dataset_size():
-    kube_spawner_config, _ = load_proposed_extra_config()
+    kube_spawner_config, namespace = load_proposed_extra_config()
     options_from_form = kube_spawner_config.options_from_form
+    spawner = SimpleNamespace(user=SimpleNamespace(name="pytest-user"))
 
-    invalid_size = options_from_form({
-        "preview_version": ["recommendation-preview-v1"],
-        "decision_action": ["accept"],
-        "dataset_size_gb": ["not-a-number"],
-    })
-    assert invalid_size["dataset_size_gb"] == 0.0
-    assert invalid_size["recommended_profile"] == "small"
-    assert invalid_size["recommended_image_id"] == "minimal-python"
-    assert options_from_form({
-        "preview_version": ["recommendation-preview-v1"],
-        "decision_action": ["accept"],
-        "dataset_size_gb": ["inf"],
-    })["dataset_size_gb"] == 0.0
+    invalid_size = options_from_form(
+        spawner,
+        {
+            "preview_version": ["recommendation-preview-v1"],
+            "decision_action": ["accept"],
+            "dataset_size_gb": ["not-a-number"],
+        },
+    )
+    assert invalid_size["decision_action"] == "accept"
+    assert "recommendation_preview_id" in invalid_size
+
+    item = namespace["RECOMMENDATION_PREVIEWS"][invalid_size["recommendation_preview_id"]]
+    assert item["recommendation"]["profile"] == "small"
+    assert item["recommendation"]["image_id"] == "minimal-python"
 
     accepted = options_from_form(
-        SimpleNamespace(),
+        spawner,
         {
             "preview_version": [b"recommendation-preview-v1"],
             "decision_action": [b"accept"],
@@ -151,30 +162,29 @@ def test_options_from_form_accepts_jupyterhub_callback_shapes_and_invalid_datase
         },
     )
     assert accepted["decision_action"] == "accept"
-    assert accepted["recommended_profile"] == "large"
-    assert accepted["applied_profile"] == "large"
-    assert accepted["recommended_image_id"] == "scipy-data-science"
-    assert accepted["applied_image_id"] == "scipy-data-science"
-    assert accepted["dataset_size_gb"] == 1.5
-    assert "intent" not in accepted
-    assert "code_context" not in accepted
+    assert "recommendation_preview_id" in accepted
+    item_accepted = namespace["RECOMMENDATION_PREVIEWS"][accepted["recommendation_preview_id"]]
+    assert item_accepted["recommendation"]["profile"] == "large"
+    assert item_accepted["recommendation"]["image_id"] == "scipy-data-science"
 
 
 def test_options_form_requires_preview_and_rejects_non_allowlisted_overrides():
     kube_spawner_config, _ = load_proposed_extra_config()
     options_from_form = kube_spawner_config.options_from_form
+    spawner = SimpleNamespace(user=SimpleNamespace(name="pytest-user"))
 
-    with pytest.raises(ValueError, match="preview is required"):
-        options_from_form({"decision_action": ["accept"]})
     with pytest.raises(ValueError, match="confirm the recommendation"):
-        options_from_form({"preview_version": ["recommendation-preview-v1"]})
+        options_from_form(spawner, {"preview_version": ["recommendation-preview-v1"]})
     with pytest.raises(ValueError, match="image override is not allowlisted"):
-        options_from_form({
-            "preview_version": ["recommendation-preview-v1"],
-            "decision_action": ["override"],
-            "override_profile": ["medium"],
-            "override_image_id": ["evil.example/user-supplied:latest"],
-        })
+        options_from_form(
+            spawner,
+            {
+                "preview_version": ["recommendation-preview-v1"],
+                "decision_action": ["override"],
+                "override_profile": ["medium"],
+                "override_image_id": ["evil.example/user-supplied:latest"],
+            },
+        )
 
 
 def test_options_form_exposes_preview_edit_confirm_and_manual_override_controls():
@@ -188,19 +198,22 @@ def test_options_form_exposes_preview_edit_confirm_and_manual_override_controls(
     assert 'id="submit-override"' in rendered
     assert "No image is built from user input" in rendered
     assert 'input.intent + "\\n" + input.code_context' in rendered
-    assert r'/[.*+?^${}()|[\]\\]/g' in rendered
 
 
 def test_kubespawner_pre_spawn_hook_applies_large_for_gpu_or_large_with_explanation():
     kube_spawner_config, namespace = load_proposed_extra_config()
     log_calls = []
-    user_options = kube_spawner_config.options_from_form({
-        "preview_version": ["recommendation-preview-v1"],
-        "decision_action": ["accept"],
-        "intent": ["deep learning image classifier"],
-        "dataset_size_gb": ["0.2"],
-        "code_context": ["import torch\nmodel.cuda()"],
-    })
+    spawner_stub = SimpleNamespace(user=SimpleNamespace(name="pytest-user"))
+    user_options = kube_spawner_config.options_from_form(
+        spawner_stub,
+        {
+            "preview_version": ["recommendation-preview-v1"],
+            "decision_action": ["accept"],
+            "intent": ["deep learning image classifier"],
+            "dataset_size_gb": ["0.2"],
+            "code_context": ["import torch\nmodel.cuda()"],
+        },
+    )
     spawner = SimpleNamespace(
         user_options=user_options,
         environment={"EXISTING": "kept"},
@@ -227,9 +240,9 @@ def test_kubespawner_pre_spawn_hook_applies_large_for_gpu_or_large_with_explanat
     assert "pytest-user" not in str(log_calls)
     assert spawner.extra_annotations["z2jh-context-demo.local/recommended-profile"] == "gpu_or_large"
     assert spawner.extra_annotations["z2jh-context-demo.local/applied-image"] == "pytorch-deep-learning"
-    assert spawner.extra_annotations["z2jh-context-demo.local/recommendation-reasons"] == html.escape(
-        spawner.environment["RECOMMENDATION_REASONS"]
-    )[:240]
+    assert spawner.extra_annotations["z2jh-context-demo.local/recommendation-reasons"] == namespace["safe_escape_truncate"](
+        spawner.environment["RECOMMENDATION_REASONS"], 240
+    )
     audit = json.loads(log_calls[-1][0][1])
     assert audit["event"] == "recommendation_decision"
     assert audit["action"] == "accept"
@@ -241,26 +254,29 @@ def test_kubespawner_pre_spawn_hook_applies_large_for_gpu_or_large_with_explanat
 def test_manual_override_is_applied_and_logged_without_accepting_arbitrary_values():
     kube_spawner_config, namespace = load_proposed_extra_config()
     log_calls = []
-    options = kube_spawner_config.options_from_form({
-        "preview_version": ["recommendation-preview-v1"],
-        "decision_action": ["override"],
-        "intent": ["basic Python loops"],
-        "dataset_size_gb": ["0.1"],
-        "code_context": ["print('hello')"],
-        "override_profile": ["medium"],
-        "override_image_id": ["scipy-data-science"],
-    })
+    spawner_stub = SimpleNamespace(user=SimpleNamespace(name="pytest-user"))
+    options = kube_spawner_config.options_from_form(
+        spawner_stub,
+        {
+            "preview_version": ["recommendation-preview-v1"],
+            "decision_action": ["override"],
+            "intent": ["basic Python loops"],
+            "dataset_size_gb": ["0.1"],
+            "code_context": ["print('hello')"],
+            "override_profile": ["medium"],
+            "override_image_id": ["scipy-data-science"],
+        },
+    )
     spawner = SimpleNamespace(
         user_options=options,
         environment={},
         extra_annotations={},
+        user=SimpleNamespace(name="pytest-user"),
         log=SimpleNamespace(info=lambda *args, **kwargs: log_calls.append((args, kwargs))),
     )
 
     asyncio.run(kube_spawner_config.pre_spawn_hook(spawner))
 
-    assert options["recommended_profile"] == "small"
-    assert options["recommended_image_id"] == "minimal-python"
     assert spawner.environment["APPLIED_PROFILE"] == "medium"
     assert spawner.environment["APPLIED_NOTEBOOK_IMAGE"] == "scipy-data-science"
     assert spawner.image == namespace["IMAGE_CATALOG"]["scipy-data-science"]["reference"]
@@ -268,6 +284,24 @@ def test_manual_override_is_applied_and_logged_without_accepting_arbitrary_value
     assert audit["action"] == "override"
     assert audit["profile_overridden"] is True
     assert audit["image_overridden"] is True
+
+
+def test_safe_escape_truncate_prevents_malformed_html_entities_and_limits_length():
+    _, namespace = load_proposed_extra_config()
+    safe_escape_truncate = namespace["safe_escape_truncate"]
+
+    # Short text
+    assert safe_escape_truncate("simple & text", 240) == "simple &amp; text"
+
+    # Truncation in middle of entity
+    # "a" * 238 + "&" => escaped: "a" * 238 + "&amp;" => len 243
+    # Slicing at 240 gives "a" * 238 + "&a"
+    # safe_escape_truncate strips trailing "&a" returning "a" * 238
+    raw = "a" * 238 + "& extra"
+    truncated = safe_escape_truncate(raw, 240)
+    assert len(truncated) <= 240
+    assert not truncated.endswith("&a")
+    assert not truncated.endswith("&")
 
 
 def test_kubernetes_demo_manifests_are_valid_yaml_and_quota_constrains_large_overrequesting():

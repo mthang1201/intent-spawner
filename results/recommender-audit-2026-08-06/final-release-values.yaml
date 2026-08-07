@@ -1,0 +1,548 @@
+hub:
+  config:
+    JupyterHub:
+      authenticator_class: dummy
+  db:
+    type: sqlite-memory
+  extraConfig:
+    00-context-aware-recommender: |
+      import html
+      import json
+      import uuid
+
+      BaseHandler = globals().get("BaseHandler")
+      if BaseHandler is None:
+          try:
+              from jupyterhub.handlers.base import BaseHandler
+          except (ImportError, ModuleNotFoundError):
+              try:
+                  from tornado.web import RequestHandler as BaseHandler
+              except (ImportError, ModuleNotFoundError):
+                  BaseHandler = object
+      from tornado import web
+
+      from recommender import (
+          POLICY_VERSION,
+          PolicyValidator,
+          RecommendationRequest,
+          coerce_dataset_size_gb,
+          create_recommender,
+          load_image_catalog,
+          recommend_with_metadata,
+      )
+
+      RECOMMENDATION_POLICY_VERSION = POLICY_VERSION
+      PREVIEW_VERSION = "recommendation-preview-v1"
+      PROFILE_RESOURCES = {
+          "small": {
+              "cpu_guarantee": 0.1,
+              "cpu_limit": 0.5,
+              "mem_guarantee": "256M",
+              "mem_limit": "384M",
+          },
+          "medium": {
+              "cpu_guarantee": 0.5,
+              "cpu_limit": 1,
+              "mem_guarantee": "768M",
+              "mem_limit": "1G",
+          },
+          "large": {
+              "cpu_guarantee": 1.5,
+              "cpu_limit": 2,
+              "mem_guarantee": "1536M",
+              "mem_limit": "2G",
+          },
+      }
+
+      # The catalog is deployment policy: recommenders may propose only these
+      # stable IDs, while the pre-spawn hook owns the actual image reference.
+      _catalog = load_image_catalog()
+      IMAGE_CATALOG_VERSION = _catalog["catalog_version"]
+      DEFAULT_IMAGE_ID = _catalog["default_image"]
+      IMAGE_CATALOG = _catalog["images"]
+      POLICY_VALIDATOR = PolicyValidator.from_catalog(
+          profiles={*PROFILE_RESOURCES, "gpu_or_large"},
+          catalog=_catalog,
+          policy_version=RECOMMENDATION_POLICY_VERSION,
+      )
+
+      # Backend configuration is resolved once. Invalid configuration prevents
+      # Hub startup instead of silently changing recommendation behavior.
+      ACTIVE_RECOMMENDER = create_recommender()
+      NETWORK_RECOMMENDATION_EXECUTOR = None
+
+      def _request_from_values(values, *, reject_unknown=False):
+          if not isinstance(values, dict):
+              raise ValueError("recommendation request must be a JSON object")
+          allowed = {"intent", "dataset_size_gb", "code_context"}
+          if reject_unknown and set(values) - allowed:
+              raise ValueError("recommendation request contains unsupported fields")
+
+          intent = values.get("intent", "")
+          code_context = values.get("code_context", "")
+          dataset_size_gb = values.get("dataset_size_gb", 0.0)
+          if not isinstance(intent, str) or not isinstance(code_context, str):
+              raise ValueError("intent and code_context must be strings")
+          if not isinstance(dataset_size_gb, (int, float, str)) and dataset_size_gb is not None:
+              raise ValueError("dataset_size_gb must be numeric, a numeric string, or null")
+          if len(intent) > 2000 or len(code_context) > 5000:
+              raise ValueError("workload context exceeds the supported preview size")
+          return RecommendationRequest(
+              intent=intent,
+              dataset_size_gb=dataset_size_gb,
+              code_context=code_context,
+          )
+
+      def _validate_recommendation(recommendation):
+          return POLICY_VALIDATOR.validate(recommendation)
+
+      def recommend_workload(intent="", dataset_size_gb=0.0, code_context=""):
+          request = _request_from_values({
+              "intent": intent,
+              "dataset_size_gb": dataset_size_gb,
+              "code_context": code_context,
+          })
+          recommender = globals().get("ACTIVE_RECOMMENDER")
+          return _validate_recommendation(recommender.recommend(request))
+
+      async def build_preview_payload_async(values):
+          request = _request_from_values(values, reject_unknown=True)
+          executor = globals().get("NETWORK_RECOMMENDATION_EXECUTOR")
+          recommender = globals().get("ACTIVE_RECOMMENDER")
+          if executor is not None and recommender is not None:
+              result = await executor.recommend(recommender, request)
+              recommendation = _validate_recommendation(result.recommendation)
+              metadata = result.metadata
+          else:
+              recommendation = _validate_recommendation(ACTIVE_RECOMMENDER.recommend(request))
+              metadata = None
+
+          applied_profile = "large" if recommendation.profile == "gpu_or_large" else recommendation.profile
+          payload = {
+              "preview_version": PREVIEW_VERSION,
+              "recommendation": recommendation.to_unified_dict(),
+              "applied_profile": applied_profile,
+              "image_display_name": IMAGE_CATALOG[recommendation.image_id]["display_name"],
+          }
+          if metadata is not None:
+              payload["metadata"] = metadata.to_dict()
+          return payload
+
+      class RecommendationPreviewHandler(BaseHandler):
+          """Authenticated, XSRF-protected adapter for browser previews."""
+
+          @web.authenticated
+          async def post(self):
+              try:
+                  values = json.loads(self.request.body.decode("utf-8") or "{}")
+                  payload = await build_preview_payload_async(values)
+              except (UnicodeDecodeError, json.JSONDecodeError, TypeError, ValueError) as exc:
+                  self.set_status(400)
+                  self.set_header("Content-Type", "application/json")
+                  self.finish(json.dumps({"error": str(exc) or "invalid recommendation request"}))
+                  return
+              except Exception:
+                  self.log.error("recommendation preview backend failed")
+                  self.set_status(503)
+                  self.set_header("Content-Type", "application/json")
+                  self.finish(json.dumps({"error": "recommendation is temporarily unavailable"}))
+                  return
+
+              self.set_header("Content-Type", "application/json")
+              self.finish(json.dumps(payload))
+
+      def _catalog_select_options():
+          return "".join(
+              '<option value="{}">{} — {}</option>'.format(
+                  html.escape(image_id),
+                  html.escape(item["display_name"]),
+                  html.escape(item["description"]),
+              )
+              for image_id, item in IMAGE_CATALOG.items()
+          )
+
+      async def context_options_form(spawner):
+          template = """
+          <div id="recommendation-flow" style="max-width: 880px">
+            <p><strong>Describe your workload.</strong> A pod is created only after you review and confirm the recommendation.</p>
+            <label for="intent"><strong>What are you trying to do?</strong></label>
+            <textarea id="intent" name="intent" rows="3" maxlength="2000" style="width: 100%" placeholder="Example: I will train a scikit-learn model on a 1.5GB CSV dataset"></textarea>
+            <br/><br/>
+            <label for="dataset_size_gb"><strong>Estimated dataset size in GB</strong></label>
+            <input id="dataset_size_gb" name="dataset_size_gb" type="number" min="0" step="0.1" value="0.1" style="width: 12em"/>
+            <br/><br/>
+            <label for="code_context"><strong>Optional imports / code context</strong></label>
+            <textarea id="code_context" name="code_context" rows="5" maxlength="5000" style="width: 100%" placeholder="import pandas as pd&#10;from sklearn.ensemble import RandomForestClassifier&#10;model.fit(X, y)"></textarea>
+            <input id="decision_action" name="decision_action" type="hidden" value=""/>
+            <input id="preview_version" name="preview_version" type="hidden" value=""/>
+
+            <div style="margin-top: 1rem">
+              <button id="preview-recommendation" type="button" class="btn btn-primary">Preview recommendation</button>
+              <span id="preview-error" role="alert" style="margin-left: 1rem; color: #a94442"></span>
+            </div>
+
+            <section id="recommendation-preview" hidden style="margin-top: 1rem; padding: 1rem; border: 1px solid #bbb; border-radius: 4px">
+              <h3 style="margin-top: 0">Recommendation Preview</h3>
+              <dl>
+                <dt>Resource profile</dt><dd id="preview-profile"></dd>
+                <dt>Notebook image</dt><dd id="preview-image"></dd>
+                <dt>Explanation</dt><dd><ul id="preview-reasons"></ul></dd>
+              </dl>
+              <p><small>Image catalog: __CATALOG_VERSION__. No image is built from user input.</small></p>
+              <button id="confirm-recommendation" data-recommendation-submit="true" type="submit" class="btn btn-success" disabled>Confirm recommendation</button>
+              <button id="edit-recommendation" type="button" class="btn btn-default">Edit inputs</button>
+              <button id="manual-override" type="button" class="btn btn-warning">Manual Override</button>
+            </section>
+
+            <section id="override-panel" hidden style="margin-top: 1rem; padding: 1rem; border-left: 4px solid #e99002">
+              <h4>Manual Override</h4>
+              <p>Select only administrator-approved resources and images. The override action and changed fields are logged.</p>
+              <label for="override_profile"><strong>Resource profile</strong></label>
+              <select id="override_profile" name="override_profile">
+                <option value="small">Small</option>
+                <option value="medium">Medium</option>
+                <option value="large">Large</option>
+              </select>
+              <br/><br/>
+              <label for="override_image_id"><strong>Notebook image</strong></label>
+              <select id="override_image_id" name="override_image_id">__IMAGE_OPTIONS__</select>
+              <br/><br/>
+              <button id="submit-override" data-recommendation-submit="true" type="submit" class="btn btn-warning" disabled>Confirm override</button>
+              <button id="cancel-override" type="button" class="btn btn-default">Cancel override</button>
+            </section>
+          </div>
+          <script>
+          (() => {
+            const form = document.getElementById("spawn_form");
+            const previewButton = document.getElementById("preview-recommendation");
+            const confirmButton = document.getElementById("confirm-recommendation");
+            const overrideSubmit = document.getElementById("submit-override");
+            const preview = document.getElementById("recommendation-preview");
+            const overridePanel = document.getElementById("override-panel");
+            const previewError = document.getElementById("preview-error");
+            const intent = document.getElementById("intent");
+            const datasetSize = document.getElementById("dataset_size_gb");
+            const codeContext = document.getElementById("code_context");
+            const action = document.getElementById("decision_action");
+            const previewVersion = document.getElementById("preview_version");
+            const overrideProfile = document.getElementById("override_profile");
+            const overrideImage = document.getElementById("override_image_id");
+            const xsrf = form ? form.querySelector('input[name="_xsrf"]') : null;
+            const previewEndpoint = window.location.pathname.replace(/\/spawn.*$/, "/recommendation-preview");
+
+            let previewFingerprint = "";
+            let previewGeneration = 0;
+
+            const values = () => ({
+              intent: intent.value,
+              dataset_size_gb: datasetSize.value,
+              code_context: codeContext.value,
+            });
+            const fingerprint = () => JSON.stringify(values());
+            const invalidatePreview = () => {
+              previewFingerprint = "";
+              previewVersion.value = "";
+              action.value = "";
+              confirmButton.disabled = true;
+              overrideSubmit.disabled = true;
+              preview.hidden = true;
+              previewError.textContent = "";
+            };
+
+            [intent, datasetSize, codeContext].forEach(element => {
+              element.addEventListener("input", invalidatePreview);
+            });
+
+            previewButton.addEventListener("click", async () => {
+              const requestGeneration = ++previewGeneration;
+              previewError.textContent = "";
+              previewButton.disabled = true;
+
+              try {
+                const requestFingerprint = fingerprint();
+                const headers = {"Content-Type": "application/json"};
+                if (xsrf) headers["X-XSRFToken"] = xsrf.value;
+                const response = await fetch(previewEndpoint, {
+                  method: "POST",
+                  headers,
+                  credentials: "same-origin",
+                  body: JSON.stringify(values()),
+                });
+                const payload = await response.json();
+                if (!response.ok) throw new Error(payload.error || "recommendation preview failed");
+                if (requestGeneration !== previewGeneration || requestFingerprint !== fingerprint()) return;
+
+                const recommendation = payload.recommendation;
+                previewFingerprint = requestFingerprint;
+                previewVersion.value = payload.preview_version;
+                document.getElementById("preview-profile").textContent = recommendation.profile + (recommendation.profile === "gpu_or_large" ? " (applied as large)" : "");
+                document.getElementById("preview-image").textContent = payload.image_display_name + " (" + recommendation.image_id + ")";
+                const list = document.getElementById("preview-reasons");
+                list.replaceChildren(...recommendation.reasons.concat(recommendation.image_reasons).map(reason => {
+                  const item = document.createElement("li"); item.textContent = reason; return item;
+                }));
+                overrideProfile.value = payload.applied_profile;
+                overrideImage.value = recommendation.image_id;
+                preview.hidden = false;
+                overridePanel.hidden = true;
+                confirmButton.disabled = false;
+                overrideSubmit.disabled = false;
+              } catch (error) {
+                if (requestGeneration === previewGeneration) {
+                  previewError.textContent = error.message || "recommendation preview failed";
+                }
+              } finally {
+                if (requestGeneration === previewGeneration) previewButton.disabled = false;
+              }
+            });
+
+            document.getElementById("edit-recommendation").addEventListener("click", () => { invalidatePreview(); intent.focus(); });
+            document.getElementById("manual-override").addEventListener("click", () => { overridePanel.hidden = false; });
+            document.getElementById("cancel-override").addEventListener("click", () => { overridePanel.hidden = true; });
+            confirmButton.addEventListener("click", () => { action.value = "accept"; });
+            overrideSubmit.addEventListener("click", () => { action.value = "override"; });
+
+            form.addEventListener("submit", event => {
+              if (!previewFingerprint || previewFingerprint !== fingerprint() || !previewVersion.value || !["accept", "override"].includes(action.value)) {
+                event.preventDefault();
+                action.value = "";
+                window.alert("Preview the current inputs and choose Confirm or Manual Override before creating the pod.");
+              }
+            });
+            const hideNativeSubmit = () => {
+              form.querySelectorAll('input[type="submit"],button[type="submit"]').forEach(button => {
+                if (!button.dataset.recommendationSubmit) button.style.display = "none";
+              });
+            };
+            hideNativeSubmit();
+            document.addEventListener("DOMContentLoaded", hideNativeSubmit, {once: true});
+          })();
+          </script>
+          """
+          replacements = {
+              "__CATALOG_VERSION__": IMAGE_CATALOG_VERSION,
+              "__IMAGE_OPTIONS__": _catalog_select_options(),
+          }
+          for placeholder, value in replacements.items():
+              template = template.replace(placeholder, value)
+          return template
+
+      def context_options_from_form(*args, **kwargs):
+          formdata = kwargs.get("formdata")
+          if formdata is None:
+              for arg in reversed(args):
+                  if isinstance(arg, dict):
+                      formdata = arg
+                      break
+          if formdata is None:
+              formdata = {}
+
+          def first(name, default=""):
+              values = formdata.get(name, [default])
+              value = values[0] if isinstance(values, (list, tuple)) else values
+              return value.decode("utf-8") if isinstance(value, bytes) else value
+
+          if first("preview_version") != PREVIEW_VERSION:
+              raise ValueError("recommendation preview is required before spawn")
+          decision_action = first("decision_action")
+          if decision_action not in {"accept", "override"}:
+              raise ValueError("confirm the recommendation or submit a manual override")
+
+          request = _request_from_values({
+              "intent": first("intent"),
+              "dataset_size_gb": first("dataset_size_gb", "0"),
+              "code_context": first("code_context"),
+          })
+          dataset_size_gb = coerce_dataset_size_gb(request.dataset_size_gb)
+
+          executor = globals().get("NETWORK_RECOMMENDATION_EXECUTOR")
+          recommender = globals().get("ACTIVE_RECOMMENDER")
+          if recommender is not None:
+              if executor is not None:
+                  result = recommend_with_metadata(recommender, request)
+                  recommendation = _validate_recommendation(result.recommendation)
+                  metadata = result.metadata
+              else:
+                  recommendation = _validate_recommendation(recommender.recommend(request))
+                  metadata = None
+          else:
+              recommendation = recommend_workload(
+                  request.intent,
+                  dataset_size_gb,
+                  request.code_context,
+              )
+              metadata = None
+
+          applied_profile = "large" if recommendation.profile == "gpu_or_large" else recommendation.profile
+          applied_image_id = recommendation.image_id
+
+          if decision_action == "override":
+              applied_profile = first("override_profile")
+              applied_image_id = first("override_image_id")
+              if applied_profile not in PROFILE_RESOURCES:
+                  raise ValueError("manual profile override is not allowlisted")
+              if applied_image_id not in IMAGE_CATALOG:
+                  raise ValueError("manual image override is not allowlisted")
+
+          res = {
+              "decision_action": decision_action,
+              "event_id": str(uuid.uuid4()),
+              "recommended_profile": recommendation.profile,
+              "applied_profile": applied_profile,
+              "recommended_image_id": recommendation.image_id,
+              "applied_image_id": applied_image_id,
+              "profile_reasons": recommendation.reasons,
+              "image_reasons": recommendation.image_reasons,
+              "score": recommendation.score,
+              "dataset_size_gb": dataset_size_gb,
+              "policy_version": recommendation.policy_version,
+              "catalog_version": recommendation.catalog_version,
+              "recommendation_schema_version": recommendation.schema_version,
+              "recommender_backend": recommendation.backend_name,
+              "recommender_version": recommendation.backend_version,
+          }
+          if metadata is not None:
+              res["recommendation_metadata"] = metadata.to_dict()
+
+          return res
+
+      async def context_pre_spawn_hook(spawner):
+          options = spawner.user_options or {}
+          required = {
+              "decision_action", "event_id", "recommended_profile", "applied_profile",
+              "recommended_image_id", "applied_image_id", "profile_reasons", "image_reasons",
+              "policy_version", "catalog_version", "recommendation_schema_version",
+              "recommender_backend", "recommender_version",
+          }
+          if not required.issubset(options):
+              raise ValueError("missing confirmed recommendation decision")
+          if options["decision_action"] not in {"accept", "override"}:
+              raise ValueError("invalid recommendation decision action")
+          if options["applied_profile"] not in PROFILE_RESOURCES:
+              raise ValueError("applied profile is not allowlisted")
+          if options["applied_image_id"] not in IMAGE_CATALOG:
+              raise ValueError("applied image is not allowlisted")
+          if options["recommended_image_id"] not in IMAGE_CATALOG:
+              raise ValueError("recommended image is not allowlisted")
+          if options["policy_version"] != RECOMMENDATION_POLICY_VERSION:
+              raise ValueError("stale recommendation policy")
+          if options["catalog_version"] != IMAGE_CATALOG_VERSION:
+              raise ValueError("stale image catalog")
+
+          resources = PROFILE_RESOURCES[options["applied_profile"]]
+          spawner.cpu_guarantee = resources["cpu_guarantee"]
+          spawner.cpu_limit = resources["cpu_limit"]
+          spawner.mem_guarantee = resources["mem_guarantee"]
+          spawner.mem_limit = resources["mem_limit"]
+          spawner.image = IMAGE_CATALOG[options["applied_image_id"]]["reference"]
+
+          all_reasons = options["profile_reasons"] + options["image_reasons"]
+          reason_text = "; ".join(all_reasons)
+          environment = dict(spawner.environment or {})
+          environment.update({
+              "RECOMMENDATION_ACTION": options["decision_action"],
+              "RECOMMENDATION_EVENT_ID": options["event_id"],
+              "RECOMMENDED_PROFILE": options["recommended_profile"],
+              "APPLIED_PROFILE": options["applied_profile"],
+              "RECOMMENDED_NOTEBOOK_IMAGE": options["recommended_image_id"],
+              "APPLIED_NOTEBOOK_IMAGE": options["applied_image_id"],
+              "RECOMMENDATION_REASONS": reason_text,
+              "RECOMMENDATION_SCHEMA_VERSION": options["recommendation_schema_version"],
+              "RECOMMENDER_BACKEND": options["recommender_backend"],
+              "RECOMMENDER_VERSION": options["recommender_version"],
+              "IMAGE_CATALOG_VERSION": IMAGE_CATALOG_VERSION,
+          })
+          spawner.environment = environment
+
+          annotations = dict(spawner.extra_annotations or {})
+          annotations.update({
+              "z2jh-context-demo.local/recommendation-action": options["decision_action"],
+              "z2jh-context-demo.local/recommendation-event-id": options["event_id"],
+              "z2jh-context-demo.local/recommended-profile": options["recommended_profile"],
+              "z2jh-context-demo.local/applied-profile": options["applied_profile"],
+              "z2jh-context-demo.local/recommended-image": options["recommended_image_id"],
+              "z2jh-context-demo.local/applied-image": options["applied_image_id"],
+              "z2jh-context-demo.local/recommender-backend": options["recommender_backend"],
+              "z2jh-context-demo.local/catalog-version": IMAGE_CATALOG_VERSION,
+              "z2jh-context-demo.local/recommendation-reasons": html.escape(reason_text)[:240],
+          })
+          metadata = options.get("recommendation_metadata")
+          if isinstance(metadata, dict):
+              fallback_used = metadata.get("fallback_used")
+              if fallback_used is not None:
+                  annotations["z2jh-context-demo.local/fallback-used"] = str(bool(fallback_used)).lower()
+              error_cat = metadata.get("fallback_error_category")
+              if isinstance(error_cat, str) and error_cat:
+                  annotations["z2jh-context-demo.local/fallback-error-category"] = error_cat[:63]
+              attempts = metadata.get("attempt_count")
+              if attempts is not None:
+                  annotations["z2jh-context-demo.local/attempt-count"] = str(attempts)[:63]
+              elapsed = metadata.get("total_elapsed_seconds")
+              if elapsed is not None:
+                  annotations["z2jh-context-demo.local/total-elapsed-seconds"] = str(elapsed)[:63]
+              if metadata.get("timed_out"):
+                  annotations["z2jh-context-demo.local/timed-out"] = "true"
+              if metadata.get("deadline_exhausted"):
+                  annotations["z2jh-context-demo.local/deadline-exhausted"] = "true"
+
+          spawner.extra_annotations = annotations
+
+          audit_event = {
+              "event": "recommendation_decision",
+              "event_id": options["event_id"],
+              "action": options["decision_action"],
+              "recommended_profile": options["recommended_profile"],
+              "applied_profile": options["applied_profile"],
+              "recommended_image_id": options["recommended_image_id"],
+              "applied_image_id": options["applied_image_id"],
+              "profile_overridden": options["recommended_profile"] not in {
+                  options["applied_profile"],
+                  "gpu_or_large" if options["applied_profile"] == "large" else "",
+              },
+              "image_overridden": options["recommended_image_id"] != options["applied_image_id"],
+              "score": options.get("score"),
+              "policy_version": RECOMMENDATION_POLICY_VERSION,
+              "catalog_version": IMAGE_CATALOG_VERSION,
+              "recommendation_schema_version": options["recommendation_schema_version"],
+              "recommender_backend": options["recommender_backend"],
+              "recommender_version": options["recommender_version"],
+          }
+          if isinstance(metadata, dict):
+              audit_event["recommendation_metadata"] = metadata
+          spawner.log.info("recommendation_audit=%s", json.dumps(audit_event, sort_keys=True))
+
+      c.JupyterHub.extra_handlers = [
+          (r"/recommendation-preview", RecommendationPreviewHandler),
+      ]
+      c.KubeSpawner.options_form = context_options_form
+      c.KubeSpawner.options_from_form = context_options_from_form
+      c.KubeSpawner.pre_spawn_hook = context_pre_spawn_hook
+  extraEnv:
+    PYTHONPATH: /opt/intent-spawner
+    RECOMMENDER_BACKEND: rule_based
+  extraVolumeMounts:
+  - mountPath: /opt/intent-spawner/recommender
+    name: recommender-runtime
+    readOnly: true
+  extraVolumes:
+  - configMap:
+      name: intent-spawner-recommender
+    name: recommender-runtime
+proxy:
+  service:
+    type: ClusterIP
+singleuser:
+  image:
+    name: quay.io/jupyter/minimal-notebook
+    tag: latest@sha256:a153ceb6b41db4f86b7d7dc20c7b63d08e75e2038d5e8758b954fda50ed2e18d
+  storage:
+    extraVolumeMounts:
+    - mountPath: /home/jovyan/demo/workload
+      name: demo-workload
+      readOnly: true
+    extraVolumes:
+    - configMap:
+        defaultMode: 493
+        name: demo-workload
+      name: demo-workload
+    type: none

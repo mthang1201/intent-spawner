@@ -1,2 +1,152 @@
-"""Rule-based context-aware profile recommender for the demo."""
 """Explainable resource-and-notebook-image recommender package."""
+
+from __future__ import annotations
+
+from . import deployment, dynamic_resources
+from .base import Recommender
+from .deployment import (
+    PACKAGE_CHECKSUM_ENV_VAR,
+    PACKAGE_VERSION,
+    PACKAGE_VERSION_ENV_VAR,
+    validate_deployment_environment,
+)
+from .dynamic_resources import (
+    CATALOG_MODE,
+    DYNAMIC_MODE,
+    DynamicResourceRejected,
+    DynamicResourceSpec,
+    QuotaCaps,
+    ResourcePolicyConfigurationError,
+    ResourceSelector,
+    configured_resource_mode,
+    load_resource_policy,
+    resource_policy_hash,
+    validate_resource_policy,
+)
+from .external_llm import (
+    ExternalLLMConfig,
+    ExternalLLMError,
+    ExternalLLMFallbackError,
+    ExternalLLMRecommender,
+    JSONHTTPTransport,
+    LLMClient,
+    LLMClientError,
+    LLMCompletionRequest,
+    LLMDeadlineExceededError,
+    LLMMessage,
+    LLMOutputValidationError,
+    LLMResponseError,
+    LLMTimeoutError,
+    OpenAICompatibleClient,
+    UrllibJSONTransport,
+)
+from .models import (
+    POLICY_VERSION,
+    SCHEMA_VERSION,
+    Recommendation,
+    RecommendationRequest,
+    SpawnRecommendation,
+)
+from .policy import PolicyValidator
+from .registry import (
+    BACKEND_ENV_VAR,
+    DEFAULT_BACKEND,
+    DEFAULT_REGISTRY,
+    RecommenderFactory,
+    RecommenderRegistry,
+    configured_backend_name,
+    create_recommender,
+)
+from .reliability import (
+    DEFAULT_MAX_CONCURRENT_NETWORK_RECOMMENDATIONS,
+    MAX_CONCURRENT_NETWORK_RECOMMENDATIONS,
+    AsyncRecommendationExecutor,
+    RecommendationCallState,
+    RecommendationMetadata,
+    RecommendationResult,
+    network_work_deadline,
+    recommend_with_metadata,
+)
+from .recommender import (
+    DEFAULT_CATALOG_PATH,
+    PROFILES,
+    recommend_image,
+    recommend_profile,
+)
+from .rule_based import (
+    RuleBasedRecommender,
+    coerce_dataset_size_gb,
+    load_image_catalog,
+    validate_image_catalog,
+)
+from .self_hosted_llm import (
+    SelfHostedLLMConfig,
+    SelfHostedLLMRecommender,
+)
+
+__all__ = [
+    "BACKEND_ENV_VAR",
+    "CATALOG_MODE",
+    "DEFAULT_BACKEND",
+    "DEFAULT_CATALOG_PATH",
+    "DEFAULT_MAX_CONCURRENT_NETWORK_RECOMMENDATIONS",
+    "DEFAULT_REGISTRY",
+    "DYNAMIC_MODE",
+    "AsyncRecommendationExecutor",
+    "DynamicResourceRejected",
+    "DynamicResourceSpec",
+    "ExternalLLMConfig",
+    "ExternalLLMError",
+    "ExternalLLMFallbackError",
+    "ExternalLLMRecommender",
+    "JSONHTTPTransport",
+    "LLMClient",
+    "LLMClientError",
+    "LLMCompletionRequest",
+    "LLMDeadlineExceededError",
+    "LLMMessage",
+    "LLMOutputValidationError",
+    "LLMResponseError",
+    "LLMTimeoutError",
+    "MAX_CONCURRENT_NETWORK_RECOMMENDATIONS",
+    "OpenAICompatibleClient",
+    "PACKAGE_CHECKSUM_ENV_VAR",
+    "PACKAGE_VERSION",
+    "PACKAGE_VERSION_ENV_VAR",
+    "POLICY_VERSION",
+    "PROFILES",
+    "PolicyValidator",
+    "QuotaCaps",
+    "Recommendation",
+    "RecommendationCallState",
+    "RecommendationMetadata",
+    "RecommendationRequest",
+    "RecommendationResult",
+    "Recommender",
+    "RecommenderFactory",
+    "RecommenderRegistry",
+    "ResourcePolicyConfigurationError",
+    "ResourceSelector",
+    "RuleBasedRecommender",
+    "SCHEMA_VERSION",
+    "SelfHostedLLMConfig",
+    "SelfHostedLLMRecommender",
+    "SpawnRecommendation",
+    "UrllibJSONTransport",
+    "coerce_dataset_size_gb",
+    "configured_backend_name",
+    "configured_resource_mode",
+    "create_recommender",
+    "deployment",
+    "dynamic_resources",
+    "load_image_catalog",
+    "load_resource_policy",
+    "network_work_deadline",
+    "recommend_image",
+    "recommend_profile",
+    "recommend_with_metadata",
+    "resource_policy_hash",
+    "validate_deployment_environment",
+    "validate_image_catalog",
+    "validate_resource_policy",
+]
