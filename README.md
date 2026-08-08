@@ -11,16 +11,16 @@ Instead of forcing users to guess raw hardware quantities (CPU/RAM limits), the 
 ## Table of Contents
 
 1. [Problem Statement](#problem-statement)
-2. [Key Architecture & Implemented Features (Tasks A–F)](#key-architecture--implemented-features-tasks-a-f)
-   - [Task A — Recommendation Preview UI](#task-a--recommendation-preview-ui)
-   - [Task B — Notebook Image Recommendation](#task-b--notebook-image-recommendation)
-   - [Task C — Pluggable Recommender Framework](#task-c--pluggable-recommender-framework)
+2. [Core System Architecture & Features](#core-system-architecture--features)
+   - [Interactive Recommendation & Preview UI](#interactive-recommendation--preview-ui)
+   - [Curated Notebook Container Image Matching](#curated-notebook-container-image-matching)
+   - [Pluggable Recommender Engine](#pluggable-recommender-engine)
      - [Rule-Based Recommender](#1-rule-based-recommender)
      - [External LLM API (e.g., Google Gemini)](#2-external-llm-api-eg-google-gemini)
      - [Self-Hosted LLM (e.g., Local Ollama)](#3-self-hosted-llm-eg-local-ollama)
-   - [Task D — Intent-Aware Re-Provisioning](#task-d--intent-aware-re-provisioning)
-   - [Task E — Policy-Bounded Dynamic Profile Generation](#task-e--policy-bounded-dynamic-profile-generation-stretch-goal)
-   - [Task F — Evaluation Framework Redesign (Protocol v4)](#task-f--evaluation-framework-redesign-protocol-v4)
+   - [Storage-Preserving Notebook Re-Provisioning](#storage-preserving-notebook-re-provisioning)
+   - [Policy-Bounded Dynamic Resource Sizing](#policy-bounded-dynamic-resource-sizing)
+   - [Evaluation Protocol v4 & Benchmarking Suite](#evaluation-protocol-v4--benchmarking-suite)
 3. [Setup & Deployment Guide](#setup--deployment-guide)
    - [Prerequisites & Local Verification](#1-prerequisites--local-verification)
    - [Deploying the Interactive Demo](#2-deploying-the-interactive-demo)
@@ -47,7 +47,7 @@ This mismatch causes three major platform inefficiencies:
 
 ---
 
-## Key Architecture & Implemented Features (Tasks A–F)
+## Core System Architecture & Features
 
 ```mermaid
 flowchart TD
@@ -69,13 +69,13 @@ flowchart TD
     Allowlist --> Hook
     
     Hook -->|5. Creates Configured Pod| UserPod[Kubernetes Notebook Pod]
-    UserPod -.->|6. Workload Change / Re-provision| Reprovision[/hub/reprovision Endpoint]
+    UserPod -.->|6. Workload Change / Re-provision| Reprovision["/hub/reprovision Endpoint"]
     Reprovision -->|Retains PVC, Stops Pod| Hook
 ```
 
 ---
 
-### Task A — Recommendation Preview UI
+### Interactive Recommendation & Preview UI
 
 Replaces direct hardware guessing with an interactive confirmation flow:
 * **Rich Inputs**: Captures natural language task intent, estimated dataset size (in GB), and lightweight code context (imports, API calls).
@@ -88,7 +88,7 @@ Replaces direct hardware guessing with an interactive confirmation flow:
 
 ---
 
-### Task B — Notebook Image Recommendation
+### Curated Notebook Container Image Matching
 
 Extends the recommender beyond CPU/memory to select an optimal software environment:
 * **Admin-Controlled Image Catalog**: Pinned, immutable SHA-256 digests in [`recommender/image-catalog.yaml`](file:///Users/mthang1201/Documents/datn/intent-spawner/recommender/image-catalog.yaml) (e.g., `minimal-python`, `scipy-data-science`, `pytorch-deep-learning`, `tensorflow-deep-learning`).
@@ -97,7 +97,7 @@ Extends the recommender beyond CPU/memory to select an optimal software environm
 
 ---
 
-### Task C — Pluggable Recommender Framework
+### Pluggable Recommender Engine
 
 A modular, provider-neutral architecture (`recommender/`) that allows seamless switching among inference backends without modifying JupyterHub integration:
 
@@ -132,7 +132,7 @@ RecommendationRequest
 
 ---
 
-### Task D — Intent-Aware Re-Provisioning
+### Storage-Preserving Notebook Re-Provisioning
 
 Enables changing workload specifications after a session has already started:
 * **Endpoint**: `/hub/reprovision`
@@ -142,7 +142,7 @@ Enables changing workload specifications after a session has already started:
 
 ---
 
-### Task E — Policy-Bounded Dynamic Profile Generation (Stretch Goal)
+### Policy-Bounded Dynamic Resource Sizing
 
 An advanced opt-in mode that calculates fine-grained, continuous CPU/RAM/GPU resource allocations instead of discrete profile buckets:
 * **Implementation**: [`recommender/dynamic_resources.py`](file:///Users/mthang1201/Documents/datn/intent-spawner/recommender/dynamic_resources.py) and [`helm/dynamic-values.yaml`](file:///Users/mthang1201/Documents/datn/intent-spawner/helm/dynamic-values.yaml).
@@ -151,7 +151,7 @@ An advanced opt-in mode that calculates fine-grained, continuous CPU/RAM/GPU res
 
 ---
 
-### Task F — Evaluation Framework Redesign (Protocol v4)
+### Evaluation Protocol v4 & Benchmarking Suite
 
 A comprehensive evaluation suite designed for research rigor and thesis defense:
 * **Implementation**: [`evaluation_v4/`](file:///Users/mthang1201/Documents/datn/intent-spawner/evaluation_v4/)
@@ -162,6 +162,7 @@ A comprehensive evaluation suite designed for research rigor and thesis defense:
   2. **System Effectiveness**: Schedulable capacity savings, resource allocation waste, OOM prevention rate, pending queue impact.
   3. **User Decision Impact**: Acceptance rate, manual override frequency, re-provisioning success rate.
 * **Statistical Rigor**: Family-clustered bootstrap confidence intervals, Wilcoxon signed-rank tests, and strict claim gates distinguishing synthetic local runs from preserved Kubernetes cluster evidence.
+
 
 ---
 

@@ -1,4 +1,4 @@
-# Intent-aware Re-provisioning (Task D)
+# Intent-aware Re-provisioning
 
 ## Scope
 

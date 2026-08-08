@@ -2,13 +2,13 @@
 
 This document explains the system architecture and data flows of the **Intent- and Context-Aware Profile Recommendation for Zero to JupyterHub** research prototype.
 
-It covers the complete feature set implemented across **Tasks A through F**:
-* **Task A — Recommendation Preview UI**
-* **Task B — Notebook Image Recommendation**
-* **Task C — Pluggable Recommender Framework** (Rule-Based, External LLM API, Self-Hosted LLM)
-* **Task D — Intent-Aware Re-Provisioning**
-* **Task E — Policy-Bounded Dynamic Profile Generation** (Stretch Goal)
-* **Task F — Evaluation Framework Redesign** (Evaluation Protocol v4)
+It covers the complete feature set:
+* **Interactive Recommendation & Preview UI**
+* **Curated Notebook Container Image Matching**
+* **Pluggable Recommender Engine** (Rule-Based, External LLM API, Self-Hosted LLM)
+* **Storage-Preserving Notebook Re-Provisioning**
+* **Policy-Bounded Dynamic Resource Sizing**
+* **Evaluation Protocol v4 & Benchmarking Suite**
 
 ---
 
@@ -19,35 +19,35 @@ flowchart TD
     User([User / Data Scientist]) -->|1. Enters Workload Description| Form[Pre-Spawn Intent Form UI]
     Form -->|2. Submits Workload Context| HubServer[JupyterHub Config & Handlers]
     
-    subgraph Recommender Layer [Pluggable Recommender Framework (Task C)]
+    subgraph Recommender Layer [Pluggable Recommender Framework]
         HubServer --> RecommenderRegistry{Recommender Backend Registry}
         RecommenderRegistry -->|Zero-dep Deterministic| RuleBased[Rule-Based Recommender]
         RecommenderRegistry -->|HTTPS OpenAI API + Secret| ExtLLM[External LLM: Gemini 1.5 Flash]
         RecommenderRegistry -->|Local HTTP Inference| SelfLLM[Self-Hosted LLM: Ollama / vLLM]
         
         RuleBased & ExtLLM & SelfLLM --> SchemaCheck[Strict JSON Schema Validation]
-        SchemaCheck --> CatalogCheck[Image Catalog & Policy Matcher (Task B)]
+        SchemaCheck --> CatalogCheck[Image Catalog & Policy Matcher]
     end
     
-    CatalogCheck -->|3. Produces Recommendation| PreviewUI[Recommendation Preview UI (Task A)]
+    CatalogCheck -->|3. Produces Recommendation| PreviewUI[Recommendation Preview UI]
     
-    subgraph User Decision & Confirmation (Task A)
+    subgraph User Decision & Confirmation
         PreviewUI -->|Confirm / Accept| Hook[KubeSpawner Pre-Spawn Hook]
         PreviewUI -->|Edit Inputs| Form
         PreviewUI -->|Manual Override| AdminAllowlist[Admin Profile & Image Allowlist]
         AdminAllowlist --> Hook
     end
     
-    subgraph Profile Allocation Modes (Task E)
+    subgraph Profile Allocation Modes
         Hook -->|Catalog Mode| FixedProfile[Discrete Sizing: Small / Medium / Large]
         Hook -->|Dynamic Mode| DynProfile[Policy-Bounded Continuous CPU/RAM/GPU]
     end
     
     FixedProfile & DynProfile -->|4. Pod Creation| K8sPod[Single-User Notebook Pod]
-    K8sPod -.->|5. Workload Change / Re-provision (Task D)| ReprovisionHandler[/hub/reprovision Stop-and-Recreate]
+    K8sPod -.->|5. Workload Change / Re-provision| ReprovisionHandler["/hub/reprovision Stop-and-Recreate"]
     ReprovisionHandler -->|Retains PVC, Stops Pod| Hook
     
-    subgraph Audit & Evaluation (Task F)
+    subgraph Audit & Evaluation
         PreviewUI -.->|Structured Logs| AuditLog[(recommendation_audit Events)]
         AuditLog -.-> ProtocolV4[Evaluation Protocol v4 Analysis]
     end
@@ -67,7 +67,7 @@ The platform provides both discrete allowlisted profiles and continuous dynamic 
 | `large` | 1500m | 2 CPU | 1536M | 2G | ML modeling (scikit-learn, XGBoost) and larger datasets |
 | `gpu_or_large` | 1500m | 2 CPU | 1536M | 2G | Deep learning; mapped safely to Large when GPU pool is unavailable |
 
-### Curated Notebook Image Catalog (Task B)
+### Curated Notebook Container Image Catalog
 Images are pinned to immutable SHA-256 digests in [`recommender/image-catalog.yaml`](file:///Users/mthang1201/Documents/datn/intent-spawner/recommender/image-catalog.yaml). Users cannot supply arbitrary registry references:
 
 * **`minimal-python`**: Lightweight JupyterLab and Python base environment.
@@ -77,7 +77,7 @@ Images are pinned to immutable SHA-256 digests in [`recommender/image-catalog.ya
 
 ---
 
-## 3. Pluggable Recommender Architecture (Task C)
+## 3. Pluggable Recommender Architecture
 
 All backends implement the `Recommender` protocol in [`recommender/base.py`](file:///Users/mthang1201/Documents/datn/intent-spawner/recommender/base.py), accepting `RecommendationRequest` and returning a validated `SpawnRecommendation`.
 
@@ -126,7 +126,7 @@ SpawnRecommendation
 
 ---
 
-## 4. Interactive Pre-Spawn Workflow (Task A & B)
+## 4. Interactive Pre-Spawn & Preview Workflow
 
 ```mermaid
 sequenceDiagram
@@ -163,7 +163,7 @@ sequenceDiagram
 
 ---
 
-## 5. Intent-Aware Re-Provisioning (Task D)
+## 5. Storage-Preserving Notebook Re-Provisioning
 
 When user workloads change mid-session, users navigate to `/hub/reprovision`:
 1. **Workload Update**: Users enter their new intent, dataset size, or code snippet.
@@ -176,7 +176,7 @@ When user workloads change mid-session, users navigate to `/hub/reprovision`:
 
 ---
 
-## 6. Policy-Bounded Dynamic Profile Generation (Task E)
+## 6. Policy-Bounded Dynamic Resource Sizing
 
 When `RESOURCE_SELECTION_MODE: dynamic` is enabled via [`helm/dynamic-values.yaml`](file:///Users/mthang1201/Documents/datn/intent-spawner/helm/dynamic-values.yaml):
 * Instead of jumping directly between fixed tiers, continuous CPU, RAM, and GPU values are calculated within administrator-defined policies (`min_cpu`, `max_cpu`, `step_cpu`, `min_memory_mb`, `max_memory_mb`).
@@ -185,7 +185,7 @@ When `RESOURCE_SELECTION_MODE: dynamic` is enabled via [`helm/dynamic-values.yam
 
 ---
 
-## 7. Evaluation Framework Redesign (Task F)
+## 7. Evaluation Protocol v4 & Benchmarking Suite
 
 The evaluation layer ([`evaluation_v4/`](file:///Users/mthang1201/Documents/datn/intent-spawner/evaluation_v4/)) provides a complete scientific benchmark suite:
 * **Bilingual 60-Intent Gold Standard**: 60 realistic tasks in English and Vietnamese across 4 workload categories (EDA, Data Processing, ML Training, Deep Learning).
@@ -195,3 +195,4 @@ The evaluation layer ([`evaluation_v4/`](file:///Users/mthang1201/Documents/datn
   2. *System Effectiveness*: Schedulable capacity savings, allocation waste, OOM rate, queue pressure.
   3. *User Decision Impact*: Acceptance rate, manual override frequency, re-provisioning success.
 * **Statistical Claim Gates**: Bootstrap confidence intervals and Wilcoxon tests ensuring empirical claims are statistically sound before publication.
+

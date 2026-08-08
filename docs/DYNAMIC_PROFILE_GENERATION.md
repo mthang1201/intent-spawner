@@ -1,6 +1,6 @@
 # Policy-bounded Dynamic Profile Generation
 
-Task E is an opt-in extension over the existing profile catalog. It generates
+This policy-bounded dynamic resource sizing module is an opt-in extension over the existing profile catalog. It generates
 CPU, memory, and GPU quantities from bounded workload signals, validates every
 quantity against administrator policy, and falls back to the existing catalog
 decision when a candidate cannot be applied safely.

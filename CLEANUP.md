@@ -89,7 +89,7 @@ Deleting the namespace removes namespaced demo resources, including:
 
 - the `context-demo` Helm release state;
 - Hub, proxy, user, and demonstration pods;
-- per-user PersistentVolumeClaims created by the Task D re-provisioning overlay
+- per-user PersistentVolumeClaims created by the re-provisioning overlay
   (and, with the demo's dynamic provisioning/reclaim policy, their bound data);
 - Services and other namespaced JupyterHub objects;
 - the `demo-workload` ConfigMap;

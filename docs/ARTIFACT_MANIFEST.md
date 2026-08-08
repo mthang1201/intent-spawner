@@ -52,7 +52,7 @@
 
 ## Documentation Index
 
-- `README.md`: executive summary, problem statement, Task A–F feature breakdown, and quickstart guides.
+- `README.md`: executive summary, problem statement, core system architecture & feature breakdown, and quickstart guides.
 - `docs/ARCHITECTURE.md`: comprehensive system architecture and sequence diagrams.
 - `docs/GETTING_STARTED.md`: step-by-step onboarding, interactive demo, and evaluation guide.
 - `DEMO_SCRIPT.md`: presentation runbook with live scenes covering all prototype features.
@@ -63,6 +63,7 @@
 - `docs/HELM_BACKEND_DEPLOYMENT.md`: production Helm wiring and ConfigMap rollout architecture.
 - `docs/evaluation/EVALUATION_V4_PROTOCOL.md`: Protocol v4 evaluation methodology and benchmark metrics.
 - `docs/evaluation/RECOMMENDATION_PREVIEW_DESIGN.md`: preview state machine, audit schema, and scalability.
-- `docs/evaluation/IMPLEMENTATION_ROADMAP.md`: complete capability matrix for Tasks A–F.
+- `docs/evaluation/IMPLEMENTATION_ROADMAP.md`: complete system capability matrix and implementation roadmap.
+
 - `docs/DATA_GOVERNANCE.md`: privacy minimization and raw evidence storage rules.
 - `CLEANUP.md`: cluster cleanup instructions and local artifact lifecycle.

@@ -184,7 +184,7 @@ helm upgrade context-demo jupyterhub/jupyterhub \
 
 ---
 
-## Path B10: Intent-Aware Re-Provisioning (Task D)
+## Path B10: Storage-Preserving Notebook Re-Provisioning
 
 Test changing workloads on an already-running notebook session:
 
@@ -204,7 +204,7 @@ Test changing workloads on an already-running notebook session:
 
 ---
 
-## Path B11: Policy-Bounded Dynamic Profile Generation (Task E)
+## Path B11: Policy-Bounded Dynamic Resource Sizing
 
 To enable fine-grained continuous CPU/RAM sizing instead of fixed profile tiers:
 
@@ -215,7 +215,7 @@ This activates [`helm/dynamic-values.yaml`](file:///Users/mthang1201/Documents/d
 
 ---
 
-## Path D: Evaluation Protocol v4 Suite (Task F)
+## Path D: Evaluation Protocol v4 Suite
 
 To validate the bilingual 60-intent benchmark and execute offline multi-recommender evaluations:
 
