@@ -1,0 +1,1115 @@
+schema_version: intent-gold-v4.0.0
+dataset_id: intent-gold-en-vi-2026-08-08
+label_policy_version: operational-gold-policy-v1
+frozen_at_utc: "2026-08-08T00:00:00Z"
+description: >-
+  Synthetic, family-grouped workload intents for profile and notebook-image
+  recommendation. Labels are protocol-locked operational targets derived from
+  controlled workload specifications, resource-envelope bands, administrator
+  image capabilities, and explicit policy constraints. They are not user
+  preference labels or production traces.
+license: synthetic-authored-for-this-repository
+profile_order: [small, medium, large]
+image_catalog:
+  catalog_version: "2026-08-06.1"
+  source_path: recommender/image-catalog.yaml
+  source_sha256: f45b04efc2ea6f271d49c6806b58bfc0f30503cb68944930609f6e0f71882a71
+  images:
+    minimal-python:
+      capabilities: [python, jupyterlab]
+    scipy-data-science:
+      capabilities: [numpy, pandas, scipy, scikit-learn, visualization]
+    pytorch-deep-learning:
+      capabilities: [pytorch, cuda-userspace, data-science]
+    tensorflow-deep-learning:
+      capabilities: [tensorflow, keras, cuda-userspace, data-science]
+
+# Only these families have a frozen bounded executable analogue in protocol v3.
+# The full 20-family test split is used for offline recommendation quality; this
+# subset is the paired Kubernetes system-effectiveness block.
+system_workload_mapping:
+  - workload_family: small-csv
+    manifest_path: benchmarks/workloads-v3.yaml
+    workload_id: h01_small_stream
+  - workload_family: dataframe-join
+    manifest_path: benchmarks/workloads-v3.yaml
+    workload_id: h02_medium_size_signal
+  - workload_family: code-only-pandas
+    manifest_path: benchmarks/workloads-v3.yaml
+    workload_id: h03_medium_code_signal
+  - workload_family: large-aggregation
+    manifest_path: benchmarks/workloads-v3.yaml
+    workload_id: h04_large_honest
+  - workload_family: code-only-training
+    manifest_path: benchmarks/workloads-v3.yaml
+    workload_id: h05_large_context_recovery
+  - workload_family: cpu-checksum
+    manifest_path: benchmarks/workloads-v3.yaml
+    workload_id: h06_cpu_parallel
+  - workload_family: noisy-overstated-size
+    manifest_path: benchmarks/workloads-v3.yaml
+    workload_id: h07_noisy_overstated
+  - workload_family: hidden-large-demand
+    manifest_path: benchmarks/workloads-v3.yaml
+    workload_id: h08_hidden_large
+
+items:
+  - sample_id: basic-python-canonical-en
+    workload_family: basic-python
+    variant: canonical
+    split: development
+    stratum: light
+    language: en
+    inputs: &basic_inputs_en
+      intent: I only need a notebook for a few basic Python calculations.
+      dataset_size_gb: 0.01
+      code_context_hints: []
+    gold: &basic_gold
+      preferred_profile: small
+      acceptable_profiles: [small]
+      preferred_image_id: minimal-python
+      acceptable_image_ids: [minimal-python]
+      required_image_capabilities: [python]
+    policy_constraints: &all_profiles
+      allowed_profiles: [small, medium, large]
+      gpu_allowed: false
+    provenance: &basic_provenance
+      resource_label_basis: controlled light-workload envelope and smallest sufficient profile
+      image_label_basis: Python-only capability requirement
+      adjudication_status: protocol_locked
+      evidence_ids: [benchmarks/workloads.yaml:light_basic_python, benchmarks/workloads-v3.yaml:h01_small_stream]
+
+  - sample_id: basic-python-paraphrase-en
+    workload_family: basic-python
+    variant: paraphrase
+    split: development
+    stratum: light
+    language: en
+    inputs:
+      intent: Give me a lightweight session to check some arithmetic and short scripts.
+      dataset_size_gb: 0.01
+      code_context_hints: []
+    gold: *basic_gold
+    policy_constraints: *all_profiles
+    provenance: *basic_provenance
+
+  - sample_id: basic-python-vi
+    workload_family: basic-python
+    variant: vietnamese
+    split: development
+    stratum: light
+    language: vi
+    inputs:
+      intent: Tôi chỉ cần chạy vài phép tính và đoạn mã Python ngắn.
+      dataset_size_gb: 0.01
+      code_context_hints: []
+    gold: *basic_gold
+    policy_constraints: *all_profiles
+    provenance: *basic_provenance
+
+  - sample_id: pandas-transform-canonical-en
+    workload_family: pandas-transform
+    variant: canonical
+    split: development
+    stratum: data_processing
+    language: en
+    inputs:
+      intent: Clean and transform a medium CSV using pandas.
+      dataset_size_gb: 0.8
+      code_context_hints: ["import pandas as pd", "df = pd.read_csv('input.csv')"]
+    gold: &pandas_gold
+      preferred_profile: medium
+      acceptable_profiles: [medium, large]
+      preferred_image_id: scipy-data-science
+      acceptable_image_ids: [scipy-data-science]
+      required_image_capabilities: [pandas]
+    policy_constraints: *all_profiles
+    provenance: &pandas_provenance
+      resource_label_basis: medium tabular workload envelope with Large accepted conservatively
+      image_label_basis: explicit pandas import requires the data-science image
+      adjudication_status: protocol_locked
+      evidence_ids: [benchmarks/workloads.yaml:data_pandas_read_transform, benchmarks/workloads-v3.yaml:h02_medium_size_signal]
+
+  - sample_id: pandas-transform-paraphrase-en
+    workload_family: pandas-transform
+    variant: paraphrase
+    split: development
+    stratum: data_processing
+    language: en
+    inputs:
+      intent: Prepare roughly 800 MB of table data and fix column types.
+      dataset_size_gb: 0.8
+      code_context_hints: ["import pandas as pd", "frame.astype({'year': 'int64'})"]
+    gold: *pandas_gold
+    policy_constraints: *all_profiles
+    provenance: *pandas_provenance
+
+  - sample_id: pandas-transform-vi
+    workload_family: pandas-transform
+    variant: vietnamese
+    split: development
+    stratum: data_processing
+    language: vi
+    inputs:
+      intent: Làm sạch và biến đổi tệp CSV khoảng 0,8 GB bằng pandas.
+      dataset_size_gb: 0.8
+      code_context_hints: ["import pandas as pd", "df = pd.read_csv('input.csv')"]
+    gold: *pandas_gold
+    policy_constraints: *all_profiles
+    provenance: *pandas_provenance
+
+  - sample_id: sklearn-small-canonical-en
+    workload_family: sklearn-small
+    variant: canonical
+    split: development
+    stratum: machine_learning
+    language: en
+    inputs:
+      intent: Fit a small scikit-learn classifier on generated data.
+      dataset_size_gb: 0.2
+      code_context_hints: ["from sklearn.linear_model import LogisticRegression", "model.fit(X, y)"]
+    gold: &sklearn_small_gold
+      preferred_profile: medium
+      acceptable_profiles: [medium, large]
+      preferred_image_id: scipy-data-science
+      acceptable_image_ids: [scipy-data-science]
+      required_image_capabilities: [scikit-learn]
+    policy_constraints: *all_profiles
+    provenance: &sklearn_small_provenance
+      resource_label_basis: small CPU model fit requires Medium; Large is safe but not preferred
+      image_label_basis: explicit scikit-learn import
+      adjudication_status: protocol_locked
+      evidence_ids: [benchmarks/workloads.yaml:ml_sklearn_fit_small]
+
+  - sample_id: sklearn-small-paraphrase-en
+    workload_family: sklearn-small
+    variant: paraphrase
+    split: development
+    stratum: machine_learning
+    language: en
+    inputs:
+      intent: Train a toy logistic model; the feature matrix is small.
+      dataset_size_gb: 0.2
+      code_context_hints: ["from sklearn.linear_model import LogisticRegression", "classifier.fit(features, labels)"]
+    gold: *sklearn_small_gold
+    policy_constraints: *all_profiles
+    provenance: *sklearn_small_provenance
+
+  - sample_id: sklearn-small-vi
+    workload_family: sklearn-small
+    variant: vietnamese
+    split: development
+    stratum: machine_learning
+    language: vi
+    inputs:
+      intent: Huấn luyện mô hình phân loại scikit-learn nhỏ trên dữ liệu sinh tổng hợp.
+      dataset_size_gb: 0.2
+      code_context_hints: ["from sklearn.linear_model import LogisticRegression", "model.fit(X, y)"]
+    gold: *sklearn_small_gold
+    policy_constraints: *all_profiles
+    provenance: *sklearn_small_provenance
+
+  - sample_id: threshold-below-canonical-en
+    workload_family: threshold-below
+    variant: canonical
+    split: development
+    stratum: boundary
+    language: en
+    inputs:
+      intent: Briefly inspect a generated object; the exact next step is unclear.
+      dataset_size_gb: 0.49
+      code_context_hints: []
+    gold: &threshold_gold
+      preferred_profile: small
+      acceptable_profiles: [small, medium]
+      preferred_image_id: minimal-python
+      acceptable_image_ids: [minimal-python]
+      required_image_capabilities: [python]
+    policy_constraints: *all_profiles
+    provenance: &threshold_provenance
+      resource_label_basis: pre-specified below-0.5GB decision boundary
+      image_label_basis: no specialized library requirement
+      adjudication_status: protocol_locked
+      evidence_ids: [benchmarks/workloads.yaml:boundary_below_0_5_ambiguous]
+
+  - sample_id: threshold-below-paraphrase-en
+    workload_family: threshold-below
+    variant: paraphrase
+    split: development
+    stratum: boundary
+    language: en
+    inputs:
+      intent: Start small; I may only look around for a minute.
+      dataset_size_gb: 0.49
+      code_context_hints: []
+    gold: *threshold_gold
+    policy_constraints: *all_profiles
+    provenance: *threshold_provenance
+
+  - sample_id: threshold-below-vi
+    workload_family: threshold-below
+    variant: vietnamese
+    split: development
+    stratum: boundary
+    language: vi
+    inputs:
+      intent: Chỉ xem nhanh dữ liệu, hiện chưa rõ bước tiếp theo.
+      dataset_size_gb: 0.49
+      code_context_hints: []
+    gold: *threshold_gold
+    policy_constraints: *all_profiles
+    provenance: *threshold_provenance
+
+  - sample_id: small-csv-canonical-en
+    workload_family: small-csv
+    variant: canonical
+    split: test
+    stratum: light
+    language: en
+    inputs:
+      intent: Open a small CSV and inspect a few columns.
+      dataset_size_gb: 0.04
+      code_context_hints: ["import pandas as pd", "pd.read_csv('small.csv')"]
+    gold: &small_csv_gold
+      preferred_profile: small
+      acceptable_profiles: [small, medium]
+      preferred_image_id: scipy-data-science
+      acceptable_image_ids: [scipy-data-science]
+      required_image_capabilities: [pandas]
+    policy_constraints: *all_profiles
+    provenance: &small_csv_provenance
+      resource_label_basis: light CSV envelope with Medium accepted conservatively
+      image_label_basis: explicit pandas CSV operation
+      adjudication_status: protocol_locked
+      evidence_ids: [benchmarks/workloads.yaml:light_small_csv_read]
+
+  - sample_id: small-csv-paraphrase-en
+    workload_family: small-csv
+    variant: paraphrase
+    split: test
+    stratum: light
+    language: en
+    inputs:
+      intent: Quickly check the headers and missing values in a tiny table.
+      dataset_size_gb: 0.04
+      code_context_hints: ["import pandas as pd", "table.isna().sum()"]
+    gold: *small_csv_gold
+    policy_constraints: *all_profiles
+    provenance: *small_csv_provenance
+
+  - sample_id: small-csv-vi
+    workload_family: small-csv
+    variant: vietnamese
+    split: test
+    stratum: light
+    language: vi
+    inputs:
+      intent: Mở tệp CSV nhỏ và kiểm tra vài cột bằng pandas.
+      dataset_size_gb: 0.04
+      code_context_hints: ["import pandas as pd", "pd.read_csv('small.csv')"]
+    gold: *small_csv_gold
+    policy_constraints: *all_profiles
+    provenance: *small_csv_provenance
+
+  - sample_id: dataframe-join-canonical-en
+    workload_family: dataframe-join
+    variant: canonical
+    split: test
+    stratum: data_processing
+    language: en
+    inputs:
+      intent: Join two medium dataframes and calculate summary features.
+      dataset_size_gb: 1.2
+      code_context_hints: ["import pandas as pd", "joined = left.merge(right, on='id')"]
+    gold: &join_gold
+      preferred_profile: medium
+      acceptable_profiles: [medium, large]
+      preferred_image_id: scipy-data-science
+      acceptable_image_ids: [scipy-data-science]
+      required_image_capabilities: [pandas]
+    policy_constraints: *all_profiles
+    provenance: &join_provenance
+      resource_label_basis: medium join envelope including intermediate-memory headroom
+      image_label_basis: explicit pandas merge operation
+      adjudication_status: protocol_locked
+      evidence_ids: [benchmarks/workloads.yaml:data_dataframe_join_medium]
+
+  - sample_id: dataframe-join-paraphrase-en
+    workload_family: dataframe-join
+    variant: paraphrase
+    split: test
+    stratum: data_processing
+    language: en
+    inputs:
+      intent: Combine customer and event tables, then group the result.
+      dataset_size_gb: 1.2
+      code_context_hints: ["import pandas as pd", "result = customers.merge(events, on='customer_id')"]
+    gold: *join_gold
+    policy_constraints: *all_profiles
+    provenance: *join_provenance
+
+  - sample_id: dataframe-join-vi
+    workload_family: dataframe-join
+    variant: vietnamese
+    split: test
+    stratum: data_processing
+    language: vi
+    inputs:
+      intent: Ghép hai dataframe cỡ vừa rồi tính các đặc trưng tổng hợp.
+      dataset_size_gb: 1.2
+      code_context_hints: ["import pandas as pd", "joined = left.merge(right, on='id')"]
+    gold: *join_gold
+    policy_constraints: *all_profiles
+    provenance: *join_provenance
+
+  - sample_id: large-aggregation-canonical-en
+    workload_family: large-aggregation
+    variant: canonical
+    split: test
+    stratum: data_processing
+    language: en
+    inputs:
+      intent: Aggregate a larger CSV and compare totals by group.
+      dataset_size_gb: 2.2
+      code_context_hints: ["import pandas as pd", "df.groupby('group').value.sum()"]
+    gold: &large_aggregation_gold
+      preferred_profile: large
+      acceptable_profiles: [large]
+      preferred_image_id: scipy-data-science
+      acceptable_image_ids: [scipy-data-science]
+      required_image_capabilities: [pandas]
+    policy_constraints: *all_profiles
+    provenance: &large_aggregation_provenance
+      resource_label_basis: above-2GB controlled large resource envelope
+      image_label_basis: explicit pandas aggregation
+      adjudication_status: protocol_locked
+      evidence_ids: [benchmarks/workloads.yaml:data_large_aggregation, benchmarks/workloads-v3.yaml:h04_large_honest]
+
+  - sample_id: large-aggregation-paraphrase-en
+    workload_family: large-aggregation
+    variant: paraphrase
+    split: test
+    stratum: data_processing
+    language: en
+    inputs:
+      intent: Compute grouped statistics over about 2.2 GB of tabular data.
+      dataset_size_gb: 2.2
+      code_context_hints: ["import pandas as pd", "summary = frame.groupby(keys).agg(metrics)"]
+    gold: *large_aggregation_gold
+    policy_constraints: *all_profiles
+    provenance: *large_aggregation_provenance
+
+  - sample_id: large-aggregation-vi
+    workload_family: large-aggregation
+    variant: vietnamese
+    split: test
+    stratum: data_processing
+    language: vi
+    inputs:
+      intent: Tổng hợp tệp CSV khoảng 2,2 GB và so sánh tổng theo nhóm.
+      dataset_size_gb: 2.2
+      code_context_hints: ["import pandas as pd", "df.groupby('group').value.sum()"]
+    gold: *large_aggregation_gold
+    policy_constraints: *all_profiles
+    provenance: *large_aggregation_provenance
+
+  - sample_id: sklearn-medium-canonical-en
+    workload_family: sklearn-medium
+    variant: canonical
+    split: test
+    stratum: machine_learning
+    language: en
+    inputs:
+      intent: Train a scikit-learn model on a medium CSV-like dataset.
+      dataset_size_gb: 1.4
+      code_context_hints: ["from sklearn.ensemble import RandomForestClassifier", "model.fit(X, y)"]
+    gold: &sklearn_medium_gold
+      preferred_profile: large
+      acceptable_profiles: [large]
+      preferred_image_id: scipy-data-science
+      acceptable_image_ids: [scipy-data-science]
+      required_image_capabilities: [scikit-learn]
+    policy_constraints: *all_profiles
+    provenance: &sklearn_medium_provenance
+      resource_label_basis: medium-data model-fit controlled envelope requires Large
+      image_label_basis: explicit scikit-learn training
+      adjudication_status: protocol_locked
+      evidence_ids: [benchmarks/workloads.yaml:ml_sklearn_fit_medium, benchmarks/workloads-v3.yaml:h05_large_context_recovery]
+
+  - sample_id: sklearn-medium-paraphrase-en
+    workload_family: sklearn-medium
+    variant: paraphrase
+    split: test
+    stratum: machine_learning
+    language: en
+    inputs:
+      intent: Fit a random forest after building features from 1.4 GB of records.
+      dataset_size_gb: 1.4
+      code_context_hints: ["from sklearn.ensemble import RandomForestClassifier", "forest.fit(features, target)"]
+    gold: *sklearn_medium_gold
+    policy_constraints: *all_profiles
+    provenance: *sklearn_medium_provenance
+
+  - sample_id: sklearn-medium-vi
+    workload_family: sklearn-medium
+    variant: vietnamese
+    split: test
+    stratum: machine_learning
+    language: vi
+    inputs:
+      intent: Huấn luyện mô hình scikit-learn trên tập dữ liệu dạng CSV cỡ vừa.
+      dataset_size_gb: 1.4
+      code_context_hints: ["from sklearn.ensemble import RandomForestClassifier", "model.fit(X, y)"]
+    gold: *sklearn_medium_gold
+    policy_constraints: *all_profiles
+    provenance: *sklearn_medium_provenance
+
+  - sample_id: pytorch-training-canonical-en
+    workload_family: pytorch-training
+    variant: canonical
+    split: test
+    stratum: deep_learning
+    language: en
+    inputs:
+      intent: Train a small PyTorch neural network; no GPU is available in this cluster.
+      dataset_size_gb: 1.0
+      code_context_hints: ["import torch", "loss.backward()"]
+    gold: &pytorch_gold
+      preferred_profile: large
+      acceptable_profiles: [large]
+      preferred_image_id: pytorch-deep-learning
+      acceptable_image_ids: [pytorch-deep-learning]
+      required_image_capabilities: [pytorch]
+    policy_constraints: *all_profiles
+    provenance: &pytorch_provenance
+      resource_label_basis: explicit no-GPU policy maps deep-learning demand to Large CPU/memory
+      image_label_basis: explicit PyTorch import
+      adjudication_status: protocol_locked
+      evidence_ids: [recommender/resource-policy.yaml:no-gpu, recommender/image-catalog.yaml:pytorch-deep-learning]
+
+  - sample_id: pytorch-training-paraphrase-en
+    workload_family: pytorch-training
+    variant: paraphrase
+    split: test
+    stratum: deep_learning
+    language: en
+    inputs:
+      intent: Run a CPU-only torch training loop for a compact neural model.
+      dataset_size_gb: 1.0
+      code_context_hints: ["from torch import nn", "optimizer.step()"]
+    gold: *pytorch_gold
+    policy_constraints: *all_profiles
+    provenance: *pytorch_provenance
+
+  - sample_id: pytorch-training-vi
+    workload_family: pytorch-training
+    variant: vietnamese
+    split: test
+    stratum: deep_learning
+    language: vi
+    inputs:
+      intent: Huấn luyện mạng nơ-ron PyTorch nhỏ bằng CPU vì cụm không có GPU.
+      dataset_size_gb: 1.0
+      code_context_hints: ["import torch", "loss.backward()"]
+    gold: *pytorch_gold
+    policy_constraints: *all_profiles
+    provenance: *pytorch_provenance
+
+  - sample_id: tensorflow-training-canonical-en
+    workload_family: tensorflow-training
+    variant: canonical
+    split: test
+    stratum: deep_learning
+    language: en
+    inputs:
+      intent: Fit a compact TensorFlow model without a GPU device.
+      dataset_size_gb: 1.0
+      code_context_hints: ["import tensorflow as tf", "model.fit(dataset)"]
+    gold: &tensorflow_gold
+      preferred_profile: large
+      acceptable_profiles: [large]
+      preferred_image_id: tensorflow-deep-learning
+      acceptable_image_ids: [tensorflow-deep-learning]
+      required_image_capabilities: [tensorflow]
+    policy_constraints: *all_profiles
+    provenance: &tensorflow_provenance
+      resource_label_basis: explicit no-GPU policy maps deep-learning demand to Large CPU/memory
+      image_label_basis: explicit TensorFlow import
+      adjudication_status: protocol_locked
+      evidence_ids: [recommender/resource-policy.yaml:no-gpu, recommender/image-catalog.yaml:tensorflow-deep-learning]
+
+  - sample_id: tensorflow-training-paraphrase-en
+    workload_family: tensorflow-training
+    variant: paraphrase
+    split: test
+    stratum: deep_learning
+    language: en
+    inputs:
+      intent: Use Keras to train a small CPU-only network.
+      dataset_size_gb: 1.0
+      code_context_hints: ["from tensorflow import keras", "network.fit(train_ds)"]
+    gold: *tensorflow_gold
+    policy_constraints: *all_profiles
+    provenance: *tensorflow_provenance
+
+  - sample_id: tensorflow-training-vi
+    workload_family: tensorflow-training
+    variant: vietnamese
+    split: test
+    stratum: deep_learning
+    language: vi
+    inputs:
+      intent: Dùng TensorFlow huấn luyện mạng nhỏ chỉ bằng CPU.
+      dataset_size_gb: 1.0
+      code_context_hints: ["import tensorflow as tf", "model.fit(dataset)"]
+    gold: *tensorflow_gold
+    policy_constraints: *all_profiles
+    provenance: *tensorflow_provenance
+
+  - sample_id: conflicting-signal-canonical-en
+    workload_family: conflicting-signal
+    variant: canonical
+    split: test
+    stratum: conflicting_signal
+    language: en
+    inputs:
+      intent: I may train a model if the data appears useful.
+      dataset_size_gb: 0.51
+      code_context_hints: ["import pandas as pd", "preview = pd.read_csv('sample.csv').head()"]
+    gold: &conflicting_gold
+      preferred_profile: medium
+      acceptable_profiles: [medium, large]
+      preferred_image_id: scipy-data-science
+      acceptable_image_ids: [scipy-data-science]
+      required_image_capabilities: [pandas]
+    policy_constraints: *all_profiles
+    provenance: &conflicting_provenance
+      resource_label_basis: pre-specified above-0.5GB conflicting-signal boundary
+      image_label_basis: explicit pandas context despite uncertain training intent
+      adjudication_status: protocol_locked
+      evidence_ids: [benchmarks/workloads.yaml:boundary_above_0_5_conflicting]
+
+  - sample_id: conflicting-signal-paraphrase-en
+    workload_family: conflicting-signal
+    variant: paraphrase
+    split: test
+    stratum: conflicting_signal
+    language: en
+    inputs:
+      intent: Start by checking the table; modeling is only a possibility.
+      dataset_size_gb: 0.51
+      code_context_hints: ["import pandas as pd", "sample = pd.read_csv('sample.csv')"]
+    gold: *conflicting_gold
+    policy_constraints: *all_profiles
+    provenance: *conflicting_provenance
+
+  - sample_id: conflicting-signal-vi
+    workload_family: conflicting-signal
+    variant: vietnamese
+    split: test
+    stratum: conflicting_signal
+    language: vi
+    inputs:
+      intent: Trước mắt kiểm tra bảng dữ liệu, có thể sẽ huấn luyện mô hình sau.
+      dataset_size_gb: 0.51
+      code_context_hints: ["import pandas as pd", "preview = pd.read_csv('sample.csv').head()"]
+    gold: *conflicting_gold
+    policy_constraints: *all_profiles
+    provenance: *conflicting_provenance
+
+  - sample_id: gpu-policy-canonical-en
+    workload_family: gpu-policy-disallowed
+    variant: canonical
+    split: test
+    stratum: policy
+    language: en
+    inputs:
+      intent: Check a tiny PyTorch example, but this namespace does not allow GPU or Large profiles.
+      dataset_size_gb: 0.03
+      code_context_hints: ["import torch", "tensor = torch.ones(8)"]
+    gold: &gpu_policy_gold
+      preferred_profile: medium
+      acceptable_profiles: [medium]
+      preferred_image_id: pytorch-deep-learning
+      acceptable_image_ids: [pytorch-deep-learning]
+      required_image_capabilities: [pytorch]
+    policy_constraints: &gpu_restricted_policy
+      allowed_profiles: [small, medium]
+      gpu_allowed: false
+    provenance: &gpu_policy_provenance
+      resource_label_basis: administrator policy forces the bounded Medium fallback
+      image_label_basis: PyTorch capability remains allowlisted without a GPU device
+      adjudication_status: protocol_locked
+      evidence_ids: [benchmarks/workloads.yaml:policy_gpu_disallowed, recommender/resource-policy.yaml:no-gpu]
+
+  - sample_id: gpu-policy-paraphrase-en
+    workload_family: gpu-policy-disallowed
+    variant: paraphrase
+    split: test
+    stratum: policy
+    language: en
+    inputs:
+      intent: Run one CPU tensor operation under the restricted profile policy.
+      dataset_size_gb: 0.03
+      code_context_hints: ["import torch", "value = torch.arange(10).sum()"]
+    gold: *gpu_policy_gold
+    policy_constraints: *gpu_restricted_policy
+    provenance: *gpu_policy_provenance
+
+  - sample_id: gpu-policy-vi
+    workload_family: gpu-policy-disallowed
+    variant: vietnamese
+    split: test
+    stratum: policy
+    language: vi
+    inputs:
+      intent: Chạy ví dụ PyTorch rất nhỏ, namespace này không cho phép GPU hoặc profile Large.
+      dataset_size_gb: 0.03
+      code_context_hints: ["import torch", "tensor = torch.ones(8)"]
+    gold: *gpu_policy_gold
+    policy_constraints: *gpu_restricted_policy
+    provenance: *gpu_policy_provenance
+
+  - sample_id: small-visualization-en
+    workload_family: small-visualization
+    variant: canonical
+    split: test
+    stratum: light
+    language: en
+    inputs:
+      intent: Plot a histogram from a small sample and inspect its distribution.
+      dataset_size_gb: 0.08
+      code_context_hints: ["import matplotlib.pyplot as plt", "plt.hist(values)"]
+    gold: &small_visualization_gold
+      preferred_profile: small
+      acceptable_profiles: [small, medium]
+      preferred_image_id: scipy-data-science
+      acceptable_image_ids: [scipy-data-science]
+      required_image_capabilities: [visualization]
+    policy_constraints: *all_profiles
+    provenance: &small_visualization_provenance
+      resource_label_basis: controlled light visualization workload
+      image_label_basis: explicit plotting dependency
+      adjudication_status: protocol_locked
+      evidence_ids: [benchmarks/workloads.yaml:light_visual_aggregation]
+
+  - sample_id: small-visualization-vi
+    workload_family: small-visualization
+    variant: vietnamese
+    split: test
+    stratum: light
+    language: vi
+    inputs:
+      intent: Vẽ biểu đồ tần suất từ một mẫu dữ liệu nhỏ.
+      dataset_size_gb: 0.08
+      code_context_hints: ["import matplotlib.pyplot as plt", "plt.hist(values)"]
+    gold: *small_visualization_gold
+    policy_constraints: *all_profiles
+    provenance: *small_visualization_provenance
+
+  - sample_id: numpy-numerical-en
+    workload_family: numpy-numerical
+    variant: canonical
+    split: test
+    stratum: numerical_computing
+    language: en
+    inputs:
+      intent: Run repeated NumPy matrix operations on a moderate array.
+      dataset_size_gb: 0.6
+      code_context_hints: ["import numpy as np", "result = matrix @ matrix.T"]
+    gold: &numpy_numerical_gold
+      preferred_profile: medium
+      acceptable_profiles: [medium, large]
+      preferred_image_id: scipy-data-science
+      acceptable_image_ids: [scipy-data-science]
+      required_image_capabilities: [numpy]
+    policy_constraints: *all_profiles
+    provenance: &numpy_numerical_provenance
+      resource_label_basis: bounded moderate-memory numerical workload
+      image_label_basis: explicit NumPy dependency
+      adjudication_status: protocol_locked
+      evidence_ids: [benchmarks/workloads-v3.yaml:h03_medium_code_signal, recommender/image-catalog.yaml:scipy-data-science]
+
+  - sample_id: numpy-numerical-vi
+    workload_family: numpy-numerical
+    variant: vietnamese
+    split: test
+    stratum: numerical_computing
+    language: vi
+    inputs:
+      intent: Thực hiện nhiều phép toán ma trận NumPy trên mảng cỡ vừa.
+      dataset_size_gb: 0.6
+      code_context_hints: ["import numpy as np", "result = matrix @ matrix.T"]
+    gold: *numpy_numerical_gold
+    policy_constraints: *all_profiles
+    provenance: *numpy_numerical_provenance
+
+  - sample_id: parquet-medium-en
+    workload_family: parquet-medium
+    variant: canonical
+    split: test
+    stratum: data_processing
+    language: en
+    inputs:
+      intent: Read selected columns from a medium Parquet table and summarize them.
+      dataset_size_gb: 1.1
+      code_context_hints: ["import pandas as pd", "pd.read_parquet('events.parquet', columns=columns)"]
+    gold: &parquet_medium_gold
+      preferred_profile: medium
+      acceptable_profiles: [medium, large]
+      preferred_image_id: scipy-data-science
+      acceptable_image_ids: [scipy-data-science]
+      required_image_capabilities: [pandas]
+    policy_constraints: *all_profiles
+    provenance: &parquet_medium_provenance
+      resource_label_basis: medium column-projected tabular workload
+      image_label_basis: explicit pandas Parquet operation
+      adjudication_status: protocol_locked
+      evidence_ids: [benchmarks/workloads.yaml:data_pandas_read_transform]
+
+  - sample_id: parquet-medium-vi
+    workload_family: parquet-medium
+    variant: vietnamese
+    split: test
+    stratum: data_processing
+    language: vi
+    inputs:
+      intent: Đọc một số cột từ bảng Parquet cỡ vừa rồi thống kê.
+      dataset_size_gb: 1.1
+      code_context_hints: ["import pandas as pd", "pd.read_parquet('events.parquet', columns=columns)"]
+    gold: *parquet_medium_gold
+    policy_constraints: *all_profiles
+    provenance: *parquet_medium_provenance
+
+  - sample_id: cpu-checksum-en
+    workload_family: cpu-checksum
+    variant: canonical
+    split: test
+    stratum: cpu_bound
+    language: en
+    inputs:
+      intent: Run a deterministic multi-process checksum benchmark.
+      dataset_size_gb: 0.1
+      code_context_hints: ["from multiprocessing import Pool", "pool.map(checksum, blocks)"]
+    gold: &cpu_checksum_gold
+      preferred_profile: medium
+      acceptable_profiles: [medium]
+      preferred_image_id: minimal-python
+      acceptable_image_ids: [minimal-python]
+      required_image_capabilities: [python]
+    policy_constraints: *all_profiles
+    provenance: &cpu_checksum_provenance
+      resource_label_basis: protocol-v3 CPU-parallel target requires Medium CPU request
+      image_label_basis: standard-library Python only
+      adjudication_status: protocol_locked
+      evidence_ids: [benchmarks/workloads-v3.yaml:h06_cpu_parallel]
+
+  - sample_id: cpu-checksum-vi
+    workload_family: cpu-checksum
+    variant: vietnamese
+    split: test
+    stratum: cpu_bound
+    language: vi
+    inputs:
+      intent: Chạy benchmark checksum đa tiến trình có tính xác định.
+      dataset_size_gb: 0.1
+      code_context_hints: ["from multiprocessing import Pool", "pool.map(checksum, blocks)"]
+    gold: *cpu_checksum_gold
+    policy_constraints: *all_profiles
+    provenance: *cpu_checksum_provenance
+
+  - sample_id: noisy-overstated-size-en
+    workload_family: noisy-overstated-size
+    variant: canonical
+    split: test
+    stratum: noisy_context
+    language: en
+    inputs:
+      intent: Run a few basic Python calculations; the source archive is large but only constants are used.
+      dataset_size_gb: 3.0
+      code_context_hints: []
+    gold: &noisy_overstated_gold
+      preferred_profile: small
+      acceptable_profiles: [small]
+      preferred_image_id: minimal-python
+      acceptable_image_ids: [minimal-python]
+      required_image_capabilities: [python]
+    policy_constraints: *all_profiles
+    provenance: &noisy_overstated_provenance
+      resource_label_basis: controlled useful allocation is Small despite an intentionally overstated hint
+      image_label_basis: no specialized dependency
+      adjudication_status: protocol_locked
+      evidence_ids: [benchmarks/workloads-v3.yaml:h07_noisy_overstated]
+
+  - sample_id: noisy-overstated-size-vi
+    workload_family: noisy-overstated-size
+    variant: vietnamese
+    split: test
+    stratum: noisy_context
+    language: vi
+    inputs:
+      intent: Chỉ chạy vài phép tính Python; tệp nguồn lớn nhưng không được nạp vào bộ nhớ.
+      dataset_size_gb: 3.0
+      code_context_hints: []
+    gold: *noisy_overstated_gold
+    policy_constraints: *all_profiles
+    provenance: *noisy_overstated_provenance
+
+  - sample_id: hidden-large-demand-en
+    workload_family: hidden-large-demand
+    variant: canonical
+    split: test
+    stratum: hidden_demand
+    language: en
+    inputs:
+      intent: Run a few basic calculations.
+      dataset_size_gb: 0.1
+      code_context_hints: []
+    gold: &hidden_large_gold
+      preferred_profile: large
+      acceptable_profiles: [large]
+      preferred_image_id: minimal-python
+      acceptable_image_ids: [minimal-python]
+      required_image_capabilities: [python]
+    policy_constraints: *all_profiles
+    provenance: &hidden_large_provenance
+      resource_label_basis: controlled hidden-demand stress case whose runtime envelope requires Large
+      image_label_basis: no specialized dependency
+      adjudication_status: protocol_locked
+      evidence_ids: [benchmarks/workloads-v3.yaml:h08_hidden_large]
+
+  - sample_id: hidden-large-demand-vi
+    workload_family: hidden-large-demand
+    variant: vietnamese
+    split: test
+    stratum: hidden_demand
+    language: vi
+    inputs:
+      intent: Chạy vài phép tính cơ bản.
+      dataset_size_gb: 0.1
+      code_context_hints: []
+    gold: *hidden_large_gold
+    policy_constraints: *all_profiles
+    provenance: *hidden_large_provenance
+
+  - sample_id: streaming-large-source-en
+    workload_family: streaming-large-source
+    variant: canonical
+    split: test
+    stratum: data_processing
+    language: en
+    inputs:
+      intent: Stream a 4 GB CSV in chunks and keep only aggregate counters.
+      dataset_size_gb: 4.0
+      code_context_hints: ["import pandas as pd", "for chunk in pd.read_csv(path, chunksize=50000): pass"]
+    gold: &streaming_large_gold
+      preferred_profile: medium
+      acceptable_profiles: [medium, large]
+      preferred_image_id: scipy-data-science
+      acceptable_image_ids: [scipy-data-science]
+      required_image_capabilities: [pandas]
+    policy_constraints: *all_profiles
+    provenance: &streaming_large_provenance
+      resource_label_basis: bounded chunked execution decouples source size from resident memory
+      image_label_basis: explicit pandas chunked reader
+      adjudication_status: protocol_locked
+      evidence_ids: [docs/evaluation/RESOURCE_ENVELOPE_PROTOCOL_V3.md:useful-allocation]
+
+  - sample_id: streaming-large-source-vi
+    workload_family: streaming-large-source
+    variant: vietnamese
+    split: test
+    stratum: data_processing
+    language: vi
+    inputs:
+      intent: Đọc tuần tự CSV 4 GB theo từng khối và chỉ giữ số liệu tổng hợp.
+      dataset_size_gb: 4.0
+      code_context_hints: ["import pandas as pd", "for chunk in pd.read_csv(path, chunksize=50000): pass"]
+    gold: *streaming_large_gold
+    policy_constraints: *all_profiles
+    provenance: *streaming_large_provenance
+
+  - sample_id: scipy-optimization-en
+    workload_family: scipy-optimization
+    variant: canonical
+    split: test
+    stratum: numerical_computing
+    language: en
+    inputs:
+      intent: Solve a moderate numerical optimization problem with SciPy.
+      dataset_size_gb: 0.3
+      code_context_hints: ["from scipy.optimize import minimize", "result = minimize(objective, initial)"]
+    gold: &scipy_optimization_gold
+      preferred_profile: medium
+      acceptable_profiles: [medium, large]
+      preferred_image_id: scipy-data-science
+      acceptable_image_ids: [scipy-data-science]
+      required_image_capabilities: [scipy]
+    policy_constraints: *all_profiles
+    provenance: &scipy_optimization_provenance
+      resource_label_basis: moderate CPU numerical solve with bounded memory
+      image_label_basis: explicit SciPy dependency
+      adjudication_status: protocol_locked
+      evidence_ids: [recommender/image-catalog.yaml:scipy-data-science]
+
+  - sample_id: scipy-optimization-vi
+    workload_family: scipy-optimization
+    variant: vietnamese
+    split: test
+    stratum: numerical_computing
+    language: vi
+    inputs:
+      intent: Giải bài toán tối ưu số cỡ vừa bằng SciPy.
+      dataset_size_gb: 0.3
+      code_context_hints: ["from scipy.optimize import minimize", "result = minimize(objective, initial)"]
+    gold: *scipy_optimization_gold
+    policy_constraints: *all_profiles
+    provenance: *scipy_optimization_provenance
+
+  - sample_id: tensorflow-policy-en
+    workload_family: tensorflow-policy-disallowed
+    variant: canonical
+    split: test
+    stratum: policy
+    language: en
+    inputs:
+      intent: Validate one TensorFlow forward pass under a Medium-only policy.
+      dataset_size_gb: 0.05
+      code_context_hints: ["import tensorflow as tf", "output = layer(tf.ones((1, 8)))"]
+    gold: &tensorflow_policy_gold
+      preferred_profile: medium
+      acceptable_profiles: [medium]
+      preferred_image_id: tensorflow-deep-learning
+      acceptable_image_ids: [tensorflow-deep-learning]
+      required_image_capabilities: [tensorflow]
+    policy_constraints: *gpu_restricted_policy
+    provenance: &tensorflow_policy_provenance
+      resource_label_basis: administrator policy forces Medium for a bounded inference check
+      image_label_basis: explicit TensorFlow import
+      adjudication_status: protocol_locked
+      evidence_ids: [recommender/resource-policy.yaml:no-gpu, recommender/image-catalog.yaml:tensorflow-deep-learning]
+
+  - sample_id: tensorflow-policy-vi
+    workload_family: tensorflow-policy-disallowed
+    variant: vietnamese
+    split: test
+    stratum: policy
+    language: vi
+    inputs:
+      intent: Kiểm tra một lượt suy luận TensorFlow theo chính sách chỉ cho Medium.
+      dataset_size_gb: 0.05
+      code_context_hints: ["import tensorflow as tf", "output = layer(tf.ones((1, 8)))"]
+    gold: *tensorflow_policy_gold
+    policy_constraints: *gpu_restricted_policy
+    provenance: *tensorflow_policy_provenance
+
+  - sample_id: code-only-pandas-en
+    workload_family: code-only-pandas
+    variant: canonical
+    split: test
+    stratum: context_recovery
+    language: en
+    inputs:
+      intent: Inspect generated values.
+      dataset_size_gb: 0.1
+      code_context_hints: ["import pandas as pd", "frame = pd.DataFrame(records)"]
+    gold: &code_only_pandas_gold
+      preferred_profile: medium
+      acceptable_profiles: [medium, large]
+      preferred_image_id: scipy-data-science
+      acceptable_image_ids: [scipy-data-science]
+      required_image_capabilities: [pandas]
+    policy_constraints: *all_profiles
+    provenance: &code_only_pandas_provenance
+      resource_label_basis: context-only Medium boundary case
+      image_label_basis: explicit pandas context despite generic intent
+      adjudication_status: protocol_locked
+      evidence_ids: [benchmarks/workloads-v3.yaml:h03_medium_code_signal]
+
+  - sample_id: code-only-pandas-vi
+    workload_family: code-only-pandas
+    variant: vietnamese
+    split: test
+    stratum: context_recovery
+    language: vi
+    inputs:
+      intent: Kiểm tra các giá trị được sinh ra.
+      dataset_size_gb: 0.1
+      code_context_hints: ["import pandas as pd", "frame = pd.DataFrame(records)"]
+    gold: *code_only_pandas_gold
+    policy_constraints: *all_profiles
+    provenance: *code_only_pandas_provenance
+
+  - sample_id: code-only-training-en
+    workload_family: code-only-training
+    variant: canonical
+    split: test
+    stratum: context_recovery
+    language: en
+    inputs:
+      intent: Try a generated classifier.
+      dataset_size_gb: 0.1
+      code_context_hints: ["from sklearn.ensemble import RandomForestClassifier", "model.fit(wide_features, labels)"]
+    gold: &code_only_training_gold
+      preferred_profile: large
+      acceptable_profiles: [large]
+      preferred_image_id: scipy-data-science
+      acceptable_image_ids: [scipy-data-science]
+      required_image_capabilities: [scikit-learn]
+    policy_constraints: *all_profiles
+    provenance: &code_only_training_provenance
+      resource_label_basis: context-recovery controlled envelope requires Large
+      image_label_basis: explicit scikit-learn training context
+      adjudication_status: protocol_locked
+      evidence_ids: [benchmarks/workloads-v3.yaml:h05_large_context_recovery]
+
+  - sample_id: code-only-training-vi
+    workload_family: code-only-training
+    variant: vietnamese
+    split: test
+    stratum: context_recovery
+    language: vi
+    inputs:
+      intent: Thử một mô hình phân loại sinh tổng hợp.
+      dataset_size_gb: 0.1
+      code_context_hints: ["from sklearn.ensemble import RandomForestClassifier", "model.fit(wide_features, labels)"]
+    gold: *code_only_training_gold
+    policy_constraints: *all_profiles
+    provenance: *code_only_training_provenance
+
+  - sample_id: medium-visualization-en
+    workload_family: medium-visualization
+    variant: canonical
+    split: test
+    stratum: data_processing
+    language: en
+    inputs:
+      intent: Build several grouped plots from a medium dataframe.
+      dataset_size_gb: 0.9
+      code_context_hints: ["import seaborn as sns", "sns.catplot(data=frame, x='group', y='value')"]
+    gold: &medium_visualization_gold
+      preferred_profile: medium
+      acceptable_profiles: [medium, large]
+      preferred_image_id: scipy-data-science
+      acceptable_image_ids: [scipy-data-science]
+      required_image_capabilities: [visualization]
+    policy_constraints: *all_profiles
+    provenance: &medium_visualization_provenance
+      resource_label_basis: medium tabular visualization workload
+      image_label_basis: explicit visualization dependency
+      adjudication_status: protocol_locked
+      evidence_ids: [benchmarks/workloads.yaml:light_visual_aggregation, recommender/image-catalog.yaml:scipy-data-science]
+
+  - sample_id: medium-visualization-vi
+    workload_family: medium-visualization
+    variant: vietnamese
+    split: test
+    stratum: data_processing
+    language: vi
+    inputs:
+      intent: Tạo nhiều biểu đồ theo nhóm từ dataframe cỡ vừa.
+      dataset_size_gb: 0.9
+      code_context_hints: ["import seaborn as sns", "sns.catplot(data=frame, x='group', y='value')"]
+    gold: *medium_visualization_gold
+    policy_constraints: *all_profiles
+    provenance: *medium_visualization_provenance

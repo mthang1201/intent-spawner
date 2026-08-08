@@ -261,10 +261,10 @@ def test_overlay_applies_preview_bound_canonical_resources_and_revalidates(monke
     asyncio.run(kube_spawner.pre_spawn_hook(spawner))
 
     assert payload["resource_decision"]["applied_mode"] == "dynamic"
-    assert spawner.cpu_guarantee == "500m"
-    assert spawner.cpu_limit == "900m"
-    assert spawner.mem_guarantee == "768Mi"
-    assert spawner.mem_limit == "1024Mi"
+    assert spawner.cpu_guarantee == 0.5
+    assert spawner.cpu_limit == 0.9
+    assert spawner.mem_guarantee == 768 * 2**20
+    assert spawner.mem_limit == 1024 * 2**20
     assert spawner.environment["DYNAMIC_RESOURCE_POLICY_HASH"] == namespace[
         "DYNAMIC_RESOURCE_POLICY_HASH"
     ]
@@ -307,7 +307,7 @@ def test_forged_mode_and_normalized_resources_are_ignored(monkeypatch):
 
     asyncio.run(kube_spawner.pre_spawn_hook(spawner))
 
-    assert spawner.cpu_limit == "900m"
+    assert spawner.cpu_limit == 0.9
     assert spawner.environment["RESOURCE_SELECTION_MODE_APPLIED"] == "dynamic"
 
 
@@ -417,7 +417,6 @@ def test_dynamic_preview_rejects_malformed_huge_and_negative_dataset_values(monk
 
 def test_reprovision_preview_carries_same_one_time_dynamic_binding(monkeypatch):
     _, kube_spawner, namespace = execute_overlay(monkeypatch)
-    namespace["context_options_from_form"] = kube_spawner.options_from_form
     reprovision = yaml.safe_load((ROOT / "helm/reprovision-values.yaml").read_text())
     code = reprovision["hub"]["extraConfig"]["10-intent-aware-reprovisioning"]
     exec(compile(code, "helm/reprovision-values.yaml::extraConfig", "exec"), namespace)
@@ -457,6 +456,7 @@ def test_reprovision_preview_carries_same_one_time_dynamic_binding(monkeypatch):
 
     assert dynamic_preview["resource_decision"]["applied_mode"] == "dynamic"
     assert options["dynamic_preview_id"] == dynamic_preview["dynamic_preview_id"]
+    asyncio.run(kube_spawner.pre_spawn_hook(spawner_for(options)))
     with pytest.raises(ValueError, match="already been used"):
         namespace["validate_dynamic_resource_preview"](options, "alice")
 
@@ -576,4 +576,3 @@ def test_gpu_resource_guarantees_and_limits_strictly_match(monkeypatch):
     assert spawner.extra_resource_guarantees["nvidia.com/gpu"] == 1
     assert spawner.extra_resource_limits["nvidia.com/gpu"] == 1
     assert spawner.extra_resource_guarantees == spawner.extra_resource_limits
-

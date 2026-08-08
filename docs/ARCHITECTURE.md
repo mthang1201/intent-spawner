@@ -1,401 +1,197 @@
 # Architecture
 
-This document explains how the repository's components fit together. It
-separates the interactive Helm demo, local synthetic benchmark, and
-Kubernetes-backed evaluation because they use different execution and evidence
-paths.
+This document explains the system architecture and data flows of the **Intent- and Context-Aware Profile Recommendation for Zero to JupyterHub** research prototype.
 
-For commands, see [Getting Started](GETTING_STARTED.md). For the presentation
-flow, see [Demo Script](../DEMO_SCRIPT.md).
+It covers the complete feature set implemented across **Tasks A through F**:
+* **Task A — Recommendation Preview UI**
+* **Task B — Notebook Image Recommendation**
+* **Task C — Pluggable Recommender Framework** (Rule-Based, External LLM API, Self-Hosted LLM)
+* **Task D — Intent-Aware Re-Provisioning**
+* **Task E — Policy-Bounded Dynamic Profile Generation** (Stretch Goal)
+* **Task F — Evaluation Framework Redesign** (Evaluation Protocol v4)
 
-## System Overview
+---
 
-```mermaid
-flowchart LR
-    User["User or benchmark scenario"]
-
-    subgraph Demo["Interactive Helm demo"]
-        Baseline["Baseline static profile form"]
-        Proposed["Intent/context form and recommendation preview"]
-        Confirm["Confirm or allowlisted override"]
-        Hook["KubeSpawner pre-spawn hook"]
-        UserPod["JupyterHub user pod"]
-    end
-
-    subgraph Local["Local synthetic benchmark"]
-        Manifest["Workload manifest"]
-        Methods["Method decision"]
-        LocalRunner["Local workload process"]
-        LocalRaw["Append-only JSONL and logs"]
-        LocalDerived["CSV, SVG, and report"]
-    end
-
-    subgraph Cluster["Kubernetes evaluation"]
-        Policies["Operational method policy"]
-        PodRunner["Controlled pod runner"]
-        Evidence["Pod, event, cgroup, and metric evidence"]
-        ClusterRaw["Preserved raw corpus"]
-        ClusterDerived["Validated tables, figures, and report"]
-    end
-
-    User --> Baseline --> UserPod
-    User --> Proposed --> Confirm --> Hook --> UserPod
-
-    Manifest --> Methods --> LocalRunner --> LocalRaw --> LocalDerived
-    Manifest --> Policies --> PodRunner --> Evidence --> ClusterRaw --> ClusterDerived
-```
-
-The three paths share profile concepts and recommendation logic, but they do
-not share runtime measurements or claim boundaries.
-
-## Profile Model
-
-The approved CPU profiles are:
-
-| Profile | CPU request | CPU limit | Memory request | Memory limit | Typical demo meaning |
-| --- | ---: | ---: | ---: | ---: | --- |
-| `small` | 100m | 500m | 256M | 384M | Basic Python and light notebooks |
-| `medium` | 500m | 1 CPU | 768M | 1G | Moderate data exploration |
-| `large` | 1500m | 2 CPU | 1536M | 2G | Training-like or larger data workloads |
-
-Kubernetes evaluation code also records normalized MiB values because decimal
-Kubernetes quantities such as `256M` are not equal to `256Mi`.
-
-`gpu_or_large` is a recommendation signal, not an actual GPU profile in this
-artifact. The demo has no GPU pool. The Helm path maps it to Large resources,
-while evaluation policies may map or reject it according to the workload's
-allowed profiles.
-
-## Rule-Based Recommendation
-
-The standalone implementation is in `recommender/recommender.py`. It accepts:
-
-- `intent`;
-- `dataset_size_gb`; and
-- `code_context`.
-
-The rule set is intentionally small and explainable:
-
-| Signal | Effect |
-| --- | --- |
-| GPU/deep-learning term | Return `gpu_or_large` immediately with a no-real-GPU explanation |
-| Dataset size at least 2.0 GB | Add 3 points |
-| Dataset size at least 0.5 GB but below 2.0 GB | Add 1 point |
-| Data-processing term | Add 1 point |
-| Training/modeling term | Add 2 points |
-| Total score at least 3 | Recommend `large` |
-| Total score from 1 to 2 | Recommend `medium` |
-| Total score 0 | Recommend `small` |
-
-Invalid, missing, or negative dataset-size inputs are treated as unknown
-(`0.0`). Reasons are kept as human-readable strings. A second deterministic
-rule set maps matched software capabilities to an immutable image in
-`recommender/image-catalog.yaml`; the default is `minimal-python`, data and
-classical-ML terms map to `scipy-data-science`, and framework-specific terms
-map to the PyTorch or TensorFlow catalog entries.
-
-The implementation under `helm/proposed-values.yaml` mirrors this logic inside
-JupyterHub `hub.extraConfig`. It is duplicated because the live Helm prototype
-must execute inside the Hub process before a user server starts. Unit tests
-exercise both the standalone module and the compiled embedded configuration;
-Helm rendering checks that the values are packaged into the chart correctly.
-
-## Path 1: Interactive Helm Demo
-
-### Baseline
-
-```mermaid
-sequenceDiagram
-    actor User
-    participant Hub as JupyterHub
-    participant Spawner as KubeSpawner
-    participant API as Kubernetes API
-
-    User->>Hub: Log in with DummyAuthenticator
-    Hub->>User: Show Small, Medium, Large
-    User->>Hub: Choose a hardware profile
-    Hub->>Spawner: Pass profile overrides
-    Spawner->>API: Create user pod with selected resources
-    API-->>User: Start JupyterLab
-```
-
-`helm/baseline-values.yaml` uses JupyterHub's static `profileList`. The user
-selects hardware directly. Each profile supplies KubeSpawner CPU, memory, and
-an identifying environment variable.
-
-### Proposed method
-
-```mermaid
-sequenceDiagram
-    actor User
-    participant Form as Intent/context form
-    participant Preview as Recommendation preview
-    participant Hook as Pre-spawn hook
-    participant Rules as Rule-based recommender
-    participant Spawner as KubeSpawner
-    participant API as Kubernetes API
-
-    User->>Form: Enter intent, dataset size, code hints
-    Form->>Preview: Preview profile, image, explanation
-    User->>Preview: Confirm or allowlisted override
-    Preview->>Rules: Hub recomputes and validates decision
-    Rules-->>Hook: Derived decision, explanations, audit ID
-    Hook->>Spawner: Set requests, limits, image, env, annotations
-    Spawner->>API: Create user pod
-    API-->>User: Start JupyterLab
-```
-
-The proposed Helm configuration provides:
-
-- an HTML form with Preview, Confirm, Edit, and Manual Override states;
-- input parsing, negative-size normalization, and server-side recomputation;
-- an administrator-owned immutable image allowlist;
-- a pre-spawn hook;
-- profile-to-resource and image-ID-to-reference mapping;
-- derived recommendation/applied environment variables;
-- allowlisted `z2jh-context-demo.local/*` annotations; and
-- one structured accept/override audit event per confirmed spawn.
-
-The recommendation is applied before pod creation only after confirmation.
-The pod specification, environment, annotations, and privacy-minimized Hub
-audit logs provide observable evidence that the reviewed choice was enforced.
-See [Recommendation Preview Design](evaluation/RECOMMENDATION_PREVIEW_DESIGN.md)
-for the state machine and scalability assessment.
-
-### Demo support components
-
-| Component | Role |
-| --- | --- |
-| `scripts/install-baseline.sh` | Creates the namespace and workload ConfigMap, then installs baseline values |
-| `scripts/install-proposed.sh` | Upgrades the same release with context-aware values |
-| `scripts/port-forward.sh` | Maps local port 8000 to the JupyterHub proxy service |
-| `scripts/watch-pods.sh` | Watches namespace pod status |
-| `workload/` | Bounded scripts mounted through the `demo-workload` ConfigMap |
-| `scripts/demo-*.sh` | Creates controlled pods for failure and reservation demonstrations |
-| `scripts/uninstall.sh` | Deletes only the configured demo namespace |
-
-The demo uses no persistent JupyterHub storage. Deleting the namespace removes
-the demo's Kubernetes state.
-
-## Path 2: Local Synthetic Benchmark
+## 1. System Overview
 
 ```mermaid
 flowchart TD
-    Manifest["benchmarks/workloads.yaml"]
-    Matrix["experiments.runner: matrix generation"]
-    Decision["experiments.methods: static_manual, intent_only, context_aware"]
-    Workload["benchmarks.workload_runner"]
-    Artifacts["stdout, stderr, workload metadata"]
-    Record["schema 2 normalized record"]
-    JSONL["experiments/raw/.../results.jsonl"]
-    Analysis["experiments.analyze_results"]
-    Outputs["results CSV, SVG, and RESULTS.md"]
-
-    Manifest --> Matrix
-    Matrix --> Decision
-    Decision --> Workload
-    Workload --> Artifacts
-    Artifacts --> Record
-    Record --> JSONL
-    JSONL --> Analysis
-    Manifest --> Analysis
-    Analysis --> Outputs
+    User([User / Data Scientist]) -->|1. Enters Workload Description| Form[Pre-Spawn Intent Form UI]
+    Form -->|2. Submits Workload Context| HubServer[JupyterHub Config & Handlers]
+    
+    subgraph Recommender Layer [Pluggable Recommender Framework (Task C)]
+        HubServer --> RecommenderRegistry{Recommender Backend Registry}
+        RecommenderRegistry -->|Zero-dep Deterministic| RuleBased[Rule-Based Recommender]
+        RecommenderRegistry -->|HTTPS OpenAI API + Secret| ExtLLM[External LLM: Gemini 1.5 Flash]
+        RecommenderRegistry -->|Local HTTP Inference| SelfLLM[Self-Hosted LLM: Ollama / vLLM]
+        
+        RuleBased & ExtLLM & SelfLLM --> SchemaCheck[Strict JSON Schema Validation]
+        SchemaCheck --> CatalogCheck[Image Catalog & Policy Matcher (Task B)]
+    end
+    
+    CatalogCheck -->|3. Produces Recommendation| PreviewUI[Recommendation Preview UI (Task A)]
+    
+    subgraph User Decision & Confirmation (Task A)
+        PreviewUI -->|Confirm / Accept| Hook[KubeSpawner Pre-Spawn Hook]
+        PreviewUI -->|Edit Inputs| Form
+        PreviewUI -->|Manual Override| AdminAllowlist[Admin Profile & Image Allowlist]
+        AdminAllowlist --> Hook
+    end
+    
+    subgraph Profile Allocation Modes (Task E)
+        Hook -->|Catalog Mode| FixedProfile[Discrete Sizing: Small / Medium / Large]
+        Hook -->|Dynamic Mode| DynProfile[Policy-Bounded Continuous CPU/RAM/GPU]
+    end
+    
+    FixedProfile & DynProfile -->|4. Pod Creation| K8sPod[Single-User Notebook Pod]
+    K8sPod -.->|5. Workload Change / Re-provision (Task D)| ReprovisionHandler[/hub/reprovision Stop-and-Recreate]
+    ReprovisionHandler -->|Retains PVC, Stops Pod| Hook
+    
+    subgraph Audit & Evaluation (Task F)
+        PreviewUI -.->|Structured Logs| AuditLog[(recommendation_audit Events)]
+        AuditLog -.-> ProtocolV4[Evaluation Protocol v4 Analysis]
+    end
 ```
 
-### Workload manifest
+---
 
-`benchmarks/workloads.yaml` is metadata-first. Each scenario declares:
+## 2. Resource Profiles & Image Catalog
 
-- a stable workload ID and category;
-- natural-language intent;
-- a dataset-size hint;
-- code-context hints;
-- deterministic seed;
-- executable workload command;
-- timeout;
-- expected acceptable profiles;
-- policy constraints where relevant; and
-- synthetic-data and license information.
+### Hardware Resource Profiles
+The platform provides both discrete allowlisted profiles and continuous dynamic sizing:
 
-The dataset-size hint is an input to the recommender. It is not a measured file
-size.
+| Profile | CPU Request | CPU Limit | Memory Request | Memory Limit | Target Workload |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| `small` | 100m | 500m | 256M | 384M | Basic Python, light scripts, text exploration |
+| `medium` | 500m | 1 CPU | 768M | 1G | Data analysis with pandas/NumPy (< 1GB datasets) |
+| `large` | 1500m | 2 CPU | 1536M | 2G | ML modeling (scikit-learn, XGBoost) and larger datasets |
+| `gpu_or_large` | 1500m | 2 CPU | 1536M | 2G | Deep learning; mapped safely to Large when GPU pool is unavailable |
 
-### Local comparison methods
+### Curated Notebook Image Catalog (Task B)
+Images are pinned to immutable SHA-256 digests in [`recommender/image-catalog.yaml`](file:///Users/mthang1201/Documents/datn/intent-spawner/recommender/image-catalog.yaml). Users cannot supply arbitrary registry references:
 
-| Method | Inputs used | Selection behavior |
-| --- | --- | --- |
-| `static_manual` | Approved acceptable-profile metadata and policy | Deterministically selects the smallest approved acceptable profile |
-| `intent_only` | Intent and policy | Calls the recommender with dataset size zero and empty code context |
-| `context_aware` | Intent, dataset-size hint, code-context hints, and policy | Uses all permitted pre-spawn inputs |
+* **`minimal-python`**: Lightweight JupyterLab and Python base environment.
+* **`scipy-data-science`**: NumPy, pandas, SciPy, scikit-learn, matplotlib, seaborn.
+* **`pytorch-deep-learning`**: PyTorch, torchvision, torchaudio, and CUDA userspace libraries.
+* **`tensorflow-deep-learning`**: TensorFlow, Keras, and CUDA userspace libraries.
 
-`static_manual` is designed as a careful deterministic comparator, not as an
-intentionally bad Small-only baseline.
+---
 
-### Execution and recording
+## 3. Pluggable Recommender Architecture (Task C)
 
-`experiments.runner` creates an immutable experiment directory, plans the
-matrix, records environment metadata, and invokes `experiments.recorder`.
+All backends implement the `Recommender` protocol in [`recommender/base.py`](file:///Users/mthang1201/Documents/datn/intent-spawner/recommender/base.py), accepting `RecommendationRequest` and returning a validated `SpawnRecommendation`.
 
-`benchmarks.workload_runner` uses deterministic generated data and standard
-library operations. It does not require pandas, scikit-learn, TensorFlow, or a
-GPU. Temporary files are deleted before the workload exits.
+```text
+RecommendationRequest
+  ├── intent: str
+  ├── dataset_size_gb: float
+  └── code_context: str
+       ↓
+Recommender Protocol (recommender/base.py)
+  ├── RuleBasedRecommender (recommender/rule_based.py)
+  ├── ExternalLLMRecommender (recommender/external_llm.py)
+  └── SelfHostedLLMRecommender (recommender/self_hosted_llm.py)
+       ↓
+PolicyValidator & Schema Validation (RESPONSE_SCHEMA)
+       ↓
+SpawnRecommendation
+  ├── profile: str
+  ├── applied_profile: str
+  ├── image_id: str
+  ├── image_display_name: str
+  ├── reasons: list[str]
+  ├── score: float | None
+  ├── backend_name: str
+  ├── policy_version: str
+  └── catalog_version: str
+```
 
-Every attempted workload preserves stdout and stderr before appending a
-normalized JSON object to `results.jsonl`. Resume mode skips only combinations
-already represented by a raw record.
+### Backend Specifications:
+1. **Rule-Based Backend** (`rule_based.py`):
+   * Fast, deterministic keyword and heuristic extraction.
+   * Dataset thresholds: `>= 2.0GB` (+3 score -> `large`), `>= 0.5GB` (+1 score -> `medium`).
+   * Training syntax (`.fit(`, `sklearn`) and data syntax (`pandas`, `read_csv`) triggers.
+   * Serves as automatic fallback whenever network-based backends fail or timeout.
 
-### Analysis
+2. **External LLM Backend** (`external_llm.py`):
+   * Uses OpenAI-compatible HTTP chat completions (e.g. Google Gemini 1.5 Flash at `https://generativelanguage.googleapis.com/v1beta/openai/chat/completions`).
+   * Authenticates with Kubernetes Secret `intent-spawner-external-llm` (`EXTERNAL_LLM_API_KEY`).
+   * Built-in timeout controls, exponential backoff retries, JSON object response format, and fail-closed fallback to `RuleBasedRecommender`.
 
-`experiments.analyze_results` reads raw JSONL without modifying it and produces:
+3. **Self-Hosted LLM Backend** (`self_hosted_llm.py`):
+   * Designed for in-cluster or host-local inference (e.g. Ollama with `llama3`, vLLM, LocalAI).
+   * Optional bearer token (`SELF_HOSTED_LLM_API_KEY`).
+   * Explicit `SELF_HOSTED_LLM_ALLOW_INSECURE_HTTP: "true"` for private internal network boundaries.
+   * Reuses identical strict response validation and rule-based safety fallback.
 
-- method summaries;
-- run counts and exclusions;
-- recommendation outcomes;
-- memory-request and runtime comparisons;
-- ablation and boundary summaries;
-- per-workload tables; and
-- SVG figures and a Markdown report.
+---
 
-Local peak memory comes from process-level instrumentation. It is not a
-Kubernetes pod memory measurement.
-
-## Path 3: Kubernetes-Backed Evaluation
+## 4. Interactive Pre-Spawn Workflow (Task A & B)
 
 ```mermaid
-flowchart TD
-    Manifest["Benchmark scenarios"]
-    Ground["Independent three-profile ground-truth sweep"]
-    Envelope["Observed acceptable profile envelopes"]
-    Methods["static_default, intent_only, context_aware"]
-    Runner["Controlled Kubernetes pod runner"]
-    Pod["Pod with enforced requests and limits"]
-    Sources["Pod status, events, logs, cgroup v2, Metrics Server"]
-    Raw["Preserved per-run raw evidence"]
-    Validate["Artifact and SHA-256 validation"]
-    Analyze["Cluster analysis and timing rule 2.0.0"]
-    Report["Derived CSV, SVG, envelopes, CLUSTER_RESULTS.md"]
+sequenceDiagram
+    actor User as User / Data Scientist
+    participant UI as Pre-Spawn Options Form
+    participant Hub as JupyterHub Server
+    participant Backend as Pluggable Recommender
+    participant Spawner as KubeSpawner
+    participant K8s as Kubernetes API
 
-    Manifest --> Ground --> Envelope
-    Manifest --> Methods --> Runner
-    Envelope --> Runner
-    Runner --> Pod --> Sources --> Raw
-    Raw --> Validate --> Analyze --> Report
+    User->>UI: Input intent, dataset size, code snippet
+    UI->>Hub: POST /hub/spawn (preview request)
+    Hub->>Backend: recommend(request)
+    Backend-->>Hub: SpawnRecommendation
+    Hub-->>UI: Display Profile, Notebook Image, Reasons
+    
+    alt User clicks Confirm
+        User->>UI: Confirm recommendation
+        UI->>Hub: Submit spawn decision (action=accept)
+        Hub->>Hub: Log privacy-minimized audit event
+        Hub->>Spawner: Apply CPU, RAM, image, env & annotations
+        Spawner->>K8s: Create notebook pod
+        K8s-->>User: Pod Running -> JupyterLab UI
+    else User clicks Edit Inputs
+        User->>UI: Modify workload parameters
+        UI->>UI: Invalidate preview, prompt for recalculation
+    else User clicks Manual Override
+        User->>UI: Select allowlisted profile/image
+        UI->>Hub: Submit override decision (action=override)
+        Hub->>Spawner: Apply overridden profile & image
+        Spawner->>K8s: Create notebook pod
+    end
 ```
 
-### Operational methods
+---
 
-| Method | Inputs used | Behavior |
-| --- | --- | --- |
-| `static_default` | Fixed deployment default and permitted policy only | Applies Medium to every workload unless policy changes it |
-| `intent_only` | Intent and permitted policy | Does not receive dataset or code context |
-| `context_aware` | Intent, dataset-size hint, derived context signals, and policy | Uses permitted pre-spawn context |
+## 5. Intent-Aware Re-Provisioning (Task D)
 
-The cluster baseline is called `static_default`, not `static_manual`. It models
-a deployment-wide Medium default and is intentionally isolated from workload
-ground truth.
+When user workloads change mid-session, users navigate to `/hub/reprovision`:
+1. **Workload Update**: Users enter their new intent, dataset size, or code snippet.
+2. **Replacement Preview**: The UI displays side-by-side comparisons of the current configuration vs. the proposed recommendation.
+3. **Explicit Warning**: The UI clearly states that kernel state, memory variables, and background processes will be discarded.
+4. **Stop-and-Recreate**:
+   * The old notebook pod is gracefully terminated.
+   * A new pod is spawned with the updated resource profile and image.
+   * The user's home directory volume (`PersistentVolumeClaim`) is re-attached, preserving all files and saved datasets.
 
-### Independent ground truth
+---
 
-The ground-truth sweep forces every workload under Small, Medium, and Large
-without calling the recommender. Repeated outcomes determine reliable profiles.
-Timing and memory-waste rules then derive an observed acceptable envelope.
+## 6. Policy-Bounded Dynamic Profile Generation (Task E)
 
-Manifest expectations are not used as operational ground truth for this stage.
-This prevents the recommender's own labels from defining its success.
+When `RESOURCE_SELECTION_MODE: dynamic` is enabled via [`helm/dynamic-values.yaml`](file:///Users/mthang1201/Documents/datn/intent-spawner/helm/dynamic-values.yaml):
+* Instead of jumping directly between fixed tiers, continuous CPU, RAM, and GPU values are calculated within administrator-defined policies (`min_cpu`, `max_cpu`, `step_cpu`, `min_memory_mb`, `max_memory_mb`).
+* **Admission Control**: Checks cluster quota headroom before issuing dynamic allocations.
+* **Fail-Safe Fallback**: If dynamic sizing exceeds limits or fails admission checks, the system safely reverts to standard Catalog Mode.
 
-### Evidence collection
+---
 
-The runner enforces the chosen profile in the first container's requests and
-limits. A label alone is not accepted as proof of profile application.
+## 7. Evaluation Framework Redesign (Task F)
 
-Preserved sources include:
-
-- normalized records;
-- sanitized pod and event evidence;
-- pod logs;
-- cgroup-v2 CPU and memory observations;
-- Metrics Server snapshots or explicit unavailability; and
-- cleanup status.
-
-Missing measurements remain null. Requests and limits are never substituted
-for missing usage.
-
-### Measurement semantics
-
-- Cgroup-v2 `memory.peak` is a genuine container-boundary memory peak.
-- Metrics Server provides sampled observations and can miss short jobs.
-- Historical CPU values include full-window averages and legacy hybrid maxima;
-  they are not continuous CPU peaks.
-- Kubernetes timestamps in the retained corpus have one-second resolution.
-  Timing rule 2.0.0 treats durations as intervals and does not add an arbitrary
-  offset.
-
-Read the
-[Kubernetes Cluster Experiment Protocol](evaluation/CLUSTER_EXPERIMENT_PROTOCOL.md)
-and [Result Schema](evaluation/RESULT_SCHEMA.md) before interpreting these
-fields.
-
-### Integrity and derived outputs
-
-`cluster_evaluation.validate_artifacts` checks corpus structure and cross-file
-consistency. `cluster_evaluation.raw_integrity` checks tracked raw bytes against
-the SHA-256 manifest.
-
-`cluster_evaluation.analyze` creates derived cluster tables, figures, observed
-resource envelopes, and `docs/evaluation/CLUSTER_RESULTS.md`. Derived files may
-be regenerated; raw evidence must not be rewritten.
-
-## Data Classes and Ownership
-
-| Data class | Main location | Mutation rule |
-| --- | --- | --- |
-| Source and configuration | `recommender/`, `helm/`, `benchmarks/`, `cluster_evaluation/` | Changed through normal reviewed development |
-| New local raw runs | `experiments/raw/<experiment-id>/` | Append-only; ignored until explicitly reviewed |
-| Preserved local raw snapshots | `experiments/raw/2026.../` | Committed evidence; do not edit |
-| Local derived outputs | `results/`, `experiments/summaries/` | Regenerable from raw records |
-| Preserved cluster raw evidence | `results/cluster/raw/` | Committed evidence protected by integrity checks |
-| Cluster derived outputs | `results/cluster/derived/`, observed envelopes, cluster report | Regenerable from validated raw evidence |
-| Protocols and audit records | `docs/evaluation/` | Source of truth for interpretation and claim boundaries |
-
-## Directory Responsibilities
-
-| Directory | Primary responsibility |
-| --- | --- |
-| `benchmarks/` | Workload definitions and portable execution |
-| `cluster_evaluation/` | Controlled Kubernetes execution and analysis |
-| `docs/` | Onboarding, architecture, governance, protocols, and reports |
-| `experiments/` | Local orchestration, recording, schema, and analysis |
-| `helm/` | Interactive JupyterHub prototype configuration |
-| `k8s/` | Simple request/quota demonstration manifests |
-| `recommender/` | Reusable recommendation function and tests |
-| `results/` | Derived local outputs and cluster evidence/results |
-| `scripts/` | Operator-facing entry points |
-| `tests/` | Automated validation and sanitized fixtures |
-| `workload/` | Bounded live-demo scripts |
-
-## Security and Privacy Boundaries
-
-The demo uses `DummyAuthenticator` and must remain local. It is not a production
-authentication configuration.
-
-The artifact does not retain raw notebooks, raw code context, datasets,
-secrets, or user identities. Evaluation records store derived context terms,
-declared hints, resource evidence, and allowlisted metadata only.
-
-Preview options forms embed catalog definitions and script constants using context-safe JSON serialization (`safe_json_dumps`), replacing `<`/`>`/`&`/`'` with Unicode escape sequences (`\u003c`, `\u003e`, `\u0026`, `\u0027`) to prevent inline script XSS context breakout. Preview state is process-local for single-Hub deployment scope (`hub.replicas: 1`) and invalidates fail-closed on Hub restart.
-
-For complete rules, read [Data Governance](DATA_GOVERNANCE.md).
-
-## What the Architecture Can Demonstrate
-
-The repository can demonstrate that:
-
-- intent and lightweight context can be mapped to an approved pre-spawn
-  profile;
-- the mapping is explainable;
-- a KubeSpawner hook can apply the recommendation before pod creation;
-- comparison methods can be isolated and executed deterministically; and
-- raw evidence can be validated and regenerated into auditable reports.
-
-It does not establish production-wide efficiency, real-user satisfaction,
-multi-node scheduler behavior, GPU performance, or history-aware provisioning.
+The evaluation layer ([`evaluation_v4/`](file:///Users/mthang1201/Documents/datn/intent-spawner/evaluation_v4/)) provides a complete scientific benchmark suite:
+* **Bilingual 60-Intent Gold Standard**: 60 realistic tasks in English and Vietnamese across 4 workload categories (EDA, Data Processing, ML Training, Deep Learning).
+* **Multi-Recommender Benchmarking**: Evaluates Rule-Based, External LLM (Gemini), Self-Hosted LLM (Ollama), and Baseline heuristics.
+* **Evaluation Triad**:
+  1. *Recommendation Quality*: Profile accuracy, image match accuracy, explainability score, latency, fallback rate.
+  2. *System Effectiveness*: Schedulable capacity savings, allocation waste, OOM rate, queue pressure.
+  3. *User Decision Impact*: Acceptance rate, manual override frequency, re-provisioning success.
+* **Statistical Claim Gates**: Bootstrap confidence intervals and Wilcoxon tests ensuring empirical claims are statistically sound before publication.

@@ -1,0 +1,18 @@
+hub:
+  extraEnv:
+    RECOMMENDER_BACKEND: external_llm
+    EXTERNAL_LLM_ENDPOINT: https://generativelanguage.googleapis.com/v1beta/openai/chat/completions
+    EXTERNAL_LLM_MODEL: gemini-1.5-flash
+    EXTERNAL_LLM_TIMEOUT: "10"
+    EXTERNAL_LLM_TOTAL_TIMEOUT: "30"
+    EXTERNAL_LLM_MAX_RETRIES: "2"
+    EXTERNAL_LLM_RETRY_BACKOFF_SECONDS: "0.25"
+    EXTERNAL_LLM_TEMPERATURE: "0"
+    EXTERNAL_LLM_MAX_CONCURRENT_RECOMMENDATIONS: "4"
+    EXTERNAL_LLM_ALLOW_INSECURE_HTTP: "false"
+    EXTERNAL_LLM_API_KEY:
+      valueFrom:
+        secretKeyRef:
+          name: intent-spawner-external-llm
+          key: api-key
+          optional: false

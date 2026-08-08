@@ -1,4 +1,4 @@
-.PHONY: check validate-cluster-results validate-raw-integrity capacity-dry-run v3-validate v3-dry-run v3-image-policy regenerate-cluster-results
+.PHONY: check validate-cluster-results validate-raw-integrity capacity-dry-run v3-validate v3-dry-run v3-image-policy v4-validate v4-test regenerate-cluster-results
 
 check:
 	bash scripts/check.sh
@@ -33,6 +33,13 @@ v3-dry-run: v3-validate
 
 v3-image-policy:
 	.venv/bin/python -m cluster_evaluation.image_policy_v3
+
+v4-validate:
+	.venv/bin/python -m evaluation_v4.run_recommenders --dry-run
+	.venv/bin/python -m evaluation_v4.plan_system --dry-run
+
+v4-test:
+	.venv/bin/python -m pytest -q tests/test_evaluation_v4.py
 
 regenerate-cluster-results: validate-cluster-results
 	.venv/bin/python -m cluster_evaluation.analyze \

@@ -1,0 +1,11 @@
+# Optional overlay for a self-hosted endpoint that requires bearer auth.
+# Create this user-supplied Secret before upgrading the Hub.
+hub:
+  extraEnv:
+    SELF_HOSTED_LLM_AUTH_REQUIRED: "true"
+    SELF_HOSTED_LLM_API_KEY:
+      valueFrom:
+        secretKeyRef:
+          name: intent-spawner-self-hosted-llm
+          key: api-key
+          optional: false

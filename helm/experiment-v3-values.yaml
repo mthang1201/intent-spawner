@@ -17,6 +17,13 @@ hub:
       import html
       import re
 
+      def safe_escape_truncate(text, max_len=240):
+          escaped = html.escape(str(text or ""))
+          if len(escaped) <= max_len:
+              return escaped
+          truncated = escaped[:max_len]
+          return re.sub(r"&[a-zA-Z0-9#]*$", "", truncated)
+
       EVALUATION_METHODS = ("static_default", "intent_only", "context_aware")
       PROFILE_RESOURCES = {
           "small": {
@@ -159,7 +166,7 @@ hub:
               "z2jh-context-demo.local/recommended-profile": profile,
               "z2jh-context-demo.local/applied-profile": profile,
               "z2jh-context-demo.local/run-id": options["run_id"],
-              "z2jh-context-demo.local/recommendation-reasons": html.escape(reason_text)[:240],
+              "z2jh-context-demo.local/recommendation-reasons": safe_escape_truncate(reason_text, 240),
           })
           spawner.extra_annotations = annotations
           spawner.log.info("v3 recommendation method=%s profile=%s", method, profile)

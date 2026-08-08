@@ -2,140 +2,67 @@
 
 ## Source And Configuration
 
-- `recommender/`: rule-based resource/image recommender, administrator image
-  catalog, and tests.
-- `helm/baseline-values.yaml`: baseline static-profile JupyterHub values.
-- `helm/proposed-values.yaml`: proposed intent/context-aware JupyterHub values.
-- `docs/evaluation/RECOMMENDATION_PREVIEW_DESIGN.md`: image mapping,
-  confirm-before-spawn state machine, audit schema, scalability assessment, and
-  production suitability boundary.
+- `recommender/`:
+  - `base.py`: unified `Recommender` protocol, `RecommendationRequest`, and `SpawnRecommendation` schemas.
+  - `registry.py`: provider-neutral backend factory (`create_recommender`).
+  - `rule_based.py`: deterministic heuristic and keyword matching recommender.
+  - `external_llm.py`: OpenAI-compatible external chat completions client with Kubernetes Secret support (e.g. Gemini 1.5 Flash).
+  - `self_hosted_llm.py`: private inference adapter for local/in-cluster engines (e.g. Ollama, vLLM).
+  - `dynamic_resources.py`: policy-bounded continuous CPU/RAM/GPU profile generator.
+  - `image-catalog.yaml`: curator-managed immutable notebook image catalog pinned to SHA-256 digests.
+  - `models.py`, `policy.py`, `reliability.py`: core dataclasses, policy validators, and network deadline managers.
+- `helm/`:
+  - `baseline-values.yaml`: static-profile baseline JupyterHub values.
+  - `proposed-values.yaml`: context-aware pre-spawn preview form, pre-spawn hook, and catalog-mode values.
+  - `reprovision-values.yaml`: stop-and-recreate intent-aware re-provisioning overlay with PVC retention.
+  - `dynamic-values.yaml`: continuous dynamic profile generation overlay with quota admission controls.
+  - `gemini-values.yaml`: external LLM deployment configuration using Google Gemini 1.5 Flash.
+  - `ollama-values.yaml`: self-hosted LLM deployment configuration using local Ollama.
 - `k8s/`: demo pods and resource quota manifests.
-- `workload/`: original demo workload scripts.
-- `cluster_evaluation/`: Kubernetes workload image, pod runner, method policies,
-  raw-integrity validator, and raw-to-derived analysis.
+- `workload/`: demo workload scripts mounted into JupyterLab containers.
+
+---
+
+## Evaluation & Benchmarks (Protocol v4)
+
+- `evaluation_v4/`:
+  - `gold_set.py` & `gold_dataset.json`: bilingual 60-intent benchmark dataset (English and Vietnamese) across EDA, Data Processing, ML Training, and Deep Learning.
+  - `recommenders.py` & `run_recommenders.py`: multi-backend recommender benchmark runner.
+  - `plan_system.py`: paired system effectiveness plan and trial generator.
+  - `metrics.py`: recommendation quality, system effectiveness, and user decision metrics.
+  - `statistics.py`: family-clustered bootstrap confidence intervals and Wilcoxon signed-rank tests.
+  - `evidence_schema.py` & `claim_gates.py`: formal claim gates separating synthetic runs from cluster evidence.
+
+---
 
 ## Setup And Verification
 
-- `requirements.txt`: pinned runtime Python dependency set.
-- `requirements-dev.txt`: pinned development/test dependency set.
+- `requirements.txt`: runtime Python dependencies.
+- `requirements-dev.txt`: development, testing, and evaluation dependencies.
 - `scripts/setup.sh`: creates `.venv` and installs pinned dependencies.
-- `scripts/check.sh`: repository verification command.
-- `scripts/environment-report.sh`: writes a sanitized local capability report.
-- `scripts/check-cluster.sh`: read-only cluster prerequisite check.
-- `scripts/uninstall.sh`: Kubernetes cleanup command.
+- `scripts/check.sh`: complete repository verification command (15 automated stages).
+- `scripts/install-proposed.sh`: installs the proposed context-aware JupyterHub demo.
+- `scripts/install-dynamic.sh`: packages the recommender library and deploys dynamic mode.
+- `scripts/install-baseline.sh`: installs the baseline static hardware profile demo.
+- `scripts/port-forward.sh`: local port forwarder to JupyterHub proxy.
+- `scripts/watch-pods.sh`: pod monitoring helper.
+- `scripts/uninstall.sh`: complete demo namespace deletion.
 
-## Benchmark And Experiment Harness
+---
 
-- `benchmarks/workloads.yaml`: deterministic workload manifest, synthetic-data
-  declarations, profile expectations, and license statements.
-- `benchmarks/workload_runner.py`: local synthetic workload executor.
-- `experiments/runner.py`: smoke, dry-run, full-matrix, resume, and aggregate
-  orchestration.
-- `experiments/recorder.py`: raw result construction and workload execution.
-- `experiments/result_schema.py` and `experiments/result_schema.schema.json`:
-  versioned raw record schema.
-- `experiments/analyze_results.py`: table, figure, and report reproduction.
-- `experiments/capture_environment.py`: local capability report capture.
-- `tests/`: unit tests and sanitized parser fixtures.
-- `cluster_evaluation/validate_artifacts.py`: reconciles every preserved cluster
-  plan, result, sidecar, applied-resource observation, and supporting path.
-- `cluster_evaluation/result_compat.py`: preserves schema-1 CPU values while
-  exposing their actual average or sampled-maximum semantics.
-- `cluster_evaluation/timing.py`: versioned interval-censored timing rule.
-- `cluster_evaluation/capacity_runner.py`: preregistered capacity-v2 runner with
-  dry-run and exact-label cleanup paths.
-- `cluster_evaluation/raw_integrity.py`: verifies every tracked raw file against
-  `docs/evaluation/RAW_EVIDENCE_SHA256SUMS.txt`.
-- `benchmarks/workloads-v3.yaml` and
-  `benchmarks/resource_envelope_runner.py`: preregistered bounded calibration
-  and hold-out suite; validation mode does not allocate pressure.
-- `cluster_evaluation/runner_v3.py`, `pod_runner_v3.py`, and
-  `result_schema_v3.py`: separate v3 direct-pod planning, cgroup measurement,
-  safety gates, append-only evidence, and schema validation.
-- `cluster_evaluation/analyze_v3.py`: calibration gate, independent ground
-  truth, fixed-suite comparison, Wilson intervals, and workload-cluster
-  bootstrap analysis.
-- `cluster_evaluation/evidence_v3.py`: fail-closed v3 corpus completeness,
-  pairing, replacement, provenance, sidecar, and SHA-256 validation.
-- `cluster_evaluation/image_policy_v3.py`: immutable custom-image and rendered
-  Helm reference validation.
-- `cluster_evaluation/jupyterhub_v3.py` and
-  `helm/experiment-v3-values.yaml`: experiment-only end-to-end sentinel path.
-- `docs/evaluation/RESOURCE_ENVELOPE_PROTOCOL_V3.md`: preregistration, stopping
-  rules, measurement semantics, uncertainty, costs, and claim boundary.
-- `docs/evaluation/RESOURCE_ENVELOPE_V3_IMPLEMENTATION_AUDIT.md`: independent
-  implementation audit, blocked readiness decision, claim table, and
-  fail-closed reproduction sequence.
+## Documentation Index
 
-## Preserved Raw Evidence
-
-- `experiments/raw/20260719T140417Z-smoke-171688c0`: smoke run evidence.
-- `experiments/raw/20260719T140423Z-matrix-783b4141`: dry-run matrix planning
-  evidence.
-- `experiments/raw/20260719T140431Z-matrix-aed48949`: full local synthetic
-  matrix used to generate the committed analysis outputs.
-- `results/cluster/raw/ground-truth-39b6973-seed20260720`: 108 retained pod
-  outcomes and supporting evidence.
-- `results/cluster/raw/comparative-39b6973-seed20260720`: 180 retained pod
-  outcomes and supporting evidence.
-- `results/cluster/raw/capacity-39b6973-seed20260721`: nine batch outcomes and
-  108 per-pod capacity observations. The exact evaluated batch generator is not
-  present; this corpus is supplementary and not principal claim support.
-- `results/cluster/raw/capacity-v2-ca2e74b-seed20260721`: principal controlled
-  capacity evidence generated from committed protocol 2.0.0 at
-  `ca2e74b2043a5ea85a68119097d6c325fe84c294`; 9 counterbalanced batches, 108
-  per-pod outcomes, sanitized Minikube/image provenance, and successful
-  exact-label cleanup for every batch.
-- `docs/evaluation/RAW_EVIDENCE_SHA256SUMS.before-0ffbd9a.txt`: file-by-file
-  baseline recorded before blocker resolution.
-- `docs/evaluation/RAW_EVIDENCE_SHA256SUMS.txt`: current file-by-file raw
-  integrity manifest.
-
-Raw records include the source `git_commit` used when they were generated. The
-current manifest covers 1,877 tracked raw files; the pre-audit baseline covers
-1,541 files and remains independently verified. New raw runs are ignored by
-default unless explicitly reviewed and force-added.
-
-## Derived Outputs
-
-- `results/*.csv`: regenerated analysis tables.
-- `results/figures/*.svg`: regenerated figures.
-- `results/environment-capability.json`: captured environment capability report.
-- `docs/evaluation/RESULTS.md`: narrative analysis report generated from raw
-  records plus the environment capability report.
-- `results/cluster/derived/`: Kubernetes-backed tables and SVG figures.
-- `benchmarks/observed_resource_envelopes.yaml`: raw-run-linked operational
-  envelopes using timing rule 2.0.0 without an offset or arbitrary guard.
-- `docs/evaluation/CLUSTER_RESULTS.md`: generated, scoped Kubernetes report.
-- `docs/evaluation/AUDIT_BLOCKER_RESOLUTION.md`: exact-commit resolution,
-  checksum chain, rerun provenance, corrected claims, and verification record.
-- `docs/evaluation/FINAL_AUDIT.md`: current independent final verdict,
-  former-blocker status, clean validation record, claim matrix, and defense
-  checklist.
-
-## Reproduction Commands
-
-```bash
-bash scripts/setup.sh
-bash scripts/check.sh
-.venv/bin/python -m experiments.runner --smoke --environment-id local-smoke --timeout 60
-.venv/bin/python -m experiments.runner --full-matrix --repeats 5 --seed 20260719 --dry-run --environment-id local-dry-run
-.venv/bin/python -m experiments.analyze_results \
-  --experiment-dir experiments/raw/20260719T140431Z-matrix-aed48949 \
-  --results-dir /tmp/intent-spawner-results \
-  --results-md /tmp/intent-spawner-results/RESULTS.md \
-  --environment-report results/environment-capability.json \
-  --overwrite
-make validate-cluster-results
-make validate-raw-integrity
-make capacity-dry-run
-make v3-dry-run
-make regenerate-cluster-results
-```
-
-## Generated Files Not Normally Committed
-
-- `.venv/`, `.pytest_cache/`, and `__pycache__/`.
-- New directories under `experiments/raw/`.
-- New CSVs under `experiments/summaries/`.
-- Temporary analysis outputs under `/tmp`.
+- `README.md`: executive summary, problem statement, Task A–F feature breakdown, and quickstart guides.
+- `docs/ARCHITECTURE.md`: comprehensive system architecture and sequence diagrams.
+- `docs/GETTING_STARTED.md`: step-by-step onboarding, interactive demo, and evaluation guide.
+- `DEMO_SCRIPT.md`: presentation runbook with live scenes covering all prototype features.
+- `docs/EXTERNAL_LLM_RECOMMENDER.md`: external LLM integration and Secret wiring specification.
+- `docs/SELF_HOSTED_LLM_RECOMMENDER.md`: local Ollama/vLLM self-hosted inference specification.
+- `docs/INTENT_AWARE_REPROVISIONING.md`: stop-and-recreate re-provisioning with storage retention.
+- `docs/DYNAMIC_PROFILE_GENERATION.md`: continuous resource allocation and quota guardrails.
+- `docs/HELM_BACKEND_DEPLOYMENT.md`: production Helm wiring and ConfigMap rollout architecture.
+- `docs/evaluation/EVALUATION_V4_PROTOCOL.md`: Protocol v4 evaluation methodology and benchmark metrics.
+- `docs/evaluation/RECOMMENDATION_PREVIEW_DESIGN.md`: preview state machine, audit schema, and scalability.
+- `docs/evaluation/IMPLEMENTATION_ROADMAP.md`: complete capability matrix for Tasks A–F.
+- `docs/DATA_GOVERNANCE.md`: privacy minimization and raw evidence storage rules.
+- `CLEANUP.md`: cluster cleanup instructions and local artifact lifecycle.

@@ -44,7 +44,7 @@ skip_check() {
 
 cd "$ROOT_DIR" || exit 1
 
-run_check "unit and smoke tests" env PYTHONPATH=. "$PYTHON_BIN" -m pytest recommender/test_recommender.py tests/test_config_validation.py tests/test_dynamic_profile_overlay.py tests/test_reprovisioning.py
+run_check "unit and smoke tests" env PYTHONPATH=. "$PYTHON_BIN" -m pytest recommender/test_recommender.py tests/test_config_validation.py tests/test_dynamic_profile_overlay.py tests/test_reprovisioning.py tests/test_evaluation_v4.py
 run_check "preserved cluster artifact integrity" "$PYTHON_BIN" -m cluster_evaluation.validate_artifacts
 run_check "raw evidence SHA-256 integrity" "$PYTHON_BIN" -m cluster_evaluation.raw_integrity
 run_check "capacity runner dry run" "$PYTHON_BIN" -m cluster_evaluation.capacity_runner \
@@ -61,7 +61,11 @@ run_check "v3 direct-pod dry run" "$PYTHON_BIN" -m cluster_evaluation.runner_v3 
 run_check "v3 JupyterHub dry run" "$PYTHON_BIN" -m cluster_evaluation.jupyterhub_v3 \
   --experiment-id v3-jupyterhub-dry-run \
   --dry-run
-run_check "Python syntax validation" "$PYTHON_BIN" -m compileall -q benchmarks cluster_evaluation experiments recommender workload scripts/generate-capacity-values.py tests
+run_check "v4 gold set and recommender matrix validation" "$PYTHON_BIN" -m evaluation_v4.run_recommenders \
+  --dry-run
+run_check "v4 paired system plan validation" "$PYTHON_BIN" -m evaluation_v4.plan_system \
+  --dry-run
+run_check "Python syntax validation" "$PYTHON_BIN" -m compileall -q benchmarks cluster_evaluation evaluation_v4 experiments recommender workload scripts/generate-capacity-values.py tests
 run_check "shell syntax validation" bash -n scripts/check-cluster.sh scripts/check.sh scripts/demo-defensive-overrequesting.sh scripts/demo-overprovisioning.sh scripts/demo-underprovisioning.sh scripts/environment-report.sh scripts/install-baseline.sh scripts/install-proposed.sh scripts/port-forward.sh scripts/setup.sh scripts/uninstall.sh scripts/watch-pods.sh
 
 if command -v helm >/dev/null 2>&1; then

@@ -152,10 +152,16 @@ class DynamicResourceSpec:
         """Return values suitable for KubeSpawner resource attributes."""
 
         values: dict[str, object] = {
-            "cpu_guarantee": f"{self.cpu_request_millicores}m",
-            "cpu_limit": f"{self.cpu_limit_millicores}m",
-            "mem_guarantee": f"{self.memory_request_mib}Mi",
-            "mem_limit": f"{self.memory_limit_mib}Mi",
+            # KubeSpawner 7 models CPU guarantee/limit as Float traits.  The
+            # Kubernetes-style ``500m`` strings accepted by pod specs are not
+            # valid trait values and fail before a pod is created.
+            "cpu_guarantee": self.cpu_request_millicores / 1000,
+            "cpu_limit": self.cpu_limit_millicores / 1000,
+            # JupyterHub's ByteSpecification accepts byte integers or decimal
+            # K/M/G/T suffixes, not Kubernetes binary ``Mi`` strings.  Integers
+            # preserve the policy's exact MiB quantities without rounding.
+            "mem_guarantee": self.memory_request_mib * 2**20,
+            "mem_limit": self.memory_limit_mib * 2**20,
         }
         if self.gpu_count:
             gpu_val = int(self.gpu_count)

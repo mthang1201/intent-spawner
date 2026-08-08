@@ -463,6 +463,10 @@ def test_replayed_dynamic_preview_token_consumed():
 
     options = namespace["build_reprovision_options"](user, values)
     assert options["provisioning_mode"] == "reprovision"
+    assert "test-dynamic-token-123" not in consumed_tokens
+    namespace["validate_dynamic_resource_preview"](
+        options, "pytest-user", consume=True
+    )
     assert "test-dynamic-token-123" in consumed_tokens
 
     # Second attempt with same token fails
@@ -593,4 +597,3 @@ def test_rollback_pre_spawn_hook_marks_rollback_mode():
     assert spawner.environment["PROVISIONING_MODE"] == "reprovision_rollback"
     assert spawner.environment["REPROVISION_GENERATION"] == "2"
     assert spawner.extra_annotations["z2jh-context-demo.local/provisioning-mode"] == "reprovision_rollback"
-

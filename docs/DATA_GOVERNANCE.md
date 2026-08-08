@@ -162,3 +162,24 @@ applicable, informed consent, a data minimization plan, a retention and deletion
 schedule, access controls, participant pseudonymization, secret scanning,
 reviewable redaction tooling, opt-out/withdrawal handling, dataset license
 review, and a clear separation between operational logs and research records.
+
+## Protocol-v4 additions
+
+Protocol v4 adds record contracts for a future consented user study and for
+controlled re-provisioning trials. These contracts do not authorize passive
+collection from deployed users.
+
+- User-study records contain a random, study-local `participant_block_id` only.
+  They exclude usernames, email, account IDs, raw intent, notebook code,
+  datasets, and free-form interaction transcripts. Any identity mapping must be
+  stored outside the artifact and deleted under the approved retention plan.
+- Observed user events require a consent-version identifier. Simulated and
+  replay events are never pooled with observed records.
+- Re-provisioning evidence stores profile/image IDs, transaction outcomes,
+  timings, and a hashed or non-sensitive PVC sentinel result. It must not store
+  persisted file contents or Kubernetes credentials.
+- Protocol-v4 system and re-provisioning records reference only sanitized,
+  repository-relative evidence paths. The analyzer requires evidence paths for
+  observed records and preserves missing metrics as null.
+
+See `docs/evaluation/EVIDENCE_COLLECTION_V4.md` for exact collection rules.

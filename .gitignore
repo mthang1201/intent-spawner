@@ -13,3 +13,6 @@ experiments/raw/*
 experiments/summaries/*
 !experiments/summaries/README.md
 helm/generated-values.yaml
+.tmp/
+results/
+

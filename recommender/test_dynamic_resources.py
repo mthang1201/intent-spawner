@@ -82,10 +82,10 @@ def test_dynamic_mode_generates_aligned_values_inside_every_policy_bound():
     assert resources.memory_limit_mib <= policy.quota.memory_limit_mib
     assert resources.gpu_count == 0
     assert resources.to_kubespawner_resources() == {
-        "cpu_guarantee": "500m",
-        "cpu_limit": "900m",
-        "mem_guarantee": "768Mi",
-        "mem_limit": "1024Mi",
+        "cpu_guarantee": 0.5,
+        "cpu_limit": 0.9,
+        "mem_guarantee": 768 * 2**20,
+        "mem_limit": 1024 * 2**20,
     }
 
 

@@ -1,348 +1,359 @@
-# Intent Spawner Research Artifact
+# Intent- and Context-Aware Profile Recommendation for Zero to JupyterHub
 
-This repository contains the graduation-thesis prototype:
+This repository contains the graduation thesis prototype and research artifact:
 
-> **Intent- and Context-Aware Profile Recommendation for Zero to JupyterHub
-> and KubeSpawner**
+> **Intent- and Context-Aware Profile Recommendation for Zero to JupyterHub and KubeSpawner**
 
-The prototype asks a user what they intend to do, optionally accepts a dataset
-size and lightweight code context, and previews an explainable Kubernetes
-resource profile plus an administrator-allowlisted notebook image. The user
-must confirm or manually override the recommendation before JupyterHub starts
-the server.
+Instead of forcing users to guess raw hardware quantities (CPU/RAM limits), the system asks users to describe their workload intent, accepts optional dataset sizes and code context, and presents an explainable recommendation preview combining an optimal resource profile and an administrator-allowlisted notebook image. Users can confirm, edit, or override the recommendation before any Kubernetes pod is created.
 
-The repository is both a runnable demonstration and a research artifact. It
-contains three separate execution paths:
+---
 
-1. an interactive Zero to JupyterHub demonstration;
-2. a portable local synthetic benchmark; and
-3. a preserved Kubernetes-backed evaluation corpus.
+## Table of Contents
 
-The repository also contains a preregistered, not-yet-executed v3
-resource-envelope protocol. V3 adds bounded memory pressure,
-calibration/hold-out isolation, and a separate JupyterHub fidelity path without
-changing the preserved v2 corpus. See
-[Resource-Envelope Protocol v3](docs/evaluation/RESOURCE_ENVELOPE_PROTOCOL_V3.md).
-The independent implementation audit is documented in
-[Protocol-v3 Implementation Audit](docs/evaluation/RESOURCE_ENVELOPE_V3_IMPLEMENTATION_AUDIT.md).
-As of 2026-07-23, this revision freezes the reviewed protocol-v3 source, but
-immutable registry images are still missing, so no real v3 cluster experiment
-has run.
+1. [Problem Statement](#problem-statement)
+2. [Key Architecture & Implemented Features (Tasks A–F)](#key-architecture--implemented-features-tasks-a-f)
+   - [Task A — Recommendation Preview UI](#task-a--recommendation-preview-ui)
+   - [Task B — Notebook Image Recommendation](#task-b--notebook-image-recommendation)
+   - [Task C — Pluggable Recommender Framework](#task-c--pluggable-recommender-framework)
+     - [Rule-Based Recommender](#1-rule-based-recommender)
+     - [External LLM API (e.g., Google Gemini)](#2-external-llm-api-eg-google-gemini)
+     - [Self-Hosted LLM (e.g., Local Ollama)](#3-self-hosted-llm-eg-local-ollama)
+   - [Task D — Intent-Aware Re-Provisioning](#task-d--intent-aware-re-provisioning)
+   - [Task E — Policy-Bounded Dynamic Profile Generation](#task-e--policy-bounded-dynamic-profile-generation-stretch-goal)
+   - [Task F — Evaluation Framework Redesign (Protocol v4)](#task-f--evaluation-framework-redesign-protocol-v4)
+3. [Setup & Deployment Guide](#setup--deployment-guide)
+   - [Prerequisites & Local Verification](#1-prerequisites--local-verification)
+   - [Deploying the Interactive Demo](#2-deploying-the-interactive-demo)
+   - [Configuring External LLM (Gemini API)](#3-configuring-external-llm-gemini-api)
+   - [Configuring Self-Hosted LLM (Local Ollama)](#4-configuring-self-hosted-llm-local-ollama)
+   - [Enabling Dynamic Resource Selection](#5-enabling-dynamic-resource-selection)
+4. [Repository Map](#repository-map)
+5. [Verification & Test Commands](#verification--test-commands)
+6. [Research Scope, Limitations & Data Safety](#research-scope-limitations--data-safety)
+7. [Cleanup](#cleanup)
+8. [Documentation Index](#documentation-index)
 
-These paths answer different questions and their results must not be treated as
-interchangeable.
+---
 
-## Start Here
+## Problem Statement
 
-If this is your first time in the repository:
+Conventional JupyterHub deployments ask users to pick from static profiles such as **Small**, **Medium**, or **Large**. Data scientists and students understand their task (e.g., training a scikit-learn model, exploring a CSV, or building deep networks), but often lack Kubernetes infrastructure intuition.
 
-1. Read [Getting Started](docs/GETTING_STARTED.md) for setup and step-by-step
-   commands.
-2. Read [Architecture](docs/ARCHITECTURE.md) to understand the components and
-   data flows.
-3. Use [Demo Script](DEMO_SCRIPT.md) when presenting the live JupyterHub demo.
-4. Use [Cleanup](CLEANUP.md) after running anything on Kubernetes.
+This mismatch causes three major platform inefficiencies:
 
-The safest first run does not create Kubernetes resources:
+* **Underprovisioning**: A user chooses Small for a data-intensive workload; the notebook runs briefly and then crashes with an Out-Of-Memory (OOM) error, losing unsaved progress.
+* **Overprovisioning**: An idle or lightweight session reserves high CPU/RAM, reducing cluster schedulable capacity for other users.
+* **Defensive Over-Requesting**: Users pick Large by default out of fear of OOM crashes, creating artificial resource contention and scheduling bottlenecks.
+
+---
+
+## Key Architecture & Implemented Features (Tasks A–F)
+
+```mermaid
+flowchart TD
+    User([User / Data Scientist]) -->|1. Enters Intent, Dataset Size, Code| Form[Pre-Spawn Intent Form]
+    Form -->|2. Requests Recommendation| Backend{Pluggable Recommender}
+    
+    subgraph Recommender Backends
+        Backend -->|Deterministic Heuristic| RuleBased[Rule-Based Recommender]
+        Backend -->|OpenAI-compatible HTTPS API| ExtLLM[External LLM: Gemini 1.5 Flash]
+        Backend -->|Local HTTP Inference| SelfLLM[Self-Hosted LLM: Ollama / vLLM]
+    end
+    
+    RuleBased & ExtLLM & SelfLLM -->|3. Validates Schema & Catalog| Validator[Policy Validator]
+    Validator -->|4. Renders Preview| PreviewUI[Recommendation Preview UI]
+    
+    PreviewUI -->|Confirm / Accept| Hook[KubeSpawner Pre-Spawn Hook]
+    PreviewUI -->|Edit Inputs| Form
+    PreviewUI -->|Manual Override| Allowlist[Admin Allowlist Selector]
+    Allowlist --> Hook
+    
+    Hook -->|5. Creates Configured Pod| UserPod[Kubernetes Notebook Pod]
+    UserPod -.->|6. Workload Change / Re-provision| Reprovision[/hub/reprovision Endpoint]
+    Reprovision -->|Retains PVC, Stops Pod| Hook
+```
+
+---
+
+### Task A — Recommendation Preview UI
+
+Replaces direct hardware guessing with an interactive confirmation flow:
+* **Rich Inputs**: Captures natural language task intent, estimated dataset size (in GB), and lightweight code context (imports, API calls).
+* **Transparent Recommendation Preview**: Presents the recommended hardware profile, software container image, and human-readable explanation reasons before pod creation.
+* **User Agency**:
+  * **Confirm / Accept**: Submits the approved profile and image to KubeSpawner.
+  * **Edit Inputs**: Invalidates the current preview and allows re-entering workload parameters.
+  * **Manual Override**: Allows selecting any administrator-allowlisted profile or image.
+* **Structured Audit Logging**: Emits privacy-minimized structured `recommendation_audit` log events (recording event IDs, actions, policy versions, and override status) for platform evaluation without storing sensitive user code.
+
+---
+
+### Task B — Notebook Image Recommendation
+
+Extends the recommender beyond CPU/memory to select an optimal software environment:
+* **Admin-Controlled Image Catalog**: Pinned, immutable SHA-256 digests in [`recommender/image-catalog.yaml`](file:///Users/mthang1201/Documents/datn/intent-spawner/recommender/image-catalog.yaml) (e.g., `minimal-python`, `scipy-data-science`, `pytorch-deep-learning`, `tensorflow-deep-learning`).
+* **Semantic & Capability Matching**: Matches workload keywords and imported libraries directly to image capabilities.
+* **KubeSpawner Enforcement**: Dynamically sets `spawner.image` and writes metadata annotations (`z2jh-context-demo.local/applied-image`, `z2jh-context-demo.local/catalog-version`).
+
+---
+
+### Task C — Pluggable Recommender Framework
+
+A modular, provider-neutral architecture (`recommender/`) that allows seamless switching among inference backends without modifying JupyterHub integration:
+
+```text
+RecommendationRequest
+  -> Base Recommender (models.py, base.py, registry.py)
+  -> Selected Backend Adapter (rule_based | external_llm | self_hosted_llm)
+  -> Strict JSON Schema Validation (RESPONSE_SCHEMA)
+  -> Policy & Catalog Validation (PolicyValidator)
+  -> SpawnRecommendation Dataclass
+```
+
+#### 1. Rule-Based Recommender
+* **Implementation**: [`recommender/rule_based.py`](file:///Users/mthang1201/Documents/datn/intent-spawner/recommender/rule_based.py)
+* **Characteristics**: Zero-dependency, sub-millisecond, deterministic heuristic scoring. Serves as the baseline recommender and universal safety fallback.
+
+#### 2. External LLM API (e.g., Google Gemini)
+* **Implementation**: [`recommender/external_llm.py`](file:///Users/mthang1201/Documents/datn/intent-spawner/recommender/external_llm.py)
+* **Characteristics**:
+  * Connects to any OpenAI-compatible Chat Completions endpoint (such as Google Gemini's OpenAI compatibility layer at `https://generativelanguage.googleapis.com/v1beta/openai/chat/completions`).
+  * Kubernetes Secret-managed API key (`EXTERNAL_LLM_API_KEY`) via `secretKeyRef`.
+  * Configurable timeouts, total budget deadlines, and exponential backoff retries.
+  * Strict JSON output enforcement and automatic fail-closed fallback to rule-based logic upon provider errors.
+
+#### 3. Self-Hosted LLM (e.g., Local Ollama)
+* **Implementation**: [`recommender/self_hosted_llm.py`](file:///Users/mthang1201/Documents/datn/intent-spawner/recommender/self_hosted_llm.py)
+* **Characteristics**:
+  * Connects to private inference engines (Ollama, vLLM, LocalAI) running locally or in-cluster.
+  * Optional bearer authentication token (`SELF_HOSTED_LLM_API_KEY`).
+  * Explicit `SELF_HOSTED_LLM_ALLOW_INSECURE_HTTP: "true"` flag for trusted in-cluster / host networks.
+  * Reuses identical response parsing, catalog validation, and rule-based fallback safety mechanisms.
+
+---
+
+### Task D — Intent-Aware Re-Provisioning
+
+Enables changing workload specifications after a session has already started:
+* **Endpoint**: `/hub/reprovision`
+* **Workflow**: Users describe their new workload and click **Preview replacement**. The UI highlights differences between current and proposed profiles/images along with an explicit restart warning.
+* **Stop-and-Recreate Mechanics**: Gracefully stops the existing pod and launches a replacement pod with the new specification.
+* **Storage Retention Boundary**: User files saved in `/home/jovyan` on the `PersistentVolumeClaim` (PVC) remain intact. Kernel memory, running terminal processes, and active in-memory variables are intentionally discarded (no fragile live migration).
+
+---
+
+### Task E — Policy-Bounded Dynamic Profile Generation (Stretch Goal)
+
+An advanced opt-in mode that calculates fine-grained, continuous CPU/RAM/GPU resource allocations instead of discrete profile buckets:
+* **Implementation**: [`recommender/dynamic_resources.py`](file:///Users/mthang1201/Documents/datn/intent-spawner/recommender/dynamic_resources.py) and [`helm/dynamic-values.yaml`](file:///Users/mthang1201/Documents/datn/intent-spawner/helm/dynamic-values.yaml).
+* **Administrator Policy Guardrails**: Enforces minimum guarantees, maximum limits, step increments, and cluster quota headroom.
+* **Fail-Safe Fallback**: Automatically reverts to safe Catalog Mode if proposed allocations violate policy constraints or exceed quota headroom.
+
+---
+
+### Task F — Evaluation Framework Redesign (Protocol v4)
+
+A comprehensive evaluation suite designed for research rigor and thesis defense:
+* **Implementation**: [`evaluation_v4/`](file:///Users/mthang1201/Documents/datn/intent-spawner/evaluation_v4/)
+* **Bilingual 60-Intent Gold Standard**: 60 diverse workload intents in English and Vietnamese across Exploratory Data Analysis, Data Processing, Classical ML Training, and Deep Learning.
+* **Multi-Recommender Benchmark Runner**: Evaluates Rule-Based, External LLM (Gemini), Self-Hosted LLM (Ollama), and Baseline heuristics under identical conditions.
+* **Multi-Dimensional Metrics**:
+  1. **Recommendation Quality**: Profile accuracy, image match accuracy, explainability score, inference latency, fallback rate.
+  2. **System Effectiveness**: Schedulable capacity savings, resource allocation waste, OOM prevention rate, pending queue impact.
+  3. **User Decision Impact**: Acceptance rate, manual override frequency, re-provisioning success rate.
+* **Statistical Rigor**: Family-clustered bootstrap confidence intervals, Wilcoxon signed-rank tests, and strict claim gates distinguishing synthetic local runs from preserved Kubernetes cluster evidence.
+
+---
+
+## Setup & Deployment Guide
+
+### 1. Prerequisites & Local Verification
+
+Clone the repository and set up the isolated Python virtual environment:
 
 ```bash
 git clone https://github.com/mthang1201/intent-spawner.git
 cd intent-spawner
-bash scripts/setup.sh
-bash scripts/check.sh
-.venv/bin/python -m experiments.runner \
-  --smoke \
-  --environment-id local-smoke \
-  --timeout 60
-```
 
-The smoke command writes a new ignored experiment directory under
-`experiments/raw/`. It does not create Kubernetes resources. If kubectl is
-installed, `scripts/check.sh` also performs API discovery for its manifest
-dry-run; use [Getting Started](docs/GETTING_STARTED.md#common-verification-problems)
-if the configured API server is offline.
-
-## The Problem
-
-A conventional JupyterHub deployment often presents profiles such as Small,
-Medium, and Large. Users usually understand their task—exploring a CSV,
-training a model, or running basic Python—but may not know how much CPU and
-memory that task needs.
-
-That mismatch can produce:
-
-- **underprovisioning**, where a workload fails after the user has already
-  started working;
-- **overprovisioning**, where idle sessions reserve more schedulable capacity
-  than they need; and
-- **defensive over-requesting**, where users choose Large to avoid an uncertain
-  failure.
-
-The proposed method moves the sizing decision into a pre-spawn recommendation
-layer. Its inputs are:
-
-- natural-language intent;
-- an estimated dataset size in GB; and
-- optional imports or code-context hints.
-
-The output is a profile, an immutable notebook image selected from the admin
-catalog, and human-readable reasons. The user can Confirm, Edit, or Manual
-Override before KubeSpawner applies the confirmed decision. Accept/override
-actions are recorded as privacy-minimized structured audit events.
-
-See [Resource-and-Image Recommendation Preview Design](docs/evaluation/RECOMMENDATION_PREVIEW_DESIGN.md)
-for the mapping, state machine, audit schema, scalability assessment, and
-production suitability limits.
-
-After an initial server starts, the proposed demo also supports an explicit
-intent-aware re-provisioning flow at `/hub/reprovision`: preview a changed
-workload, acknowledge the restart, stop the old pod, and create a replacement
-with the same per-user PVC. It does not live-migrate the pod or retain kernel
-state. See [Intent-aware Re-provisioning](docs/INTENT_AWARE_REPROVISIONING.md).
-
-## Three Evidence Paths
-
-| Path | Purpose | Requires Kubernetes | Output and claim boundary |
-| --- | --- | --- | --- |
-| Helm demo | Show the baseline and proposed user experience | Yes, disposable local cluster | Demonstrates mechanics and observable Kubernetes requests; it is not a production study |
-| Local synthetic benchmark | Compare `static_manual`, `intent_only`, and `context_aware` deterministically | No | Produces local synthetic records and process measurements; it does not prove cluster behavior |
-| Kubernetes evaluation | Evaluate `static_default`, `intent_only`, and `context_aware` with pod evidence | Yes for new runs; no for validating preserved results | Preserved single-node Minikube evidence; it does not establish production or multi-user performance |
-
-The committed local and Kubernetes results are different evidence classes.
-Never use a local process measurement as a Kubernetes scheduling or utilization
-measurement.
-
-## Quick Paths
-
-### Run without Kubernetes
-
-Set up the Python environment and validate the repository:
-
-```bash
 bash scripts/setup.sh
 bash scripts/check.sh
 ```
 
-The setup and local benchmark do not need Kubernetes. When kubectl is present,
-the repository check expects its configured API server to be reachable for
-manifest discovery; all non-kubectl checks and the benchmark remain local.
-
-Preview the complete local experiment matrix without executing workloads:
+Run all unit and integration tests:
 
 ```bash
-.venv/bin/python -m experiments.runner \
-  --full-matrix \
-  --repeats 5 \
-  --seed 20260719 \
-  --dry-run \
-  --environment-id local-dry-run
+.venv/bin/python -m pytest recommender/test_recommender.py \
+  recommender/test_external_llm.py \
+  recommender/test_self_hosted_llm.py \
+  recommender/test_reliability.py \
+  recommender/test_dynamic_resources.py \
+  tests/test_helm_recommender_deployment.py \
+  tests/test_recommender_backends_integration.py
 ```
 
-Validate and preview every v3 matrix without allocating pressure memory or
-accessing Kubernetes:
+---
+
+### 2. Deploying the Interactive Demo
+
+Deploy the proposed context-aware JupyterHub to a local disposable cluster (e.g., Minikube, Docker Desktop, k3d, kind):
 
 ```bash
-make v3-dry-run
-```
+# 1. Install proposed context-aware demo
+bash scripts/install-proposed.sh
 
-See [Local Synthetic Benchmark](docs/GETTING_STARTED.md#path-a-local-synthetic-benchmark)
-for smoke, full-matrix, resume, aggregation, and analysis commands.
-
-### Run the interactive JupyterHub demo
-
-> **Safety:** use only a disposable local Kubernetes cluster. The install and
-> demo scripts create or update resources.
-
-```bash
-kubectl config current-context
-bash scripts/check-cluster.sh
-bash scripts/install-baseline.sh
+# 2. Start port forwarding (in a separate terminal)
 bash scripts/port-forward.sh
 ```
 
-Open <http://127.0.0.1:8000>. The demo uses `DummyAuthenticator`: enter any
-username and any non-empty password. It is intentionally insecure and must not
-be exposed publicly.
+Open `http://127.0.0.1:8000` in your browser. Log in with any username and password (`DummyAuthenticator`).
 
-Continue with the
-[Interactive JupyterHub Demo](docs/GETTING_STARTED.md#path-b-interactive-jupyterhub-demo)
-or follow the presentation-oriented [Demo Script](DEMO_SCRIPT.md).
+---
 
-### Validate preserved Kubernetes evidence
+### 3. Configuring External LLM (Gemini API)
 
-These commands inspect committed evidence and do not create pods:
+To use Google Gemini as the external recommendation engine:
+
+#### Step 1: Create the Kubernetes Secret
+Store your Gemini API key in Kubernetes without committing it to values files:
 
 ```bash
-make validate-cluster-results
-make validate-raw-integrity
+kubectl create secret generic intent-spawner-external-llm \
+  --namespace=z2jh-context-demo \
+  --from-literal=api-key="YOUR_GEMINI_API_KEY" \
+  --dry-run=client -o yaml | kubectl apply -f -
 ```
 
-See
-[Preserved Kubernetes Evaluation](docs/GETTING_STARTED.md#path-c-preserved-kubernetes-evaluation)
-before regenerating derived results or starting a new experiment.
+#### Step 2: Deploy with Gemini Configuration
+Use the prepared [`helm/gemini-values.yaml`](file:///Users/mthang1201/Documents/datn/intent-spawner/helm/gemini-values.yaml):
 
-## Prerequisites
+```bash
+# Deploy dynamic package runtime
+bash scripts/install-dynamic.sh
 
-### Required for local setup
+# Apply Gemini backend configuration
+helm upgrade context-demo jupyterhub/jupyterhub \
+  --version 4.0.0 \
+  --namespace z2jh-context-demo \
+  --values helm/proposed-values.yaml \
+  --values helm/dynamic-values.yaml \
+  --values helm/reprovision-values.yaml \
+  --values helm/gemini-values.yaml \
+  --wait
+```
 
-- Python 3.11 or newer;
-- Bash;
-- Git; and
-- `pip` and Python `venv` support.
+---
 
-The artifact was most recently validated locally with Python 3.14.5. Setup
-installs pinned dependencies from `requirements-dev.txt`.
+### 4. Configuring Self-Hosted LLM (Local Ollama)
 
-### Additional tools for the Helm demo
+To run recommendations using a locally hosted LLM without external network dependencies:
 
-- `kubectl`;
-- Helm;
-- a disposable local Kubernetes cluster, such as Minikube, kind, k3d, or
-  OrbStack; and
-- network access to pull the JupyterHub chart and container images.
+#### Step 1: Install and Start Ollama
+```bash
+# Install Ollama (macOS)
+brew install ollama
 
-Metrics Server is optional for the demo. If it is unavailable, resource
-requests, limits, pod status, and events remain observable, but live usage
-claims must be reported as unavailable.
+# Start the Ollama server
+ollama serve
 
-### Additional tools for a new Kubernetes evaluation
+# Pull your preferred model (in another terminal)
+ollama pull llama3
+```
 
-- Minikube;
-- Docker;
-- the exact environment and protocol controls described in
-  [Kubernetes Cluster Experiment Protocol](docs/evaluation/CLUSTER_EXPERIMENT_PROTOCOL.md).
+#### Step 2: Deploy with Ollama Configuration
+Because JupyterHub runs inside a container, connect to the host machine using `http://host.docker.internal:11434/v1/chat/completions` via [`helm/ollama-values.yaml`](file:///Users/mthang1201/Documents/datn/intent-spawner/helm/ollama-values.yaml):
 
-A new evaluation is an advanced, cluster-mutating workflow. Validating the
-preserved evidence does not require recreating its cluster.
+```bash
+# Deploy dynamic package runtime
+bash scripts/install-dynamic.sh
 
-## Repository Defaults
+# Apply Ollama backend configuration
+helm upgrade context-demo jupyterhub/jupyterhub \
+  --version 4.0.0 \
+  --namespace z2jh-context-demo \
+  --values helm/proposed-values.yaml \
+  --values helm/dynamic-values.yaml \
+  --values helm/reprovision-values.yaml \
+  --values helm/ollama-values.yaml \
+  --wait
+```
 
-| Setting | Default |
-| --- | --- |
-| Kubernetes namespace | `z2jh-context-demo` |
-| Helm release | `context-demo` |
-| JupyterHub chart version | `4.0.0` |
-| Local JupyterHub URL | `http://127.0.0.1:8000` |
-| Python environment | `.venv` |
-| Baseline Helm values | `helm/baseline-values.yaml` |
-| Proposed Helm values | `helm/proposed-values.yaml` |
+---
 
-The shell scripts allow selected overrides through environment variables such
-as `NAMESPACE`, `RELEASE`, `Z2JH_CHART_VERSION`, `LOCAL_PORT`, and `PYTHON`.
-Keep the documented defaults when reproducing the artifact unless the changed
-environment is explicitly recorded.
+### 5. Enabling Dynamic Resource Selection
+
+To enable policy-bounded dynamic CPU/RAM/GPU allocation instead of discrete profile buckets:
+
+```bash
+bash scripts/install-dynamic.sh
+```
+
+---
 
 ## Repository Map
 
-| Path | Responsibility |
+| Path | Purpose & Responsibility |
 | --- | --- |
-| `recommender/` | Standalone explainable rule-based recommender and unit tests |
-| `helm/` | Baseline static-profile and proposed context-aware JupyterHub values |
-| `scripts/` | Setup, validation, installation, observation, demo, and cleanup entry points |
-| `workload/` | Small bounded workloads mounted into demo pods and JupyterLab |
-| `benchmarks/` | Synthetic workload manifest and portable workload runner |
-| `experiments/` | Local matrix orchestration, recording, schema, export, and analysis |
-| `cluster_evaluation/` | Kubernetes pod runners, policies, evidence collection, validation, and analysis |
-| `k8s/` | Standalone manifests used for request and quota demonstrations |
-| `results/` | Derived local tables/figures and preserved cluster evidence |
-| `docs/evaluation/` | Protocols, result interpretation, audit records, and validity limits |
-| `tests/` | Unit tests and sanitized Kubernetes evidence fixtures |
+| `recommender/` | Core Python recommender framework: `base.py`, `registry.py`, `rule_based.py`, `external_llm.py`, `self_hosted_llm.py`, `dynamic_resources.py`, and `image-catalog.yaml`. |
+| `helm/` | Helm configurations: `baseline-values.yaml`, `proposed-values.yaml`, `reprovision-values.yaml`, `dynamic-values.yaml`, `gemini-values.yaml`, and `ollama-values.yaml`. |
+| `evaluation_v4/` | Protocol v4 evaluation suite: bilingual gold set (60 intents), multi-recommender benchmark runner, statistical analysis, and claim gates. |
+| `scripts/` | Shell runbooks and cluster utilities: `install-proposed.sh`, `install-dynamic.sh`, `install-baseline.sh`, `port-forward.sh`, `check.sh`, `setup.sh`, `uninstall.sh`. |
+| `workload/` | Bounded synthetic workloads mounted into notebook containers for testing and demonstration. |
+| `benchmarks/` | Workload manifest and deterministic local workload runner. |
+| `experiments/` | Local synthetic matrix runner, schema validation, and summary generators. |
+| `cluster_evaluation/` | Single-node Kubernetes experiment execution, evidence harvesting, and cgroup-v2 validation. |
+| `results/` | Preserved cluster experiment evidence, deployment rollout records, and audit snapshots. |
+| `docs/` | Deep-dive design documents, data governance policies, threat models, and architectural specifications. |
+| `tests/` | Pytest test suite covering all recommender backends, reliability layers, dynamic resources, and Helm templating. |
 
-See [Architecture](docs/ARCHITECTURE.md) for component-level behavior and data
-flow.
+---
 
-## Verification
+## Verification & Test Commands
 
-Run:
+Run the fast local checks and benchmarks:
 
 ```bash
+# Full verification suite
 bash scripts/check.sh
+
+# Run Evaluation Protocol v4 gold-set validation and preview
+make v4-validate
+
+# Run local benchmark matrix dry-run
+.venv/bin/python -m experiments.runner --full-matrix --dry-run --environment-id local-dry-run
 ```
 
-The script performs:
+---
 
-- unit and smoke tests;
-- preserved cluster artifact validation;
-- raw SHA-256 integrity validation;
-- a capacity-runner dry run;
-- Python and shell syntax checks;
-- Helm template rendering when Helm is available; and
-- Kubernetes client dry-run validation when kubectl is available.
+## Research Scope, Limitations & Data Safety
 
-It skips read-only live cluster inspection unless `RUN_CLUSTER_CHECKS=1` is
-set. It never runs cluster-mutating demo or experiment scripts.
+* **Evaluation Boundaries**: Local synthetic benchmarks and single-node Minikube cluster evidence are distinct evidence classes. Local process memory measurements must not be equated to Kubernetes pod cgroup limits.
+* **Privacy & Data Governance**: The pre-spawn hook and audit log record only derived features, resource profiles, and action tags (`accept`, `override`). User notebooks, dataset contents, raw code files, and credentials are never stored.
+* **GPU Hardware**: While deep learning profiles and GPU image recommendations (`pytorch-deep-learning`, `tensorflow-deep-learning`) are fully modeled, physical GPU device scheduling requires an authorized hardware pool.
 
-To capture a sanitized environment capability report without overwriting the
-committed report:
-
-```bash
-bash scripts/environment-report.sh \
-  --out /tmp/intent-spawner-environment.json \
-  --overwrite
-```
-
-## Research Scope and Limitations
-
-- The recommender is rule-based; it does not use an LLM.
-- No real GPU workload or GPU scheduling policy is evaluated.
-- The local benchmark uses generated data and standard-library workload
-  approximations.
-- The preserved Kubernetes corpus comes from controlled, single-node Minikube
-  experiments, not a live multi-user JupyterHub deployment.
-- The Helm demo and Kubernetes evaluation are separate execution paths.
-- The cluster corpus observed no OOM in the comparative matrix, so it does not
-  estimate an OOM-reduction rate.
-- Cgroup-v2 memory peaks are valid pod-boundary observations. Historical CPU
-  values have average or hybrid sampled-maximum semantics and are not
-  continuous peaks.
-- History-aware provisioning remains future work.
-
-Read [Threats to Validity](docs/evaluation/THREATS_TO_VALIDITY.md) and
-[Final Audit](docs/evaluation/FINAL_AUDIT.md) before presenting quantitative
-claims.
-
-## Data Safety
-
-Raw records are append-only evidence. Do not store or commit:
-
-- notebook contents or raw code;
-- datasets;
-- secrets or credentials;
-- usernames or longitudinal user identifiers; or
-- broad unsanitized Kubernetes metadata.
-
-Store only permitted derived context features, allowlisted pod metadata,
-resource evidence, and aggregate results. See
-[Data Governance](docs/DATA_GOVERNANCE.md),
-[Local Experiment Data Guide](experiments/README.md), and
-[Derived Experiment Summaries](experiments/summaries/README.md).
+---
 
 ## Cleanup
 
-After a Kubernetes demo:
+To completely remove all demo Kubernetes resources:
 
 ```bash
 bash scripts/uninstall.sh
 ```
 
-This deletes the configured demo namespace and does not delete the cluster or
-other namespaces. Read [Cleanup](CLEANUP.md) before removing local experiment
-outputs or working with preserved evidence.
+---
 
 ## Documentation Index
 
-- [Getting Started](docs/GETTING_STARTED.md)
-- [Architecture](docs/ARCHITECTURE.md)
-- [Demo Script](DEMO_SCRIPT.md)
-- [Cleanup](CLEANUP.md)
-- [Local Experiment Data Guide](experiments/README.md)
-- [Artifact Manifest](docs/ARTIFACT_MANIFEST.md)
-- [Data Governance](docs/DATA_GOVERNANCE.md)
-- [Experiment Protocol](docs/evaluation/EXPERIMENT_PROTOCOL.md)
-- [Recommendation Preview Design](docs/evaluation/RECOMMENDATION_PREVIEW_DESIGN.md)
-- [Kubernetes Cluster Experiment Protocol](docs/evaluation/CLUSTER_EXPERIMENT_PROTOCOL.md)
-- [Result Schema](docs/evaluation/RESULT_SCHEMA.md)
-- [Local Results](docs/evaluation/RESULTS.md)
-- [Kubernetes Results](docs/evaluation/CLUSTER_RESULTS.md)
-- [Threats to Validity](docs/evaluation/THREATS_TO_VALIDITY.md)
-- [Final Audit](docs/evaluation/FINAL_AUDIT.md)
+* [Getting Started Guide](docs/GETTING_STARTED.md)
+* [Architecture Guide](docs/ARCHITECTURE.md)
+* [Demo Presentation Runbook](DEMO_SCRIPT.md)
+* [External LLM Recommender Specification](docs/EXTERNAL_LLM_RECOMMENDER.md)
+* [Self-Hosted LLM Recommender Specification](docs/SELF_HOSTED_LLM_RECOMMENDER.md)
+* [Intent-Aware Re-Provisioning Design](docs/INTENT_AWARE_REPROVISIONING.md)
+* [Dynamic Profile Generation Specification](docs/DYNAMIC_PROFILE_GENERATION.md)
+* [Production Helm Deployment Wiring](docs/HELM_BACKEND_DEPLOYMENT.md)
+* [Evaluation Protocol v4 Specification](docs/evaluation/EVALUATION_V4_PROTOCOL.md)
+* [Recommendation Preview Design](docs/evaluation/RECOMMENDATION_PREVIEW_DESIGN.md)
+* [Threats to Validity](docs/evaluation/THREATS_TO_VALIDITY.md)
+* [Data Governance Policy](docs/DATA_GOVERNANCE.md)
+* [Cleanup Runbook](CLEANUP.md)

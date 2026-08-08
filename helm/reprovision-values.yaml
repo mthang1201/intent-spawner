@@ -144,10 +144,17 @@ hub:
               "code_context": [values.get("code_context", "")],
               "dynamic_preview_id": [values.get("dynamic_preview_id", "")],
           }
-          options = context_options_from_form(formdata)
+          # Use the active KubeSpawner parser so overlays loaded earlier (notably
+          # the one-time dynamic preview binding) can preserve their event id.
+          options_parser = getattr(c.KubeSpawner, "options_from_form", None)
+          if options_parser is None:
+              options_parser = context_options_from_form
+          options = options_parser(formdata)
           options["dynamic_preview_id"] = values.get("dynamic_preview_id", "")
           if "validate_dynamic_resource_preview" in globals():
-              validate_dynamic_resource_preview(options, user.name, consume=True)
+              # Validate before stopping the old pod, but let the pre-spawn hook
+              # consume the one-time binding when it applies the replacement.
+              validate_dynamic_resource_preview(options, user.name, consume=False)
 
           expected = {
               "recommended_profile": values.get("expected_recommended_profile"),

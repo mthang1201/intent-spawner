@@ -1,0 +1,5 @@
+# Production/default backend: deterministic local rules, with no network or
+# credential configuration.
+hub:
+  extraEnv:
+    RECOMMENDER_BACKEND: rule_based
