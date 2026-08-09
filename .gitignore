@@ -16,3 +16,10 @@ helm/generated-values.yaml
 .tmp/
 results/
 
+# Presentation & inspection files
+*.pptx
+*.pptx.inspect.ndjson
+*_real_demo/
+*_revised/
+.codex-tmp/
+assets/
