@@ -2,7 +2,7 @@ hub:
   extraEnv:
     RECOMMENDER_BACKEND: self_hosted_llm
     SELF_HOSTED_LLM_ENDPOINT: http://host.docker.internal:11434/v1/chat/completions
-    SELF_HOSTED_LLM_MODEL: llama3.2:1b
+    SELF_HOSTED_LLM_MODEL: llama3
     SELF_HOSTED_LLM_TIMEOUT: "30"
     SELF_HOSTED_LLM_TOTAL_TIMEOUT: "60"
     SELF_HOSTED_LLM_MAX_RETRIES: "2"
