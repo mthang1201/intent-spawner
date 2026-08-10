@@ -32,6 +32,7 @@ from .rule_based import (
     load_image_catalog,
     validate_image_catalog,
 )
+from .token_pricing import PricingProvenance
 
 
 BACKEND_NAME = "external_llm"
@@ -47,6 +48,12 @@ RETRY_BACKOFF_ENV_VAR = "EXTERNAL_LLM_RETRY_BACKOFF_SECONDS"
 TOTAL_TIMEOUT_ENV_VAR = "EXTERNAL_LLM_TOTAL_TIMEOUT"
 MAX_CONCURRENT_ENV_VAR = "EXTERNAL_LLM_MAX_CONCURRENT_RECOMMENDATIONS"
 ALLOW_INSECURE_HTTP_ENV_VAR = "EXTERNAL_LLM_ALLOW_INSECURE_HTTP"
+PROMPT_PRICE_PER_M_ENV_VAR = "EXTERNAL_LLM_PROMPT_PRICE_PER_M"
+COMPLETION_PRICE_PER_M_ENV_VAR = "EXTERNAL_LLM_COMPLETION_PRICE_PER_M"
+PRICING_ID_ENV_VAR = "EXTERNAL_LLM_PRICING_ID"
+PRICING_DATE_ENV_VAR = "EXTERNAL_LLM_PRICING_DATE"
+PRICING_SOURCE_ENV_VAR = "EXTERNAL_LLM_PRICING_SOURCE"
+PRICING_CONFIG_PATH_ENV_VAR = "EXTERNAL_LLM_PRICING_CONFIG_PATH"
 
 MAX_TOTAL_TIMEOUT_SECONDS = 300.0
 MAX_ATTEMPT_TIMEOUT_SECONDS = 300.0
@@ -101,6 +108,9 @@ class ExternalLLMConfig:
     total_timeout: float = 30.0
     max_concurrent_recommendations: int = 4
     allow_insecure_http: bool = False
+    prompt_price_per_m: float | None = None
+    completion_price_per_m: float | None = None
+    pricing: PricingProvenance | None = None
 
     # Subclasses may explicitly define a different deployment trust boundary.
     _allow_api_key_over_http = False
@@ -168,6 +178,28 @@ class ExternalLLMConfig:
                 "external LLM API keys require HTTPS; development-only insecure "
                 "HTTP must be explicitly enabled"
             )
+        if self.pricing is not None:
+            if not isinstance(self.pricing, PricingProvenance):
+                raise ValueError("pricing must be an instance of PricingProvenance")
+            object.__setattr__(self, "prompt_price_per_m", self.pricing.prompt_price_per_m)
+            object.__setattr__(self, "completion_price_per_m", self.pricing.completion_price_per_m)
+        elif self.prompt_price_per_m is not None and self.completion_price_per_m is not None:
+            if not isinstance(self.prompt_price_per_m, (int, float)) or isinstance(self.prompt_price_per_m, bool) or not math.isfinite(float(self.prompt_price_per_m)) or float(self.prompt_price_per_m) < 0:
+                raise ValueError("prompt_price_per_m must be a non-negative number")
+            if not isinstance(self.completion_price_per_m, (int, float)) or isinstance(self.completion_price_per_m, bool) or not math.isfinite(float(self.completion_price_per_m)) or float(self.completion_price_per_m) < 0:
+                raise ValueError("completion_price_per_m must be a non-negative number")
+            prov = PricingProvenance(
+                pricing_id="custom-explicit-v1",
+                snapshot_date="2026-08-01",
+                provider="custom",
+                applicable_model=self.model,
+                prompt_price_per_m=float(self.prompt_price_per_m),
+                completion_price_per_m=float(self.completion_price_per_m),
+                source_provenance="explicit-runtime-configuration",
+            )
+            object.__setattr__(self, "pricing", prov)
+        elif self.prompt_price_per_m is not None or self.completion_price_per_m is not None:
+            raise ValueError("both prompt_price_per_m and completion_price_per_m are required together")
 
     @classmethod
     def from_environ(
@@ -179,10 +211,13 @@ class ExternalLLMConfig:
         selected = os.environ if environ is None else environ
         endpoint = selected.get(ENDPOINT_ENV_VAR, "")
         model = selected.get(MODEL_ENV_VAR, "")
+        api_key = selected.get(API_KEY_ENV_VAR, "").strip()
         if not endpoint:
             raise ValueError(f"{ENDPOINT_ENV_VAR} is required for the external_llm backend")
         if not model:
             raise ValueError(f"{MODEL_ENV_VAR} is required for the external_llm backend")
+        if not api_key:
+            raise ValueError(f"{API_KEY_ENV_VAR} is required for the external_llm backend (missing_credentials)")
 
         try:
             timeout = float(selected.get(TIMEOUT_ENV_VAR, "10"))
@@ -193,6 +228,30 @@ class ExternalLLMConfig:
             max_concurrent_recommendations = int(
                 selected.get(MAX_CONCURRENT_ENV_VAR, "4")
             )
+            pricing: PricingProvenance | None = None
+            pricing_config_path = selected.get(PRICING_CONFIG_PATH_ENV_VAR, "").strip()
+            if pricing_config_path:
+                pricing = PricingProvenance.from_file(pricing_config_path)
+            elif (
+                PROMPT_PRICE_PER_M_ENV_VAR in selected
+                and selected[PROMPT_PRICE_PER_M_ENV_VAR].strip()
+                and COMPLETION_PRICE_PER_M_ENV_VAR in selected
+                and selected[COMPLETION_PRICE_PER_M_ENV_VAR].strip()
+            ):
+                prompt_p = float(selected[PROMPT_PRICE_PER_M_ENV_VAR])
+                completion_p = float(selected[COMPLETION_PRICE_PER_M_ENV_VAR])
+                pricing_id = selected.get(PRICING_ID_ENV_VAR, "env-custom-v1").strip() or "env-custom-v1"
+                pricing_date = selected.get(PRICING_DATE_ENV_VAR, "2026-08-01").strip() or "2026-08-01"
+                pricing_source = selected.get(PRICING_SOURCE_ENV_VAR, "environment-configuration").strip() or "environment-configuration"
+                pricing = PricingProvenance(
+                    pricing_id=pricing_id,
+                    snapshot_date=pricing_date,
+                    provider="openai-compatible",
+                    applicable_model=model,
+                    prompt_price_per_m=prompt_p,
+                    completion_price_per_m=completion_p,
+                    source_provenance=pricing_source,
+                )
         except ValueError as exc:
             raise ValueError("external LLM numeric configuration is invalid") from exc
 
@@ -213,6 +272,7 @@ class ExternalLLMConfig:
             total_timeout=total_timeout,
             max_concurrent_recommendations=max_concurrent_recommendations,
             allow_insecure_http=insecure_value == "true",
+            pricing=pricing,
         )
 
 
@@ -234,14 +294,50 @@ class LLMCompletionRequest:
     response_schema: Mapping[str, Any]
 
 
+class LLMCompletionResponse(str):
+    """Response string with attached token usage, latency, and raw envelope metadata."""
+
+    prompt_tokens: int | None
+    completion_tokens: int | None
+    total_tokens: int | None
+    inference_latency_seconds: float | None
+    raw_response_envelope: Mapping[str, Any] | None
+
+    def __new__(
+        cls,
+        content: str,
+        *,
+        prompt_tokens: int | None = None,
+        completion_tokens: int | None = None,
+        total_tokens: int | None = None,
+        inference_latency_seconds: float | None = None,
+        raw_response_envelope: Mapping[str, Any] | None = None,
+    ) -> "LLMCompletionResponse":
+        instance = super().__new__(cls, content)
+        instance.prompt_tokens = prompt_tokens
+        instance.completion_tokens = completion_tokens
+        instance.total_tokens = total_tokens
+        instance.inference_latency_seconds = inference_latency_seconds
+        instance.raw_response_envelope = raw_response_envelope
+        return instance
+
+    @property
+    def content(self) -> str:
+        return str(self)
+
+
+
 @runtime_checkable
 class LLMClient(Protocol):
     """Adapter boundary implemented by an external LLM provider client."""
 
-    def complete(self, request: LLMCompletionRequest, *, timeout: float) -> str:
-        """Return only the assistant's structured text content."""
+    def complete(
+        self, request: LLMCompletionRequest, *, timeout: float
+    ) -> LLMCompletionResponse | str:
+        """Return structured completion response or assistant text content."""
 
         ...
+
 
 
 class JSONHTTPTransport(Protocol):
@@ -317,7 +413,9 @@ class OpenAICompatibleClient:
         self._api_key = api_key
         self._transport = transport or UrllibJSONTransport()
 
-    def complete(self, request: LLMCompletionRequest, *, timeout: float) -> str:
+    def complete(
+        self, request: LLMCompletionRequest, *, timeout: float
+    ) -> LLMCompletionResponse:
         headers = {"Content-Type": "application/json", "Accept": "application/json"}
         if self._api_key:
             headers["Authorization"] = f"Bearer {self._api_key}"
@@ -330,12 +428,14 @@ class OpenAICompatibleClient:
             "temperature": request.temperature,
             "response_format": {"type": "json_object"},
         }
+        started = time.monotonic()
         response = self._transport.post_json(
             self._endpoint,
             headers=headers,
             payload=payload,
             timeout=timeout,
         )
+        inference_latency = max(0.0, time.monotonic() - started)
         try:
             content = response["choices"][0]["message"]["content"]
         except (KeyError, IndexError, TypeError) as exc:
@@ -344,7 +444,25 @@ class OpenAICompatibleClient:
             ) from exc
         if not isinstance(content, str) or not content.strip():
             raise LLMResponseError("external LLM assistant content must be non-empty text")
-        return content
+        usage = response.get("usage")
+        prompt_tokens = None
+        completion_tokens = None
+        total_tokens = None
+        if isinstance(usage, dict):
+            if isinstance(usage.get("prompt_tokens"), int):
+                prompt_tokens = usage["prompt_tokens"]
+            if isinstance(usage.get("completion_tokens"), int):
+                completion_tokens = usage["completion_tokens"]
+            if isinstance(usage.get("total_tokens"), int):
+                total_tokens = usage["total_tokens"]
+        return LLMCompletionResponse(
+            content=content,
+            prompt_tokens=prompt_tokens,
+            completion_tokens=completion_tokens,
+            total_tokens=total_tokens,
+            inference_latency_seconds=inference_latency,
+            raw_response_envelope=response,
+        )
 
 
 RESPONSE_SCHEMA: Mapping[str, Any] = {
@@ -569,6 +687,15 @@ class ExternalLLMRecommender:
         timed_out: bool,
         deadline_exhausted: bool,
         external_error: Exception | None = None,
+        raw_response: str | None = None,
+        parsed_profile: str | None = None,
+        parsed_image_id: str | None = None,
+        validation_error: str | None = None,
+        prompt_tokens: int | None = None,
+        completion_tokens: int | None = None,
+        total_tokens: int | None = None,
+        inference_latency_seconds: float | None = None,
+        estimated_cost_usd: float | None = None,
     ) -> RecommendationResult:
         """Return the rule fallback plus safe metadata, or a sanitized typed error."""
 
@@ -587,6 +714,17 @@ class ExternalLLMRecommender:
                     total_elapsed_seconds=max(0.0, self._monotonic() - started),
                     timed_out=timed_out,
                     deadline_exhausted=deadline_exhausted,
+                    raw_response=raw_response,
+                    parsed_profile=parsed_profile,
+                    parsed_image_id=parsed_image_id,
+                    validation_error=validation_error,
+                    prompt_tokens=prompt_tokens,
+                    completion_tokens=completion_tokens,
+                    total_tokens=total_tokens,
+                    inference_latency_seconds=inference_latency_seconds,
+                    estimated_cost_usd=estimated_cost_usd,
+                    pricing_id=self.config.pricing.pricing_id if self.config.pricing else None,
+                    pricing_provenance=self.config.pricing.source_provenance if self.config.pricing else None,
                 ),
             )
         except Exception as fallback_error:
@@ -621,6 +759,15 @@ class ExternalLLMRecommender:
         attempt_count = 0
         timed_out = False
         deadline_exhausted = False
+        last_raw_response: str | None = None
+        last_parsed_profile: str | None = None
+        last_parsed_image_id: str | None = None
+        last_validation_error: str | None = None
+        last_prompt_tokens: int | None = None
+        last_completion_tokens: int | None = None
+        last_total_tokens: int | None = None
+        last_inference_latency: float | None = None
+        last_estimated_cost: float | None = None
 
         for attempt_index in range(self.config.max_retries + 1):
             remaining = effective_deadline - self._monotonic()
@@ -636,10 +783,35 @@ class ExternalLLMRecommender:
             if state is not None:
                 state.mark_attempt(attempt_count)
             try:
-                content = self._client.complete(
+                completion = self._client.complete(
                     completion_request,
                     timeout=min(float(self.config.timeout), remaining),
                 )
+                if isinstance(completion, LLMCompletionResponse):
+                    content = completion.content
+                    last_prompt_tokens = completion.prompt_tokens
+                    last_completion_tokens = completion.completion_tokens
+                    last_total_tokens = completion.total_tokens
+                    last_inference_latency = completion.inference_latency_seconds
+                else:
+                    content = str(completion)
+
+                last_raw_response = content
+                if self.config.pricing is not None and last_prompt_tokens is not None and last_completion_tokens is not None:
+                    last_estimated_cost = self.config.pricing.calculate_cost_usd(
+                        last_prompt_tokens, last_completion_tokens
+                    )
+                else:
+                    last_estimated_cost = None
+
+                try:
+                    decoded = _decode_structured_output(content)
+                    if isinstance(decoded, dict):
+                        last_parsed_profile = str(decoded["profile"]) if "profile" in decoded else None
+                        last_parsed_image_id = str(decoded["image_id"]) if "image_id" in decoded else None
+                except Exception as parse_exc:
+                    last_validation_error = type(parse_exc).__name__
+
                 if self._monotonic() >= effective_deadline:
                     raise LLMDeadlineExceededError(
                         "recommendation deadline exhausted"
@@ -660,12 +832,24 @@ class ExternalLLMRecommender:
                         total_elapsed_seconds=max(0.0, self._monotonic() - started),
                         timed_out=timed_out,
                         deadline_exhausted=False,
+                        raw_response=last_raw_response,
+                        parsed_profile=last_parsed_profile,
+                        parsed_image_id=last_parsed_image_id,
+                        validation_error=None,
+                        prompt_tokens=last_prompt_tokens,
+                        completion_tokens=last_completion_tokens,
+                        total_tokens=last_total_tokens,
+                        inference_latency_seconds=last_inference_latency,
+                        estimated_cost_usd=last_estimated_cost,
+                        pricing_id=self.config.pricing.pricing_id if self.config.pricing else None,
+                        pricing_provenance=self.config.pricing.source_provenance if self.config.pricing else None,
                     ),
                 )
             except Exception as exc:
                 last_error = self._sanitized_error(exc)
                 category = self._error_category(exc)
                 last_category = category
+                last_validation_error = type(exc).__name__
                 timed_out = timed_out or category in {"timeout", "deadline_exhausted"}
                 if category == "deadline_exhausted":
                     deadline_exhausted = True
@@ -709,6 +893,15 @@ class ExternalLLMRecommender:
             timed_out=timed_out,
             deadline_exhausted=deadline_exhausted,
             external_error=last_error,
+            raw_response=last_raw_response,
+            parsed_profile=last_parsed_profile,
+            parsed_image_id=last_parsed_image_id,
+            validation_error=last_validation_error,
+            prompt_tokens=last_prompt_tokens,
+            completion_tokens=last_completion_tokens,
+            total_tokens=last_total_tokens,
+            inference_latency_seconds=last_inference_latency,
+            estimated_cost_usd=last_estimated_cost,
         )
 
     def recommend(self, request: RecommendationRequest) -> SpawnRecommendation:
@@ -722,24 +915,32 @@ __all__ = [
     "ALLOW_INSECURE_HTTP_ENV_VAR",
     "BACKEND_NAME",
     "BACKEND_VERSION",
+    "COMPLETION_PRICE_PER_M_ENV_VAR",
     "ENDPOINT_ENV_VAR",
     "ExternalLLMConfig",
     "ExternalLLMError",
     "ExternalLLMFallbackError",
     "ExternalLLMRecommender",
+    "JSONHTTPTransport",
     "LLMClient",
     "LLMClientError",
     "LLMCompletionRequest",
+    "LLMCompletionResponse",
     "LLMDeadlineExceededError",
-    "JSONHTTPTransport",
     "LLMMessage",
     "LLMOutputValidationError",
     "LLMResponseError",
     "LLMTimeoutError",
-    "MAX_RETRIES_ENV_VAR",
     "MAX_CONCURRENT_ENV_VAR",
+    "MAX_RETRIES_ENV_VAR",
     "MODEL_ENV_VAR",
     "OpenAICompatibleClient",
+    "PRICING_CONFIG_PATH_ENV_VAR",
+    "PRICING_DATE_ENV_VAR",
+    "PRICING_ID_ENV_VAR",
+    "PRICING_SOURCE_ENV_VAR",
+    "PricingProvenance",
+    "PROMPT_PRICE_PER_M_ENV_VAR",
     "RESPONSE_SCHEMA",
     "RETRY_BACKOFF_ENV_VAR",
     "TEMPERATURE_ENV_VAR",

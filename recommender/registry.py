@@ -54,8 +54,12 @@ class RecommenderRegistry:
 
 DEFAULT_REGISTRY = RecommenderRegistry()
 DEFAULT_REGISTRY.register(DEFAULT_BACKEND, RuleBasedRecommender)
+DEFAULT_REGISTRY.register("rule_based_mapping", RuleBasedRecommender)
+DEFAULT_REGISTRY.register("rule_based_context", RuleBasedRecommender)
 DEFAULT_REGISTRY.register("external_llm", ExternalLLMRecommender)
 DEFAULT_REGISTRY.register("self_hosted_llm", SelfHostedLLMRecommender)
+DEFAULT_REGISTRY.register("self_hosted_local_ollama_llm", SelfHostedLLMRecommender)
+
 
 
 def configured_backend_name(

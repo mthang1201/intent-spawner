@@ -19,6 +19,13 @@ SPLITS = {"development", "test"}
 ADJUDICATION_STATUSES = {"protocol_locked", "expert_adjudicated"}
 
 
+def normalize_profile(profile: str | None) -> str | None:
+    """Map canonical profile tokens (such as gpu_or_large) to evaluated profiles."""
+    if profile == "gpu_or_large":
+        return "large"
+    return profile if profile in PROFILE_ORDER else None
+
+
 def canonical_sha256(value: Any) -> str:
     """Hash a JSON-compatible value independently of YAML formatting."""
 
@@ -311,5 +318,6 @@ __all__ = [
     "dataset_summary",
     "file_sha256",
     "load_dataset",
+    "normalize_profile",
     "validate_dataset",
 ]

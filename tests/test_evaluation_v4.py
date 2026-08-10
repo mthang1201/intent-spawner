@@ -145,7 +145,9 @@ def test_offline_runner_and_analyzer_generate_auditable_outputs(tmp_path):
     analysis_manifest = analyze(analysis_args)
 
     assert analysis_manifest["record_counts"]["predictions"] == 192
-    assert analysis_manifest["claim_gates"] == {
+    assert "RQ1" in analysis_manifest["claim_gates"]
+    assert "RQ5" in analysis_manifest["claim_gates"]
+    assert analysis_manifest["secondary_evidence_dimensions"] == {
         "system_effectiveness_observed": False,
         "user_acceptance_observed": False,
         "reprovisioning_observed": False,
@@ -154,6 +156,8 @@ def test_offline_runner_and_analyzer_generate_auditable_outputs(tmp_path):
         "recommendation-summary.csv",
         "recommendation-breakdowns.csv",
         "pairwise-mcnemar-holm.csv",
+        "pairwise-wilcoxon-holm.csv",
+        "latency-cost-summary.csv",
         "family-robustness.csv",
         "system-effectiveness.csv",
         "system-paired-binary.csv",
@@ -161,11 +165,13 @@ def test_offline_runner_and_analyzer_generate_auditable_outputs(tmp_path):
         "user-acceptance.csv",
         "user-paired-acceptance.csv",
         "reprovisioning-effectiveness.csv",
+        "profile-confusion-matrices.json",
         "analysis.json",
         "analysis-manifest.json",
         "REPORT.md",
     }
     assert expected == {path.name for path in analysis_dir.iterdir()}
+
 
 
 def _system_record(evidence_class: str, trial_id: str, *, oom: bool = False) -> dict:

@@ -1,0 +1,28 @@
+# Example Zero to JupyterHub Helm values for external Gemini-compatible LLM recommender
+# Usage:
+# 1. Create secret: kubectl create secret generic intent-spawner-external-llm --namespace z2jh-context-demo --from-literal=api-key="YOUR_GEMINI_API_KEY"
+# 2. Deploy: helm upgrade --install context-demo jupyterhub/jupyterhub --version 4.0.0 --namespace z2jh-context-demo --values helm/proposed-values.yaml --values helm/recommender-external-llm-gemini.example.yaml
+
+hub:
+  extraEnv:
+    RECOMMENDER_BACKEND: external_llm
+    EXTERNAL_LLM_ENDPOINT: https://generativelanguage.googleapis.com/v1beta/openai/chat/completions
+    # NOTE: Set the explicitly evaluated Gemini model identifier (e.g., gemini-2.0-flash, gemini-1.5-pro)
+    EXTERNAL_LLM_MODEL: gemini-2.0-flash
+    EXTERNAL_LLM_TIMEOUT: "10"
+    EXTERNAL_LLM_TOTAL_TIMEOUT: "30"
+    EXTERNAL_LLM_MAX_RETRIES: "2"
+    EXTERNAL_LLM_RETRY_BACKOFF_SECONDS: "0.25"
+    EXTERNAL_LLM_TEMPERATURE: "0"
+    EXTERNAL_LLM_MAX_CONCURRENT_RECOMMENDATIONS: "4"
+    EXTERNAL_LLM_ALLOW_INSECURE_HTTP: "false"
+    # Optional token pricing for telemetry (USD per 1,000,000 tokens)
+    EXTERNAL_LLM_PROMPT_PRICE_PER_M: "0.10"
+    EXTERNAL_LLM_COMPLETION_PRICE_PER_M: "0.40"
+    # API key referenced securely from Kubernetes secret without plaintext persistence
+    EXTERNAL_LLM_API_KEY:
+      valueFrom:
+        secretKeyRef:
+          name: intent-spawner-external-llm
+          key: api-key
+          optional: false

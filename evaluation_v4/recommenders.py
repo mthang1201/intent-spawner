@@ -11,22 +11,26 @@ from recommender.registry import create_recommender
 from recommender.reliability import recommend_with_metadata
 from recommender.rule_based import RuleBasedRecommender
 
-from .dataset import PROFILE_ORDER
+from .dataset import PROFILE_ORDER, normalize_profile
 
 
 RECOMMENDERS = (
+    "static_profile_baseline",
+    "rule_based_mapping",
+    "external_llm",
+    "self_hosted_local_ollama_llm",
     "static_small",
     "static_large",
     "rule_based_intent_only",
     "rule_based_context",
-    "external_llm",
     "self_hosted_llm",
+    "static_default",
 )
 DEFAULT_RECOMMENDERS = (
-    "static_small",
-    "static_large",
-    "rule_based_intent_only",
-    "rule_based_context",
+    "static_profile_baseline",
+    "rule_based_mapping",
+    "external_llm",
+    "self_hosted_local_ollama_llm",
 )
 
 
@@ -47,12 +51,15 @@ class EvaluationDecision:
     latency_seconds: float | None
     error_category: str | None
     execution_mode: str
-
-
-def _normalize_profile(profile: str | None) -> str | None:
-    if profile == "gpu_or_large":
-        return "large"
-    return profile if profile in PROFILE_ORDER else None
+    raw_response: str | None = None
+    parsed_profile: str | None = None
+    parsed_image_id: str | None = None
+    validation_error: str | None = None
+    prompt_tokens: int | None = None
+    completion_tokens: int | None = None
+    total_tokens: int | None = None
+    estimated_cost_usd: float | None = None
+    inference_latency_seconds: float | None = None
 
 
 def _nearest_allowed(profile: str, allowed: list[str]) -> str:
@@ -73,7 +80,7 @@ def _apply_policy(
     item: Mapping[str, Any],
     catalog_images: Mapping[str, Any],
 ) -> tuple[str | None, str | None, bool]:
-    normalized = _normalize_profile(raw_profile)
+    normalized = normalize_profile(raw_profile)
     policy = item["policy_constraints"]
     allowed = list(policy["allowed_profiles"])
     profile_valid = normalized is not None and normalized in allowed
@@ -102,10 +109,12 @@ def _request_for(method: str, item: Mapping[str, Any]) -> RecommendationRequest:
 def create_backend(method: str) -> Any:
     if method not in RECOMMENDERS:
         raise ValueError(f"unsupported recommender {method!r}")
-    if method in {"static_small", "static_large"}:
+    if method in {"static_profile_baseline", "static_default", "static_small", "static_large"}:
         return None
-    if method in {"rule_based_intent_only", "rule_based_context"}:
+    if method in {"rule_based_intent_only", "rule_based_context", "rule_based_mapping"}:
         return RuleBasedRecommender()
+    if method == "self_hosted_local_ollama_llm":
+        return create_recommender("self_hosted_local_ollama_llm")
     return create_recommender(method)
 
 
@@ -119,8 +128,15 @@ def evaluate_item(
     """Execute one method without leaking gold labels into its inputs."""
 
     started = time.monotonic()
-    if method in {"static_small", "static_large"}:
-        raw_profile = "small" if method == "static_small" else "large"
+    if method in {"static_profile_baseline", "static_default", "static_small", "static_large"}:
+        if method in {"static_profile_baseline", "static_default"}:
+            # Authoritative single operational baseline (frozen to medium per repository policy)
+            raw_profile = "medium"
+        elif method == "static_small":
+            raw_profile = "small"
+        else:
+            raw_profile = "large"
+
         image_id = "minimal-python"
         predicted, applied, compliant = _apply_policy(
             raw_profile=raw_profile,
@@ -144,6 +160,15 @@ def evaluate_item(
             latency_seconds=max(0.0, time.monotonic() - started),
             error_category=None,
             execution_mode="deterministic_local",
+            raw_response=None,
+            parsed_profile=raw_profile,
+            parsed_image_id=image_id,
+            validation_error=None,
+            prompt_tokens=None,
+            completion_tokens=None,
+            total_tokens=None,
+            estimated_cost_usd=None,
+            inference_latency_seconds=None,
         )
 
     request = _request_for(method, item)
@@ -157,7 +182,7 @@ def evaluate_item(
         catalog_images=catalog_images,
     )
     return EvaluationDecision(
-        raw_profile=recommendation.profile,
+        raw_profile=metadata.parsed_profile if metadata.fallback_used else recommendation.profile,
         predicted_profile=predicted,
         applied_profile=applied,
         predicted_image_id=recommendation.image_id,
@@ -166,7 +191,8 @@ def evaluate_item(
         backend_version=recommendation.backend_version,
         model_id=(
             str(backend.config.model)
-            if method in {"external_llm", "self_hosted_llm"}
+            if method in {"external_llm", "self_hosted_llm", "self_hosted_local_ollama_llm"}
+            and hasattr(backend, "config")
             else None
         ),
         policy_compliant=compliant,
@@ -177,16 +203,36 @@ def evaluate_item(
         error_category=None,
         execution_mode=(
             "live_backend"
-            if method in {"external_llm", "self_hosted_llm"}
+            if method in {"external_llm", "self_hosted_llm", "self_hosted_local_ollama_llm"}
             else "deterministic_local"
         ),
+        raw_response=metadata.raw_response,
+        parsed_profile=metadata.parsed_profile if metadata.fallback_used else (metadata.parsed_profile or recommendation.profile),
+        parsed_image_id=metadata.parsed_image_id if metadata.fallback_used else (metadata.parsed_image_id or recommendation.image_id),
+        validation_error=metadata.validation_error,
+        prompt_tokens=metadata.prompt_tokens,
+        completion_tokens=metadata.completion_tokens,
+        total_tokens=metadata.total_tokens,
+        estimated_cost_usd=metadata.estimated_cost_usd,
+        inference_latency_seconds=metadata.inference_latency_seconds,
     )
 
 
-def error_decision(method: str, error: Exception, elapsed: float) -> EvaluationDecision:
+def error_decision(
+    method: str,
+    error: Exception,
+    elapsed: float,
+    *,
+    model_id: str | None = None,
+    error_category: str | None = None,
+) -> EvaluationDecision:
     """Represent a failed call without persisting free-form error text or secrets."""
 
-    category = type(error).__name__
+    category = error_category or (
+        str(error)
+        if isinstance(error, RuntimeError) and not str(error).startswith("<")
+        else type(error).__name__
+    )
     return EvaluationDecision(
         raw_profile=None,
         predicted_profile=None,
@@ -195,7 +241,7 @@ def error_decision(method: str, error: Exception, elapsed: float) -> EvaluationD
         requested_backend=method,
         effective_backend="unavailable",
         backend_version="unavailable",
-        model_id=None,
+        model_id=model_id,
         policy_compliant=False,
         fallback_used=False,
         fallback_error_category=None,
@@ -204,9 +250,18 @@ def error_decision(method: str, error: Exception, elapsed: float) -> EvaluationD
         error_category=category,
         execution_mode=(
             "live_backend"
-            if method in {"external_llm", "self_hosted_llm"}
+            if method in {"external_llm", "self_hosted_llm", "self_hosted_local_ollama_llm"}
             else "deterministic_local"
         ),
+        raw_response=None,
+        parsed_profile=None,
+        parsed_image_id=None,
+        validation_error=str(category),
+        prompt_tokens=None,
+        completion_tokens=None,
+        total_tokens=None,
+        estimated_cost_usd=None,
+        inference_latency_seconds=None,
     )
 
 

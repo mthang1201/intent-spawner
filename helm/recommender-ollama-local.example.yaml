@@ -1,0 +1,20 @@
+# Example Zero to JupyterHub Helm values for self-hosted local Ollama LLM recommender
+# Usage:
+# Deploy: helm upgrade --install context-demo jupyterhub/jupyterhub --version 4.0.0 --namespace z2jh-context-demo --values helm/proposed-values.yaml --values helm/recommender-ollama-local.example.yaml
+
+hub:
+  extraEnv:
+    RECOMMENDER_BACKEND: self_hosted_local_ollama_llm
+    # Use host.docker.internal for local desktop clusters (k3d/kind) or in-cluster Service DNS for Kubernetes
+    SELF_HOSTED_LLM_ENDPOINT: http://host.docker.internal:11434/v1/chat/completions
+    SELF_HOSTED_LLM_MODEL: llama3:latest
+    SELF_HOSTED_LLM_TIMEOUT: "30"
+    SELF_HOSTED_LLM_TOTAL_TIMEOUT: "60"
+    SELF_HOSTED_LLM_MAX_RETRIES: "2"
+    SELF_HOSTED_LLM_RETRY_BACKOFF_SECONDS: "0.5"
+    SELF_HOSTED_LLM_TEMPERATURE: "0"
+    SELF_HOSTED_LLM_MAX_CONCURRENT_RECOMMENDATIONS: "4"
+    SELF_HOSTED_LLM_ALLOW_INSECURE_HTTP: "true"
+    # Optional Ollama environment variable aliases
+    OLLAMA_ENDPOINT: http://host.docker.internal:11434/v1/chat/completions
+    OLLAMA_MODEL: llama3:latest

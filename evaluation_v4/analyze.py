@@ -18,6 +18,7 @@ from .dataset import (
     dataset_summary,
     file_sha256,
     load_dataset,
+    normalize_profile,
 )
 from .schemas import (
     read_jsonl,
@@ -28,10 +29,12 @@ from .schemas import (
 )
 from .statistics import (
     cluster_bootstrap_ci,
+    confusion_matrix,
     exact_mcnemar,
     holm_adjust,
     mean,
     quantile,
+    wilcoxon_signed_rank,
 )
 
 
@@ -74,6 +77,34 @@ def _validate_joined_identity(record: Mapping[str, Any], item: Mapping[str, Any]
         )
 
 
+def _classify_size_band(dataset_size_gb: float | int | None) -> str:
+    if dataset_size_gb is None or dataset_size_gb < 0.5:
+        return "< 0.5 GB"
+    if dataset_size_gb <= 2.0:
+        return "0.5 - 2.0 GB"
+    return "> 2.0 GB"
+
+
+def _classify_resource_category(stratum: str) -> str:
+    s = stratum.lower()
+    if "cpu" in s or "cpu-heavy" in s:
+        return "cpu_heavy"
+    if "deep-learning" in s or "deep_learning" in s or "gpu" in s:
+        return "deep_learning"
+    if "machine-learning" in s or "machine_learning" in s:
+        return "machine_learning"
+    if "tabular" in s or "memory" in s or "large" in s:
+        return "memory_heavy"
+    return "light_or_standard"
+
+
+def _classify_ambiguity(stratum: str) -> str:
+    s = stratum.lower()
+    if "ambiguous" in s or "conflicting" in s or "noisy" in s or "hidden" in s:
+        return "ambiguous"
+    return "unambiguous"
+
+
 def score_predictions(
     records: Sequence[Mapping[str, Any]],
     dataset: Mapping[str, Any],
@@ -98,6 +129,10 @@ def score_predictions(
         gold = item["gold"]
         predicted_profile = record["applied_profile"]
         predicted_image = record["predicted_image_id"]
+        raw_model_profile = record.get("parsed_profile") or record.get("raw_profile")
+        raw_model_image = record.get("parsed_image_id") or record.get("predicted_image_id")
+        fallback_used = bool(record["fallback_used"])
+
         profile_available = predicted_profile in PROFILE_ORDER
         image_available = predicted_image in catalog_images
         acceptable_profiles = list(gold["acceptable_profiles"])
@@ -117,16 +152,46 @@ def score_predictions(
         )
         profile_acceptable = profile_available and predicted_profile in acceptable_profiles
         image_acceptable = image_available and predicted_image in acceptable_images
+
+        # Raw model quality (without fallback credit)
+        raw_model_profile_normalized = normalize_profile(raw_model_profile)
+        raw_model_profile_acceptable = bool(
+            not fallback_used
+            and raw_model_profile_normalized in acceptable_profiles
+        )
+        raw_model_image_acceptable = bool(
+            not fallback_used
+            and raw_model_image in acceptable_images
+        )
+        raw_model_joint_acceptable = bool(
+            not fallback_used
+            and raw_model_profile_acceptable
+            and raw_model_image_acceptable
+            and record["policy_compliant"]
+            and record["error_category"] is None
+        )
+
+        dataset_size_gb = item["inputs"].get("dataset_size_gb")
+        stratum = str(item["stratum"])
+
         scored.append(
             {
                 **dict(record),
-                "stratum": item["stratum"],
+                "gold_preferred_profile": gold["preferred_profile"],
+                "gold_preferred_image_id": gold["preferred_image_id"],
+                "stratum": stratum,
                 "language": item["language"],
                 "variant": item["variant"],
+                "size_band": _classify_size_band(dataset_size_gb),
+                "resource_category": _classify_resource_category(stratum),
+                "ambiguity": _classify_ambiguity(stratum),
                 "profile_available": profile_available,
                 "image_available": image_available,
                 "profile_exact": profile_available and predicted_profile == gold["preferred_profile"],
                 "profile_acceptable": profile_acceptable,
+                "raw_model_profile_acceptable": raw_model_profile_acceptable,
+                "raw_model_image_acceptable": raw_model_image_acceptable,
+                "raw_model_joint_acceptable": raw_model_joint_acceptable,
                 "profile_ordinal_error": profile_steps,
                 "underprovisioned": profile_available and PROFILE_ORDER[predicted_profile] < PROFILE_ORDER[minimum_profile],
                 "overprovisioned": profile_available and PROFILE_ORDER[predicted_profile] > PROFILE_ORDER[maximum_profile],
@@ -149,6 +214,9 @@ def score_predictions(
 RECOMMENDATION_METRICS = (
     "profile_exact",
     "profile_acceptable",
+    "raw_model_profile_acceptable",
+    "raw_model_image_acceptable",
+    "raw_model_joint_acceptable",
     "underprovisioned",
     "overprovisioned",
     "image_exact",
@@ -168,6 +236,13 @@ def _prediction_summary_row(
     replicates: int,
     seed: int,
 ) -> dict[str, Any]:
+    prompt_tokens_list = [row["prompt_tokens"] for row in rows if row.get("prompt_tokens") is not None]
+    completion_tokens_list = [row["completion_tokens"] for row in rows if row.get("completion_tokens") is not None]
+    total_tokens_list = [row["total_tokens"] for row in rows if row.get("total_tokens") is not None]
+    cost_list = [row["estimated_cost_usd"] for row in rows if row.get("estimated_cost_usd") is not None]
+    inf_latency_list = [row["inference_latency_seconds"] for row in rows if row.get("inference_latency_seconds") is not None]
+    latency_list = [item["latency_seconds"] for item in rows if item["latency_seconds"] is not None]
+
     row: dict[str, Any] = {
         "recommender": method,
         "records": len(rows),
@@ -175,12 +250,14 @@ def _prediction_summary_row(
         "families": len({item["workload_family"] for item in rows}),
         "coverage": mean(item["profile_available"] and item["image_available"] for item in rows),
         "profile_ordinal_mae_available": mean(item["profile_ordinal_error"] for item in rows),
-        "latency_median_seconds": quantile(
-            [item["latency_seconds"] for item in rows if item["latency_seconds"] is not None], 0.5
-        ),
-        "latency_p95_seconds": quantile(
-            [item["latency_seconds"] for item in rows if item["latency_seconds"] is not None], 0.95
-        ),
+        "latency_mean_seconds": mean(latency_list),
+        "latency_median_seconds": quantile(latency_list, 0.5),
+        "latency_p95_seconds": quantile(latency_list, 0.95),
+        "inference_latency_median_seconds": quantile(inf_latency_list, 0.5) if inf_latency_list else None,
+        "prompt_tokens_mean": mean(prompt_tokens_list) if prompt_tokens_list else None,
+        "completion_tokens_mean": mean(completion_tokens_list) if completion_tokens_list else None,
+        "total_tokens_mean": mean(total_tokens_list) if total_tokens_list else None,
+        "estimated_cost_usd_per_1k": (mean(cost_list) * 1000.0) if cost_list else None,
     }
     for metric_index, metric in enumerate(RECOMMENDATION_METRICS):
         value = mean(item[metric] for item in rows)
@@ -213,7 +290,7 @@ def analyze_recommendations(
     ]
 
     breakdowns: list[dict[str, Any]] = []
-    for dimension in ("split", "language", "stratum"):
+    for dimension in ("split", "language", "stratum", "size_band", "resource_category", "ambiguity"):
         cells: dict[tuple[str, str], list[dict[str, Any]]] = defaultdict(list)
         for row in scored:
             cells[(row["recommender"], str(row[dimension]))].append(row)
@@ -228,12 +305,13 @@ def analyze_recommendations(
                     "profile_acceptable_rate": _round(mean(item["profile_acceptable"] for item in cell_rows)),
                     "image_acceptable_rate": _round(mean(item["image_acceptable"] for item in cell_rows)),
                     "joint_acceptable_rate": _round(mean(item["joint_acceptable"] for item in cell_rows)),
+                    "raw_model_joint_acceptable_rate": _round(mean(item["raw_model_joint_acceptable"] for item in cell_rows)),
                 }
             )
 
     paired: list[dict[str, Any]] = []
     methods = sorted(grouped)
-    keyed = {
+    keyed_operational = {
         method: {
             (row["sample_id"], row["repeat_index"]): bool(row["joint_acceptable"])
             for row in method_rows
@@ -242,15 +320,16 @@ def analyze_recommendations(
     }
     for first_index, first in enumerate(methods):
         for second in methods[first_index + 1 :]:
-            common = sorted(set(keyed[first]) & set(keyed[second]))
+            common = sorted(set(keyed_operational[first]) & set(keyed_operational[second]))
             if not common:
                 continue
             result = exact_mcnemar(
-                [keyed[first][key] for key in common],
-                [keyed[second][key] for key in common],
+                [keyed_operational[first][key] for key in common],
+                [keyed_operational[second][key] for key in common],
             )
             paired.append(
                 {
+                    "comparison_type": "joint_acceptable_operational",
                     "first": first,
                     "second": second,
                     "pairs": len(common),
@@ -261,6 +340,47 @@ def analyze_recommendations(
     for row, value in zip(paired, adjusted):
         row["p_value_holm"] = _round_p(value)
         row["p_value_raw"] = _round_p(row["p_value_raw"])
+
+    # Continuous paired latency comparisons via Wilcoxon signed-rank test
+    paired_wilcoxon: list[dict[str, Any]] = []
+    keyed_latencies = {
+        method: {
+            (row["sample_id"], row["repeat_index"]): row["latency_seconds"]
+            for row in method_rows
+            if row["latency_seconds"] is not None
+        }
+        for method, method_rows in grouped.items()
+    }
+    for first_index, first in enumerate(methods):
+        for second in methods[first_index + 1 :]:
+            common_keys = sorted(set(keyed_latencies[first]) & set(keyed_latencies[second]))
+            if not common_keys:
+                continue
+            first_vals = [keyed_latencies[first][k] for k in common_keys]
+            second_vals = [keyed_latencies[second][k] for k in common_keys]
+            w_res = wilcoxon_signed_rank(first_vals, second_vals)
+            paired_wilcoxon.append(
+                {
+                    "metric": "latency_seconds",
+                    "first": first,
+                    "second": second,
+                    "pairs": len(common_keys),
+                    "mean_diff_first_minus_second": _round(mean(a - b for a, b in zip(first_vals, second_vals))),
+                    **w_res,
+                }
+            )
+    if paired_wilcoxon:
+        wilcoxon_adj = holm_adjust([float(row["p_value_raw"]) for row in paired_wilcoxon])
+        for row, value in zip(paired_wilcoxon, wilcoxon_adj):
+            row["p_value_holm"] = _round_p(value)
+            row["p_value_raw"] = _round_p(row["p_value_raw"])
+
+    # Profile confusion matrices
+    confusion_matrices: dict[str, Any] = {}
+    for method, method_rows in grouped.items():
+        golds = [str(r["gold_preferred_profile"]) for r in method_rows]
+        applied = [r["applied_profile"] for r in method_rows]
+        confusion_matrices[method] = confusion_matrix(golds, applied)
 
     consistency: list[dict[str, Any]] = []
     family_cells: dict[tuple[str, str], list[dict[str, Any]]] = defaultdict(list)
@@ -286,9 +406,12 @@ def analyze_recommendations(
         "summaries": summaries,
         "breakdowns": breakdowns,
         "paired_mcnemar_holm": paired,
+        "paired_wilcoxon_holm": paired_wilcoxon,
+        "confusion_matrices": confusion_matrices,
         "family_robustness": consistency,
         "scored_records": scored,
     }
+
 
 
 def _group_by_evidence_and_method(records: Sequence[Mapping[str, Any]]) -> dict[tuple[str, str], list[Mapping[str, Any]]]:
@@ -668,6 +791,133 @@ def _observed_available(rows: Sequence[Mapping[str, Any]]) -> bool:
     return any(row.get("evidence_class") == "observed" for row in rows)
 
 
+def compute_claim_gates(
+    recommendation: Mapping[str, Any],
+    system_records: Sequence[Mapping[str, Any]],
+) -> list[dict[str, Any]]:
+    """Compute claim gates for the authoritative research questions RQ1-RQ5."""
+    executed_methods = [str(row["recommender"]) for row in recommendation.get("summaries", [])]
+    scored_records = recommendation.get("scored_records", [])
+
+    has_real_external_llm = any(
+        r["recommender"] == "external_llm"
+        and r.get("execution_mode") == "live_backend"
+        and r.get("error_category") is None
+        and not r.get("fallback_used")
+        for r in scored_records
+    )
+    has_real_ollama = any(
+        r["recommender"] == "self_hosted_local_ollama_llm"
+        and r.get("execution_mode") == "live_backend"
+        and r.get("error_category") is None
+        and not r.get("fallback_used")
+        for r in scored_records
+    )
+    has_static = "static_profile_baseline" in executed_methods
+    has_rule_based = "rule_based_mapping" in executed_methods
+
+    real_methods: list[str] = []
+    if has_static:
+        real_methods.append("static_profile_baseline")
+    if has_rule_based:
+        real_methods.append("rule_based_mapping")
+    if has_real_external_llm:
+        real_methods.append("external_llm")
+    if has_real_ollama:
+        real_methods.append("self_hosted_local_ollama_llm")
+
+    # RQ1: How do the four approaches differ in recommendation quality?
+    if len(real_methods) == 4:
+        rq1_status = "CLAIMABLE"
+        rq1_reason = "Evaluated across all 4 canonical approaches with real predictions."
+    elif len(real_methods) >= 2:
+        rq1_status = "PARTIALLY CLAIMABLE"
+        rq1_reason = (
+            f"Only {len(real_methods)} of 4 methods have real recommendation-quality evidence "
+            f"({', '.join(sorted(real_methods))}). Narrow comparison between static baseline "
+            "and rule-based mapping is supported, but not a four-method conclusion."
+        )
+    else:
+        rq1_status = "NOT CLAIMABLE"
+        rq1_reason = "Insufficient methods evaluated to draw comparative recommendation quality conclusions."
+
+    # RQ2: Do LLM-based approaches improve recommendation quality compared with the static baseline and rule-based mapping?
+    if (has_static or has_rule_based) and has_real_external_llm and has_real_ollama:
+        rq2_status = "CLAIMABLE"
+        rq2_reason = "Recommendation quality comparison completed between LLM approaches and deterministic baselines."
+    elif (has_static or has_rule_based) and (has_real_external_llm or has_real_ollama):
+        rq2_status = "PARTIALLY CLAIMABLE"
+        rq2_reason = "Partial comparison available for only one LLM backend against deterministic baselines."
+    else:
+        rq2_status = "NOT CLAIMABLE"
+        rq2_reason = "Neither external LLM nor Ollama has been evaluated with real model inference."
+
+    # RQ3: What additional latency, failures, fallbacks, monetary cost, resource consumption, and operational overhead do LLM approaches introduce?
+    if has_real_external_llm and has_real_ollama:
+        rq3_status = "CLAIMABLE"
+        rq3_reason = "Inference latency, failures, fallbacks, token cost, and resource telemetry measured for both LLM approaches."
+    elif has_real_external_llm or has_real_ollama:
+        rq3_status = "PARTIALLY CLAIMABLE"
+        rq3_reason = "Inference latency and telemetry available for only one LLM approach."
+    else:
+        rq3_status = "NOT CLAIMABLE"
+        rq3_reason = "No real external/Ollama inference latency, failures, cost, or resource-overhead measurements exist yet."
+
+    # RQ4: When recommendations are applied, how does each approach affect workload success, OOM events, Pending failures, runtime, and resource efficiency in Kubernetes and JupyterHub?
+    observed_system = [r for r in system_records if r.get("evidence_class") == "observed"]
+    observed_methods = {str(r["recommender"]) for r in observed_system}
+    if len(observed_methods) >= 4:
+        rq4_status = "CLAIMABLE"
+        rq4_reason = "Observed Stage C Kubernetes/JupyterHub pod outcomes evaluated across all four approaches."
+    elif len(observed_methods) > 0:
+        rq4_status = "PARTIALLY CLAIMABLE"
+        rq4_reason = f"Stage C cluster trials observed for {len(observed_methods)} of 4 methods ({', '.join(sorted(observed_methods))})."
+    else:
+        rq4_status = "NOT CLAIMABLE"
+        rq4_reason = "No four-method applied Kubernetes/JupyterHub experiment exists yet (requires observed Stage C cluster telemetry)."
+
+    # RQ5: What are the quality–latency–reliability–cost–privacy trade-offs between an external LLM and a locally hosted Ollama model?
+    if has_real_external_llm and has_real_ollama:
+        rq5_status = "CLAIMABLE"
+        rq5_reason = "Empirical head-to-head evaluation completed between external LLM API and local Ollama model."
+    else:
+        rq5_status = "NOT CLAIMABLE"
+        rq5_reason = "No empirical external-vs-Ollama comparison exists yet (requires live external LLM and local Ollama evaluations)."
+
+    return [
+        {
+            "id": "RQ1",
+            "question": "How do the four approaches differ in recommendation quality?",
+            "status": rq1_status,
+            "reason": rq1_reason,
+        },
+        {
+            "id": "RQ2",
+            "question": "Do LLM-based approaches improve recommendation quality compared with the static baseline and rule-based mapping?",
+            "status": rq2_status,
+            "reason": rq2_reason,
+        },
+        {
+            "id": "RQ3",
+            "question": "What additional latency, failures, fallbacks, monetary cost, resource consumption, and operational overhead do LLM approaches introduce?",
+            "status": rq3_status,
+            "reason": rq3_reason,
+        },
+        {
+            "id": "RQ4",
+            "question": "When recommendations are applied, how does each approach affect workload success, OOM events, Pending failures, runtime, and resource efficiency in Kubernetes and JupyterHub?",
+            "status": rq4_status,
+            "reason": rq4_reason,
+        },
+        {
+            "id": "RQ5",
+            "question": "What are the quality–latency–reliability–cost–privacy trade-offs between an external LLM and a locally hosted Ollama model?",
+            "status": rq5_status,
+            "reason": rq5_reason,
+        },
+    ]
+
+
 def _write_report(
     path: Path,
     recommendation: Mapping[str, Any],
@@ -676,59 +926,101 @@ def _write_report(
     reprovision_records: Sequence[Mapping[str, Any]],
 ) -> None:
     lines = [
-        "# Protocol-v4 Evaluation Report",
+        "# Protocol-v4 Recommender Evaluation Report",
         "",
-        "> Recommendation results are observed executions on a synthetic gold set.",
-        "> Kubernetes, user-acceptance, and re-provisioning claims require separate",
-        "> records whose `evidence_class` is `observed`.",
+        "> **Evaluation Status**: Framework implemented and validated for four evaluation methods.",
+        "> Deterministic offline evaluation executed for methods present in the predictions stream.",
+        "> Live external LLM API evaluations, local Ollama daemon executions, and Kubernetes Stage C cluster experiments require separate live environment telemetry and credentials.",
         "",
-        "## Recommendation quality",
+        "## 1. Recommendation Quality Across Methods",
         "",
-        "| Recommender | N | Profile acceptable | Image acceptable | Joint acceptable | Under | Over | Fallback |",
-        "| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
+        "| Recommender | N | Profile Acc | Image Acc | Joint Acc (Ops) | Raw Model Joint Acc | Underprov | Overprov | Fallback Rate | Median Latency (s) |",
+        "| :--- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
     ]
     for row in recommendation["summaries"]:
         lines.append(
-            "| {recommender} | {records} | {profile} | {image} | {joint} | {under} | {over} | {fallback} |".format(
+            "| **{recommender}** | {records} | {profile:.4f} | {image:.4f} | **{joint:.4f}** | {raw_joint} | {under:.4f} | {over:.4f} | {fallback} | {latency} |".format(
                 recommender=row["recommender"],
                 records=row["records"],
-                profile=row["profile_acceptable_rate"],
-                image=row["image_acceptable_rate"],
-                joint=row["joint_acceptable_rate"],
-                under=row["underprovisioned_rate"],
-                over=row["overprovisioned_rate"],
-                fallback=row["fallback_used_rate"],
+                profile=float(row.get("profile_acceptable_rate") or 0.0),
+                image=float(row.get("image_acceptable_rate") or 0.0),
+                joint=float(row.get("joint_acceptable_rate") or 0.0),
+                raw_joint=f"{float(row['raw_model_joint_acceptable_rate']):.4f}" if row.get("raw_model_joint_acceptable_rate") is not None else "N/A",
+                under=float(row.get("underprovisioned_rate") or 0.0),
+                over=float(row.get("overprovisioned_rate") or 0.0),
+                fallback=f"{float(row['fallback_used_rate']):.4f}" if row.get("fallback_used_rate") is not None else "0.0000",
+                latency=f"{float(row['latency_median_seconds']):.3f}" if row.get("latency_median_seconds") is not None else "N/A",
             )
         )
-    lines.extend(["", "## Claim gates", ""])
-    gates = (
-        ("System effectiveness (utilization, OOM, Pending)", _observed_available(system_records)),
-        ("User acceptance", _observed_available(user_records)),
-        ("Re-provisioning success", _observed_available(reprovision_records)),
-    )
-    for label, available in gates:
+
+    lines.extend([
+        "",
+        "## 2. Statistical Hypothesis Testing",
+        "",
+        "### Pairwise Joint Accuracy (Exact McNemar Test with Holm-Bonferroni Correction)",
+        "",
+        "| Method A | Method B | N Pairs | A-Only Correct | B-Only Correct | Raw p-value | Holm Adjusted p | Significance (α=0.05) |",
+        "| :--- | :--- | ---: | ---: | ---: | ---: | ---: | :--- |",
+    ])
+    for row in recommendation.get("paired_mcnemar_holm", []):
+        sig = "**Significant**" if float(row["p_value_holm"]) < 0.05 else "Not Significant"
         lines.append(
-            f"- {label}: **{'observed evidence available' if available else 'not claimable; no observed records supplied'}**."
+            f"| {row['first']} | {row['second']} | {row['pairs']} | {row['first_only_correct']} | {row['second_only_correct']} | {row['p_value_raw']} | {row['p_value_holm']} | {sig} |"
         )
-    lines.extend(
-        [
+
+    if recommendation.get("paired_wilcoxon_holm"):
+        lines.extend([
             "",
-            "## Statistical interpretation",
+            "### Pairwise Latency Comparison (Paired Wilcoxon Signed-Rank Test with Holm Correction)",
             "",
-            "Recommendation confidence intervals use a percentile bootstrap over",
-            "workload families, preserving correlation among paraphrases and language",
-            "variants. Pairwise joint-accuracy comparisons use exact McNemar tests",
-            "with Holm family-wise correction. Intervals and p-values quantify",
-            "uncertainty; they do not repair dataset representativeness or missing",
-            "observed system/user evidence.",
-            "System intervals and continuous paired differences also resample",
-            "workload families; paired OOM, Pending, and success comparisons use",
-            "exact McNemar tests with Holm correction. Acceptance intervals",
-            "resample participant blocks, so repeated sessions are not treated as",
-            "independent observations.",
-            "",
-        ]
-    )
+            "| Method A | Method B | N Pairs | Mean Diff (A - B s) | Statistic | z-score | Raw p-value | Holm Adjusted p | Significance (α=0.05) |",
+            "| :--- | :--- | ---: | ---: | ---: | ---: | ---: | ---: | :--- |",
+        ])
+        for row in recommendation["paired_wilcoxon_holm"]:
+            sig = "**Significant**" if float(row["p_value_holm"]) < 0.05 else "Not Significant"
+            lines.append(
+                f"| {row['first']} | {row['second']} | {row['pairs']} | {row['mean_diff_first_minus_second']} | {row['statistic']} | {row['z_score']} | {row['p_value_raw']} | {row['p_value_holm']} | {sig} |"
+            )
+
+    lines.extend([
+        "",
+        "## 3. Latency, Token Usage, and Estimated Cost Summary",
+        "",
+        "| Recommender | Median Latency (s) | P95 Latency (s) | Mean Prompt Tokens | Mean Completion Tokens | Mean Total Tokens | Est. Cost / 1k Reqs ($) |",
+        "| :--- | ---: | ---: | ---: | ---: | ---: | ---: |",
+    ])
+    for row in recommendation["summaries"]:
+        lines.append(
+            "| **{recommender}** | {med_lat} | {p95_lat} | {prompt_tok} | {comp_tok} | {tot_tok} | {cost} |".format(
+                recommender=row["recommender"],
+                med_lat=f"{float(row['latency_median_seconds']):.4f}" if row.get("latency_median_seconds") is not None else "N/A",
+                p95_lat=f"{float(row['latency_p95_seconds']):.4f}" if row.get("latency_p95_seconds") is not None else "N/A",
+                prompt_tok=f"{float(row['prompt_tokens_mean']):.1f}" if row.get("prompt_tokens_mean") is not None else "N/A",
+                comp_tok=f"{float(row['completion_tokens_mean']):.1f}" if row.get("completion_tokens_mean") is not None else "N/A",
+                tot_tok=f"{float(row['total_tokens_mean']):.1f}" if row.get("total_tokens_mean") is not None else "N/A",
+                cost=f"${float(row['estimated_cost_usd_per_1k']):.4f}" if row.get("estimated_cost_usd_per_1k") is not None else "N/A",
+            )
+        )
+
+    lines.extend(["", "## 4. Thesis Claim Gates & Evidence Status", ""])
+    gates = compute_claim_gates(recommendation, system_records)
+    for gate in gates:
+        status_md = f"**{gate['status']}**"
+        lines.append(f"- **{gate['id']}**: {gate['question']}")
+        lines.append(f"  - **Status**: {status_md}")
+        lines.append(f"  - **Reason**: {gate['reason']}")
+
+    lines.extend([
+        "",
+        "## 5. Statistical Methodology",
+        "",
+        "- **Resampling Strategy**: Confidence intervals are estimated using cluster percentile bootstrap over `workload_family` (2,000 replicates), preserving paraphrase and linguistic correlations.",
+        "- **Binary Paired Hypothesis Testing**: Exact two-tailed McNemar tests with step-down Holm-Bonferroni family-wise error rate adjustment (α = 0.05).",
+        "- **Continuous Paired Hypothesis Testing**: Two-tailed Wilcoxon signed-rank tests with continuity and tie correction, paired across common sample IDs and repetitions.",
+        "- **Fairness Rules**: The static baseline is frozen to `medium` profile (`minimal-python` image); invalid LLM predictions triggering rule fallbacks are tracked as fallback outcomes and never credited as raw LLM prediction successes.",
+        "- **Pricing Provenance**: Estimated token cost is computed only when versioned pricing configuration is explicitly supplied; unconfigured methods report N/A.",
+        "",
+    ])
     with path.open("x", encoding="utf-8") as handle:
         handle.write("\n".join(lines))
 
@@ -777,10 +1069,29 @@ def analyze(args: argparse.Namespace) -> dict[str, Any]:
         seed=args.seed,
     ) if reprovision_records else []
 
+    # Latency and cost summary rows
+    latency_cost_rows = [
+        {
+            "recommender": row["recommender"],
+            "records": row["records"],
+            "latency_mean_seconds": row.get("latency_mean_seconds"),
+            "latency_median_seconds": row.get("latency_median_seconds"),
+            "latency_p95_seconds": row.get("latency_p95_seconds"),
+            "inference_latency_median_seconds": row.get("inference_latency_median_seconds"),
+            "prompt_tokens_mean": row.get("prompt_tokens_mean"),
+            "completion_tokens_mean": row.get("completion_tokens_mean"),
+            "total_tokens_mean": row.get("total_tokens_mean"),
+            "estimated_cost_usd_per_1k": row.get("estimated_cost_usd_per_1k"),
+        }
+        for row in recommendation["summaries"]
+    ]
+
     args.out.mkdir(parents=True)
     _write_csv(args.out / "recommendation-summary.csv", recommendation["summaries"])
     _write_csv(args.out / "recommendation-breakdowns.csv", recommendation["breakdowns"])
     _write_csv(args.out / "pairwise-mcnemar-holm.csv", recommendation["paired_mcnemar_holm"])
+    _write_csv(args.out / "pairwise-wilcoxon-holm.csv", recommendation.get("paired_wilcoxon_holm", []))
+    _write_csv(args.out / "latency-cost-summary.csv", latency_cost_rows)
     _write_csv(args.out / "family-robustness.csv", recommendation["family_robustness"])
     _write_csv(args.out / "system-effectiveness.csv", system_summary)
     _write_csv(args.out / "system-paired-binary.csv", system_comparisons["binary"])
@@ -788,6 +1099,8 @@ def analyze(args: argparse.Namespace) -> dict[str, Any]:
     _write_csv(args.out / "user-acceptance.csv", user_summary)
     _write_csv(args.out / "user-paired-acceptance.csv", user_comparisons)
     _write_csv(args.out / "reprovisioning-effectiveness.csv", reprovision_summary)
+
+    _write_json(args.out / "profile-confusion-matrices.json", recommendation.get("confusion_matrices", {}))
     _write_json(
         args.out / "analysis.json",
         {
@@ -807,6 +1120,15 @@ def analyze(args: argparse.Namespace) -> dict[str, Any]:
         for path in (args.system_trials, args.user_events, args.reprovision_trials)
         if path is not None
     )
+    gates = compute_claim_gates(recommendation, system_records)
+    claim_gates_map = {
+        gate["id"]: {
+            "question": gate["question"],
+            "status": gate["status"],
+            "reason": gate["reason"],
+        }
+        for gate in gates
+    }
     manifest = {
         "protocol_version": "4.0.0",
         "created_utc": _now_utc(),
@@ -823,12 +1145,12 @@ def analyze(args: argparse.Namespace) -> dict[str, Any]:
             "user_events": len(user_records),
             "reprovision_trials": len(reprovision_records),
         },
-        "claim_gates": {
+        "claim_gates": claim_gates_map,
+        "secondary_evidence_dimensions": {
             "system_effectiveness_observed": _observed_available(system_records),
             "user_acceptance_observed": _observed_available(user_records),
             "reprovisioning_observed": _observed_available(reprovision_records),
         },
-        "evidence_classes_are_never_pooled": True,
     }
     _write_json(args.out / "analysis-manifest.json", manifest)
     _write_report(
@@ -842,17 +1164,19 @@ def analyze(args: argparse.Namespace) -> dict[str, Any]:
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description="Analyze protocol-v4 evaluation evidence.")
+
+    parser = argparse.ArgumentParser(description="Analyze protocol-v4 evaluation records.")
     parser.add_argument("--dataset", type=Path, default=DEFAULT_DATASET)
     parser.add_argument("--predictions", type=Path, required=True)
     parser.add_argument("--system-trials", type=Path)
     parser.add_argument("--user-events", type=Path)
     parser.add_argument("--reprovision-trials", type=Path)
+    parser.add_argument("--out", type=Path, default=ROOT / "results" / "v4-analysis")
     parser.add_argument("--bootstrap-replicates", type=int, default=2000)
     parser.add_argument("--seed", type=int, default=20260808)
-    parser.add_argument("--out", type=Path, required=True)
     args = parser.parse_args(argv)
-    print(json.dumps(analyze(args), indent=2, sort_keys=True))
+    result = analyze(args)
+    print(json.dumps(result, indent=2, sort_keys=True))
     return 0
 
 

@@ -9,12 +9,14 @@ from typing import Any, Iterable, Mapping
 
 
 PREDICTION_SCHEMA = "recommendation-prediction-v4.0.0"
+PREDICTION_SCHEMA_V4_1 = "recommendation-prediction-v4.1.0"
+PREDICTION_SCHEMAS = {PREDICTION_SCHEMA, PREDICTION_SCHEMA_V4_1}
 SYSTEM_SCHEMA = "system-trial-v4.0.0"
 USER_SCHEMA = "user-decision-v4.0.0"
 REPROVISION_SCHEMA = "reprovision-trial-v4.0.0"
 EVIDENCE_CLASSES = {"observed", "simulated", "replay"}
 
-PREDICTION_FIELDS = {
+PREDICTION_FIELDS_V4_0 = {
     "schema_version",
     "run_id",
     "timestamp_utc",
@@ -43,6 +45,19 @@ PREDICTION_FIELDS = {
     "error_category",
     "execution_mode",
 }
+
+PREDICTION_FIELDS = PREDICTION_FIELDS_V4_0 | {
+    "raw_response",
+    "parsed_profile",
+    "parsed_image_id",
+    "validation_error",
+    "prompt_tokens",
+    "completion_tokens",
+    "total_tokens",
+    "estimated_cost_usd",
+    "inference_latency_seconds",
+}
+
 
 SYSTEM_FIELDS = {
     "schema_version",
@@ -172,9 +187,14 @@ def _list_of_strings(record: Mapping[str, Any], field: str, label: str) -> None:
 
 def validate_prediction(record: Mapping[str, Any]) -> dict[str, Any]:
     label = "prediction"
-    _exact_fields(record, PREDICTION_FIELDS, label)
-    if record.get("schema_version") != PREDICTION_SCHEMA:
+    if record.get("schema_version") not in PREDICTION_SCHEMAS:
         raise ValueError("prediction schema_version is unsupported")
+    record_fields = set(record)
+    if record_fields == PREDICTION_FIELDS_V4_0:
+        pass
+    else:
+        _exact_fields(record, PREDICTION_FIELDS, label)
+
     for field in (
         "run_id",
         "timestamp_utc",
@@ -209,10 +229,21 @@ def validate_prediction(record: Mapping[str, Any]) -> dict[str, Any]:
         "predicted_image_id",
         "fallback_error_category",
         "error_category",
+        "raw_response",
+        "parsed_profile",
+        "parsed_image_id",
+        "validation_error",
     ):
         if record.get(field) is not None and not isinstance(record[field], str):
             raise ValueError(f"prediction.{field} must be string or null")
+    for field in ("prompt_tokens", "completion_tokens", "total_tokens"):
+        value = record.get(field)
+        if value is not None and (not isinstance(value, int) or isinstance(value, bool) or value < 0):
+            raise ValueError(f"prediction.{field} must be a non-negative integer or null")
+    _number_or_none(record, "estimated_cost_usd", label, minimum=0)
+    _number_or_none(record, "inference_latency_seconds", label, minimum=0)
     return dict(record)
+
 
 
 def _validate_evidence_header(record: Mapping[str, Any], label: str) -> None:
@@ -354,7 +385,11 @@ def write_jsonl(path: Path, records: Iterable[Mapping[str, Any]]) -> None:
 
 __all__ = [
     "EVIDENCE_CLASSES",
+    "PREDICTION_FIELDS",
+    "PREDICTION_FIELDS_V4_0",
     "PREDICTION_SCHEMA",
+    "PREDICTION_SCHEMAS",
+    "PREDICTION_SCHEMA_V4_1",
     "REPROVISION_SCHEMA",
     "SYSTEM_SCHEMA",
     "USER_SCHEMA",

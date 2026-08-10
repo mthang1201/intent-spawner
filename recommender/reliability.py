@@ -39,6 +39,17 @@ class RecommendationMetadata:
     total_elapsed_seconds: float
     timed_out: bool
     deadline_exhausted: bool
+    raw_response: str | None = None
+    parsed_profile: str | None = None
+    parsed_image_id: str | None = None
+    validation_error: str | None = None
+    prompt_tokens: int | None = None
+    completion_tokens: int | None = None
+    total_tokens: int | None = None
+    inference_latency_seconds: float | None = None
+    estimated_cost_usd: float | None = None
+    pricing_id: str | None = None
+    pricing_provenance: str | None = None
 
     def to_dict(self) -> dict[str, object]:
         return {
@@ -50,7 +61,27 @@ class RecommendationMetadata:
             "total_elapsed_seconds": round(self.total_elapsed_seconds, 6),
             "timed_out": self.timed_out,
             "deadline_exhausted": self.deadline_exhausted,
+            "raw_response": self.raw_response,
+            "parsed_profile": self.parsed_profile,
+            "parsed_image_id": self.parsed_image_id,
+            "validation_error": self.validation_error,
+            "prompt_tokens": self.prompt_tokens,
+            "completion_tokens": self.completion_tokens,
+            "total_tokens": self.total_tokens,
+            "inference_latency_seconds": (
+                round(self.inference_latency_seconds, 6)
+                if self.inference_latency_seconds is not None
+                else None
+            ),
+            "estimated_cost_usd": (
+                round(self.estimated_cost_usd, 6)
+                if self.estimated_cost_usd is not None
+                else None
+            ),
+            "pricing_id": self.pricing_id,
+            "pricing_provenance": self.pricing_provenance,
         }
+
 
 
 @dataclass(frozen=True)

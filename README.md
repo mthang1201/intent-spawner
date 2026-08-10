@@ -153,15 +153,27 @@ An advanced opt-in mode that calculates fine-grained, continuous CPU/RAM/GPU res
 
 ### Evaluation Protocol v4 & Benchmarking Suite
 
-A comprehensive evaluation suite designed for research rigor and thesis defense:
-* **Implementation**: [`evaluation_v4/`](file:///Users/mthang1201/Documents/datn/intent-spawner/evaluation_v4/)
-* **Bilingual 60-Intent Gold Standard**: 60 diverse workload intents in English and Vietnamese across Exploratory Data Analysis, Data Processing, Classical ML Training, and Deep Learning.
-* **Multi-Recommender Benchmark Runner**: Evaluates Rule-Based, External LLM (Gemini), Self-Hosted LLM (Ollama), and Baseline heuristics under identical conditions.
-* **Multi-Dimensional Metrics**:
-  1. **Recommendation Quality**: Profile accuracy, image match accuracy, explainability score, inference latency, fallback rate.
-  2. **System Effectiveness**: Schedulable capacity savings, resource allocation waste, OOM prevention rate, pending queue impact.
-  3. **User Decision Impact**: Acceptance rate, manual override frequency, re-provisioning success rate.
-* **Statistical Rigor**: Family-clustered bootstrap confidence intervals, Wilcoxon signed-rank tests, and strict claim gates distinguishing synthetic local runs from preserved Kubernetes cluster evidence.
+A comprehensive, thesis-ready evaluation framework comparing four distinct approaches:
+* **Evaluation Framework for Four Canonical Approaches (Implemented and Validated)**:
+  1. `static_profile_baseline`: Single frozen operational baseline (`medium` profile, `minimal-python` image) ignoring workload context (deterministic offline evaluation executed).
+  2. `rule_based_mapping`: Deterministic rule-based recommender parsing intent, dataset sizes, and code context (deterministic offline evaluation executed).
+  3. `external_llm`: Configurable external LLM (e.g., Gemini-compatible API) with strict schema validation, pricing provenance, and token/cost telemetry (harness and mock validation implemented; live empirical evaluation pending external API access).
+  4. `self_hosted_local_ollama_llm`: In-cluster / local self-hosted inference (e.g., Ollama `llama3:latest`) (harness and mock validation implemented; live empirical evaluation pending local Ollama daemon).
+* **Bilingual 60-Intent Gold Standard**: 60 diverse workload intents in English and Vietnamese across Exploratory Data Analysis, Data Processing, Classical ML Training, and Deep Learning ([`benchmarks/intent-gold-v4.yaml`](file:///Users/mthang1201/Documents/datn/intent-spawner/benchmarks/intent-gold-v4.yaml)).
+* **Multi-Dimensional Metrics & Telemetry**:
+  1. **Recommendation Quality**: Profile accuracy, image capability coverage, raw model accuracy vs operational accuracy (with fallback isolation), under/over-provisioning rates.
+  2. **Reliability & Efficiency**: Inference latency, prompt/completion token usage, USD cost projections per 1,000 requests (with explicit pricing provenance), fallback rate.
+  3. **Cluster & User Impact**: Cluster request efficiency, re-provisioning file persistence, user acceptance (Stage C live trials pending cluster authorization).
+* **Statistical Rigor**:
+  - Exact two-tailed **McNemar tests** with **Holm-Bonferroni correction** for paired binary accuracy comparisons.
+* **Authoritative Research Questions (RQ1–RQ5)**:
+  - **RQ1**: How do the four approaches differ in recommendation quality?
+  - **RQ2**: Do LLM-based approaches improve recommendation quality compared with the static baseline and rule-based mapping?
+  - **RQ3**: What additional latency, failures, fallbacks, monetary cost, resource consumption, and operational overhead do LLM approaches introduce?
+  - **RQ4**: When recommendations are applied, how does each approach affect workload success, OOM events, Pending failures, runtime, and resource efficiency in Kubernetes and JupyterHub?
+  - **RQ5**: What are the quality–latency–reliability–cost–privacy trade-offs between an external LLM and a locally hosted Ollama model?
+* **Documentation**: See [`docs/evaluation/PROTOCOL_V4_FOUR_METHOD_EVALUATION.md`](file:///Users/mthang1201/Documents/datn/intent-spawner/docs/evaluation/PROTOCOL_V4_FOUR_METHOD_EVALUATION.md) and [`docs/evaluation/RUNBOOK_FOUR_METHOD_EVALUATION.md`](file:///Users/mthang1201/Documents/datn/intent-spawner/docs/evaluation/RUNBOOK_FOUR_METHOD_EVALUATION.md).
+
 
 
 ---
