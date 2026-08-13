@@ -714,6 +714,11 @@ def analyze_system_trials(
         "fallback_used",
     )
     continuous_fields = (
+        "cpu_request_m",
+        "memory_request_mib",
+        "cpu_usage_mean_m",
+        "memory_usage_mean_mib",
+        "memory_usage_peak_mib",
         "cpu_request_utilization",
         "memory_request_utilization",
         "peak_memory_to_request",
@@ -765,7 +770,12 @@ def compare_system_trials(
     replicates: int,
     seed: int,
 ) -> dict[str, list[dict[str, Any]]]:
-    """Paired system comparisons within evidence class and workload/repeat block."""
+    """Paired system comparisons within evidence class and workload/repeat block.
+
+    The returned ``binary`` rows are trial-level descriptive checks. Runtime
+    repeats are correlated within workload family, so confirmatory inference is
+    provided separately in ``family`` after aggregating repeats per family.
+    """
 
     enriched = _enrich_system_trials(records, dataset)
     by_class_method: dict[tuple[str, str], dict[tuple[str, int], dict[str, Any]]] = {}
@@ -810,6 +820,7 @@ def compare_system_trials(
                     binary_rows.append(
                         {
                             "evidence_class": evidence_class,
+                            "inference_unit": "family_repeat_trial_descriptive",
                             "endpoint": endpoint,
                             "first": first,
                             "second": second,
@@ -852,7 +863,97 @@ def compare_system_trials(
         for row, value in zip(selected, adjusted):
             row["p_value_raw"] = _round_p(row["p_value_raw"])
             row["p_value_holm"] = _round_p(value)
-    return {"binary": binary_rows, "continuous": continuous_rows}
+
+    family_rows: list[dict[str, Any]] = []
+    family_endpoints = (
+        "workload_success",
+        "oom_killed",
+        "timeout_event",
+        "pending_failure",
+        "cpu_request_m",
+        "memory_request_mib",
+        "cpu_request_utilization",
+        "memory_request_utilization",
+        "peak_memory_to_request",
+    )
+    for class_index, evidence_class in enumerate(evidence_classes):
+        methods = sorted(method for klass, method in by_class_method if klass == evidence_class)
+        for first_index, first in enumerate(methods):
+            for second in methods[first_index + 1 :]:
+                first_rows = by_class_method[(evidence_class, first)]
+                second_rows = by_class_method[(evidence_class, second)]
+                families = sorted({key[0] for key in first_rows} & {key[0] for key in second_rows})
+                for endpoint_index, endpoint in enumerate(family_endpoints):
+                    paired_families: list[dict[str, Any]] = []
+                    for family in families:
+                        first_values = [
+                            first_rows[key].get(endpoint)
+                            for key in sorted(first_rows)
+                            if key[0] == family and first_rows[key].get(endpoint) is not None
+                        ]
+                        second_values = [
+                            second_rows[key].get(endpoint)
+                            for key in sorted(second_rows)
+                            if key[0] == family and second_rows[key].get(endpoint) is not None
+                        ]
+                        first_mean = mean(first_values)
+                        second_mean = mean(second_values)
+                        if first_mean is None or second_mean is None:
+                            continue
+                        paired_families.append(
+                            {
+                                "workload_family": family,
+                                "first_mean": first_mean,
+                                "second_mean": second_mean,
+                                "difference": second_mean - first_mean,
+                            }
+                        )
+                    test = wilcoxon_signed_rank(
+                        [row["first_mean"] for row in paired_families],
+                        [row["second_mean"] for row in paired_families],
+                    )
+                    low, high = (
+                        cluster_bootstrap_ci(
+                            paired_families,
+                            lambda sample: mean(row["difference"] for row in sample),
+                            replicates=replicates,
+                            seed=(
+                                seed
+                                + class_index * 10000
+                                + first_index * 1000
+                                + endpoint_index
+                            ),
+                        )
+                        if len(paired_families) >= 2
+                        else (None, None)
+                    )
+                    family_rows.append(
+                        {
+                            "evidence_class": evidence_class,
+                            "inference_unit": "workload_family_repeat_mean",
+                            "endpoint": endpoint,
+                            "first": first,
+                            "second": second,
+                            "paired_families": len(paired_families),
+                            "mean_difference_second_minus_first": _round(
+                                mean(row["difference"] for row in paired_families)
+                            ),
+                            "ci_low": _round(low),
+                            "ci_high": _round(high),
+                            **{key: _round_p(value) if key == "p_value_raw" else value for key, value in test.items()},
+                        }
+                    )
+    for evidence_class in evidence_classes:
+        for endpoint in family_endpoints:
+            selected = [
+                row
+                for row in family_rows
+                if row["evidence_class"] == evidence_class and row["endpoint"] == endpoint
+            ]
+            adjusted = holm_adjust([float(row["p_value_raw"]) for row in selected])
+            for row, value in zip(selected, adjusted):
+                row["p_value_holm_within_endpoint"] = _round_p(value)
+    return {"binary": binary_rows, "continuous": continuous_rows, "family": family_rows}
 
 
 def analyze_user_events(
@@ -1022,6 +1123,16 @@ def _write_csv(path: Path, rows: Sequence[Mapping[str, Any]]) -> None:
         writer = csv.DictWriter(handle, fieldnames=fieldnames)
         writer.writeheader()
         writer.writerows(rows)
+
+
+def _write_analysis_checksums(output: Path) -> None:
+    path = output / "SHA256SUMS"
+    lines = [
+        f"{file_sha256(candidate)}  {candidate.relative_to(output)}\n"
+        for candidate in sorted(output.iterdir())
+        if candidate.is_file() and candidate != path
+    ]
+    path.write_text("".join(lines), encoding="utf-8")
 
 
 def _write_json(path: Path, value: Any) -> None:
@@ -1438,7 +1549,7 @@ def analyze(args: argparse.Namespace) -> dict[str, Any]:
         dataset,
         replicates=args.bootstrap_replicates,
         seed=args.seed,
-    ) if system_records else {"binary": [], "continuous": []}
+    ) if system_records else {"binary": [], "continuous": [], "family": []}
     user_summary = analyze_user_events(
         user_records,
         dataset,
@@ -1486,6 +1597,7 @@ def analyze(args: argparse.Namespace) -> dict[str, Any]:
     _write_csv(args.out / "system-effectiveness.csv", system_summary)
     _write_csv(args.out / "system-paired-binary.csv", system_comparisons["binary"])
     _write_csv(args.out / "system-paired-continuous.csv", system_comparisons["continuous"])
+    _write_csv(args.out / "system-family-paired.csv", system_comparisons["family"])
     _write_csv(args.out / "user-acceptance.csv", user_summary)
     _write_csv(args.out / "user-paired-acceptance.csv", user_comparisons)
     _write_csv(args.out / "reprovisioning-effectiveness.csv", reprovision_summary)
@@ -1550,6 +1662,7 @@ def analyze(args: argparse.Namespace) -> dict[str, Any]:
         user_records,
         reprovision_records,
     )
+    _write_analysis_checksums(args.out)
     return manifest
 
 

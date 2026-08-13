@@ -16,17 +16,24 @@ that configuration but do not add independent accuracy observations. The
 external backend was unavailable, so no cloud quality, latency, cost, provider
 reliability, or privacy trade-off was measured.
 
-The 2026-08-13 Stage C corpus is an observed single-node validation with only
-one repeat per four-method-by-eight-family cell. It provides genuine OOM,
-timeout, spawn, and cgroup evidence, but no estimate of runtime variability and
-no basis for production generalization. Metrics are available only for
-workloads that survived long enough to emit the cgroup payload, creating
-survivorship conditioning in utilization summaries. Metrics Server was absent;
-successful rows use in-container cgroup-v2 window measurements. The deployed
-release and Git worktree were dirty but their hashes/state were recorded.
+The 2026-08-13 one-repeat Stage C validation has been superseded for applied
+system inference by the 320-trial confirmatory corpus. The confirmatory corpus
+still uses a single node and only eight executable workload families, with ten
+runtime repeats per four-method-by-eight-family cell. Repeats estimate runtime
+variability but do not create independent recommendation-quality observations.
+The effective family-level sample is eight, and only three families distinguish
+static-large success from each adaptive method, limiting exact-test power. The
+corpus provides genuine OOM, timeout, spawn, and cgroup evidence but no basis
+for production generalization. Metrics are available only for workloads that
+survived long enough to emit the cgroup payload, creating survivorship
+conditioning in utilization summaries. Metrics Server was absent; successful
+rows use in-container cgroup-v2 window measurements. The run recorded a clean
+Git worktree and frozen commit, plan, values, model, prompt, policy, catalog,
+image digests, and cluster state.
 
-The Stage C method identifiers (`static_small`, `static_large`, and
-`rule_based_context`) test operational envelopes and are not identical to the
+The Stage C method identifiers (`static_small`, `static_large`,
+`rule_based_context`, and `self_hosted_local_ollama_llm`) test operational
+envelopes and are not identical to the
 Stage A/B canonical static-medium and rule-based quality comparison. Cross-stage
 conclusions must respect that distinction. User acceptance and reprovisioning
 were not observed.
@@ -57,11 +64,12 @@ networked storage, larger datasets, or institution-specific profile policies.
 
 ## Conclusion Validity
 
-The matrix uses repeated deterministic runs, but it is still small. The
-reported comparisons should be read as artifact evidence for the prototype and
-analysis pipeline, not as a definitive statistical proof of production impact.
-The cluster matrix observed no OOM and therefore cannot estimate OOM reduction.
-Its cgroup-v2 memory values are genuine memory peaks. Its CPU values are either
+The matrix uses repeated deterministic runs across only eight workload
+families, so family-level inference remains small. The reported comparisons
+should be read as artifact evidence for the prototype and analysis pipeline,
+not as definitive statistical proof of production impact. The confirmatory
+matrix observed 110 OOMs, but method differences are concentrated in a small
+number of families. Its cgroup-v2 memory values are genuine memory peaks. Its CPU values are either
 full-window averages or legacy maxima combining the interval-sample maximum
 with the full-window average, not a continuous peak time series. Historical capacity concurrency is supplementary because the evaluated
 batch-generator source was not committed. Capacity-v2 was evaluated separately

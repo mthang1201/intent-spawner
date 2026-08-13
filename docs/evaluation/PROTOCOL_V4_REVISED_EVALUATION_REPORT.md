@@ -72,7 +72,7 @@ not confirmatory evidence of stable efficiency differences.
 | RQ1: approach quality differences | **PARTIALLY CLAIMABLE** | Static, rule, and local Ollama can be compared; external quality is unavailable. Rule has the highest observed profile rate. |
 | RQ2: whether LLMs improve quality | **PARTIALLY CLAIMABLE** | Local Ollama did not improve profile accuracy over static or rules; no external LLM result supports a general LLM conclusion. |
 | RQ3: LLM overhead | **PARTIALLY CLAIMABLE** | Local latency, reliability, tokens, fallback, and Stage C outcomes are measured; external latency/cost and local energy/hardware cost are not. |
-| RQ4: applied Kubernetes effects | **PARTIALLY CLAIMABLE** | One observed 4×8 validation repeat captures real OOM/timeout/success behavior, but the 10-repeat confirmatory matrix is unexecuted. |
+| RQ4: applied Kubernetes effects | **CLAIMABLE** | The observed 4×8×10 confirmatory matrix is complete. Static-large was fully successful but over-allocated; adaptive methods reduced requests but each failed three families. Family-level success/OOM tests remain underpowered at eight families. |
 | RQ5: external vs local trade-off | **NOT CLAIMABLE** | The external backend made no provider attempts, so no empirical head-to-head comparison exists. |
 
 ## Thesis-safe claims

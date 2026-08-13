@@ -65,12 +65,11 @@ preflight if an Ollama representative falls back.
 
 ## Claim gate and remaining run
 
-RQ4 is **PARTIALLY CLAIMABLE**. The validation establishes real spawn and
-workload behavior across all planned cells, but the preregistered confirmatory
-design is four methods × eight families × ten runtime repeats (320 trials).
-That full plan exists at `results/v4-stage-c-plan-20260812T095453Z` and was not
-executed automatically. Runtime and resource comparisons from one repeat must
-remain descriptive.
+This document describes the earlier one-repeat validation only. The subsequent
+authoritative 320-trial confirmatory run is complete; see
+`docs/evaluation/STAGE_C_CONFIRMATORY_REPORT.md`. Under the revised RQ mapping,
+applied Kubernetes/JupyterHub RQ4 is now **CLAIMABLE**, subject to the
+family-level statistical and single-node scope qualifications in that report.
 
 ## Reproduction
 

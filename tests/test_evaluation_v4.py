@@ -299,6 +299,7 @@ def test_offline_runner_and_analyzer_generate_auditable_outputs(tmp_path):
         "system-effectiveness.csv",
         "system-paired-binary.csv",
         "system-paired-continuous.csv",
+        "system-family-paired.csv",
         "user-acceptance.csv",
         "user-paired-acceptance.csv",
         "reprovisioning-effectiveness.csv",
@@ -306,6 +307,7 @@ def test_offline_runner_and_analyzer_generate_auditable_outputs(tmp_path):
         "analysis.json",
         "analysis-manifest.json",
         "REPORT.md",
+        "SHA256SUMS",
     }
     assert expected == {path.name for path in analysis_dir.iterdir()}
 
@@ -376,6 +378,12 @@ def test_system_comparisons_are_paired_within_evidence_class():
     assert oom["pairs"] == 1
     assert oom["discordant_pairs"] == 1
     assert oom["p_value_holm"] == 1.0
+    family_oom = next(
+        row for row in comparisons["family"] if row["endpoint"] == "oom_killed"
+    )
+    assert family_oom["inference_unit"] == "workload_family_repeat_mean"
+    assert family_oom["paired_families"] == 1
+    assert family_oom["p_value_raw"] == 1.0
 
 
 def test_observed_system_trial_requires_evidence_path():
