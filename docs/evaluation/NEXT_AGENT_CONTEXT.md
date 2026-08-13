@@ -273,3 +273,11 @@ git add docs/evaluation/NEXT_AGENT_CONTEXT.md \
 git diff --cached --check
 git commit -m "Complete Protocol-v4 external LLM evaluation"
 ```
+
+The validated result checkpoint completed as
+`e86c8fed874bb210d2e37cda02ced06cffd2efd4` (`Complete Protocol-v4 external
+LLM evaluation`). The worktree was clean immediately after that commit. There
+are no remaining execution, evidence, analysis, validation, secret, or commit
+blockers. The only optional next action is repository publication (push the
+current `main`) and separate archival of the ignored `results/` directories
+with their manifests; do not rerun or overwrite any authoritative directory.
