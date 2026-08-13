@@ -74,7 +74,7 @@ Read-only inspection also counted plan methods/families/repeats and reviewed:
   - At this update, 2/320 records were appended. Trial 1 (`cpu-checksum/static_small`) was Ready but timed out; trial 2 (`large-aggregation/static_small`) was Ready and OOMKilled. Both had completed cleanup; otherwise execution would have stopped.
   - Do not start a second executor while PID `66971` is alive.
   - Safe observation: `wc -l results/v4-stage-c-confirmatory-20260813T021600Z/system-trials.jsonl` and inspect the last complete JSON line. Do not edit live evidence.
-  - If interrupted, first verify PID `66971` is gone, the port-forward is healthy, and no synthetic user pod exists. Then rerun the exact full command below with `--resume` appended. The resume validator rejects duplicates/drift and continues only an exact cleanup-complete plan prefix.
+  - If interrupted, first verify PID `66971` is gone, the port-forward is healthy, and no synthetic user pod exists. The run froze Git commit `99707b8da8e4c065a1a451332f8555193614144a`; later commits only update this handoff, but strict resume deliberately rejects any Git drift. With a clean worktree, temporarily run `git switch --detach 99707b8da8e4c065a1a451332f8555193614144a`, then rerun the exact full command below with `--resume` appended. After completion, return with `git switch main`. The ignored live evidence directory persists across the switch. Do not reset, delete, or overwrite it. The resume validator continues only an exact cleanup-complete plan prefix.
 
 ## Live preflight observations
 
