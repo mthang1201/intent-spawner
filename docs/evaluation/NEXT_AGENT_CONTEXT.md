@@ -1,12 +1,13 @@
 # Protocol-v4 Stage C Confirmatory Handoff
 
-Last updated: 2026-08-13 (Asia/Ho_Chi_Minh), after implementing safe resume and before the authoritative 320-trial run.
+Last updated: 2026-08-13 09:15 Asia/Ho_Chi_Minh, immediately before authoritative Stage C preflight.
 
 ## Exact repository state
 
 - Repository: `/Users/mthang1201/Documents/datn/intent-spawner`
 - Branch: `main`, one commit ahead of `origin/main` at inspection time.
 - Frozen checkpoint: `b2d7facabb01f64c9495de1aca656c1ebe0686dd` (`Harden Protocol-v4 evaluation`).
+- Stage C execution checkpoint: `83cb4af` (`Checkpoint Protocol-v4 Stage C execution`). This contains strict resume support, tests, reproducibility documentation, this handoff, and the new 320-row plan.
 - The checkpoint contains the current Protocol-v4 source, tests, documentation, and evidence-related hardening. The worktree was clean when inspected.
 - No Stage C, benchmark, pod-creating, Helm install/upgrade, or intent-spawner experiment process was running when inspected.
 - Existing historical evidence has not been modified.
@@ -57,13 +58,28 @@ Read-only inspection also counted plan methods/families/repeats and reviewed:
 
 ## Active processes / background work
 
-- No experiment or port-forward has been started.
-- No PID or process needs cleanup.
+- Hub port-forward is active:
+  - PID: `66540`
+  - Codex exec session ID: `47436`
+  - Command: `kubectl --context orbstack -n z2jh-context-demo port-forward service/proxy-public 18000:80`
+  - Output/health: listening on `127.0.0.1:18000` and `[::1]:18000`; `GET /hub/health` returned HTTP 200.
+  - Safe stop: send Ctrl-C to exec session `47436`, or `kill 66540` after verifying the exact command.
+- No Stage C experiment process has started yet.
+
+## Live preflight observations
+
+- Current Kubernetes context: `orbstack`.
+- Namespace `z2jh-context-demo` has `z2jh-context-demo.local/disposable-experiment-v4=true`.
+- One node, `Ready`, Kubernetes `v1.33.9+orb1`, OrbStack/docker runtime.
+- Hub deployment is 1/1 available; Helm release `context-demo` is deployed at chart 4.0.0 / JupyterHub 5.2.1.
+- No pod with `component=singleuser-server` exists.
+- Local Ollama is reachable on `127.0.0.1:11434` and has `llama3:latest` (digest begins `365c0bd3...`).
+- An old unrelated `idle-large-example` pod is in `Error`; it is not running and is not a single-user/Stage C pod. It was not deleted.
 
 ## Remaining tasks
 
-1. Commit the resume fix, this handoff, and the new execution plan as a new Protocol-v4 Stage C execution checkpoint so live preflight records a clean Git state.
-2. Verify the disposable `orbstack` cluster, labelled namespace, Hub, warm images, local Ollama endpoint/model, and zero synthetic user pods. Start and record the Hub port-forward.
+1. Commit this updated process handoff so the execution preflight sees a clean Git state.
+2. Run exact `--preflight-only` on the 320-row plan using the frozen Ollama settings.
 3. Execute the new plan into a new versioned `results/` directory using `--resume` only if interrupted. Never overwrite historical runs.
 4. Validate 320 unique completed records, all cleanup sidecars/statuses, `SHA256SUMS`, and failure classifications; analyze with family/repeated-measure-aware inference.
 5. Update RQ4/claim documentation only to the extent supported. External LLM credentials remain a separate blocker and must not block Stage C.
@@ -71,7 +87,7 @@ Read-only inspection also counted plan methods/families/repeats and reviewed:
 
 ## Exact next action
 
-Commit the clean Stage C execution checkpoint, then perform cluster/Ollama/Hub preflight.
+Commit this handoff update, then execute the exact `--preflight-only` command below.
 
 ## New commands executed after initial inspection
 
@@ -103,3 +119,19 @@ git diff --check
 ```
 
 Result: full pytest, compilation, shell syntax, 320-row executor dry-run, and diff check passed (exit status 0).
+
+```bash
+.venv/bin/python -m evaluation_v4.run_system \
+  --plan results/v4-stage-c-confirmatory-plan-20260813T021239Z/system-plan.jsonl \
+  --experiment-id protocol-v4-stage-c-confirmatory-20260813T021600Z \
+  --context orbstack --hub-url http://127.0.0.1:18000 \
+  --ollama-endpoint http://127.0.0.1:11434/api/chat \
+  --ollama-model llama3:latest --ollama-prompt-version prompt-v4.1.0 \
+  --ollama-temperature 0 --ollama-timeout 60 --preflight-only
+```
+
+If preflight passes, use the exact same arguments with:
+
+```bash
+--output results/v4-stage-c-confirmatory-20260813T021600Z --execute
+```
