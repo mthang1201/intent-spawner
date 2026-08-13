@@ -177,3 +177,34 @@ Exact next command if interrupted:
 ```
 
 If that and `git diff --check` pass, commit the model-only amendment and gate evidence so the live matrix records a clean frozen Git commit. Then create a new timestamped `results/v4-external-confirmatory-<UTC>` directory and run the 48 x 5 matrix with the exact command already recorded above, using `gemini-3.5-flash` and no pricing variables.
+
+## Active held-out external matrix (prepared 2026-08-13T04:55:43Z)
+
+- Pre-run model amendment and successful gate checkpoint: `a678456`.
+- Focused tests: 49 passed. `git diff --check`: passed. Historical raw checksum manifest: passed.
+- Dry run: exactly 240 records = 48 test samples x 5 repetitions; randomized/counterbalanced by repeat block; seed `20260808`.
+- New immutable output path: `results/v4-external-confirmatory-20260813T045543Z`.
+- Experiment ID: `protocol-v4-external-confirmatory-20260813T045543Z`.
+- Pricing variables are intentionally unset; monetary cost must remain unavailable.
+- The existing `results/v4-revised-test-20260812T095453Z` missing-credentials evidence and all Stage A/B/C evidence remain untouched.
+
+Launch command:
+
+```bash
+EXTERNAL_LLM_API_KEY="$(kubectl -n z2jh-context-demo get secret intent-spawner-external-llm -o jsonpath='{.data.api-key}' | base64 --decode)" \
+RECOMMENDER_BACKEND=external_llm \
+EXTERNAL_LLM_ENDPOINT='https://generativelanguage.googleapis.com/v1beta/openai/chat/completions' \
+EXTERNAL_LLM_MODEL='gemini-3.5-flash' \
+EXTERNAL_LLM_TIMEOUT='10' EXTERNAL_LLM_TOTAL_TIMEOUT='30' \
+EXTERNAL_LLM_MAX_RETRIES='2' EXTERNAL_LLM_RETRY_BACKOFF_SECONDS='0.25' \
+EXTERNAL_LLM_TEMPERATURE='0' EXTERNAL_LLM_MAX_CONCURRENT_RECOMMENDATIONS='4' \
+EXTERNAL_LLM_ALLOW_INSECURE_HTTP='false' \
+.venv/bin/python -m evaluation_v4.run_recommenders \
+  --recommenders external_llm \
+  --split test --repeats 5 --seed 20260808 --randomize-order \
+  --prompt-version prompt-v4.1.0 \
+  --experiment-id protocol-v4-external-confirmatory-20260813T045543Z \
+  --output results/v4-external-confirmatory-20260813T045543Z
+```
+
+If interrupted after at least one prediction is written, execute the identical command with `--resume` appended. The runner validates existing keys, retains the original run ID, skips the exact completed prefix, and appends only missing trials. Before resuming, record the process status and current line count here. Never start a replacement directory merely because the command was interrupted.
