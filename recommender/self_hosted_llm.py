@@ -11,6 +11,7 @@ from typing import Any
 
 from .base import Recommender
 from .external_llm import (
+    DEFAULT_PROMPT_VERSION,
     ExternalLLMConfig,
     ExternalLLMRecommender,
     JSONHTTPTransport,
@@ -19,6 +20,7 @@ from .external_llm import (
     LLMCompletionResponse,
     LLMResponseError,
     OpenAICompatibleClient,
+    LEGACY_PROMPT_VERSION_ENV_VAR,
     UrllibJSONTransport,
 )
 from .rule_based import DEFAULT_CATALOG_PATH
@@ -26,7 +28,7 @@ from .rule_based import DEFAULT_CATALOG_PATH
 
 BACKEND_NAME = "self_hosted_llm"
 OLLAMA_BACKEND_NAME = "self_hosted_local_ollama_llm"
-BACKEND_VERSION = "self-hosted-llm-v1"
+BACKEND_VERSION = "self-hosted-llm-v2"
 
 
 
@@ -44,6 +46,7 @@ OLLAMA_ENDPOINT_ENV_VAR = "OLLAMA_ENDPOINT"
 OLLAMA_MODEL_ENV_VAR = "OLLAMA_MODEL"
 OLLAMA_TIMEOUT_ENV_VAR = "OLLAMA_TIMEOUT"
 OLLAMA_TEMPERATURE_ENV_VAR = "OLLAMA_TEMPERATURE"
+PROMPT_VERSION_ENV_VAR = "SELF_HOSTED_LLM_PROMPT_VERSION"
 
 
 class OllamaClient(OpenAICompatibleClient):
@@ -62,7 +65,7 @@ class OllamaClient(OpenAICompatibleClient):
                     for message in request.messages
                 ],
                 "stream": False,
-                "format": "json",
+                "format": request.response_schema,
                 "options": {
                     "temperature": request.temperature,
                 },
@@ -161,6 +164,13 @@ class SelfHostedLLMConfig(ExternalLLMConfig):
         except ValueError as exc:
             raise ValueError("self-hosted LLM numeric configuration is invalid") from exc
 
+        prompt_version = (
+            selected.get(PROMPT_VERSION_ENV_VAR)
+            or selected.get(LEGACY_PROMPT_VERSION_ENV_VAR)
+            or DEFAULT_PROMPT_VERSION
+        )
+        prompt_version = prompt_version.strip()
+
         return cls(
             endpoint=endpoint,
             model=model,
@@ -171,6 +181,7 @@ class SelfHostedLLMConfig(ExternalLLMConfig):
             retry_backoff_seconds=retry_backoff_seconds,
             total_timeout=total_timeout,
             max_concurrent_recommendations=max_concurrent_recommendations,
+            prompt_version=prompt_version,
         )
 
 

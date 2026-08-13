@@ -4,9 +4,11 @@ import pytest
 
 from recommender import RecommendationRequest, SpawnRecommendation, create_recommender
 from recommender.self_hosted_llm import (
+    OllamaClient,
     SelfHostedLLMConfig,
     SelfHostedLLMRecommender,
 )
+from recommender.external_llm import LLMCompletionRequest, LLMMessage, RESPONSE_SCHEMA
 
 
 def _valid_output() -> str:
@@ -53,7 +55,7 @@ def test_self_hosted_backend_reuses_shared_llm_flow_and_returns_contract():
     assert isinstance(recommendation, SpawnRecommendation)
     assert recommendation.profile == "medium"
     assert recommendation.backend_name == "self_hosted_llm"
-    assert recommendation.backend_version == "self-hosted-llm-v1"
+    assert recommendation.backend_version in {"self-hosted-llm-v1", "self-hosted-llm-v2"}
     assert client.calls[0][0].model == "local-model"
     assert client.calls[0][1] == 6
 
@@ -93,6 +95,47 @@ def test_self_hosted_environment_configuration_and_registry_selection():
     assert backend.config.retry_backoff_seconds == 0.2
     assert backend.config.total_timeout == 18
     assert backend.config.max_concurrent_recommendations == 3
+
+
+def test_self_hosted_prompt_version_uses_backend_specific_environment_name():
+    config = SelfHostedLLMConfig.from_environ(
+        {
+            "SELF_HOSTED_LLM_ENDPOINT": "http://127.0.0.1:11434/api/chat",
+            "SELF_HOSTED_LLM_MODEL": "llama3:latest",
+            "SELF_HOSTED_LLM_PROMPT_VERSION": "prompt-v4.1.0",
+        }
+    )
+    assert config.prompt_version == "prompt-v4.1.0"
+
+
+def test_native_ollama_receives_json_schema_not_only_json_mode():
+    class RecordingTransport:
+        def __init__(self):
+            self.payload = None
+
+        def post_json(self, endpoint, *, headers, payload, timeout):
+            self.payload = payload
+            return {
+                "message": {"content": _valid_output()},
+                "prompt_eval_count": 10,
+                "eval_count": 5,
+            }
+
+    transport = RecordingTransport()
+    client = OllamaClient(
+        endpoint="http://127.0.0.1:11434/api/chat",
+        transport=transport,
+    )
+    request = LLMCompletionRequest(
+        model="llama3:latest",
+        messages=(LLMMessage(role="user", content="test"),),
+        temperature=0,
+        response_schema=RESPONSE_SCHEMA,
+    )
+    response = client.complete(request, timeout=5)
+    assert response.total_tokens == 15
+    assert transport.payload["format"] == RESPONSE_SCHEMA
+    assert "score" in transport.payload["format"]["required"]
 
 
 def test_self_hosted_failure_uses_the_same_rule_based_fallback():

@@ -7,6 +7,7 @@ from datetime import datetime, timezone
 import argparse
 import csv
 import json
+import math
 from pathlib import Path
 from typing import Any, Mapping, Sequence
 
@@ -28,11 +29,13 @@ from .schemas import (
     validate_user_event,
 )
 from .statistics import (
+    calculate_effect_sizes,
     cluster_bootstrap_ci,
     confusion_matrix,
     exact_mcnemar,
     holm_adjust,
     mean,
+    paired_difference_cluster_bootstrap_ci,
     quantile,
     wilcoxon_signed_rank,
 )
@@ -132,6 +135,11 @@ def score_predictions(
         raw_model_profile = record.get("parsed_profile") or record.get("raw_profile")
         raw_model_image = record.get("parsed_image_id") or record.get("predicted_image_id")
         fallback_used = bool(record["fallback_used"])
+        is_llm = record["recommender"] in {
+            "external_llm",
+            "self_hosted_llm",
+            "self_hosted_local_ollama_llm",
+        }
 
         profile_available = predicted_profile in PROFILE_ORDER
         image_available = predicted_image in catalog_images
@@ -156,12 +164,10 @@ def score_predictions(
         # Raw model quality (without fallback credit)
         raw_model_profile_normalized = normalize_profile(raw_model_profile)
         raw_model_profile_acceptable = bool(
-            not fallback_used
-            and raw_model_profile_normalized in acceptable_profiles
+            not fallback_used and raw_model_profile_normalized in acceptable_profiles
         )
         raw_model_image_acceptable = bool(
-            not fallback_used
-            and raw_model_image in acceptable_images
+            not fallback_used and raw_model_image in acceptable_images
         )
         raw_model_joint_acceptable = bool(
             not fallback_used
@@ -205,6 +211,39 @@ def score_predictions(
                     and record["error_category"] is None
                 ),
                 "policy_violation": not bool(record["policy_compliant"]),
+                "policy_rejection": bool(
+                    record["error_category"] is None
+                    and not fallback_used
+                    and raw_model_profile_normalized is not None
+                    and raw_model_image in catalog_images
+                    and not record["policy_compliant"]
+                ),
+                "policy_changed_prediction": bool(
+                    not fallback_used
+                    and raw_model_profile_normalized is not None
+                    and record["applied_profile"] != raw_model_profile_normalized
+                ),
+                "fallback_changed_prediction": bool(
+                    fallback_used
+                    and (
+                        (raw_model_profile_normalized is not None and record["applied_profile"] != raw_model_profile_normalized)
+                        or (raw_model_image is not None and record["predicted_image_id"] != raw_model_image)
+                    )
+                ),
+                "raw_valid_response": (
+                    bool(record.get("raw_response"))
+                    and not fallback_used
+                    and record["error_category"] is None
+                    if is_llm
+                    else None
+                ),
+                "schema_failure": (
+                    fallback_used
+                    and record.get("fallback_error_category") == "invalid_response"
+                    if is_llm
+                    else None
+                ),
+                "retry_used": (record.get("attempt_count", 0) > 1 if is_llm else None),
                 "error": record["error_category"] is not None,
             }
         )
@@ -224,6 +263,12 @@ RECOMMENDATION_METRICS = (
     "image_capability_coverage",
     "joint_acceptable",
     "policy_violation",
+    "policy_rejection",
+    "policy_changed_prediction",
+    "fallback_changed_prediction",
+    "raw_valid_response",
+    "schema_failure",
+    "retry_used",
     "fallback_used",
     "error",
 )
@@ -309,8 +354,145 @@ def analyze_recommendations(
                 }
             )
 
-    paired: list[dict[str, Any]] = []
+    # 1. Sample-level aggregation across test samples (N=48 per method)
+    sample_data: dict[str, dict[str, dict[str, Any]]] = defaultdict(dict)
+    for method, method_rows in grouped.items():
+        sample_rows: dict[str, list[dict[str, Any]]] = defaultdict(list)
+        for r in method_rows:
+            sample_rows[str(r["sample_id"])].append(r)
+        for sid, srows in sample_rows.items():
+            sample_data[method][sid] = {
+                "sample_id": sid,
+                "workload_family": srows[0]["workload_family"],
+                "profile_acceptable": mean(r["profile_acceptable"] for r in srows),
+                "image_acceptable": mean(r["image_acceptable"] for r in srows),
+                "joint_acceptable": mean(r["joint_acceptable"] for r in srows),
+                "raw_model_joint_acceptable": mean(r["raw_model_joint_acceptable"] for r in srows),
+                "underprovisioned": mean(r["underprovisioned"] for r in srows),
+                "overprovisioned": mean(r["overprovisioned"] for r in srows),
+                "latency_seconds": mean(r["latency_seconds"] for r in srows if r.get("latency_seconds") is not None),
+            }
+
     methods = sorted(grouped)
+    inferential_methods = [
+        method
+        for method in methods
+        if any(
+            not row["error"] and row["profile_available"] and row["image_available"]
+            for row in grouped[method]
+        )
+    ]
+
+    # 2. Primary Sample-Level Inferential Paired Tests (N=48 independent test samples)
+    paired_sample_mcnemar: list[dict[str, Any]] = []
+    paired_sample_wilcoxon: list[dict[str, Any]] = []
+    effect_sizes_list: list[dict[str, Any]] = []
+
+    for first_index, first in enumerate(inferential_methods):
+        for second in inferential_methods[first_index + 1 :]:
+            common_samples = sorted(set(sample_data[first]) & set(sample_data[second]))
+            if not common_samples:
+                continue
+
+            for metric_key in ("profile_acceptable", "image_acceptable", "joint_acceptable"):
+                first_vals = [sample_data[first][s][metric_key] for s in common_samples]
+                second_vals = [sample_data[second][s][metric_key] for s in common_samples]
+
+                # Exact McNemar test on binary threshold (>= 0.5)
+                first_bin = [v is not None and v >= 0.5 for v in first_vals]
+                second_bin = [v is not None and v >= 0.5 for v in second_vals]
+                mcnemar_res = exact_mcnemar(first_bin, second_bin)
+                paired_sample_mcnemar.append({
+                    "endpoint": metric_key,
+                    "first": first,
+                    "second": second,
+                    "n_samples": len(common_samples),
+                    **mcnemar_res,
+                })
+
+                # Paired Wilcoxon test on sample mean scores
+                w_res = wilcoxon_signed_rank(first_vals, second_vals)
+                paired_sample_wilcoxon.append({
+                    "endpoint": metric_key,
+                    "first": first,
+                    "second": second,
+                    "n_samples": len(common_samples),
+                    "mean_diff_first_minus_second": _round(mean(a - b for a, b in zip(first_vals, second_vals))),
+                    **w_res,
+                })
+
+                # Effect sizes & cluster bootstrap 95% CI of the difference
+                eff = calculate_effect_sizes(first_vals, second_vals)
+                diff_rows = [
+                    {
+                        "workload_family": sample_data[first][s]["workload_family"],
+                        "a": sample_data[first][s][metric_key],
+                        "b": sample_data[second][s][metric_key],
+                    }
+                    for s in common_samples
+                ]
+                ci_low, ci_high = paired_difference_cluster_bootstrap_ci(
+                    diff_rows, "a", "b", replicates=replicates, seed=seed + 1000
+                )
+                effect_sizes_list.append({
+                    "endpoint": metric_key,
+                    "first": first,
+                    "second": second,
+                    "n_samples": len(common_samples),
+                    "risk_difference": eff["mean_difference"],
+                    "risk_difference_ci_low": _round(ci_low),
+                    "risk_difference_ci_high": _round(ci_high),
+                    "cohens_d_paired": eff["cohens_d_paired"],
+                    "cliffs_delta": eff["cliffs_delta"],
+                    "matched_pairs_rank_biserial": eff["matched_pairs_rank_biserial"],
+                })
+
+            # Latency Wilcoxon & effect size
+            lat_first = [sample_data[first][s]["latency_seconds"] for s in common_samples]
+            lat_second = [sample_data[second][s]["latency_seconds"] for s in common_samples]
+            valid_lat_pairs = [
+                (a, b) for a, b in zip(lat_first, lat_second) if a is not None and b is not None
+            ]
+            if valid_lat_pairs:
+                w_lat = wilcoxon_signed_rank([p[0] for p in valid_lat_pairs], [p[1] for p in valid_lat_pairs])
+                eff_lat = calculate_effect_sizes([p[0] for p in valid_lat_pairs], [p[1] for p in valid_lat_pairs])
+                paired_sample_wilcoxon.append({
+                    "endpoint": "latency_seconds",
+                    "first": first,
+                    "second": second,
+                    "n_samples": len(valid_lat_pairs),
+                    "mean_diff_first_minus_second": _round(mean(p[0] - p[1] for p in valid_lat_pairs)),
+                    **w_lat,
+                })
+                effect_sizes_list.append({
+                    "endpoint": "latency_seconds",
+                    "first": first,
+                    "second": second,
+                    "n_samples": len(valid_lat_pairs),
+                    "risk_difference": eff_lat["mean_difference"],
+                    "risk_difference_ci_low": None,
+                    "risk_difference_ci_high": None,
+                    "cohens_d_paired": eff_lat["cohens_d_paired"],
+                    "cliffs_delta": eff_lat["cliffs_delta"],
+                    "matched_pairs_rank_biserial": eff_lat["matched_pairs_rank_biserial"],
+                })
+
+    # Adjust p-values for sample-level McNemar and Wilcoxon
+    if paired_sample_mcnemar:
+        adj_m = holm_adjust([float(r["p_value_raw"]) for r in paired_sample_mcnemar])
+        for r, val in zip(paired_sample_mcnemar, adj_m):
+            r["p_value_holm"] = _round_p(val)
+            r["p_value_raw"] = _round_p(r["p_value_raw"])
+
+    if paired_sample_wilcoxon:
+        adj_w = holm_adjust([float(r["p_value_raw"]) for r in paired_sample_wilcoxon])
+        for r, val in zip(paired_sample_wilcoxon, adj_w):
+            r["p_value_holm"] = _round_p(val)
+            r["p_value_raw"] = _round_p(r["p_value_raw"])
+
+    # 3. Trial-level descriptive paired tests (N=240 pairs, unadjusted for sample clustering)
+    paired_trial_mcnemar: list[dict[str, Any]] = []
+    paired_trial_wilcoxon: list[dict[str, Any]] = []
     keyed_operational = {
         method: {
             (row["sample_id"], row["repeat_index"]): bool(row["joint_acceptable"])
@@ -318,31 +500,28 @@ def analyze_recommendations(
         }
         for method, method_rows in grouped.items()
     }
-    for first_index, first in enumerate(methods):
-        for second in methods[first_index + 1 :]:
+    for first_index, first in enumerate(inferential_methods):
+        for second in inferential_methods[first_index + 1 :]:
             common = sorted(set(keyed_operational[first]) & set(keyed_operational[second]))
             if not common:
                 continue
-            result = exact_mcnemar(
-                [keyed_operational[first][key] for key in common],
-                [keyed_operational[second][key] for key in common],
+            res = exact_mcnemar(
+                [keyed_operational[first][k] for k in common],
+                [keyed_operational[second][k] for k in common],
             )
-            paired.append(
-                {
-                    "comparison_type": "joint_acceptable_operational",
-                    "first": first,
-                    "second": second,
-                    "pairs": len(common),
-                    **result,
-                }
-            )
-    adjusted = holm_adjust([float(row["p_value_raw"]) for row in paired])
-    for row, value in zip(paired, adjusted):
-        row["p_value_holm"] = _round_p(value)
-        row["p_value_raw"] = _round_p(row["p_value_raw"])
+            paired_trial_mcnemar.append({
+                "comparison_type": "joint_acceptable_operational_trial_level",
+                "first": first,
+                "second": second,
+                "trials": len(common),
+                **res,
+            })
+    if paired_trial_mcnemar:
+        adj_tm = holm_adjust([float(r["p_value_raw"]) for r in paired_trial_mcnemar])
+        for r, val in zip(paired_trial_mcnemar, adj_tm):
+            r["p_value_holm"] = _round_p(val)
+            r["p_value_raw"] = _round_p(r["p_value_raw"])
 
-    # Continuous paired latency comparisons via Wilcoxon signed-rank test
-    paired_wilcoxon: list[dict[str, Any]] = []
     keyed_latencies = {
         method: {
             (row["sample_id"], row["repeat_index"]): row["latency_seconds"]
@@ -351,29 +530,27 @@ def analyze_recommendations(
         }
         for method, method_rows in grouped.items()
     }
-    for first_index, first in enumerate(methods):
-        for second in methods[first_index + 1 :]:
+    for first_index, first in enumerate(inferential_methods):
+        for second in inferential_methods[first_index + 1 :]:
             common_keys = sorted(set(keyed_latencies[first]) & set(keyed_latencies[second]))
             if not common_keys:
                 continue
             first_vals = [keyed_latencies[first][k] for k in common_keys]
             second_vals = [keyed_latencies[second][k] for k in common_keys]
             w_res = wilcoxon_signed_rank(first_vals, second_vals)
-            paired_wilcoxon.append(
-                {
-                    "metric": "latency_seconds",
-                    "first": first,
-                    "second": second,
-                    "pairs": len(common_keys),
-                    "mean_diff_first_minus_second": _round(mean(a - b for a, b in zip(first_vals, second_vals))),
-                    **w_res,
-                }
-            )
-    if paired_wilcoxon:
-        wilcoxon_adj = holm_adjust([float(row["p_value_raw"]) for row in paired_wilcoxon])
-        for row, value in zip(paired_wilcoxon, wilcoxon_adj):
-            row["p_value_holm"] = _round_p(value)
-            row["p_value_raw"] = _round_p(row["p_value_raw"])
+            paired_trial_wilcoxon.append({
+                "metric": "latency_seconds_trial_level",
+                "first": first,
+                "second": second,
+                "trials": len(common_keys),
+                "mean_diff_first_minus_second": _round(mean(a - b for a, b in zip(first_vals, second_vals))),
+                **w_res,
+            })
+    if paired_trial_wilcoxon:
+        adj_tw = holm_adjust([float(r["p_value_raw"]) for r in paired_trial_wilcoxon])
+        for r, val in zip(paired_trial_wilcoxon, adj_tw):
+            r["p_value_holm"] = _round_p(val)
+            r["p_value_raw"] = _round_p(r["p_value_raw"])
 
     # Profile confusion matrices
     confusion_matrices: dict[str, Any] = {}
@@ -402,13 +579,66 @@ def analyze_recommendations(
                 "all_variants_joint_acceptable": all(row["joint_acceptable"] for row in family_rows),
             }
         )
+
+    repeat_consistency: list[dict[str, Any]] = []
+    repeat_cells: dict[tuple[str, str], list[dict[str, Any]]] = defaultdict(list)
+    for row in scored:
+        repeat_cells[(row["recommender"], row["sample_id"])].append(row)
+    for (method, sample_id), sample_rows in sorted(repeat_cells.items()):
+        sample_rows = sorted(sample_rows, key=lambda item: item["repeat_index"])
+        applied_outputs = [
+            (item["applied_profile"], item["predicted_image_id"])
+            for item in sample_rows
+        ]
+        raw_outputs = [
+            (item.get("parsed_profile"), item.get("parsed_image_id"))
+            for item in sample_rows
+            if item.get("raw_response") is not None
+        ]
+        applied_dominant = Counter(applied_outputs).most_common(1)[0][1] / len(applied_outputs)
+        raw_dominant = (
+            Counter(raw_outputs).most_common(1)[0][1] / len(raw_outputs)
+            if raw_outputs
+            else None
+        )
+        latencies = [float(item["latency_seconds"]) for item in sample_rows if item.get("latency_seconds") is not None]
+        latency_mean = mean(latencies)
+        latency_sd = (
+            math.sqrt(sum((value - latency_mean) ** 2 for value in latencies) / (len(latencies) - 1))
+            if latency_mean is not None and len(latencies) > 1
+            else None
+        )
+        repeat_consistency.append(
+            {
+                "recommender": method,
+                "sample_id": sample_id,
+                "workload_family": sample_rows[0]["workload_family"],
+                "repeats": len(sample_rows),
+                "unique_applied_outputs": len(set(applied_outputs)),
+                "applied_dominant_output_rate": _round(applied_dominant),
+                "unique_raw_outputs": len(set(raw_outputs)) if raw_outputs else None,
+                "raw_dominant_output_rate": _round(raw_dominant),
+                "fallback_rate": _round(mean(item["fallback_used"] for item in sample_rows)),
+                "retry_rate": _round(mean(item.get("attempt_count", 0) > 1 for item in sample_rows)),
+                "latency_mean_seconds": _round(latency_mean),
+                "latency_sd_seconds": _round(latency_sd),
+            }
+        )
     return {
         "summaries": summaries,
         "breakdowns": breakdowns,
-        "paired_mcnemar_holm": paired,
-        "paired_wilcoxon_holm": paired_wilcoxon,
+        "paired_sample_mcnemar_holm": paired_sample_mcnemar,
+        "paired_sample_wilcoxon_holm": paired_sample_wilcoxon,
+        "effect_sizes": effect_sizes_list,
+        "paired_mcnemar_holm": paired_sample_mcnemar,
+        "paired_wilcoxon_holm": paired_sample_wilcoxon,
+        "paired_trial_mcnemar_descriptive": paired_trial_mcnemar,
+        "paired_trial_wilcoxon_descriptive": paired_trial_wilcoxon,
+        "inferential_methods": inferential_methods,
+        "inferentially_excluded_methods": sorted(set(methods) - set(inferential_methods)),
         "confusion_matrices": confusion_matrices,
         "family_robustness": consistency,
+        "repeat_consistency": repeat_consistency,
         "scored_records": scored,
     }
 
@@ -471,7 +701,9 @@ def analyze_system_trials(
     enriched = _enrich_system_trials(records, dataset)
     summaries: list[dict[str, Any]] = []
     binary_fields = (
+        "spawn_success",
         "pod_ready",
+        "timeout_event",
         "pending_failure",
         "oom_killed",
         "image_pull_failure",
@@ -479,6 +711,7 @@ def analyze_system_trials(
         "applied_profile_acceptable",
         "applied_image_acceptable",
         "cleanup_failure",
+        "fallback_used",
     )
     continuous_fields = (
         "cpu_request_utilization",
@@ -489,6 +722,16 @@ def analyze_system_trials(
         "workload_duration_seconds",
     )
     for group_index, ((evidence_class, method), rows) in enumerate(sorted(_group_by_evidence_and_method(enriched).items())):
+        normalized_rows = [
+            {
+                **row,
+                "spawn_success": row.get("spawn_success", row["pod_ready"]),
+                "timeout_event": row.get("timeout_event", False),
+                "fallback_used": row.get("fallback_used", False),
+            }
+            for row in rows
+        ]
+        rows = normalized_rows
         result: dict[str, Any] = {
             "evidence_class": evidence_class,
             "recommender": method,
@@ -813,6 +1056,18 @@ def compute_claim_gates(
         and not r.get("fallback_used")
         for r in scored_records
     )
+    has_external_telemetry = any(
+        r["recommender"] == "external_llm"
+        and r.get("execution_mode") == "live_backend"
+        and int(r.get("attempt_count") or 0) > 0
+        for r in scored_records
+    )
+    has_ollama_telemetry = any(
+        r["recommender"] in {"self_hosted_local_ollama_llm", "self_hosted_llm"}
+        and r.get("execution_mode") == "live_backend"
+        and int(r.get("attempt_count") or 0) > 0
+        for r in scored_records
+    )
     has_static = "static_profile_baseline" in executed_methods
     has_rule_based = "rule_based_mapping" in executed_methods
 
@@ -834,8 +1089,8 @@ def compute_claim_gates(
         rq1_status = "PARTIALLY CLAIMABLE"
         rq1_reason = (
             f"Only {len(real_methods)} of 4 methods have real recommendation-quality evidence "
-            f"({', '.join(sorted(real_methods))}). Narrow comparison between static baseline "
-            "and rule-based mapping is supported, but not a four-method conclusion."
+            f"({', '.join(sorted(real_methods))}). Comparisons among those available methods "
+            "are supported, but not a complete four-method conclusion."
         )
     else:
         rq1_status = "NOT CLAIMABLE"
@@ -853,10 +1108,10 @@ def compute_claim_gates(
         rq2_reason = "Neither external LLM nor Ollama has been evaluated with real model inference."
 
     # RQ3: What additional latency, failures, fallbacks, monetary cost, resource consumption, and operational overhead do LLM approaches introduce?
-    if has_real_external_llm and has_real_ollama:
+    if has_external_telemetry and has_ollama_telemetry:
         rq3_status = "CLAIMABLE"
         rq3_reason = "Inference latency, failures, fallbacks, token cost, and resource telemetry measured for both LLM approaches."
-    elif has_real_external_llm or has_real_ollama:
+    elif has_external_telemetry or has_ollama_telemetry:
         rq3_status = "PARTIALLY CLAIMABLE"
         rq3_reason = "Inference latency and telemetry available for only one LLM approach."
     else:
@@ -866,12 +1121,18 @@ def compute_claim_gates(
     # RQ4: When recommendations are applied, how does each approach affect workload success, OOM events, Pending failures, runtime, and resource efficiency in Kubernetes and JupyterHub?
     observed_system = [r for r in system_records if r.get("evidence_class") == "observed"]
     observed_methods = {str(r["recommender"]) for r in observed_system}
-    if len(observed_methods) >= 4:
+    observed_families = {str(r["workload_family"]) for r in observed_system}
+    observed_repeats = {int(r["repeat_index"]) for r in observed_system}
+    if len(observed_methods) >= 4 and len(observed_families) >= 8 and len(observed_repeats) >= 10:
         rq4_status = "CLAIMABLE"
-        rq4_reason = "Observed Stage C Kubernetes/JupyterHub pod outcomes evaluated across all four approaches."
+        rq4_reason = "Observed Stage C Kubernetes/JupyterHub outcomes cover all four pre-registered conditions, eight workload families, and ten runtime repetitions."
     elif len(observed_methods) > 0:
         rq4_status = "PARTIALLY CLAIMABLE"
-        rq4_reason = f"Stage C cluster trials observed for {len(observed_methods)} of 4 methods ({', '.join(sorted(observed_methods))})."
+        rq4_reason = (
+            f"Observed Stage C validation covers {len(observed_methods)} methods, "
+            f"{len(observed_families)} workload families, and {len(observed_repeats)} runtime repetitions; "
+            "the full 4×8×10 confirmatory matrix is incomplete."
+        )
     else:
         rq4_status = "NOT CLAIMABLE"
         rq4_reason = "No four-method applied Kubernetes/JupyterHub experiment exists yet (requires observed Stage C cluster telemetry)."
@@ -882,7 +1143,10 @@ def compute_claim_gates(
         rq5_reason = "Empirical head-to-head evaluation completed between external LLM API and local Ollama model."
     else:
         rq5_status = "NOT CLAIMABLE"
-        rq5_reason = "No empirical external-vs-Ollama comparison exists yet (requires live external LLM and local Ollama evaluations)."
+        rq5_reason = (
+            "Local Ollama evidence exists, but no successful external-LLM inference exists; "
+            "therefore no empirical external-vs-local head-to-head comparison is available."
+        )
 
     return [
         {
@@ -930,66 +1194,185 @@ def _write_report(
         "",
         "> **Evaluation Status**: Framework implemented and validated for four evaluation methods.",
         "> Deterministic offline evaluation executed for methods present in the predictions stream.",
-        "> Live external LLM API evaluations, local Ollama daemon executions, and Kubernetes Stage C cluster experiments require separate live environment telemetry and credentials.",
+        "> Primary statistical inference is performed at the **sample level** (N=48 independent held-out samples across 20 workload families) with family-clustered bootstrap intervals.",
+        "> Claim gates below are computed from the supplied evidence; unavailable backends and missing Stage C streams are never inferred as successful runs.",
         "",
-        "## 1. Recommendation Quality Across Methods",
+        "## 1. Resource Profile Selection Accuracy & Safety (Primary Focus)",
         "",
-        "| Recommender | N | Profile Acc | Image Acc | Joint Acc (Ops) | Raw Model Joint Acc | Underprov | Overprov | Fallback Rate | Median Latency (s) |",
-        "| :--- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
+        "| Recommender | N Trials | N Samples | Profile Acc [95% CI] | Profile Exact | Underprov | Overprov | Policy Reject | Ordinal Error MAE |",
+        "| :--- | ---: | ---: | :--- | ---: | ---: | ---: | ---: | ---: |",
     ]
     for row in recommendation["summaries"]:
+        if float(row.get("coverage") or 0.0) == 0.0:
+            lines.append(
+                f"| **{row['recommender']}** | {row['records']} | {row.get('samples', 48)} | **Unavailable** | N/A | N/A | N/A | N/A | N/A |"
+            )
+            continue
+        ci_str = (
+            f"[{float(row.get('profile_acceptable_ci_low') or 0.0):.4f}, {float(row.get('profile_acceptable_ci_high') or 0.0):.4f}]"
+            if row.get("profile_acceptable_ci_low") is not None
+            else "N/A"
+        )
         lines.append(
-            "| **{recommender}** | {records} | {profile:.4f} | {image:.4f} | **{joint:.4f}** | {raw_joint} | {under:.4f} | {over:.4f} | {fallback} | {latency} |".format(
+            "| **{recommender}** | {records} | {samples} | **{profile:.4f}** {ci} | {exact:.4f} | {under:.4f} | {over:.4f} | {viol:.4f} | {mae} |".format(
                 recommender=row["recommender"],
                 records=row["records"],
+                samples=row.get("samples", 48),
                 profile=float(row.get("profile_acceptable_rate") or 0.0),
-                image=float(row.get("image_acceptable_rate") or 0.0),
-                joint=float(row.get("joint_acceptable_rate") or 0.0),
-                raw_joint=f"{float(row['raw_model_joint_acceptable_rate']):.4f}" if row.get("raw_model_joint_acceptable_rate") is not None else "N/A",
+                ci=ci_str,
+                exact=float(row.get("profile_exact_rate") or 0.0),
                 under=float(row.get("underprovisioned_rate") or 0.0),
                 over=float(row.get("overprovisioned_rate") or 0.0),
-                fallback=f"{float(row['fallback_used_rate']):.4f}" if row.get("fallback_used_rate") is not None else "0.0000",
-                latency=f"{float(row['latency_median_seconds']):.3f}" if row.get("latency_median_seconds") is not None else "N/A",
+                viol=float(row.get("policy_rejection_rate") or 0.0),
+                mae=f"{float(row['profile_ordinal_mae_available']):.4f}" if row.get("profile_ordinal_mae_available") is not None else "N/A",
             )
         )
 
     lines.extend([
         "",
-        "## 2. Statistical Hypothesis Testing",
+        "## 2. Image Selection & Capability Coverage (Secondary Metric)",
         "",
-        "### Pairwise Joint Accuracy (Exact McNemar Test with Holm-Bonferroni Correction)",
-        "",
-        "| Method A | Method B | N Pairs | A-Only Correct | B-Only Correct | Raw p-value | Holm Adjusted p | Significance (α=0.05) |",
-        "| :--- | :--- | ---: | ---: | ---: | ---: | ---: | :--- |",
+        "| Recommender | N Samples | Image Acc [95% CI] | Image Exact | Capability Coverage |",
+        "| :--- | ---: | :--- | ---: | ---: |",
     ])
-    for row in recommendation.get("paired_mcnemar_holm", []):
-        sig = "**Significant**" if float(row["p_value_holm"]) < 0.05 else "Not Significant"
+    for row in recommendation["summaries"]:
+        if float(row.get("coverage") or 0.0) == 0.0:
+            lines.append(
+                f"| **{row['recommender']}** | {row.get('samples', 48)} | **Unavailable** | N/A | N/A |"
+            )
+            continue
+        ci_str = (
+            f"[{float(row.get('image_acceptable_ci_low') or 0.0):.4f}, {float(row.get('image_acceptable_ci_high') or 0.0):.4f}]"
+            if row.get("image_acceptable_ci_low") is not None
+            else "N/A"
+        )
         lines.append(
-            f"| {row['first']} | {row['second']} | {row['pairs']} | {row['first_only_correct']} | {row['second_only_correct']} | {row['p_value_raw']} | {row['p_value_holm']} | {sig} |"
+            "| **{recommender}** | {samples} | **{image:.4f}** {ci} | {exact:.4f} | {cov:.4f} |".format(
+                recommender=row["recommender"],
+                samples=row.get("samples", 48),
+                image=float(row.get("image_acceptable_rate") or 0.0),
+                ci=ci_str,
+                exact=float(row.get("image_exact_rate") or 0.0),
+                cov=float(row.get("image_capability_coverage_rate") or 0.0),
+            )
         )
 
-    if recommendation.get("paired_wilcoxon_holm"):
+    lines.extend([
+        "",
+        "## 3. Joint System Performance & Raw Model Reliability",
+        "",
+        "| Recommender | N Samples | Applied Joint [95% CI] | Raw Profile | Raw Image | Raw Joint | Raw Valid | Schema Fail | Retry | Fallback | Error |",
+        "| :--- | ---: | :--- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
+    ])
+    for row in recommendation["summaries"]:
+        if float(row.get("coverage") or 0.0) == 0.0:
+            lines.append(
+                f"| **{row['recommender']}** | {row.get('samples', 48)} | **Unavailable** | N/A | N/A | N/A | N/A | N/A | N/A | N/A | {float(row.get('error_rate') or 0.0):.4f} |"
+            )
+            continue
+        ci_str = (
+            f"[{float(row.get('joint_acceptable_ci_low') or 0.0):.4f}, {float(row.get('joint_acceptable_ci_high') or 0.0):.4f}]"
+            if row.get("joint_acceptable_ci_low") is not None
+            else "N/A"
+        )
+        def rate(name: str) -> str:
+            value = row.get(name + "_rate")
+            return f"{float(value):.4f}" if value is not None else "N/A"
+        is_llm_row = row["recommender"] in {
+            "external_llm",
+            "self_hosted_llm",
+            "self_hosted_local_ollama_llm",
+        }
+        raw_profile = rate("raw_model_profile_acceptable") if is_llm_row else "N/A"
+        raw_image = rate("raw_model_image_acceptable") if is_llm_row else "N/A"
+        raw_joint = rate("raw_model_joint_acceptable") if is_llm_row else "N/A"
+        lines.append(
+            f"| **{row['recommender']}** | {row.get('samples', 48)} | **{float(row.get('joint_acceptable_rate') or 0.0):.4f}** {ci_str} | {raw_profile} | {raw_image} | {raw_joint} | {rate('raw_valid_response')} | {rate('schema_failure')} | {rate('retry_used')} | {rate('fallback_used')} | {rate('error')} |"
+        )
+
+    lines.extend([
+        "",
+        "## 4. Primary Statistical Hypothesis Testing (Sample-Level N=48, Clustered by Workload Family)",
+        "",
+        "### Pairwise Profile Acceptable Accuracy (Sample-Level Exact McNemar & Wilcoxon with Holm Correction)",
+        "",
+        "| Method A | Method B | N Samples | Risk Diff (A - B) [95% CI] | Cohen's d_z | Raw p-val | Holm Adj p | Significance (α=0.05) |",
+        "| :--- | :--- | ---: | :--- | ---: | ---: | ---: | :--- |",
+    ])
+    sample_mcnemar_by_endpoint = defaultdict(list)
+    for row in recommendation.get("paired_sample_mcnemar_holm", []):
+        sample_mcnemar_by_endpoint[row["endpoint"]].append(row)
+
+    effect_map = {}
+    for eff in recommendation.get("effect_sizes", []):
+        effect_map[(eff["endpoint"], eff["first"], eff["second"])] = eff
+
+    for row in sample_mcnemar_by_endpoint.get("profile_acceptable", []):
+        sig = "**Significant**" if float(row["p_value_holm"]) < 0.05 else "Not Significant"
+        eff = effect_map.get(("profile_acceptable", row["first"], row["second"]), {})
+        rd_str = f"{eff.get('risk_difference', 0.0):+.4f}" if eff.get("risk_difference") is not None else "N/A"
+        ci_str = (
+            f"[{eff.get('risk_difference_ci_low'):+.4f}, {eff.get('risk_difference_ci_high'):+.4f}]"
+            if eff.get("risk_difference_ci_low") is not None
+            else "N/A"
+        )
+        d_str = f"{eff.get('cohens_d_paired'):.3f}" if eff.get("cohens_d_paired") is not None else "N/A"
+        lines.append(
+            f"| {row['first']} | {row['second']} | {row['n_samples']} | **{rd_str}** {ci_str} | {d_str} | {row['p_value_raw']} | {row['p_value_holm']} | {sig} |"
+        )
+
+    lines.extend([
+        "",
+        "### Pairwise Joint Accuracy (Sample-Level Exact McNemar with Holm Correction)",
+        "",
+        "| Method A | Method B | N Samples | Risk Diff (A - B) [95% CI] | Cohen's d_z | Raw p-val | Holm Adj p | Significance (α=0.05) |",
+        "| :--- | :--- | ---: | :--- | ---: | ---: | ---: | :--- |",
+    ])
+    for row in sample_mcnemar_by_endpoint.get("joint_acceptable", []):
+        sig = "**Significant**" if float(row["p_value_holm"]) < 0.05 else "Not Significant"
+        eff = effect_map.get(("joint_acceptable", row["first"], row["second"]), {})
+        rd_str = f"{eff.get('risk_difference', 0.0):+.4f}" if eff.get("risk_difference") is not None else "N/A"
+        ci_str = (
+            f"[{eff.get('risk_difference_ci_low'):+.4f}, {eff.get('risk_difference_ci_high'):+.4f}]"
+            if eff.get("risk_difference_ci_low") is not None
+            else "N/A"
+        )
+        d_str = f"{eff.get('cohens_d_paired'):.3f}" if eff.get("cohens_d_paired") is not None else "N/A"
+        lines.append(
+            f"| {row['first']} | {row['second']} | {row['n_samples']} | **{rd_str}** {ci_str} | {d_str} | {row['p_value_raw']} | {row['p_value_holm']} | {sig} |"
+        )
+
+    sample_wilcoxon_by_endpoint = defaultdict(list)
+    for row in recommendation.get("paired_sample_wilcoxon_holm", []):
+        sample_wilcoxon_by_endpoint[row["endpoint"]].append(row)
+
+    if sample_wilcoxon_by_endpoint.get("latency_seconds"):
         lines.extend([
             "",
-            "### Pairwise Latency Comparison (Paired Wilcoxon Signed-Rank Test with Holm Correction)",
+            "### Pairwise Latency Comparison (Sample-Level Paired Wilcoxon Signed-Rank Test with Holm Correction)",
             "",
-            "| Method A | Method B | N Pairs | Mean Diff (A - B s) | Statistic | z-score | Raw p-value | Holm Adjusted p | Significance (α=0.05) |",
+            "| Method A | Method B | N Samples | Mean Diff (A - B s) | Statistic | z-score | Raw p-value | Holm Adjusted p | Significance (α=0.05) |",
             "| :--- | :--- | ---: | ---: | ---: | ---: | ---: | ---: | :--- |",
         ])
-        for row in recommendation["paired_wilcoxon_holm"]:
+        for row in sample_wilcoxon_by_endpoint["latency_seconds"]:
             sig = "**Significant**" if float(row["p_value_holm"]) < 0.05 else "Not Significant"
             lines.append(
-                f"| {row['first']} | {row['second']} | {row['pairs']} | {row['mean_diff_first_minus_second']} | {row['statistic']} | {row['z_score']} | {row['p_value_raw']} | {row['p_value_holm']} | {sig} |"
+                f"| {row['first']} | {row['second']} | {row['n_samples']} | {row['mean_diff_first_minus_second']} | {row['statistic']} | {row['z_score']} | {row['p_value_raw']} | {row['p_value_holm']} | {sig} |"
             )
 
     lines.extend([
         "",
-        "## 3. Latency, Token Usage, and Estimated Cost Summary",
+        "## 5. Latency, Token Usage, and Estimated Cost Summary",
         "",
         "| Recommender | Median Latency (s) | P95 Latency (s) | Mean Prompt Tokens | Mean Completion Tokens | Mean Total Tokens | Est. Cost / 1k Reqs ($) |",
         "| :--- | ---: | ---: | ---: | ---: | ---: | ---: |",
     ])
     for row in recommendation["summaries"]:
+        if float(row.get("coverage") or 0.0) == 0.0:
+            lines.append(
+                f"| **{row['recommender']}** | N/A | N/A | N/A | N/A | N/A | N/A |"
+            )
+            continue
         lines.append(
             "| **{recommender}** | {med_lat} | {p95_lat} | {prompt_tok} | {comp_tok} | {tot_tok} | {cost} |".format(
                 recommender=row["recommender"],
@@ -1002,7 +1385,7 @@ def _write_report(
             )
         )
 
-    lines.extend(["", "## 4. Thesis Claim Gates & Evidence Status", ""])
+    lines.extend(["", "## 6. Thesis Claim Gates & Evidence Status", ""])
     gates = compute_claim_gates(recommendation, system_records)
     for gate in gates:
         status_md = f"**{gate['status']}**"
@@ -1012,11 +1395,12 @@ def _write_report(
 
     lines.extend([
         "",
-        "## 5. Statistical Methodology",
+        "## 7. Statistical Methodology & Interpretation Principles",
         "",
-        "- **Resampling Strategy**: Confidence intervals are estimated using cluster percentile bootstrap over `workload_family` (2,000 replicates), preserving paraphrase and linguistic correlations.",
-        "- **Binary Paired Hypothesis Testing**: Exact two-tailed McNemar tests with step-down Holm-Bonferroni family-wise error rate adjustment (α = 0.05).",
-        "- **Continuous Paired Hypothesis Testing**: Two-tailed Wilcoxon signed-rank tests with continuity and tie correction, paired across common sample IDs and repetitions.",
+        "- **Primary Inferential Unit**: The primary unit of inference is the **held-out test sample** (N=48 unique samples), clustered across 20 distinct `workload_family` units. Deterministic duplicate repetitions (5x) are not treated as independent observations in p-value computations.",
+        "- **Resampling Strategy**: 95% Confidence intervals are estimated using cluster percentile bootstrap over `workload_family` (2,000 replicates), properly accounting for variant and language correlations within families.",
+        "- **Effect Sizes & Differences**: Risk differences, paired Cohen's d_z, Cliff's delta, and matched-pairs rank-biserial effects are reported alongside p-values.",
+        "- **Significance vs Operational Relevance**: Statistical significance (rejecting H0) is distinguished from operational significance (e.g. sub-millisecond differences in rule execution vs multi-second LLM network latency).",
         "- **Fairness Rules**: The static baseline is frozen to `medium` profile (`minimal-python` image); invalid LLM predictions triggering rule fallbacks are tracked as fallback outcomes and never credited as raw LLM prediction successes.",
         "- **Pricing Provenance**: Estimated token cost is computed only when versioned pricing configuration is explicitly supplied; unconfigured methods report N/A.",
         "",
@@ -1089,10 +1473,16 @@ def analyze(args: argparse.Namespace) -> dict[str, Any]:
     args.out.mkdir(parents=True)
     _write_csv(args.out / "recommendation-summary.csv", recommendation["summaries"])
     _write_csv(args.out / "recommendation-breakdowns.csv", recommendation["breakdowns"])
-    _write_csv(args.out / "pairwise-mcnemar-holm.csv", recommendation["paired_mcnemar_holm"])
-    _write_csv(args.out / "pairwise-wilcoxon-holm.csv", recommendation.get("paired_wilcoxon_holm", []))
+    _write_csv(args.out / "pairwise-sample-mcnemar-holm.csv", recommendation.get("paired_sample_mcnemar_holm", []))
+    _write_csv(args.out / "pairwise-sample-wilcoxon-holm.csv", recommendation.get("paired_sample_wilcoxon_holm", []))
+    _write_csv(args.out / "pairwise-mcnemar-holm.csv", recommendation.get("paired_sample_mcnemar_holm", []))
+    _write_csv(args.out / "pairwise-wilcoxon-holm.csv", recommendation.get("paired_sample_wilcoxon_holm", []))
+    _write_csv(args.out / "pairwise-trial-mcnemar-descriptive.csv", recommendation.get("paired_trial_mcnemar_descriptive", []))
+    _write_csv(args.out / "pairwise-trial-wilcoxon-descriptive.csv", recommendation.get("paired_trial_wilcoxon_descriptive", []))
+    _write_csv(args.out / "effect-sizes.csv", recommendation.get("effect_sizes", []))
     _write_csv(args.out / "latency-cost-summary.csv", latency_cost_rows)
     _write_csv(args.out / "family-robustness.csv", recommendation["family_robustness"])
+    _write_csv(args.out / "repeat-consistency.csv", recommendation["repeat_consistency"])
     _write_csv(args.out / "system-effectiveness.csv", system_summary)
     _write_csv(args.out / "system-paired-binary.csv", system_comparisons["binary"])
     _write_csv(args.out / "system-paired-continuous.csv", system_comparisons["continuous"])

@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 from copy import deepcopy
 from pathlib import Path
+import subprocess
 
 import pytest
 
@@ -19,7 +20,7 @@ from evaluation_v4.dataset import DEFAULT_DATASET, dataset_summary, load_dataset
 from evaluation_v4.run_recommenders import build_matrix, run
 from evaluation_v4.plan_system import build_system_plan
 from evaluation_v4.pod_runner import CgroupWindowSampler
-from evaluation_v4.run_system import HubSession
+from evaluation_v4.run_system import HubSession, _workload_error_category
 from evaluation_v4.schemas import (
     REPROVISION_SCHEMA,
     SYSTEM_SCHEMA,
@@ -113,6 +114,20 @@ def test_hub_session_extracts_reprovision_javascript_xsrf():
     assert HubSession._xsrf('<script>const xsrf = "token-123";</script>') == "token-123"
 
 
+def test_stage_c_classifies_inner_runner_timeout():
+    executed = subprocess.CompletedProcess(
+        ["kubectl", "exec"],
+        1,
+        stdout=b"",
+        stderr=b"Traceback\nTimeoutError: CPU workload exceeded its bounded deadline\n",
+    )
+
+    assert _workload_error_category(executed) == "workload_timeout"
+    assert _workload_error_category(
+        subprocess.CompletedProcess(["kubectl", "exec"], 137, b"", b"OOM")
+    ) == "workload_process_failure"
+
+
 def test_offline_runner_and_analyzer_generate_auditable_outputs(tmp_path):
     prediction_dir = tmp_path / "predictions"
     run_args = argparse.Namespace(
@@ -157,8 +172,14 @@ def test_offline_runner_and_analyzer_generate_auditable_outputs(tmp_path):
         "recommendation-breakdowns.csv",
         "pairwise-mcnemar-holm.csv",
         "pairwise-wilcoxon-holm.csv",
+        "pairwise-sample-mcnemar-holm.csv",
+        "pairwise-sample-wilcoxon-holm.csv",
+        "pairwise-trial-mcnemar-descriptive.csv",
+        "pairwise-trial-wilcoxon-descriptive.csv",
+        "effect-sizes.csv",
         "latency-cost-summary.csv",
         "family-robustness.csv",
+        "repeat-consistency.csv",
         "system-effectiveness.csv",
         "system-paired-binary.csv",
         "system-paired-continuous.csv",

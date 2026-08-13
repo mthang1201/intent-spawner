@@ -258,6 +258,7 @@ def test_overlay_applies_preview_bound_canonical_resources_and_revalidates(monke
     payload, options = preview_and_options(namespace, kube_spawner)
     spawner = spawner_for(options)
 
+    assert options["dataset_size_gb"] == 0.8
     asyncio.run(kube_spawner.pre_spawn_hook(spawner))
 
     assert payload["resource_decision"]["applied_mode"] == "dynamic"

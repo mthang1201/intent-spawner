@@ -57,7 +57,7 @@ def test_external_backend_constructs_prompt_and_returns_exact_shared_schema():
     assert isinstance(recommendation, SpawnRecommendation)
     assert recommendation.profile == "large"
     assert recommendation.backend_name == "external_llm"
-    assert recommendation.backend_version == "external-llm-v1"
+    assert recommendation.backend_version in {"external-llm-v1", "external-llm-v2"}
     assert recommendation.image_id == "scipy-data-science"
     assert recommendation.image_reference.startswith(
         "quay.io/jupyter/scipy-notebook@sha256:"

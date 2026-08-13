@@ -1,5 +1,36 @@
 # Threats To Validity
 
+## Protocol-v4 Revised Evaluation (2026-08-13)
+
+The Protocol-v4 repair was prompted by a schema omission observed in the
+original held-out run. The repair changed only interface compliance—an explicit
+five-field prompt and native Ollama JSON Schema enforcement—and was first
+validated on development samples. Nevertheless, the subsequent held-out run is
+a revised confirmatory protocol rather than the original frozen experiment.
+
+The revised recommendation dataset is synthetic, multilingual, and limited to
+48 held-out samples in 20 workload families. The local model result covers only
+`llama3:latest`, temperature zero, one Apple Silicon host, and one prompt
+contract. Five identical outputs per sample establish repeat consistency under
+that configuration but do not add independent accuracy observations. The
+external backend was unavailable, so no cloud quality, latency, cost, provider
+reliability, or privacy trade-off was measured.
+
+The 2026-08-13 Stage C corpus is an observed single-node validation with only
+one repeat per four-method-by-eight-family cell. It provides genuine OOM,
+timeout, spawn, and cgroup evidence, but no estimate of runtime variability and
+no basis for production generalization. Metrics are available only for
+workloads that survived long enough to emit the cgroup payload, creating
+survivorship conditioning in utilization summaries. Metrics Server was absent;
+successful rows use in-container cgroup-v2 window measurements. The deployed
+release and Git worktree were dirty but their hashes/state were recorded.
+
+The Stage C method identifiers (`static_small`, `static_large`, and
+`rule_based_context`) test operational envelopes and are not identical to the
+Stage A/B canonical static-medium and rule-based quality comparison. Cross-stage
+conclusions must respect that distinction. User acceptance and reprovisioning
+were not observed.
+
 ## Construct Validity
 
 The benchmark operationalizes "good profile selection" as matching expected

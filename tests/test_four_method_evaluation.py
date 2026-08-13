@@ -323,6 +323,7 @@ def test_runner_matrix_randomization_and_safe_resume(tmp_path: Path):
     )
     manifest_resume = run(run_args_resume)
     assert manifest_resume["records"] == initial_records
+    assert manifest_resume["run_id"] == manifest_1["run_id"]
 
 
 def test_wilcoxon_signed_rank_exact_and_asymptotic():
@@ -857,5 +858,4 @@ def test_validate_evidence_tool_and_corruption_detection(tmp_path: Path):
         h.write("\n")
     with pytest.raises(EvidenceValidationError, match="SHA-256 mismatch"):
         validate_evaluation_v4_evidence(test_evidence)
-
 

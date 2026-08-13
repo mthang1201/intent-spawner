@@ -12,6 +12,7 @@ PREDICTION_SCHEMA = "recommendation-prediction-v4.0.0"
 PREDICTION_SCHEMA_V4_1 = "recommendation-prediction-v4.1.0"
 PREDICTION_SCHEMAS = {PREDICTION_SCHEMA, PREDICTION_SCHEMA_V4_1}
 SYSTEM_SCHEMA = "system-trial-v4.0.0"
+SYSTEM_SCHEMA_V4_1 = "system-trial-v4.1.0"
 USER_SCHEMA = "user-decision-v4.0.0"
 REPROVISION_SCHEMA = "reprovision-trial-v4.0.0"
 EVIDENCE_CLASSES = {"observed", "simulated", "replay"}
@@ -90,6 +91,16 @@ SYSTEM_FIELDS = {
     "workload_duration_seconds",
     "cleanup_status",
     "supporting_evidence_paths",
+}
+SYSTEM_FIELDS_V4_1 = SYSTEM_FIELDS | {
+    "spawn_success",
+    "timeout_event",
+    "cpu_limit_m",
+    "memory_limit_mib",
+    "fallback_used",
+    "pod_identity_hash",
+    "node_identity_hash",
+    "trial_error_category",
 }
 
 USER_FIELDS = {
@@ -255,8 +266,12 @@ def _validate_evidence_header(record: Mapping[str, Any], label: str) -> None:
 
 def validate_system_trial(record: Mapping[str, Any]) -> dict[str, Any]:
     label = "system_trial"
-    _exact_fields(record, SYSTEM_FIELDS, label)
-    if record.get("schema_version") != SYSTEM_SCHEMA:
+    schema = record.get("schema_version")
+    if schema == SYSTEM_SCHEMA:
+        _exact_fields(record, SYSTEM_FIELDS, label)
+    elif schema == SYSTEM_SCHEMA_V4_1:
+        _exact_fields(record, SYSTEM_FIELDS_V4_1, label)
+    else:
         raise ValueError("system trial schema_version is unsupported")
     _validate_evidence_header(record, label)
     for field in ("trial_id", "experiment_id", "git_commit", "environment_id", "measurement_source", "cleanup_status"):
@@ -278,6 +293,9 @@ def validate_system_trial(record: Mapping[str, Any]) -> dict[str, Any]:
         "workload_duration_seconds",
     ):
         _number_or_none(record, field, label, minimum=0)
+    if schema == SYSTEM_SCHEMA_V4_1:
+        for field in ("cpu_limit_m", "memory_limit_mib"):
+            _number_or_none(record, field, label, minimum=0)
     if not isinstance(record.get("cpu_request_m"), (int, float)) or record["cpu_request_m"] <= 0:
         raise ValueError("system_trial.cpu_request_m must be positive")
     if not isinstance(record.get("memory_request_mib"), (int, float)) or record["memory_request_mib"] <= 0:
@@ -285,6 +303,13 @@ def validate_system_trial(record: Mapping[str, Any]) -> dict[str, Any]:
     for field in ("pod_ready", "pending_failure", "oom_killed", "image_pull_failure", "workload_success"):
         if not isinstance(record.get(field), bool):
             raise ValueError(f"system_trial.{field} must be boolean")
+    if schema == SYSTEM_SCHEMA_V4_1:
+        for field in ("spawn_success", "timeout_event", "fallback_used"):
+            if not isinstance(record.get(field), bool):
+                raise ValueError(f"system_trial.{field} must be boolean")
+        for field in ("pod_identity_hash", "node_identity_hash", "trial_error_category"):
+            if record.get(field) is not None and not isinstance(record[field], str):
+                raise ValueError(f"system_trial.{field} must be string or null")
     _list_of_strings(record, "supporting_evidence_paths", label)
     if record["evidence_class"] == "observed" and not record["supporting_evidence_paths"]:
         raise ValueError("observed system trials require supporting evidence paths")

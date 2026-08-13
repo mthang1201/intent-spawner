@@ -23,7 +23,8 @@ from .recommenders import (
     error_decision,
     evaluate_item,
 )
-from .schemas import PREDICTION_SCHEMA, read_jsonl, validate_prediction
+from .schemas import PREDICTION_SCHEMA_V4_1, read_jsonl, validate_prediction
+from recommender.external_llm import prompt_contract_sha256
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -137,6 +138,10 @@ def _apply_cli_env_overrides(args: argparse.Namespace) -> None:
     if getattr(args, "pricing_source", None):
         os.environ["EXTERNAL_LLM_PRICING_SOURCE"] = str(args.pricing_source)
 
+    if getattr(args, "prompt_version", None):
+        os.environ["EXTERNAL_LLM_PROMPT_VERSION"] = str(args.prompt_version)
+        os.environ["SELF_HOSTED_LLM_PROMPT_VERSION"] = str(args.prompt_version)
+
     if getattr(args, "ollama_endpoint", None):
         os.environ["SELF_HOSTED_LLM_ENDPOINT"] = args.ollama_endpoint
         os.environ["OLLAMA_ENDPOINT"] = args.ollama_endpoint
@@ -186,6 +191,8 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
 
     predictions_path = args.output / "predictions.jsonl"
     existing_keys: set[tuple[str, str, int]] = set()
+    resumed_run_id: str | None = None
+    existing_error_count = 0
 
     if args.output.exists():
         if not getattr(args, "resume", False):
@@ -194,13 +201,28 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
             )
         if predictions_path.exists():
             existing_records = read_jsonl(predictions_path, validate_prediction)
+            existing_error_count = sum(rec.get("error_category") is not None for rec in existing_records)
+            run_ids = {str(rec["run_id"]) for rec in existing_records}
+            if len(run_ids) > 1:
+                raise ValueError("resume input contains multiple run IDs")
+            resumed_run_id = next(iter(run_ids), None)
             for rec in existing_records:
-                existing_keys.add((str(rec["recommender"]), str(rec["sample_id"]), int(rec["repeat_index"])))
+                key = (str(rec["recommender"]), str(rec["sample_id"]), int(rec["repeat_index"]))
+                if key in existing_keys:
+                    raise ValueError(f"resume input contains duplicate prediction key {key!r}")
+                existing_keys.add(key)
+            expected_keys = {
+                (method, str(item["sample_id"]), repeat_index)
+                for method, item, repeat_index, _random_seed in matrix
+            }
+            unexpected = existing_keys - expected_keys
+            if unexpected:
+                raise ValueError("resume input does not match the requested matrix")
     else:
         args.output.mkdir(parents=True)
 
     commit, branch, dirty = _git_state()
-    run_id = f"v4-recommenders-{datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ')}-{uuid4().hex[:8]}"
+    run_id = resumed_run_id or f"v4-recommenders-{datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ')}-{uuid4().hex[:8]}"
     dataset_hash = canonical_sha256(dataset)
 
     backends: dict[str, Any] = {}
@@ -220,7 +242,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
             else:
                 blocked_backends[method] = type(exc).__name__
 
-    error_count = 0
+    error_count = existing_error_count
     executed_count = len(existing_keys)
 
     # Open predictions in append mode (or exclusive create if brand new)
@@ -261,7 +283,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
                     )
 
             record = {
-                "schema_version": PREDICTION_SCHEMA,
+                "schema_version": PREDICTION_SCHEMA_V4_1,
                 "run_id": run_id,
                 "timestamp_utc": _now_utc(),
                 "dataset_id": dataset["dataset_id"],
@@ -305,38 +327,32 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
             }
         elif m == "external_llm":
             ext_cfg = getattr(backends.get(m), "config", None)
+            p_ver = getattr(ext_cfg, "prompt_version", getattr(args, "prompt_version", "prompt-v4.1.0"))
             methods_metadata[m] = {
                 "backend": "external_llm",
-                "version": "external-llm-v1",
+                "version": "external-llm-v2",
                 "endpoint_class": "https_openai_compatible",
                 "requested_model_id": _configured_model_for(m),
                 "actual_model_id": getattr(ext_cfg, "model", None) or _configured_model_for(m),
                 "temperature": getattr(ext_cfg, "temperature", 0.0),
                 "timeout": getattr(ext_cfg, "timeout", 10.0),
                 "pricing_id": getattr(getattr(ext_cfg, "pricing", None), "pricing_id", None),
-                "prompt_version": "prompt-v4.0.0",
-                "prompt_template_sha256": canonical_sha256(
-                    "You recommend one JupyterHub resource profile and one administrator-allowlisted notebook image. "
-                    "Return exactly one JSON object matching the provided schema. Do not include Markdown, code fences, or extra fields. "
-                    "Never invent an image ID. Keep reasons concise and grounded only in the input."
-                ),
+                "prompt_version": p_ver,
+                "prompt_template_sha256": prompt_contract_sha256(p_ver),
             }
         elif m in {"self_hosted_local_ollama_llm", "self_hosted_llm"}:
             ollama_cfg = getattr(backends.get(m), "config", None)
+            p_ver = getattr(ollama_cfg, "prompt_version", getattr(args, "prompt_version", "prompt-v4.1.0"))
             methods_metadata[m] = {
                 "backend": "self_hosted_llm",
-                "version": "self-hosted-ollama-v1",
+                "version": "self-hosted-llm-v2",
                 "endpoint_class": "local_ollama_http",
                 "requested_model_id": _configured_model_for(m),
                 "actual_model_id": getattr(ollama_cfg, "model", None) or _configured_model_for(m),
                 "temperature": getattr(ollama_cfg, "temperature", 0.0),
                 "timeout": getattr(ollama_cfg, "timeout", 10.0),
-                "prompt_version": "prompt-v4.0.0",
-                "prompt_template_sha256": canonical_sha256(
-                    "You recommend one JupyterHub resource profile and one administrator-allowlisted notebook image. "
-                    "Return exactly one JSON object matching the provided schema. Do not include Markdown, code fences, or extra fields. "
-                    "Never invent an image ID. Keep reasons concise and grounded only in the input."
-                ),
+                "prompt_version": p_ver,
+                "prompt_template_sha256": prompt_contract_sha256(p_ver),
             }
         else:
             methods_metadata[m] = {
@@ -350,16 +366,16 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
 
     manifest = {
         "protocol_version": "4.0.0",
-        "experiment_id": "protocol-v4-four-method-eval",
+        "experiment_id": getattr(args, "experiment_id", "protocol-v4-four-method-eval"),
         "run_id": run_id,
         "created_utc": _now_utc(),
         "dataset": dataset_summary(dataset),
         "dataset_path": str(args.dataset),
         "dataset_sha256": dataset_hash,
         "policy_version": "resource-image-policy-v1",
-        "policy_sha256": canonical_sha256({"policy_version": "resource-image-policy-v1", "profiles": ["small", "medium", "large"]}),
+        "policy_sha256": file_sha256(ROOT / "recommender" / "resource-policy.yaml"),
         "catalog_version": dataset.get("image_catalog", {}).get("catalog_version", "unknown"),
-        "catalog_sha256": canonical_sha256(dataset.get("image_catalog", {})),
+        "catalog_sha256": file_sha256(ROOT / dataset["image_catalog"]["source_path"]),
         "git_commit": commit,
         "git_branch": branch,
         "git_worktree_dirty": dirty,
@@ -374,12 +390,20 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
         "repeats": args.repeats,
         "seed": args.seed,
         "randomize_order": randomize_order,
+        "expected_record_count": len(matrix),
+        "observed_record_count": executed_count,
         "records": executed_count,
         "errors": error_count,
         "blocked_backends": blocked_backends,
         "raw_outputs_append_only": True,
         "predictions_path": str(predictions_path),
         "predictions_sha256": file_sha256(predictions_path) if predictions_path.exists() else None,
+        "checksums": {
+            "predictions.jsonl": file_sha256(predictions_path) if predictions_path.exists() else None,
+            "dataset": dataset_hash,
+            "policy": file_sha256(ROOT / "recommender" / "resource-policy.yaml"),
+            "catalog": file_sha256(ROOT / dataset["image_catalog"]["source_path"]),
+        },
     }
     manifest_path = args.output / "run-manifest.json"
     with manifest_path.open("w", encoding="utf-8") as handle:
@@ -393,6 +417,11 @@ def main(argv: list[str] | None = None) -> int:
         description="Run protocol-v4 four-method recommender evaluation matrix."
     )
     parser.add_argument("--dataset", type=Path, default=DEFAULT_DATASET)
+    parser.add_argument(
+        "--experiment-id",
+        default="protocol-v4-four-method-eval",
+        help="Versioned experiment identifier recorded in the run manifest.",
+    )
     parser.add_argument(
         "--recommenders",
         default=",".join(DEFAULT_RECOMMENDERS),
@@ -412,6 +441,12 @@ def main(argv: list[str] | None = None) -> int:
         "--randomize-order",
         action="store_true",
         help="Randomize trial execution order by repeat block to reduce drift bias.",
+    )
+    parser.add_argument(
+        "--prompt-version",
+        type=str,
+        default="prompt-v4.1.0",
+        help="Prompt version to use for LLM backends (default: prompt-v4.1.0).",
     )
 
     # Config overrides for external and Ollama backends

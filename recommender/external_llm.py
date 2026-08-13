@@ -36,7 +36,14 @@ from .token_pricing import PricingProvenance
 
 
 BACKEND_NAME = "external_llm"
-BACKEND_VERSION = "external-llm-v1"
+BACKEND_VERSION = "external-llm-v2"
+
+PROMPT_VERSION_V4_0 = "prompt-v4.0.0"
+PROMPT_VERSION_V4_1 = "prompt-v4.1.0"
+DEFAULT_PROMPT_VERSION = PROMPT_VERSION_V4_1
+PROMPT_VERSION_ENV_VAR = "EXTERNAL_LLM_PROMPT_VERSION"
+LEGACY_PROMPT_VERSION_ENV_VAR = "LLM_PROMPT_VERSION"
+SUPPORTED_PROMPT_VERSIONS = {PROMPT_VERSION_V4_0, PROMPT_VERSION_V4_1}
 
 ENDPOINT_ENV_VAR = "EXTERNAL_LLM_ENDPOINT"
 MODEL_ENV_VAR = "EXTERNAL_LLM_MODEL"
@@ -111,6 +118,7 @@ class ExternalLLMConfig:
     prompt_price_per_m: float | None = None
     completion_price_per_m: float | None = None
     pricing: PricingProvenance | None = None
+    prompt_version: str = DEFAULT_PROMPT_VERSION
 
     # Subclasses may explicitly define a different deployment trust boundary.
     _allow_api_key_over_http = False
@@ -123,6 +131,11 @@ class ExternalLLMConfig:
             raise ValueError("external LLM endpoint must not contain credentials")
         if not isinstance(self.model, str) or not self.model.strip():
             raise ValueError("external LLM model must not be blank")
+        if self.prompt_version not in SUPPORTED_PROMPT_VERSIONS:
+            raise ValueError(
+                "external LLM prompt_version must be one of: "
+                + ", ".join(sorted(SUPPORTED_PROMPT_VERSIONS))
+            )
         if not isinstance(self.timeout, (int, float)) or isinstance(self.timeout, bool):
             raise ValueError("external LLM timeout must be a positive number")
         if (
@@ -212,6 +225,11 @@ class ExternalLLMConfig:
         endpoint = selected.get(ENDPOINT_ENV_VAR, "")
         model = selected.get(MODEL_ENV_VAR, "")
         api_key = selected.get(API_KEY_ENV_VAR, "").strip()
+        prompt_version = (
+            selected.get(PROMPT_VERSION_ENV_VAR)
+            or selected.get(LEGACY_PROMPT_VERSION_ENV_VAR)
+            or DEFAULT_PROMPT_VERSION
+        ).strip()
         if not endpoint:
             raise ValueError(f"{ENDPOINT_ENV_VAR} is required for the external_llm backend")
         if not model:
@@ -273,6 +291,7 @@ class ExternalLLMConfig:
             max_concurrent_recommendations=max_concurrent_recommendations,
             allow_insecure_http=insecure_value == "true",
             pricing=pricing,
+            prompt_version=prompt_version,
         )
 
 
@@ -487,6 +506,46 @@ _MAX_REASON_COUNT = 8
 _MAX_REASON_LENGTH = 500
 
 
+def system_prompt_for_version(version: str) -> str:
+    """Return the frozen system prompt for a supported interface version."""
+
+    if version == PROMPT_VERSION_V4_0:
+        return (
+            "You recommend one JupyterHub resource profile and one administrator-"
+            "allowlisted notebook image. Return exactly one JSON object matching the "
+            "provided schema. Do not include Markdown, code fences, or extra fields. "
+            "Never invent an image ID. Keep reasons concise and grounded only in the input."
+        )
+    if version == PROMPT_VERSION_V4_1:
+        return (
+            "You are a resource recommendation engine for JupyterHub. "
+            "Recommend one resource profile (small, medium, or large) and one notebook image ID from the administrator catalog. "
+            "You MUST return a single valid JSON object containing exactly these five fields:\n"
+            "- \"profile\": string, one of [\"small\", \"medium\", \"large\"]\n"
+            "- \"reasons\": list of non-empty strings explaining why this profile was chosen\n"
+            "- \"score\": number between 0 and 100 representing confidence, or null\n"
+            "- \"image_id\": string, exactly matching an allowed image ID from the catalog\n"
+            "- \"image_reasons\": list of non-empty strings explaining why this image was chosen\n"
+            "The score field is required even when its value is null. "
+            "Do not wrap in markdown fences or include explanations outside the JSON object. Output pure JSON only."
+        )
+    raise ValueError(f"unsupported prompt version: {version}")
+
+
+def prompt_contract_sha256(version: str) -> str:
+    """Hash the exact prompt and response schema used by the backend."""
+
+    import hashlib
+
+    payload = json.dumps(
+        {"system_prompt": system_prompt_for_version(version), "response_schema": RESPONSE_SCHEMA},
+        ensure_ascii=False,
+        sort_keys=True,
+        separators=(",", ":"),
+    ).encode("utf-8")
+    return hashlib.sha256(payload).hexdigest()
+
+
 def _validate_reason_list(value: Any, field_name: str) -> list[str]:
     if not isinstance(value, list) or not value or len(value) > _MAX_REASON_COUNT:
         raise LLMOutputValidationError(
@@ -569,12 +628,7 @@ class ExternalLLMRecommender:
             }
             for image_id, image in self._catalog["images"].items()
         }
-        system_prompt = (
-            "You recommend one JupyterHub resource profile and one administrator-"
-            "allowlisted notebook image. Return exactly one JSON object matching the "
-            "provided schema. Do not include Markdown, code fences, or extra fields. "
-            "Never invent an image ID. Keep reasons concise and grounded only in the input."
-        )
+        system_prompt = system_prompt_for_version(self.config.prompt_version)
         user_prompt = json.dumps(
             {
                 "task": "Recommend a spawn profile and notebook image.",
@@ -590,6 +644,7 @@ class ExternalLLMRecommender:
             ensure_ascii=False,
             sort_keys=True,
         )
+
         return LLMCompletionRequest(
             model=self.config.model,
             messages=(

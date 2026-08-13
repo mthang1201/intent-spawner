@@ -545,6 +545,7 @@ hub:
           if decision_action not in {"accept", "override"}:
               raise ValueError("confirm the recommendation or submit a manual override")
 
+          dataset_size_gb = _coerce_dataset_size(first("dataset_size_gb", "0"))
           preview_id = first("recommendation_preview_id") or first("preview_id")
           preview_item = RECOMMENDATION_PREVIEWS.get(preview_id)
           if preview_item is None:
@@ -553,7 +554,6 @@ hub:
               code_context = first("code_context")
               if len(intent) > 2000 or len(code_context) > 5000:
                   raise ValueError("workload context exceeds the supported preview size")
-              dataset_size_gb = _coerce_dataset_size(first("dataset_size_gb", "0"))
               preview_item = create_recommendation_preview(
                   username=username,
                   intent=intent,
@@ -582,6 +582,7 @@ hub:
               "profile_reasons": rec["profile_reasons"],
               "image_reasons": rec["image_reasons"],
               "score": rec["score"],
+              "dataset_size_gb": dataset_size_gb,
               "policy_version": RECOMMENDATION_POLICY_VERSION,
               "catalog_version": IMAGE_CATALOG_VERSION,
           }

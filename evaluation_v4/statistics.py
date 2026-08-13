@@ -248,12 +248,109 @@ def holm_adjust(p_values: Sequence[float]) -> list[float]:
     return adjusted
 
 
+def paired_difference_cluster_bootstrap_ci(
+    rows: Sequence[Mapping[str, Any]],
+    field_a: str,
+    field_b: str,
+    *,
+    cluster_field: str = "workload_family",
+    replicates: int = 2000,
+    seed: int = 20260808,
+) -> tuple[float | None, float | None]:
+    """Percentile CI for difference (field_a - field_b) resampling workload family clusters."""
+
+    if replicates < 1:
+        raise ValueError("bootstrap replicates must be >= 1")
+    grouped: dict[str, list[Mapping[str, Any]]] = defaultdict(list)
+    for row in rows:
+        grouped[str(row[cluster_field])].append(row)
+    clusters = sorted(grouped)
+    if len(clusters) < 2:
+        return None, None
+    generator = random.Random(seed)
+    estimates: list[float] = []
+    for _ in range(replicates):
+        sampled_rows: list[Mapping[str, Any]] = []
+        for _index in range(len(clusters)):
+            sampled_rows.extend(grouped[generator.choice(clusters)])
+        mean_a = mean(r.get(field_a) for r in sampled_rows)
+        mean_b = mean(r.get(field_b) for r in sampled_rows)
+        if mean_a is not None and mean_b is not None and math.isfinite(mean_a) and math.isfinite(mean_b):
+            estimates.append(float(mean_a - mean_b))
+    if not estimates:
+        return None, None
+    return quantile(estimates, 0.025), quantile(estimates, 0.975)
+
+
+def calculate_effect_sizes(
+    first: Sequence[float | int | bool | None],
+    second: Sequence[float | int | bool | None],
+) -> dict[str, float | None]:
+    """Compute risk difference, paired Cohen's d, Cliff's delta, and paired rank effect."""
+
+    pairs: list[tuple[float, float]] = []
+    for a, b in zip(first, second):
+        if a is not None and b is not None and math.isfinite(float(a)) and math.isfinite(float(b)):
+            pairs.append((float(a), float(b)))
+    if not pairs:
+        return {
+            "mean_difference": None,
+            "cohens_d_paired": None,
+            "cliffs_delta": None,
+            "matched_pairs_rank_biserial": None,
+        }
+
+    diffs = [a - b for a, b in pairs]
+    mean_diff = sum(diffs) / len(diffs)
+    if len(diffs) > 1:
+        var_diff = sum((d - mean_diff) ** 2 for d in diffs) / (len(diffs) - 1)
+        sd_diff = math.sqrt(var_diff) if var_diff > 0 else 0.0
+        cohens_d = (mean_diff / sd_diff) if sd_diff > 1e-12 else 0.0
+    else:
+        cohens_d = None
+
+    first_values = [a for a, _ in pairs]
+    second_values = [b for _, b in pairs]
+    greater = sum(a > b for a in first_values for b in second_values)
+    less = sum(a < b for a in first_values for b in second_values)
+    cliffs_d = (greater - less) / (len(first_values) * len(second_values))
+
+    nonzero_diffs = [d for d in diffs if abs(d) > 1e-12]
+    if nonzero_diffs:
+        absolute = [abs(d) for d in nonzero_diffs]
+        order = sorted(range(len(absolute)), key=absolute.__getitem__)
+        ranks = [0.0] * len(absolute)
+        index = 0
+        while index < len(order):
+            end = index + 1
+            while end < len(order) and abs(absolute[order[end]] - absolute[order[index]]) < 1e-12:
+                end += 1
+            average_rank = (index + 1 + end) / 2.0
+            for position in range(index, end):
+                ranks[order[position]] = average_rank
+            index = end
+        positive_ranks = sum(rank for rank, diff in zip(ranks, nonzero_diffs) if diff > 0)
+        negative_ranks = sum(rank for rank, diff in zip(ranks, nonzero_diffs) if diff < 0)
+        rank_biserial = (positive_ranks - negative_ranks) / (positive_ranks + negative_ranks)
+    else:
+        rank_biserial = 0.0
+
+    return {
+        "mean_difference": round(mean_diff, 6),
+        "cohens_d_paired": round(cohens_d, 6) if cohens_d is not None else None,
+        "cliffs_delta": round(cliffs_d, 6),
+        "matched_pairs_rank_biserial": round(rank_biserial, 6),
+    }
+
+
 __all__ = [
+    "calculate_effect_sizes",
     "cluster_bootstrap_ci",
     "confusion_matrix",
     "exact_mcnemar",
     "holm_adjust",
     "mean",
+    "paired_difference_cluster_bootstrap_ci",
     "quantile",
     "wilcoxon_signed_rank",
     "wilson_interval",
