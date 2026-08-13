@@ -1002,6 +1002,196 @@ def _integrity_manifest(output: Path) -> None:
     _write_new(path, "".join(lines))
 
 
+def _read_json(path: Path, label: str) -> dict[str, Any]:
+    try:
+        value = json.loads(path.read_text(encoding="utf-8"))
+    except FileNotFoundError as exc:
+        raise RuntimeError(f"resume evidence is missing {label}: {path}") from exc
+    except (json.JSONDecodeError, OSError) as exc:
+        raise RuntimeError(f"resume evidence has invalid {label}: {path}") from exc
+    if not isinstance(value, dict):
+        raise RuntimeError(f"resume evidence {label} must be a JSON object")
+    return value
+
+
+def _same_resume_environment(
+    original: Mapping[str, Any], current: Mapping[str, Any]
+) -> None:
+    """Reject resume when a frozen execution input or cluster identity drifted."""
+
+    stable_fields = (
+        "environment_id",
+        "kubernetes_context_pseudonym",
+        "namespace",
+        "namespace_safety_label",
+        "kubernetes_version",
+        "node_count",
+        "node_capacity",
+        "node_allocatable",
+        "container_runtime",
+        "resource_quota_count",
+        "horizontal_pod_autoscaler_count_clusterwide",
+        "helm_release",
+        "git_commit",
+        "dataset_id",
+        "dataset_sha256",
+        "policy_version",
+        "policy_sha256",
+        "catalog_version",
+        "catalog_sha256",
+        "plan_path",
+        "plan_sha256",
+        "plan_records",
+        "methods",
+        "methods_provenance",
+        "repeats",
+        "cache_condition",
+        "required_image_ids",
+        "input_sha256",
+    )
+    drifted = [field for field in stable_fields if original.get(field) != current.get(field)]
+    if drifted:
+        raise RuntimeError(
+            "resume preflight does not match the frozen run environment: "
+            + ", ".join(drifted)
+        )
+
+
+def _verify_integrity_manifest(output: Path) -> None:
+    manifest = output / "SHA256SUMS"
+    try:
+        lines = manifest.read_text(encoding="utf-8").splitlines()
+    except FileNotFoundError as exc:
+        raise RuntimeError("completed resume evidence is missing SHA256SUMS") from exc
+    for line in lines:
+        digest, separator, relative = line.partition("  ")
+        if not separator or not re.fullmatch(r"[0-9a-f]{64}", digest):
+            raise RuntimeError("completed resume evidence has malformed SHA256SUMS")
+        candidate = (output / relative).resolve()
+        try:
+            candidate.relative_to(output.resolve())
+        except ValueError as exc:
+            raise RuntimeError("SHA256SUMS contains a path outside the evidence directory") from exc
+        if not candidate.is_file() or _sha256(candidate) != digest:
+            raise RuntimeError(f"completed resume checksum mismatch: {relative}")
+
+
+def _load_resume_prefix(
+    output: Path,
+    plan: list[Mapping[str, Any]],
+    *,
+    experiment_id: str,
+    environment: Mapping[str, Any],
+    root: Path = ROOT,
+) -> list[dict[str, Any]]:
+    """Validate an append-only completed prefix before any resumed mutation."""
+
+    manifest = _read_json(output / "run-manifest.json", "run manifest")
+    original_environment = _read_json(output / "environment.json", "environment")
+    if manifest.get("schema_version") != "system-run-manifest-v4.0.0":
+        raise RuntimeError("resume run-manifest schema is unsupported")
+    if manifest.get("experiment_id") != experiment_id:
+        raise RuntimeError("resume experiment ID does not match the original run")
+    if manifest.get("plan_sha256") != environment.get("plan_sha256"):
+        raise RuntimeError("resume plan checksum does not match the original run")
+    if manifest.get("attempted_trials") != len(plan):
+        raise RuntimeError("resume plan length does not match the original run")
+    _same_resume_environment(original_environment, environment)
+
+    trials_path = output / "system-trials.jsonl"
+    records: list[dict[str, Any]] = []
+    if trials_path.exists():
+        with trials_path.open(encoding="utf-8") as handle:
+            for line_number, line in enumerate(handle, start=1):
+                if not line.strip():
+                    continue
+                try:
+                    record = json.loads(line)
+                    validate_system_trial(record)
+                except Exception as exc:
+                    raise RuntimeError(
+                        f"resume system-trials.jsonl record {line_number} is invalid"
+                    ) from exc
+                records.append(record)
+    if len(records) > len(plan):
+        raise RuntimeError("resume evidence contains more records than the frozen plan")
+
+    seen: set[str] = set()
+    output_resolved = output.resolve()
+    root_resolved = root.resolve()
+    for index, record in enumerate(records):
+        row = plan[index]
+        trial_id = str(record.get("trial_id"))
+        if trial_id in seen:
+            raise RuntimeError(f"resume evidence contains duplicate trial ID {trial_id}")
+        seen.add(trial_id)
+        expected = {
+            "trial_id": row["trial_id"],
+            "recommender": row["recommender"],
+            "sample_id": row["representative_sample_id"],
+            "workload_family": row["workload_family"],
+            "repeat_index": row["repeat_block"],
+            "experiment_id": experiment_id,
+            "environment_id": environment["environment_id"],
+            "git_commit": environment["git_commit"],
+        }
+        mismatched = [key for key, value in expected.items() if record.get(key) != value]
+        if mismatched:
+            raise RuntimeError(
+                f"resume evidence is not the exact completed plan prefix at row {index}: "
+                + ", ".join(mismatched)
+            )
+        if record.get("cleanup_status") != "completed":
+            raise RuntimeError(f"resume trial {trial_id} does not have completed cleanup")
+        supporting = record.get("supporting_evidence_paths") or []
+        if len(supporting) < 6:
+            raise RuntimeError(f"resume trial {trial_id} has incomplete supporting evidence")
+        parents: set[Path] = set()
+        for relative in supporting:
+            candidate = (root_resolved / str(relative)).resolve()
+            try:
+                candidate.relative_to(output_resolved)
+            except ValueError as exc:
+                raise RuntimeError(
+                    f"resume trial {trial_id} references evidence outside its run directory"
+                ) from exc
+            if not candidate.is_file():
+                raise RuntimeError(f"resume trial {trial_id} is missing sidecar {relative}")
+            parents.add(candidate.parent)
+        if len(parents) != 1 or not (next(iter(parents)) / "trial-metadata.json").is_file():
+            raise RuntimeError(f"resume trial {trial_id} has incomplete trial metadata")
+
+    completion_path = output / "completion-manifest.json"
+    integrity_path = output / "SHA256SUMS"
+    if len(records) < len(plan) and (completion_path.exists() or integrity_path.exists()):
+        raise RuntimeError("partial resume evidence unexpectedly contains finalization files")
+    if len(records) == len(plan):
+        completion = _read_json(completion_path, "completion manifest")
+        if (
+            completion.get("experiment_id") != experiment_id
+            or completion.get("expected_record_count") != len(plan)
+            or completion.get("observed_record_count") != len(records)
+            or completion.get("checksums", {}).get("system-trials.jsonl") != _sha256(trials_path)
+        ):
+            raise RuntimeError("completed resume evidence has an invalid completion manifest")
+        _verify_integrity_manifest(output)
+    return records
+
+
+def _next_attempt_directory(output: Path, trial_id: str) -> tuple[Path, list[str]]:
+    """Preserve any interrupted attempt and return a new exclusive directory."""
+
+    runs = output / "runs"
+    existing = sorted(path.name for path in runs.glob(f"{trial_id}*") if path.is_dir())
+    base = runs / trial_id
+    if not base.exists():
+        return base, existing
+    attempt = 2
+    while (runs / f"{trial_id}--attempt-{attempt:02d}").exists():
+        attempt += 1
+    return runs / f"{trial_id}--attempt-{attempt:02d}", existing
+
+
 def _apply_llm_cli_env_overrides(args: argparse.Namespace) -> None:
     """Freeze non-secret local-LLM settings supplied by the operator."""
 
@@ -1044,33 +1234,68 @@ def execute(args: argparse.Namespace) -> dict[str, Any]:
     )
     if args.preflight_only:
         return {"mode": "preflight_only", "status": "pass", "environment": environment}
-    if args.output.exists():
-        raise FileExistsError(f"refusing to overwrite system evidence directory {args.output}")
-    args.output.mkdir(parents=True)
-    _write_json_new(args.output / "environment.json", environment)
-    _write_json_new(
-        args.output / "run-manifest.json",
-        {
-            "schema_version": "system-run-manifest-v4.0.0",
-            "experiment_id": args.experiment_id,
-            "created_at_utc": _utc_now(),
-            "plan_path": environment["plan_path"],
-            "plan_sha256": environment["plan_sha256"],
-            "attempted_trials": len(plan),
-            "failure_retention": "all attempted trials remain in system-trials.jsonl",
-            "cleanup_policy": "stop through Hub and verify no synthetic-user pod before next trial",
-            "username_policy": "one pseudonymous synthetic user; username is not retained in evidence",
-        },
-    )
+    resume = bool(getattr(args, "resume", False))
+    if args.output.exists() and not resume:
+        raise FileExistsError(
+            f"refusing to overwrite system evidence directory {args.output} (use --resume to validate and continue)"
+        )
+    if resume and not args.output.exists():
+        raise FileNotFoundError(f"cannot resume missing system evidence directory {args.output}")
+    if resume:
+        existing_records = _load_resume_prefix(
+            args.output,
+            plan,
+            experiment_id=args.experiment_id,
+            environment=environment,
+        )
+        if len(existing_records) == len(plan):
+            return {
+                "mode": "execute",
+                "status": "already_completed",
+                "attempted_trials": len(plan),
+                "completed_records": len(existing_records),
+                "output": str(args.output),
+            }
+    else:
+        args.output.mkdir(parents=True)
+        _write_json_new(args.output / "environment.json", environment)
+        _write_json_new(
+            args.output / "run-manifest.json",
+            {
+                "schema_version": "system-run-manifest-v4.0.0",
+                "experiment_id": args.experiment_id,
+                "created_at_utc": _utc_now(),
+                "plan_path": environment["plan_path"],
+                "plan_sha256": environment["plan_sha256"],
+                "attempted_trials": len(plan),
+                "failure_retention": "completed attempts are append-only; interrupted attempt directories are retained",
+                "cleanup_policy": "stop through Hub and verify no synthetic-user pod before next trial",
+                "resume_policy": "validate an exact completed plan prefix and preserve interrupted attempt directories",
+                "username_policy": "one pseudonymous synthetic user; username is not retained in evidence",
+            },
+        )
+        existing_records = []
     hub = HubSession(args.hub_url, args.username)
     hub.login()
     workloads = {
         item["workload_id"]: item for item in load_manifest(ROOT / "benchmarks" / "workloads-v3.yaml")["workloads"]
     }
-    completed = 0
-    for row in plan:
-        run_dir = args.output / "runs" / row["trial_id"]
+    completed = len(existing_records)
+    for row in plan[completed:]:
+        run_dir, interrupted_attempts = _next_attempt_directory(
+            args.output, row["trial_id"]
+        )
         run_dir.mkdir(parents=True, exist_ok=False)
+        if interrupted_attempts:
+            _append_jsonl(
+                args.output / "resume-events.jsonl",
+                {
+                    "timestamp_utc": _utc_now(),
+                    "trial_id": row["trial_id"],
+                    "preserved_interrupted_attempt_directories": interrupted_attempts,
+                    "new_attempt_directory": run_dir.name,
+                },
+            )
         record = _trial(
             row=row,
             dataset=dataset,
@@ -1151,9 +1376,16 @@ def main(argv: list[str] | None = None) -> int:
     mode.add_argument("--dry-run", action="store_true")
     mode.add_argument("--preflight-only", action="store_true")
     mode.add_argument("--execute", action="store_true")
+    parser.add_argument(
+        "--resume",
+        action="store_true",
+        help="validate and continue an interrupted --execute output directory",
+    )
     args = parser.parse_args(argv)
     if args.execute and args.output is None:
         parser.error("--output is required with --execute")
+    if args.resume and not args.execute:
+        parser.error("--resume requires --execute")
     if args.output is not None:
         args.output = args.output.resolve()
         try:

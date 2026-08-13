@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 from copy import deepcopy
+import json
 from pathlib import Path
 import subprocess
 
@@ -20,10 +21,16 @@ from evaluation_v4.dataset import DEFAULT_DATASET, dataset_summary, load_dataset
 from evaluation_v4.run_recommenders import build_matrix, run
 from evaluation_v4.plan_system import build_system_plan
 from evaluation_v4.pod_runner import CgroupWindowSampler
-from evaluation_v4.run_system import HubSession, _workload_error_category
+from evaluation_v4.run_system import (
+    HubSession,
+    _load_resume_prefix,
+    _next_attempt_directory,
+    _workload_error_category,
+)
 from evaluation_v4.schemas import (
     REPROVISION_SCHEMA,
     SYSTEM_SCHEMA,
+    SYSTEM_SCHEMA_V4_1,
     USER_SCHEMA,
     validate_system_trial,
 )
@@ -126,6 +133,115 @@ def test_stage_c_classifies_inner_runner_timeout():
     assert _workload_error_category(
         subprocess.CompletedProcess(["kubectl", "exec"], 137, b"", b"OOM")
     ) == "workload_process_failure"
+
+
+def _resume_fixture(tmp_path: Path) -> tuple[Path, list[dict], dict]:
+    output = tmp_path / "stage-c"
+    run_dir = output / "runs" / "trial-0"
+    run_dir.mkdir(parents=True)
+    sidecars = []
+    for name in (
+        "preview.json",
+        "spawn-result.json",
+        "pod-evidence.json",
+        "workload.stdout",
+        "workload.stderr",
+        "cleanup.json",
+    ):
+        path = run_dir / name
+        path.write_text("{}\n", encoding="utf-8")
+        sidecars.append(str(path.relative_to(tmp_path)))
+    (run_dir / "trial-metadata.json").write_text("{}\n", encoding="utf-8")
+    environment = {
+        "environment_id": "fixture-environment",
+        "git_commit": "a" * 40,
+        "plan_sha256": "b" * 64,
+    }
+    (output / "environment.json").write_text(
+        json.dumps(environment), encoding="utf-8"
+    )
+    (output / "run-manifest.json").write_text(
+        json.dumps(
+            {
+                "schema_version": "system-run-manifest-v4.0.0",
+                "experiment_id": "fixture-stage-c",
+                "plan_sha256": environment["plan_sha256"],
+                "attempted_trials": 2,
+            }
+        ),
+        encoding="utf-8",
+    )
+    plan = [
+        {
+            "trial_id": f"trial-{index}",
+            "recommender": "rule_based_context",
+            "representative_sample_id": "small-csv-canonical-en",
+            "workload_family": "small-csv",
+            "repeat_block": index,
+        }
+        for index in range(2)
+    ]
+    record = {
+        **_system_record("observed", "trial-0"),
+        "schema_version": SYSTEM_SCHEMA_V4_1,
+        "experiment_id": "fixture-stage-c",
+        "environment_id": environment["environment_id"],
+        "git_commit": environment["git_commit"],
+        "repeat_index": 0,
+        "spawn_success": True,
+        "timeout_event": False,
+        "cpu_limit_m": 1000,
+        "memory_limit_mib": 512,
+        "fallback_used": False,
+        "pod_identity_hash": "pod-sha256:" + "c" * 64,
+        "node_identity_hash": "node-sha256:" + "d" * 64,
+        "trial_error_category": None,
+        "supporting_evidence_paths": sidecars,
+    }
+    (output / "system-trials.jsonl").write_text(
+        json.dumps(record) + "\n", encoding="utf-8"
+    )
+    return output, plan, environment
+
+
+def test_stage_c_resume_accepts_only_a_valid_completed_prefix(tmp_path):
+    output, plan, environment = _resume_fixture(tmp_path)
+
+    records = _load_resume_prefix(
+        output,
+        plan,
+        experiment_id="fixture-stage-c",
+        environment=environment,
+        root=tmp_path,
+    )
+
+    assert [record["trial_id"] for record in records] == ["trial-0"]
+    interrupted = output / "runs" / "trial-1"
+    interrupted.mkdir()
+    next_dir, preserved = _next_attempt_directory(output, "trial-1")
+    assert next_dir.name == "trial-1--attempt-02"
+    assert preserved == ["trial-1"]
+
+
+@pytest.mark.parametrize("defect", ["duplicate", "plan_mismatch", "missing_sidecar"])
+def test_stage_c_resume_rejects_corrupt_or_nonprefix_evidence(tmp_path, defect):
+    output, plan, environment = _resume_fixture(tmp_path)
+    trials = output / "system-trials.jsonl"
+    if defect == "duplicate":
+        trials.write_text(trials.read_text(encoding="utf-8") * 2, encoding="utf-8")
+    elif defect == "plan_mismatch":
+        plan[0] = {**plan[0], "trial_id": "different-trial"}
+    else:
+        (output / "runs" / "trial-0" / "preview.json").unlink()
+
+    with pytest.raises(RuntimeError, match="duplicate|prefix|missing sidecar"):
+        _load_resume_prefix(
+            output,
+            plan,
+            experiment_id="fixture-stage-c",
+            environment=environment,
+            root=tmp_path,
+        )
 
 
 def test_offline_runner_and_analyzer_generate_auditable_outputs(tmp_path):

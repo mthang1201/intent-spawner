@@ -78,6 +78,13 @@ kubectl --context orbstack -n z2jh-context-demo port-forward service/proxy-publi
   --ollama-temperature 0 --ollama-timeout 60 \
   --output results/v4-stage-c-validation-<timestamp> --execute
 
+# If and only if the same run was interrupted, repeat the exact command with:
+#   --execute --resume
+# The executor validates the original experiment ID, plan checksum, frozen
+# environment, exact completed plan prefix, sidecars, and cleanup status before
+# it skips any trial. Interrupted attempt directories are retained and retries
+# use a new attempt directory.
+
 .venv/bin/python -m evaluation_v4.analyze \
   --predictions results/v4-revised-test-<timestamp>/predictions.jsonl \
   --system-trials results/v4-stage-c-validation-<timestamp>/system-trials.jsonl \

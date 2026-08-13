@@ -1,0 +1,19 @@
+{
+  "cache_control": "all confirmatory trials require a verified warm image cache",
+  "created_utc": "2026-08-13T02:12:39Z",
+  "dataset_id": "intent-gold-en-vi-2026-08-08",
+  "dataset_sha256": "18d4bd33a58f7aa1cea91c223cb6e0f537b6030c91f3954af762e019a8dc7ec0",
+  "methods": [
+    "static_small",
+    "static_large",
+    "rule_based_context",
+    "self_hosted_local_ollama_llm"
+  ],
+  "pairing": "same family/repeat uses the same paired_workload_seed",
+  "protocol_version": "4.0.0",
+  "randomization": "within-repeat-block deterministic shuffle",
+  "records": 320,
+  "repeats": 10,
+  "seed": 20260808,
+  "system_families": 8
+}
