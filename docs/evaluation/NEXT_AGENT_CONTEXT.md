@@ -1,6 +1,6 @@
 # Protocol-v4 Stage C Confirmatory Handoff
 
-Last updated: 2026-08-13 09:15 Asia/Ho_Chi_Minh, immediately before authoritative Stage C preflight.
+Last updated: 2026-08-13 09:26 Asia/Ho_Chi_Minh, after authoritative Stage C preflight and immediately before execution.
 
 ## Exact repository state
 
@@ -75,19 +75,21 @@ Read-only inspection also counted plan methods/families/repeats and reviewed:
 - No pod with `component=singleuser-server` exists.
 - Local Ollama is reachable on `127.0.0.1:11434` and has `llama3:latest` (digest begins `365c0bd3...`).
 - An old unrelated `idle-large-example` pod is in `Error`; it is not running and is not a single-user/Stage C pod. It was not deleted.
+- The exact 320-row executor `--preflight-only` command passed at `2026-08-13T02:25:39.860Z`.
+- Preflight recorded Git commit `bb4c5f34ec5835d57634b3fcae8a358a86ea3a07` with `git_dirty=false`, plan SHA-256 `718adf39...bf10`, warm digests for `minimal-python` and `scipy-data-science`, 8 CPU / 8,185,712 KiB allocatable memory, no Metrics API, cgroup-v2 window metrics, no HPA, and no resource quota.
+- All full-plan local Ollama reliability checks completed without fallback; model/prompt were `llama3:latest` / `prompt-v4.1.0`.
 
 ## Remaining tasks
 
-1. Commit this updated process handoff so the execution preflight sees a clean Git state.
-2. Run exact `--preflight-only` on the 320-row plan using the frozen Ollama settings.
-3. Execute the new plan into a new versioned `results/` directory using `--resume` only if interrupted. Never overwrite historical runs.
-4. Validate 320 unique completed records, all cleanup sidecars/statuses, `SHA256SUMS`, and failure classifications; analyze with family/repeated-measure-aware inference.
-5. Update RQ4/claim documentation only to the extent supported. External LLM credentials remain a separate blocker and must not block Stage C.
-6. Run the remaining Helm/Kubernetes/evidence/checksum/duplicate/cleanup/diff/secret validation suite and report final Git status.
+1. Commit this successful preflight handoff so execution records a clean Git state.
+2. Execute the new plan into `results/v4-stage-c-confirmatory-20260813T021600Z`; use `--resume` only if interrupted. Never overwrite historical runs.
+3. Validate 320 unique completed records, all cleanup sidecars/statuses, `SHA256SUMS`, and failure classifications; analyze with family/repeated-measure-aware inference.
+4. Update RQ4/claim documentation only to the extent supported. External LLM credentials remain a separate blocker and must not block Stage C.
+5. Run the remaining Helm/Kubernetes/evidence/checksum/duplicate/cleanup/diff/secret validation suite and report final Git status.
 
 ## Exact next action
 
-Commit this handoff update, then execute the exact `--preflight-only` command below.
+Commit this handoff update, then execute the exact Stage C command below.
 
 ## New commands executed after initial inspection
 
@@ -134,4 +136,17 @@ If preflight passes, use the exact same arguments with:
 
 ```bash
 --output results/v4-stage-c-confirmatory-20260813T021600Z --execute
+```
+
+The preflight command passed with exit status 0 after approximately eight minutes. The exact next full command is:
+
+```bash
+.venv/bin/python -m evaluation_v4.run_system \
+  --plan results/v4-stage-c-confirmatory-plan-20260813T021239Z/system-plan.jsonl \
+  --experiment-id protocol-v4-stage-c-confirmatory-20260813T021600Z \
+  --context orbstack --hub-url http://127.0.0.1:18000 \
+  --ollama-endpoint http://127.0.0.1:11434/api/chat \
+  --ollama-model llama3:latest --ollama-prompt-version prompt-v4.1.0 \
+  --ollama-temperature 0 --ollama-timeout 60 \
+  --output results/v4-stage-c-confirmatory-20260813T021600Z --execute
 ```
