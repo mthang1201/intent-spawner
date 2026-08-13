@@ -1,162 +1,102 @@
 # Protocol-v4 Stage C Confirmatory Handoff
 
-Last updated: 2026-08-13 09:36 Asia/Ho_Chi_Minh, authoritative Stage C actively executing.
+Last updated: 2026-08-13 11:35 Asia/Ho_Chi_Minh. Stage C and analysis are complete.
 
-## Exact repository state
+## Exact current state
 
 - Repository: `/Users/mthang1201/Documents/datn/intent-spawner`
-- Branch: `main`, one commit ahead of `origin/main` at inspection time.
-- Frozen checkpoint: `b2d7facabb01f64c9495de1aca656c1ebe0686dd` (`Harden Protocol-v4 evaluation`).
-- Stage C execution checkpoint: `83cb4af` (`Checkpoint Protocol-v4 Stage C execution`). This contains strict resume support, tests, reproducibility documentation, this handoff, and the new 320-row plan.
-- The checkpoint contains the current Protocol-v4 source, tests, documentation, and evidence-related hardening. The worktree was clean when inspected.
-- No Stage C, benchmark, pod-creating, Helm install/upgrade, or intent-spawner experiment process was running when inspected.
-- Existing historical evidence has not been modified.
+- Branch: `main`, seven commits ahead of `origin/main` before this handoff update.
+- Current analytical checkpoint: `02ed23b` (`Analyze Protocol-v4 Stage C confirmatory results`).
+- Execution-source commit frozen in the observed run: `99707b8da8e4c065a1a451332f8555193614144a`, clean worktree.
+- Earlier checkpoints: `b2d7fac` hardened Protocol-v4; `83cb4af` added strict resume and the 320-row plan.
+- Historical evidence was not modified. The new run and analysis are under ignored `results/` paths and remain local, append-only artifacts.
+- No Stage C executor, benchmark, or port-forward process remains. No synthetic single-user pod remains.
 
-## Existing Stage C evidence and plans
+## Authoritative plan, run, and analysis
 
-- Authoritative one-repeat integration validation: `results/v4-stage-c-validation-v4.2-20260813T013600Z`
-  - 32 records = 4 methods x 8 families x 1 repeat.
-  - `system-trials.jsonl` SHA-256 documented as `087db516208d5d9774d90752a2821585d9bdd078d2febe6442e0179a97fd354a`.
-- Existing full plan: `results/v4-stage-c-plan-20260812T095453Z/system-plan.jsonl`
-  - SHA-256: `d45e080621e8b6994de127bfda6e5ec17d778052e78d5325d1fb7cd98e1efa1d`.
-  - 240 rows only: `static_small`, `static_large`, and `rule_based_context`, 8 families, 10 repeats.
-  - Do not use this plan for the requested four-method confirmatory run.
-- Validation plan: `results/v4-stage-c-validation-plan-20260812T102652Z/system-plan.jsonl`
-  - SHA-256: `d1b10b973c2f5cfa818f07a5e4dabcc653ac89c092578a02fd8c819f8ef2b81e`.
-  - 32 rows, including `self_hosted_local_ollama_llm`.
-- New authoritative confirmatory plan: `results/v4-stage-c-confirmatory-plan-20260813T021239Z`
-  - 320 rows = 4 methods x 8 workload families x 10 repeats.
-  - Methods each have 80 trials; each family has 40 trials; each repeat has 32 trials.
-  - 320 unique trial IDs and 80 paired family/repeat blocks; all four methods in every block share one deterministic workload seed.
-  - All ten repeat-block execution sequences are distinct deterministic shuffles.
-  - `system-plan.jsonl` SHA-256: `718adf39c82023755db3dd60a8d1b4730eaef4fb92ff909f52b2180e957bbf10`.
+- Plan: `results/v4-stage-c-confirmatory-plan-20260813T021239Z`
+  - 320 rows = 4 methods x 8 workload families x 10 runtime repeats.
+  - Seed `20260808`; randomized within repeat blocks; all methods share a deterministic seed in each family/repeat block.
+  - 320 unique trial IDs; 80 paired family/repeat blocks; ten distinct deterministic shuffled sequences.
+  - Plan SHA-256: `718adf39c82023755db3dd60a8d1b4730eaef4fb92ff909f52b2180e957bbf10`.
+- Observed run: `results/v4-stage-c-confirmatory-20260813T021600Z`
+  - Experiment ID: `protocol-v4-stage-c-confirmatory-20260813T021600Z`.
+  - Completed without interruption/resume: 320/320 records and 320 unique IDs.
+  - `system-trials.jsonl` SHA-256: `a76a334f74cd0dc928ce158f87106bc6f8576a17ec518ed0ef756cbbd61ff256`.
+  - 2,244 finalized files are covered by `SHA256SUMS`; all verified.
+  - All 320 records match the plan in exact order and have six supporting sidecars, trial metadata, and cleanup `completed`.
+  - No retry directories or `resume-events.jsonl` exist.
+- Final analysis: `results/v4-stage-c-confirmatory-analysis-v3-20260813T054000Z`
+  - Inputs bind the 960-row validated Stage B stream and the exact Stage C SHA-256 above.
+  - 10,000 workload-family bootstrap replicates, seed `20260812`.
+  - 23 files covered by its `SHA256SUMS`; all verified.
+  - Includes `system-family-paired.csv`, where ten repeats are aggregated within each of eight families before exact tests.
+- Human-readable result: `docs/evaluation/STAGE_C_CONFIRMATORY_REPORT.md`.
 
-## Commands already executed
+## Exact outcomes
 
-```bash
-git status --short --branch
-git log -5 --oneline --decorate
-git show --stat --oneline --summary HEAD
-ps -axo pid,ppid,etime,command | grep -Ei 'stage.?c|benchmark|protocol.?v4|run.*trial|kubectl.*(run|apply)|helm.*(install|upgrade)|intent-spawner'
-.venv/bin/python -m evaluation_v4.run_system --help
-```
+| Method | Trials | Success | OOM | Timeout | Mean CPU request | Mean memory request |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| `static_small` | 80 | 29 | 50 | 1 | 100m | 256 MiB |
+| `static_large` | 80 | 80 | 0 | 0 | 1,500m | 1,536 MiB |
+| `rule_based_context` | 80 | 50 | 30 | 0 | 562.5m | 800 MiB |
+| `self_hosted_local_ollama_llm` | 80 | 50 | 30 | 0 | 500m | 768 MiB |
 
-Read-only inspection also counted plan methods/families/repeats and reviewed:
+- All 320 pods spawned and became Ready; Pending, unschedulable, and image-pull failures were 0.
+- Fallback was 0/320. Cleanup completed 320/320. Successful cgroup measurement windows: 209/320.
+- Rule-based reduced mean requests versus static-large by 937.5m CPU (62.5%) and 736 MiB memory (47.9%). Ollama reduced them by 1,000m CPU (66.7%) and 768 MiB memory (50%). Both adaptive methods traded that saving for 37.5 percentage points lower success and 37.5 points more OOM.
+- On five shared successful families, static-large had lower CPU/request, memory/request, and peak-memory/request utilization than either adaptive method. These comparisons are survivor-conditioned.
+- Eight-family exact success/OOM tests were not significant after Holm correction; only three families were discordant (raw p=0.25, Holm p=1.0). Family-bootstrap effect intervals favored static-large success, but they do not override the conservative exact test.
+- Static-large CPU allocation exceeded rule-based by 937.5m (Holm p=0.046875) and Ollama by 1,000m (Holm p=0.046875). Its memory excess versus rule-based was 736 MiB (Holm p=0.0625) and versus Ollama 768 MiB (Holm p=0.046875).
+- Revised applied-system RQ4 is **CLAIMABLE** because the preregistered matrix is complete. H4 is directionally/operationally supported but is not a confirmed family-level significance claim.
 
-- `docs/evaluation/EVALUATION_V4_PROTOCOL.md`
-- `docs/evaluation/PROTOCOL_V4_REPRODUCIBILITY.md`
-- `docs/evaluation/STAGE_C_VALIDATION_AND_BLOCKER_REPORT.md`
-- `evaluation_v4/plan_system.py`
-- `evaluation_v4/run_system.py`
-- `evaluation_v4/validate_evidence.py`
+## Defects fixed during continuation
 
-`rg` is unavailable; use `find` and `grep`. `shasum` fails because the inherited `C.UTF-8` locale is unavailable; use `LC_ALL=C LANG=C openssl dgst -sha256 <file>`.
+1. `evaluation_v4.run_system` had no interruption-safe resume. `--resume` now validates experiment ID, plan hash, frozen environment, exact schema-valid completed prefix, sidecars, cleanup, final checksums, and duplicates; interrupted attempt directories are retained.
+2. Stage C binary inference used 80 correlated runtime rows. Trial McNemar output is now labeled descriptive, and `system-family-paired.csv` aggregates repeats within eight workload families for exact Wilcoxon/Holm inference.
+3. Stage C summaries now include absolute CPU/memory allocations and observed usage, and analysis directories now receive a verified `SHA256SUMS`.
 
-## Defect found and fixed before execution
-
-`evaluation_v4.run_system` originally refused an existing output directory and had no resume mode. A strict `--resume` path is now implemented. It validates the experiment ID, plan hash, stable environment identity, completed record schemas/keys/order, sidecar completeness, and cleanup success before skipping only a valid completed prefix. Interrupted attempt directories remain unchanged and a retry uses `--attempt-NN`. Focused tests pass for valid-prefix continuation and rejection of duplicates, plan mismatch, and missing sidecars. No authoritative run has been started yet.
-
-## Active processes / background work
-
-- Hub port-forward is active:
-  - PID: `66540`
-  - Codex exec session ID: `47436`
-  - Command: `kubectl --context orbstack -n z2jh-context-demo port-forward service/proxy-public 18000:80`
-  - Output/health: listening on `127.0.0.1:18000` and `[::1]:18000`; `GET /hub/health` returned HTTP 200.
-  - Safe stop: send Ctrl-C to exec session `47436`, or `kill 66540` after verifying the exact command.
-- Authoritative Stage C is active:
-  - PID: `66971`
-  - Codex exec session ID: `60381`
-  - Experiment ID: `protocol-v4-stage-c-confirmatory-20260813T021600Z`
-  - Output: `results/v4-stage-c-confirmatory-20260813T021600Z`
-  - Exact command: the full `--execute` command at the end of this file.
-  - The executor repeated and passed full preflight, wrote its clean environment/run manifests, and began trials.
-  - At this update, 2/320 records were appended. Trial 1 (`cpu-checksum/static_small`) was Ready but timed out; trial 2 (`large-aggregation/static_small`) was Ready and OOMKilled. Both had completed cleanup; otherwise execution would have stopped.
-  - Do not start a second executor while PID `66971` is alive.
-  - Safe observation: `wc -l results/v4-stage-c-confirmatory-20260813T021600Z/system-trials.jsonl` and inspect the last complete JSON line. Do not edit live evidence.
-  - If interrupted, first verify PID `66971` is gone, the port-forward is healthy, and no synthetic user pod exists. The run froze Git commit `99707b8da8e4c065a1a451332f8555193614144a`; later commits only update this handoff, but strict resume deliberately rejects any Git drift. With a clean worktree, temporarily run `git switch --detach 99707b8da8e4c065a1a451332f8555193614144a`, then rerun the exact full command below with `--resume` appended. After completion, return with `git switch main`. The ignored live evidence directory persists across the switch. Do not reset, delete, or overwrite it. The resume validator continues only an exact cleanup-complete plan prefix.
-
-## Live preflight observations
-
-- Current Kubernetes context: `orbstack`.
-- Namespace `z2jh-context-demo` has `z2jh-context-demo.local/disposable-experiment-v4=true`.
-- One node, `Ready`, Kubernetes `v1.33.9+orb1`, OrbStack/docker runtime.
-- Hub deployment is 1/1 available; Helm release `context-demo` is deployed at chart 4.0.0 / JupyterHub 5.2.1.
-- No pod with `component=singleuser-server` exists.
-- Local Ollama is reachable on `127.0.0.1:11434` and has `llama3:latest` (digest begins `365c0bd3...`).
-- An old unrelated `idle-large-example` pod is in `Error`; it is not running and is not a single-user/Stage C pod. It was not deleted.
-- The exact 320-row executor `--preflight-only` command passed at `2026-08-13T02:25:39.860Z`.
-- Preflight recorded Git commit `bb4c5f34ec5835d57634b3fcae8a358a86ea3a07` with `git_dirty=false`, plan SHA-256 `718adf39...bf10`, warm digests for `minimal-python` and `scipy-data-science`, 8 CPU / 8,185,712 KiB allocatable memory, no Metrics API, cgroup-v2 window metrics, no HPA, and no resource quota.
-- All full-plan local Ollama reliability checks completed without fallback; model/prompt were `llama3:latest` / `prompt-v4.1.0`.
-
-## Remaining tasks
-
-1. Monitor PID `66971` / session `60381` until it completes; do not launch another executor.
-2. If interrupted, follow the exact safe resume procedure above without overwriting the directory.
-3. Validate 320 unique completed records, all cleanup sidecars/statuses, `SHA256SUMS`, and failure classifications; analyze with family/repeated-measure-aware inference.
-4. Update RQ4/claim documentation only to the extent supported. External LLM credentials remain a separate blocker and must not block Stage C.
-5. Run the remaining Helm/Kubernetes/evidence/checksum/duplicate/cleanup/diff/secret validation suite and report final Git status.
-
-## Exact next action
-
-Continue monitoring session `60381`; if it is no longer available, inspect PID `66971`, the live record count, completion manifest, cleanup state, and only then decide whether `--resume` is required.
-
-## New commands executed after initial inspection
-
-```bash
-.venv/bin/python -m pytest -q tests/test_evaluation_v4.py -k 'stage_c or system_plan'
-.venv/bin/python -m compileall -q evaluation_v4/run_system.py tests/test_evaluation_v4.py
-git diff --check
-```
-
-Result: 6 focused tests passed; compilation and diff check passed.
-
-```bash
-.venv/bin/python -m evaluation_v4.plan_system \
-  --methods static_small,static_large,rule_based_context,self_hosted_local_ollama_llm \
-  --repeats 10 --seed 20260808 \
-  --output results/v4-stage-c-confirmatory-plan-20260813T021239Z
-```
-
-Result: 320-row plan created and the matrix, unique IDs, paired seeds, repeat blocks, deterministic shuffled orders, and SHA-256 were independently asserted.
+## Commands executed and validation results
 
 ```bash
 .venv/bin/python -m pytest -q
 .venv/bin/python -m compileall -q recommender workload scripts evaluation_v4 benchmarks cluster_evaluation experiments tests
 bash -n scripts/*.sh
-.venv/bin/python -m evaluation_v4.run_system \
-  --plan results/v4-stage-c-confirmatory-plan-20260813T021239Z/system-plan.jsonl \
-  --experiment-id protocol-v4-stage-c-confirmatory-dry-run --dry-run
 git diff --check
 ```
 
-Result: full pytest, compilation, shell syntax, 320-row executor dry-run, and diff check passed (exit status 0).
+Passed after the final analysis changes.
 
 ```bash
-.venv/bin/python -m evaluation_v4.run_system \
-  --plan results/v4-stage-c-confirmatory-plan-20260813T021239Z/system-plan.jsonl \
-  --experiment-id protocol-v4-stage-c-confirmatory-20260813T021600Z \
-  --context orbstack --hub-url http://127.0.0.1:18000 \
-  --ollama-endpoint http://127.0.0.1:11434/api/chat \
-  --ollama-model llama3:latest --ollama-prompt-version prompt-v4.1.0 \
-  --ollama-temperature 0 --ollama-timeout 60 --preflight-only
+helm template context-demo jupyterhub/jupyterhub --version 4.0.0 \
+  --namespace z2jh-context-demo --values helm/baseline-values.yaml
+helm template context-demo jupyterhub/jupyterhub --version 4.0.0 \
+  --namespace z2jh-context-demo --values helm/proposed-values.yaml
+kubectl apply --dry-run=client -f k8s/idle-large-pod.yaml
+kubectl apply --dry-run=client -f k8s/idle-small-pod.yaml
+kubectl apply --dry-run=client -f k8s/resource-quota.yaml
 ```
 
-If preflight passes, use the exact same arguments with:
+Both Helm renders and all three client dry-runs passed.
 
 ```bash
---output results/v4-stage-c-confirmatory-20260813T021600Z --execute
+.venv/bin/python scripts/validate_secret_refs.py --values helm/baseline-values.yaml --namespace z2jh-context-demo
+.venv/bin/python scripts/validate_secret_refs.py --values helm/proposed-values.yaml --namespace z2jh-context-demo
+.venv/bin/python -m pytest -q tests/test_historical_evidence_immutability.py
+.venv/bin/python -m evaluation_v4.validate_evidence \
+  --dir results/v4-revised-test-20260812T095453Z \
+  --analysis-dir results/v4-stage-c-confirmatory-analysis-v3-20260813T054000Z
 ```
 
-The preflight command passed with exit status 0 after approximately eight minutes. The exact next full command is:
+Both secret-reference checks, historical evidence immutability, and the evidence/analysis validator passed. A tracked-file credential-pattern scan covered 2,108 files with zero hits. Raw Stage C duplicate, plan-order, schema, sidecar, cleanup, checksum, completion-manifest, and pod-leak checks passed.
 
-```bash
-.venv/bin/python -m evaluation_v4.run_system \
-  --plan results/v4-stage-c-confirmatory-plan-20260813T021239Z/system-plan.jsonl \
-  --experiment-id protocol-v4-stage-c-confirmatory-20260813T021600Z \
-  --context orbstack --hub-url http://127.0.0.1:18000 \
-  --ollama-endpoint http://127.0.0.1:11434/api/chat \
-  --ollama-model llama3:latest --ollama-prompt-version prompt-v4.1.0 \
-  --ollama-temperature 0 --ollama-timeout 60 \
-  --output results/v4-stage-c-confirmatory-20260813T021600Z --execute
-```
+## Remaining blockers and tasks
+
+- Stage C has no remaining work.
+- External LLM remains blocked by missing secure provider credentials/configuration. It does not block Stage C and no external-vs-local empirical claim is supported.
+- User acceptance and re-provisioning evidence remain separate streams and were not created by this task.
+- The seven-plus local commits are not pushed. The 95 MiB raw run and 356 KiB analysis remain ignored local artifacts by repository policy; do not delete them.
+
+## Exact next action
+
+Do not rerun Stage C. Review `docs/evaluation/STAGE_C_CONFIRMATORY_REPORT.md` and, if repository publication is desired, push the current `main` commits and separately archive the ignored run and analysis directories with their checksum manifests. Only resume external-LLM evaluation after credentials are securely configured; never substitute fabricated output.
