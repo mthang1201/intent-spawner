@@ -45,9 +45,11 @@ Set your Gemini API key in the environment or provide it via CLI:
 ```bash
 export EXTERNAL_LLM_API_KEY="your-gemini-api-key"
 export EXTERNAL_LLM_ENDPOINT="https://generativelanguage.googleapis.com/v1beta/openai/chat/completions"
-export EXTERNAL_LLM_MODEL="gemini-2.0-flash"
-export EXTERNAL_LLM_PROMPT_PRICE_PER_M="0.10"
-export EXTERNAL_LLM_COMPLETION_PRICE_PER_M="0.40"
+export EXTERNAL_LLM_MODEL="gemini-3.5-flash"
+
+# Leave pricing unset unless a versioned, model-specific pricing snapshot is
+# available. When it is, prefer EXTERNAL_LLM_PRICING_CONFIG_PATH so the price,
+# effective date, applicable model, and source are reproducible.
 
 .venv/bin/python -m evaluation_v4.run_recommenders \
   --recommenders "external_llm" \

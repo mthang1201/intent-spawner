@@ -158,7 +158,7 @@ def _apply_cli_env_overrides(args: argparse.Namespace) -> None:
 
 def _configured_model_for(method: str) -> str | None:
     if method == "external_llm":
-        return os.environ.get("EXTERNAL_LLM_MODEL") or "gemini-2.0-flash"
+        return os.environ.get("EXTERNAL_LLM_MODEL") or "gemini-3.5-flash"
     if method in {"self_hosted_llm", "self_hosted_local_ollama_llm"}:
         return os.environ.get("SELF_HOSTED_LLM_MODEL") or os.environ.get("OLLAMA_MODEL") or "llama3:latest"
     return None

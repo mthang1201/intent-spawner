@@ -7,8 +7,8 @@ hub:
   extraEnv:
     RECOMMENDER_BACKEND: external_llm
     EXTERNAL_LLM_ENDPOINT: https://generativelanguage.googleapis.com/v1beta/openai/chat/completions
-    # NOTE: Set the explicitly evaluated Gemini model identifier (e.g., gemini-2.0-flash, gemini-1.5-pro)
-    EXTERNAL_LLM_MODEL: gemini-2.0-flash
+    # Frozen by the pre-held-out protocol amendment documented in docs/evaluation/NEXT_AGENT_CONTEXT.md.
+    EXTERNAL_LLM_MODEL: gemini-3.5-flash
     EXTERNAL_LLM_TIMEOUT: "10"
     EXTERNAL_LLM_TOTAL_TIMEOUT: "30"
     EXTERNAL_LLM_MAX_RETRIES: "2"

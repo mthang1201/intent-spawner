@@ -732,7 +732,7 @@ def test_missing_external_api_credentials_blocked(tmp_path: Path):
         assert record["applied_profile"] is None
         assert record["fallback_used"] is False
         assert record["policy_compliant"] is False
-        assert record["model_id"] == "gemini-2.0-flash"
+        assert record["model_id"] == "gemini-3.5-flash"
 
 
 def test_metric_consistency_across_recommendation_stages(tmp_path: Path):
@@ -858,4 +858,3 @@ def test_validate_evidence_tool_and_corruption_detection(tmp_path: Path):
         h.write("\n")
     with pytest.raises(EvidenceValidationError, match="SHA-256 mismatch"):
         validate_evaluation_v4_evidence(test_evidence)
-
