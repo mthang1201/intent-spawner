@@ -1,6 +1,6 @@
 # Protocol-v4 Stage C Confirmatory Handoff
 
-Last updated: 2026-08-13 09:26 Asia/Ho_Chi_Minh, after authoritative Stage C preflight and immediately before execution.
+Last updated: 2026-08-13 09:36 Asia/Ho_Chi_Minh, authoritative Stage C actively executing.
 
 ## Exact repository state
 
@@ -64,7 +64,17 @@ Read-only inspection also counted plan methods/families/repeats and reviewed:
   - Command: `kubectl --context orbstack -n z2jh-context-demo port-forward service/proxy-public 18000:80`
   - Output/health: listening on `127.0.0.1:18000` and `[::1]:18000`; `GET /hub/health` returned HTTP 200.
   - Safe stop: send Ctrl-C to exec session `47436`, or `kill 66540` after verifying the exact command.
-- No Stage C experiment process has started yet.
+- Authoritative Stage C is active:
+  - PID: `66971`
+  - Codex exec session ID: `60381`
+  - Experiment ID: `protocol-v4-stage-c-confirmatory-20260813T021600Z`
+  - Output: `results/v4-stage-c-confirmatory-20260813T021600Z`
+  - Exact command: the full `--execute` command at the end of this file.
+  - The executor repeated and passed full preflight, wrote its clean environment/run manifests, and began trials.
+  - At this update, 2/320 records were appended. Trial 1 (`cpu-checksum/static_small`) was Ready but timed out; trial 2 (`large-aggregation/static_small`) was Ready and OOMKilled. Both had completed cleanup; otherwise execution would have stopped.
+  - Do not start a second executor while PID `66971` is alive.
+  - Safe observation: `wc -l results/v4-stage-c-confirmatory-20260813T021600Z/system-trials.jsonl` and inspect the last complete JSON line. Do not edit live evidence.
+  - If interrupted, first verify PID `66971` is gone, the port-forward is healthy, and no synthetic user pod exists. Then rerun the exact full command below with `--resume` appended. The resume validator rejects duplicates/drift and continues only an exact cleanup-complete plan prefix.
 
 ## Live preflight observations
 
@@ -81,15 +91,15 @@ Read-only inspection also counted plan methods/families/repeats and reviewed:
 
 ## Remaining tasks
 
-1. Commit this successful preflight handoff so execution records a clean Git state.
-2. Execute the new plan into `results/v4-stage-c-confirmatory-20260813T021600Z`; use `--resume` only if interrupted. Never overwrite historical runs.
+1. Monitor PID `66971` / session `60381` until it completes; do not launch another executor.
+2. If interrupted, follow the exact safe resume procedure above without overwriting the directory.
 3. Validate 320 unique completed records, all cleanup sidecars/statuses, `SHA256SUMS`, and failure classifications; analyze with family/repeated-measure-aware inference.
 4. Update RQ4/claim documentation only to the extent supported. External LLM credentials remain a separate blocker and must not block Stage C.
 5. Run the remaining Helm/Kubernetes/evidence/checksum/duplicate/cleanup/diff/secret validation suite and report final Git status.
 
 ## Exact next action
 
-Commit this handoff update, then execute the exact Stage C command below.
+Continue monitoring session `60381`; if it is no longer available, inspect PID `66971`, the live record count, completion manifest, cleanup state, and only then decide whether `--resume` is required.
 
 ## New commands executed after initial inspection
 
