@@ -367,7 +367,10 @@ def analyze_recommendations(
                 "profile_acceptable": mean(r["profile_acceptable"] for r in srows),
                 "image_acceptable": mean(r["image_acceptable"] for r in srows),
                 "joint_acceptable": mean(r["joint_acceptable"] for r in srows),
+                "raw_model_profile_acceptable": mean(r["raw_model_profile_acceptable"] for r in srows),
+                "raw_model_image_acceptable": mean(r["raw_model_image_acceptable"] for r in srows),
                 "raw_model_joint_acceptable": mean(r["raw_model_joint_acceptable"] for r in srows),
+                "raw_valid_response": mean(r["raw_valid_response"] for r in srows if r["raw_valid_response"] is not None),
                 "underprovisioned": mean(r["underprovisioned"] for r in srows),
                 "overprovisioned": mean(r["overprovisioned"] for r in srows),
                 "latency_seconds": mean(r["latency_seconds"] for r in srows if r.get("latency_seconds") is not None),
@@ -387,6 +390,9 @@ def analyze_recommendations(
     paired_sample_mcnemar: list[dict[str, Any]] = []
     paired_sample_wilcoxon: list[dict[str, Any]] = []
     effect_sizes_list: list[dict[str, Any]] = []
+    paired_raw_llm_mcnemar: list[dict[str, Any]] = []
+    paired_raw_llm_wilcoxon: list[dict[str, Any]] = []
+    raw_llm_effect_sizes: list[dict[str, Any]] = []
 
     for first_index, first in enumerate(inferential_methods):
         for second in inferential_methods[first_index + 1 :]:
@@ -476,6 +482,87 @@ def analyze_recommendations(
                     "cliffs_delta": eff_lat["cliffs_delta"],
                     "matched_pairs_rank_biserial": eff_lat["matched_pairs_rank_biserial"],
                 })
+
+    # Raw LLM inference is a separate estimand from the applied recommendation.
+    # Keep its multiplicity family separate and never credit fallback outputs.
+    llm_methods = [
+        method
+        for method in inferential_methods
+        if method in {"external_llm", "self_hosted_llm", "self_hosted_local_ollama_llm"}
+    ]
+    for first_index, first in enumerate(llm_methods):
+        for second in llm_methods[first_index + 1 :]:
+            common_samples = sorted(set(sample_data[first]) & set(sample_data[second]))
+            for metric_key in (
+                "raw_model_profile_acceptable",
+                "raw_model_image_acceptable",
+                "raw_model_joint_acceptable",
+                "raw_valid_response",
+            ):
+                first_vals = [sample_data[first][sample][metric_key] for sample in common_samples]
+                second_vals = [sample_data[second][sample][metric_key] for sample in common_samples]
+                first_bin = [value is not None and value >= 0.5 for value in first_vals]
+                second_bin = [value is not None and value >= 0.5 for value in second_vals]
+                paired_raw_llm_mcnemar.append({
+                    "endpoint": metric_key,
+                    "first": first,
+                    "second": second,
+                    "n_samples": len(common_samples),
+                    **exact_mcnemar(first_bin, second_bin),
+                })
+                paired_raw_llm_wilcoxon.append({
+                    "endpoint": metric_key,
+                    "first": first,
+                    "second": second,
+                    "n_samples": len(common_samples),
+                    "mean_diff_first_minus_second": _round(
+                        mean(a - b for a, b in zip(first_vals, second_vals))
+                    ),
+                    **wilcoxon_signed_rank(first_vals, second_vals),
+                })
+                effect = calculate_effect_sizes(first_vals, second_vals)
+                diff_rows = [
+                    {
+                        "workload_family": sample_data[first][sample]["workload_family"],
+                        "a": sample_data[first][sample][metric_key],
+                        "b": sample_data[second][sample][metric_key],
+                    }
+                    for sample in common_samples
+                ]
+                ci_low, ci_high = paired_difference_cluster_bootstrap_ci(
+                    diff_rows,
+                    "a",
+                    "b",
+                    replicates=replicates,
+                    seed=seed + 2000,
+                )
+                raw_llm_effect_sizes.append({
+                    "endpoint": metric_key,
+                    "first": first,
+                    "second": second,
+                    "n_samples": len(common_samples),
+                    "risk_difference": effect["mean_difference"],
+                    "risk_difference_ci_low": _round(ci_low),
+                    "risk_difference_ci_high": _round(ci_high),
+                    "cohens_d_paired": effect["cohens_d_paired"],
+                    "cliffs_delta": effect["cliffs_delta"],
+                    "matched_pairs_rank_biserial": effect["matched_pairs_rank_biserial"],
+                })
+
+    if paired_raw_llm_mcnemar:
+        adjusted = holm_adjust(
+            [float(row["p_value_raw"]) for row in paired_raw_llm_mcnemar]
+        )
+        for row, value in zip(paired_raw_llm_mcnemar, adjusted):
+            row["p_value_holm"] = _round_p(value)
+            row["p_value_raw"] = _round_p(row["p_value_raw"])
+    if paired_raw_llm_wilcoxon:
+        adjusted = holm_adjust(
+            [float(row["p_value_raw"]) for row in paired_raw_llm_wilcoxon]
+        )
+        for row, value in zip(paired_raw_llm_wilcoxon, adjusted):
+            row["p_value_holm"] = _round_p(value)
+            row["p_value_raw"] = _round_p(row["p_value_raw"])
 
     # Adjust p-values for sample-level McNemar and Wilcoxon
     if paired_sample_mcnemar:
@@ -630,6 +717,9 @@ def analyze_recommendations(
         "paired_sample_mcnemar_holm": paired_sample_mcnemar,
         "paired_sample_wilcoxon_holm": paired_sample_wilcoxon,
         "effect_sizes": effect_sizes_list,
+        "paired_raw_llm_mcnemar_holm": paired_raw_llm_mcnemar,
+        "paired_raw_llm_wilcoxon_holm": paired_raw_llm_wilcoxon,
+        "raw_llm_effect_sizes": raw_llm_effect_sizes,
         "paired_mcnemar_holm": paired_sample_mcnemar,
         "paired_wilcoxon_holm": paired_sample_wilcoxon,
         "paired_trial_mcnemar_descriptive": paired_trial_mcnemar,
@@ -1152,6 +1242,29 @@ def compute_claim_gates(
     """Compute claim gates for the authoritative research questions RQ1-RQ5."""
     executed_methods = [str(row["recommender"]) for row in recommendation.get("summaries", [])]
     scored_records = recommendation.get("scored_records", [])
+    records_by_method: dict[str, list[Mapping[str, Any]]] = defaultdict(list)
+    for record in scored_records:
+        records_by_method[str(record["recommender"])].append(record)
+    external_rows = records_by_method.get("external_llm", [])
+    ollama_rows = records_by_method.get("self_hosted_local_ollama_llm", [])
+    external_matrix_complete = (
+        len(external_rows) == 240
+        and len({str(row["sample_id"]) for row in external_rows}) == 48
+        and len({int(row["repeat_index"]) for row in external_rows}) == 5
+    )
+    ollama_matrix_complete = (
+        len(ollama_rows) == 240
+        and len({str(row["sample_id"]) for row in ollama_rows}) == 48
+        and len({int(row["repeat_index"]) for row in ollama_rows}) == 5
+    )
+    external_raw_success_rate = mean(
+        not row.get("fallback_used") and row.get("error_category") is None
+        for row in external_rows
+    )
+    has_reproducible_cost = any(
+        row.get("estimated_cost_usd") is not None
+        for row in external_rows + ollama_rows
+    )
 
     has_real_external_llm = any(
         r["recommender"] == "external_llm"
@@ -1193,9 +1306,13 @@ def compute_claim_gates(
         real_methods.append("self_hosted_local_ollama_llm")
 
     # RQ1: How do the four approaches differ in recommendation quality?
-    if len(real_methods) == 4:
+    if len(real_methods) == 4 and external_matrix_complete and ollama_matrix_complete:
         rq1_status = "CLAIMABLE"
-        rq1_reason = "Evaluated across all 4 canonical approaches with real predictions."
+        rq1_reason = (
+            "All four 48×5 matrices are complete. Applied operational quality is comparable; "
+            "raw external-model quality is bounded by its observed response coverage and is "
+            "reported separately from fallback-assisted quality."
+        )
     elif len(real_methods) >= 2:
         rq1_status = "PARTIALLY CLAIMABLE"
         rq1_reason = (
@@ -1208,9 +1325,19 @@ def compute_claim_gates(
         rq1_reason = "Insufficient methods evaluated to draw comparative recommendation quality conclusions."
 
     # RQ2: Do LLM-based approaches improve recommendation quality compared with the static baseline and rule-based mapping?
-    if (has_static or has_rule_based) and has_real_external_llm and has_real_ollama:
+    if (
+        (has_static or has_rule_based)
+        and has_real_external_llm
+        and has_real_ollama
+        and external_matrix_complete
+        and ollama_matrix_complete
+    ):
         rq2_status = "CLAIMABLE"
-        rq2_reason = "Recommendation quality comparison completed between LLM approaches and deterministic baselines."
+        rq2_reason = (
+            "Operational applied quality and fallback-isolated raw LLM quality are both "
+            "available against the deterministic baselines; improvement claims must follow "
+            "the sample-level, family-clustered intervals and Holm-adjusted tests."
+        )
     elif (has_static or has_rule_based) and (has_real_external_llm or has_real_ollama):
         rq2_status = "PARTIALLY CLAIMABLE"
         rq2_reason = "Partial comparison available for only one LLM backend against deterministic baselines."
@@ -1220,8 +1347,13 @@ def compute_claim_gates(
 
     # RQ3: What additional latency, failures, fallbacks, monetary cost, resource consumption, and operational overhead do LLM approaches introduce?
     if has_external_telemetry and has_ollama_telemetry:
-        rq3_status = "CLAIMABLE"
-        rq3_reason = "Inference latency, failures, fallbacks, token cost, and resource telemetry measured for both LLM approaches."
+        rq3_status = "PARTIALLY CLAIMABLE"
+        rq3_reason = (
+            "Latency, retries, fallbacks, failures, and token telemetry are observed for both "
+            "LLM approaches, and local Ollama has Stage C workload-resource evidence. Monetary "
+            "cost is " + ("available" if has_reproducible_cost else "unavailable") +
+            "; provider energy/resource use and local energy/hardware cost were not measured."
+        )
     elif has_external_telemetry or has_ollama_telemetry:
         rq3_status = "PARTIALLY CLAIMABLE"
         rq3_reason = "Inference latency and telemetry available for only one LLM approach."
@@ -1249,9 +1381,27 @@ def compute_claim_gates(
         rq4_reason = "No four-method applied Kubernetes/JupyterHub experiment exists yet (requires observed Stage C cluster telemetry)."
 
     # RQ5: What are the quality–latency–reliability–cost–privacy trade-offs between an external LLM and a locally hosted Ollama model?
-    if has_real_external_llm and has_real_ollama:
+    if (
+        has_real_external_llm
+        and has_real_ollama
+        and external_matrix_complete
+        and ollama_matrix_complete
+        and has_external_telemetry
+        and has_ollama_telemetry
+    ):
         rq5_status = "CLAIMABLE"
-        rq5_reason = "Empirical head-to-head evaluation completed between external LLM API and local Ollama model."
+        coverage_text = (
+            f"{float(external_raw_success_rate):.1%}"
+            if external_raw_success_rate is not None
+            else "unknown"
+        )
+        rq5_reason = (
+            "A complete operational head-to-head covers raw/applied quality, latency, "
+            f"reliability, and tokens; external raw response coverage was {coverage_text}. "
+            "Monetary/energy cost remains unavailable, while privacy and operational "
+            "boundaries are supported by endpoint and implementation evidence rather than "
+            "user-data or provider-infrastructure measurements."
+        )
     else:
         rq5_status = "NOT CLAIMABLE"
         rq5_reason = (
@@ -1453,6 +1603,35 @@ def _write_report(
             f"| {row['first']} | {row['second']} | {row['n_samples']} | **{rd_str}** {ci_str} | {d_str} | {row['p_value_raw']} | {row['p_value_holm']} | {sig} |"
         )
 
+    raw_llm_rows = recommendation.get("paired_raw_llm_mcnemar_holm", [])
+    if raw_llm_rows:
+        raw_effect_map = {
+            (row["endpoint"], row["first"], row["second"]): row
+            for row in recommendation.get("raw_llm_effect_sizes", [])
+        }
+        lines.extend([
+            "",
+            "### Raw LLM Comparison (Fallbacks Count as Raw Failures)",
+            "",
+            "| Endpoint | Method A | Method B | N Samples | Risk Diff (A - B) [95% CI] | Raw p-val | Holm Adj p |",
+            "| :--- | :--- | :--- | ---: | :--- | ---: | ---: |",
+        ])
+        for row in raw_llm_rows:
+            effect = raw_effect_map.get(
+                (row["endpoint"], row["first"], row["second"]), {}
+            )
+            difference = effect.get("risk_difference")
+            low = effect.get("risk_difference_ci_low")
+            high = effect.get("risk_difference_ci_high")
+            difference_text = f"{difference:+.4f}" if difference is not None else "N/A"
+            interval_text = (
+                f"[{low:+.4f}, {high:+.4f}]" if low is not None and high is not None else "N/A"
+            )
+            lines.append(
+                f"| {row['endpoint']} | {row['first']} | {row['second']} | {row['n_samples']} | "
+                f"**{difference_text}** {interval_text} | {row['p_value_raw']} | {row['p_value_holm']} |"
+            )
+
     sample_wilcoxon_by_endpoint = defaultdict(list)
     for row in recommendation.get("paired_sample_wilcoxon_holm", []):
         sample_wilcoxon_by_endpoint[row["endpoint"]].append(row)
@@ -1586,6 +1765,9 @@ def analyze(args: argparse.Namespace) -> dict[str, Any]:
     _write_csv(args.out / "recommendation-breakdowns.csv", recommendation["breakdowns"])
     _write_csv(args.out / "pairwise-sample-mcnemar-holm.csv", recommendation.get("paired_sample_mcnemar_holm", []))
     _write_csv(args.out / "pairwise-sample-wilcoxon-holm.csv", recommendation.get("paired_sample_wilcoxon_holm", []))
+    _write_csv(args.out / "pairwise-raw-llm-mcnemar-holm.csv", recommendation.get("paired_raw_llm_mcnemar_holm", []))
+    _write_csv(args.out / "pairwise-raw-llm-wilcoxon-holm.csv", recommendation.get("paired_raw_llm_wilcoxon_holm", []))
+    _write_csv(args.out / "raw-llm-effect-sizes.csv", recommendation.get("raw_llm_effect_sizes", []))
     _write_csv(args.out / "pairwise-mcnemar-holm.csv", recommendation.get("paired_sample_mcnemar_holm", []))
     _write_csv(args.out / "pairwise-wilcoxon-holm.csv", recommendation.get("paired_sample_wilcoxon_holm", []))
     _write_csv(args.out / "pairwise-trial-mcnemar-descriptive.csv", recommendation.get("paired_trial_mcnemar_descriptive", []))

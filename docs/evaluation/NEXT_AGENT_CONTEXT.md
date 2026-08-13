@@ -208,3 +208,68 @@ EXTERNAL_LLM_ALLOW_INSECURE_HTTP='false' \
 ```
 
 If interrupted after at least one prediction is written, execute the identical command with `--resume` appended. The runner validates existing keys, retains the original run ID, skips the exact completed prefix, and appends only missing trials. Before resuming, record the process status and current line count here. Never start a replacement directory merely because the command was interrupted.
+
+## External matrix completed and analyzed (2026-08-13T05:08:49Z)
+
+- Live process exited 0; no experiment process is running and no resume is required.
+- Authoritative external directory: `results/v4-external-confirmatory-20260813T045543Z`.
+- Run ID: `v4-recommenders-20260813T045633Z-daae41dd`.
+- Records: 240 expected, 240 observed, 240 unique keys; evidence validator passed.
+- Predictions SHA-256: `62dccc1ce650066bfb9d1f87b2b923c3be6a0e17294677fc14b8d0a92826b7bd`.
+- Raw success/failure: 21 schema-valid completions and 219 transport-error fallbacks; zero schema failures and zero runner-level terminal errors.
+- Attempts: 16 trials with one, three with two, 221 with three; 224 retrying trials; all 219 fallback trials exhausted three attempts.
+- Raw full-denominator accuracy: profile exact/acceptable 12/240 (5.00%), image exact/acceptable 21/240 (8.75%), joint 12/240 (5.00%). Conditional on the 21 responses: 57.14% profile/joint and 100% image.
+- Applied accuracy: profile exact 66.25%, profile acceptable 77.92%, image exact/acceptable 100%, joint 67.92%; under 18.75%, over 3.33%, raw-model policy rejection 0%.
+- All-trial latency mean/median/p95: 1.5565/1.2961/3.9594 seconds. Successful completion end-to-end median/p95: 4.0095/5.4042 seconds; provider median/p95: 3.9582/5.0042 seconds. Failure fallback median: 1.2902 seconds.
+- Successful-call tokens: 12,468 prompt, 3,262 completion, 29,392 total. Pricing was unconfigured; cost is unavailable. Energy/resource use was not measured.
+- Successes were temporally concentrated: 19 in repeat 0, two in repeat 1, none in repeats 2–4. Sanitized evidence cannot prove whether quota/rate limiting caused the transport failures.
+- External report: `docs/evaluation/PROTOCOL_V4_EXTERNAL_LLM_LIVE_REPORT.md`.
+
+Derived combined evidence was created without altering the historical source:
+
+- Directory: `results/v4-combined-evidence-20260813T050500Z`.
+- Records: 960 = 720 historical static/rule/Ollama + 240 new external; validator passed.
+- Predictions SHA-256: `751a8ab32d323647770d04391c838c16233f7b987e586d37841591860230b055`.
+- Reproduction tool: `python -m evaluation_v4.combine_external_results`; an independent temporary reproduction produced the identical predictions hash and passed validation.
+- Corrected combined analysis: `results/v4-final-combined-external-analysis-v2-20260813T050836Z` with 960 recommendation records and the authoritative 320 Stage C records.
+- Current claim gates: RQ1 CLAIMABLE; RQ2 CLAIMABLE; RQ3 PARTIALLY CLAIMABLE; RQ4 CLAIMABLE; RQ5 CLAIMABLE with limitations documented in the narrative report.
+- Raw external-minus-Ollama differences: valid response -91.25 pp [family-clustered 95% CI -94.29, -87.92], raw profile -53.33 pp [-73.02, -33.47], raw image -51.67 pp [-71.38, -32.55], raw joint -38.75 pp [-59.56, -19.57]; all survive the separate Holm correction. These are operational reliability-dominated differences, not an intrinsic model ranking.
+- Applied profile differences remain statistically unsupported after Holm correction. Applied external-minus-Ollama joint is +24.17 pp [2.98, 44.09], Holm McNemar p=0.0418, but this is fallback-driven and cannot be credited to Gemini.
+
+Focused tests after analysis changes: 49 passed. Exact next command if interrupted now:
+
+```bash
+.venv/bin/python -m pytest
+```
+
+Then run evidence validators for the external and combined directories, record/duplicate checks, a secret scan, historical-evidence checksum checks, `git diff --check`, generate new checksum manifests, update this file with final validation/commit state, and commit the validated result as a new checkpoint.
+
+### Final validation completed before checkpoint
+
+- Full pytest: 310 passed in 33.87 seconds.
+- Focused external/statistical/evaluation tests: 49 passed.
+- `compileall`, shell syntax checks, and `git diff --check`: passed.
+- External evidence validator: passed for 240 records and its analysis.
+- Combined evidence validator: passed for 960 records and the 320-trial Stage C analysis.
+- Record/duplicate checks: external 240/240 unique, combined 960/960 unique, Stage C 320/320 unique.
+- Checksum verification: historical raw manifest, full 2,244-file Stage C manifest, new external run, new combined view, both new analysis directories, and the tracked consolidated manifest all passed.
+- Historical immutability: no tracked diff exists under `experiments/raw`, the historical revised prediction source, or the Stage C run. The historical revised prediction hash remains `5bdbf1575ff747366e700fb9c8d6c34d4811099f548ff7e6a52ba58fcab32484`.
+- Secret scan: 2,173 tracked/unignored/new evidence files scanned for the exact Kubernetes Secret value; zero matches. The generic scan found only three pre-existing false-positive/test-fixture paths (`task-e-*` names matching an `sk-` heuristic and test Bearer placeholders). A second generic scan of 64 new evidence/report files found zero matches. `gitleaks` is unavailable.
+- New tracked checksum manifest: `docs/evaluation/PROTOCOL_V4_EXTERNAL_SHA256SUMS.txt`.
+- No evaluation process is running. No resume action is needed.
+
+Exact next command if interrupted before the final commit:
+
+```bash
+git add docs/evaluation/NEXT_AGENT_CONTEXT.md \
+  docs/evaluation/PROTOCOL_V4_REPRODUCIBILITY.md \
+  docs/evaluation/PROTOCOL_V4_REVISED_EVALUATION_REPORT.md \
+  docs/evaluation/RUNBOOK_FOUR_METHOD_EVALUATION.md \
+  docs/evaluation/THREATS_TO_VALIDITY.md \
+  docs/evaluation/PROTOCOL_V4_EXTERNAL_LLM_LIVE_REPORT.md \
+  docs/evaluation/PROTOCOL_V4_EXTERNAL_SHA256SUMS.txt \
+  evaluation_v4/analyze.py evaluation_v4/combine_external_results.py \
+  tests/test_evaluation_v4.py tests/test_four_method_evaluation.py
+git diff --cached --check
+git commit -m "Complete Protocol-v4 external LLM evaluation"
+```

@@ -421,6 +421,9 @@ def test_full_four_method_end_to_end_evaluation_pipeline(tmp_path: Path):
     assert analysis_manifest["record_counts"]["predictions"] == manifest["records"]
     assert (analysis_dir / "REPORT.md").is_file()
     assert (analysis_dir / "pairwise-wilcoxon-holm.csv").is_file()
+    assert (analysis_dir / "pairwise-raw-llm-mcnemar-holm.csv").is_file()
+    assert (analysis_dir / "pairwise-raw-llm-wilcoxon-holm.csv").is_file()
+    assert (analysis_dir / "raw-llm-effect-sizes.csv").is_file()
     assert (analysis_dir / "latency-cost-summary.csv").is_file()
     assert (analysis_dir / "profile-confusion-matrices.json").is_file()
 

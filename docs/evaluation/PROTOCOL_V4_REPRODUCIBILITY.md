@@ -94,3 +94,59 @@ kubectl --context orbstack -n z2jh-context-demo port-forward service/proxy-publi
 
 Every live run must retain its manifest, completion record, checksums, and raw
 sidecars before any narrative summary is written.
+
+## External Gemini 3.5 Flash confirmatory matrix (2026-08-13)
+
+The retired `gemini-2.0-flash` model was replaced by the explicitly selected
+stable `gemini-3.5-flash` before any held-out external trial. Verify the
+development gate in `EXTERNAL_LLM_GEMINI_3_5_VERIFICATION.md` before using the
+held-out split. Do not configure pricing unless a versioned model-specific
+snapshot with effective date and source is available.
+
+```bash
+EXTERNAL_LLM_API_KEY="$(kubectl -n z2jh-context-demo get secret \
+  intent-spawner-external-llm -o jsonpath='{.data.api-key}' | base64 --decode)" \
+RECOMMENDER_BACKEND=external_llm \
+EXTERNAL_LLM_ENDPOINT='https://generativelanguage.googleapis.com/v1beta/openai/chat/completions' \
+EXTERNAL_LLM_MODEL='gemini-3.5-flash' \
+EXTERNAL_LLM_TIMEOUT='10' EXTERNAL_LLM_TOTAL_TIMEOUT='30' \
+EXTERNAL_LLM_MAX_RETRIES='2' EXTERNAL_LLM_RETRY_BACKOFF_SECONDS='0.25' \
+EXTERNAL_LLM_TEMPERATURE='0' EXTERNAL_LLM_MAX_CONCURRENT_RECOMMENDATIONS='4' \
+EXTERNAL_LLM_ALLOW_INSECURE_HTTP='false' \
+.venv/bin/python -m evaluation_v4.run_recommenders \
+  --recommenders external_llm \
+  --split test --repeats 5 --seed 20260808 --randomize-order \
+  --prompt-version prompt-v4.1.0 \
+  --experiment-id protocol-v4-external-confirmatory-<UTC> \
+  --output results/v4-external-confirmatory-<UTC>
+```
+
+Use `--resume` only for the same interrupted directory and exact command. The
+authoritative execution produced 240/240 records at
+`results/v4-external-confirmatory-20260813T045543Z`.
+
+Create a new derived four-method view without modifying the historical
+missing-credentials source, then run the family-aware combined analysis:
+
+```bash
+.venv/bin/python -m evaluation_v4.combine_external_results \
+  --baseline-dir results/v4-revised-test-20260812T095453Z \
+  --external-dir results/v4-external-confirmatory-20260813T045543Z \
+  --output results/v4-combined-evidence-<UTC>
+
+.venv/bin/python -m evaluation_v4.validate_evidence \
+  --dir results/v4-combined-evidence-<UTC>
+
+.venv/bin/python -m evaluation_v4.analyze \
+  --predictions results/v4-combined-evidence-<UTC>/predictions.jsonl \
+  --system-trials results/v4-stage-c-confirmatory-20260813T021600Z/system-trials.jsonl \
+  --bootstrap-replicates 2000 --seed 20260808 \
+  --out results/v4-final-combined-external-analysis-<UTC>
+
+.venv/bin/python -m evaluation_v4.validate_evidence \
+  --dir results/v4-combined-evidence-<UTC> \
+  --analysis-dir results/v4-final-combined-external-analysis-<UTC>
+```
+
+The authoritative combined analysis is
+`results/v4-final-combined-external-analysis-v2-20260813T050836Z`.

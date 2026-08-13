@@ -121,6 +121,9 @@ Execute the statistical analyzer:
 | `recommendation-breakdowns.csv` | CSV | Stratified performance across languages, sizes, and strata. |
 | `pairwise-mcnemar-holm.csv` | CSV | Exact McNemar paired test matrix with Holm adjustment. |
 | `pairwise-wilcoxon-holm.csv` | CSV | Paired Wilcoxon signed-rank latency tests with Holm adjustment. |
+| `pairwise-raw-llm-mcnemar-holm.csv` | CSV | Fallback-isolated raw LLM exact paired tests with a separate Holm family. |
+| `pairwise-raw-llm-wilcoxon-holm.csv` | CSV | Fallback-isolated raw LLM sample-mean paired tests. |
+| `raw-llm-effect-sizes.csv` | CSV | Raw external-vs-local risk differences, family-clustered intervals, and effect sizes. |
 | `profile-confusion-matrices.json` | JSON | 3x3 confusion matrices (small, medium, large) per method. |
 | `latency-cost-summary.csv` | CSV | Wall-clock latency, token consumption, and cost estimates. |
 | `analysis-manifest.json` | JSON | Audit manifest with input SHA-256 sums and claim-gate status. |

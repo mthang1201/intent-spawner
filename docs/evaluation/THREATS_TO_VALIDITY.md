@@ -12,9 +12,31 @@ The revised recommendation dataset is synthetic, multilingual, and limited to
 48 held-out samples in 20 workload families. The local model result covers only
 `llama3:latest`, temperature zero, one Apple Silicon host, and one prompt
 contract. Five identical outputs per sample establish repeat consistency under
-that configuration but do not add independent accuracy observations. The
-external backend was unavailable, so no cloud quality, latency, cost, provider
-reliability, or privacy trade-off was measured.
+that configuration but do not add independent accuracy observations.
+
+The external matrix now covers `gemini-3.5-flash` after an explicit pre-held-out
+model-only amendment: Google retired the originally frozen
+`gemini-2.0-flash` before any external held-out trial. The amended development
+gate passed credentials, endpoint/model identity, schema, policy, latency, and
+token checks. In the held-out run, however, only 21/240 trials returned a raw
+completion; 219 exhausted retries and used the rule fallback. Successful calls
+were concentrated in the first two repeat blocks (19 then two), with none in
+blocks 2–4. Execution order is therefore confounded with provider availability.
+The 8.75% response rate, raw full-denominator metrics, and fallback-assisted
+applied metrics are valid operational results for the evaluated account and
+time window, but the 21-response subset is insufficient for a broad intrinsic
+Gemini-quality conclusion.
+
+All final external failures were sanitized as `transport_error`. Sanitization
+protects provider-controlled text and credentials, but it also prevents the
+retained evidence from distinguishing HTTP quota/rate limits, 5xx responses,
+DNS failures, or other transport causes. The pattern is consistent with quota
+exhaustion but does not prove it. External all-trial latency is biased downward
+by fast failures; successful-completion latency must be reported separately.
+Token telemetry exists only for successful calls. Monetary cost is unavailable
+because no reproducible pricing snapshot was configured. Provider energy and
+resource use, local energy, local hardware cost, provider retention behavior,
+and user privacy outcomes were not measured.
 
 The 2026-08-13 one-repeat Stage C validation has been superseded for applied
 system inference by the 320-trial confirmatory corpus. The confirmatory corpus
