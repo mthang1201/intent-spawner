@@ -198,6 +198,8 @@ def test_options_form_exposes_preview_edit_confirm_and_manual_override_controls(
     assert 'id="submit-override"' in rendered
     assert "No image is built from user input" in rendered
     assert 'input.intent + "\\n" + input.code_context' in rendered
+    assert 'term.startsWith(".")' in rendered
+    assert 'term.startswith(".")' not in rendered
 
 
 def test_kubespawner_pre_spawn_hook_applies_large_for_gpu_or_large_with_explanation():

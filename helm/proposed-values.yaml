@@ -412,7 +412,7 @@ hub:
             const fingerprint = () => JSON.stringify(values());
             const escapeRegex = value => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
             const hits = (text, terms) => terms.filter(term => {
-              if (term.startswith(".")) return text.includes(term);
+              if (term.startsWith(".")) return text.includes(term);
               return new RegExp("(^|[^a-z0-9_])" + escapeRegex(term) + "($|[^a-z0-9_])").test(text);
             });
 
