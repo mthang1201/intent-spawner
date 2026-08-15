@@ -19,7 +19,7 @@ results/
 # Presentation & inspection files
 *.pptx
 *.pptx.inspect.ndjson
-*_real_demo/
-*_revised/
+Context_Aware_Profile_Selection_Extension_JupyterHub_*/
 .codex-tmp/
+.codex-work/
 assets/
