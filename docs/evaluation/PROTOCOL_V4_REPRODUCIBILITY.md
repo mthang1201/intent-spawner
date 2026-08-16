@@ -37,8 +37,10 @@ git diff --check
 
 ## Revised held-out matrix and analysis
 
-Run this only after freezing the development-tested interface. External cells
-will be explicit blockers unless secure provider configuration is present.
+Run this only after freezing the development-tested interface. For any new
+execution, external cells are explicit blockers unless secure provider
+configuration is present. The authoritative 2026-08-13 matrices described
+below are already complete and must not be overwritten.
 
 ```bash
 .venv/bin/python -m evaluation_v4.run_recommenders \
@@ -63,8 +65,9 @@ will be explicit blockers unless secure provider configuration is present.
 ## Stage C validation and combined analysis
 
 Only use the disposable labelled namespace. Start the Hub port-forward in a
-separate terminal, then run the validation. The full 320-trial plan requires a
-separate deliberate operator decision.
+separate terminal, then run the validation. The authoritative full 320-trial
+run has completed at `results/v4-stage-c-confirmatory-20260813T021600Z`; any
+new cluster execution still requires a separate deliberate operator decision.
 
 ```bash
 kubectl --context orbstack -n z2jh-context-demo port-forward service/proxy-public 18000:80
@@ -94,6 +97,11 @@ kubectl --context orbstack -n z2jh-context-demo port-forward service/proxy-publi
 
 Every live run must retain its manifest, completion record, checksums, and raw
 sidecars before any narrative summary is written.
+
+The authoritative Stage C plan contains four methods, eight executable
+families, and ten repeats (320 trials). Its human-readable result and evidence
+boundary are in `STAGE_C_CONFIRMATORY_REPORT.md`; do not infer current status
+from the earlier one-repeat validation command above.
 
 ## External Gemini 3.5 Flash confirmatory matrix (2026-08-13)
 

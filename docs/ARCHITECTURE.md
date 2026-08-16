@@ -22,7 +22,7 @@ flowchart TD
     subgraph Recommender Layer [Pluggable Recommender Framework]
         HubServer --> RecommenderRegistry{Recommender Backend Registry}
         RecommenderRegistry -->|Zero-dep Deterministic| RuleBased[Rule-Based Recommender]
-        RecommenderRegistry -->|HTTPS OpenAI API + Secret| ExtLLM[External LLM: Gemini 1.5 Flash]
+        RecommenderRegistry -->|HTTPS OpenAI API + Secret| ExtLLM[External LLM: Gemini 3.5 Flash]
         RecommenderRegistry -->|Local HTTP Inference| SelfLLM[Self-Hosted LLM: Ollama / vLLM]
         
         RuleBased & ExtLLM & SelfLLM --> SchemaCheck[Strict JSON Schema Validation]
@@ -114,7 +114,7 @@ SpawnRecommendation
    * Serves as automatic fallback whenever network-based backends fail or timeout.
 
 2. **External LLM Backend** (`external_llm.py`):
-   * Uses OpenAI-compatible HTTP chat completions (e.g. Google Gemini 1.5 Flash at `https://generativelanguage.googleapis.com/v1beta/openai/chat/completions`).
+   * Uses OpenAI-compatible HTTP chat completions (the evaluated configuration used Google `gemini-3.5-flash` at `https://generativelanguage.googleapis.com/v1beta/openai/chat/completions`).
    * Authenticates with Kubernetes Secret `intent-spawner-external-llm` (`EXTERNAL_LLM_API_KEY`).
    * Built-in timeout controls, exponential backoff retries, JSON object response format, and fail-closed fallback to `RuleBasedRecommender`.
 
@@ -187,12 +187,13 @@ When `RESOURCE_SELECTION_MODE: dynamic` is enabled via [`helm/dynamic-values.yam
 
 ## 7. Evaluation Protocol v4 & Benchmarking Suite
 
-The evaluation layer ([`evaluation_v4/`](file:///Users/mthang1201/Documents/datn/intent-spawner/evaluation_v4/)) provides a complete scientific benchmark suite:
-* **Bilingual 60-Intent Gold Standard**: 60 realistic tasks in English and Vietnamese across 4 workload categories (EDA, Data Processing, ML Training, Deep Learning).
+The evaluation layer ([`evaluation_v4/`](../evaluation_v4/)) provides a complete scientific benchmark suite:
+* **Bilingual 60-Sample Gold Standard**: 12 development and 48 held-out English/Vietnamese samples grouped into 24 workload families.
 * **Multi-Recommender Benchmarking**: Evaluates Rule-Based, External LLM (Gemini), Self-Hosted LLM (Ollama), and Baseline heuristics.
-* **Evaluation Triad**:
-  1. *Recommendation Quality*: Profile accuracy, image match accuracy, explainability score, latency, fallback rate.
-  2. *System Effectiveness*: Schedulable capacity savings, allocation waste, OOM rate, queue pressure.
-  3. *User Decision Impact*: Acceptance rate, manual override frequency, re-provisioning success.
-* **Statistical Claim Gates**: Bootstrap confidence intervals and Wilcoxon tests ensuring empirical claims are statistically sound before publication.
+* **Separated Evidence Streams**:
+  1. *Recommendation Quality*: Applied and raw-model profile/image accuracy, under/over-provisioning, latency, retries, and fallback.
+  2. *System Effectiveness*: Observed Stage C workload success, OOM/timeout behavior, allocation, and cgroup-v2 utilization.
+  3. *User Decision Impact*: Audit and re-provisioning schemas are implemented, but no real-user acceptance outcome is claimed.
+* **Statistical Claim Gates**: Accuracy inference aggregates repeats to 48 held-out samples and resamples 20 workload-family clusters. Stage C inference aggregates ten repeats within eight executable families. Exact paired tests and Holm correction prevent repeated runs from being treated as independent samples.
 
+The authoritative observed evaluation consists of four 48×5 recommender matrices and a 4×8×10 Stage C matrix. The combined claim matrix is in [`evaluation/PROTOCOL_V4_REVISED_EVALUATION_REPORT.md`](evaluation/PROTOCOL_V4_REVISED_EVALUATION_REPORT.md). The external pipeline's 21/240 raw-response coverage and 219 fallbacks are documented separately so fallback output is never credited to Gemini.

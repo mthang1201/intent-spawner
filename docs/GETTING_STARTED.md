@@ -123,7 +123,7 @@ Open `http://127.0.0.1:8000`. You will see the new **Workload Intent Form**:
 
 ## Path B-LLM: Configuring External LLM (Google Gemini)
 
-To replace the rule-based backend with Google Gemini 1.5 Flash via its OpenAI-compatible endpoint:
+To replace the rule-based backend with Google `gemini-3.5-flash` via its OpenAI-compatible endpoint:
 
 ### 1. Create the Kubernetes Secret
 ```bash
@@ -217,7 +217,7 @@ This activates [`helm/dynamic-values.yaml`](file:///Users/mthang1201/Documents/d
 
 ## Path D: Evaluation Protocol v4 Suite
 
-To validate the bilingual 60-intent benchmark and execute offline multi-recommender evaluations:
+To validate the bilingual 60-sample benchmark (12 development + 48 held-out) and preview the Protocol-v4 plans without making live model or cluster calls:
 
 ```bash
 # 1. Validate Gold-Set Schema & Stratification
@@ -229,6 +229,14 @@ make v4-validate
 # 3. Execute System Effectiveness Pairing Plan
 .venv/bin/python -m evaluation_v4.plan_system --dry-run
 ```
+
+The authoritative observed matrices are already complete. Do not overwrite or present a new dry run as those results. Their interpretation and exact evidence identities are documented in:
+
+* [`evaluation/PROTOCOL_V4_REVISED_EVALUATION_REPORT.md`](evaluation/PROTOCOL_V4_REVISED_EVALUATION_REPORT.md)
+* [`evaluation/PROTOCOL_V4_EXTERNAL_LLM_LIVE_REPORT.md`](evaluation/PROTOCOL_V4_EXTERNAL_LLM_LIVE_REPORT.md)
+* [`evaluation/STAGE_C_CONFIRMATORY_REPORT.md`](evaluation/STAGE_C_CONFIRMATORY_REPORT.md)
+
+Live external or Stage C reproduction requires an explicit operator decision, frozen configuration, credentials, and a disposable cluster. Follow [`evaluation/PROTOCOL_V4_REPRODUCIBILITY.md`](evaluation/PROTOCOL_V4_REPRODUCIBILITY.md); never point a new run at an authoritative result directory.
 
 ---
 

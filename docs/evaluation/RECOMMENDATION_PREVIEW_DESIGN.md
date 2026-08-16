@@ -140,6 +140,7 @@ The recommendation and dynamic preview flows incorporate explicit web security a
   - *TTL Expiration*: Previews expire after a bounded TTL (`RECOMMENDATION_PREVIEW_MAX_AGE_SECONDS = 3600`, `DYNAMIC_PREVIEW_TTL_SECONDS = 300`).
   - *Multi-tab isolation*: Each preview request receives a unique UUID token, allowing parallel browser tabs to maintain isolated preview states without collision.
   - *Memory bounds*: Active preview dictionaries strictly enforce upper size bounds (`MAX_ENTRIES = 1000`) by evicting oldest items based on `issued_at` timestamps.
+- **Browser Matcher Regression Guard**: Dotted code signals such as `.fit(` use JavaScript's case-sensitive `String.startsWith()` method before substring matching. `tests/test_config_validation.py` asserts the rendered form contains `startsWith` and rejects the earlier Python-style `startswith` typo that broke preview execution.
 
 ## Suitability verdict and limitations
 

@@ -236,6 +236,8 @@ helm upgrade context-demo jupyterhub/jupyterhub \
 ```
 Test complex natural language prompt in spawn form. Note the LLM-derived profile and semantic image choice.
 
+The evaluated external service had only 21/240 valid held-out completions and used rule fallback for the other 219 trials. During a live demo, identify the requested and effective backend from the preview/audit output; do not describe a fallback recommendation as Gemini output.
+
 ### 2. Self-Hosted LLM (Local Ollama)
 ```bash
 # Apply Ollama configuration
@@ -268,7 +270,7 @@ Demonstrates continuous, fine-grained CPU/RAM resource sizing bounded by adminis
 * **Pluggable Architecture**: Pluggable recommender architecture (Rule-based, Gemini External LLM, Ollama Self-hosted LLM) with strict schema validation and automatic fallback.
 * **Re-Provisioning Engine**: Stop-and-recreate intent-aware re-provisioning with storage retention.
 * **Dynamic Resource Sizing**: Continuous policy-bounded dynamic profile generation.
-* **Evaluation Suite**: Comprehensive Evaluation Protocol v4 with 60-intent bilingual gold standard and multi-recommender benchmarking.
+* **Evaluation Suite**: Completed Protocol-v4 evidence with a 60-sample bilingual gold set, four 48×5 recommender matrices, and a 4×8×10 observed Stage C cluster matrix. The results show an explicit robustness-versus-resource-request trade-off and preserve raw LLM outcomes separately from fallback-assisted decisions.
 
 ---
 

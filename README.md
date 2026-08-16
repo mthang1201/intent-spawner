@@ -56,7 +56,7 @@ flowchart TD
     
     subgraph Recommender Backends
         Backend -->|Deterministic Heuristic| RuleBased[Rule-Based Recommender]
-        Backend -->|OpenAI-compatible HTTPS API| ExtLLM[External LLM: Gemini 1.5 Flash]
+        Backend -->|OpenAI-compatible HTTPS API| ExtLLM[External LLM: Gemini 3.5 Flash]
         Backend -->|Local HTTP Inference| SelfLLM[Self-Hosted LLM: Ollama / vLLM]
     end
     
@@ -80,6 +80,7 @@ flowchart TD
 Replaces direct hardware guessing with an interactive confirmation flow:
 * **Rich Inputs**: Captures natural language task intent, estimated dataset size (in GB), and lightweight code context (imports, API calls).
 * **Transparent Recommendation Preview**: Presents the recommended hardware profile, software container image, and human-readable explanation reasons before pod creation.
+* **Validated Browser Matching**: Intent and code-context matching in the preview uses JavaScript-native term detection, including dotted signals such as `.fit(`, with a regression test preventing the earlier `startswith`/`startsWith` mismatch.
 * **User Agency**:
   * **Confirm / Accept**: Submits the approved profile and image to KubeSpawner.
   * **Edit Inputs**: Invalidates the current preview and allows re-entering workload parameters.
@@ -153,26 +154,35 @@ An advanced opt-in mode that calculates fine-grained, continuous CPU/RAM/GPU res
 
 ### Evaluation Protocol v4 & Benchmarking Suite
 
-A comprehensive, thesis-ready evaluation framework comparing four distinct approaches:
-* **Evaluation Framework for Four Canonical Approaches (Implemented and Validated)**:
+A comprehensive, thesis-ready evaluation framework comparing four distinct approaches. The authoritative Protocol-v4 evaluation was completed on 13 August 2026:
+* **Four Canonical Approaches (Implemented and Observed)**:
   1. `static_profile_baseline`: Single frozen operational baseline (`medium` profile, `minimal-python` image) ignoring workload context (deterministic offline evaluation executed).
   2. `rule_based_mapping`: Deterministic rule-based recommender parsing intent, dataset sizes, and code context (deterministic offline evaluation executed).
-  3. `external_llm`: Configurable external LLM (e.g., Gemini-compatible API) with strict schema validation, pricing provenance, and token/cost telemetry (harness and mock validation implemented; live empirical evaluation pending external API access).
-  4. `self_hosted_local_ollama_llm`: In-cluster / local self-hosted inference (e.g., Ollama `llama3:latest`) (harness and mock validation implemented; live empirical evaluation pending local Ollama daemon).
-* **Bilingual 60-Intent Gold Standard**: 60 diverse workload intents in English and Vietnamese across Exploratory Data Analysis, Data Processing, Classical ML Training, and Deep Learning ([`benchmarks/intent-gold-v4.yaml`](file:///Users/mthang1201/Documents/datn/intent-spawner/benchmarks/intent-gold-v4.yaml)).
+  3. `external_llm`: Google `gemini-3.5-flash` through the OpenAI-compatible endpoint; the held-out matrix completed, with raw-model outcomes kept separate from rule-fallback outcomes.
+  4. `self_hosted_local_ollama_llm`: Local Ollama `llama3:latest`; all 240 held-out calls completed without retry or fallback.
+* **Bilingual 60-Intent Gold Standard**: 12 development and 48 held-out English/Vietnamese samples across 24 workload families ([`benchmarks/intent-gold-v4.yaml`](benchmarks/intent-gold-v4.yaml)).
 * **Multi-Dimensional Metrics & Telemetry**:
   1. **Recommendation Quality**: Profile accuracy, image capability coverage, raw model accuracy vs operational accuracy (with fallback isolation), under/over-provisioning rates.
-  2. **Reliability & Efficiency**: Inference latency, prompt/completion token usage, USD cost projections per 1,000 requests (with explicit pricing provenance), fallback rate.
-  3. **Cluster & User Impact**: Cluster request efficiency, re-provisioning file persistence, user acceptance (Stage C live trials pending cluster authorization).
+  2. **Reliability & Efficiency**: Inference latency, prompt/completion token usage, retries, fallback rate, and cost only when a reproducible pricing snapshot is configured.
+  3. **Cluster Impact**: The completed 320-trial Stage C matrix measures workload success, OOM, timeout, request allocation, and cgroup-v2 utilization on a disposable single-node environment. Real-user acceptance remains outside the observed evidence.
 * **Statistical Rigor**:
-  - Exact two-tailed **McNemar tests** with **Holm-Bonferroni correction** for paired binary accuracy comparisons.
+  - Family-clustered bootstrap intervals, exact paired **McNemar tests**, paired **Wilcoxon tests**, and **Holm correction**. Repeated LLM calls are treated as stability/latency evidence rather than independent accuracy samples.
 * **Authoritative Research Questions (RQ1–RQ5)**:
   - **RQ1**: How do the four approaches differ in recommendation quality?
   - **RQ2**: Do LLM-based approaches improve recommendation quality compared with the static baseline and rule-based mapping?
   - **RQ3**: What additional latency, failures, fallbacks, monetary cost, resource consumption, and operational overhead do LLM approaches introduce?
   - **RQ4**: When recommendations are applied, how does each approach affect workload success, OOM events, Pending failures, runtime, and resource efficiency in Kubernetes and JupyterHub?
   - **RQ5**: What are the quality–latency–reliability–cost–privacy trade-offs between an external LLM and a locally hosted Ollama model?
-* **Documentation**: See [`docs/evaluation/PROTOCOL_V4_FOUR_METHOD_EVALUATION.md`](file:///Users/mthang1201/Documents/datn/intent-spawner/docs/evaluation/PROTOCOL_V4_FOUR_METHOD_EVALUATION.md) and [`docs/evaluation/RUNBOOK_FOUR_METHOD_EVALUATION.md`](file:///Users/mthang1201/Documents/datn/intent-spawner/docs/evaluation/RUNBOOK_FOUR_METHOD_EVALUATION.md).
+* **Authoritative Result Summary**: See [`docs/evaluation/PROTOCOL_V4_REVISED_EVALUATION_REPORT.md`](docs/evaluation/PROTOCOL_V4_REVISED_EVALUATION_REPORT.md), [`docs/evaluation/PROTOCOL_V4_EXTERNAL_LLM_LIVE_REPORT.md`](docs/evaluation/PROTOCOL_V4_EXTERNAL_LLM_LIVE_REPORT.md), and [`docs/evaluation/STAGE_C_CONFIRMATORY_REPORT.md`](docs/evaluation/STAGE_C_CONFIRMATORY_REPORT.md).
+
+Observed headline results must be read with their evidence boundaries:
+
+| Evidence stream | Completed matrix | Main result |
+| --- | ---: | --- |
+| Recommendation quality | 4 methods × 48 held-out samples × 5 repeats | Rule-based had the highest observed acceptable-profile rate (79.17%); no applied-profile pairwise difference survived Holm correction. |
+| External Gemini pipeline | 240 trials | 21 valid raw completions (8.75% coverage); 219 trials used rule fallback, so fallback-assisted outcomes are not Gemini accuracy. |
+| Local Ollama | 240 trials | 240 valid responses, no retry/fallback, 9.20-second median latency; no profile-quality improvement over deterministic baselines. |
+| Stage C cluster effects | 4 methods × 8 families × 10 repeats | Static-large succeeded 80/80; rule-based and Ollama 50/80 each; static-small 29/80. Adaptive request savings traded off against more OOMs. |
 
 
 
@@ -308,7 +318,7 @@ bash scripts/install-dynamic.sh
 | --- | --- |
 | `recommender/` | Core Python recommender framework: `base.py`, `registry.py`, `rule_based.py`, `external_llm.py`, `self_hosted_llm.py`, `dynamic_resources.py`, and `image-catalog.yaml`. |
 | `helm/` | Helm configurations: `baseline-values.yaml`, `proposed-values.yaml`, `reprovision-values.yaml`, `dynamic-values.yaml`, `gemini-values.yaml`, and `ollama-values.yaml`. |
-| `evaluation_v4/` | Protocol v4 evaluation suite: bilingual gold set (60 intents), multi-recommender benchmark runner, statistical analysis, and claim gates. |
+| `evaluation_v4/` | Protocol v4 evaluation suite: 60-sample bilingual gold set, multi-recommender runner, resumable system trials, evidence validation, external-result combination, statistical analysis, and figures. |
 | `scripts/` | Shell runbooks and cluster utilities: `install-proposed.sh`, `install-dynamic.sh`, `install-baseline.sh`, `port-forward.sh`, `check.sh`, `setup.sh`, `uninstall.sh`. |
 | `workload/` | Bounded synthetic workloads mounted into notebook containers for testing and demonstration. |
 | `benchmarks/` | Workload manifest and deterministic local workload runner. |
@@ -339,8 +349,10 @@ make v4-validate
 
 ## Research Scope, Limitations & Data Safety
 
-* **Evaluation Boundaries**: Local synthetic benchmarks and single-node Minikube cluster evidence are distinct evidence classes. Local process memory measurements must not be equated to Kubernetes pod cgroup limits.
+* **Evaluation Boundaries**: Offline recommendation evidence and observed single-node Kubernetes evidence are distinct evidence classes. The Stage C result is specific to eight frozen workload families, warm images, and the recorded disposable environment; it is not a production-wide superiority claim.
+* **External Reliability Boundary**: The configured Gemini service returned 21/240 valid completions. The complete matrix supports conclusions about the evaluated API pipeline, retries, failures, and fallback, but not a broad intrinsic Gemini-versus-Llama capability ranking.
 * **Privacy & Data Governance**: The pre-spawn hook and audit log record only derived features, resource profiles, and action tags (`accept`, `override`). User notebooks, dataset contents, raw code files, and credentials are never stored.
+* **Unmeasured Outcomes**: Monetary cost, energy use, external provider resources/retention, and real-user acceptance were not measured.
 * **GPU Hardware**: While deep learning profiles and GPU image recommendations (`pytorch-deep-learning`, `tensorflow-deep-learning`) are fully modeled, physical GPU device scheduling requires an authorized hardware pool.
 
 ---
@@ -366,6 +378,9 @@ bash scripts/uninstall.sh
 * [Dynamic Profile Generation Specification](docs/DYNAMIC_PROFILE_GENERATION.md)
 * [Production Helm Deployment Wiring](docs/HELM_BACKEND_DEPLOYMENT.md)
 * [Evaluation Protocol v4 Specification](docs/evaluation/EVALUATION_V4_PROTOCOL.md)
+* [Protocol v4 Combined Evaluation Report](docs/evaluation/PROTOCOL_V4_REVISED_EVALUATION_REPORT.md)
+* [External LLM Live Evaluation Report](docs/evaluation/PROTOCOL_V4_EXTERNAL_LLM_LIVE_REPORT.md)
+* [Stage C Confirmatory Report](docs/evaluation/STAGE_C_CONFIRMATORY_REPORT.md)
 * [Recommendation Preview Design](docs/evaluation/RECOMMENDATION_PREVIEW_DESIGN.md)
 * [Threats to Validity](docs/evaluation/THREATS_TO_VALIDITY.md)
 * [Data Governance Policy](docs/DATA_GOVERNANCE.md)

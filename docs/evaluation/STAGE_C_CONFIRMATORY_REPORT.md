@@ -106,10 +106,13 @@ every pairwise hypothesis is significant. Thesis-safe conclusions are limited
 to this single-node disposable environment, the eight frozen executable
 families, warm images, and the frozen model/policy/configuration.
 
-External LLM evidence remains a separate blocker. It does not invalidate Stage
-C, which preregistered at most one development-qualified LLM backend and used
-the qualified local Ollama method. No external-versus-local LLM head-to-head
-claim is supported.
+Stage C preregistered at most one development-qualified LLM backend and used
+the qualified local Ollama method, so the later external matrix does not alter
+these cluster outcomes. The external `gemini-3.5-flash` matrix subsequently
+completed and now supports an operational external-versus-local comparison
+with limitations; see `PROTOCOL_V4_EXTERNAL_LLM_LIVE_REPORT.md` and
+`PROTOCOL_V4_REVISED_EVALUATION_REPORT.md`. Its 21/240 raw-response coverage is
+insufficient for a broad intrinsic model-quality ranking.
 
 The authoritative family-aware analysis is
 `results/v4-stage-c-confirmatory-analysis-v3-20260813T054000Z`.

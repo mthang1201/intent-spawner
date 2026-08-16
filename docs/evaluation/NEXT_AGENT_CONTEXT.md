@@ -1,8 +1,26 @@
-# Protocol-v4 Stage C Confirmatory Handoff
+# Protocol-v4 Execution and Evaluation Handoff Log
 
-Last updated: 2026-08-13 12:05 Asia/Ho_Chi_Minh. Stage C and analysis are complete; the frozen external-LLM credential/backend was rechecked.
+Current completion note (2026-08-16): Stage C, the amended external-LLM
+matrix, the derived four-method evidence, combined analysis, validation, and
+checkpoint commits are complete. There are no remaining Protocol-v4 execution
+or analysis blockers. The latest implementation checkpoint also fixes the
+recommendation-preview JavaScript matcher and adds a regression assertion.
 
-## Exact current state
+Authoritative current summaries:
+
+- `PROTOCOL_V4_REVISED_EVALUATION_REPORT.md` for the combined RQ1-RQ5 claim
+  matrix;
+- `PROTOCOL_V4_EXTERNAL_LLM_LIVE_REPORT.md` for external raw/applied outcomes;
+- `STAGE_C_CONFIRMATORY_REPORT.md` for observed cluster effects; and
+- `PROTOCOL_V4_REPRODUCIBILITY.md` for safe validation/reproduction commands.
+
+The remainder of this file is an append-only chronological handoff log. Older
+“blocked” and “next action” sections are intentionally preserved as historical
+state and are superseded by later entries and the completion note above.
+
+## Historical Stage C handoff (2026-08-13 12:05 Asia/Ho_Chi_Minh)
+
+### Stage C checkpoint state
 
 - Repository: `/Users/mthang1201/Documents/datn/intent-spawner`
 - Branch: `main`, seven commits ahead of `origin/main` before this handoff update.
@@ -12,7 +30,7 @@ Last updated: 2026-08-13 12:05 Asia/Ho_Chi_Minh. Stage C and analysis are comple
 - Historical evidence was not modified. The new run and analysis are under ignored `results/` paths and remain local, append-only artifacts.
 - No Stage C executor, benchmark, or port-forward process remains. No synthetic single-user pod remains.
 
-## Authoritative plan, run, and analysis
+### Authoritative plan, run, and analysis
 
 - Plan: `results/v4-stage-c-confirmatory-plan-20260813T021239Z`
   - 320 rows = 4 methods x 8 workload families x 10 runtime repeats.
@@ -33,7 +51,7 @@ Last updated: 2026-08-13 12:05 Asia/Ho_Chi_Minh. Stage C and analysis are comple
   - Includes `system-family-paired.csv`, where ten repeats are aggregated within each of eight families before exact tests.
 - Human-readable result: `docs/evaluation/STAGE_C_CONFIRMATORY_REPORT.md`.
 
-## Exact outcomes
+### Exact outcomes
 
 | Method | Trials | Success | OOM | Timeout | Mean CPU request | Mean memory request |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
@@ -50,13 +68,13 @@ Last updated: 2026-08-13 12:05 Asia/Ho_Chi_Minh. Stage C and analysis are comple
 - Static-large CPU allocation exceeded rule-based by 937.5m (Holm p=0.046875) and Ollama by 1,000m (Holm p=0.046875). Its memory excess versus rule-based was 736 MiB (Holm p=0.0625) and versus Ollama 768 MiB (Holm p=0.046875).
 - Revised applied-system RQ4 is **CLAIMABLE** because the preregistered matrix is complete. H4 is directionally/operationally supported but is not a confirmed family-level significance claim.
 
-## Defects fixed during continuation
+### Defects fixed during continuation
 
 1. `evaluation_v4.run_system` had no interruption-safe resume. `--resume` now validates experiment ID, plan hash, frozen environment, exact schema-valid completed prefix, sidecars, cleanup, final checksums, and duplicates; interrupted attempt directories are retained.
 2. Stage C binary inference used 80 correlated runtime rows. Trial McNemar output is now labeled descriptive, and `system-family-paired.csv` aggregates repeats within eight workload families for exact Wilcoxon/Holm inference.
 3. Stage C summaries now include absolute CPU/memory allocations and observed usage, and analysis directories now receive a verified `SHA256SUMS`.
 
-## Commands executed and validation results
+### Commands executed and validation results
 
 ```bash
 .venv/bin/python -m pytest -q
@@ -90,14 +108,14 @@ Both Helm renders and all three client dry-runs passed.
 
 Both secret-reference checks, historical evidence immutability, and the evidence/analysis validator passed. A tracked-file credential-pattern scan covered 2,108 files with zero hits. Raw Stage C duplicate, plan-order, schema, sidecar, cleanup, checksum, completion-manifest, and pod-leak checks passed.
 
-## Remaining blockers and tasks
+### Historical Stage C-only blockers and tasks
 
 - Stage C has no remaining work.
 - External LLM remains blocked by missing secure provider credentials/configuration. It does not block Stage C and no external-vs-local empirical claim is supported.
 - User acceptance and re-provisioning evidence remain separate streams and were not created by this task.
 - The seven-plus local commits are not pushed. The 95 MiB raw run and 356 KiB analysis remain ignored local artifacts by repository policy; do not delete them.
 
-## Exact next action
+### Historical next action
 
 Do not rerun Stage C. Review `docs/evaluation/STAGE_C_CONFIRMATORY_REPORT.md` and, if repository publication is desired, push the current `main` commits and separately archive the ignored run and analysis directories with their checksum manifests. Only resume external-LLM evaluation after credentials are securely configured; never substitute fabricated output.
 

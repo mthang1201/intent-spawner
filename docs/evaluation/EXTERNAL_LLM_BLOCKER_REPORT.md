@@ -1,6 +1,13 @@
 # External LLM Blocker and Zero-Fabrication Report
 
-## Status
+> Historical evidence note: this report describes the original
+> missing-credential matrix and is retained unchanged as an audit record. The
+> blocker was later resolved through the explicit `gemini-3.5-flash` amendment
+> and a new append-only held-out run. Current outcomes are in
+> `PROTOCOL_V4_EXTERNAL_LLM_LIVE_REPORT.md` and
+> `PROTOCOL_V4_REVISED_EVALUATION_REPORT.md`.
+
+## Historical status
 
 No external LLM credential or operator-supplied endpoint/model configuration
 was available. The environment was checked only for presence; secret values
@@ -14,7 +21,7 @@ contains 240 `external_llm` records, each with `error_category` set to
 and no monetary cost. These rows represent explicit unavailability, not zero
 accuracy and not successful external calls.
 
-## Claim impact
+## Historical claim impact
 
 - External recommendation quality, latency, retries, schema validity, cost,
   repeat consistency, and provider reliability are not measured.

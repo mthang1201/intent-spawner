@@ -1,5 +1,11 @@
 # Evaluation Protocol v4: Recommender Quality and System Effectiveness
 
+> Protocol record: this document preserves the original broad evidence-stream
+> design, including user and re-provisioning streams that were not all executed.
+> For the completed four-method RQ1-RQ5 study and current claim status, use
+> `PROTOCOL_V4_REVISED_EVALUATION_REPORT.md`. Do not interpret future-tense
+> instructions below as the current execution status.
+
 ## Status and claim boundary
 
 Protocol v4 is the forward-looking evaluation for the current system. It adds
