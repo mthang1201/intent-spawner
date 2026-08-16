@@ -1,0 +1,136 @@
+{
+  "blocked_backends": {},
+  "catalog_sha256": "f45b04efc2ea6f271d49c6806b58bfc0f30503cb68944930609f6e0f71882a71",
+  "catalog_version": "2026-08-06.1",
+  "checksums": {
+    "catalog": "f45b04efc2ea6f271d49c6806b58bfc0f30503cb68944930609f6e0f71882a71",
+    "dataset": "18d4bd33a58f7aa1cea91c223cb6e0f537b6030c91f3954af762e019a8dc7ec0",
+    "policy": "fd1e2696452d4c4eae589e1c01bafeca50e84d21b52cc7320e9b467baa745cc3",
+    "predictions.jsonl": "751a8ab32d323647770d04391c838c16233f7b987e586d37841591860230b055"
+  },
+  "created_utc": "2026-08-13T05:04:47Z",
+  "dataset": {
+    "canonical_sha256": "18d4bd33a58f7aa1cea91c223cb6e0f537b6030c91f3954af762e019a8dc7ec0",
+    "dataset_id": "intent-gold-en-vi-2026-08-08",
+    "families": 24,
+    "languages": {
+      "en": 36,
+      "vi": 24
+    },
+    "samples": 60,
+    "splits": {
+      "development": 12,
+      "test": 48
+    },
+    "strata": {
+      "boundary": 3,
+      "conflicting_signal": 3,
+      "context_recovery": 4,
+      "cpu_bound": 2,
+      "data_processing": 15,
+      "deep_learning": 6,
+      "hidden_demand": 2,
+      "light": 8,
+      "machine_learning": 6,
+      "noisy_context": 2,
+      "numerical_computing": 4,
+      "policy": 5
+    },
+    "system_families": 8
+  },
+  "dataset_path": "/Users/mthang1201/Documents/datn/intent-spawner/benchmarks/intent-gold-v4.yaml",
+  "dataset_sha256": "18d4bd33a58f7aa1cea91c223cb6e0f537b6030c91f3954af762e019a8dc7ec0",
+  "derived_combined_view": true,
+  "environment_id": "local-offline-evaluation",
+  "errors": 0,
+  "expected_record_count": 960,
+  "experiment_id": "protocol-v4-combined-authoritative-20260813T050500Z",
+  "git_branch": "main",
+  "git_commit": "3d9eaa8e63f94f257e9cb4a8867aaa059e984dd1",
+  "git_worktree_dirty": false,
+  "methods_provenance": {
+    "external_llm": {
+      "actual_model_id": "gemini-3.5-flash",
+      "backend": "external_llm",
+      "endpoint_class": "https_openai_compatible",
+      "pricing_id": null,
+      "prompt_template_sha256": "14f73b70950da7e20451916f6580768da74fd1ea9abaf1d91d324f099415ccfe",
+      "prompt_version": "prompt-v4.1.0",
+      "requested_model_id": "gemini-3.5-flash",
+      "temperature": 0.0,
+      "timeout": 10.0,
+      "version": "external-llm-v2"
+    },
+    "rule_based_mapping": {
+      "backend": "rule_based",
+      "endpoint_class": "in_memory_rule_engine",
+      "model_id": null,
+      "prompt_status": "not_applicable",
+      "prompt_template_sha256": null,
+      "prompt_version": null,
+      "version": "rule-based-v1"
+    },
+    "self_hosted_local_ollama_llm": {
+      "actual_model_id": "llama3:latest",
+      "backend": "self_hosted_llm",
+      "endpoint_class": "local_ollama_http",
+      "prompt_template_sha256": "14f73b70950da7e20451916f6580768da74fd1ea9abaf1d91d324f099415ccfe",
+      "prompt_version": "prompt-v4.1.0",
+      "requested_model_id": "llama3:latest",
+      "temperature": 0.0,
+      "timeout": 60.0,
+      "version": "self-hosted-llm-v2"
+    },
+    "static_profile_baseline": {
+      "backend": "static_profile_baseline",
+      "endpoint_class": "static_fixed_baseline",
+      "model_id": null,
+      "prompt_status": "not_applicable",
+      "prompt_template_sha256": null,
+      "prompt_version": null,
+      "version": "evaluation-static-baseline-v1"
+    }
+  },
+  "observed_record_count": 960,
+  "policy_sha256": "fd1e2696452d4c4eae589e1c01bafeca50e84d21b52cc7320e9b467baa745cc3",
+  "policy_version": "resource-image-policy-v1",
+  "predictions_path": "results/v4-combined-evidence-20260813T050500Z/predictions.jsonl",
+  "predictions_sha256": "751a8ab32d323647770d04391c838c16233f7b987e586d37841591860230b055",
+  "protocol_version": "4.0.0",
+  "randomize_order": true,
+  "raw_outputs_append_only": true,
+  "recommenders": [
+    "static_profile_baseline",
+    "rule_based_mapping",
+    "external_llm",
+    "self_hosted_local_ollama_llm"
+  ],
+  "records": 960,
+  "repeats": 5,
+  "run_id": "v4-combined-20260813T050500Z",
+  "runtime_environment": {
+    "platform": "darwin",
+    "python_version": "3.14.6"
+  },
+  "seed": null,
+  "seeds_by_method": {
+    "external_llm": 20260808,
+    "rule_based_mapping": 20260812,
+    "self_hosted_local_ollama_llm": 20260812,
+    "static_profile_baseline": 20260812
+  },
+  "source_evidence": {
+    "results/v4-external-confirmatory-20260813T045543Z": {
+      "included_records": 240,
+      "predictions_sha256": "62dccc1ce650066bfb9d1f87b2b923c3be6a0e17294677fc14b8d0a92826b7bd",
+      "role": "authoritative live external_llm rows",
+      "run_id": "v4-recommenders-20260813T045633Z-daae41dd"
+    },
+    "results/v4-revised-test-20260812T095453Z": {
+      "included_records": 720,
+      "predictions_sha256": "5bdbf1575ff747366e700fb9c8d6c34d4811099f548ff7e6a52ba58fcab32484",
+      "role": "authoritative static/rule/Ollama rows; historical external missing-credentials rows excluded"
+    }
+  },
+  "split": "test"
+}

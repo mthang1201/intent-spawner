@@ -66,6 +66,7 @@ MAX_TOTAL_TIMEOUT_SECONDS = 300.0
 MAX_ATTEMPT_TIMEOUT_SECONDS = 300.0
 MAX_CONFIGURED_RETRIES = 10
 MAX_RETRY_BACKOFF_SECONDS = 60.0
+MAX_RESPONSE_BYTES = 1024 * 1024
 
 
 class ExternalLLMError(RuntimeError):
@@ -183,12 +184,11 @@ class ExternalLLMConfig:
             raise ValueError("external LLM allow_insecure_http must be a boolean")
         if (
             parsed_endpoint.scheme == "http"
-            and self.api_key
             and not self.allow_insecure_http
             and not self._allow_api_key_over_http
         ):
             raise ValueError(
-                "external LLM API keys require HTTPS; development-only insecure "
+                "external LLM endpoints require HTTPS; development-only insecure "
                 "HTTP must be explicitly enabled"
             )
         if self.pricing is not None:
@@ -283,7 +283,7 @@ class ExternalLLMConfig:
             endpoint=endpoint,
             model=model,
             timeout=timeout,
-            api_key=selected.get(API_KEY_ENV_VAR, ""),
+            api_key=api_key,
             temperature=temperature,
             max_retries=max_retries,
             retry_backoff_seconds=retry_backoff_seconds,
@@ -378,6 +378,22 @@ class JSONHTTPTransport(Protocol):
 class UrllibJSONTransport:
     """Dependency-free JSON HTTP transport with explicit timeout handling."""
 
+    class _NoRedirectHandler(urllib_request.HTTPRedirectHandler):
+        """Fail closed so bearer credentials never follow provider redirects."""
+
+        def redirect_request(self, req, fp, code, msg, headers, newurl):
+            return None
+
+    def __init__(self, *, max_response_bytes: int = MAX_RESPONSE_BYTES) -> None:
+        if (
+            not isinstance(max_response_bytes, int)
+            or isinstance(max_response_bytes, bool)
+            or max_response_bytes <= 0
+        ):
+            raise ValueError("external LLM response limit must be a positive integer")
+        self._max_response_bytes = max_response_bytes
+        self._opener = urllib_request.build_opener(self._NoRedirectHandler())
+
     def post_json(
         self,
         endpoint: str,
@@ -394,8 +410,23 @@ class UrllibJSONTransport:
             method="POST",
         )
         try:
-            with urllib_request.urlopen(request, timeout=timeout) as response:
-                raw_response = response.read().decode("utf-8")
+            with self._opener.open(request, timeout=timeout) as response:
+                content_length = response.headers.get("Content-Length")
+                if content_length is not None:
+                    try:
+                        declared_length = int(content_length)
+                    except ValueError:
+                        declared_length = -1
+                    if declared_length > self._max_response_bytes:
+                        raise LLMResponseError(
+                            "external LLM response exceeded the configured size limit"
+                        )
+                raw_bytes = response.read(self._max_response_bytes + 1)
+                if len(raw_bytes) > self._max_response_bytes:
+                    raise LLMResponseError(
+                        "external LLM response exceeded the configured size limit"
+                    )
+                raw_response = raw_bytes.decode("utf-8")
         except (TimeoutError, socket.timeout) as exc:
             raise LLMTimeoutError("external LLM request timed out") from exc
         except urllib_error.HTTPError as exc:
@@ -408,6 +439,8 @@ class UrllibJSONTransport:
             raise LLMClientError("external LLM endpoint could not be reached") from exc
         except OSError as exc:
             raise LLMClientError("external LLM transport failed") from exc
+        except UnicodeDecodeError as exc:
+            raise LLMResponseError("external LLM response was not UTF-8 JSON") from exc
 
         try:
             decoded = json.loads(raw_response)
@@ -988,6 +1021,7 @@ __all__ = [
     "LLMTimeoutError",
     "MAX_CONCURRENT_ENV_VAR",
     "MAX_RETRIES_ENV_VAR",
+    "MAX_RESPONSE_BYTES",
     "MODEL_ENV_VAR",
     "OpenAICompatibleClient",
     "PRICING_CONFIG_PATH_ENV_VAR",

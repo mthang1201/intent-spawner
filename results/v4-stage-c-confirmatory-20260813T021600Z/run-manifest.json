@@ -1,0 +1,12 @@
+{
+  "attempted_trials": 320,
+  "cleanup_policy": "stop through Hub and verify no synthetic-user pod before next trial",
+  "created_at_utc": "2026-08-13T02:37:57.456Z",
+  "experiment_id": "protocol-v4-stage-c-confirmatory-20260813T021600Z",
+  "failure_retention": "completed attempts are append-only; interrupted attempt directories are retained",
+  "plan_path": "results/v4-stage-c-confirmatory-plan-20260813T021239Z/system-plan.jsonl",
+  "plan_sha256": "718adf39c82023755db3dd60a8d1b4730eaef4fb92ff909f52b2180e957bbf10",
+  "resume_policy": "validate an exact completed plan prefix and preserve interrupted attempt directories",
+  "schema_version": "system-run-manifest-v4.0.0",
+  "username_policy": "one pseudonymous synthetic user; username is not retained in evidence"
+}

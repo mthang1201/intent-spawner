@@ -1,0 +1,114 @@
+{
+  "schema_version": "intent-spawner-live-acceptance-v1",
+  "input_commit": "229dcfe97d20267b2b4facd97f02d43f0517b34b",
+  "date": "2026-08-16",
+  "cluster_context": "orbstack",
+  "namespace": "z2jh-context-demo",
+  "chart_version": "4.0.0",
+  "jupyterhub_version": "5.2.1",
+  "kubespawner_version": "7.0.0",
+  "runtime_package": {
+    "version": "intent-spawner-recommender-v2",
+    "checksum": "04ad8e1936c101c1cec8ad29d86878589b4c3d7dd3ef3061de5b379eafd4274b",
+    "file_count": 16
+  },
+  "boundaries": {
+    "real_provider_calls": false,
+    "authoritative_protocol_v4_rerun": false,
+    "mock_backend_evidence_class": "simulated",
+    "cluster_behavior_evidence_class": "observed",
+    "model_quality_claimed_from_mock": false
+  },
+  "acceptance_cases": [
+    {
+      "id": "rule-backend-spawn",
+      "evidence_class": "observed",
+      "result": "pass",
+      "backend": "rule_based",
+      "backend_version": "rule-based-v1",
+      "applied_profile": "large",
+      "applied_image_id": "scipy-data-science",
+      "pod_phase": "Running",
+      "safe_annotations_only": true
+    },
+    {
+      "id": "external-backend-valid-mock",
+      "evidence_class": "simulated",
+      "result": "pass",
+      "backend": "external_llm",
+      "backend_version": "external-llm-v2",
+      "applied_profile": "medium",
+      "applied_image_id": "minimal-python"
+    },
+    {
+      "id": "external-backend-malformed-fallback-mock",
+      "evidence_class": "simulated",
+      "result": "pass",
+      "requested_backend": "external_llm",
+      "effective_backend": "rule_based",
+      "fallback_used": true,
+      "applied_profile": "small",
+      "applied_image_id": "minimal-python"
+    },
+    {
+      "id": "self-hosted-backend-valid-mock",
+      "evidence_class": "simulated",
+      "result": "pass",
+      "backend": "self_hosted_llm",
+      "backend_version": "self-hosted-llm-v2",
+      "applied_profile": "medium",
+      "applied_image_id": "minimal-python"
+    },
+    {
+      "id": "preview-token-binding",
+      "evidence_class": "observed",
+      "result": "pass",
+      "cross_user_rejected": true,
+      "one_time_reuse_rejected": true,
+      "implicit_preview_created": false
+    },
+    {
+      "id": "manual-override",
+      "evidence_class": "observed",
+      "result": "pass",
+      "applied_profile": "large",
+      "applied_image_id": "scipy-data-science",
+      "cpu_request_millicores": 1500,
+      "memory_request_mib": 1536
+    },
+    {
+      "id": "dynamic-resource-to-pod-match",
+      "evidence_class": "observed",
+      "result": "pass",
+      "policy_version": "dynamic-resource-policy-v2",
+      "preview_resources": {
+        "cpu_request_millicores": 500,
+        "cpu_limit_millicores": 900,
+        "memory_request_mib": 768,
+        "memory_limit_mib": 1024,
+        "gpu_count": 0
+      },
+      "pod_resources_matched": true
+    },
+    {
+      "id": "pvc-preserving-reprovision",
+      "evidence_class": "observed",
+      "result": "pass_after_correction",
+      "initial_finding": "KubeSpawner 7 runtime delete_pvc was true and the flow failed closed before stopping the pod",
+      "correction": "set c.KubeSpawner.delete_pvc = False explicitly",
+      "old_pod_uid": "af1c0b9f-8a53-4854-b2e7-e2b89264aa8a",
+      "new_pod_uid": "90cbef96-1155-42e1-a967-1f558c4aa5dc",
+      "pvc_name": "claim-audit-repro",
+      "pvc_uid_before": "15391709-2937-4f5a-bd46-34ec5b655d31",
+      "pvc_uid_after": "15391709-2937-4f5a-bd46-34ec5b655d31",
+      "marker_file_survived": true,
+      "reprovision_generation": 1,
+      "replacement_profile": "large",
+      "replacement_image_id": "scipy-data-science"
+    }
+  ],
+  "cleanup": {
+    "namespace_deleted": true,
+    "verification": "kubectl --context orbstack get namespace z2jh-context-demo returned absent after a waiting delete"
+  }
+}

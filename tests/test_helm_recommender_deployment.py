@@ -153,12 +153,48 @@ def _hub_environment(deployment: dict) -> dict[str, dict]:
     return {item["name"]: item for item in container["env"]}
 
 
+def test_base_values_always_mount_and_import_runtime_package():
+    values = yaml.safe_load((ROOT / "helm/proposed-values.yaml").read_text())
+    hub = values["hub"]
+    assert hub["extraEnv"]["PYTHONPATH"] == "/opt/intent-spawner"
+    assert hub["extraEnv"]["RECOMMENDER_BACKEND"] == "rule_based"
+    assert hub["extraVolumes"] == [
+        {
+            "name": "recommender-runtime",
+            "configMap": {"name": "intent-spawner-recommender"},
+        }
+    ]
+    code = hub["extraConfig"]["00-context-aware-recommender"]
+    assert "install_jupyterhub(c)" in code
+    assert "recommendResource" not in code
+
+
+def test_dynamic_install_is_only_a_mode_wrapper():
+    source = (ROOT / "scripts/install-dynamic.sh").read_text()
+    assert "MODE_VALUES" in source
+    assert "install-proposed.sh" in source
+    assert "kubectl create configmap" not in source
+
+
+def test_supported_install_flow_has_locked_backend_auth_and_mode_interfaces():
+    source = (ROOT / "scripts/install-proposed.sh").read_text()
+    assert "BACKEND_VALUES" in source
+    assert "recommender-rule-based-values.yaml" in source
+    assert "BACKEND_AUTH_VALUES" in source
+    assert "MODE_VALUES" in source
+    assert "recommender_package.py\" manifest" in source
+    assert "validate_secret_refs.py" in source
+
+
 @pytest.mark.parametrize(
     ("overlays", "backend"),
     [
         (["helm/recommender-rule-based-values.yaml"], "rule_based"),
         (["helm/recommender-external-llm-values.example.yaml"], "external_llm"),
         (["helm/recommender-self-hosted-llm-values.example.yaml"], "self_hosted_llm"),
+        (["helm/recommender-external-llm-mock.example.yaml"], "external_llm"),
+        (["helm/recommender-external-llm-mock-fallback.example.yaml"], "external_llm"),
+        (["helm/recommender-self-hosted-llm-mock.example.yaml"], "self_hosted_llm"),
     ],
 )
 def test_all_backend_values_render_with_explicit_configuration(
@@ -236,10 +272,28 @@ def test_required_secret_and_key_preflight_fail_clearly(monkeypatch):
 def test_runtime_configmap_allowlist_is_small_and_excludes_non_runtime_files():
     assert package_payload_size(PACKAGE_DIR) < MAX_CONFIGMAP_PAYLOAD_BYTES
     assert "deployment.py" in RUNTIME_FILES
+    assert "dynamic_resources.py" in RUNTIME_FILES
+    assert "resource-policy.yaml" in RUNTIME_FILES
+    assert "token_pricing.py" in RUNTIME_FILES
     assert not any(name.startswith("test_") for name in RUNTIME_FILES)
     assert not any("cache" in name or name.endswith(".md") for name in RUNTIME_FILES)
-    assert "dynamic_resources.py" not in RUNTIME_FILES
-    assert "resource-policy.yaml" not in RUNTIME_FILES
+
+
+def test_generated_runtime_package_imports_in_isolation(tmp_path):
+    package_copy = tmp_path / "recommender"
+    package_copy.mkdir()
+    for name in RUNTIME_FILES:
+        shutil.copyfile(PACKAGE_DIR / name, package_copy / name)
+
+    result = subprocess.run(
+        [sys.executable, "-c", "import recommender; print(recommender.PACKAGE_VERSION)"],
+        cwd=tmp_path,
+        check=True,
+        capture_output=True,
+        text=True,
+        env={**os.environ, "PYTHONPATH": str(tmp_path)},
+    )
+    assert result.stdout.strip() == PACKAGE_VERSION
 
 
 def test_missing_runtime_configmap_content_fails_clearly(tmp_path):

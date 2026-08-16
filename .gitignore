@@ -14,7 +14,30 @@ experiments/summaries/*
 !experiments/summaries/README.md
 helm/generated-values.yaml
 .tmp/
-results/
+results/*
+!results/v4-external-confirmatory-20260813T045543Z/
+results/v4-external-confirmatory-20260813T045543Z/*
+!results/v4-external-confirmatory-20260813T045543Z/predictions.jsonl
+!results/v4-external-confirmatory-20260813T045543Z/run-manifest.json
+!results/v4-revised-test-20260812T095453Z/
+results/v4-revised-test-20260812T095453Z/*
+!results/v4-revised-test-20260812T095453Z/predictions.jsonl
+!results/v4-revised-test-20260812T095453Z/run-manifest.json
+!results/v4-combined-evidence-20260813T050500Z/
+results/v4-combined-evidence-20260813T050500Z/*
+!results/v4-combined-evidence-20260813T050500Z/predictions.jsonl
+!results/v4-combined-evidence-20260813T050500Z/run-manifest.json
+!results/v4-stage-c-confirmatory-plan-20260813T021239Z/
+results/v4-stage-c-confirmatory-plan-20260813T021239Z/*
+!results/v4-stage-c-confirmatory-plan-20260813T021239Z/plan-manifest.json
+!results/v4-stage-c-confirmatory-plan-20260813T021239Z/system-plan.jsonl
+!results/v4-stage-c-confirmatory-20260813T021600Z/
+results/v4-stage-c-confirmatory-20260813T021600Z/*
+!results/v4-stage-c-confirmatory-20260813T021600Z/system-trials.jsonl
+!results/v4-stage-c-confirmatory-20260813T021600Z/run-manifest.json
+!results/v4-stage-c-confirmatory-20260813T021600Z/environment.json
+!results/v4-stage-c-confirmatory-20260813T021600Z/completion-manifest.json
+!results/v4-stage-c-confirmatory-20260813T021600Z/SHA256SUMS
 
 # Presentation & inspection files
 *.pptx

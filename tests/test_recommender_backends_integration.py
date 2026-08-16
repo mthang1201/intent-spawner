@@ -103,6 +103,7 @@ def test_all_configured_backends_share_interface_and_policy_schema():
                     model="local-model",
                     api_key="local-token",
                     max_retries=0,
+                    allow_insecure_http=True,
                 ),
             ),
         }

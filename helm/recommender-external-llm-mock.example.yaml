@@ -1,0 +1,19 @@
+# Simulated local-cluster acceptance only. Never use as model-quality evidence.
+hub:
+  extraEnv:
+    RECOMMENDER_BACKEND: external_llm
+    EXTERNAL_LLM_ENDPOINT: http://simulated-llm.z2jh-context-demo.svc.cluster.local:8080/v1/chat/completions
+    EXTERNAL_LLM_MODEL: simulated-valid
+    EXTERNAL_LLM_TIMEOUT: "2"
+    EXTERNAL_LLM_TOTAL_TIMEOUT: "4"
+    EXTERNAL_LLM_MAX_RETRIES: "0"
+    EXTERNAL_LLM_RETRY_BACKOFF_SECONDS: "0"
+    EXTERNAL_LLM_TEMPERATURE: "0"
+    EXTERNAL_LLM_MAX_CONCURRENT_RECOMMENDATIONS: "2"
+    EXTERNAL_LLM_ALLOW_INSECURE_HTTP: "true"
+    EXTERNAL_LLM_API_KEY:
+      valueFrom:
+        secretKeyRef:
+          name: simulated-llm-auth
+          key: api-key
+          optional: false

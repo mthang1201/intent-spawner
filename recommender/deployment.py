@@ -12,7 +12,7 @@ import re
 from urllib import parse as urllib_parse
 
 
-PACKAGE_VERSION = "intent-spawner-recommender-v1"
+PACKAGE_VERSION = "intent-spawner-recommender-v2"
 PACKAGE_CHECKSUM_ENV_VAR = "RECOMMENDER_PACKAGE_CHECKSUM"
 PACKAGE_VERSION_ENV_VAR = "RECOMMENDER_PACKAGE_VERSION"
 SELF_HOSTED_ALLOW_INSECURE_HTTP_ENV_VAR = (
@@ -27,23 +27,27 @@ RUNTIME_FILES = (
     "__init__.py",
     "base.py",
     "deployment.py",
+    "dynamic_resources.py",
     "external_llm.py",
     "image-catalog.yaml",
+    "jupyterhub_integration.py",
     "models.py",
     "policy.py",
     "recommender.py",
     "registry.py",
     "reliability.py",
+    "resource-policy.yaml",
     "rule_based.py",
     "self_hosted_llm.py",
+    "token_pricing.py",
 )
 MAX_CONFIGMAP_PAYLOAD_BYTES = 700 * 1024
 CHECKSUM_PATTERN = re.compile(r"^[0-9a-f]{64}$")
 ALLOWED_BACKENDS = frozenset({"rule_based", "external_llm", "self_hosted_llm"})
 BACKEND_VERSIONS = {
     "rule_based": "rule-based-v1",
-    "external_llm": "external-llm-v1",
-    "self_hosted_llm": "self-hosted-llm-v1",
+    "external_llm": "external-llm-v2",
+    "self_hosted_llm": "self-hosted-llm-v2",
 }
 
 

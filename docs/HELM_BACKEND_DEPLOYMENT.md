@@ -1,4 +1,7 @@
-# Production Helm wiring for recommender backends
+# Defense-ready demo Helm wiring for recommender backends
+
+This is reproducible research/demo deployment wiring, not a production
+multi-tenant deployment claim.
 
 ## Architecture
 
@@ -11,12 +14,12 @@ standard library, so Hub startup never runs `pip install`.
 The deployment has three inputs:
 
 1. `helm/proposed-values.yaml` provides the shared Hub integration, mandatory
-   ConfigMap mount, startup validation, readiness behavior, and an intentionally
-   invalid placeholder package checksum.
+   ConfigMap mount, default rule backend, async preview endpoint, and one-time
+   confirmation flow.
 2. Exactly one backend values file provides backend-specific environment and
    Kubernetes `secretKeyRef` entries.
 3. `scripts/recommender_package.py` builds the externally managed ConfigMap and
-   generates rollout values containing the exact package SHA-256.
+   generates rollout values containing the exact package SHA-256 and version.
 
 Startup is fail-closed:
 
@@ -103,7 +106,7 @@ BACKEND_AUTH_VALUES=helm/recommender-self-hosted-auth-values.example.yaml \
 ```
 
 Endpoint/model and numeric constraints match the external backend. HTTPS is
-the production default. Plain HTTP requires the explicit
+the secure default. Plain HTTP requires the explicit
 `SELF_HOSTED_LLM_ALLOW_INSECURE_HTTP=true` assertion and should be limited to an
 isolated development mock or trusted in-cluster path protected by namespace
 isolation, NetworkPolicy, and service identity. It must not cross an untrusted
@@ -112,9 +115,10 @@ network.
 ## ConfigMap package and deterministic rollout
 
 `recommender/deployment.py` is the single runtime allowlist. The generated
-ConfigMap contains 12 files: runtime Python modules plus the image catalog. It
-excludes tests, `__pycache__`, documentation, dynamic-resource experiment code,
-and unrelated policy files. Generation fails above a conservative 700 KiB
+ConfigMap contains 16 files: runtime Python modules, the Hub integration, image
+catalog, dynamic-resource module/policy, and token-pricing support. It excludes
+tests, `__pycache__`, documentation, and experiment results. Generation fails
+above a conservative 700 KiB
 payload threshold, leaving headroom below Kubernetes' 1 MiB object limit.
 
 Inspect its allowlist, size, version, and checksum without touching a cluster:
@@ -145,9 +149,8 @@ render the generated checksum into the Helm release input whenever it
 regenerates the ConfigMap.
 
 Package checksum/version, backend version, policy version, and catalog version
-are emitted in a safe startup log. Package identity is also included in
-recommendation audit metadata and spawned-pod annotations. Secrets are never
-logged.
+are included in privacy-minimized recommendation audit metadata and spawned-pod
+annotations. Secrets are never logged.
 
 ## Credential rotation
 

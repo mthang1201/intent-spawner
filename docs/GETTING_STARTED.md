@@ -211,7 +211,7 @@ To enable fine-grained continuous CPU/RAM sizing instead of fixed profile tiers:
 ```bash
 bash scripts/install-dynamic.sh
 ```
-This activates [`helm/dynamic-values.yaml`](file:///Users/mthang1201/Documents/datn/intent-spawner/helm/dynamic-values.yaml) and applies administrator policy boundaries with quota admission checks.
+This activates [`helm/dynamic-values.yaml`](../helm/dynamic-values.yaml) and applies administrator min/max/step, GPU allowlist, and static per-spawn cap checks. It does not query live quota headroom; Kubernetes admission remains authoritative.
 
 ---
 

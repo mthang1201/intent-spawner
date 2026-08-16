@@ -68,7 +68,7 @@
 - `docs/SELF_HOSTED_LLM_RECOMMENDER.md`: local Ollama/vLLM self-hosted inference specification.
 - `docs/INTENT_AWARE_REPROVISIONING.md`: stop-and-recreate re-provisioning with storage retention.
 - `docs/DYNAMIC_PROFILE_GENERATION.md`: continuous resource allocation and quota guardrails.
-- `docs/HELM_BACKEND_DEPLOYMENT.md`: production Helm wiring and ConfigMap rollout architecture.
+- `docs/HELM_BACKEND_DEPLOYMENT.md`: defense-ready demo Helm wiring and ConfigMap rollout architecture.
 - `docs/evaluation/EVALUATION_V4_PROTOCOL.md`: Protocol v4 evaluation methodology and benchmark metrics.
 - `docs/evaluation/PROTOCOL_V4_REVISED_EVALUATION_REPORT.md`: authoritative combined Stage A/B/C result and RQ1-RQ5 claim matrix.
 - `docs/evaluation/PROTOCOL_V4_EXTERNAL_LLM_LIVE_REPORT.md`: observed external-service reliability, raw/applied accuracy, latency, retries, fallback, and limitations.

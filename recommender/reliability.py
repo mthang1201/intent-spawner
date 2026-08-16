@@ -52,6 +52,8 @@ class RecommendationMetadata:
     pricing_provenance: str | None = None
 
     def to_dict(self) -> dict[str, object]:
+        """Return the complete evaluation record, including raw model output."""
+
         return {
             "requested_backend": self.requested_backend,
             "effective_backend": self.effective_backend,
@@ -81,6 +83,18 @@ class RecommendationMetadata:
             "pricing_id": self.pricing_id,
             "pricing_provenance": self.pricing_provenance,
         }
+
+    def to_operational_dict(self) -> dict[str, object]:
+        """Return metadata safe for browser payloads, logs, and Kubernetes objects.
+
+        Raw provider output is intentionally evaluation-only: it may echo user
+        context and must never enter operational previews, user options, logs,
+        pod annotations, or environment variables.
+        """
+
+        payload = self.to_dict()
+        payload.pop("raw_response", None)
+        return payload
 
 
 

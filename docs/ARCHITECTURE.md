@@ -68,7 +68,7 @@ The platform provides both discrete allowlisted profiles and continuous dynamic 
 | `gpu_or_large` | 1500m | 2 CPU | 1536M | 2G | Deep learning; mapped safely to Large when GPU pool is unavailable |
 
 ### Curated Notebook Container Image Catalog
-Images are pinned to immutable SHA-256 digests in [`recommender/image-catalog.yaml`](file:///Users/mthang1201/Documents/datn/intent-spawner/recommender/image-catalog.yaml). Users cannot supply arbitrary registry references:
+Images are pinned to immutable SHA-256 digests in [`recommender/image-catalog.yaml`](../recommender/image-catalog.yaml). Users cannot supply arbitrary registry references:
 
 * **`minimal-python`**: Lightweight JupyterLab and Python base environment.
 * **`scipy-data-science`**: NumPy, pandas, SciPy, scikit-learn, matplotlib, seaborn.
@@ -79,7 +79,7 @@ Images are pinned to immutable SHA-256 digests in [`recommender/image-catalog.ya
 
 ## 3. Pluggable Recommender Architecture
 
-All backends implement the `Recommender` protocol in [`recommender/base.py`](file:///Users/mthang1201/Documents/datn/intent-spawner/recommender/base.py), accepting `RecommendationRequest` and returning a validated `SpawnRecommendation`.
+All backends implement the `Recommender` protocol in [`recommender/base.py`](../recommender/base.py), accepting `RecommendationRequest` and returning a validated `SpawnRecommendation`. The engine and the Hub wiring are separate layers: [`recommender/jupyterhub_integration.py`](../recommender/jupyterhub_integration.py) validates the mounted package, creates the backend selected by `RECOMMENDER_BACKEND`, and exposes the async preview endpoint.
 
 ```text
 RecommendationRequest
@@ -96,9 +96,8 @@ PolicyValidator & Schema Validation (RESPONSE_SCHEMA)
        ↓
 SpawnRecommendation
   ├── profile: str
-  ├── applied_profile: str
   ├── image_id: str
-  ├── image_display_name: str
+  ├── image_reference: str
   ├── reasons: list[str]
   ├── score: float | None
   ├── backend_name: str
@@ -138,14 +137,16 @@ sequenceDiagram
     participant K8s as Kubernetes API
 
     User->>UI: Input intent, dataset size, code snippet
-    UI->>Hub: POST /hub/spawn (preview request)
-    Hub->>Backend: recommend(request)
+    UI->>Hub: POST /hub/recommendation-preview
+    Hub->>Backend: bounded async recommend(request)
     Backend-->>Hub: SpawnRecommendation
-    Hub-->>UI: Display Profile, Notebook Image, Reasons
+    Hub->>Hub: Store one-time user/generation-bound record
+    Hub-->>UI: Recommendation + safe metadata + token
     
     alt User clicks Confirm
         User->>UI: Confirm recommendation
-        UI->>Hub: Submit spawn decision (action=accept)
+        UI->>Hub: Submit spawn decision + one-time token
+        Hub->>Hub: Validate binding; never recompute LLM
         Hub->>Hub: Log privacy-minimized audit event
         Hub->>Spawner: Apply CPU, RAM, image, env & annotations
         Spawner->>K8s: Create notebook pod
@@ -178,10 +179,10 @@ When user workloads change mid-session, users navigate to `/hub/reprovision`:
 
 ## 6. Policy-Bounded Dynamic Resource Sizing
 
-When `RESOURCE_SELECTION_MODE: dynamic` is enabled via [`helm/dynamic-values.yaml`](file:///Users/mthang1201/Documents/datn/intent-spawner/helm/dynamic-values.yaml):
+When `RESOURCE_SELECTION_MODE: dynamic` is enabled via [`helm/dynamic-values.yaml`](../helm/dynamic-values.yaml):
 * Instead of jumping directly between fixed tiers, continuous CPU, RAM, and GPU values are calculated within administrator-defined policies (`min_cpu`, `max_cpu`, `step_cpu`, `min_memory_mb`, `max_memory_mb`).
-* **Admission Control**: Checks cluster quota headroom before issuing dynamic allocations.
-* **Fail-Safe Fallback**: If dynamic sizing exceeds limits or fails admission checks, the system safely reverts to standard Catalog Mode.
+* **Static Per-Spawn Caps**: The shipped adapter validates min/max/step, GPU allowlists, and conservative policy caps. It does not query live `ResourceQuota`, current per-user use, or node headroom.
+* **Fail-Safe Fallback**: If dynamic sizing violates those policy constraints, the system reverts to Catalog Mode. Kubernetes admission remains the final capacity authority.
 
 ---
 
@@ -197,3 +198,5 @@ The evaluation layer ([`evaluation_v4/`](../evaluation_v4/)) provides a complete
 * **Statistical Claim Gates**: Accuracy inference aggregates repeats to 48 held-out samples and resamples 20 workload-family clusters. Stage C inference aggregates ten repeats within eight executable families. Exact paired tests and Holm correction prevent repeated runs from being treated as independent samples.
 
 The authoritative observed evaluation consists of four 48×5 recommender matrices and a 4×8×10 Stage C matrix. The combined claim matrix is in [`evaluation/PROTOCOL_V4_REVISED_EVALUATION_REPORT.md`](evaluation/PROTOCOL_V4_REVISED_EVALUATION_REPORT.md). The external pipeline's 21/240 raw-response coverage and 219 fallbacks are documented separately so fallback output is never credited to Gemini.
+
+The fresh-clone portable core is checksum-locked by [`PROTOCOL_V4_PORTABLE_SHA256SUMS.txt`](evaluation/PROTOCOL_V4_PORTABLE_SHA256SUMS.txt) and validated by `scripts/validate-portable-evidence.py`. Stage C per-trial sidecars remain an external deep archive; the repository carries their full checksum manifest, not the ~95 MiB payload.

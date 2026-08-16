@@ -259,7 +259,7 @@ Demonstrates in-cluster / host-local zero-network inference with automatic rule-
 ```bash
 bash scripts/install-dynamic.sh
 ```
-Demonstrates continuous, fine-grained CPU/RAM resource sizing bounded by administrator policies and quota headroom.
+Demonstrates continuous, fine-grained CPU/RAM resource sizing bounded by administrator policies and static per-spawn caps. The shipped adapter does not query live quota or node headroom.
 
 ---
 

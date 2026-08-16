@@ -1,0 +1,62 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: simulated-llm
+  namespace: z2jh-context-demo
+  labels:
+    app: simulated-llm
+    evidence-class: simulated
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: simulated-llm
+  template:
+    metadata:
+      labels:
+        app: simulated-llm
+        evidence-class: simulated
+    spec:
+      containers:
+        - name: mock
+          image: quay.io/jupyter/minimal-notebook@sha256:a153ceb6b41db4f86b7d7dc20c7b63d08e75e2038d5e8758b954fda50ed2e18d
+          command: ["python3", "/mock/mock-openai-service.py"]
+          ports:
+            - name: http
+              containerPort: 8080
+          resources:
+            requests:
+              cpu: 20m
+              memory: 32Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 1
+            periodSeconds: 2
+          volumeMounts:
+            - name: mock-code
+              mountPath: /mock
+              readOnly: true
+      volumes:
+        - name: mock-code
+          configMap:
+            name: simulated-llm-code
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: simulated-llm
+  namespace: z2jh-context-demo
+  labels:
+    evidence-class: simulated
+spec:
+  selector:
+    app: simulated-llm
+  ports:
+    - name: http
+      port: 8080
+      targetPort: http

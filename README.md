@@ -80,21 +80,22 @@ flowchart TD
 Replaces direct hardware guessing with an interactive confirmation flow:
 * **Rich Inputs**: Captures natural language task intent, estimated dataset size (in GB), and lightweight code context (imports, API calls).
 * **Transparent Recommendation Preview**: Presents the recommended hardware profile, software container image, and human-readable explanation reasons before pod creation.
-* **Validated Browser Matching**: Intent and code-context matching in the preview uses JavaScript-native term detection, including dotted signals such as `.fit(`, with a regression test preventing the earlier `startswith`/`startsWith` mismatch.
+* **Server-Side Recommendation**: The browser posts bounded inputs to the authenticated async `/hub/recommendation-preview` endpoint. The configured backend runs on the Hub; the browser contains no duplicate rule engine.
 * **User Agency**:
   * **Confirm / Accept**: Submits the approved profile and image to KubeSpawner.
   * **Edit Inputs**: Invalidates the current preview and allows re-entering workload parameters.
   * **Manual Override**: Allows selecting any administrator-allowlisted profile or image.
-* **Structured Audit Logging**: Emits privacy-minimized structured `recommendation_audit` log events (recording event IDs, actions, policy versions, and override status) for platform evaluation without storing sensitive user code.
+* **One-Time Confirmation Binding**: The preview token is bound to the authenticated user, policy/catalog/package generation, and TTL. Submit never recomputes an LLM recommendation and cannot create an implicit preview.
+* **Structured Audit Logging**: Emits privacy-minimized `recommendation_audit` events containing only event/backend/version, applied profile/image, fallback category, attempts, latency, and policy/catalog/package identities.
 
 ---
 
 ### Curated Notebook Container Image Matching
 
 Extends the recommender beyond CPU/memory to select an optimal software environment:
-* **Admin-Controlled Image Catalog**: Pinned, immutable SHA-256 digests in [`recommender/image-catalog.yaml`](file:///Users/mthang1201/Documents/datn/intent-spawner/recommender/image-catalog.yaml) (e.g., `minimal-python`, `scipy-data-science`, `pytorch-deep-learning`, `tensorflow-deep-learning`).
+* **Admin-Controlled Image Catalog**: Pinned, immutable SHA-256 digests in [`recommender/image-catalog.yaml`](recommender/image-catalog.yaml) (e.g., `minimal-python`, `scipy-data-science`, `pytorch-deep-learning`, `tensorflow-deep-learning`).
 * **Semantic & Capability Matching**: Matches workload keywords and imported libraries directly to image capabilities.
-* **KubeSpawner Enforcement**: Dynamically sets `spawner.image` and writes metadata annotations (`z2jh-context-demo.local/applied-image`, `z2jh-context-demo.local/catalog-version`).
+* **KubeSpawner Enforcement**: Sets `spawner.image` only from the catalog and writes bounded `intent-spawner.local/*` identity/telemetry annotations.
 
 ---
 
@@ -112,11 +113,11 @@ RecommendationRequest
 ```
 
 #### 1. Rule-Based Recommender
-* **Implementation**: [`recommender/rule_based.py`](file:///Users/mthang1201/Documents/datn/intent-spawner/recommender/rule_based.py)
+* **Implementation**: [`recommender/rule_based.py`](recommender/rule_based.py)
 * **Characteristics**: Zero-dependency, sub-millisecond, deterministic heuristic scoring. Serves as the baseline recommender and universal safety fallback.
 
 #### 2. External LLM API (e.g., Google Gemini)
-* **Implementation**: [`recommender/external_llm.py`](file:///Users/mthang1201/Documents/datn/intent-spawner/recommender/external_llm.py)
+* **Implementation**: [`recommender/external_llm.py`](recommender/external_llm.py)
 * **Characteristics**:
   * Connects to any OpenAI-compatible Chat Completions endpoint (such as Google Gemini's OpenAI compatibility layer at `https://generativelanguage.googleapis.com/v1beta/openai/chat/completions`).
   * Kubernetes Secret-managed API key (`EXTERNAL_LLM_API_KEY`) via `secretKeyRef`.
@@ -124,7 +125,7 @@ RecommendationRequest
   * Strict JSON output enforcement and automatic fail-closed fallback to rule-based logic upon provider errors.
 
 #### 3. Self-Hosted LLM (e.g., Local Ollama)
-* **Implementation**: [`recommender/self_hosted_llm.py`](file:///Users/mthang1201/Documents/datn/intent-spawner/recommender/self_hosted_llm.py)
+* **Implementation**: [`recommender/self_hosted_llm.py`](recommender/self_hosted_llm.py)
 * **Characteristics**:
   * Connects to private inference engines (Ollama, vLLM, LocalAI) running locally or in-cluster.
   * Optional bearer authentication token (`SELF_HOSTED_LLM_API_KEY`).
@@ -146,9 +147,9 @@ Enables changing workload specifications after a session has already started:
 ### Policy-Bounded Dynamic Resource Sizing
 
 An advanced opt-in mode that calculates fine-grained, continuous CPU/RAM/GPU resource allocations instead of discrete profile buckets:
-* **Implementation**: [`recommender/dynamic_resources.py`](file:///Users/mthang1201/Documents/datn/intent-spawner/recommender/dynamic_resources.py) and [`helm/dynamic-values.yaml`](file:///Users/mthang1201/Documents/datn/intent-spawner/helm/dynamic-values.yaml).
-* **Administrator Policy Guardrails**: Enforces minimum guarantees, maximum limits, step increments, and cluster quota headroom.
-* **Fail-Safe Fallback**: Automatically reverts to safe Catalog Mode if proposed allocations violate policy constraints or exceed quota headroom.
+* **Implementation**: [`recommender/dynamic_resources.py`](recommender/dynamic_resources.py) and [`helm/dynamic-values.yaml`](helm/dynamic-values.yaml).
+* **Administrator Policy Guardrails**: Enforces minimum guarantees, maximum limits, step increments, GPU allowlists, and conservative static per-spawn caps.
+* **Capacity Boundary**: The shipped adapter does not query live `ResourceQuota`, per-user usage, or node headroom. Kubernetes admission remains authoritative; invalid generated values fall back to Catalog Mode before spawn.
 
 ---
 
@@ -247,21 +248,10 @@ kubectl create secret generic intent-spawner-external-llm \
 ```
 
 #### Step 2: Deploy with Gemini Configuration
-Use the prepared [`helm/gemini-values.yaml`](file:///Users/mthang1201/Documents/datn/intent-spawner/helm/gemini-values.yaml):
+Use the prepared [`helm/gemini-values.yaml`](helm/gemini-values.yaml). The supported install flow packages the runtime, validates Secret references, applies the backend overlay, and rolls out the matching checksum:
 
 ```bash
-# Deploy dynamic package runtime
-bash scripts/install-dynamic.sh
-
-# Apply Gemini backend configuration
-helm upgrade context-demo jupyterhub/jupyterhub \
-  --version 4.0.0 \
-  --namespace z2jh-context-demo \
-  --values helm/proposed-values.yaml \
-  --values helm/dynamic-values.yaml \
-  --values helm/reprovision-values.yaml \
-  --values helm/gemini-values.yaml \
-  --wait
+BACKEND_VALUES=helm/gemini-values.yaml bash scripts/install-proposed.sh
 ```
 
 ---
@@ -283,21 +273,10 @@ ollama pull llama3
 ```
 
 #### Step 2: Deploy with Ollama Configuration
-Because JupyterHub runs inside a container, connect to the host machine using `http://host.docker.internal:11434/v1/chat/completions` via [`helm/ollama-values.yaml`](file:///Users/mthang1201/Documents/datn/intent-spawner/helm/ollama-values.yaml):
+Because JupyterHub runs inside a container, the local demo can connect to the host using `http://host.docker.internal:11434/v1/chat/completions` via [`helm/ollama-values.yaml`](helm/ollama-values.yaml). Plain HTTP is development-only and requires explicit opt-in in that overlay:
 
 ```bash
-# Deploy dynamic package runtime
-bash scripts/install-dynamic.sh
-
-# Apply Ollama backend configuration
-helm upgrade context-demo jupyterhub/jupyterhub \
-  --version 4.0.0 \
-  --namespace z2jh-context-demo \
-  --values helm/proposed-values.yaml \
-  --values helm/dynamic-values.yaml \
-  --values helm/reprovision-values.yaml \
-  --values helm/ollama-values.yaml \
-  --wait
+BACKEND_VALUES=helm/ollama-values.yaml bash scripts/install-proposed.sh
 ```
 
 ---
@@ -341,9 +320,16 @@ bash scripts/check.sh
 # Run Evaluation Protocol v4 gold-set validation and preview
 make v4-validate
 
+# Validate the 3.9 MiB portable evidence core and reproduce headline analysis
+.venv/bin/python scripts/validate-portable-evidence.py
+
 # Run local benchmark matrix dry-run
 .venv/bin/python -m experiments.runner --full-matrix --dry-run --environment-id local-dry-run
 ```
+
+The defense audit and sanitized local-cluster acceptance record are
+[`docs/evaluation/AUDIT_2026-08-16.md`](docs/evaluation/AUDIT_2026-08-16.md) and
+[`docs/evaluation/LIVE_ACCEPTANCE_2026-08-16.json`](docs/evaluation/LIVE_ACCEPTANCE_2026-08-16.json).
 
 ---
 
@@ -351,7 +337,8 @@ make v4-validate
 
 * **Evaluation Boundaries**: Offline recommendation evidence and observed single-node Kubernetes evidence are distinct evidence classes. The Stage C result is specific to eight frozen workload families, warm images, and the recorded disposable environment; it is not a production-wide superiority claim.
 * **External Reliability Boundary**: The configured Gemini service returned 21/240 valid completions. The complete matrix supports conclusions about the evaluated API pipeline, retries, failures, and fallback, but not a broad intrinsic Gemini-versus-Llama capability ranking.
-* **Privacy & Data Governance**: The pre-spawn hook and audit log record only derived features, resource profiles, and action tags (`accept`, `override`). User notebooks, dataset contents, raw code files, and credentials are never stored.
+* **Privacy & Data Governance**: Intent and code context exist only for the preview call. Preview records, user options, logs, and pod annotations omit those raw inputs and raw provider responses; `raw_response` remains evaluation-internal only.
+* **Evidence Portability**: The repository carries the three authoritative recommendation matrices, Stage C summary/plan records, manifests, environment/completion records, and the deep-archive checksum list. The ~95 MiB Stage C per-trial sidecars remain an external archive; historical handoff notes are documentation, not evidence substitutes.
 * **Unmeasured Outcomes**: Monetary cost, energy use, external provider resources/retention, and real-user acceptance were not measured.
 * **GPU Hardware**: While deep learning profiles and GPU image recommendations (`pytorch-deep-learning`, `tensorflow-deep-learning`) are fully modeled, physical GPU device scheduling requires an authorized hardware pool.
 
@@ -376,7 +363,7 @@ bash scripts/uninstall.sh
 * [Self-Hosted LLM Recommender Specification](docs/SELF_HOSTED_LLM_RECOMMENDER.md)
 * [Intent-Aware Re-Provisioning Design](docs/INTENT_AWARE_REPROVISIONING.md)
 * [Dynamic Profile Generation Specification](docs/DYNAMIC_PROFILE_GENERATION.md)
-* [Production Helm Deployment Wiring](docs/HELM_BACKEND_DEPLOYMENT.md)
+* [Defense-Ready Demo Helm Wiring](docs/HELM_BACKEND_DEPLOYMENT.md)
 * [Evaluation Protocol v4 Specification](docs/evaluation/EVALUATION_V4_PROTOCOL.md)
 * [Protocol v4 Combined Evaluation Report](docs/evaluation/PROTOCOL_V4_REVISED_EVALUATION_REPORT.md)
 * [External LLM Live Evaluation Report](docs/evaluation/PROTOCOL_V4_EXTERNAL_LLM_LIVE_REPORT.md)

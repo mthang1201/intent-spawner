@@ -18,9 +18,27 @@ from recommender import (
     RecommendationRequest,
 )
 from recommender.external_llm import LLMTimeoutError
+from recommender.reliability import RecommendationMetadata
 
 
 ROOT = Path(__file__).resolve().parents[1]
+
+
+def test_operational_metadata_excludes_raw_provider_response():
+    metadata = RecommendationMetadata(
+        requested_backend="external_llm",
+        effective_backend="external_llm",
+        fallback_used=False,
+        fallback_error_category=None,
+        attempt_count=1,
+        total_elapsed_seconds=0.1,
+        timed_out=False,
+        deadline_exhausted=False,
+        raw_response='{"echoed_intent":"sensitive"}',
+    )
+
+    assert metadata.to_dict()["raw_response"] == '{"echoed_intent":"sensitive"}'
+    assert "raw_response" not in metadata.to_operational_dict()
 
 
 def _valid_output() -> str:

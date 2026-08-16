@@ -11,6 +11,7 @@ from recommender.external_llm import (
     LLMResponseError,
     LLMTimeoutError,
     OpenAICompatibleClient,
+    UrllibJSONTransport,
 )
 
 
@@ -352,3 +353,49 @@ def test_environment_configuration_and_registry_selection():
 def test_configuration_rejects_invalid_values(kwargs):
     with pytest.raises(ValueError):
         ExternalLLMConfig(**kwargs)
+
+
+class _StaticHTTPResponse:
+    def __init__(self, body: bytes, content_length: str | None = None):
+        self.body = body
+        self.headers = {}
+        if content_length is not None:
+            self.headers["Content-Length"] = content_length
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc, traceback):
+        return False
+
+    def read(self, limit: int) -> bytes:
+        return self.body[:limit]
+
+
+@pytest.mark.parametrize(
+    "body,content_length",
+    [
+        (b'{}', "9"),
+        (b'{"too_large":true}', None),
+    ],
+)
+def test_http_transport_rejects_oversized_responses(body, content_length):
+    transport = UrllibJSONTransport(max_response_bytes=8)
+    transport._opener = type(
+        "StaticOpener",
+        (),
+        {"open": lambda self, request, timeout: _StaticHTTPResponse(body, content_length)},
+    )()
+
+    with pytest.raises(LLMResponseError, match="size limit"):
+        transport.post_json(
+            "https://llm.example.test/v1/chat/completions",
+            headers={},
+            payload={},
+            timeout=1,
+        )
+
+
+def test_http_transport_redirect_handler_fails_closed():
+    handler = UrllibJSONTransport._NoRedirectHandler()
+    assert handler.redirect_request(None, None, 302, "Found", {}, "https://other.test") is None

@@ -1,0 +1,12 @@
+{
+  "checksums": {
+    "environment.json": "06cec1e8d646e89d168da60e31019989f72513323aa3d30cd5a041b7e5598f3d",
+    "plan": "718adf39c82023755db3dd60a8d1b4730eaef4fb92ff909f52b2180e957bbf10",
+    "system-trials.jsonl": "a76a334f74cd0dc928ce158f87106bc6f8576a17ec518ed0ef756cbbd61ff256"
+  },
+  "completed_at_utc": "2026-08-13T04:22:37.870Z",
+  "expected_record_count": 320,
+  "experiment_id": "protocol-v4-stage-c-confirmatory-20260813T021600Z",
+  "observed_record_count": 320,
+  "schema_version": "system-run-completion-v4.0.0"
+}

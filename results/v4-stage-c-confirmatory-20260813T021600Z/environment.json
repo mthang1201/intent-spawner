@@ -1,0 +1,124 @@
+{
+  "cache_condition": "warm_required_verified_from_node_image_digests",
+  "captured_at_utc": "2026-08-13T02:37:57.392Z",
+  "catalog_sha256": "f45b04efc2ea6f271d49c6806b58bfc0f30503cb68944930609f6e0f71882a71",
+  "catalog_version": "2026-08-06.1",
+  "container_runtime": "docker://29.4.0",
+  "dataset_id": "intent-gold-en-vi-2026-08-08",
+  "dataset_sha256": "18d4bd33a58f7aa1cea91c223cb6e0f537b6030c91f3954af762e019a8dc7ec0",
+  "environment_id": "local-single-node-v4-2d89b732b01a",
+  "git_commit": "99707b8da8e4c065a1a451332f8555193614144a",
+  "git_dirty": false,
+  "git_dirty_paths": [],
+  "helm_release": {
+    "chart": null,
+    "computed_values_sha256": "0e8ce20353aaf5e994111732f611bb76fb167664b0062299d9bc32317bfee763",
+    "name": "context-demo",
+    "revision": 34,
+    "status": "deployed"
+  },
+  "horizontal_pod_autoscaler_count_clusterwide": 0,
+  "input_sha256": {
+    "benchmarks/__init__.py": "9913ec6a32d3bca152592c76702ba2e93710c8409b23c4b67119a7880de47807",
+    "benchmarks/intent-gold-v4.yaml": "a0f23920e90c6f4b338b51ec4517a4ba49216940bf041729c8c7b0db452afc4d",
+    "benchmarks/resource_envelope_runner.py": "72b4b60bfa2fea586fbbee3faa08d1b17a8c15865e76985aaf32c10ff99c948a",
+    "benchmarks/workloads-v3.yaml": "c8ddc79eb92709293c40ed538d50c3f6fa3d86c8b281ec61fde277609485a713",
+    "docs/evaluation/EVALUATION_V4_PROTOCOL.md": "56b2d782f998e71b0edb1231ae3bf0df6e8e11d74a4c9ecdeb5e5328e8117673",
+    "docs/evaluation/EVIDENCE_COLLECTION_V4.md": "37e0d253ef4eca39791d3c5c5e9f7bcf5b77e399414b3f9863c27198f8110444",
+    "evaluation_v4/plan_system.py": "fa370123df4e4c1e5de55353a09df9413008d3337097830e0ebca8e06432fa4f",
+    "evaluation_v4/pod_runner.py": "4c4d0e0335240081a36b49fb012cbcdf8fc7cd38470b72e39d016ac4d239773c",
+    "evaluation_v4/run_system.py": "6aa589aac651901afa7207f3f060b874d27d11e1ef6c0b0e2d81b85c85ff039b",
+    "recommender/image-catalog.yaml": "f45b04efc2ea6f271d49c6806b58bfc0f30503cb68944930609f6e0f71882a71"
+  },
+  "kubernetes_context_pseudonym": "context-sha256:2d89b732b01a00a2d1675ed3cee9fd0f965daadf90603c989dd3afd4569c6896",
+  "kubernetes_version": {
+    "buildDate": "2026-04-18T09:19:01Z",
+    "compiler": "gc",
+    "emulationMajor": "1",
+    "emulationMinor": "33",
+    "gitCommit": "9093adae538d4d93bfa398549c569fe860ffe049",
+    "gitTreeState": "clean",
+    "gitVersion": "v1.33.9+orb1",
+    "goVersion": "go1.24.13",
+    "major": "1",
+    "minCompatibilityMajor": "1",
+    "minCompatibilityMinor": "32",
+    "minor": "33",
+    "platform": "linux/arm64"
+  },
+  "methods": [
+    "rule_based_context",
+    "self_hosted_local_ollama_llm",
+    "static_large",
+    "static_small"
+  ],
+  "methods_provenance": {
+    "rule_based_context": {
+      "backend": "rule_based_context",
+      "endpoint_class": "in_memory_or_static",
+      "model_id": null,
+      "prompt_contract_sha256": null,
+      "prompt_version": null
+    },
+    "self_hosted_local_ollama_llm": {
+      "backend": "self_hosted_llm",
+      "endpoint_class": "local_ollama_http",
+      "model_id": "llama3:latest",
+      "prompt_contract_sha256": "14f73b70950da7e20451916f6580768da74fd1ea9abaf1d91d324f099415ccfe",
+      "prompt_version": "prompt-v4.1.0"
+    },
+    "static_large": {
+      "backend": "static_large",
+      "endpoint_class": "in_memory_or_static",
+      "model_id": null,
+      "prompt_contract_sha256": null,
+      "prompt_version": null
+    },
+    "static_small": {
+      "backend": "static_small",
+      "endpoint_class": "in_memory_or_static",
+      "model_id": null,
+      "prompt_contract_sha256": null,
+      "prompt_version": null
+    }
+  },
+  "metrics_api_available": false,
+  "namespace": "z2jh-context-demo",
+  "namespace_safety_label": "z2jh-context-demo.local/disposable-experiment-v4=true",
+  "node_allocatable": {
+    "cpu": "8",
+    "ephemeral-storage": "71613500770",
+    "memory": "8185712Ki",
+    "pods": "110"
+  },
+  "node_capacity": {
+    "cpu": "8",
+    "ephemeral-storage": "73615852Ki",
+    "memory": "8185712Ki",
+    "pods": "110"
+  },
+  "node_conditions": {
+    "DiskPressure": "False",
+    "MemoryPressure": "False",
+    "PIDPressure": "False",
+    "Ready": "True"
+  },
+  "node_count": 1,
+  "pending_deadline_seconds": 120,
+  "plan_path": "results/v4-stage-c-confirmatory-plan-20260813T021239Z/system-plan.jsonl",
+  "plan_records": 320,
+  "plan_sha256": "718adf39c82023755db3dd60a8d1b4730eaef4fb92ff909f52b2180e957bbf10",
+  "policy_sha256": "fd1e2696452d4c4eae589e1c01bafeca50e84d21b52cc7320e9b467baa745cc3",
+  "policy_version": "resource-image-policy-v1",
+  "primary_measurement_source": "cgroup_v2_in_container_window",
+  "privacy": "no credentials, usernames, node names, addresses, or raw notebook content retained",
+  "protocol_version": "4.0.0",
+  "repeats": 10,
+  "required_image_ids": [
+    "minimal-python",
+    "scipy-data-science"
+  ],
+  "resource_quota_count": 0,
+  "sample_interval_seconds": 0.1,
+  "spawn_deadline_seconds": 180
+}

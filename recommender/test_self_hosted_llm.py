@@ -40,6 +40,7 @@ def test_self_hosted_backend_reuses_shared_llm_flow_and_returns_contract():
             timeout=6,
             api_key="optional-local-token",
             max_retries=0,
+            allow_insecure_http=True,
         ),
         client=client,
     )
@@ -72,6 +73,7 @@ def test_self_hosted_environment_configuration_and_registry_selection():
             "SELF_HOSTED_LLM_RETRY_BACKOFF_SECONDS": "0.2",
             "SELF_HOSTED_LLM_TOTAL_TIMEOUT": "18",
             "SELF_HOSTED_LLM_MAX_CONCURRENT_RECOMMENDATIONS": "3",
+            "SELF_HOSTED_LLM_ALLOW_INSECURE_HTTP": "true",
         }
     )
     backend = create_recommender(
@@ -103,6 +105,7 @@ def test_self_hosted_prompt_version_uses_backend_specific_environment_name():
             "SELF_HOSTED_LLM_ENDPOINT": "http://127.0.0.1:11434/api/chat",
             "SELF_HOSTED_LLM_MODEL": "llama3:latest",
             "SELF_HOSTED_LLM_PROMPT_VERSION": "prompt-v4.1.0",
+            "SELF_HOSTED_LLM_ALLOW_INSECURE_HTTP": "true",
         }
     )
     assert config.prompt_version == "prompt-v4.1.0"
@@ -148,6 +151,7 @@ def test_self_hosted_failure_uses_the_same_rule_based_fallback():
             endpoint="http://127.0.0.1:11434/v1/chat/completions",
             model="local-model",
             max_retries=0,
+            allow_insecure_http=True,
         ),
         client=FailedClient(),
     )
@@ -158,6 +162,20 @@ def test_self_hosted_failure_uses_the_same_rule_based_fallback():
 
     assert recommendation.backend_name == "rule_based"
     assert recommendation.profile == "small"
+
+
+def test_self_hosted_http_requires_explicit_development_opt_in():
+    with pytest.raises(ValueError, match="require HTTPS"):
+        SelfHostedLLMConfig(
+            endpoint="http://127.0.0.1:11434/api/chat",
+            model="llama3:latest",
+        )
+
+
+def test_self_hosted_wildcard_export_is_importable():
+    namespace: dict[str, object] = {}
+    exec("from recommender.self_hosted_llm import *", namespace)
+    assert namespace["LEGACY_BACKEND_NAME"] == "self_hosted_local_ollama_llm"
 
 
 @pytest.mark.parametrize(

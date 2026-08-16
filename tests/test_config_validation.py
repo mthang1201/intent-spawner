@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 import asyncio
-import html
+import inspect
 import json
 from pathlib import Path
 import re
@@ -8,323 +10,224 @@ from types import SimpleNamespace
 import pytest
 import yaml
 
+from recommender.deployment import DeploymentMetadata
+from recommender.jupyterhub_integration import (
+    PREVIEW_VERSION,
+    PROFILE_RESOURCES,
+    RecommendationPreviewRuntime,
+    options_form,
+    safe_escape_truncate,
+)
+from recommender.rule_based import RuleBasedRecommender, load_image_catalog
+
 
 ROOT = Path(__file__).resolve().parents[1]
 IMAGE_DIGEST_PATTERN = re.compile(r"sha256:[0-9a-f]{64}$")
 
-EXPECTED_PROFILE_RESOURCES = {
-    "small": {
-        "cpu_guarantee": 0.1,
-        "cpu_limit": 0.5,
-        "mem_guarantee": "256M",
-        "mem_limit": "384M",
-    },
-    "medium": {
-        "cpu_guarantee": 0.5,
-        "cpu_limit": 1,
-        "mem_guarantee": "768M",
-        "mem_limit": "1G",
-    },
-    "large": {
-        "cpu_guarantee": 1.5,
-        "cpu_limit": 2,
-        "mem_guarantee": "1536M",
-        "mem_limit": "2G",
-    },
-}
 
-
-def load_yaml(path: str) -> dict:
+def load_yaml(path: str | Path) -> dict:
     with (ROOT / path).open(encoding="utf-8") as handle:
         return yaml.safe_load(handle)
 
 
-def parse_cpu_m(value: str) -> int:
-    text = str(value)
-    if text.endswith("m"):
-        return int(text[:-1])
-    return int(float(text) * 1000)
-
-
-def parse_memory_mi(value: str) -> int:
-    text = str(value)
-    for suffix, factor in (("Gi", 1024), ("Mi", 1), ("G", 1000), ("M", 1000 / 1024)):
-        if text.endswith(suffix):
-            return int(float(text[: -len(suffix)]) * factor)
-    return int(float(text) / 1024 / 1024)
-
-
-def load_proposed_extra_config(
-    *,
-    base_handler: type | None = None,
-    web_module: Any | None = None,
-    values_path: str | Path = "helm/proposed-values.yaml",
-) -> tuple[SimpleNamespace, dict]:
-    values = load_yaml(values_path)
-    code = values["hub"]["extraConfig"]["00-context-aware-recommender"]
-    kube_spawner_config = SimpleNamespace()
-    jupyterhub_config = SimpleNamespace(extra_handlers=[])
-    namespace = {"c": SimpleNamespace(KubeSpawner=kube_spawner_config, JupyterHub=jupyterhub_config)}
-    if base_handler is not None:
-        namespace["BaseHandler"] = base_handler
-    if web_module is not None:
-        namespace["web"] = web_module
-
-    exec(compile(code, f"{values_path}::extraConfig", "exec"), namespace)
-
-    return kube_spawner_config, namespace
-
-
-def test_baseline_helm_profiles_define_approved_small_medium_large_resources():
-    values = load_yaml("helm/baseline-values.yaml")
-    profiles = values["singleuser"]["profileList"]
-
-    assert [profile["slug"] for profile in profiles] == ["small", "medium", "large"]
-    assert sum(1 for profile in profiles if profile.get("default")) == 1
-
-    for profile in profiles:
-        slug = profile["slug"]
-        overrides = profile["kubespawner_override"]
-        expected = EXPECTED_PROFILE_RESOURCES[slug]
-
-        assert {
-            "cpu_guarantee": overrides["cpu_guarantee"],
-            "cpu_limit": overrides["cpu_limit"],
-            "mem_guarantee": overrides["mem_guarantee"],
-            "mem_limit": overrides["mem_limit"],
-        } == expected
-        assert overrides["environment"]["SELECTED_STATIC_PROFILE"] == slug
-
-
-def test_proposed_helm_resources_match_baseline_policy_without_static_profile_list():
-    values = load_yaml("helm/proposed-values.yaml")
-    _, namespace = load_proposed_extra_config()
-
-    assert "profileList" not in values["singleuser"]
-    assert namespace["PROFILE_RESOURCES"] == EXPECTED_PROFILE_RESOURCES
-    assert set(namespace["PROFILE_RESOURCES"]) == {"small", "medium", "large"}
-
-
-def test_demo_images_are_digest_pinned_and_no_shared_password_is_committed():
-    baseline = load_yaml("helm/baseline-values.yaml")
-    proposed = load_yaml("helm/proposed-values.yaml")
-
-    for values in (baseline, proposed):
-        assert "DummyAuthenticator" not in values["hub"]["config"]
-        assert IMAGE_DIGEST_PATTERN.search(values["singleuser"]["image"]["tag"])
-
-
-def test_proposed_image_catalog_matches_standalone_admin_allowlist():
-    catalog = load_yaml("recommender/image-catalog.yaml")
-    _, namespace = load_proposed_extra_config()
-
-    assert namespace["IMAGE_CATALOG_VERSION"] == catalog["catalog_version"]
-    assert namespace["DEFAULT_IMAGE_ID"] == catalog["default_image"]
-    assert namespace["IMAGE_CATALOG"] == catalog["images"]
-    assert all(
-        IMAGE_DIGEST_PATTERN.search(item["reference"])
-        for item in namespace["IMAGE_CATALOG"].values()
+def preview_runtime(*, monotonic=None) -> RecommendationPreviewRuntime:
+    catalog = load_image_catalog()
+    kwargs = {}
+    if monotonic is not None:
+        kwargs["monotonic"] = monotonic
+    return RecommendationPreviewRuntime(
+        deployment=DeploymentMetadata(
+            backend="rule_based",
+            backend_version="rule-based-v1",
+            package_version="intent-spawner-recommender-v2",
+            package_checksum="a" * 64,
+        ),
+        catalog=catalog,
+        backend=RuleBasedRecommender(catalog=catalog),
+        **kwargs,
     )
 
 
-def test_repository_contains_no_raw_notebook_artifacts():
-    assert not list(ROOT.rglob("*.ipynb"))
-
-
-def test_options_from_form_accepts_jupyterhub_callback_shapes_and_invalid_dataset_size():
-    kube_spawner_config, namespace = load_proposed_extra_config()
-    options_from_form = kube_spawner_config.options_from_form
-    spawner = SimpleNamespace(user=SimpleNamespace(name="pytest-user"))
-
-    invalid_size = options_from_form(
-        spawner,
-        {
-            "preview_version": ["recommendation-preview-v1"],
-            "decision_action": ["accept"],
-            "dataset_size_gb": ["not-a-number"],
-        },
-    )
-    assert invalid_size["decision_action"] == "accept"
-    assert "recommendation_preview_id" in invalid_size
-
-    item = namespace["RECOMMENDATION_PREVIEWS"][invalid_size["recommendation_preview_id"]]
-    assert item["recommendation"]["profile"] == "small"
-    assert item["recommendation"]["image_id"] == "minimal-python"
-
-    accepted = options_from_form(
-        spawner,
-        {
-            "preview_version": [b"recommendation-preview-v1"],
-            "decision_action": [b"accept"],
-            "intent": [b"train a model"],
-            "dataset_size_gb": [b"1.5"],
-            "code_context": [b"model.fit(X, y)"],
-        },
-    )
-    assert accepted["decision_action"] == "accept"
-    assert "recommendation_preview_id" in accepted
-    item_accepted = namespace["RECOMMENDATION_PREVIEWS"][accepted["recommendation_preview_id"]]
-    assert item_accepted["recommendation"]["profile"] == "large"
-    assert item_accepted["recommendation"]["image_id"] == "scipy-data-science"
-
-
-def test_options_form_requires_preview_and_rejects_non_allowlisted_overrides():
-    kube_spawner_config, _ = load_proposed_extra_config()
-    options_from_form = kube_spawner_config.options_from_form
-    spawner = SimpleNamespace(user=SimpleNamespace(name="pytest-user"))
-
-    with pytest.raises(ValueError, match="confirm the recommendation"):
-        options_from_form(spawner, {"preview_version": ["recommendation-preview-v1"]})
-    with pytest.raises(ValueError, match="image override is not allowlisted"):
-        options_from_form(
-            spawner,
-            {
-                "preview_version": ["recommendation-preview-v1"],
-                "decision_action": ["override"],
-                "override_profile": ["medium"],
-                "override_image_id": ["evil.example/user-supplied:latest"],
-            },
-        )
-
-
-def test_options_form_exposes_preview_edit_confirm_and_manual_override_controls():
-    kube_spawner_config, _ = load_proposed_extra_config()
-    rendered = asyncio.run(kube_spawner_config.options_form(SimpleNamespace()))
-
-    assert "Recommendation Preview" in rendered
-    assert 'id="confirm-recommendation"' in rendered
-    assert 'id="edit-recommendation"' in rendered
-    assert 'id="manual-override"' in rendered
-    assert 'id="submit-override"' in rendered
-    assert "No image is built from user input" in rendered
-    assert 'input.intent + "\\n" + input.code_context' in rendered
-    assert 'term.startsWith(".")' in rendered
-    assert 'term.startswith(".")' not in rendered
-
-
-def test_kubespawner_pre_spawn_hook_applies_large_for_gpu_or_large_with_explanation():
-    kube_spawner_config, namespace = load_proposed_extra_config()
-    log_calls = []
-    spawner_stub = SimpleNamespace(user=SimpleNamespace(name="pytest-user"))
-    user_options = kube_spawner_config.options_from_form(
-        spawner_stub,
-        {
-            "preview_version": ["recommendation-preview-v1"],
-            "decision_action": ["accept"],
-            "intent": ["deep learning image classifier"],
-            "dataset_size_gb": ["0.2"],
-            "code_context": ["import torch\nmodel.cuda()"],
-        },
-    )
-    spawner = SimpleNamespace(
-        user_options=user_options,
-        environment={"EXISTING": "kept"},
-        extra_annotations={},
-        user=SimpleNamespace(name="pytest-user"),
-        log=SimpleNamespace(info=lambda *args, **kwargs: log_calls.append((args, kwargs))),
-    )
-
-    asyncio.run(kube_spawner_config.pre_spawn_hook(spawner))
-
-    assert spawner.cpu_guarantee == EXPECTED_PROFILE_RESOURCES["large"]["cpu_guarantee"]
-    assert spawner.cpu_limit == EXPECTED_PROFILE_RESOURCES["large"]["cpu_limit"]
-    assert spawner.mem_guarantee == EXPECTED_PROFILE_RESOURCES["large"]["mem_guarantee"]
-    assert spawner.mem_limit == EXPECTED_PROFILE_RESOURCES["large"]["mem_limit"]
-    assert spawner.environment["EXISTING"] == "kept"
-    assert spawner.environment["RECOMMENDED_PROFILE"] == "gpu_or_large"
-    assert spawner.environment["APPLIED_PROFILE"] == "large"
-    assert spawner.environment["RECOMMENDATION_ACTION"] == "accept"
-    assert spawner.environment["RECOMMENDED_NOTEBOOK_IMAGE"] == "pytorch-deep-learning"
-    assert spawner.image == namespace["IMAGE_CATALOG"]["pytorch-deep-learning"]["reference"]
-    assert "GPU/deep-learning context detected" in spawner.environment["RECOMMENDATION_REASONS"]
-    assert "CONTEXT_INTENT" not in spawner.environment
-    assert "deep learning image classifier" not in str(spawner.environment)
-    assert "pytest-user" not in str(log_calls)
-    assert spawner.extra_annotations["z2jh-context-demo.local/recommended-profile"] == "gpu_or_large"
-    assert spawner.extra_annotations["z2jh-context-demo.local/applied-image"] == "pytorch-deep-learning"
-    assert spawner.extra_annotations["z2jh-context-demo.local/recommendation-reasons"] == namespace["safe_escape_truncate"](
-        spawner.environment["RECOMMENDATION_REASONS"], 240
-    )
-    audit = json.loads(log_calls[-1][0][1])
-    assert audit["event"] == "recommendation_decision"
-    assert audit["action"] == "accept"
-    assert audit["profile_overridden"] is False
-    assert "pytest-user" not in json.dumps(audit)
-    assert "deep learning image classifier" not in json.dumps(audit)
-
-
-def test_manual_override_is_applied_and_logged_without_accepting_arbitrary_values():
-    kube_spawner_config, namespace = load_proposed_extra_config()
-    log_calls = []
-    spawner_stub = SimpleNamespace(user=SimpleNamespace(name="pytest-user"))
-    options = kube_spawner_config.options_from_form(
-        spawner_stub,
-        {
-            "preview_version": ["recommendation-preview-v1"],
-            "decision_action": ["override"],
-            "intent": ["basic Python loops"],
-            "dataset_size_gb": ["0.1"],
-            "code_context": ["print('hello')"],
-            "override_profile": ["medium"],
-            "override_image_id": ["scipy-data-science"],
-        },
-    )
-    spawner = SimpleNamespace(
-        user_options=options,
+def spawner(username: str = "alice", *, options=None):
+    logs = []
+    return SimpleNamespace(
+        user=SimpleNamespace(name=username),
+        user_options=options or {},
         environment={},
         extra_annotations={},
-        user=SimpleNamespace(name="pytest-user"),
-        log=SimpleNamespace(info=lambda *args, **kwargs: log_calls.append((args, kwargs))),
+        extra_resource_guarantees={},
+        extra_resource_limits={},
+        log=SimpleNamespace(info=lambda *args: logs.append(args)),
+        logs=logs,
     )
 
-    asyncio.run(kube_spawner_config.pre_spawn_hook(spawner))
 
-    assert spawner.environment["APPLIED_PROFILE"] == "medium"
-    assert spawner.environment["APPLIED_NOTEBOOK_IMAGE"] == "scipy-data-science"
-    assert spawner.image == namespace["IMAGE_CATALOG"]["scipy-data-science"]["reference"]
-    audit = json.loads(log_calls[-1][0][1])
-    assert audit["action"] == "override"
-    assert audit["profile_overridden"] is True
-    assert audit["image_overridden"] is True
+def issue(runtime: RecommendationPreviewRuntime, **values):
+    return asyncio.run(runtime.issue("alice", values))
 
 
-def test_safe_escape_truncate_prevents_malformed_html_entities_and_limits_length():
-    _, namespace = load_proposed_extra_config()
-    safe_escape_truncate = namespace["safe_escape_truncate"]
-
-    # Short text
-    assert safe_escape_truncate("simple & text", 240) == "simple &amp; text"
-
-    # Truncation in middle of entity
-    # "a" * 238 + "&" => escaped: "a" * 238 + "&amp;" => len 243
-    # Slicing at 240 gives "a" * 238 + "&a"
-    # safe_escape_truncate strips trailing "&a" returning "a" * 238
-    raw = "a" * 238 + "& extra"
-    truncated = safe_escape_truncate(raw, 240)
-    assert len(truncated) <= 240
-    assert not truncated.endswith("&a")
-    assert not truncated.endswith("&")
+def confirm(runtime: RecommendationPreviewRuntime, preview: dict, *, action="accept", **extra):
+    form = {
+        "preview_version": [PREVIEW_VERSION],
+        "decision_action": [action],
+        "recommendation_preview_id": [preview["recommendation_preview_id"]],
+        **{key: [value] for key, value in extra.items()},
+    }
+    return runtime.options_from_form(spawner(), form)
 
 
-def test_kubernetes_demo_manifests_are_valid_yaml_and_quota_constrains_large_overrequesting():
-    idle_small = load_yaml("k8s/idle-small-pod.yaml")
-    idle_large = load_yaml("k8s/idle-large-pod.yaml")
-    quota = load_yaml("k8s/resource-quota.yaml")
+def test_baseline_profiles_match_runtime_catalog_policy():
+    values = load_yaml("helm/baseline-values.yaml")
+    profiles = values["singleuser"]["profileList"]
+    assert [item["slug"] for item in profiles] == ["small", "medium", "large"]
+    assert {
+        item["slug"]: {
+            key: item["kubespawner_override"][key] for key in PROFILE_RESOURCES[item["slug"]]
+        }
+        for item in profiles
+    } == PROFILE_RESOURCES
 
-    assert idle_small["kind"] == "Pod"
-    assert idle_large["kind"] == "Pod"
-    assert quota["kind"] == "ResourceQuota"
 
-    small_requests = idle_small["spec"]["containers"][0]["resources"]["requests"]
-    large_requests = idle_large["spec"]["containers"][0]["resources"]["requests"]
-    hard = quota["spec"]["hard"]
+def test_proposed_helm_mounts_runtime_and_has_no_client_side_recommender():
+    values = load_yaml("helm/proposed-values.yaml")
+    hub = values["hub"]
+    code = hub["extraConfig"]["00-context-aware-recommender"]
+    assert hub["extraEnv"]["RECOMMENDER_BACKEND"] == "rule_based"
+    assert hub["extraEnv"]["PYTHONPATH"] == "/opt/intent-spawner"
+    assert hub["extraVolumes"][0]["configMap"]["name"] == "intent-spawner-recommender"
+    assert "install_jupyterhub" in code
+    assert "recommendResource" not in code
+    assert "recommendImage" not in code
 
-    assert parse_cpu_m(small_requests["cpu"]) == 100
-    assert parse_memory_mi(small_requests["memory"]) == 256
-    assert parse_cpu_m(large_requests["cpu"]) == 1500
-    assert parse_memory_mi(large_requests["memory"]) == 1536
 
-    assert parse_cpu_m(large_requests["cpu"]) * 2 > parse_cpu_m(hard["requests.cpu"])
-    assert parse_memory_mi(large_requests["memory"]) * 2 > parse_memory_mi(hard["requests.memory"])
-    assert parse_cpu_m(small_requests["cpu"]) * 2 <= parse_cpu_m(hard["requests.cpu"])
-    assert parse_memory_mi(small_requests["memory"]) * 2 <= parse_memory_mi(hard["requests.memory"])
+def test_jupyterhub_options_callback_uses_supported_signature(monkeypatch):
+    import recommender.jupyterhub_integration as integration
+
+    runtime = preview_runtime()
+    monkeypatch.setattr(integration, "RecommendationPreviewRuntime", lambda: runtime)
+    config = SimpleNamespace(
+        JupyterHub=SimpleNamespace(extra_handlers=[], base_url="/"),
+        KubeSpawner=SimpleNamespace(),
+    )
+    integration.install_jupyterhub(SimpleNamespace(**vars(config)))
+    signature = inspect.signature(config.KubeSpawner.options_from_form)
+    assert list(signature.parameters) == ["formdata", "spawner"]
+    assert signature.parameters["spawner"].kind is inspect.Parameter.KEYWORD_ONLY
+    runtime.executor.shutdown()
+
+
+def test_demo_images_are_digest_pinned_and_catalog_is_authoritative():
+    catalog = load_image_catalog()
+    proposed = load_yaml("helm/proposed-values.yaml")
+    assert IMAGE_DIGEST_PATTERN.search(proposed["singleuser"]["image"]["tag"])
+    assert all(IMAGE_DIGEST_PATTERN.search(item["reference"]) for item in catalog["images"].values())
+
+
+def test_preview_response_has_locked_schema_and_stores_no_raw_context():
+    runtime = preview_runtime()
+    payload = issue(
+        runtime,
+        intent="train private customer model",
+        dataset_size_gb="1.5",
+        code_context="SECRET_CODE = 'do-not-store'\nmodel.fit(X, y)",
+    )
+    assert set(payload) == {
+        "preview_version",
+        "recommendation_preview_id",
+        "recommendation",
+        "applied_profile",
+        "image_display_name",
+        "metadata",
+    }
+    assert payload["preview_version"] == PREVIEW_VERSION
+    assert payload["recommendation"]["backend_name"] == "rule_based"
+    assert "raw_response" not in payload["metadata"]
+    stored = runtime.previews[payload["recommendation_preview_id"]]
+    rendered = json.dumps(stored)
+    assert "private customer" not in rendered
+    assert "SECRET_CODE" not in rendered
+    runtime.executor.shutdown()
+
+
+def test_submit_requires_existing_preview_and_never_creates_one_implicitly():
+    runtime = preview_runtime()
+    with pytest.raises(ValueError, match="server-side recommendation preview"):
+        runtime.options_from_form(
+            spawner(),
+            {"preview_version": [PREVIEW_VERSION], "decision_action": ["accept"]},
+        )
+    assert runtime.previews == {}
+    runtime.executor.shutdown()
+
+
+def test_confirmed_preview_applies_resources_image_and_safe_telemetry():
+    runtime = preview_runtime()
+    preview = issue(runtime, intent="deep learning with torch", dataset_size_gb=0.2, code_context="")
+    options = confirm(runtime, preview)
+    target = spawner(options=options)
+    asyncio.run(runtime.pre_spawn(target))
+    assert target.cpu_limit == PROFILE_RESOURCES["large"]["cpu_limit"]
+    assert target.image == runtime.images["pytorch-deep-learning"]["reference"]
+    assert preview["recommendation_preview_id"] not in runtime.previews
+    assert all("reason" not in key for key in target.extra_annotations)
+    audit = json.loads(target.logs[-1][1])
+    assert set(audit) == {
+        "event", "event_id", "backend", "backend_version", "profile", "image_id",
+        "fallback_category", "attempts", "latency_seconds", "policy_version",
+        "catalog_version", "package_version", "package_checksum",
+    }
+    runtime.executor.shutdown()
+
+
+def test_manual_override_is_allowlisted_and_bound_at_confirmation():
+    runtime = preview_runtime()
+    preview = issue(runtime, intent="basic Python", dataset_size_gb=0.1, code_context="")
+    with pytest.raises(ValueError, match="not allowlisted"):
+        confirm(
+            runtime,
+            preview,
+            action="override",
+            override_profile="medium",
+            override_image_id="evil.example/latest",
+        )
+    options = confirm(
+        runtime,
+        preview,
+        action="override",
+        override_profile="medium",
+        override_image_id="scipy-data-science",
+    )
+    target = spawner(options=options)
+    asyncio.run(runtime.pre_spawn(target))
+    assert target.cpu_limit == PROFILE_RESOURCES["medium"]["cpu_limit"]
+    assert target.image == runtime.images["scipy-data-science"]["reference"]
+    runtime.executor.shutdown()
+
+
+def test_options_form_fetches_server_endpoint_with_xsrf_and_no_client_rules():
+    runtime = preview_runtime()
+    rendered = options_form(runtime, "/hub/recommendation-preview")
+    assert 'fetch(__ENDPOINT__' not in rendered
+    assert 'fetch("/hub/recommendation-preview"' in rendered
+    assert "/hub/recommendation-preview" in rendered
+    assert "X-XSRFToken" in rendered
+    assert "recommendResource" not in rendered
+    assert "recommendImage" not in rendered
+    assert 'name="intent"' not in rendered
+    assert 'name="code_context"' not in rendered
+    runtime.executor.shutdown()
+
+
+def test_input_validation_and_html_serialization_are_bounded():
+    runtime = preview_runtime()
+    for value in ("bad", "1e309", -1, float("nan")):
+        with pytest.raises(ValueError, match="finite non-negative"):
+            issue(runtime, intent="x", dataset_size_gb=value, code_context="")
+    escaped = safe_escape_truncate("<script>alert(1)</script>&unfinished", 20)
+    assert "<script>" not in escaped
+    assert len(escaped) <= 20
+    runtime.executor.shutdown()
+
+
+def test_repository_contains_no_raw_notebooks():
+    assert not list(ROOT.rglob("*.ipynb"))

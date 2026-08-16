@@ -28,6 +28,7 @@ from .rule_based import DEFAULT_CATALOG_PATH
 
 BACKEND_NAME = "self_hosted_llm"
 OLLAMA_BACKEND_NAME = "self_hosted_local_ollama_llm"
+LEGACY_BACKEND_NAME = OLLAMA_BACKEND_NAME
 BACKEND_VERSION = "self-hosted-llm-v2"
 
 
@@ -41,6 +42,7 @@ MAX_RETRIES_ENV_VAR = "SELF_HOSTED_LLM_MAX_RETRIES"
 RETRY_BACKOFF_ENV_VAR = "SELF_HOSTED_LLM_RETRY_BACKOFF_SECONDS"
 TOTAL_TIMEOUT_ENV_VAR = "SELF_HOSTED_LLM_TOTAL_TIMEOUT"
 MAX_CONCURRENT_ENV_VAR = "SELF_HOSTED_LLM_MAX_CONCURRENT_RECOMMENDATIONS"
+ALLOW_INSECURE_HTTP_ENV_VAR = "SELF_HOSTED_LLM_ALLOW_INSECURE_HTTP"
 
 OLLAMA_ENDPOINT_ENV_VAR = "OLLAMA_ENDPOINT"
 OLLAMA_MODEL_ENV_VAR = "OLLAMA_MODEL"
@@ -114,8 +116,8 @@ class OllamaClient(OpenAICompatibleClient):
 class SelfHostedLLMConfig(ExternalLLMConfig):
     """Configuration for a locally managed Ollama or OpenAI-compatible inference API."""
 
-    # HTTP is allowed inside the local trust boundary.
-    _allow_api_key_over_http = True
+    # Plain HTTP is permitted only through the explicit trust-boundary opt-in.
+    _allow_api_key_over_http = False
 
     @classmethod
     def from_environ(
@@ -171,16 +173,23 @@ class SelfHostedLLMConfig(ExternalLLMConfig):
         )
         prompt_version = prompt_version.strip()
 
+        insecure_value = selected.get(ALLOW_INSECURE_HTTP_ENV_VAR, "false").strip().lower()
+        if insecure_value not in {"true", "false"}:
+            raise ValueError(
+                f"{ALLOW_INSECURE_HTTP_ENV_VAR} must be exactly true or false"
+            )
+
         return cls(
             endpoint=endpoint,
             model=model,
             timeout=timeout,
-            api_key=selected.get(API_KEY_ENV_VAR, ""),
+            api_key=selected.get(API_KEY_ENV_VAR, "").strip(),
             temperature=temperature,
             max_retries=max_retries,
             retry_backoff_seconds=retry_backoff_seconds,
             total_timeout=total_timeout,
             max_concurrent_recommendations=max_concurrent_recommendations,
+            allow_insecure_http=insecure_value == "true",
             prompt_version=prompt_version,
         )
 
@@ -224,6 +233,7 @@ class SelfHostedLLMRecommender(ExternalLLMRecommender):
 
 __all__ = [
     "API_KEY_ENV_VAR",
+    "ALLOW_INSECURE_HTTP_ENV_VAR",
     "BACKEND_NAME",
     "BACKEND_VERSION",
     "ENDPOINT_ENV_VAR",

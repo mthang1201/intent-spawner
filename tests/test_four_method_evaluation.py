@@ -445,7 +445,7 @@ def test_invalid_and_unavailable_model_handling_cases():
     request = RecommendationRequest(intent="Exploratory analysis", dataset_size_gb=0.1, code_context="import pandas")
 
     # Case 1: Insecure HTTP endpoint rejection without allow_insecure_http flag
-    with pytest.raises(ValueError, match="API keys require HTTPS"):
+    with pytest.raises(ValueError, match="require HTTPS"):
         ExternalLLMConfig(
             endpoint="http://api.example.com/v1",
             model="gemini-2.0-flash",
@@ -502,6 +502,7 @@ def test_invalid_and_unavailable_model_handling_cases():
         endpoint="http://127.0.0.1:9999/v1/chat/completions",
         model="llama3:latest",
         max_retries=0,
+        allow_insecure_http=True,
     )
     recommender_ollama_unavail = SelfHostedLLMRecommender(
         config=ollama_config,
@@ -518,6 +519,7 @@ def test_invalid_and_unavailable_model_handling_cases():
         endpoint="http://127.0.0.1:11434/v1/chat/completions",
         model="nonexistent-ollama-model",
         max_retries=0,
+        allow_insecure_http=True,
     )
     recommender_ollama_bad_model = SelfHostedLLMRecommender(
         config=ollama_config_bad_model,
@@ -643,7 +645,11 @@ def test_ollama_resource_overhead_representation():
     }
     transport = MockTransport(native_response)
     client = OllamaClient(endpoint="http://localhost:11434/api/chat", transport=transport)
-    config = SelfHostedLLMConfig(endpoint="http://localhost:11434/api/chat", model="llama3:latest")
+    config = SelfHostedLLMConfig(
+        endpoint="http://localhost:11434/api/chat",
+        model="llama3:latest",
+        allow_insecure_http=True,
+    )
     recommender = SelfHostedLLMRecommender(config=config, client=client)
 
     request = RecommendationRequest(intent="Test job", dataset_size_gb=0.1)
