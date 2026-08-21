@@ -46,3 +46,14 @@ Context_Aware_Profile_Selection_Extension_JupyterHub_*/
 .codex-tmp/
 .codex-work/
 assets/
+
+# Local AI development files
+AGENTS.md
+CLAUDE.md
+GEMINI.md
+.claude/
+.cursor/
+.windsurf/
+
+# Temporary PowerPoint review artifacts
+.tmp-ppt-review.*/
