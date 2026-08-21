@@ -51,6 +51,7 @@ assets/
 AGENTS.md
 CLAUDE.md
 GEMINI.md
+docs/BACKEND_CURRENT_STATE.md
 .claude/
 .cursor/
 .windsurf/
