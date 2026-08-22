@@ -1,0 +1,146 @@
+schema_version: p2-infeasible-supplement-v1.0.0
+dataset_id: p2-infeasible-and-constraint-diagnostics-2026-08-21
+frozen_at_utc: "2026-08-21T00:00:00Z"
+description: >-
+  Synthetic diagnostic requests authored to exercise explicit hard constraints,
+  infeasible-request detection, and unsupported-catalog behavior. These cases
+  supplement, but do not alter, the frozen protocol-v4 intent gold set.
+license: synthetic-authored-for-this-repository
+items:
+  - sample_id: p2-required-gpu-unavailable-en
+    workload_family: p2-required-gpu-unavailable
+    language: en
+    inputs:
+      intent: This workload requires a GPU device for CUDA training.
+      dataset_size_gb: 0.5
+      code_context_hints: ["import torch"]
+    gold:
+      request_feasible: false
+      preferred_candidate_id: null
+      acceptable_candidate_ids: []
+      required_image_capabilities: [pytorch]
+      allowed_profiles: [small, medium, large]
+      gpu_allowed: true
+      expected_extraction:
+        gpu_requirement: required
+        minimum_cpu_cores: null
+        minimum_memory_gb: null
+        required_libraries: [torch]
+    provenance:
+      label_basis: No catalog profile grants a GPU device.
+      adjudication_status: protocol_locked
+
+  - sample_id: p2-minimum-eight-cpu-en
+    workload_family: p2-minimum-eight-cpu
+    language: en
+    inputs:
+      intent: I need at least 8 CPU cores for this parallel simulation.
+      dataset_size_gb: 0.1
+      code_context_hints: []
+    gold:
+      request_feasible: false
+      preferred_candidate_id: null
+      acceptable_candidate_ids: []
+      required_image_capabilities: [python]
+      allowed_profiles: [small, medium, large]
+      gpu_allowed: false
+      expected_extraction:
+        gpu_requirement: unspecified
+        minimum_cpu_cores: 8.0
+        minimum_memory_gb: null
+        required_libraries: []
+    provenance:
+      label_basis: The largest catalog profile has a 2-core CPU limit.
+      adjudication_status: protocol_locked
+
+  - sample_id: p2-minimum-eight-memory-en
+    workload_family: p2-minimum-eight-memory
+    language: en
+    inputs:
+      intent: This analysis requires at least 8 GB memory.
+      dataset_size_gb: 1.0
+      code_context_hints: ["import pandas as pd"]
+    gold:
+      request_feasible: false
+      preferred_candidate_id: null
+      acceptable_candidate_ids: []
+      required_image_capabilities: [pandas]
+      allowed_profiles: [small, medium, large]
+      gpu_allowed: false
+      expected_extraction:
+        gpu_requirement: unspecified
+        minimum_cpu_cores: null
+        minimum_memory_gb: 8.0
+        required_libraries: [pandas]
+    provenance:
+      label_basis: The largest catalog profile has a 2 GiB memory limit.
+      adjudication_status: protocol_locked
+
+  - sample_id: p2-required-rapids-unsupported-en
+    workload_family: p2-required-rapids-unsupported
+    language: en
+    inputs:
+      intent: This notebook requires RAPIDS library for the data pipeline.
+      dataset_size_gb: 1.0
+      code_context_hints: []
+    gold:
+      request_feasible: false
+      preferred_candidate_id: null
+      acceptable_candidate_ids: []
+      required_image_capabilities: []
+      allowed_profiles: [small, medium, large]
+      gpu_allowed: true
+      expected_extraction:
+        gpu_requirement: unspecified
+        minimum_cpu_cores: null
+        minimum_memory_gb: null
+        required_libraries: [rapids]
+    provenance:
+      label_basis: RAPIDS is not present in the administrator image catalog.
+      adjudication_status: protocol_locked
+
+  - sample_id: p2-cpu-only-pandas-feasible-en
+    workload_family: p2-cpu-only-pandas-feasible
+    language: en
+    inputs:
+      intent: Analyze a moderate table with pandas without a GPU.
+      dataset_size_gb: 0.8
+      code_context_hints: ["import pandas as pd"]
+    gold:
+      request_feasible: true
+      preferred_candidate_id: medium-scipy-data-science
+      acceptable_candidate_ids: [medium-scipy-data-science, large-scipy-data-science]
+      required_image_capabilities: [pandas]
+      allowed_profiles: [medium, large]
+      gpu_allowed: false
+      expected_extraction:
+        gpu_requirement: forbidden
+        minimum_cpu_cores: null
+        minimum_memory_gb: null
+        required_libraries: [pandas]
+    provenance:
+      label_basis: SciPy image and Medium-or-Large profile satisfy the request.
+      adjudication_status: protocol_locked
+
+  - sample_id: p2-tensorflow-inference-feasible-en
+    workload_family: p2-tensorflow-inference-feasible
+    language: en
+    inputs:
+      intent: Run TensorFlow model inference on CPU with a moderate batch.
+      dataset_size_gb: 0.3
+      code_context_hints: ["import tensorflow as tf"]
+    gold:
+      request_feasible: true
+      preferred_candidate_id: medium-tensorflow-deep-learning
+      acceptable_candidate_ids: [medium-tensorflow-deep-learning, large-tensorflow-deep-learning]
+      required_image_capabilities: [tensorflow]
+      allowed_profiles: [medium, large]
+      gpu_allowed: false
+      expected_extraction:
+        gpu_requirement: unspecified
+        minimum_cpu_cores: null
+        minimum_memory_gb: null
+        required_libraries: [tensorflow]
+    provenance:
+      label_basis: TensorFlow image and Medium-or-Large profile satisfy CPU inference.
+      adjudication_status: protocol_locked

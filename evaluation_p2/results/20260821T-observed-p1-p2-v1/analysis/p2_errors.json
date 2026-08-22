@@ -1,0 +1,676 @@
+{
+  "cases": [
+    {
+      "acceptable_feasible": true,
+      "acceptable_retrieved": true,
+      "category": "no_error",
+      "extraction_mismatch": false,
+      "fallback_category": null,
+      "request_feasible": true,
+      "sample_id": "basic-python-canonical-en",
+      "top1_acceptable": true
+    },
+    {
+      "acceptable_feasible": true,
+      "acceptable_retrieved": true,
+      "category": "ranking_error",
+      "extraction_mismatch": false,
+      "fallback_category": null,
+      "request_feasible": true,
+      "sample_id": "basic-python-paraphrase-en",
+      "top1_acceptable": false
+    },
+    {
+      "acceptable_feasible": true,
+      "acceptable_retrieved": true,
+      "category": "ranking_error",
+      "extraction_mismatch": false,
+      "fallback_category": null,
+      "request_feasible": true,
+      "sample_id": "basic-python-vi",
+      "top1_acceptable": false
+    },
+    {
+      "acceptable_feasible": true,
+      "acceptable_retrieved": true,
+      "category": "no_error",
+      "extraction_mismatch": false,
+      "fallback_category": null,
+      "request_feasible": true,
+      "sample_id": "pandas-transform-canonical-en",
+      "top1_acceptable": true
+    },
+    {
+      "acceptable_feasible": true,
+      "acceptable_retrieved": true,
+      "category": "no_error",
+      "extraction_mismatch": false,
+      "fallback_category": null,
+      "request_feasible": true,
+      "sample_id": "pandas-transform-paraphrase-en",
+      "top1_acceptable": true
+    },
+    {
+      "acceptable_feasible": true,
+      "acceptable_retrieved": true,
+      "category": "no_error",
+      "extraction_mismatch": false,
+      "fallback_category": null,
+      "request_feasible": true,
+      "sample_id": "pandas-transform-vi",
+      "top1_acceptable": true
+    },
+    {
+      "acceptable_feasible": true,
+      "acceptable_retrieved": true,
+      "category": "ranking_error",
+      "extraction_mismatch": false,
+      "fallback_category": null,
+      "request_feasible": true,
+      "sample_id": "sklearn-small-canonical-en",
+      "top1_acceptable": false
+    },
+    {
+      "acceptable_feasible": true,
+      "acceptable_retrieved": true,
+      "category": "ranking_error",
+      "extraction_mismatch": false,
+      "fallback_category": null,
+      "request_feasible": true,
+      "sample_id": "sklearn-small-paraphrase-en",
+      "top1_acceptable": false
+    },
+    {
+      "acceptable_feasible": true,
+      "acceptable_retrieved": true,
+      "category": "no_error",
+      "extraction_mismatch": false,
+      "fallback_category": null,
+      "request_feasible": true,
+      "sample_id": "sklearn-small-vi",
+      "top1_acceptable": true
+    },
+    {
+      "acceptable_feasible": true,
+      "acceptable_retrieved": true,
+      "category": "ranking_error",
+      "extraction_mismatch": false,
+      "fallback_category": null,
+      "request_feasible": true,
+      "sample_id": "threshold-below-canonical-en",
+      "top1_acceptable": false
+    },
+    {
+      "acceptable_feasible": true,
+      "acceptable_retrieved": true,
+      "category": "no_error",
+      "extraction_mismatch": false,
+      "fallback_category": null,
+      "request_feasible": true,
+      "sample_id": "threshold-below-paraphrase-en",
+      "top1_acceptable": true
+    },
+    {
+      "acceptable_feasible": true,
+      "acceptable_retrieved": true,
+      "category": "ranking_error",
+      "extraction_mismatch": false,
+      "fallback_category": null,
+      "request_feasible": true,
+      "sample_id": "threshold-below-vi",
+      "top1_acceptable": false
+    },
+    {
+      "acceptable_feasible": true,
+      "acceptable_retrieved": true,
+      "category": "no_error",
+      "extraction_mismatch": false,
+      "fallback_category": null,
+      "request_feasible": true,
+      "sample_id": "small-csv-canonical-en",
+      "top1_acceptable": true
+    },
+    {
+      "acceptable_feasible": true,
+      "acceptable_retrieved": true,
+      "category": "ranking_error",
+      "extraction_mismatch": false,
+      "fallback_category": null,
+      "request_feasible": true,
+      "sample_id": "small-csv-paraphrase-en",
+      "top1_acceptable": false
+    },
+    {
+      "acceptable_feasible": true,
+      "acceptable_retrieved": true,
+      "category": "ranking_error",
+      "extraction_mismatch": false,
+      "fallback_category": null,
+      "request_feasible": true,
+      "sample_id": "small-csv-vi",
+      "top1_acceptable": false
+    },
+    {
+      "acceptable_feasible": true,
+      "acceptable_retrieved": true,
+      "category": "no_error",
+      "extraction_mismatch": false,
+      "fallback_category": null,
+      "request_feasible": true,
+      "sample_id": "dataframe-join-canonical-en",
+      "top1_acceptable": true
+    },
+    {
+      "acceptable_feasible": true,
+      "acceptable_retrieved": true,
+      "category": "no_error",
+      "extraction_mismatch": false,
+      "fallback_category": null,
+      "request_feasible": true,
+      "sample_id": "dataframe-join-paraphrase-en",
+      "top1_acceptable": true
+    },
+    {
+      "acceptable_feasible": true,
+      "acceptable_retrieved": true,
+      "category": "no_error",
+      "extraction_mismatch": false,
+      "fallback_category": null,
+      "request_feasible": true,
+      "sample_id": "dataframe-join-vi",
+      "top1_acceptable": true
+    },
+    {
+      "acceptable_feasible": true,
+      "acceptable_retrieved": true,
+      "category": "no_error",
+      "extraction_mismatch": false,
+      "fallback_category": null,
+      "request_feasible": true,
+      "sample_id": "large-aggregation-canonical-en",
+      "top1_acceptable": true
+    },
+    {
+      "acceptable_feasible": true,
+      "acceptable_retrieved": true,
+      "category": "no_error",
+      "extraction_mismatch": false,
+      "fallback_category": null,
+      "request_feasible": true,
+      "sample_id": "large-aggregation-paraphrase-en",
+      "top1_acceptable": true
+    },
+    {
+      "acceptable_feasible": true,
+      "acceptable_retrieved": true,
+      "category": "no_error",
+      "extraction_mismatch": false,
+      "fallback_category": null,
+      "request_feasible": true,
+      "sample_id": "large-aggregation-vi",
+      "top1_acceptable": true
+    },
+    {
+      "acceptable_feasible": true,
+      "acceptable_retrieved": true,
+      "category": "ranking_error",
+      "extraction_mismatch": false,
+      "fallback_category": null,
+      "request_feasible": true,
+      "sample_id": "sklearn-medium-canonical-en",
+      "top1_acceptable": false
+    },
+    {
+      "acceptable_feasible": true,
+      "acceptable_retrieved": true,
+      "category": "no_error",
+      "extraction_mismatch": false,
+      "fallback_category": null,
+      "request_feasible": true,
+      "sample_id": "sklearn-medium-paraphrase-en",
+      "top1_acceptable": true
+    },
+    {
+      "acceptable_feasible": true,
+      "acceptable_retrieved": true,
+      "category": "no_error",
+      "extraction_mismatch": false,
+      "fallback_category": null,
+      "request_feasible": true,
+      "sample_id": "sklearn-medium-vi",
+      "top1_acceptable": true
+    },
+    {
+      "acceptable_feasible": true,
+      "acceptable_retrieved": true,
+      "category": "no_error",
+      "extraction_mismatch": false,
+      "fallback_category": null,
+      "request_feasible": true,
+      "sample_id": "pytorch-training-canonical-en",
+      "top1_acceptable": true
+    },
+    {
+      "acceptable_feasible": true,
+      "acceptable_retrieved": true,
+      "category": "no_error",
+      "extraction_mismatch": false,
+      "fallback_category": null,
+      "request_feasible": true,
+      "sample_id": "pytorch-training-paraphrase-en",
+      "top1_acceptable": true
+    },
+    {
+      "acceptable_feasible": true,
+      "acceptable_retrieved": true,
+      "category": "no_error",
+      "extraction_mismatch": false,
+      "fallback_category": null,
+      "request_feasible": true,
+      "sample_id": "pytorch-training-vi",
+      "top1_acceptable": true
+    },
+    {
+      "acceptable_feasible": true,
+      "acceptable_retrieved": true,
+      "category": "no_error",
+      "extraction_mismatch": false,
+      "fallback_category": null,
+      "request_feasible": true,
+      "sample_id": "tensorflow-training-canonical-en",
+      "top1_acceptable": true
+    },
+    {
+      "acceptable_feasible": true,
+      "acceptable_retrieved": true,
+      "category": "ranking_error",
+      "extraction_mismatch": false,
+      "fallback_category": null,
+      "request_feasible": true,
+      "sample_id": "tensorflow-training-paraphrase-en",
+      "top1_acceptable": false
+    },
+    {
+      "acceptable_feasible": true,
+      "acceptable_retrieved": true,
+      "category": "no_error",
+      "extraction_mismatch": false,
+      "fallback_category": null,
+      "request_feasible": true,
+      "sample_id": "tensorflow-training-vi",
+      "top1_acceptable": true
+    },
+    {
+      "acceptable_feasible": true,
+      "acceptable_retrieved": true,
+      "category": "no_error",
+      "extraction_mismatch": false,
+      "fallback_category": null,
+      "request_feasible": true,
+      "sample_id": "conflicting-signal-canonical-en",
+      "top1_acceptable": true
+    },
+    {
+      "acceptable_feasible": true,
+      "acceptable_retrieved": true,
+      "category": "no_error",
+      "extraction_mismatch": false,
+      "fallback_category": null,
+      "request_feasible": true,
+      "sample_id": "conflicting-signal-paraphrase-en",
+      "top1_acceptable": true
+    },
+    {
+      "acceptable_feasible": true,
+      "acceptable_retrieved": true,
+      "category": "no_error",
+      "extraction_mismatch": false,
+      "fallback_category": null,
+      "request_feasible": true,
+      "sample_id": "conflicting-signal-vi",
+      "top1_acceptable": true
+    },
+    {
+      "acceptable_feasible": true,
+      "acceptable_retrieved": true,
+      "category": "ranking_error",
+      "extraction_mismatch": false,
+      "fallback_category": null,
+      "request_feasible": true,
+      "sample_id": "gpu-policy-canonical-en",
+      "top1_acceptable": false
+    },
+    {
+      "acceptable_feasible": true,
+      "acceptable_retrieved": true,
+      "category": "ranking_error",
+      "extraction_mismatch": false,
+      "fallback_category": null,
+      "request_feasible": true,
+      "sample_id": "gpu-policy-paraphrase-en",
+      "top1_acceptable": false
+    },
+    {
+      "acceptable_feasible": true,
+      "acceptable_retrieved": true,
+      "category": "ranking_error",
+      "extraction_mismatch": false,
+      "fallback_category": null,
+      "request_feasible": true,
+      "sample_id": "gpu-policy-vi",
+      "top1_acceptable": false
+    },
+    {
+      "acceptable_feasible": true,
+      "acceptable_retrieved": true,
+      "category": "no_error",
+      "extraction_mismatch": false,
+      "fallback_category": null,
+      "request_feasible": true,
+      "sample_id": "small-visualization-en",
+      "top1_acceptable": true
+    },
+    {
+      "acceptable_feasible": true,
+      "acceptable_retrieved": true,
+      "category": "ranking_error",
+      "extraction_mismatch": false,
+      "fallback_category": null,
+      "request_feasible": true,
+      "sample_id": "small-visualization-vi",
+      "top1_acceptable": false
+    },
+    {
+      "acceptable_feasible": true,
+      "acceptable_retrieved": true,
+      "category": "no_error",
+      "extraction_mismatch": false,
+      "fallback_category": null,
+      "request_feasible": true,
+      "sample_id": "numpy-numerical-en",
+      "top1_acceptable": true
+    },
+    {
+      "acceptable_feasible": true,
+      "acceptable_retrieved": true,
+      "category": "no_error",
+      "extraction_mismatch": false,
+      "fallback_category": null,
+      "request_feasible": true,
+      "sample_id": "numpy-numerical-vi",
+      "top1_acceptable": true
+    },
+    {
+      "acceptable_feasible": true,
+      "acceptable_retrieved": true,
+      "category": "no_error",
+      "extraction_mismatch": false,
+      "fallback_category": null,
+      "request_feasible": true,
+      "sample_id": "parquet-medium-en",
+      "top1_acceptable": true
+    },
+    {
+      "acceptable_feasible": true,
+      "acceptable_retrieved": true,
+      "category": "no_error",
+      "extraction_mismatch": false,
+      "fallback_category": null,
+      "request_feasible": true,
+      "sample_id": "parquet-medium-vi",
+      "top1_acceptable": true
+    },
+    {
+      "acceptable_feasible": false,
+      "acceptable_retrieved": true,
+      "category": "constraint_error",
+      "extraction_mismatch": false,
+      "fallback_category": "unsupported_catalog",
+      "request_feasible": true,
+      "sample_id": "cpu-checksum-en",
+      "top1_acceptable": false
+    },
+    {
+      "acceptable_feasible": false,
+      "acceptable_retrieved": true,
+      "category": "constraint_error",
+      "extraction_mismatch": false,
+      "fallback_category": "unsupported_catalog",
+      "request_feasible": true,
+      "sample_id": "cpu-checksum-vi",
+      "top1_acceptable": false
+    },
+    {
+      "acceptable_feasible": true,
+      "acceptable_retrieved": true,
+      "category": "ranking_error",
+      "extraction_mismatch": false,
+      "fallback_category": null,
+      "request_feasible": true,
+      "sample_id": "noisy-overstated-size-en",
+      "top1_acceptable": false
+    },
+    {
+      "acceptable_feasible": true,
+      "acceptable_retrieved": true,
+      "category": "ranking_error",
+      "extraction_mismatch": false,
+      "fallback_category": null,
+      "request_feasible": true,
+      "sample_id": "noisy-overstated-size-vi",
+      "top1_acceptable": false
+    },
+    {
+      "acceptable_feasible": true,
+      "acceptable_retrieved": true,
+      "category": "ranking_error",
+      "extraction_mismatch": false,
+      "fallback_category": null,
+      "request_feasible": true,
+      "sample_id": "hidden-large-demand-en",
+      "top1_acceptable": false
+    },
+    {
+      "acceptable_feasible": true,
+      "acceptable_retrieved": true,
+      "category": "ranking_error",
+      "extraction_mismatch": false,
+      "fallback_category": null,
+      "request_feasible": true,
+      "sample_id": "hidden-large-demand-vi",
+      "top1_acceptable": false
+    },
+    {
+      "acceptable_feasible": true,
+      "acceptable_retrieved": true,
+      "category": "no_error",
+      "extraction_mismatch": false,
+      "fallback_category": null,
+      "request_feasible": true,
+      "sample_id": "streaming-large-source-en",
+      "top1_acceptable": true
+    },
+    {
+      "acceptable_feasible": true,
+      "acceptable_retrieved": true,
+      "category": "no_error",
+      "extraction_mismatch": false,
+      "fallback_category": null,
+      "request_feasible": true,
+      "sample_id": "streaming-large-source-vi",
+      "top1_acceptable": true
+    },
+    {
+      "acceptable_feasible": true,
+      "acceptable_retrieved": true,
+      "category": "no_error",
+      "extraction_mismatch": false,
+      "fallback_category": null,
+      "request_feasible": true,
+      "sample_id": "scipy-optimization-en",
+      "top1_acceptable": true
+    },
+    {
+      "acceptable_feasible": true,
+      "acceptable_retrieved": true,
+      "category": "no_error",
+      "extraction_mismatch": false,
+      "fallback_category": null,
+      "request_feasible": true,
+      "sample_id": "scipy-optimization-vi",
+      "top1_acceptable": true
+    },
+    {
+      "acceptable_feasible": true,
+      "acceptable_retrieved": true,
+      "category": "no_error",
+      "extraction_mismatch": false,
+      "fallback_category": null,
+      "request_feasible": true,
+      "sample_id": "tensorflow-policy-en",
+      "top1_acceptable": true
+    },
+    {
+      "acceptable_feasible": true,
+      "acceptable_retrieved": true,
+      "category": "no_error",
+      "extraction_mismatch": false,
+      "fallback_category": null,
+      "request_feasible": true,
+      "sample_id": "tensorflow-policy-vi",
+      "top1_acceptable": true
+    },
+    {
+      "acceptable_feasible": true,
+      "acceptable_retrieved": true,
+      "category": "no_error",
+      "extraction_mismatch": false,
+      "fallback_category": null,
+      "request_feasible": true,
+      "sample_id": "code-only-pandas-en",
+      "top1_acceptable": true
+    },
+    {
+      "acceptable_feasible": true,
+      "acceptable_retrieved": true,
+      "category": "no_error",
+      "extraction_mismatch": false,
+      "fallback_category": null,
+      "request_feasible": true,
+      "sample_id": "code-only-pandas-vi",
+      "top1_acceptable": true
+    },
+    {
+      "acceptable_feasible": true,
+      "acceptable_retrieved": true,
+      "category": "no_error",
+      "extraction_mismatch": false,
+      "fallback_category": null,
+      "request_feasible": true,
+      "sample_id": "code-only-training-en",
+      "top1_acceptable": true
+    },
+    {
+      "acceptable_feasible": true,
+      "acceptable_retrieved": true,
+      "category": "no_error",
+      "extraction_mismatch": false,
+      "fallback_category": null,
+      "request_feasible": true,
+      "sample_id": "code-only-training-vi",
+      "top1_acceptable": true
+    },
+    {
+      "acceptable_feasible": true,
+      "acceptable_retrieved": true,
+      "category": "no_error",
+      "extraction_mismatch": false,
+      "fallback_category": null,
+      "request_feasible": true,
+      "sample_id": "medium-visualization-en",
+      "top1_acceptable": true
+    },
+    {
+      "acceptable_feasible": true,
+      "acceptable_retrieved": true,
+      "category": "no_error",
+      "extraction_mismatch": false,
+      "fallback_category": null,
+      "request_feasible": true,
+      "sample_id": "medium-visualization-vi",
+      "top1_acceptable": true
+    },
+    {
+      "acceptable_feasible": false,
+      "acceptable_retrieved": false,
+      "category": "unsupported_catalog",
+      "extraction_mismatch": false,
+      "fallback_category": "unsupported_catalog",
+      "request_feasible": false,
+      "sample_id": "p2-required-gpu-unavailable-en",
+      "top1_acceptable": false
+    },
+    {
+      "acceptable_feasible": false,
+      "acceptable_retrieved": false,
+      "category": "unsupported_catalog",
+      "extraction_mismatch": false,
+      "fallback_category": "no_feasible_candidate",
+      "request_feasible": false,
+      "sample_id": "p2-minimum-eight-cpu-en",
+      "top1_acceptable": false
+    },
+    {
+      "acceptable_feasible": false,
+      "acceptable_retrieved": false,
+      "category": "unsupported_catalog",
+      "extraction_mismatch": false,
+      "fallback_category": "no_feasible_candidate",
+      "request_feasible": false,
+      "sample_id": "p2-minimum-eight-memory-en",
+      "top1_acceptable": false
+    },
+    {
+      "acceptable_feasible": false,
+      "acceptable_retrieved": false,
+      "category": "unsupported_catalog",
+      "extraction_mismatch": false,
+      "fallback_category": "unsupported_catalog",
+      "request_feasible": false,
+      "sample_id": "p2-required-rapids-unsupported-en",
+      "top1_acceptable": false
+    },
+    {
+      "acceptable_feasible": true,
+      "acceptable_retrieved": true,
+      "category": "no_error",
+      "extraction_mismatch": false,
+      "fallback_category": null,
+      "request_feasible": true,
+      "sample_id": "p2-cpu-only-pandas-feasible-en",
+      "top1_acceptable": true
+    },
+    {
+      "acceptable_feasible": true,
+      "acceptable_retrieved": true,
+      "category": "no_error",
+      "extraction_mismatch": false,
+      "fallback_category": null,
+      "request_feasible": true,
+      "sample_id": "p2-tensorflow-inference-feasible-en",
+      "top1_acceptable": true
+    }
+  ],
+  "categories": {
+    "constraint_error": 2,
+    "extraction_error": 0,
+    "infrastructure_provider_failure": 0,
+    "ranking_error": 18,
+    "retrieval_miss": 0,
+    "unsupported_catalog": 4
+  },
+  "dataset_sha256": "6c92e7ecc4c7de5cf8de0cc514d0e12801b97582b89c93c330f495dc012741e9",
+  "no_error": 42,
+  "run_id": "20260821T-observed-p1-p2-v1",
+  "schema_version": "p2-error-categorization-v1.0.0"
+}
