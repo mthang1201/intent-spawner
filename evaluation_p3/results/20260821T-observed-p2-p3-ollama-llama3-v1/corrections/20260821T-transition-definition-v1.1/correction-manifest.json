@@ -1,0 +1,14 @@
+{
+  "correction_id": "20260821T-transition-definition-v1.1",
+  "created_at_utc": "2026-08-21T09:35:57.245290Z",
+  "dataset_sha256": "6c92e7ecc4c7de5cf8de0cc514d0e12801b97582b89c93c330f495dc012741e9",
+  "error_transitions_path": "error_transitions.json",
+  "metrics_path": "metrics.json",
+  "paired_changes_path": "paired_changes.json",
+  "reason": "The original v1.0 transition analysis treated four correctly detected infeasible queries as wrong because their acceptable-candidate sets are empty. Version 1.1 defines query correctness as acceptable Top-1 for feasible queries and correct infeasible detection without reranking for infeasible queries. Raw predictions are unchanged.",
+  "schema_version": "p2-p3-analysis-correction-v1.0.0",
+  "source_manifest_sha256": "86b3c276549f688755cb013edc70803495a63dec6fc573492897c44d1ff0b4ec",
+  "source_raw_predictions_sha256": "581388c1e5fd144d10791ac9ef5c191cc0e4a7af9c1257d7575239e4a535de95",
+  "source_raw_predictions_unchanged": true,
+  "source_run_id": "20260821T-observed-p2-p3-ollama-llama3-v1"
+}
