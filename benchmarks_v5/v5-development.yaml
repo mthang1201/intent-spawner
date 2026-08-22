@@ -1,0 +1,658 @@
+schema_version: protocol-v5-split-bundle-v1.0.0
+split_manifest:
+  dataset_id: protocol-v5-development-2026-08-22
+  split_id: v5-development
+  role: development
+  family_ids:
+  - basic-python
+  - p2-cpu-only-pandas-feasible
+  - p2-minimum-eight-cpu
+  - p2-minimum-eight-memory
+  - p2-required-gpu-unavailable
+  - p2-required-rapids-unsupported
+  - p2-tensorflow-inference-feasible
+  - pandas-transform
+  - sklearn-small
+  - threshold-below
+  case_count: 18
+  family_count: 10
+  checksum: 18894b73ec98d895348498bf6b1c4dd4d2dc6004437202bd8b93c17d09b0dc0b
+  creation_metadata:
+    created_at_utc: '2026-08-22T00:00:00Z'
+    created_by: protocol-v5-experiment-engineering
+  freeze_metadata:
+    frozen_at_utc: '2026-08-22T00:00:00Z'
+    frozen_by: protocol-v5-experiment-engineering
+cases:
+- case_id: basic-python-canonical-en
+  family_id: basic-python
+  variant_id: canonical
+  language: en
+  prompt: I only need a notebook for a few basic Python calculations.
+  inputs:
+    dataset_size_gb: 0.01
+    code_context_hints: []
+  gold:
+    request_feasible: true
+    preferred_candidate_id: small-minimal-python
+    acceptable_candidate_ids:
+    - small-minimal-python
+    required_image_capabilities:
+    - python
+    allowed_profiles:
+    - small
+    - medium
+    - large
+    gpu_allowed: false
+    expected_extraction: null
+  source_provenance:
+    source_dataset_id: intent-gold-en-vi-2026-08-08
+    source_schema_version: intent-gold-v4.0.0
+    source_case_id: basic-python-canonical-en
+    source_split: development
+    evidence_classification: historical_formative_development_only
+    original_provenance:
+      resource_label_basis: controlled light-workload envelope and smallest sufficient profile
+      image_label_basis: Python-only capability requirement
+      adjudication_status: protocol_locked
+      evidence_ids:
+      - benchmarks/workloads.yaml:light_basic_python
+      - benchmarks/workloads-v3.yaml:h01_small_stream
+- case_id: basic-python-paraphrase-en
+  family_id: basic-python
+  variant_id: paraphrase
+  language: en
+  prompt: Give me a lightweight session to check some arithmetic and short scripts.
+  inputs:
+    dataset_size_gb: 0.01
+    code_context_hints: []
+  gold:
+    request_feasible: true
+    preferred_candidate_id: small-minimal-python
+    acceptable_candidate_ids:
+    - small-minimal-python
+    required_image_capabilities:
+    - python
+    allowed_profiles:
+    - small
+    - medium
+    - large
+    gpu_allowed: false
+    expected_extraction: null
+  source_provenance:
+    source_dataset_id: intent-gold-en-vi-2026-08-08
+    source_schema_version: intent-gold-v4.0.0
+    source_case_id: basic-python-paraphrase-en
+    source_split: development
+    evidence_classification: historical_formative_development_only
+    original_provenance:
+      resource_label_basis: controlled light-workload envelope and smallest sufficient profile
+      image_label_basis: Python-only capability requirement
+      adjudication_status: protocol_locked
+      evidence_ids:
+      - benchmarks/workloads.yaml:light_basic_python
+      - benchmarks/workloads-v3.yaml:h01_small_stream
+- case_id: basic-python-vi
+  family_id: basic-python
+  variant_id: vietnamese
+  language: vi
+  prompt: Tôi chỉ cần chạy vài phép tính và đoạn mã Python ngắn.
+  inputs:
+    dataset_size_gb: 0.01
+    code_context_hints: []
+  gold:
+    request_feasible: true
+    preferred_candidate_id: small-minimal-python
+    acceptable_candidate_ids:
+    - small-minimal-python
+    required_image_capabilities:
+    - python
+    allowed_profiles:
+    - small
+    - medium
+    - large
+    gpu_allowed: false
+    expected_extraction: null
+  source_provenance:
+    source_dataset_id: intent-gold-en-vi-2026-08-08
+    source_schema_version: intent-gold-v4.0.0
+    source_case_id: basic-python-vi
+    source_split: development
+    evidence_classification: historical_formative_development_only
+    original_provenance:
+      resource_label_basis: controlled light-workload envelope and smallest sufficient profile
+      image_label_basis: Python-only capability requirement
+      adjudication_status: protocol_locked
+      evidence_ids:
+      - benchmarks/workloads.yaml:light_basic_python
+      - benchmarks/workloads-v3.yaml:h01_small_stream
+- case_id: pandas-transform-canonical-en
+  family_id: pandas-transform
+  variant_id: canonical
+  language: en
+  prompt: Clean and transform a medium CSV using pandas.
+  inputs:
+    dataset_size_gb: 0.8
+    code_context_hints:
+    - import pandas as pd
+    - df = pd.read_csv('input.csv')
+  gold:
+    request_feasible: true
+    preferred_candidate_id: medium-scipy-data-science
+    acceptable_candidate_ids:
+    - large-scipy-data-science
+    - medium-scipy-data-science
+    required_image_capabilities:
+    - pandas
+    allowed_profiles:
+    - small
+    - medium
+    - large
+    gpu_allowed: false
+    expected_extraction: null
+  source_provenance:
+    source_dataset_id: intent-gold-en-vi-2026-08-08
+    source_schema_version: intent-gold-v4.0.0
+    source_case_id: pandas-transform-canonical-en
+    source_split: development
+    evidence_classification: historical_formative_development_only
+    original_provenance:
+      resource_label_basis: medium tabular workload envelope with Large accepted conservatively
+      image_label_basis: explicit pandas import requires the data-science image
+      adjudication_status: protocol_locked
+      evidence_ids:
+      - benchmarks/workloads.yaml:data_pandas_read_transform
+      - benchmarks/workloads-v3.yaml:h02_medium_size_signal
+- case_id: pandas-transform-paraphrase-en
+  family_id: pandas-transform
+  variant_id: paraphrase
+  language: en
+  prompt: Prepare roughly 800 MB of table data and fix column types.
+  inputs:
+    dataset_size_gb: 0.8
+    code_context_hints:
+    - import pandas as pd
+    - 'frame.astype({''year'': ''int64''})'
+  gold:
+    request_feasible: true
+    preferred_candidate_id: medium-scipy-data-science
+    acceptable_candidate_ids:
+    - large-scipy-data-science
+    - medium-scipy-data-science
+    required_image_capabilities:
+    - pandas
+    allowed_profiles:
+    - small
+    - medium
+    - large
+    gpu_allowed: false
+    expected_extraction: null
+  source_provenance:
+    source_dataset_id: intent-gold-en-vi-2026-08-08
+    source_schema_version: intent-gold-v4.0.0
+    source_case_id: pandas-transform-paraphrase-en
+    source_split: development
+    evidence_classification: historical_formative_development_only
+    original_provenance:
+      resource_label_basis: medium tabular workload envelope with Large accepted conservatively
+      image_label_basis: explicit pandas import requires the data-science image
+      adjudication_status: protocol_locked
+      evidence_ids:
+      - benchmarks/workloads.yaml:data_pandas_read_transform
+      - benchmarks/workloads-v3.yaml:h02_medium_size_signal
+- case_id: pandas-transform-vi
+  family_id: pandas-transform
+  variant_id: vietnamese
+  language: vi
+  prompt: Làm sạch và biến đổi tệp CSV khoảng 0,8 GB bằng pandas.
+  inputs:
+    dataset_size_gb: 0.8
+    code_context_hints:
+    - import pandas as pd
+    - df = pd.read_csv('input.csv')
+  gold:
+    request_feasible: true
+    preferred_candidate_id: medium-scipy-data-science
+    acceptable_candidate_ids:
+    - large-scipy-data-science
+    - medium-scipy-data-science
+    required_image_capabilities:
+    - pandas
+    allowed_profiles:
+    - small
+    - medium
+    - large
+    gpu_allowed: false
+    expected_extraction: null
+  source_provenance:
+    source_dataset_id: intent-gold-en-vi-2026-08-08
+    source_schema_version: intent-gold-v4.0.0
+    source_case_id: pandas-transform-vi
+    source_split: development
+    evidence_classification: historical_formative_development_only
+    original_provenance:
+      resource_label_basis: medium tabular workload envelope with Large accepted conservatively
+      image_label_basis: explicit pandas import requires the data-science image
+      adjudication_status: protocol_locked
+      evidence_ids:
+      - benchmarks/workloads.yaml:data_pandas_read_transform
+      - benchmarks/workloads-v3.yaml:h02_medium_size_signal
+- case_id: sklearn-small-canonical-en
+  family_id: sklearn-small
+  variant_id: canonical
+  language: en
+  prompt: Fit a small scikit-learn classifier on generated data.
+  inputs:
+    dataset_size_gb: 0.2
+    code_context_hints:
+    - from sklearn.linear_model import LogisticRegression
+    - model.fit(X, y)
+  gold:
+    request_feasible: true
+    preferred_candidate_id: medium-scipy-data-science
+    acceptable_candidate_ids:
+    - large-scipy-data-science
+    - medium-scipy-data-science
+    required_image_capabilities:
+    - scikit-learn
+    allowed_profiles:
+    - small
+    - medium
+    - large
+    gpu_allowed: false
+    expected_extraction: null
+  source_provenance:
+    source_dataset_id: intent-gold-en-vi-2026-08-08
+    source_schema_version: intent-gold-v4.0.0
+    source_case_id: sklearn-small-canonical-en
+    source_split: development
+    evidence_classification: historical_formative_development_only
+    original_provenance:
+      resource_label_basis: small CPU model fit requires Medium; Large is safe but not preferred
+      image_label_basis: explicit scikit-learn import
+      adjudication_status: protocol_locked
+      evidence_ids:
+      - benchmarks/workloads.yaml:ml_sklearn_fit_small
+- case_id: sklearn-small-paraphrase-en
+  family_id: sklearn-small
+  variant_id: paraphrase
+  language: en
+  prompt: Train a toy logistic model; the feature matrix is small.
+  inputs:
+    dataset_size_gb: 0.2
+    code_context_hints:
+    - from sklearn.linear_model import LogisticRegression
+    - classifier.fit(features, labels)
+  gold:
+    request_feasible: true
+    preferred_candidate_id: medium-scipy-data-science
+    acceptable_candidate_ids:
+    - large-scipy-data-science
+    - medium-scipy-data-science
+    required_image_capabilities:
+    - scikit-learn
+    allowed_profiles:
+    - small
+    - medium
+    - large
+    gpu_allowed: false
+    expected_extraction: null
+  source_provenance:
+    source_dataset_id: intent-gold-en-vi-2026-08-08
+    source_schema_version: intent-gold-v4.0.0
+    source_case_id: sklearn-small-paraphrase-en
+    source_split: development
+    evidence_classification: historical_formative_development_only
+    original_provenance:
+      resource_label_basis: small CPU model fit requires Medium; Large is safe but not preferred
+      image_label_basis: explicit scikit-learn import
+      adjudication_status: protocol_locked
+      evidence_ids:
+      - benchmarks/workloads.yaml:ml_sklearn_fit_small
+- case_id: sklearn-small-vi
+  family_id: sklearn-small
+  variant_id: vietnamese
+  language: vi
+  prompt: Huấn luyện mô hình phân loại scikit-learn nhỏ trên dữ liệu sinh tổng hợp.
+  inputs:
+    dataset_size_gb: 0.2
+    code_context_hints:
+    - from sklearn.linear_model import LogisticRegression
+    - model.fit(X, y)
+  gold:
+    request_feasible: true
+    preferred_candidate_id: medium-scipy-data-science
+    acceptable_candidate_ids:
+    - large-scipy-data-science
+    - medium-scipy-data-science
+    required_image_capabilities:
+    - scikit-learn
+    allowed_profiles:
+    - small
+    - medium
+    - large
+    gpu_allowed: false
+    expected_extraction: null
+  source_provenance:
+    source_dataset_id: intent-gold-en-vi-2026-08-08
+    source_schema_version: intent-gold-v4.0.0
+    source_case_id: sklearn-small-vi
+    source_split: development
+    evidence_classification: historical_formative_development_only
+    original_provenance:
+      resource_label_basis: small CPU model fit requires Medium; Large is safe but not preferred
+      image_label_basis: explicit scikit-learn import
+      adjudication_status: protocol_locked
+      evidence_ids:
+      - benchmarks/workloads.yaml:ml_sklearn_fit_small
+- case_id: threshold-below-canonical-en
+  family_id: threshold-below
+  variant_id: canonical
+  language: en
+  prompt: Briefly inspect a generated object; the exact next step is unclear.
+  inputs:
+    dataset_size_gb: 0.49
+    code_context_hints: []
+  gold:
+    request_feasible: true
+    preferred_candidate_id: small-minimal-python
+    acceptable_candidate_ids:
+    - medium-minimal-python
+    - small-minimal-python
+    required_image_capabilities:
+    - python
+    allowed_profiles:
+    - small
+    - medium
+    - large
+    gpu_allowed: false
+    expected_extraction: null
+  source_provenance:
+    source_dataset_id: intent-gold-en-vi-2026-08-08
+    source_schema_version: intent-gold-v4.0.0
+    source_case_id: threshold-below-canonical-en
+    source_split: development
+    evidence_classification: historical_formative_development_only
+    original_provenance:
+      resource_label_basis: pre-specified below-0.5GB decision boundary
+      image_label_basis: no specialized library requirement
+      adjudication_status: protocol_locked
+      evidence_ids:
+      - benchmarks/workloads.yaml:boundary_below_0_5_ambiguous
+- case_id: threshold-below-paraphrase-en
+  family_id: threshold-below
+  variant_id: paraphrase
+  language: en
+  prompt: Start small; I may only look around for a minute.
+  inputs:
+    dataset_size_gb: 0.49
+    code_context_hints: []
+  gold:
+    request_feasible: true
+    preferred_candidate_id: small-minimal-python
+    acceptable_candidate_ids:
+    - medium-minimal-python
+    - small-minimal-python
+    required_image_capabilities:
+    - python
+    allowed_profiles:
+    - small
+    - medium
+    - large
+    gpu_allowed: false
+    expected_extraction: null
+  source_provenance:
+    source_dataset_id: intent-gold-en-vi-2026-08-08
+    source_schema_version: intent-gold-v4.0.0
+    source_case_id: threshold-below-paraphrase-en
+    source_split: development
+    evidence_classification: historical_formative_development_only
+    original_provenance:
+      resource_label_basis: pre-specified below-0.5GB decision boundary
+      image_label_basis: no specialized library requirement
+      adjudication_status: protocol_locked
+      evidence_ids:
+      - benchmarks/workloads.yaml:boundary_below_0_5_ambiguous
+- case_id: threshold-below-vi
+  family_id: threshold-below
+  variant_id: vietnamese
+  language: vi
+  prompt: Chỉ xem nhanh dữ liệu, hiện chưa rõ bước tiếp theo.
+  inputs:
+    dataset_size_gb: 0.49
+    code_context_hints: []
+  gold:
+    request_feasible: true
+    preferred_candidate_id: small-minimal-python
+    acceptable_candidate_ids:
+    - medium-minimal-python
+    - small-minimal-python
+    required_image_capabilities:
+    - python
+    allowed_profiles:
+    - small
+    - medium
+    - large
+    gpu_allowed: false
+    expected_extraction: null
+  source_provenance:
+    source_dataset_id: intent-gold-en-vi-2026-08-08
+    source_schema_version: intent-gold-v4.0.0
+    source_case_id: threshold-below-vi
+    source_split: development
+    evidence_classification: historical_formative_development_only
+    original_provenance:
+      resource_label_basis: pre-specified below-0.5GB decision boundary
+      image_label_basis: no specialized library requirement
+      adjudication_status: protocol_locked
+      evidence_ids:
+      - benchmarks/workloads.yaml:boundary_below_0_5_ambiguous
+- case_id: p2-required-gpu-unavailable-en
+  family_id: p2-required-gpu-unavailable
+  variant_id: diagnostic
+  language: en
+  prompt: This workload requires a GPU device for CUDA training.
+  inputs:
+    dataset_size_gb: 0.5
+    code_context_hints:
+    - import torch
+  gold:
+    request_feasible: false
+    preferred_candidate_id: null
+    acceptable_candidate_ids: []
+    required_image_capabilities:
+    - pytorch
+    allowed_profiles:
+    - small
+    - medium
+    - large
+    gpu_allowed: true
+    expected_extraction:
+      gpu_requirement: required
+      minimum_cpu_cores: null
+      minimum_memory_gb: null
+      required_libraries:
+      - torch
+  source_provenance:
+    source_dataset_id: p2-infeasible-and-constraint-diagnostics-2026-08-21
+    source_schema_version: p2-infeasible-supplement-v1.0.0
+    source_case_id: p2-required-gpu-unavailable-en
+    source_split: development
+    evidence_classification: historical_formative_development_only
+    original_provenance:
+      label_basis: No catalog profile grants a GPU device.
+      adjudication_status: protocol_locked
+- case_id: p2-minimum-eight-cpu-en
+  family_id: p2-minimum-eight-cpu
+  variant_id: diagnostic
+  language: en
+  prompt: I need at least 8 CPU cores for this parallel simulation.
+  inputs:
+    dataset_size_gb: 0.1
+    code_context_hints: []
+  gold:
+    request_feasible: false
+    preferred_candidate_id: null
+    acceptable_candidate_ids: []
+    required_image_capabilities:
+    - python
+    allowed_profiles:
+    - small
+    - medium
+    - large
+    gpu_allowed: false
+    expected_extraction:
+      gpu_requirement: unspecified
+      minimum_cpu_cores: 8.0
+      minimum_memory_gb: null
+      required_libraries: []
+  source_provenance:
+    source_dataset_id: p2-infeasible-and-constraint-diagnostics-2026-08-21
+    source_schema_version: p2-infeasible-supplement-v1.0.0
+    source_case_id: p2-minimum-eight-cpu-en
+    source_split: development
+    evidence_classification: historical_formative_development_only
+    original_provenance:
+      label_basis: The largest catalog profile has a 2-core CPU limit.
+      adjudication_status: protocol_locked
+- case_id: p2-minimum-eight-memory-en
+  family_id: p2-minimum-eight-memory
+  variant_id: diagnostic
+  language: en
+  prompt: This analysis requires at least 8 GB memory.
+  inputs:
+    dataset_size_gb: 1.0
+    code_context_hints:
+    - import pandas as pd
+  gold:
+    request_feasible: false
+    preferred_candidate_id: null
+    acceptable_candidate_ids: []
+    required_image_capabilities:
+    - pandas
+    allowed_profiles:
+    - small
+    - medium
+    - large
+    gpu_allowed: false
+    expected_extraction:
+      gpu_requirement: unspecified
+      minimum_cpu_cores: null
+      minimum_memory_gb: 8.0
+      required_libraries:
+      - pandas
+  source_provenance:
+    source_dataset_id: p2-infeasible-and-constraint-diagnostics-2026-08-21
+    source_schema_version: p2-infeasible-supplement-v1.0.0
+    source_case_id: p2-minimum-eight-memory-en
+    source_split: development
+    evidence_classification: historical_formative_development_only
+    original_provenance:
+      label_basis: The largest catalog profile has a 2 GiB memory limit.
+      adjudication_status: protocol_locked
+- case_id: p2-required-rapids-unsupported-en
+  family_id: p2-required-rapids-unsupported
+  variant_id: diagnostic
+  language: en
+  prompt: This notebook requires RAPIDS library for the data pipeline.
+  inputs:
+    dataset_size_gb: 1.0
+    code_context_hints: []
+  gold:
+    request_feasible: false
+    preferred_candidate_id: null
+    acceptable_candidate_ids: []
+    required_image_capabilities: []
+    allowed_profiles:
+    - small
+    - medium
+    - large
+    gpu_allowed: true
+    expected_extraction:
+      gpu_requirement: unspecified
+      minimum_cpu_cores: null
+      minimum_memory_gb: null
+      required_libraries:
+      - rapids
+  source_provenance:
+    source_dataset_id: p2-infeasible-and-constraint-diagnostics-2026-08-21
+    source_schema_version: p2-infeasible-supplement-v1.0.0
+    source_case_id: p2-required-rapids-unsupported-en
+    source_split: development
+    evidence_classification: historical_formative_development_only
+    original_provenance:
+      label_basis: RAPIDS is not present in the administrator image catalog.
+      adjudication_status: protocol_locked
+- case_id: p2-cpu-only-pandas-feasible-en
+  family_id: p2-cpu-only-pandas-feasible
+  variant_id: diagnostic
+  language: en
+  prompt: Analyze a moderate table with pandas without a GPU.
+  inputs:
+    dataset_size_gb: 0.8
+    code_context_hints:
+    - import pandas as pd
+  gold:
+    request_feasible: true
+    preferred_candidate_id: medium-scipy-data-science
+    acceptable_candidate_ids:
+    - medium-scipy-data-science
+    - large-scipy-data-science
+    required_image_capabilities:
+    - pandas
+    allowed_profiles:
+    - medium
+    - large
+    gpu_allowed: false
+    expected_extraction:
+      gpu_requirement: forbidden
+      minimum_cpu_cores: null
+      minimum_memory_gb: null
+      required_libraries:
+      - pandas
+  source_provenance:
+    source_dataset_id: p2-infeasible-and-constraint-diagnostics-2026-08-21
+    source_schema_version: p2-infeasible-supplement-v1.0.0
+    source_case_id: p2-cpu-only-pandas-feasible-en
+    source_split: development
+    evidence_classification: historical_formative_development_only
+    original_provenance:
+      label_basis: SciPy image and Medium-or-Large profile satisfy the request.
+      adjudication_status: protocol_locked
+- case_id: p2-tensorflow-inference-feasible-en
+  family_id: p2-tensorflow-inference-feasible
+  variant_id: diagnostic
+  language: en
+  prompt: Run TensorFlow model inference on CPU with a moderate batch.
+  inputs:
+    dataset_size_gb: 0.3
+    code_context_hints:
+    - import tensorflow as tf
+  gold:
+    request_feasible: true
+    preferred_candidate_id: medium-tensorflow-deep-learning
+    acceptable_candidate_ids:
+    - medium-tensorflow-deep-learning
+    - large-tensorflow-deep-learning
+    required_image_capabilities:
+    - tensorflow
+    allowed_profiles:
+    - medium
+    - large
+    gpu_allowed: false
+    expected_extraction:
+      gpu_requirement: unspecified
+      minimum_cpu_cores: null
+      minimum_memory_gb: null
+      required_libraries:
+      - tensorflow
+  source_provenance:
+    source_dataset_id: p2-infeasible-and-constraint-diagnostics-2026-08-21
+    source_schema_version: p2-infeasible-supplement-v1.0.0
+    source_case_id: p2-tensorflow-inference-feasible-en
+    source_split: development
+    evidence_classification: historical_formative_development_only
+    original_provenance:
+      label_basis: TensorFlow image and Medium-or-Large profile satisfy CPU inference.
+      adjudication_status: protocol_locked
+

@@ -4,3 +4,13 @@
 **/*.pyc
 **/*.pyo
 .DS_Store
+
+# Protocol-v5 datasets/evidence never belong in ordinary image contexts.
+benchmarks_v5/
+results_v5/
+tests/
+.protocol-v5-private/
+**/.protocol-v5-private/
+**/v5-confirmatory.*
+evaluation_v5/cache/
+evaluation_v5/indexes/

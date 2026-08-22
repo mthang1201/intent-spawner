@@ -1,0 +1,333 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "protocol-v5-split-bundle-v1.schema.json",
+  "title": "Protocol-v5 dataset split bundle",
+  "description": "A development or externally supplied confirmatory split. The checksum is SHA-256 over canonical JSON for the complete parsed document after removing split_manifest.checksum.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "split_manifest", "cases"],
+  "properties": {
+    "schema_version": {
+      "const": "protocol-v5-split-bundle-v1.0.0"
+    },
+    "split_manifest": {
+      "$ref": "#/$defs/splitManifest"
+    },
+    "cases": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/case"
+      }
+    }
+  },
+  "$defs": {
+    "safeId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$"
+    },
+    "nonblankString": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "\\S"
+    },
+    "utcTimestamp": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(?:\\.[0-9]+)?Z$"
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "stringList": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/nonblankString"
+      }
+    },
+    "splitManifest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "dataset_id",
+        "split_id",
+        "role",
+        "family_ids",
+        "case_count",
+        "family_count",
+        "checksum",
+        "creation_metadata",
+        "freeze_metadata"
+      ],
+      "properties": {
+        "dataset_id": {
+          "$ref": "#/$defs/safeId"
+        },
+        "split_id": {
+          "$ref": "#/$defs/safeId"
+        },
+        "role": {
+          "enum": ["development", "confirmatory"]
+        },
+        "family_ids": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/safeId"
+          }
+        },
+        "case_count": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "family_count": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "checksum": {
+          "$ref": "#/$defs/sha256"
+        },
+        "creation_metadata": {
+          "$ref": "#/$defs/creationMetadata"
+        },
+        "freeze_metadata": {
+          "$ref": "#/$defs/freezeMetadata"
+        }
+      }
+    },
+    "creationMetadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["created_at_utc", "created_by"],
+      "properties": {
+        "created_at_utc": {
+          "$ref": "#/$defs/utcTimestamp"
+        },
+        "created_by": {
+          "$ref": "#/$defs/nonblankString"
+        }
+      }
+    },
+    "freezeMetadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["frozen_at_utc", "frozen_by"],
+      "properties": {
+        "frozen_at_utc": {
+          "$ref": "#/$defs/utcTimestamp"
+        },
+        "frozen_by": {
+          "$ref": "#/$defs/nonblankString"
+        }
+      }
+    },
+    "case": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "case_id",
+        "family_id",
+        "variant_id",
+        "language",
+        "prompt",
+        "inputs",
+        "gold",
+        "source_provenance"
+      ],
+      "properties": {
+        "case_id": {
+          "$ref": "#/$defs/safeId"
+        },
+        "family_id": {
+          "$ref": "#/$defs/safeId"
+        },
+        "variant_id": {
+          "$ref": "#/$defs/safeId"
+        },
+        "language": {
+          "type": "string",
+          "pattern": "^[A-Za-z]{2,8}(?:-[A-Za-z0-9]{1,8})*$"
+        },
+        "prompt": {
+          "$ref": "#/$defs/nonblankString"
+        },
+        "inputs": {
+          "$ref": "#/$defs/inputs"
+        },
+        "gold": {
+          "$ref": "#/$defs/gold"
+        },
+        "source_provenance": {
+          "$ref": "#/$defs/sourceProvenance"
+        }
+      }
+    },
+    "inputs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["dataset_size_gb", "code_context_hints"],
+      "properties": {
+        "dataset_size_gb": {
+          "type": "number",
+          "minimum": 0
+        },
+        "code_context_hints": {
+          "$ref": "#/$defs/stringList"
+        }
+      }
+    },
+    "gold": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "request_feasible",
+        "preferred_candidate_id",
+        "acceptable_candidate_ids",
+        "required_image_capabilities",
+        "allowed_profiles",
+        "gpu_allowed",
+        "expected_extraction"
+      ],
+      "properties": {
+        "request_feasible": {
+          "type": "boolean"
+        },
+        "preferred_candidate_id": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/safeId"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "acceptable_candidate_ids": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/safeId"
+          }
+        },
+        "required_image_capabilities": {
+          "$ref": "#/$defs/stringList"
+        },
+        "allowed_profiles": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "enum": ["small", "medium", "large"]
+          }
+        },
+        "gpu_allowed": {
+          "type": "boolean"
+        },
+        "expected_extraction": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/expectedExtraction"
+            }
+          ]
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "request_feasible": {
+                "const": true
+              }
+            },
+            "required": ["request_feasible"]
+          },
+          "then": {
+            "properties": {
+              "preferred_candidate_id": {
+                "$ref": "#/$defs/safeId"
+              },
+              "acceptable_candidate_ids": {
+                "minItems": 1
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "preferred_candidate_id": {
+                "type": "null"
+              },
+              "acceptable_candidate_ids": {
+                "maxItems": 0
+              }
+            }
+          }
+        }
+      ]
+    },
+    "expectedExtraction": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "gpu_requirement",
+        "minimum_cpu_cores",
+        "minimum_memory_gb",
+        "required_libraries"
+      ],
+      "properties": {
+        "gpu_requirement": {
+          "enum": ["unspecified", "required", "preferred", "forbidden"]
+        },
+        "minimum_cpu_cores": {
+          "type": ["number", "null"],
+          "minimum": 0
+        },
+        "minimum_memory_gb": {
+          "type": ["number", "null"],
+          "minimum": 0
+        },
+        "required_libraries": {
+          "$ref": "#/$defs/stringList"
+        }
+      }
+    },
+    "sourceProvenance": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "source_dataset_id",
+        "source_schema_version",
+        "source_case_id",
+        "source_split",
+        "evidence_classification"
+      ],
+      "properties": {
+        "source_dataset_id": {
+          "$ref": "#/$defs/safeId"
+        },
+        "source_schema_version": {
+          "$ref": "#/$defs/safeId"
+        },
+        "source_case_id": {
+          "$ref": "#/$defs/safeId"
+        },
+        "source_split": {
+          "$ref": "#/$defs/safeId"
+        },
+        "evidence_classification": {
+          "$ref": "#/$defs/nonblankString"
+        },
+        "original_provenance": {
+          "type": "object"
+        }
+      }
+    }
+  }
+}

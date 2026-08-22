@@ -6,6 +6,9 @@ Manifest schema: `protocol-v5-manifest-v1.0.0`
 
 Status: architecture implemented; Protocol-v5 experiments not executed
 
+Data-isolation contract:
+[PROTOCOL_V5_DATA_ISOLATION.md](PROTOCOL_V5_DATA_ISOLATION.md)
+
 ## 1. Purpose and evidence boundary
 
 Protocol-v5 provides one evidence model and filesystem contract for six
@@ -18,11 +21,13 @@ experiment families. P2 is the main proposed method. The primary systems are:
 - **P3** — P2 plus grounded LLM reranking, only when retained by its separate
   development gate.
 
-This architecture package contains no benchmark cases, participant records,
-recommendation outputs, cluster measurements, image-size measurements, or
-confirmatory results. It does not instantiate a recommender or expose a sealed
-dataset. Protocol-v4 evidence remains historical/formative evidence and is not
-rewritten or relabeled as Protocol-v5 evidence.
+The repository contains the visible `v5-development` bundle for formative
+work, but no confirmatory cases or labels. It contains no Protocol-v5
+participant records, recommendation outputs, cluster measurements, image-size
+measurements, or confirmatory results. The validation-only offline entry point
+does not evaluate any case or emit sealed contents. Protocol-v4
+evidence remains historical/formative evidence and is not rewritten or
+relabeled as Protocol-v5 evidence.
 
 Development and final confirmation are separate. A manifest records a
 `split_identity` with an explicit `development` or `confirmatory` stage.
@@ -30,7 +35,9 @@ Workload family is the semantic independent unit. Paraphrases, translations,
 and repeated stochastic executions do not increase the independent accuracy
 sample count. Confirmatory cases and labels must remain inaccessible to code
 that changes prompts, retrieval parameters, candidate metadata, thresholds,
-ranking, constraints, or P3 configuration.
+ranking, constraints, or P3 configuration. The separate isolation contract
+defines the split-bundle schema, freeze-before-supply gate, external loader,
+contamination checks, and packaging/cache/index guardrails.
 
 ## 2. Experiment registry
 

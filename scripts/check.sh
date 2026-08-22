@@ -44,7 +44,14 @@ skip_check() {
 
 cd "$ROOT_DIR" || exit 1
 
-run_check "unit and smoke tests" env PYTHONPATH=. "$PYTHON_BIN" -m pytest recommender/test_recommender.py tests/test_config_validation.py tests/test_dynamic_profile_overlay.py tests/test_reprovisioning.py tests/test_evaluation_v4.py tests/test_evaluation_v5.py
+run_check "unit and smoke tests" env PYTHONPATH=. "$PYTHON_BIN" -m pytest \
+  recommender/test_recommender.py \
+  tests/test_config_validation.py \
+  tests/test_dynamic_profile_overlay.py \
+  tests/test_reprovisioning.py \
+  tests/test_evaluation_v4.py \
+  tests/test_evaluation_v5.py \
+  tests/test_evaluation_v5_isolation.py
 run_check "preserved cluster artifact integrity" "$PYTHON_BIN" -m cluster_evaluation.validate_artifacts
 run_check "raw evidence SHA-256 integrity" "$PYTHON_BIN" -m cluster_evaluation.raw_integrity
 run_check "capacity runner dry run" "$PYTHON_BIN" -m cluster_evaluation.capacity_runner \
@@ -65,6 +72,7 @@ run_check "v4 gold set and recommender matrix validation" "$PYTHON_BIN" -m evalu
   --dry-run
 run_check "v4 paired system plan validation" "$PYTHON_BIN" -m evaluation_v4.plan_system \
   --dry-run
+run_check "Protocol-v5 split isolation audit" "$PYTHON_BIN" -m evaluation_v5.isolation_audit
 run_check "portable Protocol-v4 evidence" "$PYTHON_BIN" scripts/validate-portable-evidence.py
 run_check "live acceptance record JSON" "$PYTHON_BIN" -m json.tool docs/evaluation/LIVE_ACCEPTANCE_2026-08-16.json
 run_check "high-confidence secret scan" "$PYTHON_BIN" scripts/scan-secrets.py

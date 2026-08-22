@@ -74,6 +74,15 @@ def _atomic_write_json(
             temporary.unlink()
 
 
+def write_json_exclusive(
+    path: Path,
+    payload: Mapping[str, Any],
+) -> Path:
+    """Atomically create one JSON file without ever replacing a destination."""
+
+    return _atomic_write_json(path, payload, overwrite=False)
+
+
 def _safe_target(paths: ResultPaths, relative_path: str | Path) -> Path:
     relative = Path(relative_path)
     if relative.is_absolute() or not relative.parts or ".." in relative.parts:
@@ -126,4 +135,8 @@ def write_manifest_atomic(
     )
 
 
-__all__ = ["write_manifest_atomic", "write_provenance_json"]
+__all__ = [
+    "write_json_exclusive",
+    "write_manifest_atomic",
+    "write_provenance_json",
+]
