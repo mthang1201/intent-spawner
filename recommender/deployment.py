@@ -12,7 +12,7 @@ import re
 from urllib import parse as urllib_parse
 
 
-PACKAGE_VERSION = "intent-spawner-recommender-v2"
+PACKAGE_VERSION = "intent-spawner-recommender-v3"
 PACKAGE_CHECKSUM_ENV_VAR = "RECOMMENDER_PACKAGE_CHECKSUM"
 PACKAGE_VERSION_ENV_VAR = "RECOMMENDER_PACKAGE_VERSION"
 SELF_HOSTED_ALLOW_INSECURE_HTTP_ENV_VAR = (
@@ -26,12 +26,21 @@ SELF_HOSTED_AUTH_REQUIRED_ENV_VAR = "SELF_HOSTED_LLM_AUTH_REQUIRED"
 RUNTIME_FILES = (
     "__init__.py",
     "base.py",
+    "candidate_corpus.py",
+    "constraint_evaluator.py",
+    "dense_retrieval.py",
     "deployment.py",
     "dynamic_resources.py",
     "external_llm.py",
+    "hybrid_retrieval.py",
     "image-catalog.yaml",
     "jupyterhub_integration.py",
+    "local_embeddings.py",
+    "local_structured_intent.py",
     "models.py",
+    "p2_backend.py",
+    "p3_backend.py",
+    "p3_reranker.py",
     "policy.py",
     "recommender.py",
     "registry.py",
@@ -39,15 +48,19 @@ RUNTIME_FILES = (
     "resource-policy.yaml",
     "rule_based.py",
     "self_hosted_llm.py",
+    "sparse_retrieval.py",
+    "structured_intent.py",
     "token_pricing.py",
 )
 MAX_CONFIGMAP_PAYLOAD_BYTES = 700 * 1024
 CHECKSUM_PATTERN = re.compile(r"^[0-9a-f]{64}$")
-ALLOWED_BACKENDS = frozenset({"rule_based", "external_llm", "self_hosted_llm"})
+ALLOWED_BACKENDS = frozenset({"rule_based", "external_llm", "self_hosted_llm", "p2", "p3"})
 BACKEND_VERSIONS = {
     "rule_based": "rule-based-v1",
     "external_llm": "external-llm-v2",
     "self_hosted_llm": "self-hosted-llm-v2",
+    "p2": "p2-hybrid-v1.0.0",
+    "p3": "p3-reranker-v1.0.0",
 }
 
 
@@ -203,6 +216,34 @@ def validate_deployment_environment(
         _required_nonblank(selected, "SELF_HOSTED_LLM_MODEL", backend)
         if _parse_boolean(selected, SELF_HOSTED_AUTH_REQUIRED_ENV_VAR):
             _required_nonblank(selected, "SELF_HOSTED_LLM_API_KEY", backend)
+    elif backend == "p2":
+        extractor_mode = selected.get("P2_STRUCTURED_EXTRACTOR", "local").strip()
+        if extractor_mode not in {"local", "llm"}:
+            raise ValueError("P2_STRUCTURED_EXTRACTOR must be local or llm")
+        if extractor_mode == "llm":
+            _validate_secure_endpoint(
+                selected,
+                backend=backend,
+                endpoint_name="EXTERNAL_LLM_ENDPOINT",
+                allow_insecure_name="EXTERNAL_LLM_ALLOW_INSECURE_HTTP",
+            )
+            _required_nonblank(selected, "EXTERNAL_LLM_MODEL", backend)
+            _required_nonblank(selected, "EXTERNAL_LLM_API_KEY", backend)
+    elif backend == "p3":
+        extractor_mode = selected.get("P2_STRUCTURED_EXTRACTOR", "local").strip()
+        if extractor_mode not in {"local", "llm"}:
+            raise ValueError("P2_STRUCTURED_EXTRACTOR must be local or llm")
+        reranker_mode = selected.get("P3_RERANKER_MODE", "llm").strip()
+        if reranker_mode != "llm":
+            raise ValueError("deployed P3 requires P3_RERANKER_MODE=llm")
+        _validate_secure_endpoint(
+            selected,
+            backend=backend,
+            endpoint_name="EXTERNAL_LLM_ENDPOINT",
+            allow_insecure_name="EXTERNAL_LLM_ALLOW_INSECURE_HTTP",
+        )
+        _required_nonblank(selected, "EXTERNAL_LLM_MODEL", backend)
+        _required_nonblank(selected, "EXTERNAL_LLM_API_KEY", backend)
 
     # Constructors validate numeric ranges (attempt timeout, total deadline,
     # retries, backoff, temperature, and concurrency) immediately after this

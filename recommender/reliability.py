@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+from collections.abc import Mapping
 from concurrent.futures import Future, ThreadPoolExecutor
 from dataclasses import dataclass
 import math
@@ -50,11 +51,13 @@ class RecommendationMetadata:
     estimated_cost_usd: float | None = None
     pricing_id: str | None = None
     pricing_provenance: str | None = None
+    p2_provenance: Mapping[str, object] | None = None
+    p3_provenance: Mapping[str, object] | None = None
 
     def to_dict(self) -> dict[str, object]:
         """Return the complete evaluation record, including raw model output."""
 
-        return {
+        payload = {
             "requested_backend": self.requested_backend,
             "effective_backend": self.effective_backend,
             "fallback_used": self.fallback_used,
@@ -83,6 +86,11 @@ class RecommendationMetadata:
             "pricing_id": self.pricing_id,
             "pricing_provenance": self.pricing_provenance,
         }
+        if self.p2_provenance is not None:
+            payload["p2_provenance"] = dict(self.p2_provenance)
+        if self.p3_provenance is not None:
+            payload["p3_provenance"] = dict(self.p3_provenance)
+        return payload
 
     def to_operational_dict(self) -> dict[str, object]:
         """Return metadata safe for browser payloads, logs, and Kubernetes objects.

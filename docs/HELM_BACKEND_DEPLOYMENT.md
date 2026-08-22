@@ -50,6 +50,36 @@ BACKEND_VALUES=helm/recommender-rule-based-values.yaml \
   bash scripts/install-proposed.sh
 ```
 
+### P2 hybrid
+
+`helm/recommender-p2-values.yaml` selects the frozen local StructuredIntent,
+hybrid retrieval, and deterministic constraint/ranking backend. Its default
+configuration requires no endpoint or credential:
+
+```bash
+BACKEND_VALUES=helm/recommender-p2-values.yaml \
+  bash scripts/install-proposed.sh
+```
+
+### P3 feasible-only reranker
+
+Copy `helm/recommender-p3-values.yaml` to an operator-managed values file and
+replace its endpoint and model. P3 runs the same P2 configuration and adds only
+the schema-validated LLM reranker. The referenced Secret is mandatory; failed
+or invalid reranking returns the exact P2 recommendation.
+
+```bash
+read -rsp 'P3 reranker API key: ' RECOMMENDER_P3_KEY; echo
+kubectl create secret generic intent-spawner-p3-reranker \
+  --namespace z2jh-context-demo \
+  --from-literal=api-key="$RECOMMENDER_P3_KEY" \
+  --dry-run=client -o yaml | kubectl apply -f -
+unset RECOMMENDER_P3_KEY
+
+BACKEND_VALUES=/secure/operator-config/p3-values.yaml \
+  bash scripts/install-proposed.sh
+```
+
 ### External LLM
 
 Copy `helm/recommender-external-llm-values.example.yaml` to an operator-managed
@@ -115,7 +145,7 @@ network.
 ## ConfigMap package and deterministic rollout
 
 `recommender/deployment.py` is the single runtime allowlist. The generated
-ConfigMap contains 16 files: runtime Python modules, the Hub integration, image
+ConfigMap contains 25 files: runtime Python modules, the Hub integration, image
 catalog, dynamic-resource module/policy, and token-pricing support. It excludes
 tests, `__pycache__`, documentation, and experiment results. Generation fails
 above a conservative 700 KiB

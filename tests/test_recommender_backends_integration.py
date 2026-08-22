@@ -106,6 +106,7 @@ def test_all_configured_backends_share_interface_and_policy_schema():
                     allow_insecure_http=True,
                 ),
             ),
+            "p2": create_recommender("p2", catalog=catalog),
         }
 
         recommendations = {
@@ -113,7 +114,7 @@ def test_all_configured_backends_share_interface_and_policy_schema():
             for name, backend in backends.items()
         }
 
-    assert {"rule_based", "external_llm", "self_hosted_llm"}.issubset(
+    assert {"rule_based", "external_llm", "self_hosted_llm", "p2"}.issubset(
         DEFAULT_REGISTRY.names
     )
     assert all(
@@ -132,6 +133,7 @@ def test_all_configured_backends_share_interface_and_policy_schema():
         "rule_based": "rule_based",
         "external_llm": "external_llm",
         "self_hosted_llm": "self_hosted_llm",
+        "p2": "p2",
     }
     assert [item["payload"]["model"] for item in recorded_requests] == [
         "external-model",

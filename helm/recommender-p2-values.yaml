@@ -1,0 +1,6 @@
+# P2: structured intent + hybrid retrieval + deterministic constraints/ranking.
+# The default local extractor and embedding provider require no credentials.
+hub:
+  extraEnv:
+    RECOMMENDER_BACKEND: p2
+    P2_STRUCTURED_EXTRACTOR: local

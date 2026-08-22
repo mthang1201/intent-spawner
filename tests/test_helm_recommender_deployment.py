@@ -195,6 +195,8 @@ def test_supported_install_flow_has_locked_backend_auth_and_mode_interfaces():
         (["helm/recommender-external-llm-mock.example.yaml"], "external_llm"),
         (["helm/recommender-external-llm-mock-fallback.example.yaml"], "external_llm"),
         (["helm/recommender-self-hosted-llm-mock.example.yaml"], "self_hosted_llm"),
+        (["helm/recommender-p2-values.yaml"], "p2"),
+        (["helm/recommender-p3-values.yaml"], "p3"),
     ],
 )
 def test_all_backend_values_render_with_explicit_configuration(
@@ -275,6 +277,11 @@ def test_runtime_configmap_allowlist_is_small_and_excludes_non_runtime_files():
     assert "dynamic_resources.py" in RUNTIME_FILES
     assert "resource-policy.yaml" in RUNTIME_FILES
     assert "token_pricing.py" in RUNTIME_FILES
+    assert "p2_backend.py" in RUNTIME_FILES
+    assert "p3_backend.py" in RUNTIME_FILES
+    assert "p3_reranker.py" in RUNTIME_FILES
+    assert "local_embeddings.py" in RUNTIME_FILES
+    assert "local_structured_intent.py" in RUNTIME_FILES
     assert not any(name.startswith("test_") for name in RUNTIME_FILES)
     assert not any("cache" in name or name.endswith(".md") for name in RUNTIME_FILES)
 
@@ -359,6 +366,16 @@ def test_unknown_backend_and_missing_external_credential_fail_startup():
     with pytest.raises(ValueError, match="EXTERNAL_LLM_API_KEY is required"):
         validate_deployment_environment(missing_key, package_dir=PACKAGE_DIR)
 
+    missing_p3_key = {
+        **_base_environment("p3"),
+        "P2_STRUCTURED_EXTRACTOR": "local",
+        "P3_RERANKER_MODE": "llm",
+        "EXTERNAL_LLM_ENDPOINT": "https://llm.example.invalid/v1/chat/completions",
+        "EXTERNAL_LLM_MODEL": "mock-reranker",
+    }
+    with pytest.raises(ValueError, match="EXTERNAL_LLM_API_KEY is required"):
+        validate_deployment_environment(missing_p3_key, package_dir=PACKAGE_DIR)
+
 
 @pytest.mark.parametrize(
     ("name", "value", "message"),
@@ -426,6 +443,17 @@ def test_all_backend_startup_configurations_are_ready_with_local_mock_service():
                 "SELF_HOSTED_LLM_API_KEY": "dummy-self-hosted-test-only",
                 "SELF_HOSTED_LLM_MAX_RETRIES": "0",
             },
+            _base_environment("p2"),
+            {
+                **_base_environment("p3"),
+                "P2_STRUCTURED_EXTRACTOR": "local",
+                "P3_RERANKER_MODE": "llm",
+                "EXTERNAL_LLM_ENDPOINT": endpoint,
+                "EXTERNAL_LLM_MODEL": "p3-mock",
+                "EXTERNAL_LLM_API_KEY": "dummy-p3-test-only",
+                "EXTERNAL_LLM_ALLOW_INSECURE_HTTP": "true",
+                "EXTERNAL_LLM_MAX_RETRIES": "0",
+            },
         ]
         for environ in configurations:
             metadata = validate_deployment_environment(environ, package_dir=PACKAGE_DIR)
@@ -434,12 +462,14 @@ def test_all_backend_startup_configurations_are_ready_with_local_mock_service():
             assert recommendation.profile in {"small", "medium", "large", "gpu_or_large"}
             ready.append(metadata.backend)
 
-    assert ready == ["rule_based", "external_llm", "self_hosted_llm"]
+    assert ready == ["rule_based", "external_llm", "self_hosted_llm", "p2", "p3"]
     assert [item["model"] for item in requests] == [
         "external-mock",
         "self-hosted-mock",
+        "p3-mock",
     ]
     assert [item["authorization"] for item in requests] == [
         "Bearer dummy-external-test-only",
         "Bearer dummy-self-hosted-test-only",
+        "Bearer dummy-p3-test-only",
     ]

@@ -21,6 +21,8 @@ from .deployment import DeploymentMetadata, PACKAGE_VERSION, validate_deployment
 from .base import Recommender
 from .models import RecommendationRequest
 from .policy import PolicyValidator
+from .p2_backend import p2_requires_manual_override
+from .p3_backend import p3_requires_manual_override
 from .registry import create_recommender
 from .reliability import AsyncRecommendationExecutor, RecommendationResult
 from .rule_based import PROFILES, load_image_catalog
@@ -135,7 +137,7 @@ class RecommendationPreviewRuntime:
             profiles=PROFILES,
             catalog=self.catalog,
         )
-        self.backend = backend or create_recommender(environ=selected)
+        self.backend = backend or create_recommender(environ=selected, catalog=self.catalog)
         maximum = int(
             getattr(
                 getattr(self.backend, "config", None),
@@ -148,7 +150,13 @@ class RecommendationPreviewRuntime:
         self.previews: dict[str, dict[str, Any]] = {}
         self.resource_enricher: Callable[[dict[str, Any], RecommendationRequest], dict[str, Any] | None] | None = None
         self.resource_revalidator: Callable[[dict[str, Any]], None] | None = None
-        self.extra_generation: dict[str, str] = {}
+        backend_generation = getattr(self.backend, "generation", {})
+        if not isinstance(backend_generation, Mapping) or not all(
+            isinstance(key, str) and isinstance(value, str)
+            for key, value in backend_generation.items()
+        ):
+            raise ValueError("recommender backend generation must contain string versions")
+        self.extra_generation: dict[str, str] = dict(backend_generation)
 
     @property
     def generation(self) -> dict[str, str]:
@@ -196,6 +204,8 @@ class RecommendationPreviewRuntime:
             "applied_image_id": recommendation.image_id,
             "metadata": metadata,
         }
+        if p2_requires_manual_override(metadata) or p3_requires_manual_override(metadata):
+            record["requires_manual_override"] = True
         if self.resource_enricher is not None:
             resource_decision = self.resource_enricher(record, request)
             if resource_decision is not None:
@@ -212,6 +222,8 @@ class RecommendationPreviewRuntime:
         }
         if "resource_decision" in record:
             response["resource_decision"] = record["resource_decision"]
+        if record.get("requires_manual_override"):
+            response["requires_manual_override"] = True
         return response
 
     def validate(self, preview_id: object, username: str, *, consume: bool) -> dict[str, Any]:
@@ -245,6 +257,11 @@ class RecommendationPreviewRuntime:
             raise ValueError("confirm the recommendation or submit a manual override")
         preview_id = first("recommendation_preview_id")
         item = self.validate(preview_id, _username(spawner), consume=False)
+        if action == "accept" and item.get("requires_manual_override"):
+            raise ValueError(
+                "the recommender found no feasible catalog candidate; an explicit "
+                "manual override is required"
+            )
         recommendation = item["recommendation"]
         profile = item["applied_profile"]
         image_id = item["applied_image_id"]
@@ -369,6 +386,38 @@ class RecommendationPreviewRuntime:
                 "intent-spawner.local/package-checksum": item["generation"]["package_checksum"],
             }
         )
+        p2_provenance = metadata.get("p2_provenance")
+        if isinstance(p2_provenance, Mapping):
+            p2_annotation_fields = {
+                "pipeline-version": "pipeline_version",
+                "intent-schema-version": "structured_intent_schema_version",
+                "extractor-version": "extractor_version",
+                "dense-index-version": "dense_index_version",
+                "sparse-index-version": "sparse_index_version",
+                "hybrid-index-version": "hybrid_index_version",
+                "candidate-count": "candidate_count",
+                "feasible-count": "feasible_candidate_count",
+                "final-candidate-id": "final_candidate_id",
+                "p2-fallback-category": "fallback_category",
+            }
+            for annotation_suffix, provenance_key in p2_annotation_fields.items():
+                value = p2_provenance.get(provenance_key)
+                if value is not None:
+                    annotations[f"intent-spawner.local/{annotation_suffix}"] = str(value)
+        p3_provenance = metadata.get("p3_provenance")
+        if isinstance(p3_provenance, Mapping):
+            p3_annotation_fields = {
+                "p3-pipeline-version": "pipeline_version",
+                "p3-reranker-version": "reranker_version",
+                "p3-reranker-model-id": "reranker_model_id",
+                "p3-reranker-degraded": "reranker_degraded",
+                "p3-final-candidate-id": "final_candidate_id",
+                "p3-fallback-category": "fallback_category",
+            }
+            for annotation_suffix, provenance_key in p3_annotation_fields.items():
+                value = p3_provenance.get(provenance_key)
+                if value is not None:
+                    annotations[f"intent-spawner.local/{annotation_suffix}"] = str(value)
         if "resource_policy_version" in item["generation"]:
             annotations["intent-spawner.local/resource-policy-version"] = item[
                 "generation"
@@ -390,6 +439,10 @@ class RecommendationPreviewRuntime:
             "latency_seconds": metadata.get("total_elapsed_seconds", 0),
             **item["generation"],
         }
+        if isinstance(p2_provenance, Mapping):
+            audit["p2_provenance"] = dict(p2_provenance)
+        if isinstance(p3_provenance, Mapping):
+            audit["p3_provenance"] = dict(p3_provenance)
         spawner.log.info("recommendation_audit=%s", json.dumps(audit, sort_keys=True))
 
 
@@ -461,7 +514,8 @@ def options_form(runtime: RecommendationPreviewRuntime, endpoint: str) -> str:
           document.getElementById("preview-backend").textContent=rec.backend_name+" / "+rec.backend_version+(payload.metadata.fallback_used?" (fallback)":"");
           const reasons=[...rec.reasons,...rec.image_reasons]; document.getElementById("preview-reasons").replaceChildren(...reasons.map(reason=>{const li=document.createElement("li");li.textContent=reason;return li;}));
           document.getElementById("override_profile").value=payload.applied_profile; document.getElementById("override_image_id").value=rec.image_id;
-          panel.hidden=false; confirm.disabled=false; overrideSubmit.disabled=false;
+          panel.hidden=false; confirm.disabled=Boolean(payload.requires_manual_override); overrideSubmit.disabled=false;
+          if(payload.requires_manual_override){overridePanel.hidden=false;}
         } catch (_) { error.textContent="Recommendation preview failed. Check the inputs or ask an administrator to inspect safe Hub telemetry."; error.hidden=false; }
       });
       confirm.addEventListener("click",()=>{action.value="accept";});

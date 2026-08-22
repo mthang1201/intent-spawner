@@ -106,31 +106,21 @@ A modular, provider-neutral architecture (`recommender/`) that allows seamless s
 ```text
 RecommendationRequest
   -> Base Recommender (models.py, base.py, registry.py)
-  -> Selected Backend Adapter (rule_based | external_llm | self_hosted_llm)
+  -> Selected Backend (P1: rule_based | P2: p2_backend | P3: p3_backend | Direct LLM adapters)
   -> Strict JSON Schema Validation (RESPONSE_SCHEMA)
   -> Policy & Catalog Validation (PolicyValidator)
   -> SpawnRecommendation Dataclass
 ```
 
-#### 1. Rule-Based Recommender
-* **Implementation**: [`recommender/rule_based.py`](recommender/rule_based.py)
-* **Characteristics**: Zero-dependency, sub-millisecond, deterministic heuristic scoring. Serves as the baseline recommender and universal safety fallback.
+#### Primary Thesis Systems
+* **B0 (Default JupyterHub)**: Standard manual administrator profile selection; no recommendation. Represents the true operational baseline.
+* **P1 (Rule-Based Recommender)**: [`recommender/rule_based.py`](recommender/rule_based.py). Zero-dependency, sub-millisecond, deterministic heuristic scoring. Serves as the experimental comparator and universal safety fallback.
+* **P2 (Structured Intent + Hybrid Retrieval + Constraints)**: [`recommender/p2_backend.py`](recommender/p2_backend.py). Main research contribution combining structured extraction, BM25 + dense retrieval, Reciprocal Rank Fusion, deterministic hard-constraint filtering, and preference ranking.
+* **P3 (Grounded LLM Reranker)**: [`recommender/p3_backend.py`](recommender/p3_backend.py). Optional extension reranking P2-feasible candidates with schema-validated candidate ID bounds and deterministic degradation to P2.
 
-#### 2. External LLM API (e.g., Google Gemini)
-* **Implementation**: [`recommender/external_llm.py`](recommender/external_llm.py)
-* **Characteristics**:
-  * Connects to any OpenAI-compatible Chat Completions endpoint (such as Google Gemini's OpenAI compatibility layer at `https://generativelanguage.googleapis.com/v1beta/openai/chat/completions`).
-  * Kubernetes Secret-managed API key (`EXTERNAL_LLM_API_KEY`) via `secretKeyRef`.
-  * Configurable timeouts, total budget deadlines, and exponential backoff retries.
-  * Strict JSON output enforcement and automatic fail-closed fallback to rule-based logic upon provider errors.
-
-#### 3. Self-Hosted LLM (e.g., Local Ollama)
-* **Implementation**: [`recommender/self_hosted_llm.py`](recommender/self_hosted_llm.py)
-* **Characteristics**:
-  * Connects to private inference engines (Ollama, vLLM, LocalAI) running locally or in-cluster.
-  * Optional bearer authentication token (`SELF_HOSTED_LLM_API_KEY`).
-  * Explicit `SELF_HOSTED_LLM_ALLOW_INSECURE_HTTP: "true"` flag for trusted in-cluster / host networks.
-  * Reuses identical response parsing, catalog validation, and rule-based fallback safety mechanisms.
+#### Reference & Motivating LLM Adapters
+* **External LLM Adapter**: [`recommender/external_llm.py`](recommender/external_llm.py). Connects to OpenAI-compatible Chat Completions endpoints (e.g., Google Gemini 3.5 Flash) with API secrets, timeouts, and automatic rule fallback.
+* **Self-Hosted LLM Adapter**: [`recommender/self_hosted_llm.py`](recommender/self_hosted_llm.py). Connects to local inference engines (Ollama, vLLM) in private network boundaries.
 
 ---
 
@@ -153,28 +143,20 @@ An advanced opt-in mode that calculates fine-grained, continuous CPU/RAM/GPU res
 
 ---
 
-### Evaluation Protocol v4 & Benchmarking Suite
+### Evaluation Protocol & Benchmarking Suite
 
-A comprehensive, thesis-ready evaluation framework comparing four distinct approaches. The authoritative Protocol-v4 evaluation was completed on 13 August 2026:
-* **Four Canonical Approaches (Implemented and Observed)**:
-  1. `static_profile_baseline`: Single frozen operational baseline (`medium` profile, `minimal-python` image) ignoring workload context (deterministic offline evaluation executed).
-  2. `rule_based_mapping`: Deterministic rule-based recommender parsing intent, dataset sizes, and code context (deterministic offline evaluation executed).
-  3. `external_llm`: Google `gemini-3.5-flash` through the OpenAI-compatible endpoint; the held-out matrix completed, with raw-model outcomes kept separate from rule-fallback outcomes.
-  4. `self_hosted_local_ollama_llm`: Local Ollama `llama3:latest`; all 240 held-out calls completed without retry or fallback.
-* **Bilingual 60-Intent Gold Standard**: 12 development and 48 held-out English/Vietnamese samples across 24 workload families ([`benchmarks/intent-gold-v4.yaml`](benchmarks/intent-gold-v4.yaml)).
-* **Multi-Dimensional Metrics & Telemetry**:
-  1. **Recommendation Quality**: Profile accuracy, image capability coverage, raw model accuracy vs operational accuracy (with fallback isolation), under/over-provisioning rates.
-  2. **Reliability & Efficiency**: Inference latency, prompt/completion token usage, retries, fallback rate, and cost only when a reproducible pricing snapshot is configured.
-  3. **Cluster Impact**: The completed 320-trial Stage C matrix measures workload success, OOM, timeout, request allocation, and cgroup-v2 utilization on a disposable single-node environment. Real-user acceptance remains outside the observed evidence.
+A comprehensive, thesis-ready evaluation framework comparing the primary systems and reference methods:
+* **Primary Thesis Evaluations**:
+  1. **RQ1**: System and user-facing effectiveness against B0 (Default JupyterHub manual selection) in human user study (`final-evaluation-protocol-v1.0.0`).
+  2. **RQ2**: Recommendation quality of P2 (Structured Intent + Hybrid + Constraints) versus P1 (Rule-Based Recommender).
+  3. **RQ3**: Optional incremental P3 LLM reranker headroom over frozen P2 (evaluated and marked `not_retained` by empirical gate).
+* **Reference & Motivating Protocol v4 Evidence**:
+  - **Bilingual 60-Intent Gold Standard**: 12 development and 48 held-out English/Vietnamese samples across 24 workload families ([`benchmarks/intent-gold-v4.yaml`](benchmarks/intent-gold-v4.yaml)).
+  - **Direct-LLM Multi-Dimensional Metrics**: Recommendation quality, latency, token usage, retry rates, and failover characteristics.
+  - **Stage C Cluster Impact (320 pod trials)**: Workload success, OOM, timeout, request allocation, and cgroup-v2 utilization on disposable single-node Kubernetes.
 * **Statistical Rigor**:
   - Family-clustered bootstrap intervals, exact paired **McNemar tests**, paired **Wilcoxon tests**, and **Holm correction**. Repeated LLM calls are treated as stability/latency evidence rather than independent accuracy samples.
-* **Authoritative Research Questions (RQ1–RQ5)**:
-  - **RQ1**: How do the four approaches differ in recommendation quality?
-  - **RQ2**: Do LLM-based approaches improve recommendation quality compared with the static baseline and rule-based mapping?
-  - **RQ3**: What additional latency, failures, fallbacks, monetary cost, resource consumption, and operational overhead do LLM approaches introduce?
-  - **RQ4**: When recommendations are applied, how does each approach affect workload success, OOM events, Pending failures, runtime, and resource efficiency in Kubernetes and JupyterHub?
-  - **RQ5**: What are the quality–latency–reliability–cost–privacy trade-offs between an external LLM and a locally hosted Ollama model?
-* **Authoritative Result Summary**: See [`docs/evaluation/PROTOCOL_V4_REVISED_EVALUATION_REPORT.md`](docs/evaluation/PROTOCOL_V4_REVISED_EVALUATION_REPORT.md), [`docs/evaluation/PROTOCOL_V4_EXTERNAL_LLM_LIVE_REPORT.md`](docs/evaluation/PROTOCOL_V4_EXTERNAL_LLM_LIVE_REPORT.md), and [`docs/evaluation/STAGE_C_CONFIRMATORY_REPORT.md`](docs/evaluation/STAGE_C_CONFIRMATORY_REPORT.md).
+* **Authoritative Result Summary**: See [`docs/evaluation/PROTOCOL_V4_REVISED_EVALUATION_REPORT.md`](docs/evaluation/PROTOCOL_V4_REVISED_EVALUATION_REPORT.md), [`docs/evaluation/P2_BACKEND_EVALUATION_V1.md`](docs/evaluation/P2_BACKEND_EVALUATION_V1.md), and [`docs/evaluation/P3_INCREMENTAL_EVALUATION_V1.md`](docs/evaluation/P3_INCREMENTAL_EVALUATION_V1.md).
 
 Observed headline results must be read with their evidence boundaries:
 

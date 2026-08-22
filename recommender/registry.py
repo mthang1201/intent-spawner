@@ -8,6 +8,8 @@ from typing import Any
 
 from .base import Recommender
 from .external_llm import ExternalLLMRecommender
+from .p2_backend import P2Recommender
+from .p3_backend import P3Recommender
 from .rule_based import RuleBasedRecommender
 from .self_hosted_llm import SelfHostedLLMRecommender
 
@@ -59,6 +61,8 @@ DEFAULT_REGISTRY.register("rule_based_context", RuleBasedRecommender)
 DEFAULT_REGISTRY.register("external_llm", ExternalLLMRecommender)
 DEFAULT_REGISTRY.register("self_hosted_llm", SelfHostedLLMRecommender)
 DEFAULT_REGISTRY.register("self_hosted_local_ollama_llm", SelfHostedLLMRecommender)
+DEFAULT_REGISTRY.register("p2", P2Recommender)
+DEFAULT_REGISTRY.register("p3", P3Recommender)
 
 
 
