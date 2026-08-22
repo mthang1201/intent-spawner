@@ -1,0 +1,14 @@
+{
+  "P3_final_test_executed": false,
+  "P3_gate_status": "not_retained",
+  "claims_permitted": false,
+  "final_RQ2_test_executed": false,
+  "limitations": [
+    "No real user-study observations were supplied.",
+    "No final-test recommendation observations were supplied.",
+    "The existing synthetic dataset has prior development use; held-out split provenance must be established before confirmatory claims."
+  ],
+  "real_user_study_executed": false,
+  "schema_version": "final-evaluation-evidence-status-v1.0.0",
+  "state": "frozen_awaiting_observations"
+}

@@ -1,0 +1,303 @@
+{
+  "active_primary_system_ids": [
+    "B0",
+    "P1",
+    "P2"
+  ],
+  "allowed_primary_system_ids": [
+    "B0",
+    "P1",
+    "P2",
+    "P3"
+  ],
+  "created_at_utc": "2026-08-22T01:15:39Z",
+  "frozen_inputs": {
+    "candidate_catalog": {
+      "candidate_corpus_checksum": "987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444",
+      "candidate_corpus_version": "environment-candidate-corpus-v1",
+      "candidate_count": 12,
+      "file_sha256": "f45b04efc2ea6f271d49c6806b58bfc0f30503cb68944930609f6e0f71882a71",
+      "path": "recommender/image-catalog.yaml",
+      "version": "2026-08-06.1"
+    },
+    "constraint_rules": {
+      "evaluator_version": "p2-deterministic-constraint-evaluator-v1.0.0",
+      "policy_version": "p2-constraint-policy-v1.0.0",
+      "ranker_version": "p2-deterministic-ranker-v1.0.0"
+    },
+    "dataset": {
+      "base_dataset_id": "intent-gold-en-vi-2026-08-08",
+      "base_dataset_sha256": "18d4bd33a58f7aa1cea91c223cb6e0f537b6030c91f3954af762e019a8dc7ec0",
+      "dataset_id": "intent-gold-en-vi-2026-08-08+p2-infeasible-and-constraint-diagnostics-2026-08-21",
+      "dataset_schema_version": "p1-p2-evaluation-dataset-v1.0.0",
+      "dataset_sha256": "6c92e7ecc4c7de5cf8de0cc514d0e12801b97582b89c93c330f495dc012741e9",
+      "sample_count": 66,
+      "supplement_dataset_id": "p2-infeasible-and-constraint-diagnostics-2026-08-21",
+      "supplement_file_sha256": "c030c6f7b3bf6e08ab06ff1c449b4e7b0707283f75c7c2c1acfd5a2ce60e32be",
+      "tuning_after_freeze_prohibited": true
+    },
+    "embedding": {
+      "dimensions": 384,
+      "model_id": "intent-spawner-local-feature-hash",
+      "model_revision": "feature-hash-embedding-v1.0.0",
+      "tokenizer_version": "unicode-subword-features-v1.0.0"
+    },
+    "extractor": {
+      "configuration_version": "p2-config-v1.0.0",
+      "mode": "local",
+      "model_id": "deterministic-explicit-parser-v1.1.0-python-3.14",
+      "name": "p2-local-structured-parser",
+      "version": "local-structured-parser-v1.1.0"
+    },
+    "prompts": {
+      "P2_extractor": {
+        "sha256": "88f4f6935bf7c3f7e0be87cc29af97761f72fcfa1f95c0a0e54ac7b800a16972",
+        "version": "local-parser-contract-v1.1.0"
+      },
+      "P3_reranker": {
+        "applicable": false,
+        "sha256": "696dabd22010a03c110b315c48b84efb5b8517733c2174a21aa79be4807d1e44",
+        "version": "p3-reranker-prompt-v1.0.0"
+      }
+    },
+    "retrieval_and_indexes": {
+      "configuration": {
+        "config_version": "p2-config-v1.0.0",
+        "dense_top_k": 10,
+        "dense_weight": 1.0,
+        "extractor_mode": "local",
+        "max_concurrent_recommendations": 4,
+        "rrf_k": 60.0,
+        "sparse_top_k": 10,
+        "sparse_weight": 1.0,
+        "top_k": 10,
+        "total_timeout": 30.0
+      },
+      "dense": {
+        "catalog_version": "2026-08-06.1",
+        "corpus_checksum": "987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444",
+        "dimensions": 384,
+        "index_checksum": "c0561bcd1ee6ec5153b710aef3deae88bd259a011ddd454513cbb1c675118387",
+        "index_version": "environment-dense-index-v1",
+        "model_id": "intent-spawner-local-feature-hash",
+        "model_revision": "feature-hash-embedding-v1.0.0",
+        "normalization": "l2",
+        "query_representation_version": "dense-query-representation-v1",
+        "retriever_version": "cosine-dense-retriever-v1",
+        "schema_version": "dense-embedding-index-v1"
+      },
+      "hybrid": {
+        "catalog_version": "2026-08-06.1",
+        "corpus_checksum": "987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444",
+        "corpus_version": "environment-candidate-corpus-v1",
+        "dense_index_version": "environment-dense-index-v1",
+        "dense_retriever_version": "cosine-dense-retriever-v1",
+        "dense_top_k": 10,
+        "dense_weight": 1.0,
+        "index_checksum": "45ea08f29492d796189920713636b3a9cae2f0fb264e023124eb38c8cfad83a4",
+        "index_version": "environment-hybrid-index-v1",
+        "retriever_version": "reciprocal-rank-fusion-hybrid-retriever-v1",
+        "rrf_k": 60.0,
+        "schema_version": "hybrid-retrieval-metadata-v1",
+        "sparse_index_version": "environment-sparse-index-v1",
+        "sparse_retriever_version": "bm25-okapi-retriever-v1",
+        "sparse_top_k": 10,
+        "sparse_weight": 1.0,
+        "top_k": 10
+      },
+      "sparse": {
+        "b": 0.75,
+        "catalog_version": "2026-08-06.1",
+        "corpus_checksum": "987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444",
+        "corpus_version": "environment-candidate-corpus-v1",
+        "index_checksum": "931fac84b818cb934a37bfbfa76092a89626cd5eaffc869887de8558bc6fa747",
+        "index_version": "environment-sparse-index-v1",
+        "k1": 1.5,
+        "retriever_version": "bm25-okapi-retriever-v1",
+        "schema_version": "sparse-retrieval-index-v1",
+        "tokenizer_version": "unicode-alphanumeric-tokenizer-v1"
+      }
+    },
+    "source_files_sha256": {
+      "benchmarks/intent-gold-v4.yaml": "a0f23920e90c6f4b338b51ec4517a4ba49216940bf041729c8c7b0db452afc4d",
+      "benchmarks/p2-infeasible-supplement-v1.yaml": "c030c6f7b3bf6e08ab06ff1c449b4e7b0707283f75c7c2c1acfd5a2ce60e32be",
+      "docs/evaluation/FINAL_EVALUATION_PROTOCOL_V1.md": "acb51d555514053f2c85c1bc17ca4334a2d7cc315e762df0be9ddbf80e35dea6",
+      "evaluation_final/analysis.py": "8cf1b8ce0e3ada48ec5d621c1b892587224c2b3366f784797545ecce6b164175",
+      "evaluation_final/runner.py": "d0d36ecd89dbbefd07c7b745ea03d8e52710bae850e569170979172f76a8a556",
+      "evaluation_final/schemas.py": "0cecf7dcd4e641fce1bb76b983758f9c47fa6f9e6616464ad9a9e8d8e5165f4f",
+      "evaluation_final/statistics.py": "c239a48297459b1dcf824e5c5a1acee942e863c0111027532ec09e51237f9d93",
+      "evaluation_final/systems.py": "b4c4011af786b28d5fb1747066a56830bb89d981af990821359904588176d2b5",
+      "evaluation_p2/dataset.py": "dade743236ceff488bf7e8c1d012eed31f72d896fd5bd36c751a7caa3d0032a6",
+      "recommender/candidate_corpus.py": "aac2c918ddf4345f82ebcb526f29c9b8e60f934fdb1ab3b014e3f4844e28d4af",
+      "recommender/constraint_evaluator.py": "bb28299f8cd07ae7d85667c7166dbf4d04722bd4156b42f609b0ca916d8146d9",
+      "recommender/dense_retrieval.py": "5c5a63120cea5baed7f8e72f94281724cb18073f7b36410dcdc650a6f78a1d8b",
+      "recommender/hybrid_retrieval.py": "59a550e8f42214c13b284d4a59c99e28aa9d8db0f6456af60ad3adedd6b544b3",
+      "recommender/image-catalog.yaml": "f45b04efc2ea6f271d49c6806b58bfc0f30503cb68944930609f6e0f71882a71",
+      "recommender/local_embeddings.py": "70bc2de0dd1423268e10618308e63264aa6298ca16e00dc63c3545500136adf6",
+      "recommender/local_structured_intent.py": "b9c249d1c6db9b664ef11275b7ca5dc355d6b75ab0f0ebac4d3a59631882d5ba",
+      "recommender/models.py": "f9574976aaecb8a02e052f5a92ac4a34357864cf85592f8cc4f7603022fa39fa",
+      "recommender/p2_backend.py": "3ca68ea72f7010c671684021ca3172dbc58c76408f6d31fb0900e88beb78e2ff",
+      "recommender/p3_backend.py": "e0d5b21645987df5260bdfd9cfcb675959ae1c04ed558b3dbaa7a5b4e37a92d4",
+      "recommender/p3_reranker.py": "b6b0a5a7ddb23dc729dcd9f7d1c4f14ba8b1db0dd8dbbf1ba2b29e866220b609",
+      "recommender/rule_based.py": "063d70244a59d261101e286f6c0fcff5f92f8c7d906072d305b5a2c328e3c581",
+      "recommender/sparse_retrieval.py": "56bb94fc32e23e5be0e3b097dbe634eb89b2681c114a764220a18c0aa58ef5d5"
+    },
+    "system_revisions": {
+      "B0": "jupyterhub-manual-selection-protocol-v1.0.0",
+      "P1": "rule-based-v1",
+      "P2": {
+        "backend_version": "p2-hybrid-v1.0.0",
+        "pipeline_version": "p2-pipeline-v1.0.0"
+      },
+      "P3": {
+        "applicable": false,
+        "backend_version": "p3-reranker-v1.0.0",
+        "pipeline_version": "p3-pipeline-v1.0.0"
+      }
+    }
+  },
+  "historical_reference_evidence": {
+    "P1_P2_observed_development_run": {
+      "classification": "historical_reference_not_automatically_a_final_test",
+      "exists": true,
+      "path": "evaluation_p2/results/20260821T-observed-p1-p2-v1-4/manifest.json",
+      "sha256": "b9a24b9b23e4dcdb47291d09d1694050ee0b06a50ac855447675a14fcf5c43de"
+    },
+    "P3_gate_run": {
+      "classification": "gate_evidence_not_a_separate_primary_provider_system",
+      "exists": true,
+      "path": "evaluation_p3/results/20260821T-observed-p2-p3-ollama-llama3-v1/manifest.json",
+      "sha256": "86b3c276549f688755cb013edc70803495a63dec6fc573492897c44d1ff0b4ec"
+    },
+    "direct_external_LLM_report": {
+      "classification": "historical_reference_only",
+      "exists": true,
+      "path": "docs/evaluation/EXTERNAL_LLM_GEMINI_3_5_VERIFICATION.md",
+      "sha256": "5a9d4111f4ea2725dd1dfd09bdae108c2834430a09f063006718c95dfa7f91d2"
+    },
+    "direct_local_LLM_report": {
+      "classification": "historical_reference_only",
+      "exists": true,
+      "path": "docs/evaluation/LOCAL_LLM_REPAIR_REPORT.md",
+      "sha256": "e74aa1503929e0914d72753df208a68799ad9f67513960d743e2433cb5f8432a"
+    }
+  },
+  "integrity_rules": {
+    "exclusive_create_no_overwrite": true,
+    "interpretation_must_not_be_stored_as_raw_or_derived_data": true,
+    "kubernetes_cluster_mutation_authorized": false,
+    "missing_results_must_remain_missing": true,
+    "observations_must_precede_metrics": true,
+    "raw_observations_immutable": true
+  },
+  "p3_gate": {
+    "P3_active_in_final_evaluation": false,
+    "decision_version": "final-p3-retention-gate-v1.0.0",
+    "evidence_path": "docs/evaluation/P3_INCREMENTAL_EVALUATION_V1.md",
+    "evidence_sha256": "3ed59ae76bd79e5e86cb08f63f86d7a49c8c5632f578b74f8ee51a1f8c4b8d9f",
+    "status": "not_retained"
+  },
+  "research_questions": {
+    "RQ1": {
+      "B0_ranking_metrics_prohibited": true,
+      "scope": "user-facing selection effectiveness against B0",
+      "status": "awaiting_real_user_study_observations"
+    },
+    "RQ2": {
+      "P2_ablations": "optional_secondary_analysis_only",
+      "scope": "paired recommendation quality P2 versus P1",
+      "status": "awaiting_final_test_observations"
+    },
+    "RQ3": {
+      "scope": "paired incremental P3 versus P2",
+      "status": "not_applicable_after_gate"
+    }
+  },
+  "result_layout": {
+    "derived": "derived/",
+    "interpretation": "interpretation/",
+    "raw": "raw/"
+  },
+  "run_id": "20260822T-final-evaluation-freeze-v1",
+  "schema_version": "final-evaluation-freeze-v1.0.0",
+  "source_control": {
+    "git_commit": "d716c283a03477667c1c450d28c87262077a1c56",
+    "git_worktree_dirty": true,
+    "python_version": "3.14.6"
+  },
+  "state": "frozen_before_final_observation_collection",
+  "system_registry": {
+    "active_primary_system_ids": [
+      "B0",
+      "P1",
+      "P2"
+    ],
+    "allowed_primary_system_ids": [
+      "B0",
+      "P1",
+      "P2",
+      "P3"
+    ],
+    "classification_rules": {
+      "additional_primary_system_ids_permitted": false,
+      "direct_external_or_local_llm_experiments": "historical_reference_only",
+      "p2_retrieval_variants": "secondary_ablations_nested_under_P2"
+    },
+    "schema_version": "final-primary-system-registry-v1.0.0",
+    "systems": {
+      "B0": {
+        "active_in_final_evaluation": true,
+        "description": "Manual administrator-provided profile/image selection with no recommendation.",
+        "emits_ranking": false,
+        "emits_recommendation": false,
+        "gate_status": "not_applicable",
+        "label": "Default JupyterHub manual selection",
+        "research_questions": [
+          "RQ1"
+        ]
+      },
+      "P1": {
+        "active_in_final_evaluation": true,
+        "description": "Frozen existing deterministic rule-based recommender.",
+        "emits_ranking": false,
+        "emits_recommendation": true,
+        "gate_status": "not_applicable",
+        "label": "Existing rule-based recommendation",
+        "research_questions": [
+          "RQ1",
+          "RQ2"
+        ]
+      },
+      "P2": {
+        "active_in_final_evaluation": true,
+        "description": "Structured Intent, sparse+dense retrieval, Reciprocal Rank Fusion, and deterministic constraint filtering/ranking.",
+        "emits_ranking": true,
+        "emits_recommendation": true,
+        "gate_status": "not_applicable",
+        "label": "Structured Intent and Hybrid Retrieval",
+        "research_questions": [
+          "RQ1",
+          "RQ2",
+          "RQ3"
+        ],
+        "secondary_ablations": [
+          "sparse_only",
+          "dense_only"
+        ]
+      },
+      "P3": {
+        "active_in_final_evaluation": false,
+        "conditional_on_gate": true,
+        "description": "P2 followed only by schema-validated reranking of P2-feasible IDs.",
+        "emits_ranking": true,
+        "emits_recommendation": true,
+        "gate_status": "not_retained",
+        "label": "Grounded LLM reranking over P2",
+        "research_questions": [
+          "RQ1",
+          "RQ3"
+        ]
+      }
+    }
+  }
+}
