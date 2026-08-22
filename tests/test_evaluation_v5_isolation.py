@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from argparse import Namespace
+import copy
 import hashlib
 import io
 import json
@@ -34,9 +35,10 @@ from evaluation_v5.isolation import (
     load_confirmatory_split,
     normalize_prompt,
     require_external_dataset_path,
+    resolve_confirmatory_sources,
 )
 from evaluation_v5.isolation_audit import IsolationAuditError, audit_repository
-from evaluation_v5.offline.run import run_preflight
+from evaluation_v5.offline.run import main as offline_main, run_preflight
 from evaluation_v5.split_dataset import (
     DEFAULT_DEVELOPMENT_DATASET,
     SPLIT_BUNDLE_SCHEMA_VERSION,
@@ -52,6 +54,14 @@ from recommender.deployment import RUNTIME_FILES
 
 ROOT = Path(__file__).resolve().parents[1]
 FIXED_REVISION = "a" * 40
+
+
+def _is_sha256(value: object) -> bool:
+    return (
+        isinstance(value, str)
+        and len(value) == 64
+        and all(character in "0123456789abcdef" for character in value)
+    )
 
 
 def _case(
@@ -284,6 +294,51 @@ def test_split_schema_rejects_non_json_keys_and_recursive_provenance_safely():
         validate_split_bundle(recursive)
 
 
+def test_canonical_checksum_is_reproducible_and_preserves_semantic_order():
+    document = _document()
+    expected = split_bundle_checksum(document)
+
+    reordered = {
+        key: document[key]
+        for key in reversed(tuple(document))
+    }
+    reordered["split_manifest"] = {
+        key: document["split_manifest"][key]  # type: ignore[index]
+        for key in reversed(tuple(document["split_manifest"]))  # type: ignore[arg-type]
+    }
+    assert split_bundle_checksum(reordered) == expected
+    assert split_bundle_checksum(yaml.safe_load(yaml.safe_dump(document))) == expected
+
+    first = _case(case_id="case-a", family_id="family-a", prompt="Caf\u00e9")
+    second = _case(case_id="case-b", family_id="family-b", prompt="Second case")
+    ordered = _document(cases=[first, second])
+    reversed_cases = copy.deepcopy(ordered)
+    reversed_cases["cases"] = list(reversed(reversed_cases["cases"]))  # type: ignore[arg-type]
+    assert split_bundle_checksum(reversed_cases) != split_bundle_checksum(ordered)
+
+    exact_string = copy.deepcopy(document)
+    exact_string["cases"][0]["prompt"] += "\n"  # type: ignore[index,operator]
+    assert split_bundle_checksum(exact_string) != expected
+
+    decomposed_unicode = _document(
+        cases=[_case(prompt="Cafe\u0301")],
+    )
+    composed_unicode = _document(
+        cases=[_case(prompt="Caf\u00e9")],
+    )
+    assert split_bundle_checksum(decomposed_unicode) != split_bundle_checksum(
+        composed_unicode
+    )
+
+    integer_number = copy.deepcopy(document)
+    integer_number["cases"][0]["inputs"]["dataset_size_gb"] = 1  # type: ignore[index]
+    floating_number = copy.deepcopy(integer_number)
+    floating_number["cases"][0]["inputs"]["dataset_size_gb"] = 1.0  # type: ignore[index]
+    assert split_bundle_checksum(integer_number) != split_bundle_checksum(
+        floating_number
+    )
+
+
 @pytest.mark.parametrize("alias", ("development", "v5-development"))
 def test_default_development_preflight_is_not_executed(alias: str):
     result = run_preflight(_args(split=alias), environ={})
@@ -314,6 +369,52 @@ def test_development_command_cannot_touch_confirmatory_source(
     )
     with pytest.raises(SplitIsolationError):
         run_preflight(args, environ=environ)
+
+
+def test_planted_confirmatory_file_is_not_discovered_by_development_or_indexes(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+):
+    synthetic_checkout = tmp_path / "synthetic-checkout"
+    benchmark_root = synthetic_checkout / "benchmarks_v5"
+    benchmark_root.mkdir(parents=True)
+    planted = _write_bundle(benchmark_root / "v5-confirmatory.yaml")
+    sentinel = planted.read_text(encoding="utf-8")
+    planted_resolved = planted.resolve()
+    original_path_open = Path.open
+    original_os_open = split_dataset_module.os.open
+
+    def guarded_path_open(path: Path, *args: object, **kwargs: object):
+        if path.resolve() == planted_resolved:
+            pytest.fail("development/index code opened a planted confirmatory bundle")
+        return original_path_open(path, *args, **kwargs)
+
+    def guarded_os_open(path: object, *args: object, **kwargs: object):
+        if Path(path).resolve() == planted_resolved:
+            pytest.fail("development/index code opened a planted confirmatory bundle")
+        return original_os_open(path, *args, **kwargs)  # type: ignore[arg-type]
+
+    monkeypatch.setattr(Path, "open", guarded_path_open)
+    monkeypatch.setattr(split_dataset_module.os, "open", guarded_os_open)
+
+    before = build_configuration_snapshot(
+        p3_gate_status="not_retained",
+        p3_gate_evidence=freeze_module.DEFAULT_P3_GATE_EVIDENCE,
+    )["indexes"]
+    monkeypatch.chdir(synthetic_checkout)
+    development = run_preflight(_args(split="development"), environ={})
+    after = build_configuration_snapshot(
+        p3_gate_status="not_retained",
+        p3_gate_evidence=freeze_module.DEFAULT_P3_GATE_EVIDENCE,
+    )["indexes"]
+
+    assert development["split"]["split_id"] == "v5-development"
+    assert development["split"]["role"] == "development"
+    assert before == after
+    with original_path_open(planted, "r", encoding="utf-8") as handle:
+        assert handle.read() == sentinel
+    assert not (synthetic_checkout / "evaluation_v5/cache").exists()
+    assert not (synthetic_checkout / "evaluation_v5/indexes").exists()
 
 
 def test_confirmation_without_freeze_fails_before_dataset_open(
@@ -385,6 +486,80 @@ def test_confirmatory_sources_are_explicit_and_unambiguous(tmp_path: Path):
             ),
             environ={},
         )
+
+    dataset = tmp_path / "sealed.yaml"
+    freeze = tmp_path / FREEZE_ARTIFACT_BASENAME
+    assert resolve_confirmatory_sources(
+        dataset_path=dataset,
+        freeze_path=freeze,
+        environ={},
+    ) == (dataset, freeze)
+    assert resolve_confirmatory_sources(
+        dataset_path=None,
+        freeze_path=None,
+        environ={
+            CONFIRMATORY_DATASET_ENV_VAR: str(dataset),
+            FREEZE_ARTIFACT_ENV_VAR: str(freeze),
+        },
+    ) == (dataset, freeze)
+
+
+def test_public_cli_confirmation_fails_closed_without_external_inputs(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+):
+    monkeypatch.delenv(CONFIRMATORY_DATASET_ENV_VAR, raising=False)
+    monkeypatch.delenv(FREEZE_ARTIFACT_ENV_VAR, raising=False)
+
+    assert offline_main(["--split", "confirmatory"]) == 2
+    missing_dataset = json.loads(capsys.readouterr().out)
+    assert missing_dataset["status"] == "ERROR"
+    assert "requires --dataset" in missing_dataset["error"]
+
+    sealed = tmp_path / "must-not-open.yaml"
+    sealed.write_text("sealed sentinel must not be opened", encoding="utf-8")
+    original_open = split_dataset_module.os.open
+
+    def guarded_open(path: object, *args: object, **kwargs: object):
+        if Path(path) == sealed:
+            pytest.fail("sealed input was opened without a freeze source")
+        return original_open(path, *args, **kwargs)  # type: ignore[arg-type]
+
+    monkeypatch.setattr(split_dataset_module.os, "open", guarded_open)
+    assert offline_main(
+        ["--split", "confirmatory", "--dataset", str(sealed)]
+    ) == 2
+    missing_freeze = json.loads(capsys.readouterr().out)
+    assert missing_freeze["status"] == "ERROR"
+    assert "requires --freeze" in missing_freeze["error"]
+
+
+def test_public_cli_cannot_use_a_repository_bundled_dataset(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+):
+    monkeypatch.delenv(CONFIRMATORY_DATASET_ENV_VAR, raising=False)
+    monkeypatch.delenv(FREEZE_ARTIFACT_ENV_VAR, raising=False)
+    monkeypatch.setattr(
+        freeze_module,
+        "verify_freeze_artifact",
+        lambda _path: {"freeze_id": "synthetic-verification-only"},
+    )
+
+    assert offline_main(
+        [
+            "--split",
+            "confirmatory",
+            "--dataset",
+            str(DEFAULT_DEVELOPMENT_DATASET),
+            "--freeze",
+            str(ROOT / "results_v5/protocol-v5.0.0/freezes/fake/freeze-manifest.json"),
+        ]
+    ) == 2
+    result = json.loads(capsys.readouterr().out)
+    assert result["status"] == "ERROR"
+    assert "outside the repository" in result["error"]
 
 
 def test_in_repository_and_symlink_resolved_paths_are_rejected(
@@ -547,8 +722,16 @@ def test_invalid_similarity_option_is_rejected_before_freeze_or_sealed_access(
         )
 
 
-@pytest.mark.parametrize("kind", ["case", "family", "exact", "normalized"])
-def test_contamination_blockers(kind: str):
+@pytest.mark.parametrize(
+    ("kind", "expected_category"),
+    [
+        ("case", "case_id_overlap"),
+        ("family", "family_id_overlap"),
+        ("exact", "exact_prompt_duplicate"),
+        ("normalized", "normalized_prompt_duplicate"),
+    ],
+)
+def test_contamination_blockers(kind: str, expected_category: str):
     development = load_development_split().bundle
     baseline = development.cases[0]
     case_id = baseline.case_id if kind == "case" else "sealed-unique-case"
@@ -565,6 +748,7 @@ def test_contamination_blockers(kind: str):
     with pytest.raises(SplitContaminationError) as error:
         check_contamination(development, confirmatory)
     assert error.value.report.has_blocking_contamination
+    assert expected_category in error.value.report.blocking_categories
 
 
 def test_high_textual_similarity_is_safe_review_not_rejection():
@@ -578,6 +762,67 @@ def test_high_textual_similarity_is_safe_review_not_rejection():
     assert report.similarity_review_pairs
     assert baseline.prompt not in encoded
     assert prompt not in encoded
+
+    threshold_only = check_contamination(
+        development,
+        _bundle(
+            cases=[
+                _case(
+                    case_id="threshold-only-case",
+                    family_id="threshold-only-family",
+                    prompt="Text with no prohibited identity or exact duplicate.",
+                )
+            ]
+        ),
+        similarity_threshold=0.0,
+    )
+    assert threshold_only.similarity_review_pairs
+    assert not threshold_only.has_blocking_contamination
+    assert threshold_only.to_safe_dict()["blocking_checks_passed"] is True
+
+
+def test_contamination_intersections_are_symmetric_after_supply(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+):
+    sealed = _write_bundle(tmp_path / "sealed.yaml")
+    monkeypatch.setattr(
+        freeze_module,
+        "verify_freeze_artifact",
+        lambda _path: {"freeze_id": "synthetic-verification-only"},
+    )
+    supplied = load_confirmatory_split(sealed, tmp_path / "freeze.json")
+    confirmatory_case = supplied.split.bundle.cases[0]
+    development = supplied.development_split.bundle
+    modified_document = development.to_dict()
+    modified_document["cases"][0]["case_id"] = confirmatory_case.case_id
+    modified_document["cases"][0]["family_id"] = confirmatory_case.family_id
+    modified_document["cases"][0]["prompt"] = confirmatory_case.prompt
+    modified_document["split_manifest"]["family_ids"] = sorted(
+        {case["family_id"] for case in modified_document["cases"]}
+    )
+    modified_document["split_manifest"]["family_count"] = len(
+        modified_document["split_manifest"]["family_ids"]
+    )
+    modified_document["split_manifest"]["checksum"] = split_bundle_checksum(
+        modified_document
+    )
+    modified_development = validate_split_bundle(
+        modified_document,
+        expected_role=SplitRole.DEVELOPMENT,
+    )
+
+    for first, second in (
+        (modified_development, supplied.split.bundle),
+        (supplied.split.bundle, modified_development),
+    ):
+        with pytest.raises(SplitContaminationError) as error:
+            check_contamination(first, second)
+        assert set(error.value.report.blocking_categories) >= {
+            "case_id_overlap",
+            "family_id_overlap",
+            "exact_prompt_duplicate",
+        }
 
 
 def test_normalized_duplicate_check_preserves_semantic_symbols():
@@ -601,14 +846,39 @@ def test_production_freeze_is_complete_immutable_and_contains_no_sealed_data(
     snapshot = manifest["configuration_snapshot"]
     assert manifest["schema_version"] == FREEZE_SCHEMA_VERSION
     assert manifest["status"] == "FROZEN"
+    assert manifest["source_control"] == {
+        "git_revision": FIXED_REVISION,
+        "git_worktree_clean": True,
+    }
     assert snapshot["development_dataset"]["case_count"] == 18
     assert set(snapshot["systems"]) == {"P1", "P2", "P3"}
+    assert snapshot["systems"]["P1"]["backend_version"]
+    assert snapshot["systems"]["P2"]["backend_version"]
+    assert snapshot["systems"]["P2"]["pipeline_version"]
+    assert snapshot["systems"]["P3"]["backend_version"]
+    assert snapshot["systems"]["P3"]["pipeline_version"]
+    assert snapshot["systems"]["P3"]["reranker_version"]
     assert set(snapshot["indexes"]) == {"sparse", "dense", "hybrid", "source"}
+    assert snapshot["indexes"]["source"] == "administrator_catalog_only"
+    for index_name in ("sparse", "dense", "hybrid"):
+        identity = snapshot["indexes"][index_name]
+        assert identity["schema_version"]
+        assert identity["index_version"]
+        assert _is_sha256(identity["index_checksum"])
+        assert _is_sha256(identity["corpus_checksum"])
+    assert snapshot["candidate_catalog"]["version"]
+    assert _is_sha256(snapshot["candidate_catalog"]["file_sha256"])
+    assert _is_sha256(snapshot["candidate_catalog"]["corpus_sha256"])
+    assert _is_sha256(snapshot["runtime_package"]["sha256"])
+    assert _is_sha256(snapshot["prompts"]["P2_extractor"]["prompt_sha256"])
+    assert _is_sha256(snapshot["prompts"]["P3_reranker"]["prompt_sha256"])
     assert snapshot["systems"]["P3"]["reranker_model_id"] == "frozen-p3-model"
     assert snapshot["configuration"]["P2"]["top_k"] == 10
     assert snapshot["configuration"]["P3"]["total_timeout"] == 30.0
     assert snapshot["configuration"]["constraints"]["retrieval_rank_weight"] == 0.75
     assert snapshot["configuration"]["constraints"]["soft_preference_weight"] == 0.25
+    assert _is_sha256(snapshot["development_dataset"]["canonical_sha256"])
+    assert _is_sha256(snapshot["development_dataset"]["file_sha256"])
     assert "confirmatory" not in encoded
     assert "credential-must-not-be-recorded" not in encoded
     assert verify_freeze_artifact(artifact)["freeze_id"] == "fixture-freeze"
@@ -1033,6 +1303,98 @@ def test_dry_run_and_stale_or_wrong_development_checksum_freezes_are_rejected(
         verify_freeze_artifact(stale_path)
 
 
+def test_modifying_development_dataset_after_freeze_invalidates_freeze(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+):
+    development_path = tmp_path / "v5-development.yaml"
+    development_path.write_bytes(DEFAULT_DEVELOPMENT_DATASET.read_bytes())
+    monkeypatch.setattr(
+        split_dataset_module,
+        "DEFAULT_DEVELOPMENT_DATASET",
+        development_path,
+    )
+    monkeypatch.setattr(
+        freeze_module,
+        "DEFAULT_DEVELOPMENT_DATASET",
+        development_path,
+    )
+    artifact = _production_freeze(
+        tmp_path,
+        monkeypatch,
+        freeze_id="development-drift-freeze",
+    )
+
+    changed = yaml.safe_load(development_path.read_text(encoding="utf-8"))
+    changed["cases"][0]["prompt"] += " synthetic post-freeze drift"
+    changed["split_manifest"]["checksum"] = split_bundle_checksum(changed)
+    development_path.write_text(
+        yaml.safe_dump(changed, sort_keys=False, allow_unicode=True),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(FreezeValidationError, match="development_dataset"):
+        verify_freeze_artifact(artifact)
+
+
+def test_catalog_content_and_every_index_identity_are_freeze_bound(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+):
+    catalog_path = tmp_path / "image-catalog.yaml"
+    catalog_path.write_bytes((ROOT / "recommender/image-catalog.yaml").read_bytes())
+    monkeypatch.setattr(freeze_module, "DEFAULT_CATALOG_PATH", str(catalog_path))
+    artifact = _production_freeze(
+        tmp_path,
+        monkeypatch,
+        freeze_id="catalog-index-drift-freeze",
+    )
+    frozen = json.loads(artifact.read_text(encoding="utf-8"))[
+        "configuration_snapshot"
+    ]
+    frozen_checksums = {
+        name: frozen["indexes"][name]["index_checksum"]
+        for name in ("sparse", "dense", "hybrid")
+    }
+
+    changed = yaml.safe_load(catalog_path.read_text(encoding="utf-8"))
+    changed["images"]["minimal-python"]["description"] += " Synthetic drift."
+    catalog_path.write_text(
+        yaml.safe_dump(changed, sort_keys=False, allow_unicode=True),
+        encoding="utf-8",
+    )
+    current = build_configuration_snapshot(
+        p3_gate_status="not_retained",
+        p3_gate_evidence=freeze_module.DEFAULT_P3_GATE_EVIDENCE,
+    )
+    assert all(
+        current["indexes"][name]["index_checksum"] != frozen_checksums[name]
+        for name in ("sparse", "dense", "hybrid")
+    )
+    with pytest.raises(FreezeValidationError) as error:
+        verify_freeze_artifact(artifact)
+    assert "candidate_catalog" in str(error.value)
+    assert "indexes" in str(error.value)
+
+
+def test_prompt_identity_drift_invalidates_freeze(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+):
+    artifact = _production_freeze(
+        tmp_path,
+        monkeypatch,
+        freeze_id="prompt-drift-freeze",
+    )
+    monkeypatch.setattr(
+        freeze_module,
+        "LOCAL_EXTRACTOR_PROMPT_SHA256",
+        "f" * 64,
+    )
+    with pytest.raises(FreezeValidationError, match="prompts"):
+        verify_freeze_artifact(artifact)
+
+
 def test_loading_synthetic_confirmation_does_not_change_candidate_indexes(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
@@ -1092,6 +1454,87 @@ def test_isolation_audit_detects_synthetic_wheel_without_disclosing_content(
     assert "confirmatory-split-bundle" in encoded
     assert wheel.name not in encoded
     assert prompt not in encoded
+
+
+@pytest.mark.parametrize(
+    "relative_path",
+    (
+        "benchmarks_v5/sealed/v5-confirmatory.yaml",
+        "tests/fixtures/protocol-v5-private.yaml",
+        "evaluation_v5/cache/cached-split.yaml",
+        "evaluation_v5/indexes/dataset-derived-index.yaml",
+        "results_v5/protocol-v5.0.0/raw/sealed-labels.yaml",
+    ),
+)
+def test_isolation_audit_detects_planted_material_in_protected_locations(
+    tmp_path: Path,
+    relative_path: str,
+):
+    repository = tmp_path / "repository"
+    planted = repository / relative_path
+    planted.parent.mkdir(parents=True)
+    _write_bundle(planted)
+
+    report = audit_repository(repository)
+
+    assert not report.clean
+    assert any(
+        finding.category == "confirmatory-split-bundle"
+        for finding in report.findings
+    )
+
+
+def test_isolation_audit_detects_docker_context_and_opaque_oci_layer(
+    tmp_path: Path,
+):
+    repository = tmp_path / "repository"
+    repository.mkdir()
+    bundle = yaml.safe_dump(
+        _document(
+            cases=[
+                _case(
+                    prompt="synthetic Docker isolation sentinel must stay redacted"
+                )
+            ]
+        ),
+        sort_keys=False,
+        allow_unicode=True,
+    ).encode("utf-8")
+
+    context = tmp_path / "docker-context.tar"
+    with tarfile.open(context, mode="w") as archive:
+        info = tarfile.TarInfo(".protocol-v5-private/sealed.yaml")
+        info.size = len(bundle)
+        archive.addfile(info, io.BytesIO(bundle))
+
+    layer_payload = io.BytesIO()
+    with tarfile.open(fileobj=layer_payload, mode="w") as layer:
+        info = tarfile.TarInfo("app/sealed.yaml")
+        info.size = len(bundle)
+        layer.addfile(info, io.BytesIO(bundle))
+    oci_image = tmp_path / "synthetic-image.tar"
+    with tarfile.open(oci_image, mode="w") as outer:
+        opaque_layer = layer_payload.getvalue()
+        info = tarfile.TarInfo("blobs/sha256/opaque-layer-digest")
+        info.size = len(opaque_layer)
+        outer.addfile(info, io.BytesIO(opaque_layer))
+
+    report = audit_repository(repository, archives=[context, oci_image])
+    encoded = json.dumps(
+        [
+            {"location": finding.location, "category": finding.category}
+            for finding in report.findings
+        ],
+        sort_keys=True,
+    )
+    assert len(report.findings) == 2
+    assert all(
+        finding.category == "confirmatory-split-bundle"
+        for finding in report.findings
+    )
+    assert "synthetic Docker isolation sentinel" not in encoded
+    assert context.name not in encoded
+    assert oci_image.name not in encoded
 
 
 def test_isolation_audit_parses_confirmatory_role_across_json_lines(tmp_path: Path):
@@ -1465,14 +1908,56 @@ def test_isolation_audit_fails_closed_at_archive_nesting_limit(tmp_path: Path):
 
 
 def test_docker_and_runtime_packages_are_allowlisted_away_from_v5_data():
-    dockerfile = (ROOT / "cluster_evaluation/Dockerfile").read_text(encoding="utf-8")
-    dockerignore = (
-        ROOT / "cluster_evaluation/Dockerfile.dockerignore"
-    ).read_text(encoding="utf-8")
+    dockerfile_path = ROOT / "cluster_evaluation/Dockerfile"
+    dockerfile = dockerfile_path.read_text(encoding="utf-8")
+    dockerignore = Path(f"{dockerfile_path}.dockerignore").read_text(encoding="utf-8")
     assert "COPY benchmarks /app/benchmarks" not in dockerfile
     assert "COPY benchmarks/__init__.py benchmarks/workload_runner.py" in dockerfile
     assert dockerignore.splitlines()[0] == "*"
     prohibited = ("evaluation_v5", "benchmarks_v5", "results_v5", "tests", "cache")
+    dockerfiles = sorted(
+        path
+        for path in (ROOT / "cluster_evaluation").glob("Dockerfile*")
+        if not path.name.endswith(".dockerignore")
+    )
+    assert {path.name for path in dockerfiles} == {
+        "Dockerfile",
+        "Dockerfile.jupyter-v3",
+        "Dockerfile.v3",
+    }
+    for selected_dockerfile in dockerfiles:
+        instructions = selected_dockerfile.read_text(encoding="utf-8").splitlines()
+        context_rules = Path(f"{selected_dockerfile}.dockerignore").read_text(
+            encoding="utf-8"
+        ).splitlines()
+        assert context_rules[0] == "*"
+        assert not any(
+            any(token in rule for token in prohibited)
+            for rule in context_rules
+            if rule.startswith("!")
+        )
+        copy_or_add = [
+            line.strip()
+            for line in instructions
+            if line.strip().startswith(("COPY ", "ADD "))
+        ]
+        assert copy_or_add
+        assert not any(
+            line in {"COPY . /app", "COPY . .", "ADD . /app", "ADD . ."}
+            or any(token in line for token in prohibited)
+            for line in copy_or_add
+        )
+
+    root_dockerignore = (ROOT / ".dockerignore").read_text(encoding="utf-8")
+    for protected in (
+        "benchmarks_v5/",
+        "results_v5/",
+        "tests/",
+        ".protocol-v5-private/",
+        "evaluation_v5/cache/",
+        "evaluation_v5/indexes/",
+    ):
+        assert protected in root_dockerignore
     assert not any(any(token in name for token in prohibited) for name in RUNTIME_FILES)
     assert not any(
         (ROOT / name).exists()

@@ -9,6 +9,9 @@ Freeze schema: `protocol-v5-freeze-v1.0.0`
 Status: isolation and preflight harness implemented; confirmatory evaluation
 `NOT_EXECUTED`
 
+Adversarial verification:
+[PROTOCOL_V5_ISOLATION_VERIFICATION.md](PROTOCOL_V5_ISOLATION_VERIFICATION.md)
+
 ## 1. Purpose and security property
 
 Protocol-v5 separates material used to build or tune the systems from material
@@ -105,6 +108,23 @@ as UTF-8 JSON with Unicode preserved, keys sorted recursively, and compact
 separators (`,` and `:`). Thus the checksum covers all cases, prompts, labels,
 metadata, counts, and identities while remaining independent of YAML spacing,
 comments, and key order.
+
+The canonicalization is intentionally exact and reproducible:
+
+- mapping order and YAML serialization details do not affect the digest;
+- sequence order is preserved, so reordering cases or another list changes the
+  digest;
+- strings are hashed exactly after YAML parsing—there is no Unicode, newline,
+  or internal-whitespace normalization of prompts or metadata;
+- JSON numeric representation remains significant (`1` and `1.0` produce
+  different canonical bytes); and
+- the canonical JSON has no trailing newline. Its bytes are exactly the UTF-8
+  encoding produced with `ensure_ascii=False`, `sort_keys=True`, and compact
+  separators.
+
+These checksum rules are separate from prompt normalization used only by the
+contamination checker. Another implementation can reproduce the digest without
+copying the YAML formatting.
 
 The authoritative freeze records two distinct development digests:
 
@@ -395,6 +415,13 @@ Lexical similarity is a review aid, not a semantic oracle. A low score cannot
 prove that two workload families are independent, and a high score is not by
 itself a rejection. Human review must apply the family-level protocol without
 using sealed labels for development.
+
+The visible 18-case, 10-family bundle validates Protocol-v5 infrastructure and
+supports bounded formative work; it is not evidence that this corpus is
+sufficient for unrestricted tuning. Split isolation prevents leakage from the
+sealed set, but it cannot prevent overfitting to visible development material.
+Any claim about tuning adequacy requires a separate design justification and
+must not be inferred from the existence of the isolation controls.
 
 Finally, a freeze records and verifies the captured repository and
 configuration identity; it is not execution evidence or a cryptographic
