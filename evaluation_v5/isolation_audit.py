@@ -1,4 +1,4 @@
-"""Audit repository and package artifacts for sealed Protocol-v5 bundles.
+"""Audit repository and package artifacts for sealed Protocol-v5 gold data.
 
 The audit never extracts archives and never reports dataset contents.  It is a
 defence-in-depth packaging check; the confirmatory loader remains responsible
@@ -26,6 +26,7 @@ import yaml
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 SPLIT_SCHEMA_PREFIX = "protocol-v5-split-bundle-"
+GOLD_SCHEMA_PREFIX = "protocol-v5-gold-family-"
 
 _DOCUMENT_SUFFIXES = frozenset({".json", ".jsonl", ".yaml", ".yml"})
 _ARCHIVE_SUFFIXES = (
@@ -53,7 +54,7 @@ _MAX_REPOSITORY_STREAM_BYTES = 512 * 1024 * 1024
 _STREAM_CHUNK_BYTES = 1024 * 1024
 _SIGNATURE_OVERLAP_BYTES = 256
 _SCHEMA_SIGNATURE = re.compile(
-    rb"protocol-v5-split-bundle-[A-Za-z0-9._-]+",
+    rb"protocol-v5-(?:split-bundle|gold-family)-[A-Za-z0-9._-]+",
     re.IGNORECASE,
 )
 _CONFIRMATORY_TOKEN_SIGNATURE = re.compile(
@@ -63,22 +64,23 @@ _CONFIRMATORY_TOKEN_SIGNATURE = re.compile(
 _YAML_SCHEMA_LINE = re.compile(
     r"(?m)^[ \t]*(?P<key_quote>['\"]?)schema_version(?P=key_quote)"
     r"[ \t]*:[ \t]*(?P<value_quote>['\"]?)"
-    r"protocol-v5-split-bundle-[A-Za-z0-9._-]+(?P=value_quote)"
+    r"protocol-v5-(?:split-bundle|gold-family)-[A-Za-z0-9._-]+(?P=value_quote)"
     r"[ \t]*(?:#.*)?$",
     re.IGNORECASE,
 )
 _YAML_FLOW_SCHEMA_FIELD = re.compile(
     r"(?P<key_quote>['\"]?)schema_version(?P=key_quote)"
     r"\s*:\s*(?P<value_quote>['\"]?)"
-    r"protocol-v5-split-bundle-[A-Za-z0-9._-]+(?P=value_quote)",
+    r"protocol-v5-(?:split-bundle|gold-family)-[A-Za-z0-9._-]+(?P=value_quote)",
     re.IGNORECASE,
 )
 _YAML_ROOT_KEY_LINE = re.compile(
     r"(?m)^(?P<indent>[ \t]*)(?P<quote>['\"]?)"
-    r"(?P<key>schema_version|split_manifest|cases)(?P=quote)[ \t]*:",
+    r"(?P<key>schema_version|split_manifest|cases|dataset_metadata|"
+    r"catalog_identity|review_policy|families)(?P=quote)[ \t]*:",
 )
 _JSON_SCHEMA_FIELD = re.compile(
-    r'"schema_version"\s*:\s*"protocol-v5-split-bundle-[A-Za-z0-9._-]+"',
+    r'"schema_version"\s*:\s*"protocol-v5-(?:split-bundle|gold-family)-[A-Za-z0-9._-]+"',
     re.IGNORECASE,
 )
 _FENCED_BLOCK = re.compile(
@@ -161,15 +163,18 @@ def _is_confirmatory_bundle(document: object) -> bool:
     if not isinstance(document, Mapping):
         return False
     schema_version = document.get("schema_version")
-    if not (
-        isinstance(schema_version, str)
-        and schema_version.startswith(SPLIT_SCHEMA_PREFIX)
+    if not isinstance(schema_version, str) or not schema_version.startswith(
+        (SPLIT_SCHEMA_PREFIX, GOLD_SCHEMA_PREFIX)
     ):
         return False
 
     split_manifest = document.get("split_manifest")
     if isinstance(split_manifest, Mapping):
         return split_manifest.get("role") == "confirmatory"
+
+    dataset_metadata = document.get("dataset_metadata")
+    if isinstance(dataset_metadata, Mapping):
+        return dataset_metadata.get("role") == "confirmatory"
 
     # Retain detection if a future compatible bundle lifts role to the root.
     return document.get("role") == "confirmatory"
@@ -946,8 +951,8 @@ def audit_repository(
 def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description=(
-            "Fail if a Protocol-v5 confirmatory split bundle is present in "
-            "the repository or a package archive."
+            "Fail if Protocol-v5 confirmatory authoring data or a split bundle "
+            "is present in the repository or a package archive."
         )
     )
     parser.add_argument(
@@ -985,7 +990,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         return 1
 
     print(
-        "PASS: Protocol-v5 isolation audit found no confirmatory split bundles "
+        "PASS: Protocol-v5 isolation audit found no confirmatory gold datasets "
+        "or split bundles "
         f"({report.repository_documents_scanned} repository document(s), "
         f"{report.archives_scanned} archive(s), "
         f"{report.archive_documents_scanned} archive document(s) inspected)."

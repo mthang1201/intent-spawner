@@ -45,6 +45,8 @@ from .split_dataset import (
     DEFAULT_DEVELOPMENT_DATASET,
     DEFAULT_DEVELOPMENT_SPLIT_ID,
     SPLIT_BUNDLE_SCHEMA_VERSION,
+    SPLIT_BUNDLE_SCHEMA_VERSION_V2,
+    SUPPORTED_SPLIT_BUNDLE_SCHEMA_VERSIONS,
     LoadedSplit,
     SplitBundle,
     SplitBundleValidationError,
@@ -55,11 +57,45 @@ from .split_dataset import (
     split_bundle_checksum,
     validate_split_bundle,
 )
+_GOLD_EXPORTS = frozenset(
+    {
+        "COMPILED_SPLIT_SCHEMA_VERSION",
+        "GOLD_DATASET_SCHEMA_VERSION",
+        "GOLD_REVIEW_SCHEMA_VERSION",
+        "GOLD_SUMMARY_SCHEMA_VERSION",
+        "GoldDataset",
+        "GoldDatasetReviewError",
+        "GoldDatasetValidationError",
+        "LoadedGoldDataset",
+        "ReviewFinding",
+        "ReviewReport",
+        "Variant",
+        "WorkloadFamily",
+        "compile_gold_dataset",
+        "current_catalog_identity",
+        "import_v4_dataset",
+        "load_gold_dataset",
+        "review_gold_dataset",
+        "summarize_gold_dataset",
+        "validate_gold_dataset",
+    }
+)
+
+
+def __getattr__(name: str):
+    """Lazily expose gold authoring APIs without preloading its CLI module."""
+
+    if name in _GOLD_EXPORTS:
+        from . import gold_dataset
+
+        return getattr(gold_dataset, name)
+    raise AttributeError(name)
 
 __all__ = [
     "CandidateCatalogIdentity",
     "ChecksumMismatchError",
     "CONFIRMATORY_DATASET_ENV_VAR",
+    "COMPILED_SPLIT_SCHEMA_VERSION",
     "ConfirmatoryLoadResult",
     "ContaminationReport",
     "DEFAULT_CONFIRMATORY_SPLIT_ID",
@@ -72,13 +108,22 @@ __all__ = [
     "ExperimentId",
     "ExtractorIdentity",
     "FREEZE_ARTIFACT_ENV_VAR",
+    "GOLD_DATASET_SCHEMA_VERSION",
+    "GOLD_REVIEW_SCHEMA_VERSION",
+    "GOLD_SUMMARY_SCHEMA_VERSION",
+    "GoldDataset",
+    "GoldDatasetReviewError",
+    "GoldDatasetValidationError",
     "LoadedSplit",
+    "LoadedGoldDataset",
     "MANIFEST_SCHEMA_VERSION",
     "ManifestValidationError",
     "PROTOCOL_DIRECTORY",
     "PROTOCOL_VERSION",
     "ProtocolV5Manifest",
     "ResultPaths",
+    "ReviewFinding",
+    "ReviewReport",
     "SplitIdentity",
     "SplitBundle",
     "SplitBundleValidationError",
@@ -89,14 +134,25 @@ __all__ = [
     "SplitRole",
     "SplitStage",
     "SPLIT_BUNDLE_SCHEMA_VERSION",
+    "SPLIT_BUNDLE_SCHEMA_VERSION_V2",
+    "SUPPORTED_SPLIT_BUNDLE_SCHEMA_VERSIONS",
+    "Variant",
+    "WorkloadFamily",
     "adapt_operational_provenance",
     "check_contamination",
+    "compile_gold_dataset",
     "create_result_directory",
+    "current_catalog_identity",
+    "import_v4_dataset",
+    "load_gold_dataset",
     "load_manifest",
     "load_confirmatory_split",
     "load_development_split",
     "normalize_prompt",
     "result_paths",
+    "review_gold_dataset",
+    "summarize_gold_dataset",
+    "validate_gold_dataset",
     "validate_manifest",
     "verify_file_checksum",
     "verify_manifest_checksums",

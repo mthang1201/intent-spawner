@@ -63,6 +63,7 @@ docs/BACKEND_CURRENT_STATE.md
 .protocol-v5-private/
 benchmarks_v5/sealed/
 benchmarks_v5/v5-confirmatory.*
+benchmarks_v5/*confirmatory*
 evaluation_v5/cache/
 evaluation_v5/indexes/
 results_v5/protocol-v5.0.0/

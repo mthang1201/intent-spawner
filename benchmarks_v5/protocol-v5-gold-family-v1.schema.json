@@ -1,0 +1,258 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "protocol-v5-gold-family-v1.schema.json",
+  "title": "Protocol-v5 family-oriented gold authoring dataset",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "dataset_metadata", "catalog_identity", "review_policy", "families"],
+  "properties": {
+    "schema_version": {"const": "protocol-v5-gold-family-v1.0.0"},
+    "dataset_metadata": {"$ref": "#/$defs/datasetMetadata"},
+    "catalog_identity": {"$ref": "#/$defs/catalogIdentity"},
+    "review_policy": {"$ref": "#/$defs/reviewPolicy"},
+    "families": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/family"}
+    }
+  },
+  "$defs": {
+    "safeId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[a-z0-9][a-z0-9._-]*$"
+    },
+    "nonblank": {"type": "string", "minLength": 1, "pattern": "\\S"},
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(?:\\.[0-9]+)?Z$"
+    },
+    "idList": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {"$ref": "#/$defs/safeId"}
+    },
+    "stringList": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {"$ref": "#/$defs/nonblank"}
+    },
+    "resource": {"type": ["number", "null"], "minimum": 0},
+    "sourceDataset": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["dataset_id", "schema_version", "source_file_sha256", "source_split"],
+      "properties": {
+        "dataset_id": {"$ref": "#/$defs/safeId"},
+        "schema_version": {"$ref": "#/$defs/safeId"},
+        "source_file_sha256": {"$ref": "#/$defs/sha256"},
+        "source_split": {"$ref": "#/$defs/safeId"}
+      }
+    },
+    "freezeMetadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["frozen_at_utc", "frozen_by"],
+      "properties": {
+        "frozen_at_utc": {"$ref": "#/$defs/timestamp"},
+        "frozen_by": {"$ref": "#/$defs/nonblank"}
+      }
+    },
+    "datasetMetadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "dataset_id", "protocol_version", "role", "lifecycle", "created_at_utc", "created_by",
+        "git_revision", "evidence_classification", "freeze_metadata", "source_datasets"
+      ],
+      "properties": {
+        "dataset_id": {"$ref": "#/$defs/safeId"},
+        "protocol_version": {"const": "5.0.0"},
+        "role": {"enum": ["development", "confirmatory"]},
+        "lifecycle": {"enum": ["draft", "reviewed", "frozen"]},
+        "created_at_utc": {"$ref": "#/$defs/timestamp"},
+        "created_by": {"$ref": "#/$defs/nonblank"},
+        "git_revision": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+        "evidence_classification": {"$ref": "#/$defs/safeId"},
+        "freeze_metadata": {
+          "oneOf": [{"type": "null"}, {"$ref": "#/$defs/freezeMetadata"}]
+        },
+        "source_datasets": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/sourceDataset"}
+        }
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"lifecycle": {"const": "frozen"}}, "required": ["lifecycle"]},
+          "then": {"properties": {"freeze_metadata": {"$ref": "#/$defs/freezeMetadata"}}},
+          "else": {"properties": {"freeze_metadata": {"type": "null"}}}
+        }
+      ]
+    },
+    "catalogIdentity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "candidate_corpus_version", "candidate_corpus_sha256", "image_catalog_version",
+        "image_catalog_sha256", "profile_catalog_sha256"
+      ],
+      "properties": {
+        "candidate_corpus_version": {"$ref": "#/$defs/nonblank"},
+        "candidate_corpus_sha256": {"$ref": "#/$defs/sha256"},
+        "image_catalog_version": {"$ref": "#/$defs/nonblank"},
+        "image_catalog_sha256": {"$ref": "#/$defs/sha256"},
+        "profile_catalog_sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "reviewPolicy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["required_workload_strata", "max_preferred_profile_share", "max_preferred_image_share"],
+      "properties": {
+        "required_workload_strata": {"$ref": "#/$defs/idList"},
+        "max_preferred_profile_share": {"type": "number", "exclusiveMinimum": 0, "maximum": 1},
+        "max_preferred_image_share": {"type": "number", "exclusiveMinimum": 0, "maximum": 1}
+      }
+    },
+    "structuredIntent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "task_types", "required_features", "preferred_features", "forbidden_features",
+        "required_frameworks", "preferred_frameworks", "gpu_semantics",
+        "minimum_cpu_cores", "minimum_memory_gb", "dataset_size_gb", "ambiguities"
+      ],
+      "properties": {
+        "task_types": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "data_analysis", "data_processing", "visualization", "machine_learning",
+              "deep_learning", "model_training", "model_inference", "scientific_computing",
+              "software_development", "education", "other", "unspecified"
+            ]
+          }
+        },
+        "required_features": {"$ref": "#/$defs/idList"},
+        "preferred_features": {"$ref": "#/$defs/idList"},
+        "forbidden_features": {"$ref": "#/$defs/idList"},
+        "required_frameworks": {"$ref": "#/$defs/idList"},
+        "preferred_frameworks": {"$ref": "#/$defs/idList"},
+        "gpu_semantics": {"enum": ["required", "preferred", "forbidden", "not_needed", "unspecified"]},
+        "minimum_cpu_cores": {"$ref": "#/$defs/resource"},
+        "minimum_memory_gb": {"$ref": "#/$defs/resource"},
+        "dataset_size_gb": {"$ref": "#/$defs/resource"},
+        "ambiguities": {"$ref": "#/$defs/stringList"}
+      }
+    },
+    "candidateGold": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["preferred_candidate_ids", "acceptable_candidate_ids"],
+      "properties": {
+        "preferred_candidate_ids": {"$ref": "#/$defs/idList"},
+        "acceptable_candidate_ids": {"$ref": "#/$defs/idList"}
+      }
+    },
+    "profileGold": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["preferred_profile_ids", "acceptable_profile_ids"],
+      "properties": {
+        "preferred_profile_ids": {"$ref": "#/$defs/idList"},
+        "acceptable_profile_ids": {"$ref": "#/$defs/idList"}
+      }
+    },
+    "imageGold": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["preferred_image_ids", "acceptable_image_ids", "required_capabilities"],
+      "properties": {
+        "preferred_image_ids": {"$ref": "#/$defs/idList"},
+        "acceptable_image_ids": {"$ref": "#/$defs/idList"},
+        "required_capabilities": {"$ref": "#/$defs/idList"}
+      }
+    },
+    "policyGold": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["required_constraints", "explicitly_unsupported_requirements", "expected_feasibility"],
+      "properties": {
+        "required_constraints": {"$ref": "#/$defs/stringList"},
+        "explicitly_unsupported_requirements": {"$ref": "#/$defs/stringList"},
+        "expected_feasibility": {"enum": ["feasible", "infeasible", "ambiguous"]}
+      }
+    },
+    "variant": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["variant_id", "variant_class", "language", "intent", "equivalence_status"],
+      "properties": {
+        "variant_id": {"$ref": "#/$defs/safeId"},
+        "variant_class": {"enum": ["canonical_en", "paraphrase_en", "vietnamese", "informal_or_noisy", "optional_code_context", "optional_ambiguity_variant", "other"]},
+        "language": {"type": "string", "pattern": "^[A-Za-z]{2,8}(?:-[A-Za-z0-9]{1,8})*$"},
+        "intent": {"$ref": "#/$defs/nonblank"},
+        "code_context": {"$ref": "#/$defs/stringList"},
+        "equivalence_status": {"enum": ["canonical_reference", "reviewed_equivalent", "pending_review", "controlled_ambiguity"]}
+      }
+    },
+    "labelReview": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "reviewed_by", "reviewed_at_utc", "notes"],
+      "properties": {
+        "status": {"enum": ["pending", "approved"]},
+        "reviewed_by": {"type": ["string", "null"]},
+        "reviewed_at_utc": {"oneOf": [{"type": "null"}, {"$ref": "#/$defs/timestamp"}]},
+        "notes": {"$ref": "#/$defs/stringList"}
+      }
+    },
+    "sourceProvenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_dataset_id", "source_schema_version", "source_family_id", "source_case_ids",
+        "source_split", "source_file_sha256", "evidence_classification", "original_label_sha256"
+      ],
+      "properties": {
+        "source_dataset_id": {"$ref": "#/$defs/safeId"},
+        "source_schema_version": {"$ref": "#/$defs/safeId"},
+        "source_family_id": {"$ref": "#/$defs/safeId"},
+        "source_case_ids": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "#/$defs/safeId"}},
+        "source_split": {"$ref": "#/$defs/safeId"},
+        "source_file_sha256": {"$ref": "#/$defs/sha256"},
+        "evidence_classification": {"$ref": "#/$defs/safeId"},
+        "original_label_sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "family": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "family_id", "title", "workload_stratum", "difficulty",
+        "gold_structured_intent", "candidate_gold", "profile_gold", "image_gold", "policy_gold",
+        "variants", "label_review"
+      ],
+      "properties": {
+        "family_id": {"$ref": "#/$defs/safeId"},
+        "title": {"$ref": "#/$defs/nonblank"},
+        "workload_stratum": {"$ref": "#/$defs/safeId"},
+        "difficulty": {"enum": ["unassessed", "easy", "medium", "hard"]},
+        "executable_workload_id": {"oneOf": [{"type": "null"}, {"$ref": "#/$defs/safeId"}]},
+        "gold_structured_intent": {"$ref": "#/$defs/structuredIntent"},
+        "candidate_gold": {"$ref": "#/$defs/candidateGold"},
+        "profile_gold": {"$ref": "#/$defs/profileGold"},
+        "image_gold": {"$ref": "#/$defs/imageGold"},
+        "policy_gold": {"$ref": "#/$defs/policyGold"},
+        "variants": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/variant"}},
+        "label_review": {"$ref": "#/$defs/labelReview"},
+        "source_provenance": {"oneOf": [{"type": "null"}, {"$ref": "#/$defs/sourceProvenance"}]}
+      }
+    }
+  }
+}

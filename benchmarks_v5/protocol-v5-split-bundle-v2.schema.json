@@ -1,0 +1,111 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "protocol-v5-split-bundle-v2.schema.json",
+  "title": "Protocol-v5 compiled family gold split bundle",
+  "description": "A flat evaluator projection compiled from a manually frozen family-authoring dataset. The checksum uses the same canonical JSON rule as v1.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "split_manifest", "cases"],
+  "properties": {
+    "schema_version": {"const": "protocol-v5-split-bundle-v2.0.0"},
+    "split_manifest": {"$ref": "protocol-v5-split-bundle-v1.schema.json#/$defs/splitManifest"},
+    "cases": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/case"}
+    }
+  },
+  "$defs": {
+    "case": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "case_id", "family_id", "variant_id", "language", "prompt", "inputs",
+        "family_metadata", "variant_metadata", "gold", "source_provenance"
+      ],
+      "properties": {
+        "case_id": {"$ref": "protocol-v5-gold-family-v1.schema.json#/$defs/safeId"},
+        "family_id": {"$ref": "protocol-v5-gold-family-v1.schema.json#/$defs/safeId"},
+        "variant_id": {"$ref": "protocol-v5-gold-family-v1.schema.json#/$defs/safeId"},
+        "language": {"type": "string", "pattern": "^[A-Za-z]{2,8}(?:-[A-Za-z0-9]{1,8})*$"},
+        "prompt": {"$ref": "protocol-v5-gold-family-v1.schema.json#/$defs/nonblank"},
+        "inputs": {"$ref": "#/$defs/inputs"},
+        "family_metadata": {"$ref": "#/$defs/familyMetadata"},
+        "variant_metadata": {"$ref": "#/$defs/variantMetadata"},
+        "gold": {"$ref": "#/$defs/gold"},
+        "source_provenance": {"$ref": "#/$defs/sourceProvenance"}
+      }
+    },
+    "inputs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["dataset_size_gb", "code_context_hints"],
+      "properties": {
+        "dataset_size_gb": {"$ref": "protocol-v5-gold-family-v1.schema.json#/$defs/resource"},
+        "code_context_hints": {"$ref": "protocol-v5-gold-family-v1.schema.json#/$defs/stringList"}
+      }
+    },
+    "familyMetadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["title", "workload_stratum", "difficulty", "executable_workload_id"],
+      "properties": {
+        "title": {"$ref": "protocol-v5-gold-family-v1.schema.json#/$defs/nonblank"},
+        "workload_stratum": {"$ref": "protocol-v5-gold-family-v1.schema.json#/$defs/safeId"},
+        "difficulty": {"enum": ["easy", "medium", "hard"]},
+        "executable_workload_id": {
+          "oneOf": [
+            {"type": "null"},
+            {"$ref": "protocol-v5-gold-family-v1.schema.json#/$defs/safeId"}
+          ]
+        }
+      }
+    },
+    "variantMetadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["variant_class", "equivalence_status"],
+      "properties": {
+        "variant_class": {"enum": ["canonical_en", "paraphrase_en", "vietnamese", "informal_or_noisy", "optional_code_context", "optional_ambiguity_variant", "other"]},
+        "equivalence_status": {"enum": ["canonical_reference", "reviewed_equivalent", "controlled_ambiguity"]}
+      }
+    },
+    "gold": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["gold_structured_intent", "candidate_gold", "profile_gold", "image_gold", "policy_gold"],
+      "properties": {
+        "gold_structured_intent": {"$ref": "protocol-v5-gold-family-v1.schema.json#/$defs/structuredIntent"},
+        "candidate_gold": {"$ref": "protocol-v5-gold-family-v1.schema.json#/$defs/candidateGold"},
+        "profile_gold": {"$ref": "protocol-v5-gold-family-v1.schema.json#/$defs/profileGold"},
+        "image_gold": {"$ref": "protocol-v5-gold-family-v1.schema.json#/$defs/imageGold"},
+        "policy_gold": {"$ref": "protocol-v5-gold-family-v1.schema.json#/$defs/policyGold"}
+      }
+    },
+    "sourceProvenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_dataset_id", "source_schema_version", "source_case_id", "source_split",
+        "evidence_classification", "authoring_canonical_sha256", "catalog_identity",
+        "label_review", "original_source_provenance"
+      ],
+      "properties": {
+        "source_dataset_id": {"$ref": "protocol-v5-gold-family-v1.schema.json#/$defs/safeId"},
+        "source_schema_version": {"$ref": "protocol-v5-gold-family-v1.schema.json#/$defs/safeId"},
+        "source_case_id": {"$ref": "protocol-v5-gold-family-v1.schema.json#/$defs/safeId"},
+        "source_split": {"enum": ["development", "confirmatory"]},
+        "evidence_classification": {"$ref": "protocol-v5-gold-family-v1.schema.json#/$defs/safeId"},
+        "authoring_canonical_sha256": {"$ref": "protocol-v5-gold-family-v1.schema.json#/$defs/sha256"},
+        "catalog_identity": {"$ref": "protocol-v5-gold-family-v1.schema.json#/$defs/catalogIdentity"},
+        "label_review": {"$ref": "protocol-v5-gold-family-v1.schema.json#/$defs/labelReview"},
+        "original_source_provenance": {
+          "oneOf": [
+            {"type": "null"},
+            {"$ref": "protocol-v5-gold-family-v1.schema.json#/$defs/sourceProvenance"}
+          ]
+        }
+      }
+    }
+  }
+}

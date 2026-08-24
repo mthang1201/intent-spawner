@@ -42,7 +42,10 @@ v4-test:
 	.venv/bin/python -m pytest -q tests/test_evaluation_v4.py
 
 v5-test:
-	.venv/bin/python -m pytest -q tests/test_evaluation_v5.py tests/test_evaluation_v5_isolation.py
+	.venv/bin/python -m pytest -q \
+		tests/test_evaluation_v5.py \
+		tests/test_evaluation_v5_isolation.py \
+		tests/test_evaluation_v5_gold_dataset.py
 
 v5-isolation-check:
 	.venv/bin/python -m evaluation_v5.isolation_audit

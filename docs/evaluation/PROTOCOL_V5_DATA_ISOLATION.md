@@ -2,7 +2,10 @@
 
 Protocol version: `5.0.0`
 
-Split-bundle schema: `protocol-v5-split-bundle-v1.0.0`
+Split-bundle schemas: `protocol-v5-split-bundle-v1.0.0` and
+`protocol-v5-split-bundle-v2.0.0`
+
+Family-authoring schema: `protocol-v5-gold-family-v1.0.0`
 
 Freeze schema: `protocol-v5-freeze-v1.0.0`
 
@@ -68,11 +71,32 @@ Reserved names such as `.protocol-v5-private/` and
 `benchmarks_v5/sealed/` are leak guardrails, not approved custody locations.
 All real confirmatory material must remain outside the repository.
 
-## 3. Split-bundle contract and checksums
+## 3. Gold authoring and split-bundle contracts
+
+Researchers author workload families using
+`protocol-v5-gold-family-v1.0.0`. The source schema groups shared structured
+intent, candidate/profile/image labels, policy feasibility, provenance, review
+state, and any subset of supported text-variant classes under one independent
+family. Strict tooling binds IDs and constraints to the administrator-owned
+catalog and reports coverage and unresolved human review without printing
+prompt text in machine review findings.
+
+The importer for Protocol-v4 emits only development drafts classified
+`historical_formative_development_only`. It does not generate text or approve
+semantic equivalence. Compilation requires human-approved families and
+manually supplied freeze metadata. A compiled v2 bundle flattens variants into
+cases while retaining the complete family metadata and rich gold mappings.
+The tracked development bundle remains unchanged on v1.
+
+Confirmatory family sources and v2 projections remain subject to the same
+external-custody and pre-data freeze rules. Their source and output paths must
+both be absolute and outside the repository.
+
+### Split-bundle structure
 
 A bundle has exactly three top-level keys:
 
-- `schema_version` — `protocol-v5-split-bundle-v1.0.0`;
+- `schema_version` — a supported v1 or v2 split-bundle version;
 - `split_manifest`; and
 - `cases`.
 
@@ -84,7 +108,7 @@ A bundle has exactly three top-level keys:
 - `creation_metadata` with `created_at_utc` and `created_by`; and
 - `freeze_metadata` with `frozen_at_utc` and `frozen_by`.
 
-Each case has exactly `case_id`, `family_id`, `variant_id`, `language`,
+Each v1 case has exactly `case_id`, `family_id`, `variant_id`, `language`,
 `prompt`, `inputs`, `gold`, and `source_provenance`. `inputs` contains the
 normalized `dataset_size_gb` and `code_context_hints` fields. `gold` contains
 feasibility, preferred/acceptable candidate, capability, profile, GPU, and
@@ -92,6 +116,12 @@ expected-extraction labels. `source_provenance` identifies the source dataset,
 schema, source case and split, and evidence classification. The tracked
 development bundle additionally preserves the source record's original
 provenance inside that mapping.
+
+A v2 case additionally has `family_metadata`; its `gold` mapping preserves the
+complete `gold_structured_intent`, `candidate_gold`, `profile_gold`,
+`image_gold`, and `policy_gold` source records. Its provenance binds the case
+to the authoring checksum, administrator catalog identity, label review, and
+any historical source classification.
 
 Validation is strict: unknown or missing fields fail in the bundle, manifest,
 case, input, and gold mappings; source provenance permits additional source
@@ -330,7 +360,7 @@ indexes.
 The repository reserves/ignores these leak-prone namespaces:
 
 - `.protocol-v5-private/`;
-- `benchmarks_v5/sealed/` and `benchmarks_v5/v5-confirmatory.*`;
+- `benchmarks_v5/sealed/` and confirmatory-named files under `benchmarks_v5/`;
 - `evaluation_v5/cache/` and `evaluation_v5/indexes/`; and
 - `results_v5/protocol-v5.0.0/`.
 

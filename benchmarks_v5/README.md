@@ -1,8 +1,12 @@
 # Protocol-v5 benchmarks
 
-This directory contains only the visible Protocol-v5 development split and its
-machine-readable schema. It must never contain final confirmatory cases or
-labels.
+This directory contains only the visible Protocol-v5 development split,
+machine-readable schemas, and authoring documentation. It must never contain
+final confirmatory cases or labels.
+
+Family-oriented authoring is documented in `GOLD_AUTHORING.md`. The repository
+tracks its source schema and the v2 compiled-bundle schema, but deliberately
+tracks no family-authored gold dataset or generated confirmatory material.
 
 ## Tracked development data
 
@@ -30,10 +34,17 @@ object is encoded as UTF-8 JSON with Unicode preserved, object keys sorted, and
 separators `,` and `:` without extra whitespace. YAML formatting, comments, and
 mapping order therefore do not affect the canonical digest.
 
+The existing tracked development bundle remains on v1. A manually frozen,
+human-reviewed family dataset may compile to
+`protocol-v5-split-bundle-v2.0.0`, which retains the same manifest/checksum
+rules while preserving complete structured-intent, candidate, profile, image,
+policy, and family metadata in each flat evaluator case.
+
 ## Confirmatory data boundary
 
 There is deliberately no `v5-confirmatory` file or test fixture here. A
-confirmatory split must use the same schema but remain under external custody;
-it is supplied only through the explicit, freeze-gated confirmatory loader.
+confirmatory split must use a supported split-bundle schema but remain under
+external custody; it is supplied only through the explicit, freeze-gated
+confirmatory loader.
 Development code must not copy it into this directory, repository caches,
 candidate indexes, results, wheels, or container images.

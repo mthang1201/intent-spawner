@@ -12,7 +12,7 @@ import os
 from pathlib import Path
 import re
 import stat
-from typing import Any, Mapping
+from typing import Any, Mapping, Sequence
 
 import yaml
 
@@ -22,6 +22,10 @@ from evaluation_v4.dataset import canonical_sha256
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_DEVELOPMENT_DATASET = ROOT / "benchmarks_v5" / "v5-development.yaml"
 SPLIT_BUNDLE_SCHEMA_VERSION = "protocol-v5-split-bundle-v1.0.0"
+SPLIT_BUNDLE_SCHEMA_VERSION_V2 = "protocol-v5-split-bundle-v2.0.0"
+SUPPORTED_SPLIT_BUNDLE_SCHEMA_VERSIONS = frozenset(
+    {SPLIT_BUNDLE_SCHEMA_VERSION, SPLIT_BUNDLE_SCHEMA_VERSION_V2}
+)
 DEFAULT_DEVELOPMENT_SPLIT_ID = "v5-development"
 DEFAULT_CONFIRMATORY_SPLIT_ID = "v5-confirmatory"
 
@@ -343,6 +347,8 @@ class SplitCase:
     inputs: Mapping[str, Any]
     gold: Mapping[str, Any]
     source_provenance: Mapping[str, Any]
+    family_metadata: Mapping[str, Any] | None = None
+    variant_metadata: Mapping[str, Any] | None = None
 
     _FIELDS = frozenset(
         {
@@ -527,8 +533,12 @@ class SplitCase:
             source_provenance=provenance,
         )
 
-    def to_dict(self) -> dict[str, Any]:
-        return {
+    def to_dict(
+        self,
+        *,
+        schema_version: str = SPLIT_BUNDLE_SCHEMA_VERSION,
+    ) -> dict[str, Any]:
+        payload = {
             "case_id": self.case_id,
             "family_id": self.family_id,
             "variant_id": self.variant_id,
@@ -538,6 +548,28 @@ class SplitCase:
             "gold": dict(self.gold),
             "source_provenance": dict(self.source_provenance),
         }
+        if schema_version == SPLIT_BUNDLE_SCHEMA_VERSION_V2:
+            if self.family_metadata is None or self.variant_metadata is None:
+                raise SplitBundleValidationError(
+                    "v2 split case requires family_metadata and variant_metadata"
+                )
+            payload["family_metadata"] = dict(self.family_metadata)
+            payload["variant_metadata"] = dict(self.variant_metadata)
+            # Preserve the v2 schema's declaration order for human-readable
+            # YAML while checksum canonicalization remains key-order agnostic.
+            payload = {
+                "case_id": payload["case_id"],
+                "family_id": payload["family_id"],
+                "variant_id": payload["variant_id"],
+                "language": payload["language"],
+                "prompt": payload["prompt"],
+                "inputs": payload["inputs"],
+                "family_metadata": payload["family_metadata"],
+                "variant_metadata": payload["variant_metadata"],
+                "gold": payload["gold"],
+                "source_provenance": payload["source_provenance"],
+            }
+        return payload
 
 
 @dataclass(frozen=True, slots=True)
@@ -550,7 +582,10 @@ class SplitBundle:
         return {
             "schema_version": self.schema_version,
             "split_manifest": self.split_manifest.to_dict(),
-            "cases": [case.to_dict() for case in self.cases],
+            "cases": [
+                case.to_dict(schema_version=self.schema_version)
+                for case in self.cases
+            ],
         }
 
 
@@ -597,6 +632,7 @@ def validate_split_bundle(
     *,
     expected_role: SplitRole | None = None,
     expected_split_id: str | None = None,
+    workload_manifests: Sequence[Path] = (),
 ) -> SplitBundle:
     """Validate a complete split bundle and its embedded canonical checksum."""
 
@@ -605,7 +641,8 @@ def validate_split_bundle(
         frozenset({"schema_version", "split_manifest", "cases"}),
         "split bundle",
     )
-    if root["schema_version"] != SPLIT_BUNDLE_SCHEMA_VERSION:
+    schema_version = root["schema_version"]
+    if schema_version not in SUPPORTED_SPLIT_BUNDLE_SCHEMA_VERSIONS:
         raise SplitBundleValidationError("split bundle schema_version is unsupported")
     manifest = SplitManifest.from_dict(root["split_manifest"])
     if expected_role is not None and manifest.role is not expected_role:
@@ -621,10 +658,87 @@ def validate_split_bundle(
     raw_cases = root["cases"]
     if not isinstance(raw_cases, list) or not raw_cases:
         raise SplitBundleValidationError("cases must be a non-empty list")
-    cases = tuple(
-        SplitCase.from_dict(value, index=index)
-        for index, value in enumerate(raw_cases)
-    )
+    if schema_version == SPLIT_BUNDLE_SCHEMA_VERSION:
+        cases = tuple(
+            SplitCase.from_dict(value, index=index)
+            for index, value in enumerate(raw_cases)
+        )
+    else:
+        from .gold_dataset import (
+            GoldDatasetValidationError,
+            validate_compiled_case,
+        )
+
+        normalized_cases: list[SplitCase] = []
+        for index, value in enumerate(raw_cases):
+            try:
+                normalized = validate_compiled_case(
+                    value,
+                    index=index,
+                    workload_manifests=workload_manifests,
+                )
+            except GoldDatasetValidationError as exc:
+                raise SplitBundleValidationError(str(exc)) from exc
+            normalized_cases.append(
+                SplitCase(
+                    case_id=normalized["case_id"],
+                    family_id=normalized["family_id"],
+                    variant_id=normalized["variant_id"],
+                    language=normalized["language"],
+                    prompt=normalized["prompt"],
+                    inputs=normalized["inputs"],
+                    gold=normalized["gold"],
+                    source_provenance=normalized["source_provenance"],
+                    family_metadata=normalized["family_metadata"],
+                    variant_metadata=normalized["variant_metadata"],
+                )
+            )
+        cases = tuple(normalized_cases)
+        family_signatures: dict[str, str] = {}
+        family_canonical_references: dict[str, int] = {}
+        authoring_checksums: set[str] = set()
+        for index, case in enumerate(cases):
+            provenance = case.source_provenance
+            if provenance["source_dataset_id"] != manifest.dataset_id:
+                raise SplitBundleValidationError(
+                    f"cases[{index}].source_provenance.source_dataset_id "
+                    "does not match split_manifest.dataset_id"
+                )
+            if provenance["source_split"] != manifest.role.value:
+                raise SplitBundleValidationError(
+                    f"cases[{index}].source_provenance.source_split "
+                    "does not match split_manifest.role"
+                )
+            authoring_checksums.add(str(provenance["authoring_canonical_sha256"]))
+            family_signature = canonical_sha256(
+                {
+                    "family_metadata": case.family_metadata,
+                    "gold": case.gold,
+                    "source_provenance": {
+                        key: nested
+                        for key, nested in provenance.items()
+                        if key != "source_case_id"
+                    },
+                }
+            )
+            existing = family_signatures.setdefault(case.family_id, family_signature)
+            if existing != family_signature:
+                raise SplitBundleValidationError(
+                    f"cases[{index}] disagrees with another case in family "
+                    f"{case.family_id!r}"
+                )
+            if case.variant_metadata["equivalence_status"] == "canonical_reference":
+                family_canonical_references[case.family_id] = (
+                    family_canonical_references.get(case.family_id, 0) + 1
+                )
+                if family_canonical_references[case.family_id] > 1:
+                    raise SplitBundleValidationError(
+                        f"family {case.family_id!r} has multiple canonical references"
+                    )
+        if len(authoring_checksums) != 1:
+            raise SplitBundleValidationError(
+                "v2 cases must share one authoring_canonical_sha256"
+            )
     case_ids = [case.case_id for case in cases]
     if len(case_ids) != len(set(case_ids)):
         raise SplitBundleValidationError("case IDs must be unique within a split")
@@ -646,7 +760,11 @@ def validate_split_bundle(
         raise SplitBundleValidationError(
             "split_manifest.checksum does not match canonical split content"
         )
-    return SplitBundle(split_manifest=manifest, cases=cases)
+    return SplitBundle(
+        split_manifest=manifest,
+        cases=cases,
+        schema_version=schema_version,
+    )
 
 
 def _open_readonly_regular(path: Path, *, no_follow: bool) -> int:
@@ -700,6 +818,7 @@ def _read_split_bundle(
     expected_role: SplitRole,
     expected_split_id: str,
     no_follow: bool = False,
+    workload_manifests: Sequence[Path] = (),
 ) -> LoadedSplit:
     """Read, hash, and parse one immutable byte snapshot from one descriptor."""
 
@@ -727,6 +846,7 @@ def _read_split_bundle(
         document,
         expected_role=expected_role,
         expected_split_id=expected_split_id,
+        workload_manifests=workload_manifests,
     )
     return LoadedSplit(
         bundle=bundle,
@@ -757,6 +877,8 @@ __all__ = [
     "DEFAULT_DEVELOPMENT_SPLIT_ID",
     "LoadedSplit",
     "SPLIT_BUNDLE_SCHEMA_VERSION",
+    "SPLIT_BUNDLE_SCHEMA_VERSION_V2",
+    "SUPPORTED_SPLIT_BUNDLE_SCHEMA_VERSIONS",
     "SplitBundle",
     "SplitBundleValidationError",
     "SplitCase",

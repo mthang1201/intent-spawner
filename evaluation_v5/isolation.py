@@ -8,7 +8,7 @@ import hashlib
 import os
 from pathlib import Path
 import unicodedata
-from typing import Any, Mapping
+from typing import Any, Mapping, Sequence
 
 from .split_dataset import (
     DEFAULT_CONFIRMATORY_SPLIT_ID,
@@ -332,6 +332,7 @@ def load_confirmatory_split(
     *,
     expected_split_id: str = DEFAULT_CONFIRMATORY_SPLIT_ID,
     similarity_threshold: float = DEFAULT_SIMILARITY_THRESHOLD,
+    workload_manifests: Sequence[Path] = (),
 ) -> ConfirmatoryLoadResult:
     """Verify the pre-data freeze before opening and comparing sealed material."""
 
@@ -350,6 +351,7 @@ def load_confirmatory_split(
         expected_role=SplitRole.CONFIRMATORY,
         expected_split_id=expected_split_id,
         no_follow=True,
+        workload_manifests=workload_manifests,
     )
     report = check_contamination(
         development.bundle,
