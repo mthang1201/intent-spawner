@@ -44,6 +44,7 @@ from .models import (
     RobustnessFamily,
     RobustnessValidationError,
     RobustnessVariant,
+    compute_dataset_canonical_sha256,
     validate_robustness_dataset,
     validate_robustness_family,
 )
@@ -133,7 +134,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         print(f"Role: {dataset.role}")
         print(f"Families: {len(dataset.families)}")
         print(f"Total variants: {dataset.total_variants}")
-        print(f"Valid equivalent variants: {dataset.total_equivalent_variants}")
+        print(f"Valid reviewed-equivalent variants: {dataset.total_reviewed_equivalent_variants}")
         return 0
 
     if args.command == "draft":
@@ -174,6 +175,7 @@ __all__ = [
     "VariantMetadata",
     "VariantSource",
     "apply_review_decisions",
+    "compute_dataset_canonical_sha256",
     "compute_robustness_metrics",
     "compute_text_sha256",
     "evaluate_robustness_pairs",

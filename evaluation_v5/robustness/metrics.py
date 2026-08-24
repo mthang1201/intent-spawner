@@ -160,6 +160,8 @@ class RobustnessMetricsResult:
     max_variants_per_family: int
 
     # Accuracy breakdowns
+    canonical_evaluated_count: int
+    canonical_acceptable_count: int
     canonical_accuracy: float | None
     canonical_top1_accuracy: float | None
     english_paraphrase_accuracy: float | None
@@ -725,6 +727,8 @@ def compute_robustness_metrics(
         mean_variants_per_family=exposure_mean,
         min_variants_per_family=exposure_min,
         max_variants_per_family=exposure_max,
+        canonical_evaluated_count=len(canonical_records),
+        canonical_acceptable_count=sum(1 for r in canonical_records if r.is_acceptable),
         canonical_accuracy=canonical_acc,
         canonical_top1_accuracy=canonical_top1,
         english_paraphrase_accuracy=en_para_acc,

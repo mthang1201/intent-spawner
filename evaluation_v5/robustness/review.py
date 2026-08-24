@@ -10,7 +10,7 @@ import json
 import re
 from typing import Any
 
-from .models import RobustnessDataset, RobustnessFamily, RobustnessVariant
+from .models import RobustnessDataset, RobustnessFamily, RobustnessVariant, compute_dataset_canonical_sha256
 from .taxonomy import (
     EquivalenceStatus,
     HumanReviewStatus,
@@ -25,7 +25,7 @@ _FORMULA_PREFIXES = ("=", "+", "-", "@", "\t", "\r")
 
 
 class StaleReviewError(ValueError):
-    """Raised when a review decision is applied to modified or stale variant text."""
+    """Raised when a review decision is applied to modified or stale variant text or dataset revision."""
 
     pass
 
@@ -60,6 +60,8 @@ class EquivalenceReviewRow:
     source: str
     notes: str
     variant_text_sha256: str = ""
+    dataset_id: str = ""
+    dataset_canonical_sha256: str = ""
 
     def to_dict(self) -> dict[str, str]:
         return {
@@ -76,11 +78,15 @@ class EquivalenceReviewRow:
             "source": self.source,
             "notes": self.notes,
             "variant_text_sha256": self.variant_text_sha256,
+            "dataset_id": self.dataset_id,
+            "dataset_canonical_sha256": self.dataset_canonical_sha256,
         }
 
     def to_csv_dict(self) -> dict[str, str]:
         """Return dict with formula prefixes sanitized for safe CSV output."""
         return {
+            "dataset_id": self.dataset_id,
+            "dataset_canonical_sha256": self.dataset_canonical_sha256,
             "family_id": self.family_id,
             "family_title": _csv_sanitize(self.family_title),
             "canonical_meaning": _csv_sanitize(self.canonical_meaning),
@@ -102,6 +108,9 @@ class EquivalenceReviewRow:
 def _build_review_row(
     family: RobustnessFamily,
     variant: RobustnessVariant,
+    *,
+    dataset_id: str = "",
+    dataset_canonical_sha256: str = "",
 ) -> EquivalenceReviewRow:
     canonical = family.canonical_variant
     canonical_meaning = canonical.intent
@@ -149,6 +158,8 @@ def _build_review_row(
         ),
         notes="; ".join(meta.notes),
         variant_text_sha256=variant.text_sha256,
+        dataset_id=dataset_id,
+        dataset_canonical_sha256=dataset_canonical_sha256,
     )
 
 
@@ -156,11 +167,26 @@ def extract_review_rows(
     source: RobustnessDataset | Sequence[RobustnessFamily],
 ) -> list[EquivalenceReviewRow]:
     """Extract ordered review rows for all variants in the dataset or families."""
-    families = source.families if isinstance(source, RobustnessDataset) else source
+    if isinstance(source, RobustnessDataset):
+        families = source.families
+        dataset_id = source.dataset_id
+        dataset_sha = source.canonical_sha256
+    else:
+        families = source
+        dataset_id = ""
+        dataset_sha = ""
+
     rows: list[EquivalenceReviewRow] = []
     for family in families:
         for variant in family.variants:
-            rows.append(_build_review_row(family, variant))
+            rows.append(
+                _build_review_row(
+                    family,
+                    variant,
+                    dataset_id=dataset_id,
+                    dataset_canonical_sha256=dataset_sha,
+                )
+            )
     return rows
 
 
@@ -170,6 +196,8 @@ def export_equivalence_review_csv(
     """Format equivalence review records as RFC-4180 CSV with formula-injection defense."""
     output = io.StringIO()
     fieldnames = [
+        "dataset_id",
+        "dataset_canonical_sha256",
         "family_id",
         "family_title",
         "canonical_meaning",
@@ -210,13 +238,17 @@ def export_equivalence_review_markdown(
     rows: Sequence[EquivalenceReviewRow],
 ) -> str:
     """Format equivalence review records as human-readable Markdown tables."""
+    dataset_info = ""
+    if rows and rows[0].dataset_id:
+        dataset_info = f"- **Dataset ID**: `{rows[0].dataset_id}`\n- **Dataset Checksum**: `{rows[0].dataset_canonical_sha256}`\n\n"
+
     lines = [
         "# Workload Variant Semantic Equivalence Review",
         "",
         "This artifact records human and candidate equivalence decisions for "
         "natural-language robustness variants.",
         "",
-        f"**Total variants reviewed**: {len(rows)}",
+        dataset_info + f"**Total variants reviewed**: {len(rows)}",
         "",
     ]
 
@@ -318,6 +350,20 @@ def apply_review_decisions(
             )
 
         family, variant = target
+
+        # Check dataset binding
+        if "dataset_id" in item and item["dataset_id"] != dataset.dataset_id:
+            raise InvalidReviewDecisionError(
+                f"Review decision dataset_id {item['dataset_id']!r} does not match target dataset {dataset.dataset_id!r}"
+            )
+
+        # Check dataset canonical checksum binding
+        if "dataset_canonical_sha256" in item:
+            expected_ds_hash = str(item["dataset_canonical_sha256"]).strip()
+            if expected_ds_hash and expected_ds_hash != dataset.canonical_sha256:
+                raise StaleReviewError(
+                    f"Stale review decision for variant {v_id!r}: dataset canonical checksum mismatch (expected {expected_ds_hash!r}, got {dataset.canonical_sha256!r})"
+                )
 
         # Check family binding
         if "family_id" in item and item["family_id"] != family.family_id:

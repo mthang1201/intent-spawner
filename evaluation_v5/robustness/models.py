@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
+import hashlib
+import json
 from typing import Any
 
 from .taxonomy import (
@@ -47,12 +49,17 @@ class RobustnessVariant:
         )
 
     @property
+    def is_reviewed_equivalent(self) -> bool:
+        """Return True if this variant is a human-approved equivalent perturbation (excludes canonical)."""
+        return (
+            self.metadata.equivalence_status == EquivalenceStatus.REVIEWED_EQUIVALENT
+            and not self.is_canonical
+        )
+
+    @property
     def is_equivalent(self) -> bool:
-        """Return True if this variant is an accepted or reference semantic equivalent."""
-        return self.metadata.equivalence_status in {
-            EquivalenceStatus.CANONICAL_REFERENCE,
-            EquivalenceStatus.REVIEWED_EQUIVALENT,
-        }
+        """Alias for is_reviewed_equivalent; strictly excludes canonical baseline."""
+        return self.is_reviewed_equivalent
 
     @property
     def is_controlled_ambiguity(self) -> bool:
@@ -67,6 +74,15 @@ class RobustnessVariant:
     def is_non_equivalent(self) -> bool:
         """Return True if this variant is explicitly non-equivalent to the canonical workload."""
         return self.metadata.equivalence_status == EquivalenceStatus.NON_EQUIVALENT
+
+    @property
+    def is_pending_review(self) -> bool:
+        """Return True if this variant is untrusted / awaiting human review."""
+        return (
+            self.metadata.equivalence_status == EquivalenceStatus.PENDING_REVIEW
+            or self.metadata.human_review_status
+            in {HumanReviewStatus.PENDING, HumanReviewStatus.DRAFT}
+        )
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -140,19 +156,21 @@ class RobustnessFamily:
         raise ValueError(f"Family {self.family_id!r} has no variants")
 
     @property
+    def reviewed_equivalent_variants(self) -> tuple[RobustnessVariant, ...]:
+        """All reviewed-equivalent perturbation variants (strictly excluding canonical)."""
+        return tuple(
+            variant for variant in self.variants if variant.is_reviewed_equivalent
+        )
+
+    @property
     def equivalent_variants(self) -> tuple[RobustnessVariant, ...]:
-        """All variants that should yield an acceptable recommendation equivalent to canonical."""
-        return tuple(variant for variant in self.variants if variant.is_equivalent)
+        """Alias for reviewed_equivalent_variants."""
+        return self.reviewed_equivalent_variants
 
     @property
     def non_canonical_equivalent_variants(self) -> tuple[RobustnessVariant, ...]:
         """All equivalent variants excluding the canonical reference itself."""
-        canonical = self.canonical_variant
-        return tuple(
-            variant
-            for variant in self.variants
-            if variant.is_equivalent and variant.variant_id != canonical.variant_id
-        )
+        return self.reviewed_equivalent_variants
 
     @property
     def ambiguous_variants(self) -> tuple[RobustnessVariant, ...]:
@@ -172,9 +190,7 @@ class RobustnessFamily:
     def pending_variants(self) -> tuple[RobustnessVariant, ...]:
         """All variants awaiting human review."""
         return tuple(
-            variant
-            for variant in self.variants
-            if variant.metadata.equivalence_status == EquivalenceStatus.PENDING_REVIEW
+            variant for variant in self.variants if variant.is_pending_review
         )
 
     def to_dict(self) -> dict[str, Any]:
@@ -246,8 +262,21 @@ class RobustnessDataset:
         return sum(len(family.variants) for family in self.families)
 
     @property
+    def total_reviewed_equivalent_variants(self) -> int:
+        return sum(
+            len(family.reviewed_equivalent_variants)
+            for family in self.families
+        )
+
+    @property
     def total_equivalent_variants(self) -> int:
-        return sum(len(family.equivalent_variants) for family in self.families)
+        """Alias for total_reviewed_equivalent_variants."""
+        return self.total_reviewed_equivalent_variants
+
+    @property
+    def canonical_sha256(self) -> str:
+        """Deterministic cryptographic SHA-256 fingerprint for complete dataset revision."""
+        return compute_dataset_canonical_sha256(self)
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -274,6 +303,54 @@ class RobustnessDataset:
             role=str(payload.get("role", "development")),
             metadata=payload.get("metadata"),
         )
+
+
+def compute_dataset_canonical_sha256(dataset: RobustnessDataset) -> str:
+    """Compute deterministic cryptographic SHA-256 fingerprint for complete dataset revision."""
+    items = []
+    for fam in sorted(dataset.families, key=lambda f: f.family_id):
+        fam_dict = {
+            "family_id": fam.family_id,
+            "title": fam.title,
+            "workload_stratum": fam.workload_stratum,
+            "difficulty": fam.difficulty,
+            "executable_workload_id": fam.executable_workload_id,
+            "gold_structured_intent": fam.gold_structured_intent,
+            "candidate_gold": fam.candidate_gold,
+            "profile_gold": fam.profile_gold,
+            "image_gold": fam.image_gold,
+            "policy_gold": fam.policy_gold,
+            "variants": [
+                {
+                    "variant_id": v.variant_id,
+                    "variant_type": (
+                        v.metadata.variant_type.value
+                        if isinstance(v.metadata.variant_type, PerturbationClass)
+                        else str(v.metadata.variant_type)
+                    ),
+                    "language": v.metadata.language,
+                    "intent": v.intent,
+                    "code_context": list(v.code_context),
+                    "equivalence_status": (
+                        v.metadata.equivalence_status.value
+                        if isinstance(v.metadata.equivalence_status, EquivalenceStatus)
+                        else str(v.metadata.equivalence_status)
+                    ),
+                    "expected_semantic_differences": v.metadata.expected_semantic_differences,
+                    "dataset_size_gb": v.dataset_size_gb,
+                }
+                for v in sorted(fam.variants, key=lambda x: x.variant_id)
+            ],
+        }
+        items.append(fam_dict)
+
+    payload = json.dumps(
+        {"dataset_id": dataset.dataset_id, "families": items},
+        sort_keys=True,
+        ensure_ascii=False,
+        separators=(",", ":"),
+    )
+    return hashlib.sha256(payload.encode("utf-8")).hexdigest()
 
 
 def validate_robustness_family(family: RobustnessFamily) -> None:
@@ -348,7 +425,7 @@ __all__ = [
     "RobustnessFamily",
     "RobustnessValidationError",
     "RobustnessVariant",
+    "compute_dataset_canonical_sha256",
     "validate_robustness_dataset",
     "validate_robustness_family",
 ]
-
