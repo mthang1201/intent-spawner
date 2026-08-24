@@ -1,1 +1,1 @@
-"""Protocol-v5 derived metrics and component-level error analysis."""
+"""Protocol-v5 derived metrics, component analysis, and family statistics."""

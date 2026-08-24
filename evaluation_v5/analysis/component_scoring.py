@@ -428,11 +428,42 @@ def _strict_json_lines(path: Path) -> list[dict[str, Any]]:
     return records
 
 
-def load_component_evidence(
+def load_validated_evidence(
     evidence_dir: Path,
     gold: GoldSource,
+    *,
+    systems: Sequence[str] | None = None,
+    require_systems: bool = True,
 ) -> tuple[dict[str, Any], tuple[dict[str, Any], ...]]:
-    """Validate Prompt-5 evidence before exposing rows to the scorer."""
+    """Validate complete Prompt-5 evidence and retain selected system rows.
+
+    ``systems=None`` retains every participating system from the authenticated
+    provenance.  An explicit system selection is restricted to P1/P2/P3 and,
+    by default, every requested system must be present.  Setting
+    ``require_systems=False`` permits callers to select the available subset;
+    it never weakens validation of the complete offline evidence package.
+    """
+
+    if not isinstance(require_systems, bool):
+        raise ComponentAnalysisError("require_systems must be boolean")
+    requested_systems: tuple[str, ...] | None
+    if systems is None:
+        requested_systems = None
+    else:
+        if isinstance(systems, (str, bytes)):
+            raise ComponentAnalysisError("systems must be a sequence of system IDs")
+        requested_systems = tuple(systems)
+        if not requested_systems:
+            raise ComponentAnalysisError("systems must not be empty")
+        if any(not isinstance(system, str) for system in requested_systems):
+            raise ComponentAnalysisError("systems must contain only system IDs")
+        unsupported = sorted(set(requested_systems) - {"P1", "P2", "P3"})
+        if unsupported:
+            raise ComponentAnalysisError(
+                "unsupported evidence system(s): " + ", ".join(unsupported)
+            )
+        if len(requested_systems) != len(set(requested_systems)):
+            raise ComponentAnalysisError("systems must not contain duplicates")
 
     provenance_path = evidence_dir / RAW_DIRECTORY_NAME / PROVENANCE_FILENAME
     try:
@@ -479,10 +510,60 @@ def load_component_evidence(
         raise ComponentAnalysisError(
             "offline provenance changed during component validation"
         )
+    participating_systems = tuple(provenance["systems"])
+    if requested_systems is None:
+        selected_systems = participating_systems
+    else:
+        missing = tuple(
+            system
+            for system in requested_systems
+            if system not in participating_systems
+        )
+        if missing and require_systems:
+            raise ComponentAnalysisError(
+                "evidence is missing requested system(s): " + ", ".join(missing)
+            )
+        selected_systems = tuple(
+            system
+            for system in requested_systems
+            if system in participating_systems
+        )
+
     records_path = evidence_dir / RAW_DIRECTORY_NAME / RECORDS_FILENAME
+    all_records = _strict_json_lines(records_path)
+    records = tuple(
+        record for record in all_records if record.get("system_id") in selected_systems
+    )
+    if require_systems and selected_systems:
+        observed_systems = {record.get("system_id") for record in records}
+        missing_rows = tuple(
+            system for system in selected_systems if system not in observed_systems
+        )
+        if missing_rows:
+            raise ComponentAnalysisError(
+                "evidence has no rows for requested system(s): "
+                + ", ".join(missing_rows)
+            )
+    if records:
+        _validate_gold_evidence_join(gold, provenance, records)
+    return provenance, records
+
+
+def load_component_evidence(
+    evidence_dir: Path,
+    gold: GoldSource,
+) -> tuple[dict[str, Any], tuple[dict[str, Any], ...]]:
+    """Validate Prompt-5 evidence before exposing P2/P3 rows to the scorer."""
+
+    provenance, all_records = load_validated_evidence(
+        evidence_dir,
+        gold,
+        systems=None,
+        require_systems=False,
+    )
     records = tuple(
         record
-        for record in _strict_json_lines(records_path)
+        for record in all_records
         if record.get("system_id") in {"P2", "P3"}
     )
     if not records:
@@ -2061,6 +2142,7 @@ __all__ = [
     "analyze_component_evidence",
     "load_component_evidence",
     "load_component_gold",
+    "load_validated_evidence",
     "main",
     "p3_headroom_report",
     "score_component_records",

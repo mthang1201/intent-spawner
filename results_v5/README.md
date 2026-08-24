@@ -2,11 +2,18 @@
 
 No Protocol-v5 experiment has been executed in this package.
 
-The P2/P3 component-scoring harness is implemented, but complete Prompt-3 gold
-and Prompt-5 raw evidence are not tracked. Its empirical status therefore
-remains explicitly `NOT_EXECUTED`; see
-`docs/evaluation/PROTOCOL_V5_COMPONENT_SCORING.md`. Synthetic tests validate
-the harness and error taxonomy but are not observed thesis evidence.
+The P2/P3 component-scoring and family-level statistical harnesses are
+implemented, but complete Prompt-3 gold and Prompt-5 raw evidence are not
+tracked. Their empirical status therefore remains explicitly `NOT_EXECUTED`;
+see `docs/evaluation/PROTOCOL_V5_COMPONENT_SCORING.md` and
+`docs/evaluation/PROTOCOL_V5_STATISTICAL_ANALYSIS.md`. Synthetic tests validate
+the harnesses and their failure modes but are not observed thesis evidence.
+
+In particular, no Protocol-v5 accuracy, robustness, retrieval, latency,
+confidence interval, effect-size, p-value, or significance result is currently
+available. The statistical harness treats workload family as the independent
+unit and never promotes variants or repeated model calls into additional
+accuracy samples.
 
 Future runs use this immutable convention:
 

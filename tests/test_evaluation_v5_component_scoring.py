@@ -17,6 +17,9 @@ from evaluation_v5.analysis.component_scoring import (
     _validate_gold_evidence_join,
     _validate_primary_attribution,
     analyze_component_evidence,
+    load_component_evidence,
+    load_component_gold,
+    load_validated_evidence,
     main,
     p3_headroom_report,
     score_component_records,
@@ -668,7 +671,12 @@ def _compiled_v2_document(*, include_second_variant=False):
     }
 
 
-def _write_cli_inputs(tmp_path: Path, *, include_second_variant=False):
+def _write_cli_inputs(
+    tmp_path: Path,
+    *,
+    include_second_variant=False,
+    system_ids=("P2",),
+):
     authoring_path = tmp_path / "family-gold.json"
     document = _compiled_v2_document(
         include_second_variant=include_second_variant
@@ -686,7 +694,7 @@ def _write_cli_inputs(tmp_path: Path, *, include_second_variant=False):
     run_offline_recommendations(
         split,
         result_dir=evidence_dir,
-        system_ids=("P2",),
+        system_ids=system_ids,
         repeats=1,
         seed=8128,
         frozen_configuration={"snapshot": "component-scoring-cli-test-v1"},
@@ -1134,3 +1142,60 @@ def test_compiled_v2_prompt5_evidence_runs_through_cli(
         "DERIVED_EVIDENCE_COMPLETE"
     )
     assert validate_analysis_package(family_output_dir)["status"] == "PASS"
+
+
+def test_validated_evidence_loader_retains_requested_or_all_systems(
+    tmp_path: Path,
+):
+    _, gold_path, evidence_dir, _, _ = _write_cli_inputs(
+        tmp_path,
+        system_ids=("P1", "P2"),
+    )
+    gold = load_component_gold(gold_path)
+
+    provenance, all_records = load_validated_evidence(
+        evidence_dir,
+        gold,
+        systems=None,
+        require_systems=False,
+    )
+    assert provenance["systems"] == ["P1", "P2"]
+    assert {record["system_id"] for record in all_records} == {"P1", "P2"}
+
+    _, p1_records = load_validated_evidence(
+        evidence_dir,
+        gold,
+        systems=("P1",),
+    )
+    assert {record["system_id"] for record in p1_records} == {"P1"}
+
+    with pytest.raises(ComponentAnalysisError, match="missing requested system"):
+        load_validated_evidence(evidence_dir, gold, systems=("P3",))
+
+    _, component_records = load_component_evidence(evidence_dir, gold)
+    assert {record["system_id"] for record in component_records} == {"P2"}
+
+    from evaluation_v5.analysis.statistical_analysis import (
+        analyze_statistical_evidence,
+        validate_statistical_package,
+    )
+
+    statistical_output = tmp_path / "family-statistics"
+    analyze_statistical_evidence(
+        evidence_dir,
+        gold_path,
+        statistical_output,
+        bootstrap_replicates=20,
+    )
+    statistical_manifest = json.loads(
+        (statistical_output / "analysis-manifest.json").read_text(encoding="utf-8")
+    )
+    assert statistical_manifest["status"] == "DERIVED_EVIDENCE_COMPLETE"
+    assert statistical_manifest["systems"] == ["P1", "P2"]
+    assert statistical_manifest["source"]["gold_catalog_identity"] == dict(
+        gold.catalog_identity
+    )
+    assert statistical_manifest["evidence_validation"][
+        "raw_completion_verified_before_external_gold_load"
+    ] is True
+    assert validate_statistical_package(statistical_output)["status"] == "PASS"
