@@ -29,6 +29,7 @@ from .runner import (
     EvidenceRecordError,
     MatrixEntry,
     _entry_seed,
+    _evaluation_gold,
     _freeze_identity,
     _input_identity,
     _metric_inputs,
@@ -560,16 +561,7 @@ def _read_records(path: Path) -> list[dict[str, Any]]:
 
 
 def _expected_gold(case: Any) -> dict[str, Any]:
-    return {
-        "request_feasible": case.gold["request_feasible"],
-        "preferred_candidate_id": case.gold["preferred_candidate_id"],
-        "acceptable_candidate_ids": list(case.gold["acceptable_candidate_ids"]),
-        "required_image_capabilities": list(
-            case.gold["required_image_capabilities"]
-        ),
-        "allowed_profiles": list(case.gold["allowed_profiles"]),
-        "gpu_allowed": case.gold["gpu_allowed"],
-    }
+    return _evaluation_gold(case)
 
 
 def _adapter_result(record: Mapping[str, Any]) -> OfflineAdapterResult:

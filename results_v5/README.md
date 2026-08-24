@@ -2,6 +2,12 @@
 
 No Protocol-v5 experiment has been executed in this package.
 
+The P2/P3 component-scoring harness is implemented, but complete Prompt-3 gold
+and Prompt-5 raw evidence are not tracked. Its empirical status therefore
+remains explicitly `NOT_EXECUTED`; see
+`docs/evaluation/PROTOCOL_V5_COMPONENT_SCORING.md`. Synthetic tests validate
+the harness and error taxonomy but are not observed thesis evidence.
+
 Future runs use this immutable convention:
 
 ```text

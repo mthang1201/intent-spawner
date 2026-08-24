@@ -1009,6 +1009,23 @@ def _candidate_satisfies(
     return True
 
 
+def candidate_satisfies_gold(
+    candidate: CandidateDocument,
+    structured: Mapping[str, Any],
+    image_gold: Mapping[str, Any],
+) -> bool:
+    """Evaluate one catalog candidate against validated Protocol-v5 gold.
+
+    This public analysis helper deliberately delegates to the same frozen
+    catalog/gold consistency rule used while authoring the dataset.  It does
+    not run the recommendation pipeline or alter backend constraint semantics.
+    Callers must supply gold mappings that have already passed the Protocol-v5
+    dataset validator.
+    """
+
+    return _candidate_satisfies(candidate, structured, image_gold)
+
+
 def _validate_family(
     value: object,
     *,
@@ -2517,6 +2534,7 @@ __all__ = [
     "ReviewReport",
     "Variant",
     "WorkloadFamily",
+    "candidate_satisfies_gold",
     "compile_gold_dataset",
     "current_catalog_identity",
     "import_v4_dataset",

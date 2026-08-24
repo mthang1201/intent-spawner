@@ -757,7 +757,61 @@ def _safe_error(exc: BaseException) -> dict[str, str]:
     return {"category": type(exc).__name__, "code": "adapter_execution_error"}
 
 
+def _evaluation_gold(case: SplitCase) -> dict[str, Any]:
+    """Project v1 or v2 split gold into the frozen raw-record fields.
+
+    The raw evidence contract predates the full Prompt-3 v2 labels.  Keep that
+    contract stable while allowing the Prompt-5 runner and validator to consume
+    compiled v2 splits.  Component scoring continues to use the complete v2
+    gold directly rather than this compatibility projection.
+    """
+
+    gold = case.gold
+    if "request_feasible" in gold:
+        return {
+            "request_feasible": gold["request_feasible"],
+            "preferred_candidate_id": gold["preferred_candidate_id"],
+            "acceptable_candidate_ids": list(gold["acceptable_candidate_ids"]),
+            "required_image_capabilities": list(
+                gold["required_image_capabilities"]
+            ),
+            "allowed_profiles": list(gold["allowed_profiles"]),
+            "gpu_allowed": gold["gpu_allowed"],
+        }
+
+    try:
+        structured = gold["gold_structured_intent"]
+        candidate_gold = gold["candidate_gold"]
+        profile_gold = gold["profile_gold"]
+        image_gold = gold["image_gold"]
+        policy_gold = gold["policy_gold"]
+        preferred = list(candidate_gold["preferred_candidate_ids"])
+    except (KeyError, TypeError) as exc:
+        raise EvidenceRecordError(
+            "split case gold cannot be projected into raw metric fields"
+        ) from exc
+
+    expected_feasibility = policy_gold["expected_feasibility"]
+    return {
+        # The legacy raw field is binary.  Ambiguous v2 requests are not
+        # asserted feasible; their three-way label remains in the full gold
+        # consumed by component scoring.
+        "request_feasible": expected_feasibility == "feasible",
+        "preferred_candidate_id": preferred[0] if preferred else None,
+        "acceptable_candidate_ids": list(
+            candidate_gold["acceptable_candidate_ids"]
+        ),
+        "required_image_capabilities": list(
+            image_gold["required_capabilities"]
+        ),
+        "allowed_profiles": list(profile_gold["acceptable_profile_ids"]),
+        "gpu_allowed": structured["gpu_semantics"] != "forbidden",
+    }
+
+
 def _acceptable_image_ids(case: SplitCase) -> list[str]:
+    if "image_gold" in case.gold:
+        return sorted(case.gold["image_gold"]["acceptable_image_ids"])
     images: set[str] = set()
     for candidate_id in case.gold["acceptable_candidate_ids"]:
         for profile in ("small", "medium", "large"):
@@ -771,6 +825,7 @@ def _acceptable_image_ids(case: SplitCase) -> list[str]:
 def _metric_inputs(case: SplitCase, result: OfflineAdapterResult) -> dict[str, Any]:
     """Raw ingredients for registered metrics, never an aggregate claim."""
 
+    evaluation_gold = _evaluation_gold(case)
     selected_evaluation = next(
         (
             item
@@ -787,12 +842,16 @@ def _metric_inputs(case: SplitCase, result: OfflineAdapterResult) -> dict[str, A
     fallback = dict(result.fallback or {})
     constraint_summary = dict(result.constraint_summary or {})
     return {
-        "request_feasible": case.gold["request_feasible"],
-        "preferred_candidate_id": case.gold["preferred_candidate_id"],
-        "acceptable_candidate_ids": list(case.gold["acceptable_candidate_ids"]),
-        "acceptable_profile_ids": list(case.gold["allowed_profiles"]),
+        "request_feasible": evaluation_gold["request_feasible"],
+        "preferred_candidate_id": evaluation_gold["preferred_candidate_id"],
+        "acceptable_candidate_ids": list(
+            evaluation_gold["acceptable_candidate_ids"]
+        ),
+        "acceptable_profile_ids": list(evaluation_gold["allowed_profiles"]),
         "acceptable_image_ids": _acceptable_image_ids(case),
-        "required_image_capabilities": list(case.gold["required_image_capabilities"]),
+        "required_image_capabilities": list(
+            evaluation_gold["required_image_capabilities"]
+        ),
         "predicted_candidate_id": result.predicted_candidate_id,
         "predicted_profile_id": result.predicted_profile_id,
         "predicted_image_id": result.predicted_image_id,
@@ -858,6 +917,7 @@ def _record_for_entry(
     result_data = result.to_dict()
     _reject_secrets(result_data, label="adapter_result")
     status = "error" if error is not None else "completed"
+    evaluation_gold = _evaluation_gold(entry.case)
     core = {
         "schema_version": OFFLINE_RAW_RECORD_SCHEMA_VERSION,
         "provenance_fingerprint": provenance_fingerprint,
@@ -869,14 +929,7 @@ def _record_for_entry(
         "repeat_index": entry.repeat_index,
         "seed": entry.seed,
         "input_identity": _input_identity(entry.case, split),
-        "evaluation_gold": {
-            "request_feasible": entry.case.gold["request_feasible"],
-            "preferred_candidate_id": entry.case.gold["preferred_candidate_id"],
-            "acceptable_candidate_ids": list(entry.case.gold["acceptable_candidate_ids"]),
-            "required_image_capabilities": list(entry.case.gold["required_image_capabilities"]),
-            "allowed_profiles": list(entry.case.gold["allowed_profiles"]),
-            "gpu_allowed": entry.case.gold["gpu_allowed"],
-        },
+        "evaluation_gold": evaluation_gold,
         "adapter_provenance": dict(adapter_provenance),
         "status": status,
         **result_data,

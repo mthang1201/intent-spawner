@@ -1,1 +1,1 @@
-"""Protocol-v5 derived-metric and report namespace (analyzers pending)."""
+"""Protocol-v5 derived metrics and component-level error analysis."""
