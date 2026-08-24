@@ -9,6 +9,9 @@ Status: architecture implemented; Protocol-v5 experiments not executed
 Data-isolation contract:
 [PROTOCOL_V5_DATA_ISOLATION.md](PROTOCOL_V5_DATA_ISOLATION.md)
 
+Offline recommendation runner and raw-evidence validator:
+[PROTOCOL_V5_OFFLINE_RUNNER.md](PROTOCOL_V5_OFFLINE_RUNNER.md)
+
 ## 1. Purpose and evidence boundary
 
 Protocol-v5 provides one evidence model and filesystem contract for six
@@ -95,7 +98,13 @@ must not influence the P3 gate or configuration. If P3 is not retained, E6 is
 
 ## 3. Manifest and provenance contract
 
-Every evidence package uses `ProtocolV5Manifest`. Its required keys are stable
+Every canonical cross-experiment evidence package uses `ProtocolV5Manifest`.
+The append-only offline recommendation collector additionally uses its
+specialized `offline-run-provenance.json` execution-plan schema and completion
+marker, as documented in the offline runner contract. Its fields bind the raw
+rows to the same Protocol-v5 identities while also recording requested versus
+effective repeats and crash-safe resume state. Its required keys are stable
+for that collector. The cross-experiment manifest's required keys are stable
 for all statuses, while incomplete/non-executed packages may use `null` for
 provenance that genuinely does not yet exist. An `OBSERVED` manifest rejects
 null, blank, `unknown`, `unavailable`, `TBD`, and similar placeholders in
