@@ -1,6 +1,9 @@
 from __future__ import annotations
 
+from copy import deepcopy
+import hashlib
 import json
+import os
 from pathlib import Path
 import zipfile
 
@@ -9,6 +12,7 @@ import yaml
 from jsonschema import Draft202012Validator
 from referencing import Registry, Resource
 
+import evaluation_v5.gold_dataset as gold_dataset_module
 from evaluation_v5.gold_dataset import (
     COMPILED_SPLIT_SCHEMA_VERSION,
     GOLD_DATASET_SCHEMA_VERSION,
@@ -24,7 +28,7 @@ from evaluation_v5.gold_dataset import (
     validate_gold_dataset,
     write_document_exclusive,
 )
-from evaluation_v5.isolation_audit import audit_repository
+from evaluation_v5.isolation_audit import IsolationAuditError, audit_repository
 from evaluation_v5.split_dataset import (
     SPLIT_BUNDLE_SCHEMA_VERSION,
     SplitBundleValidationError,
@@ -377,7 +381,7 @@ def test_review_report_is_redaction_safe_and_classifies_findings():
     assert "pending_semantic_equivalence" in codes
     assert "singleton_stratum" in codes
     assert "missing_workload_category" in codes
-    assert "normalized_identical_variant" in codes
+    assert "normalized_duplicate_variant_across_families" in codes
     assert "unbalanced_preferred_profile" in codes
     assert "unbalanced_preferred_image" in codes
     assert secret_prompt not in encoded
@@ -562,8 +566,15 @@ def test_cli_import_validate_summary_review_and_overwrite_guard(
     assert "## Profile coverage" in markdown_summary
     assert "## Image coverage" in markdown_summary
     assert "## Perturbation coverage" in markdown_summary
+    assert main(["summary", str(output), "--format", "markdown"]) == 0
+    assert capsys.readouterr().out == markdown_summary
     assert main(["review", str(output), "--format", "json"]) == 1
     assert json.loads(capsys.readouterr().out)["blocking_count"] > 0
+    assert main(["review", str(output), "--format", "markdown"]) == 1
+    markdown_review = capsys.readouterr().out
+    assert "## Blocking" in markdown_review
+    assert main(["review", str(output), "--format", "markdown"]) == 1
+    assert capsys.readouterr().out == markdown_review
 
     assert main(["import-v4", str(source), "--output", str(output)]) == 2
     assert json.loads(capsys.readouterr().out)["status"] == "ERROR"
@@ -676,3 +687,781 @@ def test_isolation_audit_does_not_flag_new_schema_artifacts(tmp_path: Path):
     ):
         (repository / name).write_bytes((ROOT / "benchmarks_v5" / name).read_bytes())
     assert audit_repository(repository).clean
+
+
+def _set_pending_review(family: dict[str, object]) -> None:
+    family["label_review"] = {
+        "status": "pending",
+        "reviewed_by": None,
+        "reviewed_at_utc": None,
+        "notes": [],
+    }
+
+
+def test_compile_gating_matrix_blocks_only_unresolved_label_findings():
+    draft = validate_gold_dataset(_document(lifecycle="draft"))
+    with pytest.raises(GoldDatasetReviewError, match="manually frozen"):
+        compile_gold_dataset(draft)
+
+    reviewed = validate_gold_dataset(_document(lifecycle="reviewed"))
+    with pytest.raises(GoldDatasetReviewError, match="manually frozen"):
+        compile_gold_dataset(reviewed)
+
+    pending_review_document = _document()
+    _set_pending_review(pending_review_document["families"][0])  # type: ignore[index]
+    with pytest.raises(GoldDatasetReviewError, match="unresolved_gold_review"):
+        compile_gold_dataset(validate_gold_dataset(pending_review_document))
+
+    unassessed_document = _document()
+    unassessed_document["families"][0]["difficulty"] = "unassessed"  # type: ignore[index]
+    with pytest.raises(GoldDatasetReviewError, match="unassessed_difficulty"):
+        compile_gold_dataset(validate_gold_dataset(unassessed_document))
+
+    pending_equivalence_document = _document()
+    variants = pending_equivalence_document["families"][0]["variants"]  # type: ignore[index]
+    variants[1]["equivalence_status"] = "pending_review"
+    with pytest.raises(
+        GoldDatasetReviewError,
+        match="pending_semantic_equivalence",
+    ):
+        compile_gold_dataset(validate_gold_dataset(pending_equivalence_document))
+
+    unresolved_ambiguity_document = _document()
+    ambiguous = unresolved_ambiguity_document["families"][1]  # type: ignore[index]
+    ambiguous["policy_gold"]["expected_feasibility"] = "ambiguous"
+    ambiguous["gold_structured_intent"]["ambiguities"] = [
+        "The GPU requirement still needs adjudication."
+    ]
+    _set_pending_review(ambiguous)
+    with pytest.raises(GoldDatasetReviewError, match="unresolved_gold_ambiguity"):
+        compile_gold_dataset(validate_gold_dataset(unresolved_ambiguity_document))
+
+    advisory_only = validate_gold_dataset(_document())
+    report = review_gold_dataset(advisory_only)
+    assert not report.blocking_findings
+    assert {
+        "singleton_stratum",
+        "missing_workload_category",
+        "unbalanced_preferred_profile",
+        "unbalanced_preferred_image",
+    }.issubset({finding.code for finding in report.advisory_findings})
+    assert compile_gold_dataset(advisory_only).split_manifest.case_count == 4
+
+    duplicate_advisory_document = _document()
+    family = duplicate_advisory_document["families"][0]  # type: ignore[index]
+    family["variants"][1]["intent"] = family["variants"][0]["intent"]
+    duplicate_advisory = validate_gold_dataset(duplicate_advisory_document)
+    assert "duplicate_variant_within_family" in {
+        finding.code for finding in review_gold_dataset(duplicate_advisory).findings
+    }
+    assert compile_gold_dataset(duplicate_advisory).split_manifest.case_count == 4
+
+
+def test_compile_revalidates_mutated_gold_and_live_catalog_identity():
+    unresolved = validate_gold_dataset(_document())
+    unresolved.families[0].candidate_gold["acceptable_candidate_ids"].append(
+        "missing-candidate"
+    )
+    with pytest.raises(GoldDatasetValidationError, match="unknown candidates"):
+        compile_gold_dataset(unresolved)
+
+    drifted = validate_gold_dataset(_document())
+    drifted.catalog_identity["candidate_corpus_sha256"] = "0" * 64
+    with pytest.raises(
+        GoldDatasetValidationError,
+        match="administrator-owned configuration",
+    ):
+        compile_gold_dataset(drifted)
+
+
+def test_controlled_ambiguity_requires_consistent_reviewed_gold_and_compiles():
+    document = _document()
+    family = document["families"][1]  # type: ignore[index]
+    family["policy_gold"]["expected_feasibility"] = "ambiguous"
+    family["gold_structured_intent"]["ambiguities"] = [
+        "The request deliberately leaves GPU availability uncertain."
+    ]
+    family["variants"][0]["equivalence_status"] = "controlled_ambiguity"
+
+    dataset = validate_gold_dataset(document)
+    report = review_gold_dataset(dataset)
+
+    assert not report.blocking_findings
+    assert "documented_gold_ambiguity" in {
+        finding.code for finding in report.advisory_findings
+    }
+    compiled = compile_gold_dataset(dataset)
+    controlled_case = next(
+        case for case in compiled.cases if case.family_id == "gpu-required"
+    )
+    assert controlled_case.variant_metadata["equivalence_status"] == (
+        "controlled_ambiguity"
+    )
+
+
+def test_controlled_ambiguity_rejects_feasible_or_unreviewed_gold():
+    feasible = _document()
+    feasible["families"][0]["variants"][0][  # type: ignore[index]
+        "equivalence_status"
+    ] = "controlled_ambiguity"
+    with pytest.raises(
+        GoldDatasetValidationError,
+        match="expected_feasibility ambiguous",
+    ):
+        validate_gold_dataset(feasible)
+
+    unreviewed = _document()
+    family = unreviewed["families"][1]  # type: ignore[index]
+    family["policy_gold"]["expected_feasibility"] = "ambiguous"
+    family["gold_structured_intent"]["ambiguities"] = ["Needs review."]
+    family["variants"][0]["equivalence_status"] = "controlled_ambiguity"
+    _set_pending_review(family)
+    with pytest.raises(
+        GoldDatasetValidationError,
+        match="explicit family review approval",
+    ):
+        validate_gold_dataset(unreviewed)
+
+
+@pytest.mark.parametrize(
+    "field",
+    [
+        "candidate_corpus_version",
+        "candidate_corpus_sha256",
+        "image_catalog_version",
+        "image_catalog_sha256",
+        "profile_catalog_sha256",
+    ],
+)
+def test_every_catalog_identity_component_is_drift_checked(field: str):
+    document = _document()
+    document["catalog_identity"][field] = (
+        "drifted-version" if field.endswith("version") else "0" * 64
+    )
+    with pytest.raises(
+        GoldDatasetValidationError,
+        match=rf"catalog_identity\.{field}.*administrator-owned",
+    ):
+        validate_gold_dataset(document)
+
+
+@pytest.mark.parametrize(
+    ("field", "replacement", "message"),
+    [
+        ("reviewed_by", None, "non-blank"),
+        ("reviewed_at_utc", "2026-08-24 01:00:00", "UTC timestamp"),
+        ("notes", [], "non-empty list"),
+    ],
+)
+def test_approved_review_requires_complete_provenance(
+    field: str,
+    replacement: object,
+    message: str,
+):
+    document = _document()
+    document["families"][0]["label_review"][field] = replacement  # type: ignore[index]
+    with pytest.raises(GoldDatasetValidationError, match=message):
+        validate_gold_dataset(document)
+
+
+def test_lifecycle_freeze_metadata_rules_are_enforced():
+    frozen_without_provenance = _document()
+    frozen_without_provenance["dataset_metadata"]["freeze_metadata"] = None
+    with pytest.raises(GoldDatasetValidationError, match="frozen dataset requires"):
+        validate_gold_dataset(frozen_without_provenance)
+
+    draft_with_freeze = _document(lifecycle="draft")
+    draft_with_freeze["dataset_metadata"]["freeze_metadata"] = {
+        "frozen_at_utc": "2026-08-24T02:00:00Z",
+        "frozen_by": "invalid-custodian",
+    }
+    with pytest.raises(GoldDatasetValidationError, match="only valid for a frozen"):
+        validate_gold_dataset(draft_with_freeze)
+
+    freeze_before_creation = _document()
+    freeze_before_creation["dataset_metadata"]["freeze_metadata"][  # type: ignore[index]
+        "frozen_at_utc"
+    ] = "2026-08-23T23:59:59Z"
+    with pytest.raises(GoldDatasetValidationError, match="cannot precede creation"):
+        validate_gold_dataset(freeze_before_creation)
+
+
+def test_compilation_is_deterministic_traceable_and_representation_independent(
+    tmp_path: Path,
+):
+    document = _document()
+    dataset = validate_gold_dataset(document)
+    first = compile_gold_dataset(dataset)
+    second = compile_gold_dataset(dataset)
+
+    assert first.to_dict() == second.to_dict()
+    assert first.split_manifest.checksum == second.split_manifest.checksum
+    assert {case.case_id for case in first.cases} == {
+        variant["variant_id"]
+        for family in document["families"]
+        for variant in family["variants"]
+    }
+    for case in first.cases:
+        source_family = next(
+            family
+            for family in document["families"]
+            if family["family_id"] == case.family_id
+        )
+        assert case.case_id == case.variant_id
+        assert case.gold == {
+            "gold_structured_intent": source_family["gold_structured_intent"],
+            "candidate_gold": source_family["candidate_gold"],
+            "profile_gold": source_family["profile_gold"],
+            "image_gold": source_family["image_gold"],
+            "policy_gold": source_family["policy_gold"],
+        }
+        assert case.source_provenance["source_dataset_id"] == "mini-v5-gold"
+
+    reordered = deepcopy(document)
+    reordered["families"].reverse()
+    reordered_bundle = compile_gold_dataset(validate_gold_dataset(reordered))
+    assert {case.case_id for case in reordered_bundle.cases} == {
+        case.case_id for case in first.cases
+    }
+
+    yaml_source = tmp_path / "semantic.yaml"
+    json_source = tmp_path / "semantic.json"
+    write_document_exclusive(yaml_source, document)
+    write_document_exclusive(json_source, document)
+    yaml_loaded = load_gold_dataset(yaml_source)
+    json_loaded = load_gold_dataset(json_source)
+    assert yaml_loaded.source_file_sha256 != json_loaded.source_file_sha256
+    assert yaml_loaded.source_canonical_sha256 == json_loaded.source_canonical_sha256
+    assert compile_gold_dataset(yaml_loaded).to_dict() == compile_gold_dataset(
+        json_loaded
+    ).to_dict()
+    assert yaml_source.read_bytes().endswith(b"\n")
+    assert json_source.read_bytes().endswith(b"\n")
+
+
+def _second_feasible_family() -> dict[str, object]:
+    family = _infeasible_family()
+    family["family_id"] = "pytorch-cpu"
+    family["title"] = "PyTorch on CPU"
+    family["workload_stratum"] = "deep_learning"
+    family["difficulty"] = "medium"
+    family["gold_structured_intent"]["gpu_semantics"] = "not_needed"
+    family["candidate_gold"] = {
+        "preferred_candidate_ids": ["large-pytorch-deep-learning"],
+        "acceptable_candidate_ids": ["large-pytorch-deep-learning"],
+    }
+    family["profile_gold"] = {
+        "preferred_profile_ids": ["large"],
+        "acceptable_profile_ids": ["large"],
+    }
+    family["image_gold"] = {
+        "preferred_image_ids": ["pytorch-deep-learning"],
+        "acceptable_image_ids": ["pytorch-deep-learning"],
+        "required_capabilities": ["pytorch"],
+    }
+    family["policy_gold"] = {
+        "required_constraints": ["CPU execution accepted"],
+        "explicitly_unsupported_requirements": [],
+        "expected_feasibility": "feasible",
+    }
+    family["variants"] = [
+        _variant(
+            "pytorch-cpu-canonical",
+            intent="Run a small PyTorch example on CPU.",
+        )
+    ]
+    return family
+
+
+def test_review_balance_uses_family_not_variant_denominators():
+    document = _document()
+    first = document["families"][0]  # type: ignore[index]
+    first["variants"] = [
+        _variant(
+            f"table-cleaning-{index:02d}",
+            intent=f"Clean table variant {index} with pandas.",
+            equivalence_status=(
+                "canonical_reference" if index == 0 else "reviewed_equivalent"
+            ),
+        )
+        for index in range(20)
+    ]
+    document["families"] = [first, _second_feasible_family()]
+    document["review_policy"] = {
+        "required_workload_strata": ["data_processing", "deep_learning"],
+        "max_preferred_profile_share": 0.6,
+        "max_preferred_image_share": 0.6,
+    }
+
+    dataset = validate_gold_dataset(document)
+    summary = summarize_gold_dataset(dataset)
+    codes = {finding.code for finding in review_gold_dataset(dataset).findings}
+
+    assert "unbalanced_preferred_profile" not in codes
+    assert "unbalanced_preferred_image" not in codes
+    assert summary["profile_coverage"]["primary_denominator"] == (
+        "workload_families"
+    )
+    assert summary["profile_coverage"]["preferred"] == {"large": 1, "medium": 1}
+    assert summary["profile_coverage"]["case_counts"]["preferred"] == {
+        "large": 1,
+        "medium": 20,
+    }
+    assert summary["capability_coverage"] == {"pandas": 1, "pytorch": 1}
+    assert summary["capability_case_coverage"] == {"pandas": 20, "pytorch": 1}
+    assert summary["workload_strata"]["data_processing"] == {
+        "family_count": 1,
+        "case_count": 20,
+    }
+
+
+def test_duplicate_finding_codes_distinguish_scope_and_normalization():
+    document = _document()
+    first = document["families"][0]  # type: ignore[index]
+    second = document["families"][1]  # type: ignore[index]
+    first["variants"] = [
+        _variant("dup-a", intent="Within exact"),
+        _variant(
+            "dup-b",
+            variant_class="other",
+            intent="Within exact",
+            equivalence_status="reviewed_equivalent",
+        ),
+        _variant(
+            "dup-c",
+            variant_class="other",
+            intent="Normalized, within!",
+            equivalence_status="reviewed_equivalent",
+        ),
+        _variant(
+            "dup-d",
+            variant_class="other",
+            intent=" normalized within ",
+            equivalence_status="reviewed_equivalent",
+        ),
+        _variant(
+            "dup-e",
+            variant_class="other",
+            intent="Cross exact",
+            equivalence_status="reviewed_equivalent",
+        ),
+        _variant(
+            "dup-f",
+            variant_class="other",
+            intent="Cross normalized!",
+            equivalence_status="reviewed_equivalent",
+        ),
+    ]
+    second["variants"] = [
+        _variant(
+            "dup-g",
+            variant_class="other",
+            intent="Cross exact",
+            equivalence_status="reviewed_equivalent",
+        ),
+        _variant(
+            "dup-h",
+            variant_class="other",
+            intent=" cross normalized ",
+            equivalence_status="reviewed_equivalent",
+        ),
+    ]
+
+    report = review_gold_dataset(validate_gold_dataset(document))
+    codes = {finding.code for finding in report.findings}
+
+    assert {
+        "duplicate_variant_within_family",
+        "normalized_duplicate_variant_within_family",
+        "duplicate_variant_across_families",
+        "normalized_duplicate_variant_across_families",
+    }.issubset(codes)
+
+
+def test_v4_importer_rejects_unresolved_historical_mapping_atomically(
+    tmp_path: Path,
+):
+    source_document = yaml.safe_load(
+        (ROOT / "benchmarks" / "intent-gold-v4.yaml").read_text(encoding="utf-8")
+    )
+    selected = next(
+        item
+        for item in source_document["items"]
+        if item["sample_id"] == "small-csv-canonical-en"
+    )
+    selected["gold"]["preferred_image_id"] = "retired-historical-image"
+    selected["gold"]["acceptable_image_ids"] = ["retired-historical-image"]
+    source = tmp_path / "historical-with-retired-label.yaml"
+    source.write_text(yaml.safe_dump(source_document), encoding="utf-8")
+    output = tmp_path / "must-not-exist.yaml"
+
+    with pytest.raises(GoldDatasetValidationError, match="unknown candidate"):
+        import_v4_dataset(
+            source,
+            source_split="test",
+            sample_ids=["small-csv-canonical-en"],
+        )
+    assert not output.exists()
+    assert main(
+        [
+            "import-v4",
+            str(source),
+            "--source-split",
+            "test",
+            "--sample-id",
+            "small-csv-canonical-en",
+            "--output",
+            str(output),
+        ]
+    ) == 2
+    assert not output.exists()
+
+
+def test_v4_importer_populates_only_explicit_or_mechanical_gold():
+    source = ROOT / "benchmarks" / "intent-gold-v4.yaml"
+    source_document = yaml.safe_load(source.read_text(encoding="utf-8"))
+    source_case = next(
+        item
+        for item in source_document["items"]
+        if item["sample_id"] == "pandas-transform-canonical-en"
+    )
+    imported = import_v4_dataset(
+        source,
+        sample_ids=["pandas-transform-canonical-en"],
+    )
+    family = imported.families[0]
+
+    assert family.variants[0].intent == source_case["inputs"]["intent"]
+    assert family.gold_structured_intent["task_types"] == []
+    assert family.gold_structured_intent["minimum_cpu_cores"] is None
+    assert family.gold_structured_intent["minimum_memory_gb"] is None
+    assert family.difficulty == "unassessed"
+    assert family.label_review["status"] == "pending"
+    assert family.source_provenance["source_split"] == "development"
+    assert imported.dataset_metadata["role"] == "development"
+    assert imported.dataset_metadata["evidence_classification"] == (
+        "historical_formative_development_only"
+    )
+
+
+def test_confirmatory_realpath_guard_covers_symlinks_and_traversal(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+):
+    dataset = validate_gold_dataset(_document(role="confirmatory"))
+    repository = tmp_path / "repository"
+    external = tmp_path / "external"
+    repository.mkdir()
+    external.mkdir()
+    inside = repository / "inside.yaml"
+    outside = external / "outside.yaml"
+    inside.write_text("placeholder", encoding="utf-8")
+    outside.write_text("placeholder", encoding="utf-8")
+    monkeypatch.setattr(gold_dataset_module, "ROOT", repository)
+
+    with pytest.raises(GoldDatasetValidationError, match="absolute external paths"):
+        compile_gold_dataset(
+            dataset,
+            source_path=Path("relative.yaml"),
+            output_path=external / "relative-rejected.yaml",
+        )
+    with pytest.raises(GoldDatasetValidationError, match="absolute external paths"):
+        compile_gold_dataset(
+            dataset,
+            source_path=inside,
+            output_path=external / "inside-rejected.yaml",
+        )
+
+    assert compile_gold_dataset(
+        dataset,
+        source_path=outside,
+        output_path=external / "allowed.yaml",
+    ).split_manifest.role.value == "confirmatory"
+
+    outward_link = repository / "outward.yaml"
+    outward_link.symlink_to(outside)
+    with pytest.raises(GoldDatasetValidationError, match="absolute external paths"):
+        compile_gold_dataset(
+            dataset,
+            source_path=outward_link,
+            output_path=external / "outward-rejected.yaml",
+        )
+
+    inward_link = external / "inward.yaml"
+    inward_link.symlink_to(inside)
+    with pytest.raises(GoldDatasetValidationError, match="absolute external paths"):
+        compile_gold_dataset(
+            dataset,
+            source_path=inward_link,
+            output_path=external / "inward-rejected.yaml",
+        )
+
+    outward_output = repository / "outward-output.yaml"
+    outward_output.symlink_to(outside)
+    with pytest.raises(GoldDatasetValidationError, match="absolute external paths"):
+        compile_gold_dataset(
+            dataset,
+            source_path=outside,
+            output_path=outward_output,
+        )
+
+    inward_output = external / "inward-output.yaml"
+    inward_output.symlink_to(inside)
+    with pytest.raises(GoldDatasetValidationError, match="absolute external paths"):
+        compile_gold_dataset(
+            dataset,
+            source_path=outside,
+            output_path=inward_output,
+        )
+
+    inward_directory = external / "repository-directory"
+    inward_directory.symlink_to(repository, target_is_directory=True)
+    with pytest.raises(GoldDatasetValidationError, match="absolute external paths"):
+        compile_gold_dataset(
+            dataset,
+            source_path=outside,
+            output_path=inward_directory / "new-output.yaml",
+        )
+
+    chain_target = external / "chain-target.yaml"
+    chain_target.symlink_to(inside)
+    chain = external / "chain.yaml"
+    chain.symlink_to(chain_target)
+    with pytest.raises(GoldDatasetValidationError, match="absolute external paths"):
+        compile_gold_dataset(
+            dataset,
+            source_path=chain,
+            output_path=external / "chain-rejected.yaml",
+        )
+
+    traversal = external / ".." / "repository" / "inside.yaml"
+    with pytest.raises(GoldDatasetValidationError, match="absolute external paths"):
+        compile_gold_dataset(
+            dataset,
+            source_path=traversal,
+            output_path=external / "traversal-rejected.yaml",
+        )
+
+
+def test_exclusive_writer_resists_late_destination_creation_and_cleans_temp(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+):
+    target = tmp_path / "race.json"
+    real_link = os.link
+
+    def create_competitor_then_link(source: object, destination: object) -> None:
+        Path(destination).write_text("competitor\n", encoding="utf-8")
+        real_link(source, destination)
+
+    monkeypatch.setattr(os, "link", create_competitor_then_link)
+    with pytest.raises(FileExistsError):
+        write_document_exclusive(target, {"safe": True})
+
+    assert target.read_text(encoding="utf-8") == "competitor\n"
+    assert list(tmp_path.glob(f".{target.name}.*.tmp")) == []
+
+    bad_output = tmp_path / "invalid.extension"
+    with pytest.raises(GoldDatasetValidationError, match="output must use"):
+        write_document_exclusive(bad_output, {"safe": True})
+    assert not bad_output.exists()
+    assert list(tmp_path.glob(f".{bad_output.name}.*.tmp")) == []
+
+
+def test_strict_loader_rejects_additional_adversarial_encodings(tmp_path: Path):
+    duplicate_json = tmp_path / "duplicate.json"
+    duplicate_json.write_text('{"schema_version": "a", "schema_version": "b"}')
+    with pytest.raises(GoldDatasetValidationError, match="duplicate JSON field"):
+        load_gold_dataset(duplicate_json)
+
+    malformed_utf8 = tmp_path / "malformed.yaml"
+    malformed_utf8.write_bytes(b"schema_version: \xff\xfe")
+    with pytest.raises(GoldDatasetValidationError, match="UTF-8"):
+        load_gold_dataset(malformed_utf8)
+
+    recursive = tmp_path / "recursive.yaml"
+    recursive.write_text("root: &root\n  child: *root\n", encoding="utf-8")
+    with pytest.raises(GoldDatasetValidationError, match="YAML is invalid|recursive"):
+        load_gold_dataset(recursive)
+
+    unsafe = _document()
+    unsafe["families"][0]["family_id"] = "../unsafe"  # type: ignore[index]
+    with pytest.raises(GoldDatasetValidationError, match="lowercase bounded"):
+        validate_gold_dataset(unsafe)
+
+
+def test_redaction_safe_paths_never_emit_prompt_sentinel(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+):
+    sentinel = "TOP_SECRET_PROMPT_SENTINEL_93A7"
+    document = _document(lifecycle="draft")
+    family = document["families"][0]  # type: ignore[index]
+    family["variants"][0]["intent"] = sentinel
+    family["difficulty"] = "unassessed"
+    _set_pending_review(family)
+    family["variants"][1]["equivalence_status"] = "pending_review"
+    dataset = validate_gold_dataset(document)
+
+    review_payload = json.dumps(review_gold_dataset(dataset).to_dict())
+    assert sentinel not in review_payload
+    with pytest.raises(GoldDatasetReviewError) as compile_error:
+        compile_gold_dataset(dataset)
+    assert sentinel not in str(compile_error.value)
+
+    invalid = deepcopy(document)
+    invalid["families"][0]["candidate_gold"][  # type: ignore[index]
+        "acceptable_candidate_ids"
+    ].append("missing-candidate")
+    with pytest.raises(GoldDatasetValidationError) as validation_error:
+        validate_gold_dataset(invalid)
+    assert sentinel not in str(validation_error.value)
+
+    invalid_source = tmp_path / "sentinel-invalid.yaml"
+    write_document_exclusive(invalid_source, invalid)
+    assert main(["validate", str(invalid_source)]) == 2
+    cli_failure = capsys.readouterr()
+    assert sentinel not in cli_failure.out
+    assert "Traceback" not in cli_failure.out + cli_failure.err
+
+    source = tmp_path / "sentinel-draft.yaml"
+    write_document_exclusive(source, document)
+    assert main(["review", str(source), "--format", "json"]) == 1
+    assert sentinel not in capsys.readouterr().out
+    assert main(["review", str(source), "--format", "markdown"]) == 1
+    assert sentinel not in capsys.readouterr().out
+    assert main(["compile", str(source), "--output", str(tmp_path / "no.yaml")]) == 2
+    assert sentinel not in capsys.readouterr().out
+
+    confirmatory = deepcopy(document)
+    confirmatory["dataset_metadata"]["role"] = "confirmatory"
+    repository = tmp_path / "repository"
+    repository.mkdir()
+    (repository / "sealed.json").write_text(
+        json.dumps(confirmatory), encoding="utf-8"
+    )
+    direct_report = audit_repository(repository)
+    assert sentinel not in repr(direct_report.findings)
+
+    (repository / "sealed.json").unlink()
+    with zipfile.ZipFile(repository / "sealed.zip", "w") as archive:
+        archive.writestr("gold.json", json.dumps(confirmatory))
+    archive_report = audit_repository(repository)
+    assert sentinel not in repr(archive_report.findings)
+
+    (repository / "sealed.zip").unlink()
+    malformed = repository / "malformed.yaml"
+    malformed.write_bytes(
+        b"schema_version: protocol-v5-gold-family-v1.0.0\n"
+        b"dataset_metadata:\n  role: confirmatory\n"
+        + sentinel.encode("utf-8")
+        + b"\xff"
+    )
+    with pytest.raises(IsolationAuditError) as isolation_error:
+        audit_repository(repository)
+    assert sentinel not in str(isolation_error.value)
+
+
+def _controlled_ambiguity_family() -> dict[str, object]:
+    family = _infeasible_family()
+    family["family_id"] = "controlled-gpu-ambiguity"
+    family["title"] = "Controlled GPU ambiguity"
+    family["workload_stratum"] = "ambiguity"
+    family["policy_gold"]["expected_feasibility"] = "ambiguous"
+    family["gold_structured_intent"]["ambiguities"] = [
+        "GPU availability is deliberately unspecified for this robustness case."
+    ]
+    family["variants"] = [
+        _variant(
+            "controlled-gpu-ambiguity-case",
+            variant_class="optional_ambiguity_variant",
+            intent="Train this model; the available accelerator is intentionally unclear.",
+            equivalence_status="controlled_ambiguity",
+        )
+    ]
+    return family
+
+
+def test_complete_temporary_development_authoring_lifecycle(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+):
+    draft_document = _document(lifecycle="draft")
+    draft_document["dataset_metadata"]["dataset_id"] = "synthetic-lifecycle-draft"
+    draft_document["review_policy"]["required_workload_strata"].append(
+        "missing-advisory-stratum"
+    )
+    first = draft_document["families"][0]  # type: ignore[index]
+    first["variants"].append(
+        _variant(
+            "table-cleaning-code-context",
+            variant_class="optional_code_context",
+            intent="Use the shown pandas import to clean the table.",
+            code_context=["import pandas as pd"],
+            equivalence_status="pending_review",
+        )
+    )
+    first["difficulty"] = "unassessed"
+    _set_pending_review(first)
+    draft_document["families"].append(_controlled_ambiguity_family())
+
+    draft_path = tmp_path / "draft.yaml"
+    write_document_exclusive(draft_path, draft_document)
+    assert main(["validate", str(draft_path)]) == 0
+    assert json.loads(capsys.readouterr().out)["status"] == "VALID"
+    assert main(["summary", str(draft_path), "--format", "json"]) == 0
+    summary = json.loads(capsys.readouterr().out)
+    assert summary["language_counts"]["vi"] == 1
+    assert summary["perturbation_coverage"]["optional_code_context"] == {
+        "case_count": 1,
+        "family_count": 1,
+    }
+    assert main(["review", str(draft_path), "--format", "json"]) == 1
+    assert json.loads(capsys.readouterr().out)["blocking_count"] > 0
+
+    reviewed_document = deepcopy(draft_document)
+    reviewed_document["dataset_metadata"]["lifecycle"] = "reviewed"
+    reviewed_first = reviewed_document["families"][0]
+    reviewed_first["difficulty"] = "medium"
+    reviewed_first["label_review"] = {
+        "status": "approved",
+        "reviewed_by": "synthetic-reviewer",
+        "reviewed_at_utc": "2026-08-24T01:00:00Z",
+        "notes": ["Synthetic lifecycle fixture was manually adjudicated."],
+    }
+    for variant in reviewed_first["variants"]:
+        if variant["equivalence_status"] == "pending_review":
+            variant["equivalence_status"] = "reviewed_equivalent"
+    reviewed_path = tmp_path / "reviewed.json"
+    write_document_exclusive(reviewed_path, reviewed_document)
+    reviewed = load_gold_dataset(reviewed_path)
+    assert not review_gold_dataset(reviewed).blocking_findings
+    with pytest.raises(GoldDatasetReviewError, match="manually frozen"):
+        compile_gold_dataset(reviewed)
+    assert reviewed.dataset.dataset_metadata["lifecycle"] == "reviewed"
+
+    frozen_document = deepcopy(reviewed_document)
+    frozen_document["dataset_metadata"]["lifecycle"] = "frozen"
+    frozen_document["dataset_metadata"]["freeze_metadata"] = {
+        "frozen_at_utc": "2026-08-24T02:00:00Z",
+        "frozen_by": "synthetic-custodian",
+    }
+    frozen_path = tmp_path / "frozen.yaml"
+    compiled_path = tmp_path / "compiled.json"
+    write_document_exclusive(frozen_path, frozen_document)
+    assert main(["compile", str(frozen_path), "--output", str(compiled_path)]) == 0
+    compile_status = json.loads(capsys.readouterr().out)
+    assert compile_status["status"] == "COMPILED"
+    compiled_payload = json.loads(compiled_path.read_text(encoding="utf-8"))
+    compiled = validate_split_bundle(compiled_payload)
+    assert compiled.split_manifest.checksum == compile_status["checksum"]
+    assert compiled.split_manifest.family_count == 3
+    assert any(
+        case.variant_metadata["equivalence_status"] == "controlled_ambiguity"
+        for case in compiled.cases
+    )
+    assert all(
+        case.source_provenance["source_dataset_id"] == "synthetic-lifecycle-draft"
+        for case in compiled.cases
+    )
+    assert frozen_document["dataset_metadata"]["lifecycle"] == "frozen"

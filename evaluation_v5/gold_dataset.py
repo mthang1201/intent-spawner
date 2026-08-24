@@ -1177,6 +1177,20 @@ def _validate_family(
         raise GoldDatasetValidationError(
             f"{label} cannot contain more than one canonical reference"
         )
+    label_review = _validate_label_review(
+        payload["label_review"], f"{label}.label_review"
+    )
+    controlled_ambiguity = any(
+        item.equivalence_status == "controlled_ambiguity" for item in variants
+    )
+    if controlled_ambiguity and feasibility != "ambiguous":
+        raise GoldDatasetValidationError(
+            f"{label} controlled ambiguity requires expected_feasibility ambiguous"
+        )
+    if controlled_ambiguity and label_review["status"] != "approved":
+        raise GoldDatasetValidationError(
+            f"{label} controlled ambiguity requires explicit family review approval"
+        )
 
     return WorkloadFamily(
         family_id=family_id,
@@ -1192,9 +1206,7 @@ def _validate_family(
         image_gold=image_gold,
         policy_gold=policy_gold,
         variants=variants,
-        label_review=_validate_label_review(
-            payload["label_review"], f"{label}.label_review"
-        ),
+        label_review=label_review,
         source_provenance=_validate_source_provenance(
             payload.get("source_provenance"), f"{label}.source_provenance"
         ),
@@ -1293,10 +1305,16 @@ def summarize_gold_dataset(
     difficulties: Counter[str] = Counter()
     feasibilities: Counter[str] = Counter()
     capabilities: Counter[str] = Counter()
+    capability_cases: Counter[str] = Counter()
     preferred_profiles: Counter[str] = Counter()
     acceptable_profiles: Counter[str] = Counter()
+    preferred_profile_cases: Counter[str] = Counter()
+    acceptable_profile_cases: Counter[str] = Counter()
     preferred_images: Counter[str] = Counter()
     acceptable_images: Counter[str] = Counter()
+    preferred_image_cases: Counter[str] = Counter()
+    acceptable_image_cases: Counter[str] = Counter()
+    language_families: dict[str, set[str]] = defaultdict(set)
     perturbation_cases: Counter[str] = Counter()
     perturbation_families: dict[str, set[str]] = defaultdict(set)
     for family in dataset.families:
@@ -1307,16 +1325,22 @@ def summarize_gold_dataset(
         feasibilities[str(family.policy_gold["expected_feasibility"])] += 1
         for capability in family.image_gold["required_capabilities"]:
             capabilities[str(capability)] += 1
+            capability_cases[str(capability)] += case_count
         for profile_id in family.profile_gold["preferred_profile_ids"]:
             preferred_profiles[str(profile_id)] += 1
+            preferred_profile_cases[str(profile_id)] += case_count
         for profile_id in family.profile_gold["acceptable_profile_ids"]:
             acceptable_profiles[str(profile_id)] += 1
+            acceptable_profile_cases[str(profile_id)] += case_count
         for image_id in family.image_gold["preferred_image_ids"]:
             preferred_images[str(image_id)] += 1
+            preferred_image_cases[str(image_id)] += case_count
         for image_id in family.image_gold["acceptable_image_ids"]:
             acceptable_images[str(image_id)] += 1
+            acceptable_image_cases[str(image_id)] += case_count
         for variant in family.variants:
             languages[variant.language] += 1
+            language_families[variant.language].add(family.family_id)
             perturbation_cases[variant.variant_class] += 1
             perturbation_families[variant.variant_class].add(family.family_id)
     strata = {
@@ -1340,17 +1364,31 @@ def summarize_gold_dataset(
         "family_count": len(dataset.families),
         "case_count": sum(len(family.variants) for family in dataset.families),
         "language_counts": dict(sorted(languages.items())),
+        "language_family_counts": {
+            key: len(language_families[key]) for key in sorted(language_families)
+        },
         "workload_strata": strata,
         "difficulty_distribution": dict(sorted(difficulties.items())),
         "feasibility_distribution": dict(sorted(feasibilities.items())),
         "capability_coverage": dict(sorted(capabilities.items())),
+        "capability_case_coverage": dict(sorted(capability_cases.items())),
         "profile_coverage": {
+            "primary_denominator": "workload_families",
             "preferred": dict(sorted(preferred_profiles.items())),
             "acceptable": dict(sorted(acceptable_profiles.items())),
+            "case_counts": {
+                "preferred": dict(sorted(preferred_profile_cases.items())),
+                "acceptable": dict(sorted(acceptable_profile_cases.items())),
+            },
         },
         "image_coverage": {
+            "primary_denominator": "workload_families",
             "preferred": dict(sorted(preferred_images.items())),
             "acceptable": dict(sorted(acceptable_images.items())),
+            "case_counts": {
+                "preferred": dict(sorted(preferred_image_cases.items())),
+                "acceptable": dict(sorted(acceptable_image_cases.items())),
+            },
         },
         "perturbation_coverage": perturbations,
     }
@@ -1372,16 +1410,16 @@ def _text_sha256(value: str) -> str:
 def _imbalance_findings(
     counter: Counter[str],
     *,
+    denominator: int,
     threshold: float,
     code: str,
     noun: str,
 ) -> list[ReviewFinding]:
-    total = sum(counter.values())
-    if not total:
+    if denominator <= 0:
         return []
     findings: list[ReviewFinding] = []
     for identifier, count in sorted(counter.items()):
-        share = count / total
+        share = count / denominator
         if share > threshold:
             findings.append(
                 ReviewFinding(
@@ -1389,7 +1427,9 @@ def _imbalance_findings(
                     code=code,
                     message=(
                         f"Preferred {noun} {identifier!r} has share {share:.3f}, "
-                        f"above configured maximum {threshold:.3f}."
+                        f"above configured maximum {threshold:.3f}, among "
+                        f"the {denominator} workload family/families with a "
+                        f"preferred {noun} label."
                     ),
                 )
             )
@@ -1404,6 +1444,8 @@ def review_gold_dataset(value: GoldDataset | LoadedGoldDataset) -> ReviewReport:
     strata: Counter[str] = Counter(family.workload_stratum for family in dataset.families)
     preferred_profiles: Counter[str] = Counter()
     preferred_images: Counter[str] = Counter()
+    preferred_profile_family_count = 0
+    preferred_image_family_count = 0
     variants: list[tuple[WorkloadFamily, Variant]] = []
     for family in dataset.families:
         if family.difficulty == "unassessed":
@@ -1456,8 +1498,12 @@ def review_gold_dataset(value: GoldDataset | LoadedGoldDataset) -> ReviewReport:
                 )
         for profile_id in family.profile_gold["preferred_profile_ids"]:
             preferred_profiles[str(profile_id)] += 1
+        if family.profile_gold["preferred_profile_ids"]:
+            preferred_profile_family_count += 1
         for image_id in family.image_gold["preferred_image_ids"]:
             preferred_images[str(image_id)] += 1
+        if family.image_gold["preferred_image_ids"]:
+            preferred_image_family_count += 1
         for variant in family.variants:
             variants.append((family, variant))
             if variant.equivalence_status == "pending_review":
@@ -1500,6 +1546,7 @@ def review_gold_dataset(value: GoldDataset | LoadedGoldDataset) -> ReviewReport:
     findings.extend(
         _imbalance_findings(
             preferred_profiles,
+            denominator=preferred_profile_family_count,
             threshold=float(dataset.review_policy["max_preferred_profile_share"]),
             code="unbalanced_preferred_profile",
             noun="profile",
@@ -1508,6 +1555,7 @@ def review_gold_dataset(value: GoldDataset | LoadedGoldDataset) -> ReviewReport:
     findings.extend(
         _imbalance_findings(
             preferred_images,
+            denominator=preferred_image_family_count,
             threshold=float(dataset.review_policy["max_preferred_image_share"]),
             code="unbalanced_preferred_image",
             noun="image",
@@ -1516,12 +1564,21 @@ def review_gold_dataset(value: GoldDataset | LoadedGoldDataset) -> ReviewReport:
 
     for left_index, (left_family, left_variant) in enumerate(variants):
         for right_family, right_variant in variants[left_index + 1 :]:
+            same_family = left_family.family_id == right_family.family_id
             if left_variant.intent == right_variant.intent:
                 findings.append(
                     ReviewFinding(
                         "advisory",
-                        "identical_variant",
-                        "Two variants contain identical text.",
+                        (
+                            "duplicate_variant_within_family"
+                            if same_family
+                            else "duplicate_variant_across_families"
+                        ),
+                        (
+                            "Two variants in one family contain identical text."
+                            if same_family
+                            else "Variants in different families contain identical text."
+                        ),
                         family_ids=tuple(
                             sorted({left_family.family_id, right_family.family_id})
                         ),
@@ -1538,8 +1595,18 @@ def review_gold_dataset(value: GoldDataset | LoadedGoldDataset) -> ReviewReport:
                 findings.append(
                     ReviewFinding(
                         "advisory",
-                        "normalized_identical_variant",
-                        "Two variants are identical after review normalization.",
+                        (
+                            "normalized_duplicate_variant_within_family"
+                            if same_family
+                            else "normalized_duplicate_variant_across_families"
+                        ),
+                        (
+                            "Two variants in one family are identical after "
+                            "review normalization."
+                            if same_family
+                            else "Variants in different families are identical "
+                            "after review normalization."
+                        ),
                         family_ids=tuple(
                             sorted({left_family.family_id, right_family.family_id})
                         ),
@@ -2057,7 +2124,13 @@ def compile_gold_dataset(
 ):
     """Compile approved human-authored families into a v2 flat split bundle."""
 
-    dataset = _dataset(value)
+    # GoldDataset is frozen only at the dataclass boundary; its nested mappings
+    # can still be mutated by a caller after initial validation. Revalidate the
+    # complete normalized document against the live administrator corpus at
+    # the compile boundary so stale or tampered labels cannot bypass gating.
+    dataset = validate_gold_dataset(
+        _dataset(value).to_dict(), workload_manifests=workload_manifests
+    )
     if dataset.dataset_metadata["lifecycle"] != "frozen":
         raise GoldDatasetReviewError("compilation requires a manually frozen dataset")
     report = review_gold_dataset(dataset)
@@ -2234,10 +2307,12 @@ def _render_markdown_summary(summary: Mapping[str, Any]) -> str:
         "",
     ]
     for heading, field in (
-        ("Languages", "language_counts"),
+        ("Languages (cases)", "language_counts"),
+        ("Languages (families)", "language_family_counts"),
         ("Difficulty", "difficulty_distribution"),
         ("Feasibility", "feasibility_distribution"),
-        ("Capabilities", "capability_coverage"),
+        ("Capabilities (families)", "capability_coverage"),
+        ("Capabilities (cases)", "capability_case_coverage"),
     ):
         lines.extend([f"## {heading}", ""])
         values = summary[field]
@@ -2258,11 +2333,17 @@ def _render_markdown_summary(summary: Mapping[str, Any]) -> str:
         ("Image coverage", "image_coverage"),
     ):
         lines.extend([f"## {heading}", ""])
+        lines.append(
+            f"Primary denominator: {summary[field]['primary_denominator']}."
+        )
+        lines.append("")
         for label in ("preferred", "acceptable"):
             values = summary[field][label]
+            case_values = summary[field]["case_counts"][label]
             if values:
                 lines.extend(
-                    f"- {label} {identifier}: {values[identifier]}"
+                    f"- {label} {identifier}: {values[identifier]} family/families, "
+                    f"{case_values[identifier]} case(s)"
                     for identifier in sorted(values)
                 )
             else:
