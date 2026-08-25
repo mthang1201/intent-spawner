@@ -125,6 +125,7 @@ class GoldSource:
     cases: tuple[GoldCase, ...]
     split: LoadedSplit | None = None
     freeze_identity: Mapping[str, Any] | None = None
+    p3_gate_identity: Mapping[str, Any] | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -308,6 +309,7 @@ def _gold_cases_from_split(
     split: LoadedSplit,
     *,
     freeze_identity: Mapping[str, Any] | None,
+    p3_gate_identity: Mapping[str, Any] | None = None,
 ) -> GoldSource:
     if split.bundle.schema_version != SPLIT_BUNDLE_SCHEMA_VERSION_V2:
         raise ComponentAnalysisError(
@@ -339,6 +341,9 @@ def _gold_cases_from_split(
         cases=cases,
         split=split,
         freeze_identity=dict(freeze_identity) if freeze_identity is not None else None,
+        p3_gate_identity=(
+            dict(p3_gate_identity) if p3_gate_identity is not None else None
+        ),
     )
 
 
@@ -370,9 +375,18 @@ def load_component_gold(
             "frozen_by": "authoritative_protocol_v5_freeze",
             "source": "confirmatory_freeze_manifest",
         }
+        gate = loaded.freeze_manifest["configuration_snapshot"]["p3_gate"]
+        p3_gate_identity = {
+            "status": gate["status"],
+            "p3_active": gate["p3_active"],
+            "snapshot_version": gate["snapshot_version"],
+            "evidence_sha256": gate["evidence_sha256"],
+            "source": "authoritative_protocol_v5_freeze",
+        }
         return _gold_cases_from_split(
             loaded.split,
             freeze_identity=freeze_identity,
+            p3_gate_identity=p3_gate_identity,
         )
     if freeze_path is not None:
         raise ComponentAnalysisError("development scoring prohibits --freeze")

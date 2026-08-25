@@ -15,6 +15,13 @@ available. The statistical harness treats workload family as the independent
 unit and never promotes variants or repeated model calls into additional
 accuracy samples.
 
+P3 records, if later present, do not by themselves authorize P2-versus-P3
+inference. Ordinary paired P3 inference requires the authoritative frozen gate
+to say `retained`; `not_retained` P3 remains descriptive only. Because the
+implemented P3 reranker inherits the internal P2 retrieval result, the
+statistical package labels that retrieval provenance as shared and never tests
+P2 against P3 on retrieval endpoints.
+
 Future runs use this immutable convention:
 
 ```text

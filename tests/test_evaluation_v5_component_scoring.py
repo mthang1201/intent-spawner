@@ -5,8 +5,11 @@ from dataclasses import replace
 import json
 from pathlib import Path
 import shutil
+from types import SimpleNamespace
 
 import pytest
+
+import evaluation_v5.analysis.component_scoring as component_scoring_module
 
 from evaluation_v5.analysis.component_scoring import (
     COMPONENT_ANALYSIS_SCHEMA_VERSION,
@@ -1169,6 +1172,7 @@ def test_validated_evidence_loader_retains_requested_or_all_systems(
     )
     assert {record["system_id"] for record in p1_records} == {"P1"}
 
+
     with pytest.raises(ComponentAnalysisError, match="missing requested system"):
         load_validated_evidence(evidence_dir, gold, systems=("P3",))
 
@@ -1199,3 +1203,52 @@ def test_validated_evidence_loader_retains_requested_or_all_systems(
         "raw_completion_verified_before_external_gold_load"
     ] is True
     assert validate_statistical_package(statistical_output)["status"] == "PASS"
+
+
+def test_confirmatory_gold_carries_frozen_p3_gate_identity(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    document = _compiled_v2_document()
+    bundle = compile_gold_dataset(validate_gold_dataset(document))
+    compiled = tmp_path / "synthetic-confirmatory.json"
+    write_document_exclusive(compiled, bundle.to_dict())
+    split = _read_split_bundle(
+        compiled,
+        expected_role=SplitRole.DEVELOPMENT,
+        expected_split_id="v5-development",
+    )
+    freeze = tmp_path / "synthetic-freeze.json"
+    freeze.write_text("{}\n", encoding="utf-8")
+    fake_load = SimpleNamespace(
+        split=split,
+        freeze_manifest={
+            "freeze_id": "synthetic-freeze",
+            "created_at_utc": "2026-08-24T00:00:00Z",
+            "configuration_snapshot": {
+                "p3_gate": {
+                    "status": "not_retained",
+                    "p3_active": False,
+                    "snapshot_version": "protocol-v5-p3-gate-snapshot-v1",
+                    "evidence_sha256": "a" * 64,
+                }
+            },
+        },
+    )
+    monkeypatch.setattr(
+        component_scoring_module,
+        "load_confirmatory_split",
+        lambda *args, **kwargs: fake_load,
+    )
+    gold = load_component_gold(
+        compiled,
+        role="confirmatory",
+        freeze_path=freeze,
+        split_id="synthetic-confirmatory",
+    )
+    assert gold.p3_gate_identity == {
+        "status": "not_retained",
+        "p3_active": False,
+        "snapshot_version": "protocol-v5-p3-gate-snapshot-v1",
+        "evidence_sha256": "a" * 64,
+        "source": "authoritative_protocol_v5_freeze",
+    }

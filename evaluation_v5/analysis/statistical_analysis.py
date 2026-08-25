@@ -107,6 +107,11 @@ _VARIANT_STRATUM_MAP = {
 
 DEFAULT_RETRIEVAL_KS = (1, 3, 5)
 ALPHA = 0.05
+HOLM_REGISTRY_VERSION = "protocol-v5-holm-registry-v1.0.0"
+P3_RETAINED = "retained"
+P3_NOT_RETAINED = "not_retained"
+P3_GATE_STATUSES = frozenset({P3_RETAINED, P3_NOT_RETAINED})
+LATENCY_POPULATION = "all_validated_recommendation_attempts_with_recorded_duration"
 
 
 class StatisticalAnalysisError(RuntimeError):
@@ -120,6 +125,9 @@ class StatisticalAnalysisResult:
     paired_comparisons: tuple[Mapping[str, Any], ...]
     stratified_estimates: tuple[Mapping[str, Any], ...]
     seed_registry: Mapping[str, int]
+    metric_registry: Mapping[str, Mapping[str, Any]]
+    holm_registry: Mapping[str, Any]
+    p3_inference: Mapping[str, Any]
 
 
 @dataclass(frozen=True, slots=True)
@@ -127,6 +135,9 @@ class EndpointDefinition:
     key: str
     direction: str
     domain: str
+    unit: str
+    higher_is_better: bool
+    null_value: float = 0.0
     retrieval_only: bool = False
     diagnostic: bool = False
 
@@ -136,30 +147,48 @@ def _retrieval_endpoint_definitions(ks: Sequence[int]) -> tuple[EndpointDefiniti
     for k in ks:
         values.extend(
             (
-                EndpointDefinition(f"retrieval_hit_at_{k}", "higher_is_better", "retrieval", retrieval_only=True),
-                EndpointDefinition(f"retrieval_recall_at_{k}", "higher_is_better", "retrieval", retrieval_only=True),
-                EndpointDefinition(f"retrieval_ndcg_at_{k}", "higher_is_better", "retrieval", retrieval_only=True),
+                EndpointDefinition(f"retrieval_hit_at_{k}", "higher_is_better", "retrieval", "proportion", True, retrieval_only=True),
+                EndpointDefinition(f"retrieval_recall_at_{k}", "higher_is_better", "retrieval", "proportion", True, retrieval_only=True),
+                EndpointDefinition(f"retrieval_ndcg_at_{k}", "higher_is_better", "retrieval", "unit_interval_score", True, retrieval_only=True),
             )
         )
     values.append(
-        EndpointDefinition("retrieval_mrr", "higher_is_better", "retrieval", retrieval_only=True)
+        EndpointDefinition("retrieval_mrr", "higher_is_better", "retrieval", "unit_interval_score", True, retrieval_only=True)
     )
     return tuple(values)
 
 
 def _endpoint_definitions(ks: Sequence[int]) -> tuple[EndpointDefinition, ...]:
     return (
-        EndpointDefinition("joint_accept_at_1", "higher_is_better", "primary"),
-        EndpointDefinition("profile_acceptable_accuracy", "higher_is_better", "quality_safety"),
-        EndpointDefinition("image_acceptable_accuracy", "higher_is_better", "quality_safety"),
-        EndpointDefinition("hard_constraint_violation_rate", "lower_is_better", "quality_safety"),
-        EndpointDefinition("robustness_rate", "higher_is_better", "robustness"),
+        EndpointDefinition("joint_accept_at_1", "higher_is_better", "primary", "proportion", True),
+        EndpointDefinition("profile_acceptable_accuracy", "higher_is_better", "quality_safety", "proportion", True),
+        EndpointDefinition("image_acceptable_accuracy", "higher_is_better", "quality_safety", "proportion", True),
+        EndpointDefinition("hard_constraint_violation_rate", "lower_is_better", "quality_safety", "proportion", False),
+        EndpointDefinition("robustness_rate", "higher_is_better", "robustness", "proportion", True),
         *_retrieval_endpoint_definitions(ks),
-        EndpointDefinition("latency_seconds", "lower_is_better", "latency"),
-        EndpointDefinition("selection_coverage", "higher_is_better", "diagnostic", diagnostic=True),
-        EndpointDefinition("infeasible_detection_accuracy", "higher_is_better", "diagnostic", diagnostic=True),
-        EndpointDefinition("ambiguity_detection_accuracy", "higher_is_better", "diagnostic", diagnostic=True),
+        EndpointDefinition("latency_seconds", "lower_is_better", "latency", "seconds", False),
+        EndpointDefinition("selection_coverage", "higher_is_better", "diagnostic", "proportion", True, diagnostic=True),
+        EndpointDefinition("infeasible_detection_accuracy", "higher_is_better", "diagnostic", "proportion", True, diagnostic=True),
+        EndpointDefinition("ambiguity_detection_accuracy", "higher_is_better", "diagnostic", "proportion", True, diagnostic=True),
     )
+
+
+def _metric_fields(endpoint: EndpointDefinition) -> dict[str, Any]:
+    return {
+        "metric": endpoint.key,
+        "effect_definition": "second_system_minus_first_system",
+        "direction": endpoint.direction,
+        "unit": endpoint.unit,
+        "higher_is_better": endpoint.higher_is_better,
+        "null_value": endpoint.null_value,
+        "holm_domain": endpoint.domain,
+    }
+
+
+def _metric_registry(
+    endpoints: Sequence[EndpointDefinition],
+) -> dict[str, dict[str, Any]]:
+    return {endpoint.key: _metric_fields(endpoint) for endpoint in endpoints}
 
 
 def _safe_mean(values: Sequence[float | int | bool | None]) -> float | None:
@@ -383,6 +412,19 @@ def _score_execution(
     )
     if latency is not None:
         latency = float(latency)
+    fallback = record.get("fallback")
+    fallback_used = bool(
+        fallback.get("used", False)
+        if isinstance(fallback, Mapping)
+        else metric_inputs.get("fallback_used", False)
+        if isinstance(metric_inputs, Mapping)
+        else record.get("fallback_used", False)
+    )
+    if isinstance(latency_components, Mapping):
+        timed_out = bool(latency_components.get("timed_out", False))
+    else:
+        timed_out = False
+    execution_status = str(record.get("status"))
 
     variant_class = str(variant_metadata["variant_class"])
     equivalence_status = str(variant_metadata["equivalence_status"])
@@ -406,6 +448,17 @@ def _score_execution(
         "infeasible_detection_accuracy": no_feasible if expected_feasibility == "infeasible" else None,
         "ambiguity_detection_accuracy": predicted_ambiguity if expected_feasibility == "ambiguous" else None,
         "latency_seconds": latency,
+        "latency_population": LATENCY_POPULATION,
+        "latency_observation_status": (
+            "RECORDED" if latency is not None else "MISSING"
+        ),
+        "execution_outcome": (
+            "timeout"
+            if timed_out
+            else "fallback"
+            if fallback_used
+            else execution_status
+        ),
         **retrieval,
     }
 
@@ -448,6 +501,15 @@ def _aggregate_variant_rows(
                 "execution_latency_distribution": _distribution(
                     [row.get("latency_seconds") for row in rows]
                 ),
+                "latency_population": LATENCY_POPULATION,
+                "latency_outcome_counts": {
+                    outcome: sum(
+                        row.get("execution_outcome") == outcome for row in rows
+                    )
+                    for outcome in sorted(
+                        {str(row.get("execution_outcome")) for row in rows}
+                    )
+                },
                 "execution_value_distributions": {
                     endpoint.key: _distribution(
                         [row.get(endpoint.key) for row in rows]
@@ -527,6 +589,21 @@ def _aggregate_family_rows(
                 "endpoint_directions": {
                     endpoint.key: endpoint.direction for endpoint in endpoints
                 },
+                "metric_registry": {
+                    endpoint.key: _metric_fields(endpoint) for endpoint in endpoints
+                },
+                "endpoint_provenance": {
+                    endpoint.key: (
+                        "INHERITED_FROM_P2_INTERNAL_PIPELINE"
+                        if endpoint.retrieval_only and system == "P3"
+                        else "NATIVE_P2_RETRIEVAL"
+                        if endpoint.retrieval_only and system == "P2"
+                        else "NOT_APPLICABLE"
+                        if endpoint.retrieval_only
+                        else "DIRECTLY_DERIVED"
+                    )
+                    for endpoint in endpoints
+                },
                 "endpoint_variant_denominators": denominators,
                 "endpoint_variant_sums": sums,
                 "latency_execution_distribution": _distribution(
@@ -536,6 +613,20 @@ def _aggregate_family_rows(
                         for value in row["execution_latency_values"]
                     ]
                 ),
+                "latency_population": LATENCY_POPULATION,
+                "latency_outcome_counts": {
+                    outcome: sum(
+                        int(row["latency_outcome_counts"].get(outcome, 0))
+                        for row in rows
+                    )
+                    for outcome in sorted(
+                        {
+                            outcome
+                            for row in rows
+                            for outcome in row["latency_outcome_counts"]
+                        }
+                    )
+                },
                 "execution_stability_by_variant": {
                     str(row["variant_id"]): {
                         "repeat_count": int(row["repeat_count"]),
@@ -588,7 +679,7 @@ def _not_available_system_estimate(
         "system_id": system,
         "endpoint": endpoint.key,
         "domain": endpoint.domain,
-        "direction": endpoint.direction,
+        **_metric_fields(endpoint),
         "applicability": applicability,
         "estimate": None,
         "ci_level": DEFAULT_CI_LEVEL,
@@ -603,6 +694,16 @@ def _not_available_system_estimate(
         "bootstrap_seed_namespace": None,
         "warning_codes": list(warning_codes),
         "aggregation_unit": "workload_family",
+        "retrieval_provenance": (
+            "INHERITED_FROM_P2_INTERNAL_PIPELINE"
+            if endpoint.retrieval_only and system == "P3"
+            else "NOT_APPLICABLE"
+            if endpoint.retrieval_only
+            else None
+        ),
+        "population_definition": (
+            LATENCY_POPULATION if endpoint.key == "latency_seconds" else None
+        ),
     }
 
 
@@ -652,7 +753,7 @@ def _system_estimate(
         "system_id": system,
         "endpoint": endpoint.key,
         "domain": endpoint.domain,
-        "direction": endpoint.direction,
+        **_metric_fields(endpoint),
         "applicability": "AVAILABLE",
         "estimate": _safe_mean(values),
         "ci_level": DEFAULT_CI_LEVEL,
@@ -676,6 +777,33 @@ def _system_estimate(
         "bootstrap_seed_namespace": namespace,
         "warning_codes": warnings,
         "aggregation_unit": "workload_family",
+        "retrieval_provenance": (
+            "INHERITED_FROM_P2_INTERNAL_PIPELINE"
+            if endpoint.retrieval_only and system == "P3"
+            else "NATIVE_P2_RETRIEVAL"
+            if endpoint.retrieval_only and system == "P2"
+            else None
+        ),
+        "population_definition": (
+            LATENCY_POPULATION if endpoint.key == "latency_seconds" else None
+        ),
+        "execution_outcome_counts": (
+            {
+                outcome: sum(
+                    int(row["latency_outcome_counts"].get(outcome, 0))
+                    for row in selected
+                )
+                for outcome in sorted(
+                    {
+                        outcome
+                        for row in selected
+                        for outcome in row["latency_outcome_counts"]
+                    }
+                )
+            }
+            if endpoint.key == "latency_seconds"
+            else None
+        ),
     }
 
 
@@ -715,6 +843,136 @@ def _pair_rows(
     return paired
 
 
+def _p3_inference_policy(gold: GoldSource, systems: Sequence[str]) -> dict[str, Any]:
+    if "P3" not in systems:
+        return {
+            "evidence_present": False,
+            "gate_status": "not_applicable",
+            "inference_permitted": False,
+            "source": None,
+            "reason_code": "P3_EVIDENCE_ABSENT",
+        }
+    identity = gold.p3_gate_identity
+    status = identity.get("status") if isinstance(identity, Mapping) else None
+    if status not in P3_GATE_STATUSES:
+        return {
+            "evidence_present": True,
+            "gate_status": "not_available",
+            "inference_permitted": False,
+            "source": None,
+            "reason_code": "P3_FROZEN_GATE_NOT_AVAILABLE",
+        }
+    return {
+        "evidence_present": True,
+        "gate_status": status,
+        "inference_permitted": status == P3_RETAINED,
+        "source": dict(identity),
+        "reason_code": (
+            "P3_RETAINED_FOR_INFERENCE"
+            if status == P3_RETAINED
+            else "P3_NOT_RETAINED_FOR_INFERENCE"
+        ),
+    }
+
+
+def _noninferential_comparison(
+    family_rows: Sequence[Mapping[str, Any]],
+    endpoint: EndpointDefinition,
+    *,
+    first: str,
+    second: str,
+    applicability: str,
+    reason_code: str,
+    extra_warnings: Sequence[str] = (),
+) -> dict[str, Any]:
+    paired = _pair_rows(
+        family_rows,
+        first=first,
+        second=second,
+        endpoint=endpoint.key,
+    )
+    family_n = len(paired)
+    planned_family = (
+        None
+        if endpoint.domain in {"primary", "diagnostic"}
+        or applicability == "NOT_RETAINED"
+        else f"{second}_minus_{first}:{endpoint.domain}"
+    )
+    return {
+        "schema_version": PAIRED_COMPARISON_SCHEMA_VERSION,
+        "comparison_id": f"{second}_minus_{first}",
+        "first_system": first,
+        "second_system": second,
+        "endpoint": endpoint.key,
+        "domain": endpoint.domain,
+        **_metric_fields(endpoint),
+        "applicability": applicability,
+        "unavailability_reason": reason_code,
+        "hypothesis_status": f"UNTESTED_{applicability}",
+        "family_count": family_n,
+        "effective_family_n": family_n,
+        "variant_count": sum(
+            row["first_variant_denominator"] + row["second_variant_denominator"]
+            for row in paired
+        ),
+        "execution_count": sum(
+            row["first_execution_count"] + row["second_execution_count"]
+            for row in paired
+        ),
+        "first_variant_count": sum(
+            row["first_variant_denominator"] for row in paired
+        ),
+        "second_variant_count": sum(
+            row["second_variant_denominator"] for row in paired
+        ),
+        "first_execution_count": sum(
+            row["first_execution_count"] for row in paired
+        ),
+        "second_execution_count": sum(
+            row["second_execution_count"] for row in paired
+        ),
+        "test_method": None,
+        "test_details": {"reason_code": reason_code},
+        "p_value_raw": None,
+        "p_value_holm": None,
+        "planned_multiplicity_family": planned_family,
+        "multiplicity_family": None,
+        "multiplicity_method": "NONE_UNTESTED",
+        "holm_hypotheses_tested": 0,
+        "alpha": ALPHA,
+        "effect_direction": "second_minus_first",
+        "effect_label": f"{second}_minus_{first}",
+        "positive_effect_favors": (
+            second if endpoint.higher_is_better else first
+        ),
+        "effect_sizes": None,
+        "effect_ci_low": None,
+        "effect_ci_high": None,
+        "effect_ci_level": DEFAULT_CI_LEVEL,
+        "effect_ci_method": None,
+        "ci_method": None,
+        "bootstrap_seed": None,
+        "bootstrap_seed_namespace": None,
+        "statistical_decision": "NOT_COMPUTABLE",
+        "warning_codes": [
+            *family_n_warnings(family_n),
+            reason_code,
+            *extra_warnings,
+        ],
+        "aggregation_unit": "paired_workload_family",
+        "retrieval_provenance": (
+            "INHERITED_FROM_P2_INTERNAL_PIPELINE"
+            if endpoint.retrieval_only and second == "P3"
+            else "P1_HAS_NO_RETRIEVAL_STAGE"
+            if endpoint.retrieval_only and first == "P1"
+            else None
+        ),
+        "population_definition": (
+            LATENCY_POPULATION if endpoint.key == "latency_seconds" else None
+        ),
+    }
+
+
 def _paired_comparison(
     family_rows: Sequence[Mapping[str, Any]],
     endpoint: EndpointDefinition,
@@ -732,8 +990,12 @@ def _paired_comparison(
         endpoint=endpoint.key,
     )
     namespace = f"comparison|{second}_minus_{first}|{endpoint.key}|overall"
-    seed = _seed_for(seed_registry, base_seed=base_seed, namespace=namespace)
     family_n = len(paired)
+    seed = (
+        _seed_for(seed_registry, base_seed=base_seed, namespace=namespace)
+        if family_n >= 2
+        else None
+    )
     warnings = family_n_warnings(family_n)
     binary_outcome = bool(
         paired
@@ -793,6 +1055,23 @@ def _paired_comparison(
             replicates=replicates,
             seed=seed,
         )
+    hypothesis_tested = test.get("p_value_raw") is not None
+    unavailability_reason = (
+        None
+        if hypothesis_tested
+        else "NO_COMMON_ELIGIBLE_FAMILIES"
+        if family_n == 0
+        else "INSUFFICIENT_EFFECTIVE_FAMILY_N"
+        if family_n < 2
+        else "TEST_NOT_COMPUTABLE"
+    )
+    if unavailability_reason is not None and unavailability_reason not in warnings:
+        warnings.append(unavailability_reason)
+    planned_family = (
+        None
+        if endpoint.domain in {"primary", "diagnostic"}
+        else f"{second}_minus_{first}:{endpoint.domain}"
+    )
     return {
         "schema_version": PAIRED_COMPARISON_SCHEMA_VERSION,
         "comparison_id": f"{second}_minus_{first}",
@@ -800,8 +1079,12 @@ def _paired_comparison(
         "second_system": second,
         "endpoint": endpoint.key,
         "domain": endpoint.domain,
-        "direction": endpoint.direction,
+        **_metric_fields(endpoint),
         "applicability": "AVAILABLE" if paired else "NOT_AVAILABLE",
+        "unavailability_reason": unavailability_reason,
+        "hypothesis_status": (
+            "TESTED" if hypothesis_tested else "UNTESTED_NOT_COMPUTABLE"
+        ),
         "family_count": family_n,
         "effective_family_n": family_n,
         "variant_count": sum(
@@ -832,17 +1115,24 @@ def _paired_comparison(
         },
         "p_value_raw": test.get("p_value_raw"),
         "p_value_holm": None,
+        "planned_multiplicity_family": planned_family,
         "multiplicity_family": (
-            None if endpoint.domain in {"primary", "diagnostic"}
-            else f"{second}_minus_{first}:{endpoint.domain}"
+            planned_family if hypothesis_tested else None
         ),
         "multiplicity_method": (
-            "NONE_PRIMARY" if endpoint.domain == "primary" else "HOLM"
+            "NONE_PRIMARY"
+            if endpoint.domain == "primary"
+            else "HOLM"
+            if hypothesis_tested
+            else "NONE_UNTESTED"
         ),
         "holm_hypotheses_tested": 0,
         "alpha": ALPHA,
         "effect_direction": "second_minus_first",
         "effect_label": f"{second}_minus_{first}",
+        "positive_effect_favors": (
+            second if endpoint.higher_is_better else first
+        ),
         "effect_sizes": effects,
         "effect_ci_low": ci_low,
         "effect_ci_high": ci_high,
@@ -858,7 +1148,7 @@ def _paired_comparison(
             else None
         ),
         "bootstrap_seed": seed,
-        "bootstrap_seed_namespace": namespace,
+        "bootstrap_seed_namespace": namespace if seed is not None else None,
         "statistical_decision": statistical_decision(
             test.get("p_value_raw"),
             family_n,
@@ -866,6 +1156,14 @@ def _paired_comparison(
         ),
         "warning_codes": warnings,
         "aggregation_unit": "paired_workload_family",
+        "retrieval_provenance": (
+            "INHERITED_FROM_P2_INTERNAL_PIPELINE"
+            if endpoint.retrieval_only and second == "P3"
+            else None
+        ),
+        "population_definition": (
+            LATENCY_POPULATION if endpoint.key == "latency_seconds" else None
+        ),
     }
 
 
@@ -873,7 +1171,11 @@ def _apply_holm(comparisons: list[dict[str, Any]]) -> None:
     grouped: dict[str, list[dict[str, Any]]] = defaultdict(list)
     for row in comparisons:
         family = row.get("multiplicity_family")
-        if family is not None and row.get("p_value_raw") is not None:
+        if row.get("hypothesis_status") == "TESTED" and row.get("domain") != "primary":
+            if family is None or row.get("p_value_raw") is None:
+                raise StatisticalAnalysisError(
+                    "tested secondary hypothesis lacks its predeclared Holm family"
+                )
             grouped[str(family)].append(row)
     for family, rows in sorted(grouped.items()):
         adjusted = holm_adjust([float(row["p_value_raw"]) for row in rows])
@@ -891,6 +1193,71 @@ def _apply_holm(comparisons: list[dict[str, Any]]) -> None:
             row["holm_hypotheses_tested"] = 0
         elif row.get("multiplicity_family") is None:
             row["holm_hypotheses_tested"] = 0
+
+
+def _holm_registry(
+    comparisons: Sequence[Mapping[str, Any]],
+) -> dict[str, Any]:
+    registry: dict[str, Any] = {
+        "registry_version": HOLM_REGISTRY_VERSION,
+        "alpha": ALPHA,
+        "membership_rule": (
+            "predeclared_by_comparison_endpoint_and_domain; activation depends "
+            "only on structural applicability and test computability, never on p-value magnitude"
+        ),
+        "comparisons_separate": True,
+        "comparison_families": {},
+        "ineligible_comparisons": {},
+    }
+    grouped: dict[tuple[str, str], list[Mapping[str, Any]]] = defaultdict(list)
+    ineligible: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    for row in comparisons:
+        domain = str(row["domain"])
+        if domain in {"primary", "diagnostic"}:
+            continue
+        if row.get("applicability") == "NOT_RETAINED":
+            ineligible[str(row["comparison_id"])].append(
+                {
+                    "endpoint": str(row["endpoint"]),
+                    "status": row.get("hypothesis_status"),
+                    "reason": row.get("unavailability_reason"),
+                }
+            )
+            continue
+        grouped[(str(row["comparison_id"]), domain)].append(row)
+    families: dict[str, Any] = {}
+    for (comparison_id, domain), rows in sorted(grouped.items()):
+        comparison = families.setdefault(comparison_id, {})
+        comparison[domain] = {
+            "planned_hypotheses": [
+                str(row["endpoint"]) for row in sorted(rows, key=lambda item: str(item["endpoint"]))
+            ],
+            "tested_hypotheses": [
+                str(row["endpoint"])
+                for row in sorted(rows, key=lambda item: str(item["endpoint"]))
+                if row.get("hypothesis_status") == "TESTED"
+            ],
+            "untested_hypotheses": [
+                {
+                    "endpoint": str(row["endpoint"]),
+                    "status": row.get("hypothesis_status"),
+                    "reason": row.get("unavailability_reason"),
+                }
+                for row in sorted(rows, key=lambda item: str(item["endpoint"]))
+                if row.get("hypothesis_status") != "TESTED"
+            ],
+        }
+    registry["comparison_families"] = families
+    registry["ineligible_comparisons"] = {
+        comparison_id: {
+            "holm_family_activated": False,
+            "untested_hypotheses": sorted(
+                rows, key=lambda item: str(item["endpoint"])
+            ),
+        }
+        for comparison_id, rows in sorted(ineligible.items())
+    }
+    return registry
 
 
 def _stratified_cell(
@@ -994,7 +1361,7 @@ def _stratified_cell(
         "system_id": system,
         "endpoint": endpoint.key,
         "domain": endpoint.domain,
-        "direction": endpoint.direction,
+        **_metric_fields(endpoint),
         "dimension": dimension,
         "value": value,
         "applicability": applicable,
@@ -1012,6 +1379,18 @@ def _stratified_cell(
         "warning_codes": warning_codes,
         "hypothesis_tested": False,
         "aggregation_unit": "workload_family_within_stratum",
+        "retrieval_provenance": (
+            "INHERITED_FROM_P2_INTERNAL_PIPELINE"
+            if endpoint.retrieval_only and system == "P3"
+            else "NATIVE_P2_RETRIEVAL"
+            if endpoint.retrieval_only and system == "P2"
+            else "NOT_APPLICABLE"
+            if endpoint.retrieval_only
+            else None
+        ),
+        "population_definition": (
+            LATENCY_POPULATION if endpoint.key == "latency_seconds" else None
+        ),
     }
 
 
@@ -1061,6 +1440,7 @@ def analyze_statistical_records(
             )
         )
     endpoints = _endpoint_definitions(ks)
+    p3_inference = _p3_inference_policy(gold, systems)
     variant_rows = _aggregate_variant_rows(execution_rows, endpoints)
     family_rows = _aggregate_family_rows(variant_rows, endpoints)
     seed_registry: dict[str, int] = {}
@@ -1082,31 +1462,69 @@ def analyze_statistical_records(
     primary_endpoints = [endpoint for endpoint in endpoints if not endpoint.diagnostic]
     for endpoint in primary_endpoints:
         if endpoint.retrieval_only:
-            continue
-        comparisons.append(
-            _paired_comparison(
-                family_rows,
-                endpoint,
-                first="P1",
-                second="P2",
-                replicates=bootstrap_replicates,
-                base_seed=bootstrap_seed,
-                seed_registry=seed_registry,
+            comparisons.append(
+                _noninferential_comparison(
+                    family_rows,
+                    endpoint,
+                    first="P1",
+                    second="P2",
+                    applicability="NOT_APPLICABLE",
+                    reason_code="P1_HAS_NO_RETRIEVAL_STAGE",
+                )
             )
-        )
-    if "P3" in systems:
-        for endpoint in primary_endpoints:
+        else:
             comparisons.append(
                 _paired_comparison(
                     family_rows,
                     endpoint,
-                    first="P2",
-                    second="P3",
+                    first="P1",
+                    second="P2",
                     replicates=bootstrap_replicates,
                     base_seed=bootstrap_seed,
                     seed_registry=seed_registry,
                 )
             )
+    if "P3" in systems:
+        for endpoint in primary_endpoints:
+            if not p3_inference["inference_permitted"]:
+                comparisons.append(
+                    _noninferential_comparison(
+                        family_rows,
+                        endpoint,
+                        first="P2",
+                        second="P3",
+                        applicability="NOT_RETAINED",
+                        reason_code=str(p3_inference["reason_code"]),
+                        extra_warnings=(
+                            ("P3_RETRIEVAL_INHERITED_FROM_P2",)
+                            if endpoint.retrieval_only
+                            else ()
+                        ),
+                    )
+                )
+            elif endpoint.retrieval_only:
+                comparisons.append(
+                    _noninferential_comparison(
+                        family_rows,
+                        endpoint,
+                        first="P2",
+                        second="P3",
+                        applicability="NOT_APPLICABLE",
+                        reason_code="P3_RETRIEVAL_INHERITED_FROM_P2",
+                    )
+                )
+            else:
+                comparisons.append(
+                    _paired_comparison(
+                        family_rows,
+                        endpoint,
+                        first="P2",
+                        second="P3",
+                        replicates=bootstrap_replicates,
+                        base_seed=bootstrap_seed,
+                        seed_registry=seed_registry,
+                    )
+                )
     _apply_holm(comparisons)
 
     workload_strata = sorted(
@@ -1154,6 +1572,9 @@ def analyze_statistical_records(
         paired_comparisons=tuple(comparisons),
         stratified_estimates=tuple(stratified),
         seed_registry=dict(sorted(seed_registry.items())),
+        metric_registry=_metric_registry(endpoints),
+        holm_registry=_holm_registry(comparisons),
+        p3_inference=p3_inference,
     )
 
 
@@ -1307,6 +1728,49 @@ def validate_statistical_package(output_dir: Path) -> dict[str, Any]:
         raise StatisticalAnalysisError(
             "statistical manifest lacks required source provenance"
         )
+    metric_registry = manifest.get("metric_registry")
+    if not isinstance(metric_registry, Mapping) or not metric_registry:
+        raise StatisticalAnalysisError("statistical manifest lacks its metric registry")
+    for endpoint, definition in metric_registry.items():
+        if (
+            not isinstance(endpoint, str)
+            or not isinstance(definition, Mapping)
+            or definition.get("metric") != endpoint
+            or definition.get("effect_definition") != "second_system_minus_first_system"
+            or definition.get("direction") not in {"higher_is_better", "lower_is_better"}
+            or not isinstance(definition.get("unit"), str)
+            or not isinstance(definition.get("higher_is_better"), bool)
+            or not isinstance(definition.get("null_value"), (int, float))
+            or not isinstance(definition.get("holm_domain"), str)
+        ):
+            raise StatisticalAnalysisError("statistical metric registry is invalid")
+    holm_registry = manifest.get("holm_registry")
+    if (
+        not isinstance(holm_registry, Mapping)
+        or holm_registry.get("registry_version") != HOLM_REGISTRY_VERSION
+        or not isinstance(holm_registry.get("comparison_families"), Mapping)
+        or not isinstance(holm_registry.get("ineligible_comparisons"), Mapping)
+    ):
+        raise StatisticalAnalysisError("statistical Holm registry is invalid")
+    p3_inference = manifest.get("p3_inference")
+    if (
+        not isinstance(p3_inference, Mapping)
+        or not isinstance(p3_inference.get("evidence_present"), bool)
+        or not isinstance(p3_inference.get("inference_permitted"), bool)
+    ):
+        raise StatisticalAnalysisError("statistical P3 inference provenance is invalid")
+    manifest_systems = manifest.get("systems")
+    if (
+        not isinstance(manifest_systems, list)
+        or ("P3" in manifest_systems) != p3_inference["evidence_present"]
+        or (
+            p3_inference["inference_permitted"]
+            and p3_inference.get("gate_status") != P3_RETAINED
+        )
+    ):
+        raise StatisticalAnalysisError(
+            "statistical P3 inference provenance disagrees with systems or gate"
+        )
     expected_files = {"analysis-manifest.json", *OUTPUT_FILES.values()}
     if files != expected_files:
         raise StatisticalAnalysisError("statistical output file registry is incomplete")
@@ -1329,6 +1793,10 @@ def validate_statistical_package(output_dir: Path) -> dict[str, Any]:
         if identity.get("row_count") != len(rows):
             raise StatisticalAnalysisError(f"statistical row count mismatch for {name}")
         parsed[name] = rows
+    if dict(holm_registry) != _holm_registry(parsed["paired_comparisons"]):
+        raise StatisticalAnalysisError(
+            "statistical Holm registry disagrees with comparison rows"
+        )
 
     bootstrap = manifest.get("bootstrap")
     if not isinstance(bootstrap, Mapping):
@@ -1375,6 +1843,63 @@ def validate_statistical_package(output_dir: Path) -> dict[str, Any]:
                 raise StatisticalAnalysisError("paired p-value lacks an effect size")
             if row.get("effect_ci_low") is None or row.get("effect_ci_high") is None:
                 raise StatisticalAnalysisError("paired p-value lacks an effect confidence interval")
+        endpoint = row.get("endpoint")
+        definition = metric_registry.get(endpoint)
+        if not isinstance(definition, Mapping) or any(
+            row.get(field) != definition.get(field)
+            for field in (
+                "metric",
+                "effect_definition",
+                "direction",
+                "unit",
+                "higher_is_better",
+                "null_value",
+                "holm_domain",
+            )
+        ):
+            raise StatisticalAnalysisError(
+                "paired comparison disagrees with the metric registry"
+            )
+        expected_favored = (
+            row.get("second_system")
+            if definition.get("higher_is_better") is True
+            else row.get("first_system")
+        )
+        if row.get("positive_effect_favors") != expected_favored:
+            raise StatisticalAnalysisError(
+                "paired comparison reverses the registered metric direction"
+            )
+        if row.get("applicability") in {"NOT_RETAINED", "NOT_APPLICABLE"} and any(
+            row.get(field) is not None
+            for field in (
+                "test_method",
+                "p_value_raw",
+                "p_value_holm",
+                "effect_sizes",
+                "effect_ci_low",
+                "effect_ci_high",
+                "bootstrap_seed",
+            )
+        ):
+            raise StatisticalAnalysisError(
+                "ineligible paired comparison exposes inferential output"
+            )
+        if (
+            row.get("comparison_id") == "P3_minus_P2"
+            and row.get("domain") == "retrieval"
+            and row.get("hypothesis_status") == "TESTED"
+        ):
+            raise StatisticalAnalysisError(
+                "P3 inherited retrieval cannot be tested against P2"
+            )
+        if (
+            row.get("comparison_id") == "P3_minus_P2"
+            and not p3_inference["inference_permitted"]
+            and row.get("hypothesis_status") == "TESTED"
+        ):
+            raise StatisticalAnalysisError(
+                "P3 comparison was tested without frozen retention permission"
+            )
         if n < DEFAULT_MINIMUM_CLAIM_FAMILIES and row.get("statistical_decision") not in {
             "WITHHELD_SMALL_N",
             "NOT_COMPUTABLE",
@@ -1477,6 +2002,7 @@ def write_analysis_package(
                 gold.split.manifest.checksum if gold.split is not None else None
             ),
             "freeze_identity": gold.freeze_identity,
+            "p3_gate_identity": gold.p3_gate_identity,
         },
         "systems": sorted({str(row["system_id"]) for row in result.family_estimates}),
         "source_systems": list(provenance.get("systems", [])),
@@ -1502,6 +2028,16 @@ def write_analysis_package(
             "accuracy_eligibility": "feasible requests only",
             "robustness_eligibility": "non-canonical reviewed_equivalent variants",
             "repeated_calls_are_accuracy_samples": False,
+            "latency_population": LATENCY_POPULATION,
+            "latency_includes": [
+                "completed_attempts",
+                "recorded_fallback_attempts",
+                "recorded_error_attempts",
+                "recorded_timeout_attempts",
+            ],
+            "latency_missing_duration_policy": (
+                "full validated packages reject missing durations; direct in-memory rows are unavailable"
+            ),
         },
         "bootstrap": {
             "method": "workload_family_percentile_bootstrap",
@@ -1520,21 +2056,9 @@ def write_analysis_package(
             "significance_withheld_below": DEFAULT_MINIMUM_CLAIM_FAMILIES,
             "stratified_hypothesis_tests": False,
         },
-        "holm_registry": {
-            "primary": ["joint_accept_at_1"],
-            "quality_safety": [
-                "profile_acceptable_accuracy",
-                "image_acceptable_accuracy",
-                "hard_constraint_violation_rate",
-            ],
-            "robustness": ["robustness_rate"],
-            "retrieval": [
-                endpoint.key
-                for endpoint in _retrieval_endpoint_definitions(retrieval_ks)
-            ],
-            "latency": ["latency_seconds"],
-            "comparisons_separate": ["P2_minus_P1", "P3_minus_P2"],
-        },
+        "metric_registry": dict(result.metric_registry),
+        "holm_registry": dict(result.holm_registry),
+        "p3_inference": dict(result.p3_inference),
         "configuration": {
             "primary_comparison": "P2_minus_P1",
             "optional_comparison": "P3_minus_P2",

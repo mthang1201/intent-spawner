@@ -9,6 +9,8 @@ from types import SimpleNamespace
 
 import pytest
 
+import evaluation_v5.analysis.statistical_analysis as statistical_analysis_module
+
 from evaluation_v5.analysis.component_scoring import GoldSource
 from evaluation_v5.analysis.statistical_analysis import (
     StatisticalAnalysisError,
@@ -117,7 +119,12 @@ def _case(
     )
 
 
-def _gold(cases, *, schema_version: str = SPLIT_BUNDLE_SCHEMA_VERSION_V2):
+def _gold(
+    cases,
+    *,
+    schema_version: str = SPLIT_BUNDLE_SCHEMA_VERSION_V2,
+    p3_gate_status: str | None = None,
+):
     split = SimpleNamespace(
         bundle=SimpleNamespace(
             schema_version=schema_version,
@@ -144,6 +151,17 @@ def _gold(cases, *, schema_version: str = SPLIT_BUNDLE_SCHEMA_VERSION_V2):
         cases=(),
         split=split,
         freeze_identity={"synthetic_fixture": True},
+        p3_gate_identity=(
+            {
+                "status": p3_gate_status,
+                "p3_active": p3_gate_status == "retained",
+                "snapshot_version": "synthetic-p3-gate-v1",
+                "evidence_sha256": "5" * 64,
+                "source": "synthetic_fixture",
+            }
+            if p3_gate_status is not None
+            else None
+        ),
     )
 
 
@@ -197,9 +215,16 @@ def _record(
     }
 
 
-def _analyze(cases, records, *, seed=20260824, replicates=80):
+def _analyze(
+    cases,
+    records,
+    *,
+    seed=20260824,
+    replicates=80,
+    p3_gate_status: str | None = None,
+):
     return analyze_statistical_records(
-        _gold(cases),
+        _gold(cases, p3_gate_status=p3_gate_status),
         records,
         bootstrap_seed=seed,
         bootstrap_replicates=replicates,
@@ -370,7 +395,7 @@ def test_record_input_order_does_not_change_estimates_or_effective_seeds():
     assert second == first
 
 
-def test_primary_comparison_and_optional_p3_are_separate():
+def test_p3_records_do_not_enable_inference_without_retained_frozen_gate():
     cases = [_case(f"family-{index}", "canonical") for index in range(3)]
     p1_p2 = [
         _record(case, system, success=(system == "P2" or index == 0))
@@ -384,6 +409,7 @@ def test_primary_comparison_and_optional_p3_are_separate():
     with_p3 = _analyze(
         cases,
         p1_p2 + [_record(case, "P3", success=True) for case in cases],
+        p3_gate_status="not_retained",
     )
     assert {row["comparison_id"] for row in with_p3.paired_comparisons} == {
         "P2_minus_P1",
@@ -392,6 +418,43 @@ def test_primary_comparison_and_optional_p3_are_separate():
     assert _comparison_row(
         with_p3, "P2_minus_P1", "joint_accept_at_1"
     )["multiplicity_family"] is None
+    blocked = _comparison_row(with_p3, "P3_minus_P2", "joint_accept_at_1")
+    assert blocked["applicability"] == "NOT_RETAINED"
+    assert blocked["hypothesis_status"] == "UNTESTED_NOT_RETAINED"
+    assert blocked["test_method"] is None
+    assert blocked["p_value_raw"] is None
+    assert blocked["p_value_holm"] is None
+    assert blocked["effect_sizes"] is None
+    assert blocked["planned_multiplicity_family"] is None
+    assert blocked["multiplicity_family"] is None
+    assert "P3_minus_P2" not in with_p3.holm_registry["comparison_families"]
+    assert with_p3.holm_registry["ineligible_comparisons"]["P3_minus_P2"][
+        "holm_family_activated"
+    ] is False
+    assert with_p3.p3_inference["inference_permitted"] is False
+    assert _system_row(with_p3, "P3", "joint_accept_at_1")["estimate"] == 1.0
+
+
+def test_retained_p3_gate_enables_nonretrieval_inference_only():
+    cases = [_case(f"retained-{index}", "canonical") for index in range(3)]
+    records = [
+        _record(case, system, success=(system != "P2"))
+        for case in cases
+        for system in ("P1", "P2", "P3")
+    ]
+    result = _analyze(cases, records, p3_gate_status="retained")
+    quality = _comparison_row(result, "P3_minus_P2", "joint_accept_at_1")
+    assert quality["applicability"] == "AVAILABLE"
+    assert quality["hypothesis_status"] == "TESTED"
+    assert quality["p_value_raw"] is not None
+    retrieval = _comparison_row(result, "P3_minus_P2", "retrieval_hit_at_1")
+    assert retrieval["applicability"] == "NOT_APPLICABLE"
+    assert retrieval["unavailability_reason"] == "P3_RETRIEVAL_INHERITED_FROM_P2"
+    assert retrieval["retrieval_provenance"] == "INHERITED_FROM_P2_INTERNAL_PIPELINE"
+    assert retrieval["p_value_raw"] is None
+    assert retrieval["effect_sizes"] is None
+    p3_retrieval = _system_row(result, "P3", "retrieval_hit_at_1")
+    assert p3_retrieval["retrieval_provenance"] == "INHERITED_FROM_P2_INTERNAL_PIPELINE"
 
 
 def test_fractional_family_outcome_uses_wilcoxon_without_thresholding():
@@ -409,6 +472,25 @@ def test_fractional_family_outcome_uses_wilcoxon_without_thresholding():
     comparison = _comparison_row(result, "P2_minus_P1", "joint_accept_at_1")
     assert comparison["test_method"] == "wilcoxon_signed_rank"
     assert comparison["effect_sizes"]["mean_difference"] == pytest.approx(0.5)
+    assert comparison["effect_sizes"]["risk_difference"] is None
+
+
+def test_multiple_variants_with_realized_binary_family_means_still_use_wilcoxon():
+    cases = [
+        _case(f"unanimous-{family}", variant, variant_class=("canonical_en" if variant == "c" else "paraphrase_en"))
+        for family in range(3)
+        for variant in ("c", "p")
+    ]
+    records = [
+        _record(case, system, success=system == "P2")
+        for case in cases
+        for system in ("P1", "P2")
+    ]
+    comparison = _comparison_row(
+        _analyze(cases, records), "P2_minus_P1", "joint_accept_at_1"
+    )
+    assert comparison["test_method"] == "wilcoxon_signed_rank"
+    assert comparison["test_details"]["binary_outcome"] is False
     assert comparison["effect_sizes"]["risk_difference"] is None
 
 
@@ -461,6 +543,13 @@ def test_p1_retrieval_and_absent_strata_are_not_zero_filled():
     )
     assert p1_retrieval_stratum["applicability"] == "NOT_APPLICABLE"
     assert p1_retrieval_stratum["estimate"] is None
+    robustness = _system_row(result, "P2", "robustness_rate")
+    assert robustness["applicability"] == "NOT_AVAILABLE"
+    assert robustness["estimate"] is None
+    family = next(
+        row for row in result.family_estimates if row["system_id"] == "P2"
+    )
+    assert family["values"]["robustness_rate"] is None
 
 
 def test_all_variant_and_workload_strata_receive_descriptive_rows():
@@ -518,6 +607,46 @@ def test_frozen_catalog_oracle_scores_unknown_and_violating_candidates():
     assert family_rows["P3"]["values"]["joint_accept_at_1"] == 0.0
 
 
+def test_oracle_violation_overrides_internally_inconsistent_acceptable_membership():
+    case = _case("oracle-conflict", "canonical")
+    case.gold["candidate_gold"]["acceptable_candidate_ids"].append(
+        CONSTRAINT_VIOLATING_CANDIDATE
+    )
+    records = [
+        _record(
+            case,
+            system,
+            success=False,
+            candidate_id=CONSTRAINT_VIOLATING_CANDIDATE,
+        )
+        for system in ("P1", "P2")
+    ]
+    result = _analyze([case], records)
+    for row in result.family_estimates:
+        assert row["values"]["hard_constraint_violation_rate"] == 1.0
+        assert row["values"]["joint_accept_at_1"] == 0.0
+
+
+def test_latency_population_includes_recorded_error_fallback_and_timeout_attempts():
+    cases = [_case("latency", "canonical")]
+    p1 = _record(cases[0], "P1", latency=1.0)
+    p2_error = _record(cases[0], "P2", status="error", candidate_id=None, latency=2.0)
+    p2_error["fallback"] = {"used": True, "category": "provider_failure"}
+    p2_timeout = _record(
+        cases[0], "P2", repeat_index=1, status="error", candidate_id=None, latency=4.0
+    )
+    p2_timeout["latency_components"]["timed_out"] = True
+    result = _analyze(cases, [p1, p2_error, p2_timeout])
+    row = _system_row(result, "P2", "latency_seconds")
+    assert row["estimate"] == 3.0
+    assert row["effective_family_n"] == 1
+    assert row["execution_count"] == 2
+    assert row["population_definition"] == (
+        "all_validated_recommendation_attempts_with_recorded_duration"
+    )
+    assert row["execution_outcome_counts"] == {"fallback": 1, "timeout": 1}
+
+
 def test_small_family_n_boundaries_warn_and_withhold_claims():
     assert family_n_warnings(1) == [
         INSUFFICIENT_EFFECTIVE_FAMILY_N,
@@ -526,6 +655,8 @@ def test_small_family_n_boundaries_warn_and_withhold_claims():
     assert family_n_warnings(19) == [SMALL_EFFECTIVE_FAMILY_N]
     assert family_n_warnings(20) == []
     assert inference_eligibility(1)["ci_eligible"] is False
+    assert inference_eligibility(2)["ci_eligible"] is True
+    assert inference_eligibility(2)["inference_status"] == WITHHELD_SMALL_N
     assert inference_eligibility(9)["inference_status"] == WITHHELD_SMALL_N
     assert inference_eligibility(10)["inference_status"] == ELIGIBLE
     assert statistical_decision(0.001, 9) == WITHHELD_SMALL_N
@@ -533,6 +664,47 @@ def test_small_family_n_boundaries_warn_and_withhold_claims():
     assert family_bootstrap_ci(
         [{"family_id": "only", "value": 1.0}], "value", replicates=10
     ) == (None, None)
+
+
+def test_metric_direction_and_frozen_holm_registry_are_machine_readable():
+    cases = [_case(f"registry-{index}", "canonical") for index in range(3)]
+    records = [
+        _record(case, system, success=system != "P1")
+        for case in cases
+        for system in ("P1", "P2", "P3")
+    ]
+    result = _analyze(cases, records, p3_gate_status="retained")
+    violation = _comparison_row(
+        result, "P3_minus_P2", "hard_constraint_violation_rate"
+    )
+    latency = _comparison_row(result, "P3_minus_P2", "latency_seconds")
+    assert violation["higher_is_better"] is False
+    assert violation["positive_effect_favors"] == "P2"
+    assert latency["unit"] == "seconds"
+    assert latency["positive_effect_favors"] == "P2"
+    retrieval_family = result.holm_registry["comparison_families"]["P3_minus_P2"]["retrieval"]
+    assert "retrieval_hit_at_1" in retrieval_family["planned_hypotheses"]
+    assert "retrieval_hit_at_1" not in retrieval_family["tested_hypotheses"]
+    assert any(
+        row["endpoint"] == "retrieval_hit_at_1"
+        and row["reason"] == "P3_RETRIEVAL_INHERITED_FROM_P2"
+        for row in retrieval_family["untested_hypotheses"]
+    )
+    changed_p_values = _analyze(
+        cases,
+        [_record(case, system, success=True) for case in cases for system in ("P1", "P2", "P3")],
+        p3_gate_status="retained",
+    )
+    for comparison_id in ("P2_minus_P1", "P3_minus_P2"):
+        first_registry = result.holm_registry["comparison_families"][comparison_id]
+        second_registry = changed_p_values.holm_registry["comparison_families"][comparison_id]
+        assert {
+            domain: rows["planned_hypotheses"]
+            for domain, rows in first_registry.items()
+        } == {
+            domain: rows["planned_hypotheses"]
+            for domain, rows in second_registry.items()
+        }
 
 
 def test_small_n_analyzer_keeps_effects_and_p_values_but_withholds_decision():
@@ -576,6 +748,42 @@ def test_v1_metadata_fails_closed_and_invalid_inputs_emit_not_executed(tmp_path:
     assert manifest["reason_code"] == "INPUTS_UNAVAILABLE_OR_INVALID"
     assert {path.name for path in output.iterdir()} == {"analysis-manifest.json"}
     assert validate_statistical_package(output)["analysis_status"] == "NOT_EXECUTED"
+
+
+def test_confirmatory_raw_prevalidation_failure_occurs_before_gold_loader(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    events: list[str] = []
+
+    def fail_prevalidation(_evidence_dir):
+        events.append("raw_prevalidation")
+        raise StatisticalAnalysisError("synthetic invalid raw envelope")
+
+    def forbidden_gold_loader(*args, **kwargs):
+        events.append("gold_opened")
+        raise AssertionError("sealed gold loader must not run")
+
+    monkeypatch.setattr(
+        statistical_analysis_module,
+        "_prevalidate_completed_evidence_envelope",
+        fail_prevalidation,
+    )
+    monkeypatch.setattr(
+        statistical_analysis_module,
+        "load_component_gold",
+        forbidden_gold_loader,
+    )
+    output = tmp_path / "prevalidation-order"
+    analyze_statistical_evidence(
+        tmp_path / "synthetic-invalid-raw",
+        tmp_path / "sealed-confirmatory-gold.json",
+        output,
+        role="confirmatory",
+        freeze_path=tmp_path / "freeze.json",
+    )
+    assert events == ["raw_prevalidation"]
+    manifest = json.loads((output / "analysis-manifest.json").read_text())
+    assert manifest["status"] == "NOT_EXECUTED"
 
 
 def test_package_writes_are_exclusive_and_checksum_tampering_is_detected(tmp_path: Path):
@@ -623,6 +831,17 @@ def test_package_writes_are_exclusive_and_checksum_tampering_is_detected(tmp_pat
     assert validate_statistical_package(package_dir)["analysis_status"] == (
         "DERIVED_EVIDENCE_COMPLETE"
     )
+    stratified_rows = [
+        json.loads(line)
+        for line in (package_dir / "stratified-estimates.jsonl").read_text().splitlines()
+    ]
+    assert any(
+        row["dimension"] == "variant_stratum"
+        and row["value"] == "noisy"
+        and row["applicability"] == "NOT_AVAILABLE"
+        and row["estimate"] is None
+        for row in stratified_rows
+    )
     with pytest.raises(FileExistsError):
         write_analysis_package(
             package_dir,
@@ -642,6 +861,13 @@ def test_package_writes_are_exclusive_and_checksum_tampering_is_detected(tmp_pat
     manifest["bootstrap"]["derived_seeds"][namespace] += 1
     manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
     with pytest.raises(StatisticalAnalysisError, match="derived bootstrap seed"):
+        validate_statistical_package(package_dir)
+    manifest_path.write_text(original_manifest, encoding="utf-8")
+
+    manifest = json.loads(original_manifest)
+    manifest["holm_registry"]["membership_rule"] = "tampered-after-analysis"
+    manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+    with pytest.raises(StatisticalAnalysisError, match="Holm registry disagrees"):
         validate_statistical_package(package_dir)
     manifest_path.write_text(original_manifest, encoding="utf-8")
 
