@@ -2,6 +2,19 @@
 
 No Protocol-v5 experiment has been executed in this package.
 
+The E3 B0-versus-P2 human-study protocol, deterministic assignment tooling,
+content-free instrumentation, and derived-metric harness are implemented, but
+no participant session has been collected. The checked-in task bundle is a
+development-only draft requiring independent review; simulated event streams
+exist only in tests and the temporary dry-run smoke harness. E3 therefore
+remains explicitly `NOT_EXECUTED`, and no
+accuracy, time, effort, preference, or usability claim is available.
+
+The real study-adapter interaction path is exercised only by a deterministic
+researcher/CI smoke test using synthetic actions, a generated pseudonym, fake
+clocks, and temporary `DRY_RUN` finalization. This is framework verification,
+not participant or Kubernetes evidence, and creates no tracked E3 result.
+
 The P2/P3 component-scoring and family-level statistical harnesses are
 implemented, but complete Prompt-3 gold and Prompt-5 raw evidence are not
 tracked. Their empirical status therefore remains explicitly `NOT_EXECUTED`;

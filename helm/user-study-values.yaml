@@ -1,0 +1,58 @@
+# Study-only overlay for Protocol-v5 E3 (B0 versus P2).
+#
+# Apply this after helm/proposed-values.yaml and
+# helm/recommender-p2-values.yaml.  It deliberately replaces the Hub volume
+# lists with the complete recommender + study set because Helm replaces arrays
+# rather than merging them.  It does not modify either normal deployment file.
+hub:
+  podSecurityContext:
+    fsGroup: 1000
+  extraEnv:
+    INTENT_SPAWNER_USER_STUDY_ENABLED: "true"
+    INTENT_SPAWNER_USER_STUDY_ASSIGNMENT_PATH: /etc/intent-spawner-user-study/assignment-manifest.json
+    INTENT_SPAWNER_USER_STUDY_BROWSER_TASKS_PATH: /etc/intent-spawner-user-study/browser-task-set.json
+    INTENT_SPAWNER_USER_STUDY_EVIDENCE_ROOT: /srv/user-study
+  extraVolumes:
+    - name: recommender-runtime
+      configMap:
+        name: intent-spawner-recommender
+    - name: user-study-adapter
+      configMap:
+        name: intent-spawner-user-study-adapter
+    - name: user-study-config
+      configMap:
+        name: intent-spawner-user-study-config
+    - name: user-study-evidence
+      persistentVolumeClaim:
+        claimName: intent-spawner-user-study-evidence
+  extraVolumeMounts:
+    - name: recommender-runtime
+      mountPath: /opt/intent-spawner/recommender
+      readOnly: true
+    - name: user-study-adapter
+      mountPath: /opt/intent-spawner/evaluation_v5/user_study
+      readOnly: true
+    - name: user-study-config
+      mountPath: /etc/intent-spawner-user-study
+      readOnly: true
+    - name: user-study-evidence
+      mountPath: /srv/user-study
+  extraConfig:
+    50-protocol-v5-user-study: |
+      from evaluation_v5.user_study.hub import install_user_study
+
+      if "RECOMMENDATION_RUNTIME" not in globals():
+          raise RuntimeError("study overlay requires the existing recommendation runtime")
+      globals().update(install_user_study(c, RECOMMENDATION_RUNTIME))
+
+# Both assigned conditions use this one storage and Kubernetes configuration.
+# The adapter changes only selection/recommendation interaction inside the Hub.
+singleuser:
+  storage:
+    type: dynamic
+    capacity: 1Gi
+  defaultUrl: /lab
+
+prePuller:
+  hook:
+    enabled: false

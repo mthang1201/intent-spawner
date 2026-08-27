@@ -51,7 +51,10 @@ run_check "unit and smoke tests" env PYTHONPATH=. "$PYTHON_BIN" -m pytest \
   tests/test_reprovisioning.py \
   tests/test_evaluation_v4.py \
   tests/test_evaluation_v5.py \
-  tests/test_evaluation_v5_isolation.py
+  tests/test_evaluation_v5_isolation.py \
+  tests/test_evaluation_v5_user_study.py
+run_check "study-only package validation" "$PYTHON_BIN" scripts/user_study_package.py verify
+run_check "Protocol-v5 E3 real-adapter synthetic smoke" env PYTHONPATH=. "$PYTHON_BIN" -m evaluation_v5.user_study.smoke
 run_check "preserved cluster artifact integrity" "$PYTHON_BIN" -m cluster_evaluation.validate_artifacts
 run_check "raw evidence SHA-256 integrity" "$PYTHON_BIN" -m cluster_evaluation.raw_integrity
 run_check "capacity runner dry run" "$PYTHON_BIN" -m cluster_evaluation.capacity_runner \
@@ -98,6 +101,9 @@ if command -v helm >/dev/null 2>&1; then
   run_check "v3 experiment Helm render" bash -c \
     'helm template "$1" jupyterhub --repo https://hub.jupyter.org/helm-chart/ --version "$2" --namespace "$3" --values "$4" >/tmp/intent-spawner-v3-render.yaml' \
     _ "$RELEASE" "$Z2JH_CHART_VERSION" "$NAMESPACE" "$ROOT_DIR/helm/experiment-v3-values.yaml"
+  run_check "Protocol-v5 E3 study Helm render" bash -c \
+    'helm template "$1" jupyterhub --repo https://hub.jupyter.org/helm-chart/ --version "$2" --namespace "$3" --values "$4" --values "$5" --values "$6" >/tmp/intent-spawner-user-study-render.yaml' \
+    _ "$RELEASE" "$Z2JH_CHART_VERSION" "$NAMESPACE" "$ROOT_DIR/helm/proposed-values.yaml" "$ROOT_DIR/helm/recommender-p2-values.yaml" "$ROOT_DIR/helm/user-study-values.yaml"
 else
   skip_check "Helm render validation" "helm is not installed or is not on PATH."
 fi

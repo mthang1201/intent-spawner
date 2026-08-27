@@ -67,6 +67,9 @@ recommendation or ranking. Therefore MRR, nDCG, Hit@K, recommendation
 acceptance, and similar ranking metrics are prohibited for B0. Compare
 selection correctness, time, interaction burden, corrections, completion, and
 abandonment. Do not store raw participant identifiers or fabricate sessions.
+The executable study contract, including its explicit `NOT_EXECUTED` status,
+is specified in
+[PROTOCOL_V5_USER_STUDY.md](PROTOCOL_V5_USER_STUDY.md).
 
 ### E4 — resource efficiency and dynamic resources
 

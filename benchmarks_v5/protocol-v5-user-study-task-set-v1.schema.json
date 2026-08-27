@@ -1,0 +1,115 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://intent-spawner.local/schemas/protocol-v5-user-study-task-set-v1.schema.json",
+  "title": "Protocol-v5 E3 matched user-study task set",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "task_set_id",
+    "stage",
+    "status",
+    "language",
+    "presentation_version",
+    "catalog_version",
+    "corpus_version",
+    "policy_version",
+    "pairs"
+  ],
+  "properties": {
+    "schema_version": {"const": "protocol-v5-user-study-task-set-v1.0.0"},
+    "task_set_id": {"$ref": "#/$defs/id"},
+    "stage": {"enum": ["development", "confirmatory"]},
+    "status": {"enum": ["draft", "frozen"]},
+    "language": {"const": "en"},
+    "presentation_version": {"$ref": "#/$defs/id"},
+    "catalog_version": {"$ref": "#/$defs/id"},
+    "corpus_version": {"$ref": "#/$defs/id"},
+    "policy_version": {"$ref": "#/$defs/id"},
+    "pairs": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/pair"}
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"
+    },
+    "idArray": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {"$ref": "#/$defs/id"}
+    },
+    "task": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "task_id",
+        "pair_id",
+        "variant_id",
+        "phase",
+        "language",
+        "scenario",
+        "difficulty",
+        "presentation_version"
+      ],
+      "properties": {
+        "task_id": {"$ref": "#/$defs/id"},
+        "pair_id": {"$ref": "#/$defs/id"},
+        "variant_id": {"enum": ["A", "B"]},
+        "phase": {"enum": ["warm_up", "measured"]},
+        "language": {"const": "en"},
+        "scenario": {"type": "string", "minLength": 1, "maxLength": 2000},
+        "difficulty": {"enum": ["easy", "medium", "hard"]},
+        "presentation_version": {"$ref": "#/$defs/id"}
+      }
+    },
+    "gold": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "requirements",
+        "acceptable_profile_ids",
+        "acceptable_image_ids",
+        "acceptable_candidate_ids",
+        "preferred_candidate_id",
+        "policy_constraints",
+        "difficulty",
+        "equivalence_review_status"
+      ],
+      "properties": {
+        "requirements": {"$ref": "#/$defs/idArray"},
+        "acceptable_profile_ids": {"$ref": "#/$defs/idArray"},
+        "acceptable_image_ids": {"$ref": "#/$defs/idArray"},
+        "acceptable_candidate_ids": {"$ref": "#/$defs/idArray"},
+        "preferred_candidate_id": {"$ref": "#/$defs/id"},
+        "policy_constraints": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/id"}
+        },
+        "difficulty": {"enum": ["easy", "medium", "hard"]},
+        "equivalence_review_status": {"enum": ["needs_review", "approved"]}
+      }
+    },
+    "pair": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["pair_id", "phase", "tasks", "gold"],
+      "properties": {
+        "pair_id": {"$ref": "#/$defs/id"},
+        "phase": {"enum": ["warm_up", "measured"]},
+        "tasks": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "items": {"$ref": "#/$defs/task"}
+        },
+        "gold": {"$ref": "#/$defs/gold"}
+      }
+    }
+  }
+}

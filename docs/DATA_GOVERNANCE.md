@@ -51,6 +51,22 @@ does not collect data from deployed users.
   variables, or cluster-wide metadata dumps.
 - Browser telemetry, keystroke logs, or interaction transcripts.
 
+The only narrow exception is an explicitly enabled, consent-versioned
+Protocol-v5 E3 study deployment. That deployment records the closed event
+taxonomy in `docs/evaluation/PROTOCOL_V5_USER_STUDY.md` (for example,
+`task_shown`, a coalesced content-free `intent_edit`, selection changes, and
+`confirm`). It never records key values, intent text, field lengths, DOM/event
+objects, mouse coordinates, or general browser telemetry. The study collector
+is disabled in normal deployments and writes to a separate access-controlled
+research sink.
+
+The research event API has an exact field allowlist. Attempts to add raw
+intent, names, emails, Hub usernames/authentication identities, authorization
+headers, bearer tokens, API keys, or obvious secret fields are rejected rather
+than redacted after collection. Intent text is transient input to the existing
+P2 preview path only; the study evidence retains one content-free edit-episode
+event, not the text or keystrokes.
+
 ## Raw Notebook Contents
 
 Raw notebook contents are not stored. The proposed recommender may receive
@@ -70,6 +86,15 @@ not logged. The event intentionally excludes usernames, raw intent, raw code,
 and dataset contents. Demo Hub logs are not a durable research datastore; a
 real-user study requires a controlled audit sink and an explicit retention and
 deletion schedule.
+
+Protocol-v5 E3 supplies that controlled sink only when the study-specific Helm
+overlay is installed. It binds events to issued `P-<12 hex>` pseudonyms,
+assignment and task-set checksums, and a consent version; it does not promote
+ordinary Hub logs into research evidence. The browser-safe task projection and
+the event sink are deliberately separated from researcher-only task gold.
+The fairness manifest stores hashes of public study configuration and named
+deployment identities only. It must not ingest Secret resources, credentials,
+authenticator configuration, or other secret-bearing Helm values.
 
 ## Datasets
 

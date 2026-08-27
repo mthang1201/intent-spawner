@@ -1,0 +1,154 @@
+# DEVELOPMENT DRAFT ONLY. This is not a confirmatory task set and contains no
+# participant observations. Independent equivalence/gold review is required
+# before an externally frozen confirmatory copy may be used.
+schema_version: protocol-v5-user-study-task-set-v1.0.0
+task_set_id: protocol-v5-e3-draft-v1
+stage: development
+status: draft
+language: en
+presentation_version: e3-task-presentation-v1
+catalog_version: 2026-08-06.1
+corpus_version: environment-candidate-corpus-v1
+policy_version: resource-image-policy-v1
+pairs:
+  - pair_id: warmup-framework-tutorial
+    phase: warm_up
+    tasks:
+      - task_id: warmup-framework-tutorial-a
+        pair_id: warmup-framework-tutorial
+        variant_id: A
+        phase: warm_up
+        language: en
+        scenario: >-
+          You are following a short TensorFlow tutorial with a tiny in-memory
+          example. Choose the environment that supplies TensorFlow without
+          reserving more compute than this introductory exercise needs.
+        difficulty: easy
+        presentation_version: e3-task-presentation-v1
+      - task_id: warmup-framework-tutorial-b
+        pair_id: warmup-framework-tutorial
+        variant_id: B
+        phase: warm_up
+        language: en
+        scenario: >-
+          A colleague asks you to run a small Keras learning example using only
+          toy data. Select an environment with the required framework while
+          following the policy to use the smallest adequate resource profile.
+        difficulty: easy
+        presentation_version: e3-task-presentation-v1
+    gold:
+      requirements: [tensorflow, tiny_in_memory_data]
+      acceptable_profile_ids: [small]
+      acceptable_image_ids: [tensorflow-deep-learning]
+      acceptable_candidate_ids: [small-tensorflow-deep-learning]
+      preferred_candidate_id: small-tensorflow-deep-learning
+      policy_constraints: [smallest_adequate_profile, no_gpu_device]
+      difficulty: easy
+      equivalence_review_status: needs_review
+
+  - pair_id: light-standard-python
+    phase: measured
+    tasks:
+      - task_id: light-standard-python-a
+        pair_id: light-standard-python
+        variant_id: A
+        phase: measured
+        language: en
+        scenario: >-
+          You need a notebook for a short Python exercise that reads a few
+          small JSON files and computes basic summaries using the standard
+          library. No scientific or machine-learning packages are required.
+        difficulty: easy
+        presentation_version: e3-task-presentation-v1
+      - task_id: light-standard-python-b
+        pair_id: light-standard-python
+        variant_id: B
+        phase: measured
+        language: en
+        scenario: >-
+          Prepare an environment for a lightweight Python script that checks
+          several configuration records and prints counts. The data fits in
+          memory and the work needs only ordinary Python and JupyterLab.
+        difficulty: easy
+        presentation_version: e3-task-presentation-v1
+    gold:
+      requirements: [python, jupyterlab, small_in_memory_data]
+      acceptable_profile_ids: [small]
+      acceptable_image_ids: [minimal-python]
+      acceptable_candidate_ids: [small-minimal-python]
+      preferred_candidate_id: small-minimal-python
+      policy_constraints: [smallest_adequate_profile, no_gpu_device]
+      difficulty: easy
+      equivalence_review_status: needs_review
+
+  - pair_id: moderate-tabular-analysis
+    phase: measured
+    tasks:
+      - task_id: moderate-tabular-analysis-a
+        pair_id: moderate-tabular-analysis
+        variant_id: A
+        phase: measured
+        language: en
+        scenario: >-
+          Explore and clean an approximately 0.8 GB CSV file with pandas, then
+          create several plots with Matplotlib. The table should fit in a
+          moderate notebook environment and no GPU is needed.
+        difficulty: medium
+        presentation_version: e3-task-presentation-v1
+      - task_id: moderate-tabular-analysis-b
+        pair_id: moderate-tabular-analysis
+        variant_id: B
+        phase: measured
+        language: en
+        scenario: >-
+          Investigate a collection of tabular survey exports totalling about
+          800 MB. You plan to merge them with pandas and visualize distributions
+          using common Python data-science packages, without GPU computation.
+        difficulty: medium
+        presentation_version: e3-task-presentation-v1
+    gold:
+      requirements: [pandas, visualization, dataset_approximately_0_8_gb]
+      acceptable_profile_ids: [medium]
+      acceptable_image_ids: [scipy-data-science]
+      acceptable_candidate_ids: [medium-scipy-data-science]
+      preferred_candidate_id: medium-scipy-data-science
+      policy_constraints: [smallest_adequate_profile, no_gpu_device]
+      difficulty: medium
+      equivalence_review_status: needs_review
+
+  - pair_id: large-cpu-pytorch-training
+    phase: measured
+    tasks:
+      - task_id: large-cpu-pytorch-training-a
+        pair_id: large-cpu-pytorch-training
+        variant_id: A
+        phase: measured
+        language: en
+        scenario: >-
+          Train a PyTorch neural network on CPU with a workload expected to use
+          roughly 1.3 GB of memory. The cluster has no GPU device, but the
+          notebook must include PyTorch and needs the largest available memory
+          envelope to run safely.
+        difficulty: hard
+        presentation_version: e3-task-presentation-v1
+      - task_id: large-cpu-pytorch-training-b
+        pair_id: large-cpu-pytorch-training
+        variant_id: B
+        phase: measured
+        language: en
+        scenario: >-
+          Run a CPU-only deep-learning experiment using PyTorch. Model and data
+          preparation are expected to approach 1.3 GB of memory, so choose the
+          available profile with sufficient headroom and an image containing
+          the required framework; no physical GPU is available.
+        difficulty: hard
+        presentation_version: e3-task-presentation-v1
+    gold:
+      requirements: [pytorch, cpu_only, memory_approximately_1_3_gb]
+      acceptable_profile_ids: [large]
+      acceptable_image_ids: [pytorch-deep-learning]
+      acceptable_candidate_ids: [large-pytorch-deep-learning]
+      preferred_candidate_id: large-pytorch-deep-learning
+      policy_constraints: [sufficient_memory, no_gpu_device]
+      difficulty: hard
+      equivalence_review_status: needs_review

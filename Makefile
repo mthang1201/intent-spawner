@@ -1,4 +1,4 @@
-.PHONY: check validate-cluster-results validate-raw-integrity capacity-dry-run v3-validate v3-dry-run v3-image-policy v4-validate v4-test v5-test v5-isolation-check regenerate-cluster-results
+.PHONY: check validate-cluster-results validate-raw-integrity capacity-dry-run v3-validate v3-dry-run v3-image-policy v4-validate v4-test v5-test v5-user-study-test v5-user-study-smoke v5-isolation-check regenerate-cluster-results
 
 check:
 	bash scripts/check.sh
@@ -45,7 +45,17 @@ v5-test:
 	.venv/bin/python -m pytest -q \
 		tests/test_evaluation_v5.py \
 		tests/test_evaluation_v5_isolation.py \
-		tests/test_evaluation_v5_gold_dataset.py
+		tests/test_evaluation_v5_gold_dataset.py \
+		tests/test_evaluation_v5_user_study.py
+
+v5-user-study-test:
+	PYTHONPATH=. .venv/bin/python -m pytest -q \
+		tests/test_evaluation_v5_user_study.py \
+		tests/test_config_validation.py \
+		tests/test_p2_backend_integration.py
+
+v5-user-study-smoke:
+	PYTHONPATH=. .venv/bin/python -m evaluation_v5.user_study.smoke
 
 v5-isolation-check:
 	.venv/bin/python -m evaluation_v5.isolation_audit
