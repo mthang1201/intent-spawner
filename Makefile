@@ -46,11 +46,13 @@ v5-test:
 		tests/test_evaluation_v5.py \
 		tests/test_evaluation_v5_isolation.py \
 		tests/test_evaluation_v5_gold_dataset.py \
-		tests/test_evaluation_v5_user_study.py
+		tests/test_evaluation_v5_user_study.py \
+		tests/test_evaluation_v5_user_study_analysis.py
 
 v5-user-study-test:
 	PYTHONPATH=. .venv/bin/python -m pytest -q \
 		tests/test_evaluation_v5_user_study.py \
+		tests/test_evaluation_v5_user_study_analysis.py \
 		tests/test_config_validation.py \
 		tests/test_p2_backend_integration.py
 

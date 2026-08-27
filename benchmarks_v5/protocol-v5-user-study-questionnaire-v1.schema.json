@@ -1,0 +1,151 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "protocol-v5-user-study-questionnaire-v1.schema.json",
+  "title": "Protocol-v5 E3 closed-response questionnaire record",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "instrument_version",
+    "study_id",
+    "assignment_id",
+    "session_id",
+    "participant_id",
+    "response_uuid",
+    "questionnaire_type",
+    "questionnaire_id",
+    "condition",
+    "period",
+    "trial_id",
+    "task_id",
+    "pair_id",
+    "responses",
+    "submitted_at_utc"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "protocol-v5-user-study-questionnaire-v1.0.0"
+    },
+    "instrument_version": {
+      "const": "protocol-v5-user-study-questionnaire-instrument-v1.0.0"
+    },
+    "study_id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,191}$"},
+    "assignment_id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,191}$"},
+    "session_id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,191}$"},
+    "participant_id": {"type": "string", "pattern": "^P-[0-9a-f]{12}$"},
+    "response_uuid": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+    },
+    "questionnaire_type": {
+      "enum": ["seq_task", "post_condition", "final_preference"]
+    },
+    "questionnaire_id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,191}$"},
+    "condition": {"type": ["string", "null"]},
+    "period": {"type": ["integer", "null"]},
+    "trial_id": {"type": ["string", "null"]},
+    "task_id": {"type": ["string", "null"]},
+    "pair_id": {"type": ["string", "null"]},
+    "responses": {"type": "object"},
+    "submitted_at_utc": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "Z$"
+    }
+  },
+  "oneOf": [
+    {
+      "properties": {
+        "questionnaire_type": {"const": "seq_task"},
+        "condition": {"enum": ["B0", "P2"]},
+        "period": {"enum": [1, 2]},
+        "trial_id": {"type": "string"},
+        "task_id": {"type": "string"},
+        "pair_id": {"type": "string"},
+        "responses": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["seq_ease"],
+          "properties": {
+            "seq_ease": {
+              "anyOf": [
+                {"type": "integer", "minimum": 1, "maximum": 7},
+                {"type": "null"}
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "properties": {
+        "questionnaire_type": {"const": "post_condition"},
+        "condition": {"enum": ["B0", "P2"]},
+        "period": {"enum": [1, 2]},
+        "trial_id": {"type": "null"},
+        "task_id": {"type": "null"},
+        "pair_id": {"type": "null"},
+        "responses": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "sus_01", "sus_02", "sus_03", "sus_04", "sus_05",
+            "sus_06", "sus_07", "sus_08", "sus_09", "sus_10",
+            "custom_confidence_selected_environment",
+            "custom_natural_workload_expression",
+            "custom_selection_convenience"
+          ],
+          "properties": {
+            "sus_01": {"$ref": "#/$defs/susResponse"},
+            "sus_02": {"$ref": "#/$defs/susResponse"},
+            "sus_03": {"$ref": "#/$defs/susResponse"},
+            "sus_04": {"$ref": "#/$defs/susResponse"},
+            "sus_05": {"$ref": "#/$defs/susResponse"},
+            "sus_06": {"$ref": "#/$defs/susResponse"},
+            "sus_07": {"$ref": "#/$defs/susResponse"},
+            "sus_08": {"$ref": "#/$defs/susResponse"},
+            "sus_09": {"$ref": "#/$defs/susResponse"},
+            "sus_10": {"$ref": "#/$defs/susResponse"},
+            "custom_confidence_selected_environment": {"$ref": "#/$defs/customResponse"},
+            "custom_natural_workload_expression": {"$ref": "#/$defs/customResponse"},
+            "custom_selection_convenience": {"$ref": "#/$defs/customResponse"}
+          }
+        }
+      }
+    },
+    {
+      "properties": {
+        "questionnaire_type": {"const": "final_preference"},
+        "condition": {"type": "null"},
+        "period": {"type": "null"},
+        "trial_id": {"type": "null"},
+        "task_id": {"type": "null"},
+        "pair_id": {"type": "null"},
+        "responses": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["final_preference"],
+          "properties": {
+            "final_preference": {
+              "enum": ["B0", "P2", "NO_PREFERENCE", null]
+            }
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "susResponse": {
+      "anyOf": [
+        {"type": "integer", "minimum": 1, "maximum": 5},
+        {"type": "null"}
+      ]
+    },
+    "customResponse": {
+      "anyOf": [
+        {"type": "integer", "minimum": 1, "maximum": 7},
+        {"type": "null"}
+      ]
+    }
+  }
+}

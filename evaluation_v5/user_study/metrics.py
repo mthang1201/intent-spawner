@@ -32,11 +32,11 @@ from .schemas import (
 from .scoring import FINAL_SELECTION_SCORING_VERSION, score_final_selection
 
 
-TASK_OUTCOME_SCHEMA_VERSION = "protocol-v5-user-study-task-outcome-v1.0.0"
+TASK_OUTCOME_SCHEMA_VERSION = "protocol-v5-user-study-task-outcome-v1.1.0"
 MATCHED_PAIR_OUTCOME_SCHEMA_VERSION = (
-    "protocol-v5-user-study-matched-pair-outcome-v1.0.0"
+    "protocol-v5-user-study-matched-pair-outcome-v1.1.0"
 )
-SUMMARY_SCHEMA_VERSION = "protocol-v5-user-study-summary-v1.0.0"
+SUMMARY_SCHEMA_VERSION = "protocol-v5-user-study-summary-v1.1.0"
 
 _CONTROL_ACTIONS = frozenset(
     {
@@ -169,11 +169,47 @@ def derive_task_outcomes(
     """
 
     tasks = parse_task_set(task_set)
+    manifest = (
+        assignment_manifest
+        if isinstance(assignment_manifest, AssignmentManifest)
+        else (
+            AssignmentManifest.from_dict(assignment_manifest)
+            if assignment_manifest is not None
+            else None
+        )
+    )
     parsed = _parse_events(
         events,
         task_set=tasks,
-        assignment_manifest=assignment_manifest,
+        assignment_manifest=manifest,
     )
+    design: dict[tuple[str, str], dict[str, Any]] = {}
+    if manifest is not None:
+        for participant in manifest.assignments:
+            for assigned in participant.task_sequence:
+                variants = sorted(
+                    tasks.pair_by_id(assigned.pair_id).tasks,
+                    key=lambda item: item.variant_id,
+                )
+                variant_slot = next(
+                    index
+                    for index, variant in enumerate(variants)
+                    if variant.variant_id == assigned.variant_id
+                )
+                design[(participant.participant_id, assigned.trial_id)] = {
+                    "matched_pair_id": assigned.pair_id,
+                    "variant_id": assigned.variant_id,
+                    "variant_slot": variant_slot,
+                    "within_pair_variant_slot": variant_slot,
+                    "period": assigned.period,
+                    "position": assigned.position_in_period,
+                    "position_in_period": assigned.position_in_period,
+                    "sequence_index": assigned.sequence_index,
+                    "condition_order": "-then-".join(
+                        item.value for item in participant.condition_order
+                    ),
+                    "counterbalance_cell": participant.counterbalance_cell,
+                }
     grouped: dict[tuple[str, str], list[StudyEvent]] = defaultdict(list)
     for event in parsed:
         grouped[(event.session_id, event.trial_id)].append(event)
@@ -208,6 +244,15 @@ def derive_task_outcomes(
         image_id = confirmation.image_id if confirmation is not None else None
         selection_score = score_final_selection(
             pair.gold, profile_id=profile_id, image_id=image_id
+        )
+        selection_success = (
+            selection_score.profile_acceptable
+            and selection_score.image_acceptable
+            and selection_score.hard_constraints_satisfied
+        )
+        _require(
+            selection_success == selection_score.selection_acceptable,
+            "SelectionSuccess differs from frozen acceptable-candidate scoring",
         )
         candidate_id = selection_score.candidate_id
         recommendation: tuple[str, str] | None = None
@@ -254,6 +299,21 @@ def derive_task_outcomes(
                 "pair_id": first.pair_id,
                 "phase": task.phase.value,
                 "condition": first.condition.value,
+                **design.get(
+                    (first.participant_id, first.trial_id),
+                    {
+                        "matched_pair_id": first.pair_id,
+                        "variant_id": None,
+                        "variant_slot": None,
+                        "within_pair_variant_slot": None,
+                        "period": None,
+                        "position": None,
+                        "position_in_period": None,
+                        "sequence_index": None,
+                        "condition_order": None,
+                        "counterbalance_cell": None,
+                    },
+                ),
                 "confirmed": confirmation is not None,
                 "cancelled": cancellation is not None,
                 "cancel_reason": (
@@ -266,6 +326,7 @@ def derive_task_outcomes(
                 "image_id": image_id,
                 "candidate_id": candidate_id,
                 **selection_score.to_dict(),
+                "selection_success": selection_success,
                 # Compatibility alias retained for pre-observation v1 tooling.
                 # Its frozen meaning is selection acceptability, which remains
                 # the primary binary accuracy outcome.
@@ -300,6 +361,7 @@ def derive_task_outcomes(
                 "control_action_count": control_count,
                 "edit_count": edit_count,
                 "total_action_count": control_count + edit_count,
+                "interaction_count": control_count + edit_count,
                 "override_count": override_count,
                 "final_override": final_override,
                 "correction_count": _trial_corrections(trial),
@@ -377,6 +439,8 @@ def derive_matched_pair_outcomes(
                 "p2_correct_selection": value(p2, "correct_selection"),
                 "b0_selection_acceptable": value(b0, "selection_acceptable"),
                 "p2_selection_acceptable": value(p2, "selection_acceptable"),
+                "b0_selection_success": value(b0, "selection_success"),
+                "p2_selection_success": value(p2, "selection_success"),
                 "b0_selection_correct": value(b0, "selection_correct"),
                 "p2_selection_correct": value(p2, "selection_correct"),
                 "correctness_delta_p2_minus_b0": correctness_delta,
@@ -395,6 +459,9 @@ def derive_matched_pair_outcomes(
                 "b0_total_action_count": value(b0, "total_action_count"),
                 "p2_total_action_count": value(p2, "total_action_count"),
                 "total_action_delta_p2_minus_b0": delta("total_action_count"),
+                "b0_interaction_count": value(b0, "interaction_count"),
+                "p2_interaction_count": value(p2, "interaction_count"),
+                "interaction_delta_p2_minus_b0": delta("interaction_count"),
                 "b0_end_to_end_seconds": value(b0, "end_to_end_seconds"),
                 "p2_end_to_end_seconds": value(p2, "end_to_end_seconds"),
                 "end_to_end_delta_p2_minus_b0": delta("end_to_end_seconds"),
@@ -434,6 +501,7 @@ def _condition_summary(rows: Sequence[Mapping[str, Any]], condition: Condition) 
     ready = sum(bool(row["notebook_ready_observed"]) for row in selected)
     cancelled = sum(bool(row["cancelled"]) for row in selected)
     acceptable = sum(bool(row["selection_acceptable"]) for row in selected)
+    success = sum(bool(row["selection_success"]) for row in selected)
     exact = sum(bool(row["selection_correct"]) for row in selected)
     result: dict[str, Any] = {
         "task_count": count,
@@ -442,6 +510,8 @@ def _condition_summary(rows: Sequence[Mapping[str, Any]], condition: Condition) 
         "correct_selection_rate": _rate(acceptable, count),
         "selection_acceptable_count": acceptable,
         "selection_acceptable_rate": _rate(acceptable, count),
+        "selection_success_count": success,
+        "selection_success_rate": _rate(success, count),
         "selection_correct_count": exact,
         "selection_correct_rate": _rate(exact, count),
         "confirmed_count": confirmed,
@@ -466,6 +536,9 @@ def _condition_summary(rows: Sequence[Mapping[str, Any]], condition: Condition) 
         "edit_count": _distribution(row["edit_count"] for row in selected),
         "total_action_count": _distribution(
             row["total_action_count"] for row in selected
+        ),
+        "interaction_count": _distribution(
+            row["interaction_count"] for row in selected
         ),
         "correction_count": _distribution(
             row["correction_count"] for row in selected
@@ -516,6 +589,9 @@ def _participant_deltas(
                 "mean_total_action_delta_p2_minus_b0": mean(
                     "total_action_delta_p2_minus_b0"
                 ),
+                "mean_interaction_delta_p2_minus_b0": mean(
+                    "interaction_delta_p2_minus_b0"
+                ),
                 "mean_end_to_end_delta_p2_minus_b0": mean(
                     "end_to_end_delta_p2_minus_b0"
                 ),
@@ -557,6 +633,7 @@ def summarize_outcomes(
                 "correctness_delta_p2_minus_b0",
                 "decision_time_delta_p2_minus_b0",
                 "total_action_delta_p2_minus_b0",
+                "interaction_delta_p2_minus_b0",
                 "end_to_end_delta_p2_minus_b0",
             )
         },
@@ -566,7 +643,7 @@ def summarize_outcomes(
         "formal_inference": {
             "status": "NOT_COMPUTED",
             "reason": (
-                "Descriptive derivation does not test the three co-primary "
+                "Descriptive derivation does not test the two co-primary "
                 "hypotheses or emit significance claims."
             ),
         },

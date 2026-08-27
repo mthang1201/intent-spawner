@@ -69,17 +69,19 @@ PVC, or live Kubernetes behavior.
    or compromise namespace isolation.
 
 6. Configure the smoke authenticator account name to be the issued pseudonym
-   from the assignment manifest. Complete all eight interactions. Use synthetic
-   task descriptions only; do not enter personal or production information.
+   from the assignment manifest. Complete all eight interactions, all six
+   measured-task SEQ forms, both post-condition forms, and final preference.
+   Use synthetic task descriptions and synthetic closed responses only; do not
+   enter personal or production information.
 7. For at least one B0 task, make and correct a manual profile/image selection.
    Verify there is no recommendation or preview request. For at least one P2
    task, request a preview and either accept it or exercise the explicit
    override. Allow one spawn to reach ready; a separate controlled spawn may be
    allowed to miss readiness to exercise the 180-second path.
 8. Export the study PVC staging files to an access-controlled temporary
-   directory. Verify `events.jsonl`, `sessions.jsonl`, and completion markers
-   exist; `exclusions.jsonl` is expected only if an exclusion was recorded. Do
-   not copy ordinary Hub logs into research evidence.
+   directory. Verify `events.jsonl`, `questionnaires.jsonl`, `sessions.jsonl`,
+   and completion markers exist; `exclusions.jsonl` is expected only if an
+   exclusion was recorded. Do not copy ordinary Hub logs into research evidence.
 9. Validate the events and finalize outside the repository as `DRY_RUN`:
 
    ```bash
@@ -88,12 +90,18 @@ PVC, or live Kubernetes behavior.
      --task-set benchmarks_v5/user-study-draft-v1.yaml \
      --assignments /tmp/e3-smoke-prepared/assignment-manifest.json
 
+   PYTHONPATH=. .venv/bin/python -m evaluation_v5.user_study \
+     validate-questionnaires \
+     /tmp/e3-smoke-export/questionnaires.jsonl \
+     --assignments /tmp/e3-smoke-prepared/assignment-manifest.json
+
    PYTHONPATH=. .venv/bin/python -m evaluation_v5.user_study finalize \
      --run-id e3-researcher-smoke \
      --task-set benchmarks_v5/user-study-draft-v1.yaml \
      --assignments /tmp/e3-smoke-prepared/assignment-manifest.json \
      --events /tmp/e3-smoke-export/events.jsonl \
      --sessions /tmp/e3-smoke-export/sessions.jsonl \
+     --questionnaires /tmp/e3-smoke-export/questionnaires.jsonl \
      --execution-status DRY_RUN \
      --output-dir /tmp/e3-smoke-finalized
    ```
@@ -102,7 +110,9 @@ PVC, or live Kubernetes behavior.
     indexes and one terminal `confirm` or `cancel`, and has at most one matching
     `notebook_ready`. Confirm B0 contains no intent/preview/override events,
     final confirmed IDs match the spawned selection, timing statuses are
-    explicit, and the provenance fairness checksum matches the assignment.
+    explicit, all nine scheduled forms exist even when answers were skipped,
+    and the provenance fairness, questionnaire-instrument, and analysis-plan
+    checksums match the assignment.
 11. Delete the isolated namespace and temporary smoke artifacts according to
     the researcher's approved operational process. The study PVC is retained by
     design until that explicit cleanup.

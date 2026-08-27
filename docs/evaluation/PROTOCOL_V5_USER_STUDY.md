@@ -12,22 +12,20 @@ The research question is:
 > accurately, faster, and with less interaction effort than default/manual
 > JupyterHub?
 
-The three directional co-primary hypotheses are:
+The two directional co-primary hypotheses are:
 
-- **H1 — correctness:** P2 increases the probability that the confirmed
-  profile-image candidate belongs to the task pair's frozen acceptable set
-  (`selection_acceptable`). Exact selection of the frozen preferred candidate
+- **H1 — SelectionSuccess:** P2 increases the probability that the confirmed
+  profile and image are acceptable and satisfy all frozen hard constraints
+  (`selection_success`, asserted equivalent to `selection_acceptable`). Exact
+  selection of the frozen preferred candidate
   (`selection_correct`) is reported separately.
 - **H2 — decision time:** among tasks with an environment confirmation, P2
   reduces elapsed time from `task_shown` to `confirm`.
-- **H3 — interaction burden:** P2 reduces the total number of recorded user
-  control and coalesced edit actions.
-
-Completion, cancellation, corrections, P2 overrides, and optional
-task-shown-to-notebook-ready time are secondary or diagnostic outcomes. Any
-future formal analysis must account for the three co-primary hypotheses and
-the repeated observations within a participant. No significance conclusion is
-produced merely because the harness exists.
+Interaction burden, completion, cancellation, corrections, P2 overrides, and
+optional task-shown-to-notebook-ready time are secondary or diagnostic
+outcomes. Any future formal analysis must account for the two co-primary
+hypotheses and the repeated observations within a participant. No significance
+conclusion is produced merely because the harness exists.
 
 ## Conditions and fairness boundary
 
@@ -98,7 +96,8 @@ The participant may stop at any time. A whole session is excluded only for:
 
 Wrong selections, slow decisions, intent edits, overrides, cancellations,
 preview/backend failures, spawn failures after confirmation, and missing
-notebook-ready events are outcomes or missingness, not exclusions. An active
+notebook-ready events or questionnaire answers are outcomes or missingness,
+not exclusions. An active
 task interrupted by a Hub restart is preserved and marked instrumentation
 incomplete rather than joined across incompatible monotonic clocks. Every
 exclusion retains a versioned, non-free-text reason alongside the raw attempt.
@@ -211,8 +210,9 @@ without fabricating readiness.
 Live staging uses a study-only persistent volume. Event appends are locked,
 opened with `O_APPEND`, flushed, and fsynced. Event UUIDs are idempotent and a
 completion marker is exclusive-created. Consent acknowledgement supplies the
-session start time; successful eight-task sealing automatically appends the
-versioned `sessions.jsonl` record. A restart during a nonterminal trial writes
+session start time; successful sealing after eight terminal task interactions
+and all nine scheduled form submissions automatically appends the versioned
+`sessions.jsonl` record. A restart during a nonterminal trial writes
 an immutable incomplete marker plus a versioned
 `instrumentation_corruption` exclusion to `exclusions.jsonl`. These appends are
 also locked, content-free, flushed, and fsynced, so no spreadsheet timing or
@@ -220,11 +220,37 @@ manual timestamp transcription is needed. Finalization validates and copies
 the raw streams into a new immutable Protocol-v5 E3 results directory before
 deriving metrics; derived or report files never rewrite raw observations.
 
+Questionnaires use the exact, content-free
+`protocol-v5-user-study-questionnaire-v1.0.0` contract, published as
+`benchmarks_v5/protocol-v5-user-study-questionnaire-v1.schema.json` and backed
+by assignment-aware validation. Submission time is supplied by the study
+server, not the browser. Each participant
+submits six measured-task SEQ forms, two post-condition forms, and one final
+preference form. Every response is optional, including an explicit all-null
+skip, but each scheduled form must have a durable submission before the
+session is complete. Records contain only fixed numeric responses or the
+closed final-preference enumeration; comments and other free text are rejected.
+
+The task item is a 1–7 SEQ-style ease rating (1 = very difficult, 7 = very
+easy). Each post-condition form presents the ten standard 1–5 SUS items,
+followed under a separate **CUSTOM Likert items (not SUS dimensions)** heading
+by 1–7 agreement items for confidence in selected environments, ability to
+express workload needs naturally, and selection convenience. Final preference
+is exactly `B0`, `P2`, or `NO_PREFERENCE`; a skipped answer remains missing.
+SUS uses the standard odd-item `response - 1`, even-item `5 - response`, then
+multiplies the sum by 2.5. If any SUS item is missing, that condition's SUS
+score is unavailable; no questionnaire response is imputed.
+
 ## Outcomes and analysis rules
 
 For a measured task:
 
-- `selection_acceptable` is true only if the participant's **final confirmed**
+- `selection_success` is true only if `profile_acceptable`,
+  `image_acceptable`, and `hard_constraints_satisfied` are all true for the
+  participant's final confirmed selection. The frozen acceptable candidate set
+  authoritatively enforces this conjunction. `selection_acceptable` is retained
+  as an asserted-equivalent compatibility field and is true only if the
+  participant's **final confirmed**
   `profile-image` candidate belongs to the pair's frozen acceptable set. It is
   the primary binary accuracy outcome. `selection_correct` is true only for the
   frozen preferred candidate, so an acceptable non-preferred alternative is
@@ -265,34 +291,45 @@ interpreted alongside completion and missingness.
 
 ### Frozen pre-analysis plan
 
-The three directional hypotheses are co-primary. If confirmatory evidence is
+The two directional hypotheses are co-primary. If confirmatory evidence is
 eventually available, family-wise two-sided inference uses Holm's step-down
-adjustment across the three co-primary p-values at family alpha 0.05.
+adjustment across SelectionSuccess and DecisionTime at family alpha 0.05.
 Unadjusted estimates and confidence intervals may also be shown but do not
 replace that rule. Tests are not selected after inspecting future results.
 
 The primary binary analysis estimates the within-participant P2-minus-B0
-difference in `selection_acceptable`. Use a participant-clustered logistic
-mixed model with participant random intercept and fixed effects for condition,
-matched pair, task variant, period, and condition order; report the paired risk
-difference with a 95% confidence interval as the principal effect estimate. A
-predeclared conditional-logistic or participant-clustered GEE fit is the
-convergence fallback, and its use and reason must be reported independently of
+difference in `selection_success`. Use a participant-clustered binomial GEE
+with exchangeable working correlation and fixed effects for condition,
+matched pair, within-pair variant slot, period, and condition order. Report the
+marginal risk difference with a participant-cluster refit bootstrap 95%
+confidence interval and the odds ratio as a secondary model effect. A
+participant-level paired risk-difference analysis is the convergence or
+identifiability fallback, and its use and reason are reported independently of
 significance.
 
-Decision time and total action count use predeclared participant-clustered
-models suited to positive skew/nonnegative counts: a log-time mixed model for
-positive confirmed decision times and an overdispersed count model for actions,
+Decision time and interaction count use predeclared participant-clustered
+models suited to positive skew/nonnegative counts: a participant-random-intercept
+log-time mixed model for positive confirmed matched decision times and an
+overdispersed count model for actions,
 with the same condition, pair, variant, period, and order terms. Report paired
 means/medians and participant-level P2-minus-B0 estimates with 95% confidence
 intervals alongside model effects. Cancellations remain in accuracy and
 completion denominators. An incomplete task pair contributes to descriptive
 missingness and any outcome for which its predeclared estimator is valid, but
-not to a complete-pair timing/action contrast. No single-value imputation or
+not to a complete-pair timing/action contrast. A nonpositive eligible time
+triggers the raw-scale paired robust fallback for the entire endpoint; zero is
+retained and no offset is added. No single-value imputation or
 performance-based trimming is allowed. Whole-session exclusions retain their
 frozen reason. Period/order and condition-by-period results are reported as
 learning/carryover diagnostics and never used to redefine the primary
 estimand.
+
+SEQ uses a task-pair-aware participant-random-intercept scale model with a
+paired participant bootstrap fallback. SUS and each CUSTOM item use paired
+participant effects with bootstrap confidence intervals. Preference reports
+counts and answered-response percentages with Bonferroni-adjusted Wilson
+simultaneous 95% intervals; missing is reported separately. CUSTOM items are
+never combined with or described as SUS dimensions.
 
 ## Privacy, consent, and limitations
 
@@ -302,6 +339,12 @@ usernames, real account identifiers, emails, names, source code, notebook data,
 raw intent, Kubernetes object dumps, credentials, or an identity mapping. Any
 separate recruitment-to-pseudonym mapping remains outside this artifact under
 the researcher's approved access, retention, withdrawal, and deletion process.
+Finalization emits aggregate-only report files and runs a fail-closed privacy
+audit over them. The audit rejects participant/session identifiers, issued
+pseudonyms, email/IP-shaped values, participant free-text fields, and absolute
+local paths. Raw pseudonymous event, session, exclusion, and questionnaire
+streams stay under `raw/` and are never included in aggregate figures or the
+thesis-ready report.
 
 The consent gate records a boolean acknowledgement and a nonblank consent
 document version. It is not an ethics approval, legal consent form, or IRB
@@ -330,8 +373,13 @@ are documented in
    version using `python -m evaluation_v5.user_study`.
 3. Install the opt-in study overlay on the isolated Hub and issue only generated
    pseudonyms to consented participants.
-4. Export the append-only staging directory and run event validation and
-   finalization into a new E3 run ID.
+4. Export the append-only staging directory. Validate `events.jsonl` and
+   `questionnaires.jsonl`, then finalize `events.jsonl`, `sessions.jsonl`,
+   optional `exclusions.jsonl`, and required real-run `questionnaires.jsonl`
+   together into a new E3 run ID. Install the pinned analysis environment with
+   `pip install -r requirements-analysis.txt`; finalization creates all tables,
+   figures, model/effect JSON, provenance, limitations, and the privacy-audited
+   Markdown report without manual editing.
 5. Preserve raw, derived, report, checksums, exclusions, and limitations. If no
    real sessions were supplied, emit `NOT_EXECUTED`, never zero-filled metrics.
 

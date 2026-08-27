@@ -49,6 +49,20 @@ from .assignment import (
 )
 from .instrumentation import AppendOnlyEventStore
 from .fairness import validate_study_environment_identity, verify_fairness_manifest
+from .questionnaires import (
+    CUSTOM_ITEMS,
+    CUSTOM_ITEM_IDS,
+    FINAL_PREFERENCE_ID,
+    QUESTIONNAIRE_INSTRUMENT_VERSION,
+    QUESTIONNAIRE_SCHEMA_VERSION,
+    SEQ_ITEM_ID,
+    SUS_ITEMS,
+    SUS_ITEM_IDS,
+    QuestionnaireType,
+    QuestionnaireValidationError,
+    expected_questionnaire_ids,
+    validate_questionnaire_record,
+)
 from .schemas import (
     BROWSER_TASK_SET_SCHEMA_VERSION,
     CancelReason,
@@ -62,7 +76,7 @@ from .schemas import (
 )
 
 
-STUDY_HUB_ADAPTER_VERSION = "protocol-v5-user-study-hub-adapter-v1.0.0"
+STUDY_HUB_ADAPTER_VERSION = "protocol-v5-user-study-hub-adapter-v1.1.0"
 STUDY_HUB_PACKAGE_CHECKSUM_ENV = "INTENT_SPAWNER_USER_STUDY_PACKAGE_CHECKSUM"
 STUDY_HUB_PACKAGE_VERSION_ENV = "INTENT_SPAWNER_USER_STUDY_PACKAGE_VERSION"
 STUDY_ASSIGNMENT_CHECKSUM_ENV = "INTENT_SPAWNER_USER_STUDY_ASSIGNMENT_CHECKSUM"
@@ -74,6 +88,7 @@ STUDY_HUB_RUNTIME_FILES = (
     "hub.py",
     "instrumentation.py",
     "fairness.py",
+    "questionnaires.py",
     "scoring.py",
     "schemas.py",
     "spawn_pending.html",
@@ -431,6 +446,8 @@ class StudyGateStore:
         record: Mapping[str, Any],
         *,
         identity_field: str,
+        uniqueness_fields: Sequence[str] = (),
+        idempotent_ignored_fields: Sequence[str] = (),
     ) -> Path:
         """Durably append one canonical staging record with ID idempotency."""
 
@@ -469,11 +486,20 @@ class StudyGateStore:
                 if not isinstance(existing, Mapping):
                     raise StudyHubError(f"{filename} records must be objects")
                 if existing.get(identity_field) != record.get(identity_field):
+                    if uniqueness_fields and all(
+                        existing.get(field) == record.get(field)
+                        for field in uniqueness_fields
+                    ):
+                        raise StudyHubError(
+                            f"{filename} scheduled record was already submitted"
+                        )
                     continue
-                if (
-                    json.dumps(existing, sort_keys=True, separators=(",", ":"))
-                    == encoded.decode("utf-8").rstrip("\n")
-                ):
+                existing_comparable = dict(existing)
+                record_comparable = dict(record)
+                for field in idempotent_ignored_fields:
+                    existing_comparable.pop(field, None)
+                    record_comparable.pop(field, None)
+                if existing_comparable == record_comparable:
                     return path
                 raise StudyHubError(
                     f"{filename} contains a conflicting {identity_field} record"
@@ -640,6 +666,49 @@ class StudyGateStore:
             self._append_record_once(
                 "exclusions.jsonl", exclusion, identity_field="session_id"
             ),
+        )
+
+    def questionnaire_records(self) -> list[dict[str, Any]]:
+        path = self.root / "questionnaires.jsonl"
+        if not path.exists():
+            return []
+        try:
+            fd = os.open(path, os.O_RDONLY)
+        except FileNotFoundError:
+            return []
+        try:
+            fcntl.flock(fd, fcntl.LOCK_SH)
+            chunks: list[bytes] = []
+            while True:
+                chunk = os.read(fd, 1024 * 1024)
+                if not chunk:
+                    break
+                chunks.append(chunk)
+            raw = b"".join(chunks)
+        finally:
+            try:
+                fcntl.flock(fd, fcntl.LOCK_UN)
+            finally:
+                os.close(fd)
+        if raw and not raw.endswith(b"\n"):
+            raise StudyHubError("questionnaires.jsonl has an incomplete final record")
+        records: list[dict[str, Any]] = []
+        for line in raw.splitlines():
+            try:
+                value = json.loads(line)
+            except json.JSONDecodeError as exc:
+                raise StudyHubError("questionnaires.jsonl contains invalid JSON") from exc
+            records.append(validate_questionnaire_record(value).to_dict())
+        return records
+
+    def append_questionnaire(self, record: Mapping[str, Any]) -> Path:
+        validated = validate_questionnaire_record(record).to_dict()
+        return self._append_record_once(
+            "questionnaires.jsonl",
+            validated,
+            identity_field="response_uuid",
+            uniqueness_fields=("session_id", "questionnaire_id"),
+            idempotent_ignored_fields=("submitted_at_utc",),
         )
 
 
@@ -841,6 +910,100 @@ class StudySessionRuntime:
                     scenario=self._tasks[assigned.task_id]["scenario"],
                 )
         return None
+
+    def pending_questionnaire(self, participant_id: str) -> dict[str, Any] | None:
+        """Return the next scheduled form after its task/period is terminal."""
+
+        participant = self.participant(participant_id)
+        submitted = {
+            row["questionnaire_id"]
+            for row in self.gate_store.questionnaire_records()
+            if row["session_id"] == participant.session_id
+        }
+        events = self._events()
+        for assigned in participant.task_sequence:
+            terminal = self._is_terminal(
+                [
+                    event
+                    for event in events
+                    if event["session_id"] == participant.session_id
+                    and event["trial_id"] == assigned.trial_id
+                ]
+            )
+            if not terminal:
+                return None
+            if assigned.phase.value == "measured":
+                questionnaire_id = f"seq:{assigned.trial_id}"
+                if questionnaire_id not in submitted:
+                    return {
+                        "questionnaire_type": QuestionnaireType.SEQ_TASK.value,
+                        "questionnaire_id": questionnaire_id,
+                        "condition": assigned.condition.value,
+                        "period": assigned.period,
+                        "trial_id": assigned.trial_id,
+                        "task_id": assigned.task_id,
+                        "pair_id": assigned.pair_id,
+                    }
+                if assigned.position_in_period == 3:
+                    questionnaire_id = f"post_condition:{assigned.period}"
+                    if questionnaire_id not in submitted:
+                        return {
+                            "questionnaire_type": QuestionnaireType.POST_CONDITION.value,
+                            "questionnaire_id": questionnaire_id,
+                            "condition": assigned.condition.value,
+                            "period": assigned.period,
+                            "trial_id": None,
+                            "task_id": None,
+                            "pair_id": None,
+                        }
+        if "final_preference" not in submitted:
+            return {
+                "questionnaire_type": QuestionnaireType.FINAL_PREFERENCE.value,
+                "questionnaire_id": "final_preference",
+                "condition": None,
+                "period": None,
+                "trial_id": None,
+                "task_id": None,
+                "pair_id": None,
+            }
+        return None
+
+    def record_questionnaire(
+        self,
+        participant_id: str,
+        questionnaire_id: str,
+        response_uuid: str,
+        responses: Mapping[str, Any],
+    ) -> dict[str, Any]:
+        participant = self.participant(participant_id)
+        pending = self.pending_questionnaire(participant_id)
+        if pending is None or pending["questionnaire_id"] != questionnaire_id:
+            raise StudyHubError("questionnaire is not currently scheduled")
+        record = validate_questionnaire_record(
+            {
+                "schema_version": QUESTIONNAIRE_SCHEMA_VERSION,
+                "instrument_version": QUESTIONNAIRE_INSTRUMENT_VERSION,
+                "study_id": self.manifest.study_id,
+                "assignment_id": self.manifest.assignment_id,
+                "session_id": participant.session_id,
+                "participant_id": participant.participant_id,
+                "response_uuid": response_uuid,
+                **pending,
+                "responses": dict(responses),
+                "submitted_at_utc": _utc_text(self.utc_now()),
+            }
+        ).to_dict()
+        self.gate_store.append_questionnaire(record)
+        return record
+
+    def questionnaire_complete(self, participant_id: str) -> bool:
+        participant = self.participant(participant_id)
+        observed = {
+            row["questionnaire_id"]
+            for row in self.gate_store.questionnaire_records()
+            if row["session_id"] == participant.session_id
+        }
+        return observed == expected_questionnaire_ids(participant)
 
     def transition_required(self, active: ActiveStudyTask) -> bool:
         return (
@@ -1440,6 +1603,70 @@ def _message_form(title: str, message: str, action_url: str, action: str) -> str
     """
 
 
+def _scale_radios(name: str, low: int, high: int) -> str:
+    return " ".join(
+        f"<label><input type='radio' name='{html.escape(name)}' value='{value}'/> {value}</label>"
+        for value in range(low, high + 1)
+    )
+
+
+def questionnaire_form(spec: Mapping[str, Any], xsrf_token: str, response_uuid: str) -> str:
+    """Render one closed-response form; blank answers and explicit skip are valid."""
+
+    kind = QuestionnaireType(str(spec["questionnaire_type"]))
+    if kind is QuestionnaireType.SEQ_TASK:
+        title = "Task ease"
+        fields = (
+            "<fieldset><legend>Overall, how difficult or easy was this task?</legend>"
+            + _scale_radios(SEQ_ITEM_ID, 1, 7)
+            + "<p>1 = Very difficult; 7 = Very easy.</p></fieldset>"
+        )
+    elif kind is QuestionnaireType.POST_CONDITION:
+        title = f"Post-condition questionnaire: {html.escape(str(spec['condition']))}"
+        sus = "".join(
+            "<fieldset><legend>{}. {}</legend>{}<p>1 = Strongly disagree; 5 = Strongly agree.</p></fieldset>".format(
+                index,
+                html.escape(statement),
+                _scale_radios(item_id, 1, 5),
+            )
+            for index, (item_id, statement) in enumerate(
+                zip(SUS_ITEM_IDS, SUS_ITEMS), start=1
+            )
+        )
+        custom = "".join(
+            "<fieldset><legend>{}</legend>{}<p>1 = Strongly disagree; 7 = Strongly agree.</p></fieldset>".format(
+                html.escape(statement), _scale_radios(item_id, 1, 7)
+            )
+            for item_id, statement in CUSTOM_ITEMS.items()
+        )
+        fields = (
+            "<h2>System Usability Scale (SUS)</h2>"
+            "<p>For these standard SUS statements, ‘this system’ means the environment-selection method you just used.</p>"
+            + sus
+            + "<h2>CUSTOM Likert items (not SUS dimensions)</h2>"
+            + custom
+        )
+    else:
+        title = "Final preference"
+        fields = (
+            "<fieldset><legend>Overall, which method would you prefer to use to select a notebook environment?</legend>"
+            "<label><input type='radio' name='final_preference' value='B0'/> B0</label> "
+            "<label><input type='radio' name='final_preference' value='P2'/> P2</label> "
+            "<label><input type='radio' name='final_preference' value='NO_PREFERENCE'/> No preference</label>"
+            "</fieldset>"
+        )
+    return (
+        "<!doctype html><html lang='en'><body style='max-width:900px;margin:2rem auto;font-family:sans-serif'>"
+        f"<h1>{title}</h1><p>Every response is optional. No comments or free text are collected.</p>"
+        f"<form method='post'><input type='hidden' name='_xsrf' value='{html.escape(xsrf_token)}'/>"
+        f"<input type='hidden' name='questionnaire_id' value='{html.escape(str(spec['questionnaire_id']))}'/>"
+        f"<input type='hidden' name='response_uuid' value='{html.escape(response_uuid)}'/>{fields}"
+        "<button type='submit' name='action' value='submit'>Submit responses</button> "
+        "<button type='submit' name='action' value='skip'>Skip all responses</button>"
+        "</form></body></html>"
+    )
+
+
 def _study_options_from_form(
     study: StudySessionRuntime,
     spawner: object,
@@ -1563,6 +1790,7 @@ def install_user_study(
     event_endpoint = f"{base_url}hub/study/event"
     consent_endpoint = f"{base_url}hub/study/consent"
     transition_endpoint = f"{base_url}hub/study/transition"
+    questionnaire_endpoint = f"{base_url}hub/study/questionnaire"
     advance_endpoint = f"{base_url}hub/study/advance"
     spawn_endpoint = f"{base_url}hub/spawn"
     c.JupyterHub.template_paths = [str(Path(__file__).parent)]
@@ -1711,6 +1939,66 @@ def install_user_study(
             self.set_header("Content-Type", "application/json")
             self.finish(json.dumps(response))
 
+    class StudyQuestionnaireHandler(BaseHandler):
+        @web.authenticated
+        async def get(self) -> None:
+            participant_id = _study_participant_id(self)
+            pending = study.pending_questionnaire(participant_id)
+            if pending is None:
+                self.redirect(advance_endpoint)
+                return
+            token = self.xsrf_token
+            if isinstance(token, bytes):
+                token = token.decode("ascii")
+            self.finish(
+                questionnaire_form(pending, str(token), str(uuid.uuid4()))
+            )
+
+        @web.authenticated
+        async def post(self) -> None:
+            participant_id = _study_participant_id(self)
+            pending = study.pending_questionnaire(participant_id)
+            if pending is None:
+                raise web.HTTPError(409, "no questionnaire is currently due")
+            questionnaire_id = self.get_body_argument("questionnaire_id", default="")
+            if questionnaire_id != pending["questionnaire_id"]:
+                raise web.HTTPError(409, "submitted questionnaire is stale")
+            action = self.get_body_argument("action", default="")
+            if action not in {"submit", "skip"}:
+                raise web.HTTPError(400, "questionnaire action is invalid")
+            kind = QuestionnaireType(str(pending["questionnaire_type"]))
+            if kind is QuestionnaireType.SEQ_TASK:
+                keys = (SEQ_ITEM_ID,)
+            elif kind is QuestionnaireType.POST_CONDITION:
+                keys = (*SUS_ITEM_IDS, *CUSTOM_ITEM_IDS)
+            else:
+                keys = (FINAL_PREFERENCE_ID,)
+            responses: dict[str, Any] = {}
+            for key in keys:
+                raw = None if action == "skip" else self.get_body_argument(key, default="")
+                if raw in {None, ""}:
+                    responses[key] = None
+                elif key == FINAL_PREFERENCE_ID:
+                    responses[key] = raw
+                else:
+                    try:
+                        responses[key] = int(str(raw))
+                    except ValueError as exc:
+                        raise web.HTTPError(400, f"{key} is not an integer") from exc
+            try:
+                study.record_questionnaire(
+                    participant_id,
+                    questionnaire_id,
+                    self.get_body_argument("response_uuid", default=""),
+                    responses,
+                )
+            except (QuestionnaireValidationError, StudyHubError, ValueError) as exc:
+                raise web.HTTPError(400, str(exc)) from exc
+            if kind is QuestionnaireType.POST_CONDITION and pending["period"] == 1:
+                self.redirect(transition_endpoint)
+            else:
+                self.redirect(advance_endpoint)
+
     class StudyAdvanceHandler(BaseHandler):
         @web.authenticated
         async def get(self) -> None:
@@ -1728,8 +2016,13 @@ def install_user_study(
                         )
                 except asyncio.TimeoutError:
                     self.log.warning("bounded study server cleanup timed out")
+            if study.pending_questionnaire(participant_id) is not None:
+                self.redirect(questionnaire_endpoint)
+                return
             if study.current_task(participant_id) is None:
                 participant = study.participant(participant_id)
+                if not study.questionnaire_complete(participant_id):
+                    raise StudyHubError("session questionnaire schedule is incomplete")
                 if not store.is_session_complete(participant.session_id):
                     store.complete_session(
                         participant.session_id,
@@ -1758,6 +2051,7 @@ def install_user_study(
             (r"/study/transition", StudyTransitionHandler),
             (r"/study/event", StudyEventHandler),
             (r"/study/preview", StudyPreviewHandler),
+            (r"/study/questionnaire", StudyQuestionnaireHandler),
             (r"/study/advance", StudyAdvanceHandler),
         ]
     )
@@ -1772,6 +2066,14 @@ def install_user_study(
                 "Review acknowledgement",
             )
         try:
+            pending = study.pending_questionnaire(participant_id)
+            if pending is not None:
+                return _message_form(
+                    "Questionnaire due",
+                    "Submit or explicitly skip the scheduled closed-response form before continuing.",
+                    questionnaire_endpoint,
+                    "Open questionnaire",
+                )
             active = study.current_task(participant_id)
         except StudySessionIncompleteError as exc:
             return _message_form(
@@ -1871,6 +2173,7 @@ def install_user_study(
         "StudyTransitionHandler": StudyTransitionHandler,
         "StudyEventHandler": StudyEventHandler,
         "StudyPreviewHandler": StudyPreviewHandler,
+        "StudyQuestionnaireHandler": StudyQuestionnaireHandler,
         "StudyAdvanceHandler": StudyAdvanceHandler,
         "context_options_form": context_options_form,
         "context_options_from_form": context_options_from_form,

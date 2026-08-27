@@ -31,6 +31,13 @@ from .hub import (
 )
 from .instrumentation import AppendOnlyEventStore
 from .runner import main as runner_main
+from .questionnaires import (
+    CUSTOM_ITEM_IDS,
+    FINAL_PREFERENCE_ID,
+    SEQ_ITEM_ID,
+    SUS_ITEM_IDS,
+    QuestionnaireType,
+)
 from .schemas import Condition, EventType, browser_safe_task_set, load_task_set
 
 
@@ -248,6 +255,25 @@ async def _exercise(tmp: Path, task_set_path: Path) -> dict[str, object]:
         clock.tick()
         study.record_ready(participant.participant_id, assigned.trial_id)
         clock.tick()
+        while True:
+            pending = study.pending_questionnaire(participant.participant_id)
+            if pending is None:
+                break
+            kind = QuestionnaireType(pending["questionnaire_type"])
+            if kind is QuestionnaireType.SEQ_TASK:
+                responses = {SEQ_ITEM_ID: 5}
+            elif kind is QuestionnaireType.POST_CONDITION:
+                responses = {item: 3 for item in SUS_ITEM_IDS}
+                responses.update({item: 5 for item in CUSTOM_ITEM_IDS})
+            else:
+                responses = {FINAL_PREFERENCE_ID: "NO_PREFERENCE"}
+            study.record_questionnaire(
+                participant.participant_id,
+                str(pending["questionnaire_id"]),
+                str(clock.uuid()),
+                responses,
+            )
+            clock.tick()
 
     store.complete_session(
         participant.session_id,
@@ -287,6 +313,8 @@ async def _exercise(tmp: Path, task_set_path: Path) -> dict[str, object]:
             str(tmp / "sessions.jsonl"),
             "--exclusions",
             str(tmp / "exclusions.jsonl"),
+            "--questionnaires",
+            str(tmp / "questionnaires.jsonl"),
             "--execution-status",
             "DRY_RUN",
             "--output-dir",

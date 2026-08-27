@@ -52,7 +52,8 @@ run_check "unit and smoke tests" env PYTHONPATH=. "$PYTHON_BIN" -m pytest \
   tests/test_evaluation_v4.py \
   tests/test_evaluation_v5.py \
   tests/test_evaluation_v5_isolation.py \
-  tests/test_evaluation_v5_user_study.py
+  tests/test_evaluation_v5_user_study.py \
+  tests/test_evaluation_v5_user_study_analysis.py
 run_check "study-only package validation" "$PYTHON_BIN" scripts/user_study_package.py verify
 run_check "Protocol-v5 E3 real-adapter synthetic smoke" env PYTHONPATH=. "$PYTHON_BIN" -m evaluation_v5.user_study.smoke
 run_check "preserved cluster artifact integrity" "$PYTHON_BIN" -m cluster_evaluation.validate_artifacts

@@ -30,11 +30,19 @@ from .schemas import (
     validate_task_set,
 )
 from .fairness import validate_study_environment_identity
+from .questionnaires import (
+    ANALYSIS_PLAN_SHA256,
+    ANALYSIS_PLAN_VERSION,
+    QUESTIONNAIRE_INSTRUMENT_SHA256,
+    QUESTIONNAIRE_INSTRUMENT_VERSION,
+    QUESTIONNAIRE_SCHEMA_SHA256,
+    QUESTIONNAIRE_SCHEMA_VERSION,
+)
 from .scoring import FINAL_SELECTION_SCORING_VERSION
 
 
 PROTOCOL_VERSION = "5.0.0"
-ASSIGNMENT_GENERATOR_VERSION = "protocol-v5-user-study-counterbalance-v1.1.0"
+ASSIGNMENT_GENERATOR_VERSION = "protocol-v5-user-study-counterbalance-v1.2.0"
 PARTICIPANT_TARGET = 36
 COUNTERBALANCE_CELL_COUNT = 12
 
@@ -395,6 +403,12 @@ class AssignmentManifest:
     policy_version: str
     event_schema_version: str
     selection_scoring_version: str
+    questionnaire_schema_version: str
+    questionnaire_schema_sha256: str
+    questionnaire_instrument_version: str
+    questionnaire_instrument_sha256: str
+    analysis_plan_version: str
+    analysis_plan_sha256: str
     environment_identity: Mapping[str, Any]
     assignments: tuple[ParticipantAssignment, ...]
     balance_audit: Mapping[str, Any]
@@ -423,6 +437,12 @@ class AssignmentManifest:
             "policy_version",
             "event_schema_version",
             "selection_scoring_version",
+            "questionnaire_schema_version",
+            "questionnaire_schema_sha256",
+            "questionnaire_instrument_version",
+            "questionnaire_instrument_sha256",
+            "analysis_plan_version",
+            "analysis_plan_sha256",
             "environment_identity",
             "assignments",
             "balance_audit",
@@ -445,10 +465,16 @@ class AssignmentManifest:
             "policy_version",
             "event_schema_version",
             "selection_scoring_version",
+            "questionnaire_schema_version",
+            "questionnaire_instrument_version",
+            "analysis_plan_version",
         ):
             object.__setattr__(self, name, _safe_id(getattr(self, name), name))
         _require(bool(_SHA256.fullmatch(self.task_set_sha256)), "task_set_sha256 must be SHA-256")
         _require(bool(_SHA256.fullmatch(self.browser_task_set_sha256)), "browser_task_set_sha256 must be SHA-256")
+        _require(bool(_SHA256.fullmatch(self.questionnaire_schema_sha256)), "questionnaire_schema_sha256 must be SHA-256")
+        _require(bool(_SHA256.fullmatch(self.questionnaire_instrument_sha256)), "questionnaire_instrument_sha256 must be SHA-256")
+        _require(bool(_SHA256.fullmatch(self.analysis_plan_sha256)), "analysis_plan_sha256 must be SHA-256")
         _require(
             isinstance(self.seed, int) and not isinstance(self.seed, bool) and self.seed >= 0,
             "seed must be a non-negative integer",
@@ -474,6 +500,12 @@ class AssignmentManifest:
             self.selection_scoring_version == FINAL_SELECTION_SCORING_VERSION,
             "assignment selection_scoring_version is unsupported",
         )
+        _require(self.questionnaire_schema_version == QUESTIONNAIRE_SCHEMA_VERSION, "assignment questionnaire_schema_version is unsupported")
+        _require(self.questionnaire_schema_sha256 == QUESTIONNAIRE_SCHEMA_SHA256, "assignment questionnaire-schema checksum is unsupported")
+        _require(self.questionnaire_instrument_version == QUESTIONNAIRE_INSTRUMENT_VERSION, "assignment questionnaire_instrument_version is unsupported")
+        _require(self.questionnaire_instrument_sha256 == QUESTIONNAIRE_INSTRUMENT_SHA256, "assignment questionnaire-instrument checksum is unsupported")
+        _require(self.analysis_plan_version == ANALYSIS_PLAN_VERSION, "assignment analysis_plan_version is unsupported")
+        _require(self.analysis_plan_sha256 == ANALYSIS_PLAN_SHA256, "assignment analysis-plan checksum is unsupported")
         object.__setattr__(
             self,
             "environment_identity",
@@ -516,6 +548,12 @@ class AssignmentManifest:
             "policy_version": self.policy_version,
             "event_schema_version": self.event_schema_version,
             "selection_scoring_version": self.selection_scoring_version,
+            "questionnaire_schema_version": self.questionnaire_schema_version,
+            "questionnaire_schema_sha256": self.questionnaire_schema_sha256,
+            "questionnaire_instrument_version": self.questionnaire_instrument_version,
+            "questionnaire_instrument_sha256": self.questionnaire_instrument_sha256,
+            "analysis_plan_version": self.analysis_plan_version,
+            "analysis_plan_sha256": self.analysis_plan_sha256,
             "environment_identity": dict(self.environment_identity),
             "assignments": [item.to_dict() for item in self.assignments],
             "balance_audit": dict(self.balance_audit),
@@ -527,6 +565,12 @@ class AssignmentManifest:
             legacy_fields = cls._FIELDS - {
                 "event_schema_version",
                 "selection_scoring_version",
+                "questionnaire_schema_version",
+                "questionnaire_schema_sha256",
+                "questionnaire_instrument_version",
+                "questionnaire_instrument_sha256",
+                "analysis_plan_version",
+                "analysis_plan_sha256",
             }
             if set(value) == legacy_fields:
                 _require(
@@ -537,6 +581,13 @@ class AssignmentManifest:
                     **dict(value),
                     "event_schema_version": EVENT_SCHEMA_VERSION,
                     "selection_scoring_version": FINAL_SELECTION_SCORING_VERSION,
+                    "questionnaire_schema_version": QUESTIONNAIRE_SCHEMA_VERSION,
+                    "questionnaire_schema_sha256": QUESTIONNAIRE_SCHEMA_SHA256,
+                    "questionnaire_instrument_version": QUESTIONNAIRE_INSTRUMENT_VERSION,
+                    "questionnaire_instrument_sha256": QUESTIONNAIRE_INSTRUMENT_SHA256,
+                    "analysis_plan_version": ANALYSIS_PLAN_VERSION,
+                    "analysis_plan_sha256": ANALYSIS_PLAN_SHA256,
+                    "schema_version": ASSIGNMENT_SCHEMA_VERSION,
                 }
         payload = _exact(value, cls._FIELDS, "assignment manifest")
         assignments = payload["assignments"]
@@ -570,6 +621,12 @@ class AssignmentManifest:
             policy_version=payload["policy_version"],
             event_schema_version=payload["event_schema_version"],
             selection_scoring_version=payload["selection_scoring_version"],
+            questionnaire_schema_version=payload["questionnaire_schema_version"],
+            questionnaire_schema_sha256=payload["questionnaire_schema_sha256"],
+            questionnaire_instrument_version=payload["questionnaire_instrument_version"],
+            questionnaire_instrument_sha256=payload["questionnaire_instrument_sha256"],
+            analysis_plan_version=payload["analysis_plan_version"],
+            analysis_plan_sha256=payload["analysis_plan_sha256"],
             environment_identity=dict(payload["environment_identity"]),
             assignments=tuple(ParticipantAssignment.from_dict(item) for item in assignments),
             balance_audit=dict(payload["balance_audit"]),
@@ -788,6 +845,12 @@ def generate_assignment_manifest(
         "policy_version": parsed.policy_version,
         "event_schema_version": EVENT_SCHEMA_VERSION,
         "selection_scoring_version": FINAL_SELECTION_SCORING_VERSION,
+        "questionnaire_schema_version": QUESTIONNAIRE_SCHEMA_VERSION,
+        "questionnaire_schema_sha256": QUESTIONNAIRE_SCHEMA_SHA256,
+        "questionnaire_instrument_version": QUESTIONNAIRE_INSTRUMENT_VERSION,
+        "questionnaire_instrument_sha256": QUESTIONNAIRE_INSTRUMENT_SHA256,
+        "analysis_plan_version": ANALYSIS_PLAN_VERSION,
+        "analysis_plan_sha256": ANALYSIS_PLAN_SHA256,
         "environment_identity": normalized_environment,
         "assignments": [item.to_dict() for item in participants],
     }
@@ -811,6 +874,12 @@ def generate_assignment_manifest(
         policy_version=parsed.policy_version,
         event_schema_version=EVENT_SCHEMA_VERSION,
         selection_scoring_version=FINAL_SELECTION_SCORING_VERSION,
+        questionnaire_schema_version=QUESTIONNAIRE_SCHEMA_VERSION,
+        questionnaire_schema_sha256=QUESTIONNAIRE_SCHEMA_SHA256,
+        questionnaire_instrument_version=QUESTIONNAIRE_INSTRUMENT_VERSION,
+        questionnaire_instrument_sha256=QUESTIONNAIRE_INSTRUMENT_SHA256,
+        analysis_plan_version=ANALYSIS_PLAN_VERSION,
+        analysis_plan_sha256=ANALYSIS_PLAN_SHA256,
         environment_identity=normalized_environment,
         assignments=tuple(participants),
         balance_audit=_balance(participants, [pair.pair_id for pair in measured]),
@@ -938,6 +1007,12 @@ def validate_assignment_manifest(
         "policy_version": parsed.policy_version,
         "event_schema_version": parsed.event_schema_version,
         "selection_scoring_version": parsed.selection_scoring_version,
+        "questionnaire_schema_version": parsed.questionnaire_schema_version,
+        "questionnaire_schema_sha256": parsed.questionnaire_schema_sha256,
+        "questionnaire_instrument_version": parsed.questionnaire_instrument_version,
+        "questionnaire_instrument_sha256": parsed.questionnaire_instrument_sha256,
+        "analysis_plan_version": parsed.analysis_plan_version,
+        "analysis_plan_sha256": parsed.analysis_plan_sha256,
         "environment_identity": dict(parsed.environment_identity),
         "assignments": [item.to_dict() for item in parsed.assignments],
     }

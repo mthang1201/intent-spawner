@@ -37,7 +37,9 @@ from .assignment import (
     validate_assignment_manifest,
 )
 from .metrics import (
+    MATCHED_PAIR_OUTCOME_SCHEMA_VERSION,
     SUMMARY_SCHEMA_VERSION,
+    TASK_OUTCOME_SCHEMA_VERSION,
     derive_study_metrics,
 )
 from .fairness import (
@@ -47,6 +49,28 @@ from .fairness import (
     verify_fairness_manifest,
 )
 from .scoring import FINAL_SELECTION_SCORING_VERSION
+from .questionnaires import (
+    ANALYSIS_PLAN_SHA256,
+    ANALYSIS_PLAN_VERSION,
+    QUESTIONNAIRE_INSTRUMENT_SHA256,
+    QUESTIONNAIRE_INSTRUMENT_VERSION,
+    QUESTIONNAIRE_OUTCOME_SCHEMA_VERSION,
+    QUESTIONNAIRE_SCHEMA_VERSION,
+    QUESTIONNAIRE_SCHEMA_SHA256,
+    QuestionnaireRecord,
+    QuestionnaireValidationError,
+    derive_questionnaire_outcomes,
+    expected_questionnaire_ids,
+    validate_questionnaire_stream,
+)
+from .analysis import (
+    ANALYSIS_SCHEMA_VERSION,
+    UserStudyAnalysisError,
+    analyze_user_study,
+    analysis_dependency_versions,
+    validate_analysis_dependencies,
+    write_analysis_artifacts,
+)
 from .schemas import (
     ASSIGNMENT_SCHEMA_VERSION,
     BROWSER_TASK_SET_SCHEMA_VERSION,
@@ -72,7 +96,7 @@ from .schemas import (
 
 PROTOCOL_VERSION = "5.0.0"
 EXPERIMENT_ID = "E3"
-FINALIZER_VERSION = "protocol-v5-user-study-finalizer-v1.0.0"
+FINALIZER_VERSION = "protocol-v5-user-study-finalizer-v1.1.0"
 PROVENANCE_SCHEMA_VERSION = "protocol-v5-user-study-provenance-v1.0.0"
 STATUS_SCHEMA_VERSION = "protocol-v5-user-study-status-v1.0.0"
 SESSION_SCHEMA_VERSION = "protocol-v5-user-study-session-v1.0.0"
@@ -542,6 +566,7 @@ def _validate_complete_sessions(
     events: Sequence[StudyEvent],
     manifest: AssignmentManifest,
     excluded: set[str],
+    questionnaires: Sequence[QuestionnaireRecord],
 ) -> set[str]:
     event_types: dict[tuple[str, str], set[EventType]] = defaultdict(set)
     for event in events:
@@ -551,6 +576,10 @@ def _validate_complete_sessions(
         assignment.session_id: assignment for assignment in manifest.assignments
     }
     complete: set[str] = set()
+    questionnaire_ids: dict[str, set[str]] = defaultdict(set)
+    for record in questionnaires:
+        if record.session_id not in excluded:
+            questionnaire_ids[record.session_id].add(record.questionnaire_id)
     for row in sessions:
         session_id = str(row["session_id"])
         if session_id in excluded or row["session_status"] != "complete":
@@ -563,6 +592,11 @@ def _validate_complete_sessions(
                 EventType.CONFIRM in terminal or EventType.CANCEL in terminal,
                 "complete session is missing an assigned terminal trial",
             )
+        _require(
+            questionnaire_ids.get(session_id, set())
+            == expected_questionnaire_ids(assignment),
+            "complete session is missing a scheduled questionnaire submission",
+        )
         complete.add(session_id)
     return complete
 
@@ -842,6 +876,20 @@ def validate_events_command(args: argparse.Namespace) -> dict[str, Any]:
     }
 
 
+def validate_questionnaires_command(args: argparse.Namespace) -> dict[str, Any]:
+    assignments = load_assignment_manifest(str(args.assignments))
+    raw_records, _ = _load_jsonl(args.questionnaires, "questionnaire JSONL")
+    parsed = validate_questionnaire_stream(raw_records, assignments)
+    return {
+        "schema_version": "protocol-v5-user-study-questionnaire-validation-v1.0.0",
+        "status": "VALID",
+        "questionnaire_schema_version": QUESTIONNAIRE_SCHEMA_VERSION,
+        "record_count": len(parsed),
+        "participant_count": len({record.participant_id for record in parsed}),
+        "questionnaire_file_sha256": _file_sha256(args.questionnaires),
+    }
+
+
 def _empty_summary(execution_status: str, reason: str) -> dict[str, Any]:
     return {
         "schema_version": SUMMARY_SCHEMA_VERSION,
@@ -878,8 +926,8 @@ def _limitations_text(
         f"- Evidence status: `{status}`. {evidence}\n"
         f"- Task set: `{task_set.task_set_id}` ({task_set.stage.value}/{task_set.status.value}).\n"
         f"- Whole-session exclusions recorded: {exclusions}.\n"
-        "- No significance claim, multiplicity-adjusted hypothesis test, or causal generalization is emitted.\n"
-        "- Any future inference must account for three co-primary outcomes and repeated tasks clustered by participant.\n"
+        "- NOT_EXECUTED and DRY_RUN packages emit no empirical significance claim; real packages use the frozen two-outcome Holm family.\n"
+        "- Inference accounts for repeated tasks clustered within participant, with matched task pair modeled as a fixed factor.\n"
         "- Findings are bounded to the recruited population, frozen scenarios, catalog, policy, Hub, and cluster identity.\n"
         "- Institutional consent, ethics review, retention, withdrawal, and legal requirements remain the researcher's responsibility.\n"
     )
@@ -955,14 +1003,25 @@ def finalize_command(args: argparse.Namespace) -> dict[str, Any]:
     event_records, event_raw = _load_jsonl(args.events, "event JSONL")
     session_records, session_raw = _load_jsonl(args.sessions, "session JSONL")
     exclusion_records, exclusion_raw = _load_jsonl(args.exclusions, "exclusion JSONL")
+    questionnaire_records, questionnaire_raw = _load_jsonl(
+        args.questionnaires, "questionnaire JSONL"
+    )
     if status == "NOT_EXECUTED":
         _require(
-            not event_records and not session_records and not exclusion_records,
-            "NOT_EXECUTED finalization rejects event, session, or exclusion records",
+            not event_records
+            and not session_records
+            and not exclusion_records
+            and not questionnaire_records,
+            "NOT_EXECUTED finalization rejects event, session, exclusion, or questionnaire records",
         )
+    if real_status:
+        _require(args.questionnaires is not None, "real evidence requires --questionnaires")
 
     sessions = _validate_sessions(session_records, assignments)
     exclusions = _validate_exclusions(exclusion_records, assignments)
+    questionnaires = validate_questionnaire_stream(
+        questionnaire_records, assignments
+    )
     parsed_events = [validate_event(row) for row in event_records]
     if parsed_events:
         _validate_raw_prefixes(parsed_events, sessions, exclusions)
@@ -977,6 +1036,11 @@ def finalize_command(args: argparse.Namespace) -> dict[str, Any]:
         event
         for event in parsed_events
         if event.session_id not in nonanalyzable_sessions
+    ]
+    analyzable_questionnaires = [
+        record
+        for record in questionnaires
+        if record.session_id not in nonanalyzable_sessions
     ]
     if analyzable_events:
         validate_event_stream(
@@ -994,6 +1058,7 @@ def finalize_command(args: argparse.Namespace) -> dict[str, Any]:
         analyzable_events,
         assignments,
         nonanalyzable_sessions,
+        analyzable_questionnaires,
     )
     if real_status:
         _require(bool(sessions), "real evidence requires versioned session records")
@@ -1041,6 +1106,22 @@ def finalize_command(args: argparse.Namespace) -> dict[str, Any]:
             status,
             "No analyzable event stream was supplied; no outcome denominator was invented.",
         )
+    questionnaire_rows = derive_questionnaire_outcomes(
+        analyzable_questionnaires
+    )
+    analysis_dependencies = (
+        analysis_dependency_versions()
+        if status == "NOT_EXECUTED"
+        else validate_analysis_dependencies()
+    )
+    analysis = analyze_user_study(
+        execution_status=status,
+        task_rows=task_rows,
+        questionnaire_rows=questionnaire_rows,
+        sessions=sessions,
+        exclusions=exclusions,
+        assignment_manifest=assignments,
+    )
     summary["session_coverage"] = {
         "session_record_count": len(sessions),
         "complete_session_count": len(complete_sessions),
@@ -1088,11 +1169,20 @@ def finalize_command(args: argparse.Namespace) -> dict[str, Any]:
         "experiment_executed": real_status,
         "synthetic_only": status == "DRY_RUN",
         "observed_evidence": real_status,
-        "formal_inference_emitted": False,
+        "formal_inference_emitted": real_status
+        and any(
+            analysis.get("effects", {}).get(endpoint, {}).get("p_value_raw")
+            is not None
+            for endpoint in ("selection_success", "decision_time_seconds")
+        ),
         "task_set_stage": tasks.stage.value,
         "task_set_status": tasks.status.value,
         "raw_event_count": len(parsed_events),
         "analyzable_event_count": len(analyzable_events),
+        "raw_questionnaire_submission_count": len(questionnaires),
+        "analyzable_questionnaire_submission_count": len(
+            analyzable_questionnaires
+        ),
         "measured_task_outcome_count": len(task_rows),
         "participant_target": PARTICIPANT_TARGET,
         "valid_completed_crossover_count": len(complete_sessions),
@@ -1132,6 +1222,16 @@ def finalize_command(args: argparse.Namespace) -> dict[str, Any]:
             "file_sha256": _sha256_bytes(exclusion_raw) if args.exclusions is not None else None,
             "record_count": len(exclusions),
         },
+        "questionnaires": {
+            "artifact_role": "staging_questionnaires",
+            "supplied": args.questionnaires is not None,
+            "file_sha256": (
+                _sha256_bytes(questionnaire_raw)
+                if args.questionnaires is not None
+                else None
+            ),
+            "record_count": len(questionnaires),
+        },
     }
     staging = _create_staging_directory(target)
     try:
@@ -1149,27 +1249,37 @@ def finalize_command(args: argparse.Namespace) -> dict[str, Any]:
         raw_exclusions = _write_bytes_exclusive(
             raw_dir / "exclusions.jsonl", exclusion_raw
         )
+        raw_questionnaires = _write_bytes_exclusive(
+            raw_dir / "questionnaires.jsonl", questionnaire_raw
+        )
         task_output = _write_jsonl_exclusive(
             derived_dir / "task-outcomes.jsonl", task_rows
         )
         pair_output = _write_jsonl_exclusive(
             derived_dir / "matched-pair-outcomes.jsonl", pair_rows
         )
+        questionnaire_output = _write_jsonl_exclusive(
+            derived_dir / "questionnaire-outcomes.jsonl", questionnaire_rows
+        )
         summary_output = write_json_exclusive(derived_dir / "summary.json", summary)
         status_output = write_json_exclusive(report_dir / "status.json", status_report)
         limitations_output = _write_bytes_exclusive(
             report_dir / "limitations.md", limitations
         )
+        analysis_outputs = write_analysis_artifacts(staging, analysis)
         output_paths = (
             raw_assignment,
             raw_events,
             raw_sessions,
             raw_exclusions,
+            raw_questionnaires,
             task_output,
             pair_output,
+            questionnaire_output,
             summary_output,
             status_output,
             limitations_output,
+            *analysis_outputs,
         )
         output_checksums = {
             str(path.relative_to(staging)): _file_sha256(path)
@@ -1188,6 +1298,7 @@ def finalize_command(args: argparse.Namespace) -> dict[str, Any]:
                 "python_version": platform.python_version(),
                 "python_implementation": platform.python_implementation(),
                 "platform": platform.platform(),
+                "analysis_dependencies": analysis_dependencies,
             },
             "contracts": {
                 "task_set_schema_version": TASK_SET_SCHEMA_VERSION,
@@ -1195,6 +1306,16 @@ def finalize_command(args: argparse.Namespace) -> dict[str, Any]:
                 "assignment_generator_version": ASSIGNMENT_GENERATOR_VERSION,
                 "event_schema_version": EVENT_SCHEMA_VERSION,
                 "selection_scoring_version": FINAL_SELECTION_SCORING_VERSION,
+                "questionnaire_schema_version": QUESTIONNAIRE_SCHEMA_VERSION,
+                "questionnaire_schema_sha256": QUESTIONNAIRE_SCHEMA_SHA256,
+                "questionnaire_instrument_version": QUESTIONNAIRE_INSTRUMENT_VERSION,
+                "questionnaire_instrument_sha256": QUESTIONNAIRE_INSTRUMENT_SHA256,
+                "questionnaire_outcome_schema_version": QUESTIONNAIRE_OUTCOME_SCHEMA_VERSION,
+                "analysis_plan_version": ANALYSIS_PLAN_VERSION,
+                "analysis_plan_sha256": ANALYSIS_PLAN_SHA256,
+                "analysis_schema_version": ANALYSIS_SCHEMA_VERSION,
+                "task_outcome_schema_version": TASK_OUTCOME_SCHEMA_VERSION,
+                "matched_pair_outcome_schema_version": MATCHED_PAIR_OUTCOME_SCHEMA_VERSION,
                 "fairness_manifest_schema_version": FAIRNESS_MANIFEST_SCHEMA_VERSION,
                 "session_schema_version": SESSION_SCHEMA_VERSION,
                 "exclusion_schema_version": EXCLUSION_SCHEMA_VERSION,
@@ -1240,6 +1361,7 @@ def finalize_command(args: argparse.Namespace) -> dict[str, Any]:
         "result_directory": str(target),
         "manifest": str(manifest_output),
         "raw_event_count": len(parsed_events),
+        "questionnaire_submission_count": len(questionnaires),
         "measured_task_outcome_count": len(task_rows),
         "matched_pair_outcome_count": len(pair_rows),
     }
@@ -1302,6 +1424,14 @@ def _parser() -> argparse.ArgumentParser:
     event_parser.add_argument("--confirmatory", action="store_true")
     event_parser.set_defaults(handler=validate_events_command)
 
+    questionnaire_parser = commands.add_parser(
+        "validate-questionnaires",
+        help="Validate closed-response questionnaire exports",
+    )
+    questionnaire_parser.add_argument("questionnaires", type=Path)
+    questionnaire_parser.add_argument("--assignments", type=Path, required=True)
+    questionnaire_parser.set_defaults(handler=validate_questionnaires_command)
+
     finalize_parser = commands.add_parser(
         "finalize", help="Validate staging data and create an immutable E3 result"
     )
@@ -1311,6 +1441,7 @@ def _parser() -> argparse.ArgumentParser:
     finalize_parser.add_argument("--events", type=Path)
     finalize_parser.add_argument("--sessions", type=Path)
     finalize_parser.add_argument("--exclusions", type=Path)
+    finalize_parser.add_argument("--questionnaires", type=Path)
     finalize_parser.add_argument("--catalog", type=Path)
     finalize_parser.add_argument("--execution-status", choices=sorted(EXECUTION_STATUSES), default="NOT_EXECUTED")
     finalize_parser.add_argument("--created-at-utc")
@@ -1328,6 +1459,8 @@ def main(argv: Sequence[str] | None = None) -> int:
     except (
         UserStudyRunnerError,
         UserStudyValidationError,
+        QuestionnaireValidationError,
+        UserStudyAnalysisError,
         FileExistsError,
         OSError,
         ValueError,

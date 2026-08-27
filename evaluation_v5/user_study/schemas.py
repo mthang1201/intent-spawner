@@ -27,7 +27,7 @@ TASK_SET_SCHEMA_VERSION = "protocol-v5-user-study-task-set-v1.0.0"
 BROWSER_TASK_SET_SCHEMA_VERSION = (
     "protocol-v5-user-study-browser-task-set-v1.0.0"
 )
-ASSIGNMENT_SCHEMA_VERSION = "protocol-v5-user-study-assignment-v1.0.0"
+ASSIGNMENT_SCHEMA_VERSION = "protocol-v5-user-study-assignment-v1.1.0"
 EVENT_SCHEMA_VERSION = "protocol-v5-user-study-event-v1.0.0"
 DECISION_LIMIT_SECONDS = 600.0
 READINESS_LIMIT_SECONDS = 180.0
