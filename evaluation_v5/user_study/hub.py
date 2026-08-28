@@ -79,7 +79,7 @@ from .schemas import (
 )
 
 
-STUDY_HUB_ADAPTER_VERSION = "protocol-v5-user-study-hub-adapter-v1.2.0"
+STUDY_HUB_ADAPTER_VERSION = "protocol-v5-user-study-hub-adapter-v1.3.0"
 STUDY_HUB_PACKAGE_CHECKSUM_ENV = "INTENT_SPAWNER_USER_STUDY_PACKAGE_CHECKSUM"
 STUDY_HUB_PACKAGE_VERSION_ENV = "INTENT_SPAWNER_USER_STUDY_PACKAGE_VERSION"
 STUDY_ASSIGNMENT_CHECKSUM_ENV = "INTENT_SPAWNER_USER_STUDY_ASSIGNMENT_CHECKSUM"
@@ -1573,7 +1573,7 @@ def options_form(
       form.addEventListener("submit",e=>{if(!allowSubmit)e.preventDefault();});
       form.querySelectorAll('input[type="submit"],button[type="submit"]').forEach(button=>button.style.display="none");
       document.getElementById("study-cancel").addEventListener("click",async()=>{try{await event("cancel",{cancel_reason:"participant_cancelled"});window.location.assign(advanceEndpoint);}catch(error){window.alert(error.message);}});
-      window.setTimeout(async()=>{try{await event("cancel",{cancel_reason:"decision_timeout"});window.location.assign(advanceEndpoint);}catch(_){window.location.reload();}},600000);
+      window.setTimeout(async()=>{try{await event("cancel",{cancel_reason:"decision_timeout"});window.location.assign(advanceEndpoint);}catch(_){window.location.reload();}},__DECISION_TIMEOUT_MILLISECONDS__);
       if(condition==="B0"){
         changed(document.getElementById("study_profile"),"profile_changed","old_profile_id","new_profile_id");
         changed(document.getElementById("study_image_id"),"image_changed","old_image_id","new_image_id");
@@ -1606,6 +1606,9 @@ def options_form(
         "__PREVIEW_ENDPOINT__": safe_json_dumps(preview_endpoint),
         "__EVENT_ENDPOINT__": safe_json_dumps(event_endpoint),
         "__ADVANCE_ENDPOINT__": safe_json_dumps(advance_endpoint),
+        "__DECISION_TIMEOUT_MILLISECONDS__": str(
+            int(DECISION_TIMEOUT_SECONDS * 1000)
+        ),
     }
     for marker, replacement in replacements.items():
         template = template.replace(marker, replacement)

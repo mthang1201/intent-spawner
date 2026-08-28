@@ -13,15 +13,22 @@ import jsonschema
 import pytest
 
 from evaluation_v5.user_study import analysis as analysis_module
+from evaluation_v5.user_study import runner as runner_module
 from evaluation_v5.user_study.analysis import (
     UserStudyAnalysisError,
     analyze_user_study,
     audit_report_privacy,
     write_analysis_artifacts,
 )
-from evaluation_v5.user_study.assignment import generate_assignment_manifest
+from evaluation_v5.user_study.assignment import (
+    AssignmentManifest,
+    generate_assignment_manifest,
+)
 from evaluation_v5.user_study.hub import StudyGateStore, StudyHubError
 from evaluation_v5.user_study.questionnaires import (
+    ANALYSIS_PLAN,
+    ANALYSIS_PLAN_SHA256,
+    ANALYSIS_PLAN_VERSION,
     CUSTOM_ITEM_IDS,
     FINAL_PREFERENCE_ID,
     QUESTIONNAIRE_INSTRUMENT_VERSION,
@@ -49,8 +56,12 @@ from evaluation_v5.user_study.runner import (
 )
 from evaluation_v5.user_study.schemas import (
     EVENT_SCHEMA_VERSION,
+    STUDY_TIMING_CONTRACT,
+    STUDY_TIMING_CONTRACT_SHA256,
+    STUDY_TIMING_CONTRACT_VERSION,
     CancelReason,
     EventType,
+    UserStudyValidationError,
     browser_safe_task_set,
     load_task_set,
     validate_event,
@@ -402,6 +413,12 @@ def test_synthetic_analysis_emits_effects_intervals_and_aggregate_reports(tmp_pa
     assert analysis["effects"]["selection_success"]["risk_difference"] is not None
     assert analysis["effects"]["decision_time_seconds"]["raw_paired_effect"]["confidence_interval_95"] != [None, None]
     assert analysis["effects"]["decision_time_seconds"]["status"] == "MODELED"
+    assert analysis["effects"]["decision_time_seconds"]["estimand"] == (
+        ANALYSIS_PLAN["decision_time_seconds"]["estimand"]
+    )
+    assert analysis["effects"]["decision_time_seconds"][
+        "primary_timeout_or_pseudotime_policy"
+    ] == "none"
     assert analysis["effects"]["seq_ease"]["status"] == "MODELED"
     assert analysis["effects"]["holm_family"]["family"] == ["selection_success", "decision_time_seconds"]
     registry = analysis["primary_inference_registry"]
@@ -440,6 +457,22 @@ def test_synthetic_analysis_emits_effects_intervals_and_aggregate_reports(tmp_pa
     )
     assert "report/privacy-audit.json" in report_manifest["generated_files"]
     assert report_manifest["analysis_dependencies"] == analysis_module.PINNED_ANALYSIS_DEPENDENCIES
+    assert report_manifest["supported_python"] == ">=3.12,<3.15"
+    assert report_manifest["pinned_analysis_dependency_requires_python"] == (
+        analysis_module.PINNED_ANALYSIS_REQUIRES_PYTHON
+    )
+    assert report_manifest["decision_time_contract"][
+        "nonconfirmation_bound_seconds"
+    ] == 600
+    model_effects = json.loads(
+        (tmp_path / "derived" / "model-effects.json").read_text()
+    )
+    assert model_effects["decision_time_timeout_sensitivity"][
+        "primary_holm_family"
+    ] is False
+    report_text = (tmp_path / "report" / "USER_STUDY_REPORT.md").read_text()
+    assert "Non-confirmation is outcome unavailability" in report_text
+    assert "no timeout penalty or pseudo-time enters the primary" in report_text
     assert report_manifest["python_version"]
     assert report_manifest["figure_renderer"] == "matplotlib_svg"
     assert report_manifest["generated_file_sha256"]
@@ -623,9 +656,76 @@ def test_nonconfirmation_is_missing_outcome_not_exclusion(monkeypatch):
     assert b0["nonconfirmation_count"] == 1
     assert b0["nonconfirmation_reasons"] == {"participant_cancelled": 1}
     assert analysis["participant_flow"][4] == {"stage": "excluded_sessions", "count": 0}
-    assert analysis["effects"]["decision_time_timeout_sensitivity"][
-        "timeout_bound_seconds"
+    decision = analysis["effects"]["decision_time_seconds"]
+    accounting = decision["population_accounting"]
+    assert decision["response_variable"] == "decision_time_seconds"
+    assert decision["eligibility"]["eligible_row_count"] == 70
+    assert accounting["assigned_measured_trial_count"] == 72
+    assert accounting["primary_eligible_matched_pair_count"] == 35
+    assert accounting["condition_denominators"]["B0"] == {
+        "assigned_measured_trial_count": 36,
+        "confirmed_trial_count": 35,
+        "nonconfirmed_trial_count": 1,
+        "decision_time_available_count": 35,
+        "decision_time_unavailable_count": 1,
+    }
+    assert accounting["condition_denominators"]["P2"] == {
+        "assigned_measured_trial_count": 36,
+        "confirmed_trial_count": 36,
+        "nonconfirmed_trial_count": 0,
+        "decision_time_available_count": 36,
+        "decision_time_unavailable_count": 0,
+    }
+    sensitivity = analysis["effects"]["decision_time_timeout_sensitivity"]
+    assert sensitivity["timeout_bound_seconds"] == 600
+    assert sensitivity["timing_contract_version"] == STUDY_TIMING_CONTRACT_VERSION
+    assert sensitivity["timing_contract_sha256"] == STUDY_TIMING_CONTRACT_SHA256
+    assert sensitivity["analysis_plan_version"] == ANALYSIS_PLAN_VERSION
+    assert sensitivity["analysis_plan_sha256"] == ANALYSIS_PLAN_SHA256
+    assert sensitivity["primary_holm_family"] is False
+    assert analysis["primary_inference_registry"]["family_size"] == 2
+
+
+def test_frozen_analysis_runtime_rejects_python_311_and_records_metadata():
+    with pytest.raises(UserStudyAnalysisError, match=r"Python 3\.11.*>=3\.12,<3\.15"):
+        analysis_module.validate_analysis_runtime(python_version=(3, 11))
+    assert analysis_module.validate_analysis_dependencies(
+        python_version=(3, 12)
+    ) == analysis_module.PINNED_ANALYSIS_DEPENDENCIES
+    assert analysis_module.analysis_dependency_python_requirements() == (
+        analysis_module.PINNED_ANALYSIS_REQUIRES_PYTHON
+    )
+    assert analysis_module.PINNED_ANALYSIS_REQUIRES_PYTHON["numpy"] == ">=3.12"
+    assert analysis_module.PINNED_ANALYSIS_REQUIRES_PYTHON["scipy"] == ">=3.12"
+
+
+def test_frozen_timeout_contract_is_assignment_bound_and_drift_fails_closed(
+    synthetic_assignment,
+):
+    frozen = ANALYSIS_PLAN["decision_time_nonconfirmation_bound"]
+    assert STUDY_TIMING_CONTRACT[
+        "decision_time_nonconfirmation_bound_seconds"
     ] == 600
+    assert frozen == {
+        "seconds": 600,
+        "semantics": STUDY_TIMING_CONTRACT[
+            "decision_time_nonconfirmation_bound_semantics"
+        ],
+        "timing_contract_version": STUDY_TIMING_CONTRACT_VERSION,
+        "timing_contract_sha256": STUDY_TIMING_CONTRACT_SHA256,
+        "source": "frozen_server_enforced_study_task_timing_contract",
+        "tuned_from_participant_results": False,
+    }
+    assert synthetic_assignment.analysis_plan_version == ANALYSIS_PLAN_VERSION
+    assert synthetic_assignment.analysis_plan_sha256 == ANALYSIS_PLAN_SHA256
+
+    payload = synthetic_assignment.to_dict()
+    payload["analysis_plan_sha256"] = "0" * 64
+    with pytest.raises(
+        UserStudyValidationError,
+        match="assignment analysis-plan checksum is unsupported",
+    ):
+        AssignmentManifest.from_dict(payload)
 
 
 @pytest.mark.parametrize(
@@ -710,5 +810,43 @@ def test_not_executed_finalization_generates_full_placeholder_surface(
     assert derived["effects"] == {}
     provenance = json.loads((output / "manifest.json").read_text())
     assert provenance["contracts"]["analysis_plan_sha256"] == synthetic_assignment.analysis_plan_sha256
+    assert provenance["contracts"]["study_timing_contract_version"] == STUDY_TIMING_CONTRACT_VERSION
+    assert provenance["contracts"]["study_timing_contract_sha256"] == STUDY_TIMING_CONTRACT_SHA256
+    assert provenance["contracts"]["decision_time_nonconfirmation_bound_seconds"] == 600
     assert provenance["contracts"]["questionnaire_schema_version"] == synthetic_assignment.questionnaire_schema_version
     assert provenance["runtime"]["analysis_dependencies"] == analysis_module.PINNED_ANALYSIS_DEPENDENCIES
+    assert provenance["runtime"]["supported_python"] == ">=3.12,<3.15"
+
+
+def test_not_executed_finalization_enforces_runtime_contract(
+    tmp_path, synthetic_assignment, monkeypatch, capsys
+):
+    assignment_path = tmp_path / "assignment.json"
+    assignment_path.write_text(json.dumps(synthetic_assignment.to_dict()) + "\n")
+    output = tmp_path / "unsupported-runtime"
+
+    def reject_runtime():
+        raise UserStudyAnalysisError(
+            "unsupported Python 3.11; requires >=3.12,<3.15"
+        )
+
+    monkeypatch.setattr(runner_module, "validate_analysis_runtime", reject_runtime)
+    assert user_study_main(
+        [
+            "finalize",
+            "--run-id",
+            "synthetic-unsupported-runtime-contract-test",
+            "--task-set",
+            str(TASK_SET_PATH),
+            "--assignments",
+            str(assignment_path),
+            "--execution-status",
+            "NOT_EXECUTED",
+            "--output-dir",
+            str(output),
+            "--created-at-utc",
+            datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
+        ]
+    ) == 2
+    assert "unsupported Python 3.11" in capsys.readouterr().err
+    assert not output.exists()

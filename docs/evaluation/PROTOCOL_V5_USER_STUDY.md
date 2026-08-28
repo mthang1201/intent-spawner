@@ -19,10 +19,13 @@ The two directional co-primary hypotheses are:
   (`selection_success`, asserted equivalent to `selection_acceptable`). Exact
   selection of the frozen preferred candidate
   (`selection_correct`) is reported separately.
-- **H2 — decision time:** among confirmed complete matched tasks, P2 reduces
-  elapsed time from `task_shown` to `confirm`. Every assigned measured task
-  remains in confirmation and missingness accounting, and the frozen
-  600-second timeout-bound sensitivity retains unconfirmed trials.
+- **H2 — DecisionTime:** the primary estimand is conditional on matched task
+  pairs with valid positive confirmation times in both B0 and P2, and measures
+  elapsed time from `task_shown` to `confirm`. Every assigned measured trial
+  remains in participant-flow and missingness denominators. Non-confirmation is
+  outcome unavailability, not participant/task exclusion; differential
+  non-confirmation is reported explicitly and evaluated by the separately
+  labeled frozen 600-second timeout-bound sensitivity.
 Interaction burden, completion, cancellation, corrections, P2 overrides, and
 optional task-shown-to-notebook-ready time are secondary or diagnostic
 outcomes. Any future formal analysis must account for the two co-primary
@@ -272,10 +275,13 @@ For a measured task:
   `protocol-v5-user-study-final-selection-scoring-v1.0.0` contract.
 - `decision_time_seconds` is `confirm - task_shown`; it is null without a
   confirmation, with status `available`, `unavailable_cancelled`, or
-  `unavailable_no_confirmation` and a coded unavailability reason. The
-  secondary timeout-bound sensitivity uses the predeclared 600-second task
-  limit for an unconfirmed measured trial; it does not alter or impute the
-  primary DecisionTime field.
+  `unavailable_no_confirmation` and a coded unavailability reason. The primary
+  DecisionTime analysis uses only matched task pairs with valid positive times
+  in both conditions. No timeout penalty, offset, pseudo-time, or imputation
+  enters that primary model, and all assigned measured trials remain in the
+  flow and missingness denominators. The separately labeled secondary
+  timeout-bound sensitivity uses the predeclared 600-second task limit for an
+  unconfirmed measured trial.
 - `notebook_ready_time_seconds` is `notebook_ready - confirm`; it is null when
   either event is unavailable and carries an explicit status.
 - Separately, `end_to_end_seconds` is `notebook_ready - task_shown`; it is null
@@ -298,8 +304,23 @@ ID. Warm-ups are excluded. Report condition distributions, denominators,
 missingness, cancellation/readiness rates, participant-level paired
 differences, order/cell coverage, and any exclusions. Participant is the
 independent sampling unit; repeated task pairs must remain clustered within
-participant. Decision-time comparisons use confirmed matched tasks and must be
-interpreted alongside completion and missingness.
+participant. Primary DecisionTime comparisons are conditional on matched task
+pairs with valid positive confirmation times in both B0 and P2 and must be
+interpreted alongside condition-specific confirmation and missingness
+denominators. An unavailable DecisionTime is not an exclusion.
+
+The 600-second value is not tuned from participant results. Its authoritative
+source is the frozen server-enforced study timing contract
+`protocol-v5-user-study-timing-contract-v1.0.0`, field
+`decision_time_nonconfirmation_bound_seconds`. That contract has SHA-256
+`3a1cbe7ea27d0c52eb909770d8c72f6b7a6c566e049692cae647569dd47e055d`.
+The assignment-bound analysis plan
+`protocol-v5-user-study-analysis-plan-v1.2.0` copies and identifies that frozen
+field and has SHA-256
+`1874b426666111362ef79f4e23315dc8f51a97b10827ae2e596cc70523b1a3ce`;
+assignment validation fails closed on plan checksum drift. Finalization records
+both contract identities and the bound in machine-readable manifests and
+model/effect results. This sensitivity is outside the two-primary Holm family.
 
 ### Frozen pre-analysis plan
 
@@ -418,7 +439,7 @@ are documented in
 4. Export the append-only staging directory. Validate `events.jsonl` and
    `questionnaires.jsonl`, then finalize `events.jsonl`, `sessions.jsonl`,
    optional `exclusions.jsonl`, and required real-run `questionnaires.jsonl`
-   together into a new E3 run ID. Use supported CPython 3.11 through 3.14 and
+   together into a new E3 run ID. Use supported CPython 3.12 through 3.14 and
    install the exact NumPy, SciPy, Pandas, Patsy, Statsmodels, and Matplotlib
    versions with `pip install -r requirements-analysis.txt`; finalization
    refuses analysis dependency drift, records runtime/package versions, and
@@ -429,3 +450,9 @@ are documented in
 
 All repository tests use simulated streams only. Running the harness or its dry
 run is not participant recruitment and produces no empirical result.
+
+The effective Python floor is the intersection of exact distribution metadata:
+NumPy 2.5.1 and SciPy 1.18.1 require Python 3.12 or newer; Pandas 3.0.5 and
+Matplotlib 3.11.1 require 3.11 or newer; Statsmodels 0.14.6 requires 3.9 or
+newer; and Patsy 1.0.2 requires 3.6 or newer. Protocol-v5 freezes the validated
+upper runtime boundary below Python 3.15, yielding `>=3.12,<3.15`.

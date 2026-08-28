@@ -50,6 +50,7 @@ from .fairness import (
 )
 from .scoring import FINAL_SELECTION_SCORING_VERSION
 from .questionnaires import (
+    ANALYSIS_PLAN,
     ANALYSIS_PLAN_SHA256,
     ANALYSIS_PLAN_VERSION,
     QUESTIONNAIRE_INSTRUMENT_SHA256,
@@ -65,16 +66,23 @@ from .questionnaires import (
 )
 from .analysis import (
     ANALYSIS_SCHEMA_VERSION,
+    PINNED_ANALYSIS_DEPENDENCIES,
+    PINNED_ANALYSIS_REQUIRES_PYTHON,
+    SUPPORTED_PYTHON,
     UserStudyAnalysisError,
     analyze_user_study,
+    analysis_dependency_python_requirements,
     analysis_dependency_versions,
     validate_analysis_dependencies,
+    validate_analysis_runtime,
     write_analysis_artifacts,
 )
 from .schemas import (
     ASSIGNMENT_SCHEMA_VERSION,
     BROWSER_TASK_SET_SCHEMA_VERSION,
     EVENT_SCHEMA_VERSION,
+    STUDY_TIMING_CONTRACT_SHA256,
+    STUDY_TIMING_CONTRACT_VERSION,
     TASK_SET_SCHEMA_VERSION,
     CancelReason,
     EventType,
@@ -96,7 +104,7 @@ from .schemas import (
 
 PROTOCOL_VERSION = "5.0.0"
 EXPERIMENT_ID = "E3"
-FINALIZER_VERSION = "protocol-v5-user-study-finalizer-v1.2.0"
+FINALIZER_VERSION = "protocol-v5-user-study-finalizer-v1.3.0"
 PROVENANCE_SCHEMA_VERSION = "protocol-v5-user-study-provenance-v1.0.0"
 STATUS_SCHEMA_VERSION = "protocol-v5-user-study-status-v1.0.0"
 SESSION_SCHEMA_VERSION = "protocol-v5-user-study-session-v1.0.0"
@@ -1109,6 +1117,7 @@ def finalize_command(args: argparse.Namespace) -> dict[str, Any]:
     questionnaire_rows = derive_questionnaire_outcomes(
         analyzable_questionnaires
     )
+    validate_analysis_runtime()
     analysis_dependencies = (
         analysis_dependency_versions()
         if status == "NOT_EXECUTED"
@@ -1298,7 +1307,15 @@ def finalize_command(args: argparse.Namespace) -> dict[str, Any]:
                 "python_version": platform.python_version(),
                 "python_implementation": platform.python_implementation(),
                 "platform": platform.platform(),
+                "supported_python": SUPPORTED_PYTHON,
                 "analysis_dependencies": analysis_dependencies,
+                "pinned_analysis_dependencies": PINNED_ANALYSIS_DEPENDENCIES,
+                "analysis_dependency_requires_python": (
+                    analysis_dependency_python_requirements()
+                ),
+                "pinned_analysis_dependency_requires_python": (
+                    PINNED_ANALYSIS_REQUIRES_PYTHON
+                ),
             },
             "contracts": {
                 "task_set_schema_version": TASK_SET_SCHEMA_VERSION,
@@ -1313,6 +1330,15 @@ def finalize_command(args: argparse.Namespace) -> dict[str, Any]:
                 "questionnaire_outcome_schema_version": QUESTIONNAIRE_OUTCOME_SCHEMA_VERSION,
                 "analysis_plan_version": ANALYSIS_PLAN_VERSION,
                 "analysis_plan_sha256": ANALYSIS_PLAN_SHA256,
+                "study_timing_contract_version": (
+                    STUDY_TIMING_CONTRACT_VERSION
+                ),
+                "study_timing_contract_sha256": (
+                    STUDY_TIMING_CONTRACT_SHA256
+                ),
+                "decision_time_nonconfirmation_bound_seconds": ANALYSIS_PLAN[
+                    "decision_time_nonconfirmation_bound"
+                ]["seconds"],
                 "analysis_schema_version": ANALYSIS_SCHEMA_VERSION,
                 "task_outcome_schema_version": TASK_OUTCOME_SCHEMA_VERSION,
                 "matched_pair_outcome_schema_version": MATCHED_PAIR_OUTCOME_SCHEMA_VERSION,

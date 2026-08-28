@@ -29,15 +29,17 @@ from .questionnaires import (
 )
 
 
-ANALYSIS_SCHEMA_VERSION = "protocol-v5-user-study-analysis-v1.1.0"
-REPORTING_VERSION = "protocol-v5-user-study-reporting-v1.1.0"
+ANALYSIS_SCHEMA_VERSION = "protocol-v5-user-study-analysis-v1.2.0"
+REPORTING_VERSION = "protocol-v5-user-study-reporting-v1.2.0"
 BOOTSTRAP_REPLICATES = int(ANALYSIS_PLAN["bootstrap_replicates"])
 BOOTSTRAP_SEED = int(ANALYSIS_PLAN["bootstrap_seed"])
 ALPHA = float(ANALYSIS_PLAN["family_alpha"])
 BOOTSTRAP_MIN_SUCCESS_FRACTION = float(
     ANALYSIS_PLAN["bootstrap_minimum_success_fraction"]
 )
-SUPPORTED_PYTHON = ">=3.11,<3.15"
+SUPPORTED_PYTHON = ">=3.12,<3.15"
+SUPPORTED_PYTHON_MIN = (3, 12)
+SUPPORTED_PYTHON_MAX_EXCLUSIVE = (3, 15)
 PINNED_ANALYSIS_DEPENDENCIES = {
     "numpy": "2.5.1",
     "scipy": "1.18.1",
@@ -46,6 +48,37 @@ PINNED_ANALYSIS_DEPENDENCIES = {
     "statsmodels": "0.14.6",
     "matplotlib": "3.11.1",
 }
+PINNED_ANALYSIS_REQUIRES_PYTHON = {
+    "numpy": ">=3.12",
+    "scipy": ">=3.12",
+    "pandas": ">=3.11",
+    "patsy": ">=3.6",
+    "statsmodels": ">=3.9",
+    "matplotlib": ">=3.11",
+}
+
+
+def _decision_time_contract() -> dict[str, Any]:
+    frozen = ANALYSIS_PLAN["decision_time_nonconfirmation_bound"]
+    return {
+        "primary_estimand": ANALYSIS_PLAN["decision_time_seconds"]["estimand"],
+        "primary_eligibility": ANALYSIS_PLAN["decision_time_seconds"][
+            "eligibility"
+        ],
+        "assigned_trial_accounting": ANALYSIS_PLAN["decision_time_seconds"][
+            "assigned_trial_accounting"
+        ],
+        "nonconfirmation_policy": ANALYSIS_PLAN["decision_time_seconds"][
+            "nonconfirmation_policy"
+        ],
+        "nonconfirmation_bound_seconds": frozen["seconds"],
+        "nonconfirmation_bound_semantics": frozen["semantics"],
+        "timing_contract_version": frozen["timing_contract_version"],
+        "timing_contract_sha256": frozen["timing_contract_sha256"],
+        "analysis_plan_version": ANALYSIS_PLAN_VERSION,
+        "analysis_plan_sha256": ANALYSIS_PLAN_SHA256,
+        "sensitivity_primary_holm_family": False,
+    }
 
 
 class UserStudyAnalysisError(RuntimeError):
@@ -74,11 +107,37 @@ def analysis_dependency_versions() -> dict[str, str | None]:
     return versions
 
 
-def validate_analysis_dependencies() -> dict[str, str | None]:
-    if not ((3, 11) <= sys.version_info[:2] < (3, 15)):
+def analysis_dependency_python_requirements() -> dict[str, str | None]:
+    requirements: dict[str, str | None] = {}
+    for package in PINNED_ANALYSIS_DEPENDENCIES:
+        try:
+            requirements[package] = metadata.distribution(package).metadata.get(
+                "Requires-Python"
+            )
+        except metadata.PackageNotFoundError:
+            requirements[package] = None
+    return requirements
+
+
+def validate_analysis_runtime(
+    *, python_version: tuple[int, int] | None = None
+) -> None:
+    selected_python = python_version or sys.version_info[:2]
+    if not (
+        SUPPORTED_PYTHON_MIN
+        <= selected_python
+        < SUPPORTED_PYTHON_MAX_EXCLUSIVE
+    ):
+        observed = ".".join(str(part) for part in selected_python)
         raise UserStudyAnalysisError(
-            f"unsupported Python {sys.version.split()[0]}; requires {SUPPORTED_PYTHON}"
+            f"unsupported Python {observed}; requires {SUPPORTED_PYTHON}"
         )
+
+
+def validate_analysis_dependencies(
+    *, python_version: tuple[int, int] | None = None
+) -> dict[str, str | None]:
+    validate_analysis_runtime(python_version=python_version)
     versions = analysis_dependency_versions()
     drift = {
         package: {"expected": expected, "observed": versions[package]}
@@ -89,6 +148,20 @@ def validate_analysis_dependencies() -> dict[str, str | None]:
         raise UserStudyAnalysisError(
             "analysis dependency drift; install requirements-analysis.txt: "
             + json.dumps(drift, sort_keys=True)
+        )
+    python_requirements = analysis_dependency_python_requirements()
+    requirement_drift = {
+        package: {
+            "expected": expected,
+            "observed": python_requirements[package],
+        }
+        for package, expected in PINNED_ANALYSIS_REQUIRES_PYTHON.items()
+        if python_requirements[package] != expected
+    }
+    if requirement_drift:
+        raise UserStudyAnalysisError(
+            "analysis dependency Python-requirement metadata drift: "
+            + json.dumps(requirement_drift, sort_keys=True)
         )
     return versions
 
@@ -529,6 +602,21 @@ def _log_mixed_analysis(
     eligible_pair_count = len(frame) // 2
     requested = "log_time_participant_random_intercept_mixedlm"
 
+    time_contract = (
+        {
+            "estimand": ANALYSIS_PLAN["decision_time_seconds"]["estimand"],
+            "estimand_population": (
+                "matched_task_pairs_with_valid_positive_confirmation_times_in_both_conditions"
+            ),
+            "nonconfirmation_policy": ANALYSIS_PLAN["decision_time_seconds"][
+                "nonconfirmation_policy"
+            ],
+            "primary_timeout_or_pseudotime_policy": "none",
+        }
+        if field == "decision_time_seconds"
+        else {}
+    )
+
     def robust(reason: str) -> dict[str, Any]:
         return {
             "status": "FALLBACK",
@@ -544,6 +632,7 @@ def _log_mixed_analysis(
             ),
             "response_variable": field,
             "clock_definition": _clock_definition(field),
+            **time_contract,
             "geometric_mean_ratio": None,
             "geometric_mean_ratio_ci_95": [None, None],
             "percent_change": None,
@@ -599,7 +688,7 @@ def _log_mixed_analysis(
                 "condition_order_p2_first",
             ],
             "counterbalance_cell_handling": "coverage_diagnostic_only_redundant_with_frozen_design_terms",
-            "estimand": "conditional_P2_to_B0_geometric_mean_ratio_among_confirmed_complete_matched_tasks",
+            **time_contract,
             "geometric_mean_ratio": ratio,
             "geometric_mean_ratio_ci_95": [
                 math.exp(lower),
@@ -1084,6 +1173,38 @@ def _condition_summary(
     return summaries
 
 
+def _decision_time_population_accounting(
+    tasks: Sequence[Mapping[str, Any]],
+) -> dict[str, Any]:
+    matched = _complete_matched_rows(tasks, "decision_time_seconds")
+    by_condition = {}
+    for condition in ("B0", "P2"):
+        selected = [row for row in tasks if row.get("condition") == condition]
+        confirmed = [row for row in selected if bool(row.get("confirmed"))]
+        by_condition[condition] = {
+            "assigned_measured_trial_count": len(selected),
+            "confirmed_trial_count": len(confirmed),
+            "nonconfirmed_trial_count": len(selected) - len(confirmed),
+            "decision_time_available_count": sum(
+                _finite(row.get("decision_time_seconds")) is not None
+                for row in selected
+            ),
+            "decision_time_unavailable_count": sum(
+                _finite(row.get("decision_time_seconds")) is None
+                for row in selected
+            ),
+        }
+    return {
+        "all_assigned_measured_trials_retained_in_flow_and_missingness": True,
+        "assigned_measured_trial_count": len(tasks),
+        "primary_eligible_matched_pair_count": len(matched) // 2,
+        "primary_eligible_trial_row_count": len(matched),
+        "condition_denominators": by_condition,
+        "nonconfirmation_is_exclusion": False,
+        "primary_timeout_or_pseudotime_used": False,
+    }
+
+
 def _design_diagnostics(tasks: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
     def counts(field: str) -> dict[str, int]:
         values = {
@@ -1135,6 +1256,7 @@ def analyze_user_study(
             "observed_rows_present": False,
             "analysis_plan_version": ANALYSIS_PLAN_VERSION,
             "analysis_plan_sha256": ANALYSIS_PLAN_SHA256,
+            "decision_time_contract": _decision_time_contract(),
             "participant_flow": participant_flow,
             "condition_summary": [],
             "design_diagnostics": _design_diagnostics([]),
@@ -1153,6 +1275,9 @@ def analyze_user_study(
     condition_rows = [row for row in questionnaire_rows if row.get("questionnaire_type") == "post_condition"]
     selection = _selection_analysis(task_rows)
     decision = _log_mixed_analysis(task_rows, "decision_time_seconds", seed_offset=201)
+    decision["population_accounting"] = _decision_time_population_accounting(
+        task_rows
+    )
     adjusted = _holm(
         {
             "selection_success": selection.get("p_value_raw"),
@@ -1172,9 +1297,20 @@ def analyze_user_study(
                 seed_offset=205,
             ),
             "estimand": "timeout_bound_decision_completion_composite_P2_minus_B0",
-            "timeout_bound_seconds": ANALYSIS_PLAN["decision_time_seconds"][
-                "nonconfirmation_sensitivity"
-            ]["value_for_unconfirmed_trial_seconds"],
+            "timeout_bound_seconds": ANALYSIS_PLAN[
+                "decision_time_nonconfirmation_bound"
+            ]["seconds"],
+            "timeout_bound_semantics": ANALYSIS_PLAN[
+                "decision_time_nonconfirmation_bound"
+            ]["semantics"],
+            "timing_contract_version": ANALYSIS_PLAN[
+                "decision_time_nonconfirmation_bound"
+            ]["timing_contract_version"],
+            "timing_contract_sha256": ANALYSIS_PLAN[
+                "decision_time_nonconfirmation_bound"
+            ]["timing_contract_sha256"],
+            "analysis_plan_version": ANALYSIS_PLAN_VERSION,
+            "analysis_plan_sha256": ANALYSIS_PLAN_SHA256,
             "primary_holm_family": False,
         },
         "interaction_count": interaction,
@@ -1334,6 +1470,7 @@ def analyze_user_study(
         "synthetic_only": execution_status == "DRY_RUN",
         "analysis_plan_version": ANALYSIS_PLAN_VERSION,
         "analysis_plan_sha256": ANALYSIS_PLAN_SHA256,
+        "decision_time_contract": _decision_time_contract(),
         "participant_flow": participant_flow,
         "condition_summary": _condition_summary(task_rows, questionnaire_rows),
         "design_diagnostics": _design_diagnostics(task_rows),
@@ -1522,6 +1659,8 @@ def _report_markdown(analysis: Mapping[str, Any]) -> str:
         "",
         "Participant is the clustered/random sampling structure; the three frozen matched task pairs are fixed repeated factors only for task-level outcomes. Counterbalance cell is a coverage diagnostic because it is redundant with the frozen condition-order, variant, period, and position design.",
         "",
+        "Primary DecisionTime is conditional on matched task pairs with valid positive confirmation times in both B0 and P2. Every assigned measured trial remains in participant-flow and missingness denominators. Non-confirmation is outcome unavailability, not participant or task exclusion; differential non-confirmation is reported explicitly and evaluated only in the separately labeled predeclared timeout-bound sensitivity.",
+        "",
         "## Participant flow",
         "",
         "| Stage | Count |",
@@ -1569,7 +1708,7 @@ def _report_markdown(analysis: Mapping[str, Any]) -> str:
         )
         sensitivity = effects["decision_time_timeout_sensitivity"]
         lines.append(
-            f"- DecisionTime non-confirmation sensitivity: every measured trial is retained; an unconfirmed trial uses only the predeclared 600-second task-timeout bound. Paired P2-minus-B0 difference {_display(sensitivity.get('mean_difference'))} seconds, 95% CI {_display_ci(sensitivity.get('confidence_interval_95'))}. This sensitivity is not in the primary Holm family."
+            f"- DecisionTime non-confirmation sensitivity: every measured trial is retained; an unconfirmed trial uses only the predeclared {_display(sensitivity.get('timeout_bound_seconds'), digits=0)}-second task-timeout bound from `{sensitivity.get('timing_contract_version')}` (`{sensitivity.get('timing_contract_sha256')}`). Paired P2-minus-B0 difference {_display(sensitivity.get('mean_difference'))} seconds, 95% CI {_display_ci(sensitivity.get('confidence_interval_95'))}. This sensitivity is not in the primary Holm family and no timeout penalty or pseudo-time enters the primary DecisionTime model."
         )
         for key, label in (
             ("total_action_count", "Total actions"),
@@ -1693,6 +1832,13 @@ def write_analysis_artifacts(root: Path, analysis: Mapping[str, Any]) -> tuple[P
         "supported_python": SUPPORTED_PYTHON,
         "analysis_dependencies": analysis_dependency_versions(),
         "pinned_analysis_dependencies": PINNED_ANALYSIS_DEPENDENCIES,
+        "analysis_dependency_requires_python": (
+            analysis_dependency_python_requirements()
+        ),
+        "pinned_analysis_dependency_requires_python": (
+            PINNED_ANALYSIS_REQUIRES_PYTHON
+        ),
+        "decision_time_contract": _decision_time_contract(),
         "figure_renderer": "matplotlib_svg",
         "bootstrap_contract": {
             "resampling_unit": ANALYSIS_PLAN["bootstrap_resampling_unit"],
@@ -1735,10 +1881,14 @@ def write_analysis_artifacts(root: Path, analysis: Mapping[str, Any]) -> tuple[P
 __all__ = [
     "ANALYSIS_SCHEMA_VERSION",
     "PINNED_ANALYSIS_DEPENDENCIES",
+    "PINNED_ANALYSIS_REQUIRES_PYTHON",
+    "SUPPORTED_PYTHON",
     "UserStudyAnalysisError",
     "analyze_user_study",
+    "analysis_dependency_python_requirements",
     "analysis_dependency_versions",
     "audit_report_privacy",
     "validate_analysis_dependencies",
+    "validate_analysis_runtime",
     "write_analysis_artifacts",
 ]

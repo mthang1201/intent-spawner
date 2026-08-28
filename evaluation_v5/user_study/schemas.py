@@ -29,7 +29,27 @@ BROWSER_TASK_SET_SCHEMA_VERSION = (
 )
 ASSIGNMENT_SCHEMA_VERSION = "protocol-v5-user-study-assignment-v1.1.0"
 EVENT_SCHEMA_VERSION = "protocol-v5-user-study-event-v1.0.0"
-DECISION_LIMIT_SECONDS = 600.0
+STUDY_TIMING_CONTRACT_VERSION = "protocol-v5-user-study-timing-contract-v1.0.0"
+STUDY_TIMING_CONTRACT = {
+    "version": STUDY_TIMING_CONTRACT_VERSION,
+    "decision_time_nonconfirmation_bound_seconds": 600.0,
+    "decision_time_nonconfirmation_bound_semantics": (
+        "server_enforced_task_decision_limit_and_secondary_analysis_bound_only"
+    ),
+}
+STUDY_TIMING_CONTRACT_SHA256 = hashlib.sha256(
+    json.dumps(
+        STUDY_TIMING_CONTRACT,
+        allow_nan=False,
+        sort_keys=True,
+        separators=(",", ":"),
+    ).encode("utf-8")
+).hexdigest()
+# Compatibility name used by the Hub and event validator. The only numeric
+# declaration is in the frozen timing contract above.
+DECISION_LIMIT_SECONDS = float(
+    STUDY_TIMING_CONTRACT["decision_time_nonconfirmation_bound_seconds"]
+)
 READINESS_LIMIT_SECONDS = 180.0
 # Only absorbs binary floating-point serialization at an exact boundary; it is
 # not an operational grace period.
@@ -1463,7 +1483,8 @@ def validate_event_stream(
                 _require(
                     event.monotonic_seconds - first.monotonic_seconds
                     <= DECISION_LIMIT_SECONDS + _TIMING_EPSILON_SECONDS,
-                    f"trial {trial_key!r} confirm exceeds the 600-second decision limit",
+                    f"trial {trial_key!r} confirm exceeds the "
+                    f"{DECISION_LIMIT_SECONDS:g}-second decision limit",
                 )
                 _require(
                     (event.profile_id, event.image_id) == (current_profile, current_image),
@@ -1483,7 +1504,8 @@ def validate_event_stream(
                     _require(
                         event.monotonic_seconds - first.monotonic_seconds
                         >= DECISION_LIMIT_SECONDS - _TIMING_EPSILON_SECONDS,
-                        f"trial {trial_key!r} decision_timeout occurred before 600 seconds",
+                        f"trial {trial_key!r} decision_timeout occurred before "
+                        f"{DECISION_LIMIT_SECONDS:g} seconds",
                     )
                 terminal = True
             elif event.event_type is EventType.NOTEBOOK_READY:
@@ -1514,6 +1536,9 @@ __all__ = [
     "DECISION_LIMIT_SECONDS",
     "EVENT_SCHEMA_VERSION",
     "READINESS_LIMIT_SECONDS",
+    "STUDY_TIMING_CONTRACT",
+    "STUDY_TIMING_CONTRACT_SHA256",
+    "STUDY_TIMING_CONTRACT_VERSION",
     "TASK_SET_SCHEMA_VERSION",
     "CancelReason",
     "Condition",

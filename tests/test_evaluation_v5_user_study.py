@@ -64,7 +64,9 @@ from evaluation_v5.user_study.runner import main as user_study_main
 from evaluation_v5.user_study.scoring import score_final_selection
 from evaluation_v5.user_study.smoke import run_synthetic_hub_smoke
 from evaluation_v5.user_study.schemas import (
+    DECISION_LIMIT_SECONDS,
     EVENT_SCHEMA_VERSION,
+    STUDY_TIMING_CONTRACT,
     CancelReason,
     Condition,
     EventType,
@@ -1144,6 +1146,11 @@ def test_hub_uses_one_gold_free_option_snapshot_and_b0_never_calls_p2(
     assert "if(!editSent)" in p2_html
     assert 'event("intent_edit")' in p2_html
     assert "event.data" not in p2_html and "event.key" not in p2_html
+    expected_timeout_milliseconds = int(DECISION_LIMIT_SECONDS * 1000)
+    assert f"}},{expected_timeout_milliseconds});" in b0_html
+    assert DECISION_LIMIT_SECONDS == STUDY_TIMING_CONTRACT[
+        "decision_time_nonconfirmation_bound_seconds"
+    ]
 
     spawner = SimpleNamespace(
         extra_resource_guarantees={"stale": 1},

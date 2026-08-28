@@ -17,14 +17,18 @@ import re
 from typing import Any
 import uuid
 
-from .schemas import DECISION_LIMIT_SECONDS
+from .schemas import (
+    STUDY_TIMING_CONTRACT,
+    STUDY_TIMING_CONTRACT_SHA256,
+    STUDY_TIMING_CONTRACT_VERSION,
+)
 
 
 QUESTIONNAIRE_SCHEMA_VERSION = "protocol-v5-user-study-questionnaire-v1.1.0"
 QUESTIONNAIRE_INSTRUMENT_VERSION = (
     "protocol-v5-user-study-questionnaire-instrument-v1.1.0"
 )
-ANALYSIS_PLAN_VERSION = "protocol-v5-user-study-analysis-plan-v1.1.0"
+ANALYSIS_PLAN_VERSION = "protocol-v5-user-study-analysis-plan-v1.2.0"
 QUESTIONNAIRE_OUTCOME_SCHEMA_VERSION = (
     "protocol-v5-user-study-questionnaire-outcome-v1.0.0"
 )
@@ -84,17 +88,40 @@ ANALYSIS_PLAN = {
         "fallback": "participant_paired_risk_difference",
     },
     "decision_time_seconds": {
-        "eligibility": "confirmed_complete_matched_tasks",
+        "estimand": (
+            "conditional_on_matched_task_pairs_with_valid_positive_confirmation_times_in_both_B0_and_P2"
+        ),
+        "eligibility": "confirmed_complete_matched_tasks_with_positive_times",
+        "assigned_trial_accounting": (
+            "all_assigned_measured_trials_remain_in_flow_and_missingness_denominators"
+        ),
+        "nonconfirmation_policy": (
+            "outcome_unavailable_not_participant_or_task_exclusion"
+        ),
         "model": "log_time_participant_random_intercept_mixedlm",
         "effects": ["geometric_mean_ratio", "percent_change", "raw_paired_difference"],
         "fallback": "participant_paired_robust_raw_scale",
         "zero_policy": "retain_and_fallback_without_offset",
         "nonconfirmation_sensitivity": {
             "estimand": "timeout_bound_decision_completion_composite",
-            "value_for_unconfirmed_trial_seconds": DECISION_LIMIT_SECONDS,
+            "bound_contract_field": (
+                "decision_time_nonconfirmation_bound_seconds"
+            ),
             "method": "participant_paired_robust_raw_scale",
             "primary_holm_family": False,
         },
+    },
+    "decision_time_nonconfirmation_bound": {
+        "seconds": STUDY_TIMING_CONTRACT[
+            "decision_time_nonconfirmation_bound_seconds"
+        ],
+        "semantics": STUDY_TIMING_CONTRACT[
+            "decision_time_nonconfirmation_bound_semantics"
+        ],
+        "timing_contract_version": STUDY_TIMING_CONTRACT_VERSION,
+        "timing_contract_sha256": STUDY_TIMING_CONTRACT_SHA256,
+        "source": "frozen_server_enforced_study_task_timing_contract",
+        "tuned_from_participant_results": False,
     },
     "interaction_and_correction_counts": {
         "model": "participant_clustered_quasipoisson_gee_exchangeable",
