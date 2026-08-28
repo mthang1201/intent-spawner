@@ -367,10 +367,34 @@ async def _exercise(tmp: Path, task_set_path: Path) -> dict[str, object]:
             event["event_type"] in p2_only for event in trial
         ):
             raise RuntimeError("synthetic smoke leaked P2 events into B0")
-    if not all((result_dir / name).is_file() for name in ("manifest.json", "derived/summary.json", "report/status.json")):
+    required_outputs = (
+        "manifest.json",
+        "derived/summary.json",
+        "derived/analysis.json",
+        "derived/model-effects.json",
+        "report/status.json",
+        "report/limitations.md",
+        "report/USER_STUDY_REPORT.md",
+        "report/analysis-manifest.json",
+        "report/privacy-audit.json",
+        "report/tables/participant-flow.csv",
+        "report/tables/condition-summary.csv",
+        "report/tables/missingness.csv",
+        "report/figures/accuracy.svg",
+        "report/figures/decision-time.svg",
+        "report/figures/interaction-effort.svg",
+        "report/figures/sus-seq-custom.svg",
+        "report/figures/preference.svg",
+    )
+    if not all((result_dir / name).is_file() for name in required_outputs):
         raise RuntimeError("synthetic smoke finalization artifacts are incomplete")
+    privacy_audit = json.loads(
+        (result_dir / "report/privacy-audit.json").read_text(encoding="utf-8")
+    )
+    if privacy_audit.get("status") != "PASS":
+        raise RuntimeError("synthetic smoke aggregate privacy audit did not pass")
     return {
-        "schema_version": "protocol-v5-user-study-hub-smoke-v1.0.0",
+        "schema_version": "protocol-v5-user-study-hub-smoke-v1.1.0",
         "status": "PASS",
         "evidence_class": "SYNTHETIC_DRY_RUN",
         "participant_id": participant.participant_id,
@@ -383,6 +407,8 @@ async def _exercise(tmp: Path, task_set_path: Path) -> dict[str, object]:
         "finalized_measured_task_count": sum(
             1 for _ in (result_dir / "derived/task-outcomes.jsonl").read_text().splitlines()
         ),
+        "required_analysis_output_count": len(required_outputs),
+        "privacy_audit_status": privacy_audit["status"],
         "temporary_output_removed": True,
     }
 

@@ -19,8 +19,10 @@ The two directional co-primary hypotheses are:
   (`selection_success`, asserted equivalent to `selection_acceptable`). Exact
   selection of the frozen preferred candidate
   (`selection_correct`) is reported separately.
-- **H2 — decision time:** among tasks with an environment confirmation, P2
-  reduces elapsed time from `task_shown` to `confirm`.
+- **H2 — decision time:** among confirmed complete matched tasks, P2 reduces
+  elapsed time from `task_shown` to `confirm`. Every assigned measured task
+  remains in confirmation and missingness accounting, and the frozen
+  600-second timeout-bound sensitivity retains unconfirmed trials.
 Interaction burden, completion, cancellation, corrections, P2 overrides, and
 optional task-shown-to-notebook-ready time are secondary or diagnostic
 outcomes. Any future formal analysis must account for the two co-primary
@@ -211,7 +213,8 @@ Live staging uses a study-only persistent volume. Event appends are locked,
 opened with `O_APPEND`, flushed, and fsynced. Event UUIDs are idempotent and a
 completion marker is exclusive-created. Consent acknowledgement supplies the
 session start time; successful sealing after eight terminal task interactions
-and all nine scheduled form submissions automatically appends the versioned
+and every form derived from that participant's frozen assignment schedule
+automatically appends the versioned
 `sessions.jsonl` record. A restart during a nonterminal trial writes
 an immutable incomplete marker plus a versioned
 `instrumentation_corruption` exclusion to `exclusions.jsonl`. These appends are
@@ -221,12 +224,15 @@ the raw streams into a new immutable Protocol-v5 E3 results directory before
 deriving metrics; derived or report files never rewrite raw observations.
 
 Questionnaires use the exact, content-free
-`protocol-v5-user-study-questionnaire-v1.0.0` contract, published as
+`protocol-v5-user-study-questionnaire-v1.1.0` contract, published as
 `benchmarks_v5/protocol-v5-user-study-questionnaire-v1.schema.json` and backed
 by assignment-aware validation. Submission time is supplied by the study
-server, not the browser. Each participant
-submits six measured-task SEQ forms, two post-condition forms, and one final
-preference form. Every response is optional, including an explicit all-null
+server, not the browser. Each participant submits one SEQ after every scheduled
+measured task, one post-condition form after every scheduled period, and one
+final-preference form after the final period. This derives to six SEQ forms,
+two post-condition forms, and one final preference in the current frozen
+design; it is not a separately hard-coded completeness count. Every response
+is optional, including an explicit all-null
 skip, but each scheduled form must have a durable submission before the
 session is complete. Records contain only fixed numeric responses or the
 closed final-preference enumeration; comments and other free text are rejected.
@@ -266,9 +272,15 @@ For a measured task:
   `protocol-v5-user-study-final-selection-scoring-v1.0.0` contract.
 - `decision_time_seconds` is `confirm - task_shown`; it is null without a
   confirmation, with status `available`, `unavailable_cancelled`, or
-  `unavailable_no_confirmation`.
-- `end_to_end_seconds` is `notebook_ready - task_shown`; it is null when the
-  ready event is unavailable, with an explicit no-confirm or no-ready status.
+  `unavailable_no_confirmation` and a coded unavailability reason. The
+  secondary timeout-bound sensitivity uses the predeclared 600-second task
+  limit for an unconfirmed measured trial; it does not alter or impute the
+  primary DecisionTime field.
+- `notebook_ready_time_seconds` is `notebook_ready - confirm`; it is null when
+  either event is unavailable and carries an explicit status.
+- Separately, `end_to_end_seconds` is `notebook_ready - task_shown`; it is null
+  when the ready event is unavailable, with an explicit no-confirm or no-ready
+  status.
 - `control_action_count` counts participant preview requests, profile/image
   changes, explicit override, final confirm, and cancel. Focus-only events,
   preview responses, readiness/rendering, and retry duplicates do not count.
@@ -309,8 +321,10 @@ significance.
 
 Decision time and interaction count use predeclared participant-clustered
 models suited to positive skew/nonnegative counts: a participant-random-intercept
-log-time mixed model for positive confirmed matched decision times and an
-overdispersed count model for actions,
+log-time mixed model for positive confirmed matched decision times and a
+participant-clustered quasi-Poisson GEE with exchangeable working correlation
+and Pearson dispersion estimated from the fitted residuals for actions and
+corrections,
 with the same condition, pair, variant, period, and order terms. Report paired
 means/medians and participant-level P2-minus-B0 estimates with 95% confidence
 intervals alongside model effects. Cancellations remain in accuracy and
@@ -324,9 +338,37 @@ frozen reason. Period/order and condition-by-period results are reported as
 learning/carryover diagnostics and never used to redefine the primary
 estimand.
 
+The binary model reports `exp(beta_condition)` as its odds ratio. Its adjusted
+P2-minus-B0 risk difference is a marginal standardized contrast: the fitted
+probability is predicted twice over every frozen eligible design row, once with
+condition set to P2 and once to B0, and the mean probability difference is
+taken. A logit coefficient is never reported as a probability difference.
+Counterbalance cell is retained as an aggregate coverage diagnostic rather
+than an additional model term because the cell is constructed from the frozen
+condition-order, variant-allocation, period/position, and pair-order design.
+
+The deterministic fallback order is: check eligible participants and complete
+pairs; check outcome variation and positive-time requirements; fit the
+predeclared model; reject convergence, singularity, numerical-warning,
+non-identifiable, or non-finite inference; then use the endpoint's predeclared
+participant-paired fallback. P-values, significance, effect direction,
+magnitude, and interval width never choose a method. Each machine-readable
+result records the requested and actual method, eligibility, convergence, and
+technical fallback reason.
+
+Participant bootstraps draw participants with replacement using NumPy PCG64,
+seed 20260827 plus a frozen endpoint offset, and keep every row for a drawn
+participant together. Percentile equal-tailed 95% intervals use 2,000 requested
+replicates. Failed model refits are discarded and counted; a model-refit
+interval is unavailable unless at least 95% succeed. These settings are frozen
+before participant evidence and are not changed according to significance.
+
 SEQ uses a task-pair-aware participant-random-intercept scale model with a
 paired participant bootstrap fallback. SUS and each CUSTOM item use paired
-participant effects with bootstrap confidence intervals. Preference reports
+participant effects with bootstrap confidence intervals and no task-pair term,
+because they are collected once per condition. Standardized paired effects are
+`d_z = mean(participant P2-minus-B0 difference) / SD(participant difference)`.
+Preference reports
 counts and answered-response percentages with Bonferroni-adjusted Wilson
 simultaneous 95% intervals; missing is reported separately. CUSTOM items are
 never combined with or described as SUS dimensions.
@@ -376,10 +418,12 @@ are documented in
 4. Export the append-only staging directory. Validate `events.jsonl` and
    `questionnaires.jsonl`, then finalize `events.jsonl`, `sessions.jsonl`,
    optional `exclusions.jsonl`, and required real-run `questionnaires.jsonl`
-   together into a new E3 run ID. Install the pinned analysis environment with
-   `pip install -r requirements-analysis.txt`; finalization creates all tables,
-   figures, model/effect JSON, provenance, limitations, and the privacy-audited
-   Markdown report without manual editing.
+   together into a new E3 run ID. Use supported CPython 3.11 through 3.14 and
+   install the exact NumPy, SciPy, Pandas, Patsy, Statsmodels, and Matplotlib
+   versions with `pip install -r requirements-analysis.txt`; finalization
+   refuses analysis dependency drift, records runtime/package versions, and
+   creates all tables, figures, model/effect JSON, provenance, limitations, and
+   the privacy-audited Markdown report without manual editing.
 5. Preserve raw, derived, report, checksums, exclusions, and limitations. If no
    real sessions were supplied, emit `NOT_EXECUTED`, never zero-filled metrics.
 

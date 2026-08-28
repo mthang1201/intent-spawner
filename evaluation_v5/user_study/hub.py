@@ -50,12 +50,15 @@ from .assignment import (
 from .instrumentation import AppendOnlyEventStore
 from .fairness import validate_study_environment_identity, verify_fairness_manifest
 from .questionnaires import (
+    CUSTOM_ANCHORS,
     CUSTOM_ITEMS,
     CUSTOM_ITEM_IDS,
     FINAL_PREFERENCE_ID,
     QUESTIONNAIRE_INSTRUMENT_VERSION,
     QUESTIONNAIRE_SCHEMA_VERSION,
     SEQ_ITEM_ID,
+    SEQ_ANCHORS,
+    SUS_ANCHORS,
     SUS_ITEMS,
     SUS_ITEM_IDS,
     QuestionnaireType,
@@ -76,7 +79,7 @@ from .schemas import (
 )
 
 
-STUDY_HUB_ADAPTER_VERSION = "protocol-v5-user-study-hub-adapter-v1.1.0"
+STUDY_HUB_ADAPTER_VERSION = "protocol-v5-user-study-hub-adapter-v1.2.0"
 STUDY_HUB_PACKAGE_CHECKSUM_ENV = "INTENT_SPAWNER_USER_STUDY_PACKAGE_CHECKSUM"
 STUDY_HUB_PACKAGE_VERSION_ENV = "INTENT_SPAWNER_USER_STUDY_PACKAGE_VERSION"
 STUDY_ASSIGNMENT_CHECKSUM_ENV = "INTENT_SPAWNER_USER_STUDY_ASSIGNMENT_CHECKSUM"
@@ -921,6 +924,18 @@ class StudySessionRuntime:
             if row["session_id"] == participant.session_id
         }
         events = self._events()
+        last_measured_trial_by_period = {
+            period: measured[-1].trial_id
+            for period in range(1, len(participant.condition_order) + 1)
+            if (
+                measured := [
+                    assigned
+                    for assigned in participant.task_sequence
+                    if assigned.period == period
+                    and assigned.phase.value == "measured"
+                ]
+            )
+        }
         for assigned in participant.task_sequence:
             terminal = self._is_terminal(
                 [
@@ -944,7 +959,10 @@ class StudySessionRuntime:
                         "task_id": assigned.task_id,
                         "pair_id": assigned.pair_id,
                     }
-                if assigned.position_in_period == 3:
+                if (
+                    last_measured_trial_by_period.get(assigned.period)
+                    == assigned.trial_id
+                ):
                     questionnaire_id = f"post_condition:{assigned.period}"
                     if questionnaire_id not in submitted:
                         return {
@@ -1619,23 +1637,28 @@ def questionnaire_form(spec: Mapping[str, Any], xsrf_token: str, response_uuid: 
         fields = (
             "<fieldset><legend>Overall, how difficult or easy was this task?</legend>"
             + _scale_radios(SEQ_ITEM_ID, 1, 7)
-            + "<p>1 = Very difficult; 7 = Very easy.</p></fieldset>"
+            + f"<p>1 = {html.escape(SEQ_ANCHORS['1'])}; 7 = {html.escape(SEQ_ANCHORS['7'])}.</p></fieldset>"
         )
     elif kind is QuestionnaireType.POST_CONDITION:
         title = f"Post-condition questionnaire: {html.escape(str(spec['condition']))}"
         sus = "".join(
-            "<fieldset><legend>{}. {}</legend>{}<p>1 = Strongly disagree; 5 = Strongly agree.</p></fieldset>".format(
+            "<fieldset><legend>{}. {}</legend>{}<p>1 = {}; 5 = {}.</p></fieldset>".format(
                 index,
                 html.escape(statement),
                 _scale_radios(item_id, 1, 5),
+                html.escape(SUS_ANCHORS["1"]),
+                html.escape(SUS_ANCHORS["5"]),
             )
             for index, (item_id, statement) in enumerate(
                 zip(SUS_ITEM_IDS, SUS_ITEMS), start=1
             )
         )
         custom = "".join(
-            "<fieldset><legend>{}</legend>{}<p>1 = Strongly disagree; 7 = Strongly agree.</p></fieldset>".format(
-                html.escape(statement), _scale_radios(item_id, 1, 7)
+            "<fieldset><legend>{}</legend>{}<p>1 = {}; 7 = {}.</p></fieldset>".format(
+                html.escape(statement),
+                _scale_radios(item_id, 1, 7),
+                html.escape(CUSTOM_ANCHORS["1"]),
+                html.escape(CUSTOM_ANCHORS["7"]),
             )
             for item_id, statement in CUSTOM_ITEMS.items()
         )

@@ -8,7 +8,7 @@ Warm-up trials are excluded from the default measured outputs.
 
 from __future__ import annotations
 
-from collections import defaultdict
+from collections import Counter, defaultdict
 from collections.abc import Iterable, Mapping, Sequence
 import math
 import statistics
@@ -19,6 +19,7 @@ from .assignment import (
     validate_assignment_manifest,
 )
 from .schemas import (
+    DECISION_LIMIT_SECONDS,
     Condition,
     EventType,
     PreviewStatus,
@@ -32,11 +33,11 @@ from .schemas import (
 from .scoring import FINAL_SELECTION_SCORING_VERSION, score_final_selection
 
 
-TASK_OUTCOME_SCHEMA_VERSION = "protocol-v5-user-study-task-outcome-v1.1.0"
+TASK_OUTCOME_SCHEMA_VERSION = "protocol-v5-user-study-task-outcome-v1.2.0"
 MATCHED_PAIR_OUTCOME_SCHEMA_VERSION = (
-    "protocol-v5-user-study-matched-pair-outcome-v1.1.0"
+    "protocol-v5-user-study-matched-pair-outcome-v1.2.0"
 )
-SUMMARY_SCHEMA_VERSION = "protocol-v5-user-study-summary-v1.1.0"
+SUMMARY_SCHEMA_VERSION = "protocol-v5-user-study-summary-v1.2.0"
 
 _CONTROL_ACTIONS = frozenset(
     {
@@ -345,7 +346,41 @@ def derive_task_outcomes(
                         else "unavailable_no_confirmation"
                     )
                 ),
+                "decision_time_unavailability_reason": (
+                    None
+                    if confirmation is not None
+                    else (
+                        cancellation.cancel_reason.value
+                        if cancellation is not None
+                        and cancellation.cancel_reason is not None
+                        else "no_valid_confirmation"
+                    )
+                ),
+                "decision_time_timeout_sensitivity_seconds": (
+                    confirmation.monotonic_seconds - shown
+                    if confirmation is not None
+                    else DECISION_LIMIT_SECONDS
+                ),
+                "decision_time_timeout_sensitivity_status": (
+                    "observed_confirmation"
+                    if confirmation is not None
+                    else "timeout_bound_for_nonconfirmation"
+                ),
                 "notebook_ready_observed": ready is not None,
+                "notebook_ready_time_seconds": (
+                    ready.monotonic_seconds - confirmation.monotonic_seconds
+                    if ready is not None and confirmation is not None
+                    else None
+                ),
+                "notebook_ready_time_status": (
+                    "available"
+                    if ready is not None and confirmation is not None
+                    else (
+                        "unavailable_no_confirmation"
+                        if confirmation is None
+                        else "unavailable_notebook_ready"
+                    )
+                ),
                 "end_to_end_seconds": (
                     ready.monotonic_seconds - shown if ready is not None else None
                 ),
@@ -456,6 +491,15 @@ def derive_matched_pair_outcomes(
                 "decision_time_delta_p2_minus_b0": delta(
                     "decision_time_seconds"
                 ),
+                "b0_decision_time_timeout_sensitivity_seconds": value(
+                    b0, "decision_time_timeout_sensitivity_seconds"
+                ),
+                "p2_decision_time_timeout_sensitivity_seconds": value(
+                    p2, "decision_time_timeout_sensitivity_seconds"
+                ),
+                "decision_time_timeout_sensitivity_delta_p2_minus_b0": delta(
+                    "decision_time_timeout_sensitivity_seconds"
+                ),
                 "b0_total_action_count": value(b0, "total_action_count"),
                 "p2_total_action_count": value(p2, "total_action_count"),
                 "total_action_delta_p2_minus_b0": delta("total_action_count"),
@@ -465,6 +509,15 @@ def derive_matched_pair_outcomes(
                 "b0_end_to_end_seconds": value(b0, "end_to_end_seconds"),
                 "p2_end_to_end_seconds": value(p2, "end_to_end_seconds"),
                 "end_to_end_delta_p2_minus_b0": delta("end_to_end_seconds"),
+                "b0_notebook_ready_time_seconds": value(
+                    b0, "notebook_ready_time_seconds"
+                ),
+                "p2_notebook_ready_time_seconds": value(
+                    p2, "notebook_ready_time_seconds"
+                ),
+                "notebook_ready_time_delta_p2_minus_b0": delta(
+                    "notebook_ready_time_seconds"
+                ),
             }
         )
     return paired
@@ -523,12 +576,27 @@ def _condition_summary(rows: Sequence[Mapping[str, Any]], condition: Condition) 
         "decision_time_seconds": _distribution(
             row["decision_time_seconds"] for row in selected
         ),
+        "decision_time_timeout_sensitivity_seconds": _distribution(
+            row["decision_time_timeout_sensitivity_seconds"] for row in selected
+        ),
+        "decision_time_unavailability_reasons": dict(
+            sorted(
+                Counter(
+                    str(row["decision_time_unavailability_reason"])
+                    for row in selected
+                    if row["decision_time_unavailability_reason"] is not None
+                ).items()
+            )
+        ),
         "notebook_ready_count": ready,
         "readiness_rate_among_confirmed": _rate(ready, confirmed),
         "end_to_end_missing_count": count
         - sum(row["end_to_end_seconds"] is not None for row in selected),
         "end_to_end_seconds": _distribution(
             row["end_to_end_seconds"] for row in selected
+        ),
+        "notebook_ready_time_seconds": _distribution(
+            row["notebook_ready_time_seconds"] for row in selected
         ),
         "control_action_count": _distribution(
             row["control_action_count"] for row in selected
@@ -586,6 +654,9 @@ def _participant_deltas(
                 "mean_decision_time_delta_p2_minus_b0": mean(
                     "decision_time_delta_p2_minus_b0"
                 ),
+                "mean_decision_time_timeout_sensitivity_delta_p2_minus_b0": mean(
+                    "decision_time_timeout_sensitivity_delta_p2_minus_b0"
+                ),
                 "mean_total_action_delta_p2_minus_b0": mean(
                     "total_action_delta_p2_minus_b0"
                 ),
@@ -594,6 +665,9 @@ def _participant_deltas(
                 ),
                 "mean_end_to_end_delta_p2_minus_b0": mean(
                     "end_to_end_delta_p2_minus_b0"
+                ),
+                "mean_notebook_ready_time_delta_p2_minus_b0": mean(
+                    "notebook_ready_time_delta_p2_minus_b0"
                 ),
             }
         )
@@ -632,9 +706,11 @@ def summarize_outcomes(
             for field in (
                 "correctness_delta_p2_minus_b0",
                 "decision_time_delta_p2_minus_b0",
+                "decision_time_timeout_sensitivity_delta_p2_minus_b0",
                 "total_action_delta_p2_minus_b0",
                 "interaction_delta_p2_minus_b0",
                 "end_to_end_delta_p2_minus_b0",
+                "notebook_ready_time_delta_p2_minus_b0",
             )
         },
         "participant_level_paired_deltas": participant_rows,

@@ -110,7 +110,8 @@ PVC, or live Kubernetes behavior.
     indexes and one terminal `confirm` or `cancel`, and has at most one matching
     `notebook_ready`. Confirm B0 contains no intent/preview/override events,
     final confirmed IDs match the spawned selection, timing statuses are
-    explicit, all nine scheduled forms exist even when answers were skipped,
+    explicit, all schedule-derived forms (nine in the current frozen design)
+    exist even when answers were skipped,
     and the provenance fairness, questionnaire-instrument, and analysis-plan
     checksums match the assignment.
 11. Delete the isolated namespace and temporary smoke artifacts according to

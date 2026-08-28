@@ -96,7 +96,7 @@ from .schemas import (
 
 PROTOCOL_VERSION = "5.0.0"
 EXPERIMENT_ID = "E3"
-FINALIZER_VERSION = "protocol-v5-user-study-finalizer-v1.1.0"
+FINALIZER_VERSION = "protocol-v5-user-study-finalizer-v1.2.0"
 PROVENANCE_SCHEMA_VERSION = "protocol-v5-user-study-provenance-v1.0.0"
 STATUS_SCHEMA_VERSION = "protocol-v5-user-study-status-v1.0.0"
 SESSION_SCHEMA_VERSION = "protocol-v5-user-study-session-v1.0.0"

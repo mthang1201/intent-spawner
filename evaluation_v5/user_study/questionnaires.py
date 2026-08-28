@@ -17,12 +17,14 @@ import re
 from typing import Any
 import uuid
 
+from .schemas import DECISION_LIMIT_SECONDS
 
-QUESTIONNAIRE_SCHEMA_VERSION = "protocol-v5-user-study-questionnaire-v1.0.0"
+
+QUESTIONNAIRE_SCHEMA_VERSION = "protocol-v5-user-study-questionnaire-v1.1.0"
 QUESTIONNAIRE_INSTRUMENT_VERSION = (
-    "protocol-v5-user-study-questionnaire-instrument-v1.0.0"
+    "protocol-v5-user-study-questionnaire-instrument-v1.1.0"
 )
-ANALYSIS_PLAN_VERSION = "protocol-v5-user-study-analysis-plan-v1.0.0"
+ANALYSIS_PLAN_VERSION = "protocol-v5-user-study-analysis-plan-v1.1.0"
 QUESTIONNAIRE_OUTCOME_SCHEMA_VERSION = (
     "protocol-v5-user-study-questionnaire-outcome-v1.0.0"
 )
@@ -36,6 +38,9 @@ CUSTOM_ITEM_IDS = (
 )
 FINAL_PREFERENCE_ID = "final_preference"
 FINAL_PREFERENCES = frozenset({"B0", "P2", "NO_PREFERENCE"})
+SEQ_ANCHORS = {"1": "Very difficult", "7": "Very easy"}
+SUS_ANCHORS = {"1": "Strongly disagree", "5": "Strongly agree"}
+CUSTOM_ANCHORS = {"1": "Strongly disagree", "7": "Strongly agree"}
 
 SUS_ITEMS = (
     "I think that I would like to use this system frequently.",
@@ -63,6 +68,7 @@ ANALYSIS_PLAN = {
     "sampling_structure": {
         "participant": "cluster_or_random_intercept",
         "task_pair": "fixed_repeated_factor",
+        "counterbalance_cell": "coverage_diagnostic_only_redundant_with_frozen_design_terms",
     },
     "fixed_effects": [
         "condition",
@@ -83,13 +89,22 @@ ANALYSIS_PLAN = {
         "effects": ["geometric_mean_ratio", "percent_change", "raw_paired_difference"],
         "fallback": "participant_paired_robust_raw_scale",
         "zero_policy": "retain_and_fallback_without_offset",
+        "nonconfirmation_sensitivity": {
+            "estimand": "timeout_bound_decision_completion_composite",
+            "value_for_unconfirmed_trial_seconds": DECISION_LIMIT_SECONDS,
+            "method": "participant_paired_robust_raw_scale",
+            "primary_holm_family": False,
+        },
     },
     "interaction_and_correction_counts": {
-        "model": "participant_clustered_negative_binomial_gee",
+        "model": "participant_clustered_quasipoisson_gee_exchangeable",
+        "dispersion": "pearson_scale_estimated_from_fit",
         "effect": "incidence_rate_ratio",
         "fallback": "participant_paired_count_difference",
     },
     "notebook_ready_time": {
+        "primary_clock": "notebook_ready_minus_confirmed_environment",
+        "separate_end_to_end_clock": "notebook_ready_minus_task_shown",
         "model": "decision_time_log_or_robust_equivalent",
         "report_confirmation_and_readiness_missingness": True,
     },
@@ -99,7 +114,25 @@ ANALYSIS_PLAN = {
     },
     "sus_and_custom": {
         "model": "participant_paired_difference",
+        "standardized_effect": "cohens_dz_mean_difference_divided_by_sd_difference",
         "confidence_interval": "participant_percentile_bootstrap",
+    },
+    "fallback_hierarchy": {
+        "modeled_to_fallback_triggers": [
+            "insufficient_eligible_participants_or_pairs",
+            "outcome_nonvariation_or_nonidentifiability",
+            "nonpositive_value_for_log_model",
+            "convergence_failure",
+            "singular_random_effect_or_hessian",
+            "nonfinite_inference",
+        ],
+        "forbidden_triggers": [
+            "p_value",
+            "statistical_significance",
+            "effect_direction",
+            "effect_magnitude",
+            "confidence_interval_width",
+        ],
     },
     "preference": {
         "categories": ["B0", "P2", "NO_PREFERENCE"],
@@ -108,6 +141,13 @@ ANALYSIS_PLAN = {
     },
     "bootstrap_replicates": 2000,
     "bootstrap_seed": 20260827,
+    "bootstrap_rng": "numpy.random.PCG64",
+    "bootstrap_resampling_unit": "participant_all_rows_together",
+    "bootstrap_ci": "percentile_equal_tailed_95",
+    "bootstrap_minimum_success_fraction": 0.95,
+    "bootstrap_failure_policy": (
+        "discard_failed_refit_and_mark_ci_unavailable_below_threshold"
+    ),
     "sus_missing_policy": "strict_complete_case",
     "other_missing_policy": "no_imputation",
     "trimming_policy": "none",
@@ -119,9 +159,11 @@ ANALYSIS_PLAN = {
 QUESTIONNAIRE_INSTRUMENT = {
     "instrument_version": QUESTIONNAIRE_INSTRUMENT_VERSION,
     "seq_prompt": "Overall, how difficult or easy was this task?",
-    "seq_anchors": {"1": "Very difficult", "7": "Very easy"},
+    "seq_anchors": SEQ_ANCHORS,
     "sus_items": list(SUS_ITEMS),
+    "sus_anchors": SUS_ANCHORS,
     "custom_items": CUSTOM_ITEMS,
+    "custom_anchors": CUSTOM_ANCHORS,
     "preference_prompt": "Overall, which method would you prefer to use to select a notebook environment?",
     "preference_labels": {
         "B0": "B0",
@@ -146,7 +188,7 @@ ANALYSIS_PLAN_SHA256 = hashlib.sha256(_canonical(ANALYSIS_PLAN)).hexdigest()
 # It is literal because the study-Hub runtime intentionally does not mount the
 # authoritative benchmark directory.
 QUESTIONNAIRE_SCHEMA_SHA256 = (
-    "59b789e548e3fd30438809fd0a9d2bd0c8563b82d0a87a99e9c9e2b65ae03454"
+    "7c2f5950644f16a26f24bec5939646dd4c4a21d6fd1723797c70b29748dbea56"
 )
 QUESTIONNAIRE_INSTRUMENT_SHA256 = hashlib.sha256(
     _canonical(QUESTIONNAIRE_INSTRUMENT)
@@ -321,8 +363,10 @@ def expected_questionnaire_ids(participant: Any) -> set[str]:
     measured = [task for task in participant.task_sequence if task.phase.value == "measured"]
     return {
         *(f"seq:{task.trial_id}" for task in measured),
-        "post_condition:1",
-        "post_condition:2",
+        *(
+            f"post_condition:{period}"
+            for period, _ in enumerate(participant.condition_order, start=1)
+        ),
         "final_preference",
     }
 
@@ -431,6 +475,7 @@ __all__ = [
     "ANALYSIS_PLAN_SHA256",
     "ANALYSIS_PLAN_VERSION",
     "CUSTOM_ITEMS",
+    "CUSTOM_ANCHORS",
     "CUSTOM_ITEM_IDS",
     "FINAL_PREFERENCES",
     "FINAL_PREFERENCE_ID",
@@ -443,7 +488,9 @@ __all__ = [
     "QuestionnaireType",
     "QuestionnaireValidationError",
     "SEQ_ITEM_ID",
+    "SEQ_ANCHORS",
     "SUS_ITEMS",
+    "SUS_ANCHORS",
     "SUS_ITEM_IDS",
     "expected_questionnaire_ids",
     "derive_questionnaire_outcomes",

@@ -24,10 +24,10 @@
   ],
   "properties": {
     "schema_version": {
-      "const": "protocol-v5-user-study-questionnaire-v1.0.0"
+      "const": "protocol-v5-user-study-questionnaire-v1.1.0"
     },
     "instrument_version": {
-      "const": "protocol-v5-user-study-questionnaire-instrument-v1.0.0"
+      "const": "protocol-v5-user-study-questionnaire-instrument-v1.1.0"
     },
     "study_id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,191}$"},
     "assignment_id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,191}$"},

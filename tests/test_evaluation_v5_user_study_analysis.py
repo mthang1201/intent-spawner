@@ -29,6 +29,7 @@ from evaluation_v5.user_study.questionnaires import (
     QUESTIONNAIRE_SCHEMA_VERSION,
     QUESTIONNAIRE_SCHEMA_SHA256,
     SEQ_ITEM_ID,
+    SUS_ITEMS,
     SUS_ITEM_IDS,
     QuestionnaireValidationError,
     derive_questionnaire_outcomes,
@@ -38,9 +39,12 @@ from evaluation_v5.user_study.questionnaires import (
     validate_questionnaire_stream,
 )
 from evaluation_v5.user_study.runner import (
+    EXCLUSION_REASON_VERSION,
     EXCLUSION_REASONS,
+    EXCLUSION_SCHEMA_VERSION,
     UserStudyRunnerError,
     _validate_complete_sessions,
+    _validate_exclusions,
     main as user_study_main,
 )
 from evaluation_v5.user_study.schemas import (
@@ -143,6 +147,19 @@ def test_questionnaire_schema_sus_and_missing_policy(synthetic_assignment):
     }
     assert synthetic_assignment.questionnaire_schema_sha256 == QUESTIONNAIRE_SCHEMA_SHA256
     assert synthetic_assignment.questionnaire_instrument_sha256 == QUESTIONNAIRE_INSTRUMENT_SHA256
+    assert QUESTIONNAIRE_INSTRUMENT_SHA256 == "5b651d19628d15ef2afa4365cad9eaab5ab2196ea86f84389b09d5d24a000db5"
+    assert SUS_ITEMS == (
+        "I think that I would like to use this system frequently.",
+        "I found the system unnecessarily complex.",
+        "I thought the system was easy to use.",
+        "I think that I would need the support of a technical person to be able to use this system.",
+        "I found the various functions in this system were well integrated.",
+        "I thought there was too much inconsistency in this system.",
+        "I would imagine that most people would learn to use this system very quickly.",
+        "I found the system very cumbersome to use.",
+        "I felt very confident using the system.",
+        "I needed to learn a lot of things before I could get going with this system.",
+    )
     participant = synthetic_assignment.assignments[0]
     rows = _complete_questionnaires(synthetic_assignment, participant)
     schema = json.loads(QUESTIONNAIRE_SCHEMA_PATH.read_text())
@@ -153,6 +170,7 @@ def test_questionnaire_schema_sus_and_missing_policy(synthetic_assignment):
     assert {row.questionnaire_id for row in parsed} == expected_questionnaire_ids(participant)
     post = next(row for row in parsed if row.questionnaire_type.value == "post_condition")
     assert score_sus(post.responses) == 100.0
+    assert score_sus({item: 3 for item in SUS_ITEM_IDS}) == 50.0
     missing = dict(post.responses)
     missing["sus_01"] = None
     assert score_sus(missing) is None
@@ -246,7 +264,7 @@ def _terminal_events(assignment, participant):
     return events
 
 
-def test_complete_session_requires_all_nine_scheduled_forms(synthetic_assignment):
+def test_complete_session_requires_every_form_derived_from_schedule(synthetic_assignment):
     participant = synthetic_assignment.assignments[0]
     session = {
         "session_id": participant.session_id,
@@ -257,6 +275,11 @@ def test_complete_session_requires_all_nine_scheduled_forms(synthetic_assignment
         _complete_questionnaires(synthetic_assignment, participant),
         synthetic_assignment,
     )
+    measured_count = sum(
+        task.phase.value == "measured" for task in participant.task_sequence
+    )
+    assert len(questionnaires) == measured_count + len(participant.condition_order) + 1
+    assert len(questionnaires) == 9  # consequence of the current frozen schedule
     with pytest.raises(UserStudyRunnerError, match="scheduled questionnaire"):
         _validate_complete_sessions(
             [session], events, synthetic_assignment, set(), questionnaires[:-1]
@@ -275,24 +298,53 @@ def _synthetic_analysis_rows(participant_count: int = 12):
         order = "B0-then-P2" if participant % 2 == 0 else "P2-then-B0"
         for pair_index, pair_id in enumerate(pairs):
             for condition in ("B0", "P2"):
-                success = ((participant + pair_index + (condition == "P2")) % 3) != 0
+                condition_p2 = int(condition == "P2")
+                success = (
+                    (participant * 7 + pair_index * 3 + condition_p2 * 5) % 13
+                ) < (8 + condition_p2)
+                interaction_count = 3 + (
+                    (participant * 5 + pair_index * 3 + condition_p2 * 2) % 7
+                )
+                decision_time = (
+                    40
+                    + participant * 2
+                    + pair_index * 3
+                    - condition_p2 * 5
+                    + ((participant * 3 + pair_index * 5 + condition_p2 * 7) % 11)
+                )
+                notebook_ready_time = (
+                    20
+                    + participant * 1.5
+                    + pair_index * 2
+                    - condition_p2 * 2
+                    + ((participant * 5 + pair_index * 2 + condition_p2 * 3) % 7)
+                )
                 tasks.append(
                     {
                         "participant_id": participant_id,
                         "trial_id": f"trial-{participant}-{pair_index}-{condition}",
                         "pair_id": pair_id,
                         "condition": condition,
-                        "variant_slot": (participant + (condition == "P2")) % 2,
+                        "variant_slot": ((participant // 2) + condition_p2) % 2,
                         "period": 1 if order.startswith(condition) else 2,
                         "condition_order": order,
                         "selection_success": success,
                         "confirmed": True,
-                        "decision_time_seconds": 45 + participant + pair_index - (8 if condition == "P2" else 0),
-                        "total_action_count": 5 + pair_index - (1 if condition == "P2" else 0),
-                        "interaction_count": 5 + pair_index - (1 if condition == "P2" else 0),
-                        "correction_count": (participant + pair_index + (condition == "B0")) % 2,
+                        "decision_time_seconds": decision_time,
+                        "decision_time_unavailability_reason": None,
+                        "decision_time_timeout_sensitivity_seconds": decision_time,
+                        "total_action_count": interaction_count,
+                        "interaction_count": interaction_count,
+                        "correction_count": (
+                            participant * 3 + pair_index * 2 + condition_p2
+                        ) % 4,
                         "notebook_ready_observed": True,
-                        "end_to_end_seconds": 70 + participant + pair_index - (7 if condition == "P2" else 0),
+                        "notebook_ready_time_seconds": notebook_ready_time,
+                        "notebook_ready_time_status": "available",
+                        "end_to_end_seconds": decision_time + notebook_ready_time,
+                        "end_to_end_status": "available",
+                        "position": pair_index + 1,
+                        "counterbalance_cell": f"cell-{participant % 12:02d}",
                         "final_override": False if condition == "P2" else None,
                     }
                 )
@@ -304,7 +356,13 @@ def _synthetic_analysis_rows(participant_count: int = 12):
                         "pair_id": pair_id,
                         "condition": condition,
                         "period": 1 if order.startswith(condition) else 2,
-                        SEQ_ITEM_ID: 4 + int(condition == "P2"),
+                        SEQ_ITEM_ID: min(
+                            7,
+                            1
+                            + (participant % 4)
+                            + condition_p2
+                            + ((participant + pair_index) % 3),
+                        ),
                     }
                 )
         for condition in ("B0", "P2"):
@@ -343,7 +401,30 @@ def test_synthetic_analysis_emits_effects_intervals_and_aggregate_reports(tmp_pa
     assert analysis["synthetic_only"] is True
     assert analysis["effects"]["selection_success"]["risk_difference"] is not None
     assert analysis["effects"]["decision_time_seconds"]["raw_paired_effect"]["confidence_interval_95"] != [None, None]
+    assert analysis["effects"]["decision_time_seconds"]["status"] == "MODELED"
+    assert analysis["effects"]["seq_ease"]["status"] == "MODELED"
     assert analysis["effects"]["holm_family"]["family"] == ["selection_success", "decision_time_seconds"]
+    registry = analysis["primary_inference_registry"]
+    assert registry["family_size"] == 2
+    assert [row["endpoint"] for row in registry["hypotheses"]] == [
+        "selection_success",
+        "decision_time_seconds",
+    ]
+    selection = analysis["effects"]["selection_success"]
+    assert selection["risk_difference_estimand"].startswith("average_over_observed")
+    assert selection["risk_difference"] != pytest.approx(
+        __import__("math").log(selection["odds_ratio"])
+    )
+    count = analysis["effects"]["interaction_count"]
+    assert count["actual_method"] == "participant_clustered_quasipoisson_gee_exchangeable"
+    assert count["dispersion_method"] == "pearson_scale_estimated_from_fit"
+    assert count["dispersion_scale"] > 0
+    assert analysis["effects"]["notebook_ready_time"]["clock_definition"].startswith(
+        "notebook_ready_timestamp_minus_confirmed"
+    )
+    assert analysis["effects"]["end_to_end_launch_time"]["clock_definition"].endswith(
+        "task_shown_timestamp"
+    )
     assert next(
         row for row in analysis["condition_summary"] if row["condition"] == "B0"
     )["final_override_rate_among_confirmed"] is None
@@ -358,6 +439,15 @@ def test_synthetic_analysis_emits_effects_intervals_and_aggregate_reports(tmp_pa
         (tmp_path / "report" / "analysis-manifest.json").read_text()
     )
     assert "report/privacy-audit.json" in report_manifest["generated_files"]
+    assert report_manifest["analysis_dependencies"] == analysis_module.PINNED_ANALYSIS_DEPENDENCIES
+    assert report_manifest["python_version"]
+    assert report_manifest["figure_renderer"] == "matplotlib_svg"
+    assert report_manifest["generated_file_sha256"]
+    for logical_name, expected_sha256 in report_manifest[
+        "generated_file_sha256"
+    ].items():
+        assert not logical_name.startswith("/")
+        assert hashlib.sha256((tmp_path / logical_name).read_bytes()).hexdigest() == expected_sha256
     assert "P-000000000000" not in "".join(path.read_text() for path in paths if path.is_file())
 
 
@@ -377,6 +467,195 @@ def test_zero_time_uses_predeclared_robust_fallback(monkeypatch):
     assert decision["status"] == "FALLBACK"
     assert decision["fallback_reason"] == "nonpositive_time"
     assert decision["geometric_mean_ratio"] is None
+    assert decision["requested_method"] == "log_time_participant_random_intercept_mixedlm"
+    assert decision["actual_method"] == "participant_paired_robust_raw_scale"
+    assert decision["converged"] is None
+
+
+def test_all_technical_model_fallbacks_are_deterministic_and_self_describing(monkeypatch):
+    monkeypatch.setattr(analysis_module, "BOOTSTRAP_REPLICATES", 20)
+    tasks, questionnaires = _synthetic_analysis_rows()
+
+    no_variation = [dict(row, selection_success=True) for row in tasks]
+    selection = analysis_module._selection_analysis(no_variation)
+    assert selection["actual_method"] == "participant_paired_risk_difference"
+    assert selection["fallback_reason"] == "insufficient_clusters_or_outcome_variation"
+    assert selection["p_value_raw"] == 1.0
+
+    def fail_fit(*args, **kwargs):
+        raise RuntimeError("forced technical failure")
+
+    monkeypatch.setattr(analysis_module, "_selection_fit", fail_fit)
+    selection_failed = analysis_module._selection_analysis(tasks)
+    assert selection_failed["converged"] is False
+    assert selection_failed["fallback_reason"].startswith(
+        "gee_nonconvergence_or_nonidentifiability"
+    )
+
+    monkeypatch.setattr(
+        analysis_module, "_fit_with_numerical_warnings_as_errors", fail_fit
+    )
+    decision = analysis_module._log_mixed_analysis(
+        tasks, "decision_time_seconds", seed_offset=701
+    )
+    assert decision["actual_method"] == "participant_paired_robust_raw_scale"
+    assert decision["converged"] is False
+    seq_rows = [
+        row for row in questionnaires if row.get("questionnaire_type") == "seq_task"
+    ]
+    by_trial = {row["trial_id"]: row for row in tasks}
+    seq_rows = [
+        {
+            **row,
+            "variant_slot": by_trial[row["trial_id"]]["variant_slot"],
+            "condition_order": by_trial[row["trial_id"]]["condition_order"],
+        }
+        for row in seq_rows
+    ]
+    seq = analysis_module._scale_mixed_analysis(seq_rows, SEQ_ITEM_ID, seed_offset=702)
+    assert seq["actual_method"] == "participant_paired_scale_difference"
+    assert seq["converged"] is False
+    count = analysis_module._count_analysis(tasks, "interaction_count")
+    assert count["actual_method"] == "participant_paired_count_difference"
+    assert count["converged"] is False
+
+
+def test_bootstrap_seed_reproducibility_and_failed_refit_threshold(monkeypatch):
+    monkeypatch.setattr(analysis_module, "BOOTSTRAP_REPLICATES", 20)
+    values = {f"p-{index}": float(index) for index in range(8)}
+    first = analysis_module._participant_bootstrap(values, seed_offset=77)
+    second = analysis_module._participant_bootstrap(values, seed_offset=77)
+    assert first == second
+    assert first[1]["rng_algorithm"] == "numpy.random.PCG64"
+    assert first[1]["successful_fraction"] == 1.0
+
+    tasks, _ = _synthetic_analysis_rows()
+    frame = analysis_module._model_frame(tasks, "selection_success")
+
+    inspected = 0
+
+    def inspect_complete_clusters(sampled):
+        nonlocal inspected
+        inspected += 1
+        assert set(sampled.groupby("participant_id").size()) == {6}
+        return None, float(sampled["selection_success"].mean())
+
+    monkeypatch.setattr(analysis_module, "_selection_fit", inspect_complete_clusters)
+    interval, contract = analysis_module._selection_bootstrap(frame)
+    assert inspected == 20
+    assert interval != [None, None]
+    assert contract["successful_fraction"] == 1.0
+
+    def fail_fit(*args, **kwargs):
+        raise RuntimeError("forced failed bootstrap refit")
+
+    monkeypatch.setattr(analysis_module, "_selection_fit", fail_fit)
+    interval, contract = analysis_module._selection_bootstrap(frame)
+    assert interval == [None, None]
+    assert contract["successful_replicates"] == 0
+    assert contract["ci_available"] is False
+
+
+def test_holm_family_stays_two_when_one_primary_is_unavailable():
+    adjusted = analysis_module._holm(
+        {"selection_success": 0.03, "decision_time_seconds": None}
+    )
+    assert adjusted == {
+        "selection_success": pytest.approx(0.06),
+        "decision_time_seconds": None,
+    }
+
+
+def test_preference_wilson_intervals_and_missing_are_separate():
+    rows = [
+        {"questionnaire_type": "final_preference", FINAL_PREFERENCE_ID: "B0"},
+        {"questionnaire_type": "final_preference", FINAL_PREFERENCE_ID: "P2"},
+        {"questionnaire_type": "final_preference", FINAL_PREFERENCE_ID: None},
+    ]
+    summary = analysis_module._preference_summary(rows)
+    b0 = next(row for row in summary if row["preference"] == "B0")
+    from scipy.stats import norm
+
+    z = float(norm.ppf(1 - 0.05 / 6))
+    n, proportion = 2, 0.5
+    denominator = 1 + z * z / n
+    center = (proportion + z * z / (2 * n)) / denominator
+    radius = z * (
+        proportion * (1 - proportion) / n + z * z / (4 * n * n)
+    ) ** 0.5 / denominator
+    assert b0["simultaneous_confidence_interval_95"] == pytest.approx(
+        [(center - radius) * 100, (center + radius) * 100]
+    )
+    assert b0["answered_denominator"] == 2
+    assert b0["missing_response_count"] == 1
+    assert next(row for row in summary if row["preference"] == "NO_PREFERENCE")[
+        "count"
+    ] == 0
+
+
+def test_nonconfirmation_is_missing_outcome_not_exclusion(monkeypatch):
+    monkeypatch.setattr(analysis_module, "BOOTSTRAP_REPLICATES", 20)
+    tasks, questionnaires = _synthetic_analysis_rows()
+    tasks[0].update(
+        {
+            "selection_success": False,
+            "confirmed": False,
+            "decision_time_seconds": None,
+            "decision_time_unavailability_reason": "participant_cancelled",
+            "decision_time_timeout_sensitivity_seconds": 600,
+            "notebook_ready_observed": False,
+            "notebook_ready_time_seconds": None,
+            "notebook_ready_time_status": "unavailable_no_confirmation",
+            "end_to_end_seconds": None,
+            "end_to_end_status": "unavailable_no_confirmation",
+        }
+    )
+    analysis = analyze_user_study(
+        execution_status="DRY_RUN",
+        task_rows=tasks,
+        questionnaire_rows=questionnaires,
+        sessions=[],
+        exclusions=[],
+        assignment_manifest=SimpleNamespace(participant_count=12),
+    )
+    b0 = next(row for row in analysis["condition_summary"] if row["condition"] == "B0")
+    assert b0["measured_task_count"] == 36
+    assert b0["nonconfirmation_count"] == 1
+    assert b0["nonconfirmation_reasons"] == {"participant_cancelled": 1}
+    assert analysis["participant_flow"][4] == {"stage": "excluded_sessions", "count": 0}
+    assert analysis["effects"]["decision_time_timeout_sensitivity"][
+        "timeout_bound_seconds"
+    ] == 600
+
+
+@pytest.mark.parametrize(
+    "forbidden_reason",
+    [
+        "poor_performance",
+        "participant_cancelled",
+        "missing_questionnaire_answer",
+        "slow_response",
+        "manual_override",
+        "notebook_not_ready",
+        "unsuccessful_task",
+    ],
+)
+def test_outcomes_and_missingness_can_never_become_exclusion_codes(
+    synthetic_assignment, forbidden_reason
+):
+    participant = synthetic_assignment.assignments[0]
+    record = {
+        "schema_version": EXCLUSION_SCHEMA_VERSION,
+        "reason_version": EXCLUSION_REASON_VERSION,
+        "study_id": synthetic_assignment.study_id,
+        "assignment_id": synthetic_assignment.assignment_id,
+        "session_id": participant.session_id,
+        "participant_id": participant.participant_id,
+        "reason_code": forbidden_reason,
+        "recorded_at_utc": "2026-08-27T00:00:00Z",
+    }
+    with pytest.raises(UserStudyRunnerError, match="not predeclared"):
+        _validate_exclusions([record], synthetic_assignment)
 
 
 @pytest.mark.parametrize(
@@ -385,6 +664,7 @@ def test_zero_time_uses_predeclared_robust_fallback(monkeypatch):
         '{"participant_id":"P-000000000000","email":"person@example.test"}\n',
         '{"comment":"participant supplied prose"}\n',
         '{"source":"/Users/example/private/export.jsonl"}\n',
+        '{"source":"/home/example/private/export.jsonl"}\n',
         "participant_id,score\nP-000000000000,7\n",
     ],
 )
@@ -421,6 +701,10 @@ def test_not_executed_finalization_generates_full_placeholder_surface(
     capsys.readouterr()
     assert "NOT_EXECUTED" in (output / "report" / "USER_STUDY_REPORT.md").read_text()
     assert len(list((output / "report" / "figures").glob("*.svg"))) == 5
+    for figure in (output / "report" / "figures").glob("*.svg"):
+        content = figure.read_text()
+        assert "NOT_EXECUTED — no real consented participant data available" in content
+        assert "0.000" not in content
     derived = json.loads((output / "derived" / "analysis.json").read_text())
     assert derived["condition_summary"] == []
     assert derived["effects"] == {}

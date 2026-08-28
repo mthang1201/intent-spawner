@@ -17,6 +17,7 @@ import jsonschema
 import pytest
 import yaml
 
+from evaluation_v5.user_study import metrics as metrics_module
 from evaluation_v5.user_study.assignment import (
     AssignmentManifest,
     generate_assignment_manifest,
@@ -40,6 +41,7 @@ from evaluation_v5.user_study.hub import (
     apply_b0_selection,
     bind_study_spawn_annotations,
     options_form,
+    questionnaire_form,
     shared_option_snapshot,
     validate_browser_task_set,
 )
@@ -50,11 +52,20 @@ from evaluation_v5.user_study.fairness import (
     verify_fairness_manifest,
 )
 from evaluation_v5.user_study.metrics import derive_study_metrics
+from evaluation_v5.user_study.questionnaires import (
+    CUSTOM_ITEM_IDS,
+    FINAL_PREFERENCE_ID,
+    SEQ_ITEM_ID,
+    SUS_ITEM_IDS,
+    QuestionnaireType,
+    expected_questionnaire_ids,
+)
 from evaluation_v5.user_study.runner import main as user_study_main
 from evaluation_v5.user_study.scoring import score_final_selection
 from evaluation_v5.user_study.smoke import run_synthetic_hub_smoke
 from evaluation_v5.user_study.schemas import (
     EVENT_SCHEMA_VERSION,
+    CancelReason,
     Condition,
     EventType,
     Difficulty,
@@ -980,6 +991,79 @@ def _study_runtime(tmp_path: Path, assignment: AssignmentManifest, task_set):
     return runtime, fake, store, gates
 
 
+def test_hub_routes_every_terminal_task_through_schedule_derived_forms(
+    tmp_path: Path, assignment, task_set
+):
+    runtime, _, _, gates = _study_runtime(tmp_path, assignment, task_set)
+    participant = assignment.assignments[0]
+    runtime.acknowledge_consent(participant.participant_id)
+    observed_types = []
+    while (active := runtime.current_task(participant.participant_id)) is not None:
+        if runtime.transition_required(active):
+            runtime.acknowledge_transition(participant.participant_id)
+        runtime.ensure_task_shown(active)
+        runtime.record(
+            participant.participant_id,
+            active.assigned.trial_id,
+            EventType.CANCEL,
+            cancel_reason=CancelReason.PARTICIPANT_CANCELLED,
+        )
+        while (pending := runtime.pending_questionnaire(participant.participant_id)):
+            kind = QuestionnaireType(pending["questionnaire_type"])
+            observed_types.append(kind.value)
+            if kind is QuestionnaireType.SEQ_TASK:
+                responses = {SEQ_ITEM_ID: None}
+            elif kind is QuestionnaireType.POST_CONDITION:
+                responses = {
+                    **{item: None for item in SUS_ITEM_IDS},
+                    **{item: None for item in CUSTOM_ITEM_IDS},
+                }
+            else:
+                responses = {FINAL_PREFERENCE_ID: None}
+            runtime.record_questionnaire(
+                participant.participant_id,
+                pending["questionnaire_id"],
+                str(uuid.uuid4()),
+                responses,
+            )
+            if kind is QuestionnaireType.FINAL_PREFERENCE:
+                break
+    observed = {
+        row["questionnaire_id"] for row in gates.questionnaire_records()
+    }
+    assert observed == expected_questionnaire_ids(participant)
+    assert Counter(observed_types) == {
+        QuestionnaireType.SEQ_TASK.value: 6,
+        QuestionnaireType.POST_CONDITION.value: 2,
+        QuestionnaireType.FINAL_PREFERENCE.value: 1,
+    }
+    assert runtime.questionnaire_complete(participant.participant_id)
+
+
+def test_questionnaire_ui_freezes_anchors_and_separates_custom_items():
+    seq_html = questionnaire_form(
+        {
+            "questionnaire_type": "seq_task",
+            "questionnaire_id": "seq:synthetic",
+            "condition": "B0",
+        },
+        "xsrf",
+        str(uuid.uuid4()),
+    )
+    assert "1 = Very difficult; 7 = Very easy" in seq_html
+    post_html = questionnaire_form(
+        {
+            "questionnaire_type": "post_condition",
+            "questionnaire_id": "post_condition:1",
+            "condition": "P2",
+        },
+        "xsrf",
+        str(uuid.uuid4()),
+    )
+    assert "1 = Strongly disagree; 5 = Strongly agree" in post_html
+    assert "CUSTOM Likert items (not SUS dimensions)" in post_html
+
+
 def test_preview_token_binding_accepts_authenticator_case_mapping_only(
     tmp_path: Path, assignment, task_set
 ):
@@ -1286,6 +1370,12 @@ def test_scoring_uses_final_human_selection_not_p2_recommendation(
     )["task_outcomes"][0]
     assert corrected["selection_correct"] is True
     assert corrected["selection_acceptable"] is True
+    assert corrected["selection_success"] is (
+        corrected["profile_acceptable"]
+        and corrected["image_acceptable"]
+        and corrected["hard_constraints_satisfied"]
+    )
+    assert corrected["selection_success"] == corrected["selection_acceptable"]
     assert corrected["final_override"] is True
     assert overridden_wrong["selection_correct"] is False
     assert overridden_wrong["selection_acceptable"] is False
@@ -1304,6 +1394,25 @@ def test_scoring_uses_final_human_selection_not_p2_recommendation(
         image_id=preferred.image_id,
     )
     assert b0_label == p2_label
+
+
+def test_selection_success_disagreement_with_legacy_alias_fails_closed(
+    assignment, task_set, monkeypatch
+):
+    real_scorer = metrics_module.score_final_selection
+
+    def drifting_scorer(*args, **kwargs):
+        score = real_scorer(*args, **kwargs)
+        from dataclasses import replace
+
+        return replace(score, selection_acceptable=not score.selection_acceptable)
+
+    monkeypatch.setattr(metrics_module, "score_final_selection", drifting_scorer)
+    with pytest.raises(
+        UserStudyValidationError,
+        match="SelectionSuccess differs from frozen acceptable-candidate scoring",
+    ):
+        derive_study_metrics(_b0_events(assignment), task_set, assignment)
 
 
 def test_b0_final_manual_correction_scores_the_confirmed_selection(
@@ -1691,4 +1800,6 @@ def test_real_adapter_synthetic_smoke_path_reaches_immutable_finalization():
     assert result["condition_task_counts"] == {"B0": 4, "P2": 4}
     assert result["notebook_ready_count"] == 8
     assert result["finalized_measured_task_count"] == 6
+    assert result["required_analysis_output_count"] == 17
+    assert result["privacy_audit_status"] == "PASS"
     assert result["temporary_output_removed"] is True
