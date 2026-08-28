@@ -1923,6 +1923,7 @@ def test_docker_and_runtime_packages_are_allowlisted_away_from_v5_data():
     assert {path.name for path in dockerfiles} == {
         "Dockerfile",
         "Dockerfile.jupyter-v3",
+        "Dockerfile.resource-v5",
         "Dockerfile.v3",
     }
     for selected_dockerfile in dockerfiles:
@@ -1931,17 +1932,42 @@ def test_docker_and_runtime_packages_are_allowlisted_away_from_v5_data():
             encoding="utf-8"
         ).splitlines()
         assert context_rules[0] == "*"
-        assert not any(
-            any(token in rule for token in prohibited)
-            for rule in context_rules
-            if rule.startswith("!")
-        )
         copy_or_add = [
             line.strip()
             for line in instructions
             if line.strip().startswith(("COPY ", "ADD "))
         ]
         assert copy_or_add
+        if selected_dockerfile.name == "Dockerfile.resource-v5":
+            allowed_v5_inputs = {
+                "evaluation_v5/resource/__init__.py",
+                "evaluation_v5/resource/models.py",
+                "evaluation_v5/resource/manifest.py",
+                "evaluation_v5/resource/workloads.py",
+                "evaluation_v5/resource/planner.py",
+                "evaluation_v5/resource/derive.py",
+                "evaluation_v5/resource/pod_runner.py",
+                "benchmarks_v5/resource-envelope-workloads-v1.yaml",
+            }
+            exceptions = {
+                line[1:]
+                for line in context_rules
+                if line.startswith("!")
+                and (line[1:].startswith("evaluation_v5/") or line[1:].startswith("benchmarks_v5/"))
+            }
+            assert exceptions == allowed_v5_inputs
+            encoded = "\n".join(instructions)
+            assert "recommender/" not in encoded
+            assert "v5-development" not in encoded
+            assert "results_v5" not in encoded
+            assert "tests" not in encoded
+            assert "evaluation_v5/cache" not in encoded
+            continue
+        assert not any(
+            any(token in rule for token in prohibited)
+            for rule in context_rules
+            if rule.startswith("!")
+        )
         assert not any(
             line in {"COPY . /app", "COPY . .", "ADD . /app", "ADD . ."}
             or any(token in line for token in prohibited)

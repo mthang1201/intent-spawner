@@ -18,6 +18,14 @@ generated pseudonym, fake clocks, and temporary `DRY_RUN` finalization. This is
 framework verification, not participant or Kubernetes evidence, and creates no
 tracked E3 result.
 
+The E4 independent resource-envelope harness now contains sixteen bounded
+synthetic workload families, deterministic discrete CPU/memory calibration,
+cgroup-v2 provenance, raw-evidence validation, interval-censored derivation,
+and manual-review gating. The generated local E4 package is a `DRY_RUN` because the
+required disposable Kubernetes context was unavailable. It contains no CPU,
+memory, runtime, OOM, hardware, or cgroup observations, so E4 remains
+`NOT_EXECUTED` for empirical purposes.
+
 The P2/P3 component-scoring and family-level statistical harnesses are
 implemented, but complete Prompt-3 gold and Prompt-5 raw evidence are not
 tracked. Their empirical status therefore remains explicitly `NOT_EXECUTED`;
@@ -55,3 +63,9 @@ Raw observations are preserved separately from derived metrics and narrative
 reports. Run directories and provenance files are exclusive-created. The only
 overwrite escape hatch is an explicit development override for non-observed
 development work; it is prohibited for confirmatory and `OBSERVED` packages.
+`SHA256SUMS`, exclusive creation, and resume refusal after sealing provide
+application-level immutability; an ignored local directory is not durable or
+externally immutable storage. Approved observed E4 packages must be copied
+byte-for-byte to the thesis evidence archive with its checksum manifest and a
+recorded retention/object-lock receipt. Local dry runs are planning evidence
+only and are not promoted into that archive as hardware observations.

@@ -1,0 +1,204 @@
+schema_version: protocol-v5-resource-workloads-v1.0.0
+protocol_version: 5.0.0
+evidence_role: confirmatory_reference
+description: Independent bounded synthetic workload instances for empirical CPU and memory envelopes.
+master_seed: 20260828
+candidate_lattices:
+  memory_mib: [64, 96, 128, 192, 256, 384, 512, 768, 1024, 1280, 1536, 1792, 2048]
+  cpu_m: [100, 200, 300, 500, 750, 1000, 1500, 2000]
+limits:
+  max_cpu_m: 2000
+  max_memory_mib: 2048
+  max_timeout_seconds: 120
+  single_active_workload: true
+  required_cgroup_version: v2
+safe_rule:
+  version: protocol-v5-resource-safe-rule-v1.1.0
+  reference_repeats: 3
+  probe_repeats: 2
+  joint_verification_repeats: 5
+  median_runtime_ratio_max: 1.25
+  individual_runtime_ratio_max: 1.5
+  required_joint_successes: 5
+  infrastructure_replacements_per_trial: 1
+  reference_stability_rule_version: max-relative-spread-v1.0.0
+  reference_max_relative_spread: 0.20
+workloads:
+  - family_id: streaming_statistics
+    workload_instance_id: streaming-statistics-v1-count-200000-seed-8101
+    workload_instance_version: 1.0.0
+    operation: streaming_statistics
+    description: Streaming integer summary without materializing input rows.
+    deterministic_seed: 8101
+    parameters: {count: 200000}
+    expected_marker_sha256: "0a7c2d9111173471424ff0385f003af9070083baaf1d3293fe0de01355b755a4"
+    correctness_oracle:
+      checker_version: frozen-invariant-checker-v1.0.0
+      expected_invariants: {count: 200000, sum: 6557346294, sum_squares: 286448048554702, tail: 5955086490276291101}
+    timeout_seconds: 120
+    data_source: &synthetic {type: synthetic, external_input: false, persist_generated_data: false}
+  - family_id: relational_transform
+    workload_instance_id: relational-transform-v1-rows-100000-seed-8102
+    workload_instance_version: 1.0.0
+    operation: relational_transform
+    description: Materialized filter and projection over generated relational rows.
+    deterministic_seed: 8102
+    parameters: {rows: 100000, filter_mod: 5}
+    expected_marker_sha256: "5eace6751c469a2fc834a1a6cdeab7cb38feca1c90d45794440328a36e30ea2b"
+    correctness_oracle: {checker_version: frozen-invariant-checker-v1.0.0, expected_invariants: {checksum: 43458322488, input_rows: 100000, retained_rows: 80048}}
+    timeout_seconds: 120
+    data_source: *synthetic
+  - family_id: hash_join
+    workload_instance_id: hash-join-v1-left-120000-right-30000-seed-8103
+    workload_instance_version: 1.0.0
+    operation: hash_join
+    description: Generated build-and-probe hash join with partial key overlap.
+    deterministic_seed: 8103
+    parameters: {left_rows: 120000, right_rows: 30000}
+    expected_marker_sha256: "e45bf28f96cbf865855681dedba2e0a8f366db350756a5732acc8f6e300afcc7"
+    correctness_oracle: {checker_version: frozen-invariant-checker-v1.0.0, expected_invariants: {checksum: 117518220828072, left_rows: 120000, matched: 60094, right_rows: 30000}}
+    timeout_seconds: 120
+    data_source: *synthetic
+  - family_id: sort_group_reduction
+    workload_instance_id: sort-group-v1-rows-100000-groups-257-seed-8104
+    workload_instance_version: 1.0.0
+    operation: sort_group_reduction
+    description: Full sort followed by grouped integer reduction.
+    deterministic_seed: 8104
+    parameters: {rows: 100000, groups: 257}
+    expected_marker_sha256: "a21d922592d3e6e5365c69e89c45f6def899fc903ce3d33b7f8e2134e1bd08d5"
+    correctness_oracle: {checker_version: frozen-invariant-checker-v1.0.0, expected_invariants: {checksum: 3266360558, groups: 257, leader: 60, rows: 100000}}
+    timeout_seconds: 120
+    data_source: *synthetic
+  - family_id: categorical_encoding
+    workload_instance_id: categorical-encoding-v1-rows-60000-features-16-seed-8105
+    workload_instance_version: 1.0.0
+    operation: categorical_encoding
+    description: Dense categorical feature encoding into a compact numeric buffer.
+    deterministic_seed: 8105
+    parameters: {rows: 60000, features: 16, categories: 1024}
+    expected_marker_sha256: "93b9f5d17ff12a6160b31e97bd540c0184fe366d15061121f04f7182eca9ed30"
+    correctness_oracle: {checker_version: frozen-invariant-checker-v1.0.0, expected_invariants: {categories: 1024, cells: 960000, checksum: 62733841574}}
+    timeout_seconds: 120
+    data_source: *synthetic
+  - family_id: iterative_linear_fit
+    workload_instance_id: linear-fit-v1-rows-30000-features-12-epochs-3-seed-8106
+    workload_instance_version: 1.0.0
+    operation: iterative_linear_fit
+    description: Repeated deterministic linear-model update passes.
+    deterministic_seed: 8106
+    parameters: {rows: 30000, features: 12, epochs: 3}
+    expected_marker_sha256: "c24cbd4926f8f630f48c8a10c9f6a91f575f1695c14979a8a00d28ceeb5bb3e9"
+    correctness_oracle: {checker_version: frozen-invariant-checker-v1.0.0, expected_invariants: {checksum: 3393662380873078883, epochs: 3, features: 12, rows: 30000, weight_sum: -312}}
+    timeout_seconds: 120
+    data_source: *synthetic
+  - family_id: dense_matrix_computation
+    workload_instance_id: dense-matrix-v1-dimension-64-seed-8107
+    workload_instance_version: 1.0.0
+    operation: dense_matrix_computation
+    description: Dense square integer matrix multiplication.
+    deterministic_seed: 8107
+    parameters: {dimension: 64}
+    expected_marker_sha256: "3273ea45b5aeed6a732e43f02ab00684a1257933a7f52fa7ceb4f70e90f2b11e"
+    correctness_oracle: {checker_version: frozen-invariant-checker-v1.0.0, expected_invariants: {checksum: 281251716312, dimension: 64}}
+    timeout_seconds: 120
+    data_source: *synthetic
+  - family_id: sparse_graph_traversal
+    workload_instance_id: sparse-graph-v1-nodes-20000-edges-3-seed-8108
+    workload_instance_version: 1.0.0
+    operation: sparse_graph_traversal
+    description: Bounded breadth-first traversal of a generated sparse graph.
+    deterministic_seed: 8108
+    parameters: {nodes: 20000, edges_per_node: 3, visit_limit: 15000}
+    expected_marker_sha256: "78122944b54a017a49473630b1c8d99462984e9fc99f6e981002672bb9bedacd"
+    correctness_oracle: {checker_version: frozen-invariant-checker-v1.0.0, expected_invariants: {checksum: 17930562997649204289, nodes: 20000, visited: 15000}}
+    timeout_seconds: 120
+    data_source: *synthetic
+  - family_id: text_tfidf
+    workload_instance_id: text-tfidf-v1-docs-15000-terms-20-seed-8109
+    workload_instance_version: 1.0.0
+    operation: text_tfidf
+    description: Document-frequency construction over generated token streams.
+    deterministic_seed: 8109
+    parameters: {documents: 15000, terms_per_document: 20, vocabulary: 1024}
+    expected_marker_sha256: "f4eb56808ded44935098533ad9f4bf592b6294db599671ec6448bbc93528f36f"
+    correctness_oracle: {checker_version: frozen-invariant-checker-v1.0.0, expected_invariants: {checksum: 1141613337102, documents: 15000, nonzero_terms: 1024, total_terms: 300000}}
+    timeout_seconds: 120
+    data_source: *synthetic
+  - family_id: json_normalization
+    workload_instance_id: json-normalization-v1-docs-25000-seed-8110
+    workload_instance_version: 1.0.0
+    operation: json_normalization
+    description: Parse and normalize generated nested JSON documents.
+    deterministic_seed: 8110
+    parameters: {documents: 25000}
+    expected_marker_sha256: "ab3dcc6fe71c4f218ea46631e30d61a7bfc2b53a8477c40f469b5654e2cfbf7b"
+    correctness_oracle: {checker_version: frozen-invariant-checker-v1.0.0, expected_invariants: {checksum: 2200938190, documents: 25000}}
+    timeout_seconds: 120
+    data_source: *synthetic
+  - family_id: image_convolution
+    workload_instance_id: image-convolution-v1-512x512-seed-8111
+    workload_instance_version: 1.0.0
+    operation: image_convolution
+    description: Five-point convolution over a generated grayscale raster.
+    deterministic_seed: 8111
+    parameters: {width: 512, height: 512}
+    expected_marker_sha256: "fa37e1768564bc86f57162e0e29f4b7426ea5968208fab68b29788452a6d77d9"
+    correctness_oracle: {checker_version: frozen-invariant-checker-v1.0.0, expected_invariants: {checksum: 21707533669590, height: 512, width: 512}}
+    timeout_seconds: 120
+    data_source: *synthetic
+  - family_id: compression_roundtrip
+    workload_instance_id: compression-roundtrip-v1-bytes-4194304-level-6-seed-8112
+    workload_instance_version: 1.0.0
+    operation: compression_roundtrip
+    description: In-memory deterministic compression and decompression round-trip.
+    deterministic_seed: 8112
+    parameters: {block_bytes: 4194304, level: 6}
+    expected_marker_sha256: "445a77126898d9a0b50577702c35f67f6f83a816de8dccb45a44c10aa0c0f1b9"
+    correctness_oracle: {checker_version: frozen-invariant-checker-v1.0.0, expected_invariants: {compressed_bytes: 16601, input_bytes: 4194304, roundtrip_sha256: "5a816bf4451399785fa4217d4ce80913a5a9b1278d8352d05148ee8ef251cc94"}}
+    timeout_seconds: 120
+    data_source: *synthetic
+  - family_id: rolling_timeseries
+    workload_instance_id: rolling-timeseries-v1-points-300000-window-128-seed-8113
+    workload_instance_version: 1.0.0
+    operation: rolling_timeseries
+    description: Sliding-window aggregation over generated time-series points.
+    deterministic_seed: 8113
+    parameters: {points: 300000, window: 128}
+    expected_marker_sha256: "b8eb84828578c3bb2d04871d945051847e12de066e856a6522fa8481a0a0d4c5"
+    correctness_oracle: {checker_version: frozen-invariant-checker-v1.0.0, expected_invariants: {checksum: 3747453850101910656, points: 300000, window: 128}}
+    timeout_seconds: 120
+    data_source: *synthetic
+  - family_id: monte_carlo
+    workload_instance_id: monte-carlo-v1-samples-500000-seed-8114
+    workload_instance_version: 1.0.0
+    operation: monte_carlo
+    description: Streaming fixed-point Monte Carlo circle estimation.
+    deterministic_seed: 8114
+    parameters: {samples: 500000}
+    expected_marker_sha256: "dc6329a98ab0591fde6a6502176beab27f249eb028f1dcebe0eb1731495f9dfd"
+    correctness_oracle: {checker_version: frozen-invariant-checker-v1.0.0, expected_invariants: {inside: 393007, samples: 500000, tail: 9127871472810359356}}
+    timeout_seconds: 120
+    data_source: *synthetic
+  - family_id: content_deduplication
+    workload_instance_id: content-dedup-v1-items-100000-space-70000-seed-8115
+    workload_instance_version: 1.0.0
+    operation: content_deduplication
+    description: Hash-based content deduplication with controlled collisions.
+    deterministic_seed: 8115
+    parameters: {items: 100000, unique_space: 70000}
+    expected_marker_sha256: "d8dab26f0b9d239df9c1c44b87a9c6286551caadc8f2f675d16b4aea54eb1602"
+    correctness_oracle: {checker_version: frozen-invariant-checker-v1.0.0, expected_invariants: {checksum: 634764227352, items: 100000, unique: 70000}}
+    timeout_seconds: 120
+    data_source: *synthetic
+  - family_id: bounded_producer_consumer
+    workload_instance_id: producer-consumer-v1-items-100000-queue-128-seed-8116
+    workload_instance_version: 1.0.0
+    operation: bounded_producer_consumer
+    description: Threaded producer-consumer processing through a bounded queue.
+    deterministic_seed: 8116
+    parameters: {items: 100000, queue_size: 128}
+    expected_marker_sha256: "a76d5e234d45f29cde01c9c1607608830e6eee2fa415733b4cdd7c00a50d2f53"
+    correctness_oracle: {checker_version: frozen-invariant-checker-v1.0.0, expected_invariants: {checksum: 4537195982250917991, items: 100000, tail: 13963992239895998930}}
+    timeout_seconds: 120
+    data_source: *synthetic

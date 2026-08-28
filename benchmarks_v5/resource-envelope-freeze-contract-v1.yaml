@@ -1,0 +1,27 @@
+schema_version: protocol-v5-resource-freeze-contract-v1.0.0
+protocol_version: 5.0.0
+current_phase: development
+confirmatory_freeze_status: NOT_FROZEN
+pilot_policy:
+  evidence_role: formative_only
+  permitted_uses: [scale_selection, bounded_input_selection, correctness_feasibility, timeout_feasibility, lattice_feasibility]
+  forbidden_uses: [merge_into_confirmatory_evidence, report_as_final_envelope]
+confirmatory_policy:
+  tuning_after_first_observation: forbidden
+  clean_tracked_git_tree_required: true
+  immutable_digest_image_required: true
+  eligible_cluster_required: true
+  frozen_components:
+    - workload implementation
+    - workload manifest and scale parameters
+    - seeds and generated input identity
+    - correctness markers and invariant checker
+    - CPU and memory lattices
+    - timeout and safe rule
+    - reference runtime stability rule
+    - container image digest
+    - schemas
+    - semantic independence assertion
+    - cluster eligibility policy
+    - downstream comparison contract and crosswalk
+activation: Set current_phase to confirmatory and confirmatory_freeze_status to FROZEN only in a clean committed revision after image and cluster eligibility verification; never in response to observed E4 outcomes.

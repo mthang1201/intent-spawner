@@ -1,0 +1,11 @@
+*
+!requirements.txt
+!cluster_evaluation/container_evaluation_v5_init.py
+!evaluation_v5/resource/__init__.py
+!evaluation_v5/resource/models.py
+!evaluation_v5/resource/manifest.py
+!evaluation_v5/resource/workloads.py
+!evaluation_v5/resource/planner.py
+!evaluation_v5/resource/derive.py
+!evaluation_v5/resource/pod_runner.py
+!benchmarks_v5/resource-envelope-workloads-v1.yaml

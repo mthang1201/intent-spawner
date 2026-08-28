@@ -1,0 +1,16 @@
+schema_version: protocol-v5-resource-image-state-v1.0.0
+protocol_version: 5.0.0
+dockerfile_path: cluster_evaluation/Dockerfile.resource-v5
+dockerfile_sha256: a9ce83468dbdf19569a703cb9277a39f5d26308a1230e2b00ed88d614bc10ed4
+build_context_dockerignore_path: cluster_evaluation/Dockerfile.resource-v5.dockerignore
+build_context_dockerignore_sha256: 1cedf3c42d1173e18b735eb92bebd3fbc80872ce6c8e6e31111a73ecdcc315ad
+image_reference: null
+reference_configured: false
+digest_syntactically_pinned: false
+built: false
+resolved_digest: null
+digest_verified: false
+pre_pulled_on_eligible_node: false
+operationally_verified: false
+status: NOT_BUILT_OR_VERIFIED
+note: This repository records no image build or registry verification; observed execution must use a separately frozen verified state artifact.

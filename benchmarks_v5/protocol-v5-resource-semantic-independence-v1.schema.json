@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "protocol-v5-resource-semantic-independence-v1.schema.json",
+  "type": "object", "additionalProperties": false,
+  "required": ["schema_version", "protocol_version", "assertion_scope", "entries"],
+  "properties": {
+    "schema_version": {"const": "protocol-v5-resource-semantic-independence-v1.0.0"},
+    "protocol_version": {"const": "5.0.0"},
+    "assertion_scope": {"const": "design_review_not_statistical_inference"},
+    "entries": {
+      "type": "array", "minItems": 16, "maxItems": 16,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["family_id", "description", "primary_kernel", "data_representation", "dominant_resource_mechanism", "major_algorithmic_operation", "distinctness_rationale", "known_overlap_limitations"],
+        "properties": {
+          "family_id": {"type": "string", "pattern": "^[a-z][a-z0-9_]{2,63}$"},
+          "description": {"type": "string", "minLength": 1},
+          "primary_kernel": {"type": "string", "minLength": 1},
+          "data_representation": {"type": "string", "minLength": 1},
+          "dominant_resource_mechanism": {"type": "string", "minLength": 1},
+          "major_algorithmic_operation": {"type": "string", "minLength": 1},
+          "distinctness_rationale": {"type": "string", "minLength": 1},
+          "known_overlap_limitations": {"type": "string", "minLength": 1}
+        }
+      }
+    }
+  }
+}

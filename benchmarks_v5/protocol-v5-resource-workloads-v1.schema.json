@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "protocol-v5-resource-workloads-v1.schema.json",
+  "title": "Protocol-v5 independent resource workload manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "protocol_version", "evidence_role", "description", "master_seed", "candidate_lattices", "limits", "safe_rule", "workloads"],
+  "properties": {
+    "schema_version": {"const": "protocol-v5-resource-workloads-v1.0.0"},
+    "protocol_version": {"const": "5.0.0"},
+    "evidence_role": {"const": "confirmatory_reference"},
+    "description": {"type": "string", "minLength": 1},
+    "master_seed": {"type": "integer"},
+    "candidate_lattices": {
+      "type": "object", "additionalProperties": false,
+      "required": ["memory_mib", "cpu_m"],
+      "properties": {
+        "memory_mib": {"const": [64, 96, 128, 192, 256, 384, 512, 768, 1024, 1280, 1536, 1792, 2048]},
+        "cpu_m": {"const": [100, 200, 300, 500, 750, 1000, 1500, 2000]}
+      }
+    },
+    "limits": {
+      "type": "object", "additionalProperties": false,
+      "required": ["max_cpu_m", "max_memory_mib", "max_timeout_seconds", "single_active_workload", "required_cgroup_version"],
+      "properties": {
+        "max_cpu_m": {"const": 2000}, "max_memory_mib": {"const": 2048},
+        "max_timeout_seconds": {"const": 120}, "single_active_workload": {"const": true},
+        "required_cgroup_version": {"const": "v2"}
+      }
+    },
+    "safe_rule": {
+      "type": "object", "additionalProperties": false,
+      "required": ["version", "reference_repeats", "probe_repeats", "joint_verification_repeats", "median_runtime_ratio_max", "individual_runtime_ratio_max", "required_joint_successes", "infrastructure_replacements_per_trial", "reference_stability_rule_version", "reference_max_relative_spread"],
+      "properties": {
+        "version": {"const": "protocol-v5-resource-safe-rule-v1.1.0"},
+        "reference_repeats": {"const": 3}, "probe_repeats": {"const": 2},
+        "joint_verification_repeats": {"const": 5}, "median_runtime_ratio_max": {"const": 1.25},
+        "individual_runtime_ratio_max": {"const": 1.5}, "required_joint_successes": {"const": 5},
+        "infrastructure_replacements_per_trial": {"const": 1},
+        "reference_stability_rule_version": {"const": "max-relative-spread-v1.0.0"},
+        "reference_max_relative_spread": {"const": 0.2}
+      }
+    },
+    "workloads": {
+      "type": "array", "minItems": 16, "maxItems": 16,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["family_id", "workload_instance_id", "workload_instance_version", "operation", "description", "deterministic_seed", "parameters", "expected_marker_sha256", "correctness_oracle", "timeout_seconds", "data_source"],
+        "properties": {
+          "family_id": {"type": "string", "pattern": "^[a-z][a-z0-9_]{2,63}$"},
+          "workload_instance_id": {"type": "string", "pattern": "^[a-z][a-z0-9._-]{2,127}$"},
+          "workload_instance_version": {"const": "1.0.0"},
+          "operation": {"enum": ["streaming_statistics", "relational_transform", "hash_join", "sort_group_reduction", "categorical_encoding", "iterative_linear_fit", "dense_matrix_computation", "sparse_graph_traversal", "text_tfidf", "json_normalization", "image_convolution", "compression_roundtrip", "rolling_timeseries", "monte_carlo", "content_deduplication", "bounded_producer_consumer"]},
+          "description": {"type": "string", "minLength": 1},
+          "deterministic_seed": {"type": "integer"},
+          "parameters": {"type": "object"},
+          "expected_marker_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+          "correctness_oracle": {
+            "type": "object", "additionalProperties": false,
+            "required": ["checker_version", "expected_invariants"],
+            "properties": {
+              "checker_version": {"const": "frozen-invariant-checker-v1.0.0"},
+              "expected_invariants": {"type": "object", "minProperties": 1}
+            }
+          },
+          "timeout_seconds": {"const": 120},
+          "data_source": {"const": {"type": "synthetic", "external_input": false, "persist_generated_data": false}}
+        }
+      }
+    }
+  }
+}

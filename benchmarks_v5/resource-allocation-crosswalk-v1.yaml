@@ -1,0 +1,20 @@
+schema_version: protocol-v5-resource-allocation-crosswalk-v1.0.0
+protocol_version: 5.0.0
+comparison_contract_version: protocol-v5-resource-allocation-comparison-v1.0.0
+entries:
+  - {allocation_case_id: e4-allocation-streaming-statistics, family_id: streaming_statistics, workload_instance_id: streaming-statistics-v1-count-200000-seed-8101, workload_fingerprint: a786e2f52db54cb0d3c52a9da13047f3169cff9e5c817be6cf4692885a3adf8d}
+  - {allocation_case_id: e4-allocation-relational-transform, family_id: relational_transform, workload_instance_id: relational-transform-v1-rows-100000-seed-8102, workload_fingerprint: 00317961dcd8b0ab00d76616bb8fb048ab5ce0492536f6d2031d6a91b7b63611}
+  - {allocation_case_id: e4-allocation-hash-join, family_id: hash_join, workload_instance_id: hash-join-v1-left-120000-right-30000-seed-8103, workload_fingerprint: e255df8f75884493d6cd1e85d887180ed273755d9f92669bb83269cfd3bb4f82}
+  - {allocation_case_id: e4-allocation-sort-group, family_id: sort_group_reduction, workload_instance_id: sort-group-v1-rows-100000-groups-257-seed-8104, workload_fingerprint: afcb3ccdf68987814f90f794719d28a15695392fa85251f7616f949505966d69}
+  - {allocation_case_id: e4-allocation-categorical-encoding, family_id: categorical_encoding, workload_instance_id: categorical-encoding-v1-rows-60000-features-16-seed-8105, workload_fingerprint: 2aa9549f87d5eaa06ff0b729edc55b27a095cd0dadbf430fd03cbaffa14b24eb}
+  - {allocation_case_id: e4-allocation-linear-fit, family_id: iterative_linear_fit, workload_instance_id: linear-fit-v1-rows-30000-features-12-epochs-3-seed-8106, workload_fingerprint: 8096a850a4b1076ded768d90f204e05d54964b0e5fee6d98705369cd5bf6181f}
+  - {allocation_case_id: e4-allocation-dense-matrix, family_id: dense_matrix_computation, workload_instance_id: dense-matrix-v1-dimension-64-seed-8107, workload_fingerprint: 23af97bcbfaa21fbe9d3f99107dda44b684724197c40e8ca34692c774a7cfb0e}
+  - {allocation_case_id: e4-allocation-sparse-graph, family_id: sparse_graph_traversal, workload_instance_id: sparse-graph-v1-nodes-20000-edges-3-seed-8108, workload_fingerprint: 76ddb0d92f4b5edf521692ca4722d5421fcd8e385ee02f15da2d09aa25f5ae78}
+  - {allocation_case_id: e4-allocation-text-tfidf, family_id: text_tfidf, workload_instance_id: text-tfidf-v1-docs-15000-terms-20-seed-8109, workload_fingerprint: 49e3bf8c6b3694560ddfbaded23f4a082f6d56809af322152f35dad5e04988c8}
+  - {allocation_case_id: e4-allocation-json-normalization, family_id: json_normalization, workload_instance_id: json-normalization-v1-docs-25000-seed-8110, workload_fingerprint: 113c0b454e5a751fd3c847bcd709e4dabbe2206f43f308044517653bb600771f}
+  - {allocation_case_id: e4-allocation-image-convolution, family_id: image_convolution, workload_instance_id: image-convolution-v1-512x512-seed-8111, workload_fingerprint: 4dcece4e4042d2135b44a26f64f6a21a2ce367ed125d0e83d7e82adb9ba83439}
+  - {allocation_case_id: e4-allocation-compression, family_id: compression_roundtrip, workload_instance_id: compression-roundtrip-v1-bytes-4194304-level-6-seed-8112, workload_fingerprint: d4c282292db33c33d3f9b53b2c6cdb4aac6721833f5623d6baa5e07aab2681c2}
+  - {allocation_case_id: e4-allocation-rolling-timeseries, family_id: rolling_timeseries, workload_instance_id: rolling-timeseries-v1-points-300000-window-128-seed-8113, workload_fingerprint: 2a7da40e7b51e018c3172c97b4685e11c17b9042b7fd0a59b1000b844e06ee0e}
+  - {allocation_case_id: e4-allocation-monte-carlo, family_id: monte_carlo, workload_instance_id: monte-carlo-v1-samples-500000-seed-8114, workload_fingerprint: db484e6c6e3315e2b66b630c293ff291a43ef10dc34e591e0e4af0c68c4ac4a9}
+  - {allocation_case_id: e4-allocation-content-dedup, family_id: content_deduplication, workload_instance_id: content-dedup-v1-items-100000-space-70000-seed-8115, workload_fingerprint: ea7ab7e06f5c1f31ef06fba707ece7645c76cd3bb3a44c96a7d0a4966551e3d2}
+  - {allocation_case_id: e4-allocation-producer-consumer, family_id: bounded_producer_consumer, workload_instance_id: producer-consumer-v1-items-100000-queue-128-seed-8116, workload_fingerprint: bbc879495793f151cab3f32094521a8a8153851c7b2d9f6b9e8b3bdd004cc1cb}

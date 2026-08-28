@@ -1,4 +1,6 @@
-.PHONY: check validate-cluster-results validate-raw-integrity capacity-dry-run v3-validate v3-dry-run v3-image-policy v4-validate v4-test v5-test v5-user-study-test v5-user-study-smoke v5-isolation-check regenerate-cluster-results
+E4_RESOURCE_DRY_RUN_ID := e4-resource-envelope-dry-run-$(shell date -u +%Y%m%dT%H%M%SZ)
+
+.PHONY: check validate-cluster-results validate-raw-integrity capacity-dry-run v3-validate v3-dry-run v3-image-policy v4-validate v4-test v5-test v5-resource-validate v5-resource-test v5-resource-dry-run v5-user-study-test v5-user-study-smoke v5-isolation-check regenerate-cluster-results
 
 check:
 	bash scripts/check.sh
@@ -48,6 +50,19 @@ v5-test:
 		tests/test_evaluation_v5_gold_dataset.py \
 		tests/test_evaluation_v5_user_study.py \
 		tests/test_evaluation_v5_user_study_analysis.py
+
+v5-resource-validate:
+	PYTHONPATH=. .venv/bin/python -m evaluation_v5.resource validate-manifest
+
+v5-resource-test: v5-resource-validate
+	PYTHONPATH=. .venv/bin/python -m pytest -q tests/test_resource_envelope_v5.py
+
+v5-resource-dry-run: v5-resource-validate
+	PYTHONPATH=. .venv/bin/python -m evaluation_v5.resource dry-run \
+		--result-dir results_v5/protocol-v5.0.0/E4/$(E4_RESOURCE_DRY_RUN_ID) \
+		--run-id $(E4_RESOURCE_DRY_RUN_ID) \
+		--image example.invalid/intent-spawner-resource-v5@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa \
+		--reason "Current context is not the required disposable intent-spawner-eval-v5 cluster."
 
 v5-user-study-test:
 	PYTHONPATH=. .venv/bin/python -m pytest -q \

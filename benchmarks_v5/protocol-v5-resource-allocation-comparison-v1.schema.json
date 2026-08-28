@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "protocol-v5-resource-allocation-comparison-v1.schema.json",
+  "type": "object", "additionalProperties": false,
+  "required": ["schema_version", "protocol_version", "classification_semantics", "e4_package_sha256s", "allocation_evidence_sha256", "crosswalk_sha256", "results"],
+  "properties": {
+    "schema_version": {"const": "protocol-v5-resource-allocation-comparison-v1.0.0"},
+    "protocol_version": {"const": "5.0.0"},
+    "classification_semantics": {"type": "object"},
+    "e4_package_sha256s": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "allocation_evidence_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "crosswalk_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "results": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["allocation_case_id", "family_id", "workload_instance_id", "workload_fingerprint", "cpu_classification", "memory_classification", "joint_classification", "cpu_allocation_m", "memory_allocation_mib"],
+        "properties": {
+          "allocation_case_id": {"type": "string"},
+          "family_id": {"type": "string"},
+          "workload_instance_id": {"type": "string"},
+          "workload_fingerprint": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+          "cpu_classification": {"enum": ["EMPIRICALLY_INSUFFICIENT", "EMPIRICALLY_SUPPORTED", "INDETERMINATE_UNTESTED_INTERVAL", "NO_REFERENCE_AVAILABLE"]},
+          "memory_classification": {"enum": ["EMPIRICALLY_INSUFFICIENT", "EMPIRICALLY_SUPPORTED", "INDETERMINATE_UNTESTED_INTERVAL", "NO_REFERENCE_AVAILABLE"]},
+          "joint_classification": {"enum": ["NO_REFERENCE_AVAILABLE", "UNDER_ALLOCATION_ON_AT_LEAST_ONE_AXIS", "EMPIRICALLY_SUPPORTED_BOTH_AXES", "INDETERMINATE_ON_AT_LEAST_ONE_AXIS"]},
+          "cpu_allocation_m": {"type": "integer"},
+          "memory_allocation_mib": {"type": "integer"}
+        }
+      }
+    }
+  }
+}
