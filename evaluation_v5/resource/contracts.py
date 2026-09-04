@@ -58,18 +58,21 @@ def load_cluster_policy(path: Path = ELIGIBILITY_PATH) -> dict[str, Any]:
         "schema_version", "protocol_version", "expected_context", "expected_namespace",
         "cluster_identity_label", "namespace_safety_label", "node_identity_label",
         "node_isolation_label", "required_node_count", "required_cgroup_version",
-        "required_cgroup_controllers", "required_cgroup_files", "minimum_allocatable",
+        "required_cgroup_controllers", "required_cgroup_files",
+        "required_memory_event_keys", "minimum_allocatable",
         "maximum_trial", "required_api_access", "single_active_e4_pod",
         "require_no_resource_quotas", "require_pre_pulled_image",
         "require_verified_image_state", "require_dedicated_node",
         "require_no_non_daemonset_workloads_on_node", "eligibility_probe",
     }
-    if set(value) != required or value["schema_version"] != "protocol-v5-resource-cluster-eligibility-v1.0.0":
-        raise ValueError("cluster eligibility contract shape/version differs from frozen v1")
+    if set(value) != required or value["schema_version"] != "protocol-v5-resource-cluster-eligibility-v1.1.0":
+        raise ValueError("cluster eligibility contract shape/version differs from frozen v1.1")
     if value["required_cgroup_version"] != "v2" or value["required_node_count"] != 1:
         raise ValueError("cluster eligibility contract weakened")
     if set(value["required_cgroup_controllers"]) != {"cpu", "memory", "pids"}:
         raise ValueError("required cgroup controllers differ from frozen contract")
+    if value["required_memory_event_keys"] != ["oom", "oom_kill"]:
+        raise ValueError("required cgroup memory event keys differ from frozen contract")
     return value
 
 
@@ -151,6 +154,9 @@ def static_independence_scan(directory: Path | None = None) -> dict[str, Any]:
     directory = directory or Path(__file__).resolve().parent
     violations: list[str] = []
     files = [path for path in directory.glob("*.py") if path.name != "comparison.py"]
+    if directory == Path(__file__).resolve().parent:
+        files.append(ROOT / "cluster_evaluation" / "resource_adapter_v5.py")
+    files = sorted(files)
     for path in files:
         tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
         for node in ast.walk(tree):
@@ -176,7 +182,18 @@ def static_independence_scan(directory: Path | None = None) -> dict[str, Any]:
                 violations.append(f"{path.name}: forbidden runtime call {called}")
     if violations:
         raise ValueError("E4 calibration independence violations: " + "; ".join(violations))
-    return {"status": "pass", "files_scanned": len(files), "recommender_imports": 0}
+    scanned_files = []
+    for path in files:
+        try:
+            scanned_files.append(str(path.relative_to(ROOT)))
+        except ValueError:
+            scanned_files.append(str(path))
+    return {
+        "status": "pass",
+        "files_scanned": len(files),
+        "scanned_files": scanned_files,
+        "recommender_imports": 0,
+    }
 
 
 __all__ = [

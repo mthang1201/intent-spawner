@@ -13,7 +13,7 @@ from .workloads import OPERATIONS, execute_workload, validate_parameters
 
 ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_MANIFEST = ROOT / "benchmarks_v5" / "resource-envelope-workloads-v1.yaml"
-SCHEMA_VERSION = "protocol-v5-resource-workloads-v1.0.0"
+SCHEMA_VERSION = "protocol-v5-resource-workloads-v1.1.0"
 PROTOCOL_VERSION = "5.0.0"
 MEMORY_LATTICE_MIB = [64, 96, 128, 192, 256, 384, 512, 768, 1024, 1280, 1536, 1792, 2048]
 CPU_LATTICE_M = [100, 200, 300, 500, 750, 1000, 1500, 2000]
@@ -30,7 +30,7 @@ SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
 ID_RE = re.compile(r"^[a-z][a-z0-9_]{2,63}$")
 INSTANCE_RE = re.compile(r"^[a-z][a-z0-9._-]{2,127}$")
 SAFE_RULE = {
-    "version": "protocol-v5-resource-safe-rule-v1.1.0",
+    "version": "protocol-v5-resource-safe-rule-v1.2.0",
     "reference_repeats": 3,
     "probe_repeats": 2,
     "joint_verification_repeats": 5,
@@ -40,6 +40,10 @@ SAFE_RULE = {
     "infrastructure_replacements_per_trial": 1,
     "reference_stability_rule_version": "max-relative-spread-v1.0.0",
     "reference_max_relative_spread": 0.20,
+    "required_zero_memory_events": ["oom", "oom_kill"],
+    "optional_zero_memory_events": ["oom_group_kill"],
+    "runtime_timeout_basis": "measured_workload_runtime_seconds",
+    "runtime_timeout_inclusive": True,
 }
 
 

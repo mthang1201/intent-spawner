@@ -1,4 +1,4 @@
-schema_version: protocol-v5-resource-workloads-v1.0.0
+schema_version: protocol-v5-resource-workloads-v1.1.0
 protocol_version: 5.0.0
 evidence_role: confirmatory_reference
 description: Independent bounded synthetic workload instances for empirical CPU and memory envelopes.
@@ -13,7 +13,7 @@ limits:
   single_active_workload: true
   required_cgroup_version: v2
 safe_rule:
-  version: protocol-v5-resource-safe-rule-v1.1.0
+  version: protocol-v5-resource-safe-rule-v1.2.0
   reference_repeats: 3
   probe_repeats: 2
   joint_verification_repeats: 5
@@ -23,6 +23,10 @@ safe_rule:
   infrastructure_replacements_per_trial: 1
   reference_stability_rule_version: max-relative-spread-v1.0.0
   reference_max_relative_spread: 0.20
+  required_zero_memory_events: [oom, oom_kill]
+  optional_zero_memory_events: [oom_group_kill]
+  runtime_timeout_basis: measured_workload_runtime_seconds
+  runtime_timeout_inclusive: true
 workloads:
   - family_id: streaming_statistics
     workload_instance_id: streaming-statistics-v1-count-200000-seed-8101

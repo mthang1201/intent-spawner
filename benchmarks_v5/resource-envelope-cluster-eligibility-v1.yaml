@@ -1,4 +1,4 @@
-schema_version: protocol-v5-resource-cluster-eligibility-v1.0.0
+schema_version: protocol-v5-resource-cluster-eligibility-v1.1.0
 protocol_version: 5.0.0
 expected_context: intent-spawner-eval-v5
 expected_namespace: z2jh-context-demo
@@ -10,6 +10,7 @@ required_node_count: 1
 required_cgroup_version: v2
 required_cgroup_controllers: [cpu, memory, pids]
 required_cgroup_files: [cgroup.controllers, cpu.max, cpu.stat, memory.current, memory.events, memory.max, memory.peak]
+required_memory_event_keys: [oom, oom_kill]
 minimum_allocatable: {cpu_m: 2000, memory_mib: 2560}
 maximum_trial: {cpu_m: 2000, memory_mib: 2048}
 required_api_access:

@@ -14,7 +14,7 @@ from .manifest import (
 from .models import SafeEnvelope, TrialObservation
 
 
-DERIVATION_SCHEMA_VERSION = "protocol-v5-safe-resource-envelopes-v1.1.0"
+DERIVATION_SCHEMA_VERSION = "protocol-v5-safe-resource-envelopes-v1.2.0"
 NON_MONOTONIC = "NON_MONOTONIC_BOUNDARY_REQUIRES_REVIEW"
 REFERENCE_UNSTABLE = "REFERENCE_RUNTIME_UNSTABLE_REQUIRES_REVIEW"
 
@@ -46,6 +46,22 @@ def _valid(rows: Iterable[TrialObservation]) -> list[TrialObservation]:
     return [row for row in rows if not row.infrastructure_invalid]
 
 
+def _memory_events_are_oom_free(metrics: Mapping[str, Any]) -> bool:
+    events = metrics.get("memory_events_delta")
+    if not isinstance(events, Mapping):
+        return False
+    for key in SAFE_RULE["required_zero_memory_events"]:
+        value = events.get(key)
+        if not isinstance(value, int) or isinstance(value, bool) or value != 0:
+            return False
+    for key in SAFE_RULE["optional_zero_memory_events"]:
+        if key in events:
+            value = events[key]
+            if not isinstance(value, int) or isinstance(value, bool) or value != 0:
+                return False
+    return True
+
+
 def trial_basic_success(row: TrialObservation) -> bool:
     metrics = row.cgroup_metrics
     cpu_parts = str(metrics.get("cpu_max", "")).split()
@@ -57,6 +73,10 @@ def trial_basic_success(row: TrialObservation) -> bool:
         observed_memory_bytes = None
     return (
         row.workload_success
+        and 1 <= row.workload_timeout_seconds <= 120
+        and row.runtime_seconds is not None
+        and math.isfinite(row.runtime_seconds)
+        and 0 < row.runtime_seconds <= row.workload_timeout_seconds
         and row.cgroup_version == "v2"
         and metrics.get("source") == "cgroup_v2_in_container"
         and set(metrics.get("controllers") or []) >= {"cpu", "memory", "pids"}
@@ -65,7 +85,7 @@ def trial_basic_success(row: TrialObservation) -> bool:
         and isinstance(metrics.get("cpu_usage_usec_delta"), int)
         and isinstance(metrics.get("cpu_max"), str)
         and isinstance(metrics.get("memory_max"), str)
-        and isinstance(metrics.get("memory_events_delta"), Mapping)
+        and _memory_events_are_oom_free(metrics)
         and observed_cpu_m is not None
         and abs(observed_cpu_m - row.cpu_m) <= 1
         and observed_memory_bytes == row.memory_mib * 1024 * 1024

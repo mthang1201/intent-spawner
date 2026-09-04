@@ -85,10 +85,23 @@ rule `max-relative-spread-v1.0.0`:
 This is a deterministic stability gate, not a hypothesis test. Failure emits
 `REFERENCE_RUNTIME_UNSTABLE_REQUIRES_REVIEW` and prevents normal derivation.
 
-A candidate passes only if all required valid repeats have: no OOM; successful
-exit; marker and invariant correctness; no timeout; required cgroup-v2 metrics;
-median runtime at most 125% of the stable reference median; and every runtime
-at most 150% of it. The joint pair is safe only at 5/5 passes.
+A candidate passes only if all required valid repeats have: zero `oom` and
+`oom_kill` deltas in cgroup-v2 `memory.events`; zero `oom_group_kill` when that
+counter is exposed; no Kubernetes OOM kill; successful exit; marker and
+invariant correctness; measured workload runtime no greater than the frozen
+120-second boundary; required cgroup-v2 metrics; median runtime at most 125% of
+the stable reference median; and every runtime at most 150% of it. Missing
+required OOM counters, non-integer or negative deltas, and deltas that cannot be
+computed because either the baseline or final sample is missing all fail closed.
+The joint pair is safe only at 5/5 passes.
+
+The pod `activeDeadlineSeconds` is 150 seconds: the 120-second measured-workload
+boundary plus a separately recorded 30-second lifecycle allowance for container
+startup and result/log collection. That allowance never expands the safe
+runtime criterion. A completed workload measured above 120 seconds is recorded
+as a timeout outcome and rejected. The adapter's separately recorded five-second
+monitoring cushion only allows Kubernetes deadline propagation to be observed;
+it also cannot affect workload safety.
 
 Evidence reports the largest *tested* rejected point, smallest *tested*
 accepted point, selected jointly verified safe point, and interval
@@ -122,7 +135,12 @@ capacity/allocatable headroom, API access, quotas, conflicting E4 pods,
 non-DaemonSet node workloads, and image pre-pull. A pre-trial eligibility pod
 must confirm cgroup v2, controllers `cpu`, `memory`, and `pids`, all frozen
 measurement files, and successful cleanup. Calibration trial 1 cannot start
-until these checks pass.
+until these checks pass. The probe also records the available `memory.events`
+keys and requires `oom` and `oom_kill`, so an observed run cannot silently use a
+cgroup interface that is unable to enforce the frozen no-OOM rule. The complete
+observed key set is retained in environment provenance; absence of the optional
+`oom_group_kill` key is therefore explicit and is never inferred to mean a zero
+delta.
 
 Image state distinguishes reference configured, digest syntax, build, resolved
 digest verification, eligible-node pre-pull, and operational verification. A
@@ -138,7 +156,12 @@ The current `orbstack` context remains ineligible and dry-run-only.
 
 Packages contain root manifest, plan/provenance/environment facts, append-only
 JSONL trials, an append-only adaptive decision ledger, trial sidecars, derived
-envelopes, status/review, and `SHA256SUMS`.
+envelopes, status/review, and `SHA256SUMS`. Each v1.1 trial record carries its
+record schema and exact `workload_timeout_seconds`; Kubernetes evidence records
+the separate `pod_lifecycle_grace_seconds` and `pod_active_deadline_seconds`.
+Environment and Kubernetes evidence also identify the adapter monitoring grace.
+Older Protocol-v5 trial rows lacking these fields or using a prior record schema
+are rejected rather than upgraded implicitly.
 Raw observations stay separate from derivation and interpretation. Resume is
 permitted only for an existing unsealed partial package with an identical plan
 fingerprint; sealed or completed packages refuse resume and overwrite.

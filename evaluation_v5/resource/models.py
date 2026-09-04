@@ -6,6 +6,9 @@ from dataclasses import asdict, dataclass
 from typing import Any, Mapping, Protocol
 
 
+TRIAL_SCHEMA_VERSION = "protocol-v5-resource-trial-v1.1.0"
+
+
 @dataclass(frozen=True, slots=True)
 class TrialSpec:
     run_id: str
@@ -28,6 +31,7 @@ class TrialSpec:
 
 @dataclass(frozen=True, slots=True)
 class TrialObservation:
+    schema_version: str
     run_id: str
     family_id: str
     workload_instance_id: str
@@ -43,6 +47,7 @@ class TrialObservation:
     exit_reason: str | None
     oom_killed: bool
     timeout: bool
+    workload_timeout_seconds: int
     runtime_seconds: float | None
     correctness_marker_ok: bool
     correctness_invariants_ok: bool

@@ -12,7 +12,11 @@ import yaml
 from jsonschema import Draft202012Validator
 
 from cluster_evaluation.resource_adapter_v5 import (
-    build_pod_spec, evaluate_cluster_eligibility,
+    ADAPTER_MONITOR_GRACE_SECONDS,
+    POD_LIFECYCLE_GRACE_SECONDS,
+    KubernetesTrialAdapter,
+    build_pod_spec,
+    evaluate_cluster_eligibility,
 )
 from evaluation_v5.resource.comparison import classify_axis, compare_allocations
 from evaluation_v5.resource.contracts import (
@@ -20,9 +24,13 @@ from evaluation_v5.resource.contracts import (
     static_independence_scan,
 )
 from evaluation_v5.resource.derive import (
-    derive_safe_envelopes, reference_is_stable, wilson_interval,
+    derive_safe_envelopes, reference_is_stable, trial_basic_success,
+    wilson_interval,
 )
-from evaluation_v5.resource.evidence import validate_evidence_package
+from evaluation_v5.resource.evidence import (
+    canonical_sha256, file_sha256, validate_evidence_package,
+    validate_trial_observation,
+)
 from evaluation_v5.resource.manifest import (
     CPU_LATTICE_M,
     MEMORY_LATTICE_MIB,
@@ -31,8 +39,9 @@ from evaluation_v5.resource.manifest import (
     verify_workload_markers,
     workload_fingerprint,
 )
-from evaluation_v5.resource.models import TrialObservation
+from evaluation_v5.resource.models import TRIAL_SCHEMA_VERSION, TrialObservation
 from evaluation_v5.resource.planner import build_calibration_plan, make_trial_spec
+from evaluation_v5.resource.pod_runner import _delta
 from evaluation_v5.resource.runner import (
     create_dry_run_package,
     record_manual_review,
@@ -55,7 +64,8 @@ def _metrics(cpu: int, memory: int, peak: float) -> dict:
         "controllers": ["cpu", "memory", "pids"],
         "memory_peak_mib": peak, "cpu_full_window_average_m": min(cpu, 100),
         "cpu_usage_usec_delta": 1000, "cpu_max": f"{cpu * 100} 100000",
-        "memory_max": str(memory * 1024 * 1024), "memory_events_delta": {"oom": 0},
+        "memory_max": str(memory * 1024 * 1024),
+        "memory_events_delta": {"oom": 0, "oom_kill": 0, "oom_group_kill": 0},
     }
 
 
@@ -73,6 +83,7 @@ def _row(
 ) -> TrialObservation:
     marker = workload["expected_marker_sha256"] if success else "f" * 64
     return TrialObservation(
+        schema_version=TRIAL_SCHEMA_VERSION,
         run_id=f"fixture-{workload['family_id']}-{phase}-{cpu}-{memory}-{repeat}",
         family_id=workload["family_id"], workload_instance_id=workload["workload_instance_id"],
         workload_fingerprint=workload_fingerprint(workload), phase=phase, cpu_m=cpu,
@@ -81,7 +92,8 @@ def _row(
         expected_marker_sha256=workload["expected_marker_sha256"],
         observed_marker_sha256=marker, exit_code=0 if success else 1,
         exit_reason="Completed" if success else "Error", oom_killed=False,
-        timeout=False, runtime_seconds=runtime, correctness_marker_ok=success,
+        timeout=False, workload_timeout_seconds=workload["timeout_seconds"],
+        runtime_seconds=runtime, correctness_marker_ok=success,
         correctness_invariants_ok=success, correctness_details={"fixture": success},
         infrastructure_invalid=infrastructure,
         exclusion_reason="synthetic_infrastructure_failure" if infrastructure else None,
@@ -124,6 +136,7 @@ class FakeAdapter:
         if self.infrastructure_once and not self._failed:
             self._failed = True
             return TrialObservation(
+                schema_version=TRIAL_SCHEMA_VERSION,
                 run_id=spec.run_id, family_id=spec.family_id, phase=spec.phase,
                 workload_instance_id=spec.workload_instance_id,
                 workload_fingerprint=spec.workload_fingerprint,
@@ -131,7 +144,9 @@ class FakeAdapter:
                 repeat_index=spec.repeat_index, deterministic_seed=spec.deterministic_seed,
                 expected_marker_sha256=spec.expected_marker_sha256,
                 observed_marker_sha256=None, exit_code=None, exit_reason="FixtureInfra",
-                oom_killed=False, timeout=False, runtime_seconds=None,
+                oom_killed=False, timeout=False,
+                workload_timeout_seconds=spec.timeout_seconds,
+                runtime_seconds=None,
                 correctness_marker_ok=False, infrastructure_invalid=True,
                 correctness_invariants_ok=False, correctness_details={},
                 exclusion_reason="fixture_infrastructure_failure", cgroup_version=None,
@@ -143,6 +158,7 @@ class FakeAdapter:
         runtime = 1.0 if enough_cpu else 2.0
         marker = spec.expected_marker_sha256 if enough_memory else None
         return TrialObservation(
+            schema_version=TRIAL_SCHEMA_VERSION,
             run_id=spec.run_id, family_id=spec.family_id, phase=spec.phase,
             workload_instance_id=spec.workload_instance_id,
             workload_fingerprint=spec.workload_fingerprint,
@@ -152,6 +168,7 @@ class FakeAdapter:
             observed_marker_sha256=marker, exit_code=0 if enough_memory else 137,
             exit_reason="Completed" if enough_memory else "OOMKilled",
             oom_killed=not enough_memory, timeout=False,
+            workload_timeout_seconds=spec.timeout_seconds,
             runtime_seconds=runtime if enough_memory else None,
             correctness_marker_ok=enough_memory, infrastructure_invalid=False,
             correctness_invariants_ok=enough_memory, correctness_details={"fixture": enough_memory},
@@ -209,7 +226,25 @@ def test_semantic_independence_and_crosswalk_cover_manifest_exactly(manifest):
 
 
 def test_static_independence_guard_scans_calibration_runtime():
-    assert static_independence_scan()["recommender_imports"] == 0
+    report = static_independence_scan()
+    assert report["recommender_imports"] == 0
+    assert "cluster_evaluation/resource_adapter_v5.py" in report["scanned_files"]
+    assert "evaluation_v5/resource/pod_runner.py" in report["scanned_files"]
+
+
+@pytest.mark.parametrize(
+    "source",
+    [
+        "from recommender.rules import RuleBasedRecommender\n",
+        "def calibrate():\n    return recommend()\n",
+    ],
+)
+def test_static_independence_guard_rejects_forbidden_imports_and_calls(
+    tmp_path, source,
+):
+    (tmp_path / "calibration_violation.py").write_text(source, encoding="utf-8")
+    with pytest.raises(ValueError, match="E4 calibration independence violations"):
+        static_independence_scan(tmp_path)
 
 
 def test_manifest_rejects_recommendation_or_oracle_fields(manifest):
@@ -249,6 +284,185 @@ def test_reference_stability_rule_stable_unstable_and_borderline():
     stable, statistic = reference_is_stable([0.89, 1.0, 1.11])
     assert stable is False
     assert statistic == pytest.approx(0.22)
+
+
+@pytest.mark.parametrize("event_key", ["oom", "oom_kill", "oom_group_kill"])
+def test_trial_safety_rejects_any_observed_oom_event(manifest, event_key):
+    workload = manifest["workloads"][0]
+    row = _row(workload, "reference", 2000, 2048, 0)
+    metrics = deepcopy(row.cgroup_metrics)
+    metrics["memory_events_delta"][event_key] = 1
+    assert trial_basic_success(replace(row, cgroup_metrics=metrics)) is False
+
+
+@pytest.mark.parametrize("missing_key", ["oom", "oom_kill"])
+def test_trial_safety_fails_closed_without_required_oom_counter(manifest, missing_key):
+    workload = manifest["workloads"][0]
+    row = _row(workload, "reference", 2000, 2048, 0)
+    metrics = deepcopy(row.cgroup_metrics)
+    del metrics["memory_events_delta"][missing_key]
+    assert trial_basic_success(replace(row, cgroup_metrics=metrics)) is False
+
+
+@pytest.mark.parametrize(
+    "before,after",
+    [({"oom": 0}, {}), ({}, {"oom": 0})],
+)
+def test_missing_memory_event_baseline_or_final_sample_rejects(
+    manifest, before, after,
+):
+    workload = manifest["workloads"][0]
+    row = _row(workload, "reference", 2000, 2048, 0)
+    metrics = deepcopy(row.cgroup_metrics)
+    metrics["memory_events_delta"]["oom"] = _delta(after, before, "oom")
+    assert metrics["memory_events_delta"]["oom"] is None
+    assert trial_basic_success(replace(row, cgroup_metrics=metrics)) is False
+
+
+@pytest.mark.parametrize("value", [None, "0", -1, True])
+def test_trial_safety_rejects_malformed_or_negative_oom_counter(manifest, value):
+    workload = manifest["workloads"][0]
+    row = _row(workload, "reference", 2000, 2048, 0)
+    metrics = deepcopy(row.cgroup_metrics)
+    metrics["memory_events_delta"]["oom"] = value
+    assert trial_basic_success(replace(row, cgroup_metrics=metrics)) is False
+
+
+def test_zero_valid_oom_counters_continue_safety_evaluation(manifest):
+    workload = manifest["workloads"][0]
+    row = _row(workload, "reference", 2000, 2048, 0, runtime=1.0)
+    assert row.cgroup_metrics["memory_events_delta"] == {
+        "oom": 0, "oom_kill": 0, "oom_group_kill": 0,
+    }
+    assert trial_basic_success(row) is True
+
+
+def test_trial_safety_applies_inclusive_measured_runtime_timeout(manifest):
+    workload = manifest["workloads"][0]
+    boundary = float(workload["timeout_seconds"])
+    below = _row(workload, "reference", 2000, 2048, 0, runtime=119.999)
+    at_boundary = replace(below, runtime_seconds=boundary)
+    assert trial_basic_success(below) is True
+    assert trial_basic_success(at_boundary) is True
+    exceeded = replace(at_boundary, runtime_seconds=boundary + 0.001, timeout=True)
+    assert trial_basic_success(exceeded) is False
+
+
+@pytest.mark.parametrize("runtime", [float("nan"), float("inf"), float("-inf")])
+def test_trial_safety_and_evidence_reject_non_finite_runtime(manifest, runtime):
+    workload = manifest["workloads"][0]
+    row = _row(workload, "reference", 2000, 2048, 0, runtime=runtime)
+    assert trial_basic_success(row) is False
+    with pytest.raises(ValueError, match="finite non-negative"):
+        validate_trial_observation(row)
+
+
+def test_trial_safety_rejects_missing_or_negative_runtime(manifest):
+    workload = manifest["workloads"][0]
+    row = _row(workload, "reference", 2000, 2048, 0)
+    assert trial_basic_success(replace(row, runtime_seconds=None)) is False
+    negative = replace(row, runtime_seconds=-0.001)
+    assert trial_basic_success(negative) is False
+    with pytest.raises(ValueError, match="finite non-negative"):
+        validate_trial_observation(negative)
+
+
+def test_trial_evidence_rejects_unflagged_runtime_overflow(manifest):
+    workload = manifest["workloads"][0]
+    row = _row(
+        workload, "reference", 2000, 2048, 0,
+        runtime=float(workload["timeout_seconds"]) + 0.001,
+    )
+    with pytest.raises(ValueError, match="runtime exceeds"):
+        validate_trial_observation(row)
+
+
+def test_current_trial_observation_round_trip_and_prior_v5_rejection(manifest):
+    workload = manifest["workloads"][0]
+    row = _row(workload, "reference", 2000, 2048, 0)
+    round_tripped = TrialObservation.from_dict(json.loads(json.dumps(row.to_dict())))
+    validate_trial_observation(round_tripped)
+    assert round_tripped == row
+
+    prior = row.to_dict()
+    prior["schema_version"] = "protocol-v5-resource-trial-v1.0.0"
+    prior["timeout_seconds"] = prior.pop("workload_timeout_seconds")
+    with pytest.raises(TypeError):
+        TrialObservation.from_dict(prior)
+
+    wrong_version = replace(
+        row, schema_version="protocol-v5-resource-trial-v1.0.0",
+    )
+    with pytest.raises(ValueError, match="unsupported"):
+        validate_trial_observation(wrong_version)
+
+
+def test_kubernetes_adapter_flags_runtime_and_cgroup_oom_boundaries(manifest):
+    workload = manifest["workloads"][0]
+    spec = make_trial_spec(
+        workload, phase="reference", cpu_m=2000, memory_mib=2048,
+        repeat_index=0, plan_index=0,
+    )
+    adapter = KubernetesTrialAdapter(image=IMAGE)
+    metrics = _metrics(spec.cpu_m, spec.memory_mib, 100.0)
+    metrics["memory_events_delta"]["oom_kill"] = 1
+    row = adapter._observation(
+        spec, observed_marker=spec.expected_marker_sha256, exit_code=0,
+        exit_reason="Completed", runtime=spec.timeout_seconds + 0.001,
+        metrics=metrics, correctness_invariants_ok=True,
+    )
+    assert row.schema_version == TRIAL_SCHEMA_VERSION
+    assert row.workload_timeout_seconds == spec.timeout_seconds
+    assert row.timeout is True
+    assert row.oom_killed is True
+    assert trial_basic_success(row) is False
+
+    kubernetes_only_oom = adapter._observation(
+        spec, observed_marker=spec.expected_marker_sha256, exit_code=137,
+        exit_reason="OOMKilled", oom=True, runtime=1.0,
+        metrics=_metrics(spec.cpu_m, spec.memory_mib, 100.0),
+        correctness_invariants_ok=True,
+    )
+    assert kubernetes_only_oom.oom_killed is True
+    assert trial_basic_success(kubernetes_only_oom) is False
+
+
+@pytest.mark.parametrize("outcome", ["oom", "timeout"])
+def test_workload_oom_or_timeout_cannot_be_replaceable_infrastructure(
+    manifest, outcome,
+):
+    workload = manifest["workloads"][0]
+    row = _row(workload, "memory_probe", 2000, 64, 0)
+    contradictory = replace(
+        row,
+        oom_killed=outcome == "oom",
+        timeout=outcome == "timeout",
+        infrastructure_invalid=True,
+        exclusion_reason="pod_cleanup_failed",
+    )
+    with pytest.raises(ValueError, match="cannot be infrastructure-invalid"):
+        validate_trial_observation(contradictory)
+
+
+def test_lifecycle_and_monitor_grace_do_not_enlarge_workload_timeout(manifest):
+    workload = manifest["workloads"][0]
+    spec = make_trial_spec(
+        workload, phase="reference", cpu_m=2000, memory_mib=2048,
+        repeat_index=0, plan_index=0,
+    )
+    assert POD_LIFECYCLE_GRACE_SECONDS == 30
+    assert ADAPTER_MONITOR_GRACE_SECONDS == 5
+    pod = build_pod_spec(spec, IMAGE)
+    assert pod["spec"]["activeDeadlineSeconds"] == spec.timeout_seconds + 30
+
+    row = KubernetesTrialAdapter(image=IMAGE)._observation(
+        spec, observed_marker=spec.expected_marker_sha256, exit_code=0,
+        exit_reason="Completed", runtime=spec.timeout_seconds + 0.001,
+        metrics=_metrics(spec.cpu_m, spec.memory_mib, 100.0),
+        correctness_invariants_ok=True,
+    )
+    assert row.timeout is True
+    assert trial_basic_success(row) is False
 
 
 def test_frozen_correctness_invariant_rejects_corruption(manifest):
@@ -395,7 +609,18 @@ def test_dry_run_is_immutable_and_contains_no_observations(tmp_path, manifest):
     assert report["eligible_for_comparison"] is False
     root = json.loads((result_dir / "manifest.json").read_text())
     assert root["cluster_measurement_status"] == "NOT_EXECUTED"
+    assert root["measurement_claims_permitted"] is False
+    assert not (result_dir / "raw" / "trials.jsonl").exists()
+    assert not (result_dir / "raw" / "decision-ledger.jsonl").exists()
     assert not (result_dir / "derived" / "safe-envelopes.json").exists()
+    environment = json.loads((result_dir / "raw" / "environment.json").read_text())
+    assert environment["hardware_measurements"] is None
+    assert environment["cgroup_measurements"] is None
+    assert environment["kubernetes_mutations"] == []
+    assert environment["workload_timeout_seconds"] == 120
+    assert environment["pod_lifecycle_grace_seconds"] == 30
+    assert environment["pod_active_deadline_seconds"] == 150
+    assert environment["adapter_monitor_grace_seconds"] == 5
     with pytest.raises(FileExistsError):
         create_dry_run_package(
             result_dir=result_dir, run_id="fixture-dry-run", image=IMAGE,
@@ -442,6 +667,40 @@ def test_fake_adapter_drives_search_and_manual_review_gate(tmp_path, monkeypatch
     with pytest.raises(FileExistsError):
         record_manual_review(
             result_dir, reviewer_id="reviewer-fixture", decision="REJECTED", reason="duplicate",
+        )
+
+
+def test_observed_package_rejects_incompatible_derivation_schema(
+    tmp_path, monkeypatch,
+):
+    from evaluation_v5.resource import runner
+
+    monkeypatch.setattr(
+        runner, "_git_identity",
+        lambda: {"git_revision": "9" * 40, "git_dirty": False},
+    )
+    result_dir = tmp_path / "old-derivation-schema"
+    run_calibration(
+        result_dir=result_dir, run_id="old-derivation-schema",
+        adapter=FakeAdapter(), image=IMAGE, enforce_readiness=False,
+    )
+    derived_path = result_dir / "derived" / "safe-envelopes.json"
+    derived = json.loads(derived_path.read_text(encoding="utf-8"))
+    derived["schema_version"] = "protocol-v5-safe-resource-envelopes-v1.1.0"
+    derived_path.write_text(json.dumps(derived, sort_keys=True) + "\n", encoding="utf-8")
+    status_path = result_dir / "report" / "status.json"
+    status = json.loads(status_path.read_text(encoding="utf-8"))
+    status["review_input_components"]["derived/safe-envelopes.json"] = file_sha256(
+        derived_path
+    )
+    status["review_input_fingerprint"] = canonical_sha256(
+        status["review_input_components"]
+    )
+    status_path.write_text(json.dumps(status, sort_keys=True) + "\n", encoding="utf-8")
+    with pytest.raises(ValueError, match="incompatible derivation schema"):
+        record_manual_review(
+            result_dir, reviewer_id="reviewer-fixture", decision="APPROVED",
+            reason="Synthetic fixture verifies derivation version rejection.",
         )
 
 
@@ -536,6 +795,8 @@ def test_kubernetes_spec_is_guaranteed_hardened_and_recommender_free(manifest):
     assert pod["spec"]["automountServiceAccountToken"] is False
     assert pod["spec"]["restartPolicy"] == "Never"
     assert pod["spec"]["activeDeadlineSeconds"] == 150
+    assert pod["metadata"]["annotations"]["z2jh-context-demo.local/workload-timeout-seconds"] == "120"
+    assert pod["metadata"]["annotations"]["z2jh-context-demo.local/pod-lifecycle-grace-seconds"] == "30"
     assert container["securityContext"]["readOnlyRootFilesystem"] is True
     assert container["imagePullPolicy"] == "Never"
     assert pod["spec"]["nodeSelector"]["z2jh-context-demo.local/dedicated-e4"] == "true"
@@ -571,7 +832,9 @@ def _eligible_cluster_fixture():
     }}
     probe = {
         "cgroup_version": "v2", "controllers": policy["required_cgroup_controllers"],
-        "available_files": policy["required_cgroup_files"], "cleanup_status": "succeeded",
+        "available_files": policy["required_cgroup_files"],
+        "memory_event_keys": policy["required_memory_event_keys"],
+        "cleanup_status": "succeeded",
     }
     kwargs = dict(
         policy=policy, image=IMAGE, image_state=image_state,
@@ -587,6 +850,7 @@ def test_cluster_eligibility_accepts_complete_fixture():
     report = evaluate_cluster_eligibility(**_eligible_cluster_fixture())
     assert report["eligibility_status"] == "ELIGIBLE"
     assert report["failure_codes"] == []
+    assert report["facts"]["cgroup_probe"]["memory_event_keys"] == ["oom", "oom_kill"]
 
 
 @pytest.mark.parametrize("mutation,code", [
@@ -594,6 +858,7 @@ def test_cluster_eligibility_accepts_complete_fixture():
     ("cluster", "WRONG_CLUSTER_FINGERPRINT"),
     ("cgroup", "CGROUP_V2_REQUIRED"),
     ("controller", "CGROUP_CONTROLLER_MISSING"),
+    ("memory_event", "CGROUP_MEMORY_EVENT_KEY_MISSING"),
     ("capacity", "INSUFFICIENT_NODE_CAPACITY"),
     ("conflict", "CONFLICTING_CALIBRATION_WORKLOAD"),
     ("image", "IMAGE_DIGEST_UNVERIFIED"),
@@ -609,6 +874,8 @@ def test_cluster_eligibility_fails_closed(mutation, code):
         kwargs["cgroup_probe"]["cgroup_version"] = "v1"
     elif mutation == "controller":
         kwargs["cgroup_probe"]["controllers"] = ["cpu", "memory"]
+    elif mutation == "memory_event":
+        kwargs["cgroup_probe"]["memory_event_keys"] = ["oom"]
     elif mutation == "capacity":
         kwargs["nodes"]["items"][0]["status"]["allocatable"] = {"cpu": "1000m", "memory": "1Gi"}
     elif mutation == "conflict":

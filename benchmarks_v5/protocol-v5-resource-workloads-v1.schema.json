@@ -6,7 +6,7 @@
   "additionalProperties": false,
   "required": ["schema_version", "protocol_version", "evidence_role", "description", "master_seed", "candidate_lattices", "limits", "safe_rule", "workloads"],
   "properties": {
-    "schema_version": {"const": "protocol-v5-resource-workloads-v1.0.0"},
+    "schema_version": {"const": "protocol-v5-resource-workloads-v1.1.0"},
     "protocol_version": {"const": "5.0.0"},
     "evidence_role": {"const": "confirmatory_reference"},
     "description": {"type": "string", "minLength": 1},
@@ -30,15 +30,19 @@
     },
     "safe_rule": {
       "type": "object", "additionalProperties": false,
-      "required": ["version", "reference_repeats", "probe_repeats", "joint_verification_repeats", "median_runtime_ratio_max", "individual_runtime_ratio_max", "required_joint_successes", "infrastructure_replacements_per_trial", "reference_stability_rule_version", "reference_max_relative_spread"],
+      "required": ["version", "reference_repeats", "probe_repeats", "joint_verification_repeats", "median_runtime_ratio_max", "individual_runtime_ratio_max", "required_joint_successes", "infrastructure_replacements_per_trial", "reference_stability_rule_version", "reference_max_relative_spread", "required_zero_memory_events", "optional_zero_memory_events", "runtime_timeout_basis", "runtime_timeout_inclusive"],
       "properties": {
-        "version": {"const": "protocol-v5-resource-safe-rule-v1.1.0"},
+        "version": {"const": "protocol-v5-resource-safe-rule-v1.2.0"},
         "reference_repeats": {"const": 3}, "probe_repeats": {"const": 2},
         "joint_verification_repeats": {"const": 5}, "median_runtime_ratio_max": {"const": 1.25},
         "individual_runtime_ratio_max": {"const": 1.5}, "required_joint_successes": {"const": 5},
         "infrastructure_replacements_per_trial": {"const": 1},
         "reference_stability_rule_version": {"const": "max-relative-spread-v1.0.0"},
-        "reference_max_relative_spread": {"const": 0.2}
+        "reference_max_relative_spread": {"const": 0.2},
+        "required_zero_memory_events": {"const": ["oom", "oom_kill"]},
+        "optional_zero_memory_events": {"const": ["oom_group_kill"]},
+        "runtime_timeout_basis": {"const": "measured_workload_runtime_seconds"},
+        "runtime_timeout_inclusive": {"const": true}
       }
     },
     "workloads": {

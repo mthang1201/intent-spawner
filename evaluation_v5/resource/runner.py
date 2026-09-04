@@ -43,14 +43,14 @@ from .manifest import (
     workload_fingerprint,
     workloads_by_id,
 )
-from .models import TrialAdapter, TrialObservation, TrialSpec
+from .models import TRIAL_SCHEMA_VERSION, TrialAdapter, TrialObservation, TrialSpec
 from .planner import build_calibration_plan, make_trial_spec
 
 
 ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_FREEZE = ROOT / "results_v5" / "protocol-v5.0.0" / "freezes" / "frozen-configuration.json"
-RUN_SCHEMA_VERSION = "protocol-v5-resource-calibration-run-v1.0.0"
-RUNNER_VERSION = "protocol-v5-resource-calibration-runner-v1.1.0"
+RUN_SCHEMA_VERSION = "protocol-v5-resource-calibration-run-v1.1.0"
+RUNNER_VERSION = "protocol-v5-resource-calibration-runner-v1.2.0"
 
 
 class InfrastructureExhausted(RuntimeError):
@@ -164,6 +164,7 @@ def _base_provenance(
         "safe_rule": {
             "version": manifest["safe_rule"]["version"],
             "reference_stability_rule_version": manifest["safe_rule"]["reference_stability_rule_version"],
+            "trial_observation_schema_version": TRIAL_SCHEMA_VERSION,
         },
         "frozen_contracts": contracts,
         "comparison_provenance": comparison,
@@ -221,7 +222,10 @@ def create_dry_run_package(
         manifest_path, manifest, freeze_path, run_id=run_id, image=image,
         adapter_version="dry-run-adapter-v1",
     )
-    from cluster_evaluation.resource_adapter_v5 import IMAGE_RE, collect_read_only_preflight
+    from cluster_evaluation.resource_adapter_v5 import (
+        ADAPTER_MONITOR_GRACE_SECONDS, IMAGE_RE, POD_LIFECYCLE_GRACE_SECONDS,
+        collect_read_only_preflight,
+    )
 
     policy = load_cluster_policy()
     declared_image_state = load_image_state()
@@ -246,7 +250,7 @@ def create_dry_run_package(
         readiness_failures.append("IMAGE_DIGEST_UNVERIFIED")
     readiness_failures = sorted(set(readiness_failures))
     environment = {
-        "schema_version": "protocol-v5-resource-environment-v1.0.0",
+        "schema_version": "protocol-v5-resource-environment-v1.1.0",
         "captured_at_utc": _utc_now(),
         "environment_id": "local-dry-run-no-cluster-measurement",
         "python_version": platform.python_version(),
@@ -262,6 +266,12 @@ def create_dry_run_package(
         "image_state": image_state,
         "hardware_measurements": None,
         "cgroup_measurements": None,
+        "workload_timeout_seconds": manifest["limits"]["max_timeout_seconds"],
+        "pod_lifecycle_grace_seconds": POD_LIFECYCLE_GRACE_SECONDS,
+        "pod_active_deadline_seconds": (
+            manifest["limits"]["max_timeout_seconds"] + POD_LIFECYCLE_GRACE_SECONDS
+        ),
+        "adapter_monitor_grace_seconds": ADAPTER_MONITOR_GRACE_SECONDS,
         "kubernetes_mutations": [],
     }
     root_manifest = {
@@ -282,6 +292,7 @@ def create_dry_run_package(
         "comparison_contract_version": provenance["frozen_contracts"]["allocation_comparison"]["version"],
         "comparison_contract_sha256": provenance["frozen_contracts"]["allocation_comparison"]["schema_sha256"],
         "safe_rule_version": manifest["safe_rule"]["version"],
+        "trial_observation_schema_version": TRIAL_SCHEMA_VERSION,
         "reference_stability_rule_version": manifest["safe_rule"]["reference_stability_rule_version"],
         "cluster_eligibility_policy_version": policy["schema_version"],
         "cluster_eligibility_policy_sha256": provenance["frozen_contracts"]["cluster_eligibility"]["sha256"],
@@ -669,6 +680,7 @@ def run_calibration(
         "comparison_contract_sha256": provenance["frozen_contracts"]["allocation_comparison"]["schema_sha256"],
         "comparison_crosswalk_sha256": provenance["frozen_contracts"]["allocation_comparison"]["crosswalk_sha256"],
         "safe_rule_version": manifest["safe_rule"]["version"],
+        "trial_observation_schema_version": TRIAL_SCHEMA_VERSION,
         "reference_stability_rule_version": manifest["safe_rule"]["reference_stability_rule_version"],
         "cluster_eligibility_policy_version": provenance["frozen_contracts"]["cluster_eligibility"]["schema_version"],
         "cluster_eligibility_policy_sha256": provenance["frozen_contracts"]["cluster_eligibility"]["sha256"],

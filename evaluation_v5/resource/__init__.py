@@ -2,12 +2,15 @@
 
 from .derive import derive_safe_envelopes, wilson_interval
 from .manifest import DEFAULT_MANIFEST, load_resource_manifest
-from .models import SafeEnvelope, TrialAdapter, TrialObservation, TrialSpec
+from .models import (
+    TRIAL_SCHEMA_VERSION, SafeEnvelope, TrialAdapter, TrialObservation, TrialSpec,
+)
 from .planner import build_calibration_plan
 
 __all__ = [
     "DEFAULT_MANIFEST",
     "SafeEnvelope",
+    "TRIAL_SCHEMA_VERSION",
     "TrialAdapter",
     "TrialObservation",
     "TrialSpec",

@@ -9,10 +9,10 @@ from .manifest import (
     CPU_LATTICE_M, MEMORY_LATTICE_MIB, validate_resource_manifest,
     workload_fingerprint,
 )
-from .models import TrialSpec
+from .models import TRIAL_SCHEMA_VERSION, TrialSpec
 
 
-PLAN_SCHEMA_VERSION = "protocol-v5-resource-calibration-plan-v1.0.0"
+PLAN_SCHEMA_VERSION = "protocol-v5-resource-calibration-plan-v1.1.0"
 
 
 def _seed(master_seed: int, family_id: str, phase: str, repeat: int) -> int:
@@ -71,6 +71,7 @@ def build_calibration_plan(manifest: Mapping[str, Any]) -> dict[str, Any]:
         "protocol_version": "5.0.0",
         "experiment_id": "E4",
         "evidence_role": "confirmatory_reference",
+        "trial_observation_schema_version": TRIAL_SCHEMA_VERSION,
         "master_seed": validated["master_seed"],
         "family_count": len(families),
         "family_ids": families,

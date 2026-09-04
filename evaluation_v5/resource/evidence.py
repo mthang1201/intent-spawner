@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import math
 import os
 from pathlib import Path
 import re
@@ -11,10 +12,11 @@ from typing import Any, Iterable, Mapping
 
 from evaluation_v5.provenance import write_json_exclusive
 
-from .models import TrialObservation, TrialSpec
+from .derive import DERIVATION_SCHEMA_VERSION
+from .models import TRIAL_SCHEMA_VERSION, TrialObservation, TrialSpec
 
 
-OBSERVATION_SCHEMA_VERSION = "protocol-v5-resource-trial-v1.0.0"
+OBSERVATION_SCHEMA_VERSION = TRIAL_SCHEMA_VERSION
 SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
 
 
@@ -35,6 +37,8 @@ def canonical_sha256(payload: Mapping[str, Any]) -> str:
 def validate_trial_observation(observation: TrialObservation, spec: TrialSpec | None = None) -> None:
     if not isinstance(observation, TrialObservation):
         raise ValueError("trial observation has the wrong type")
+    if observation.schema_version != OBSERVATION_SCHEMA_VERSION:
+        raise ValueError("unsupported resource trial observation version")
     if observation.phase not in {"reference", "memory_probe", "cpu_probe", "joint_verification"}:
         raise ValueError("unsupported calibration phase")
     if observation.cpu_m <= 0 or observation.cpu_m > 2000:
@@ -45,10 +49,29 @@ def validate_trial_observation(observation: TrialObservation, spec: TrialSpec | 
         raise ValueError("expected marker is not SHA-256")
     if observation.observed_marker_sha256 is not None and not SHA256_RE.fullmatch(observation.observed_marker_sha256):
         raise ValueError("observed marker is not SHA-256")
-    if observation.runtime_seconds is not None and observation.runtime_seconds < 0:
-        raise ValueError("runtime cannot be negative")
+    if (
+        not isinstance(observation.workload_timeout_seconds, int)
+        or isinstance(observation.workload_timeout_seconds, bool)
+        or not 1 <= observation.workload_timeout_seconds <= 120
+    ):
+        raise ValueError("trial timeout boundary is outside the E4 hard bound")
+    if observation.runtime_seconds is not None and (
+        not isinstance(observation.runtime_seconds, (int, float))
+        or isinstance(observation.runtime_seconds, bool)
+        or not math.isfinite(observation.runtime_seconds)
+        or observation.runtime_seconds < 0
+    ):
+        raise ValueError("runtime must be a finite non-negative number")
+    if (
+        observation.runtime_seconds is not None
+        and observation.runtime_seconds > observation.workload_timeout_seconds
+        and not observation.timeout
+    ):
+        raise ValueError("runtime exceeds the trial timeout boundary without a timeout outcome")
     if observation.infrastructure_invalid != bool(observation.exclusion_reason):
         raise ValueError("infrastructure exclusion fields disagree")
+    if observation.infrastructure_invalid and (observation.oom_killed or observation.timeout):
+        raise ValueError("workload OOM or timeout cannot be infrastructure-invalid")
     if observation.correctness_marker_ok != (
         observation.observed_marker_sha256 == observation.expected_marker_sha256
     ):
@@ -65,6 +88,8 @@ def validate_trial_observation(observation: TrialObservation, spec: TrialSpec | 
         ):
             if getattr(observation, name) != getattr(spec, name):
                 raise ValueError(f"trial observation/spec mismatch for {name}")
+        if observation.workload_timeout_seconds != spec.timeout_seconds:
+            raise ValueError("trial observation/spec mismatch for workload_timeout_seconds")
 
 
 def append_jsonl_fsync(path: Path, payload: Mapping[str, Any]) -> None:
@@ -166,8 +191,10 @@ def validate_evidence_package(root: Path, *, allow_unsealed: bool = False) -> di
     if not manifest_path.is_file():
         raise ValueError("resource evidence package lacks manifest.json")
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-    if manifest.get("schema_version") != "protocol-v5-resource-calibration-run-v1.0.0":
+    if manifest.get("schema_version") != "protocol-v5-resource-calibration-run-v1.1.0":
         raise ValueError("unsupported resource run manifest")
+    if manifest.get("trial_observation_schema_version") != OBSERVATION_SCHEMA_VERSION:
+        raise ValueError("resource run manifest has an incompatible trial observation schema")
     integrity = None
     if (root / "SHA256SUMS").exists():
         integrity = verify_integrity(root)
@@ -198,8 +225,15 @@ def validate_evidence_package(root: Path, *, allow_unsealed: bool = False) -> di
             or environment.get("kubernetes_mutations") != []
         ):
             raise ValueError("dry-run package contains measurements, trials, or mutation claims")
-    elif status == "OBSERVED" and (not observations or not decisions):
-        raise ValueError("observed resource package lacks trials or adaptive decisions")
+    elif status == "OBSERVED":
+        if not observations or not decisions:
+            raise ValueError("observed resource package lacks trials or adaptive decisions")
+        derived_path = root / "derived" / "safe-envelopes.json"
+        if not derived_path.is_file():
+            raise ValueError("observed resource package lacks derived envelopes")
+        derived = json.loads(derived_path.read_text(encoding="utf-8"))
+        if derived.get("schema_version") != DERIVATION_SCHEMA_VERSION:
+            raise ValueError("observed resource package has an incompatible derivation schema")
     review_status = "NOT_APPLICABLE" if status == "DRY_RUN" else manifest.get("manual_review_status")
     eligible = False
     review_path = root / "report" / "manual-review.json"

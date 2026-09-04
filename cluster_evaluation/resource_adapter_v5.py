@@ -14,7 +14,7 @@ from typing import Any, Mapping
 from evaluation_v5.resource.contracts import (
     IMAGE_STATE_PATH, image_state_is_verified, load_cluster_policy, load_image_state,
 )
-from evaluation_v5.resource.models import TrialObservation, TrialSpec
+from evaluation_v5.resource.models import TRIAL_SCHEMA_VERSION, TrialObservation, TrialSpec
 
 
 REQUIRED_CONTEXT = "intent-spawner-eval-v5"
@@ -22,6 +22,8 @@ NAMESPACE = "z2jh-context-demo"
 SAFETY_LABEL = "z2jh-context-demo.local/disposable-experiment-v5"
 IMAGE_RE = re.compile(r"^[a-z0-9]+(?:[._-][a-z0-9]+)*(?::[0-9]+)?/[a-z0-9]+(?:[._/-][a-z0-9]+)*@sha256:[0-9a-f]{64}$")
 E4_LABEL_SELECTOR = "app.kubernetes.io/name=intent-spawner-resource-envelope-v5"
+POD_LIFECYCLE_GRACE_SECONDS = 30
+ADAPTER_MONITOR_GRACE_SECONDS = 5
 
 
 def _utc_now() -> str:
@@ -142,10 +144,13 @@ def evaluate_cluster_eligibility(
             missing_files = set(policy["required_cgroup_files"]) - set(cgroup_probe.get("available_files") or [])
             if missing_files:
                 failures.append("CGROUP_MEASUREMENT_FILE_MISSING")
+            missing_memory_events = set(policy["required_memory_event_keys"]) - set(cgroup_probe.get("memory_event_keys") or [])
+            if missing_memory_events:
+                failures.append("CGROUP_MEMORY_EVENT_KEY_MISSING")
             if cgroup_probe.get("cleanup_status") != "succeeded":
                 failures.append("ELIGIBILITY_PROBE_CLEANUP_FAILED")
     return {
-        "schema_version": "protocol-v5-resource-cluster-preflight-v1.0.0",
+        "schema_version": "protocol-v5-resource-cluster-preflight-v1.1.0",
         "eligibility_status": "ELIGIBLE" if not failures else "CLUSTER_INELIGIBLE",
         "failure_codes": sorted(set(failures)),
         "facts": {
@@ -233,11 +238,13 @@ def build_pod_spec(spec: TrialSpec, image: str) -> dict[str, Any]:
                 "z2jh-context-demo.local/run-id": spec.run_id,
                 "z2jh-context-demo.local/family-id": spec.family_id,
                 "z2jh-context-demo.local/phase": spec.phase,
+                "z2jh-context-demo.local/workload-timeout-seconds": str(spec.timeout_seconds),
+                "z2jh-context-demo.local/pod-lifecycle-grace-seconds": str(POD_LIFECYCLE_GRACE_SECONDS),
             },
         },
         "spec": {
             "restartPolicy": "Never",
-            "activeDeadlineSeconds": spec.timeout_seconds + 30,
+            "activeDeadlineSeconds": spec.timeout_seconds + POD_LIFECYCLE_GRACE_SECONDS,
             "automountServiceAccountToken": False,
             "nodeSelector": {
                 "z2jh-context-demo.local/node-identity": "e4-node-v1",
@@ -271,7 +278,7 @@ def build_pod_spec(spec: TrialSpec, image: str) -> dict[str, Any]:
 
 
 class KubernetesTrialAdapter:
-    adapter_version = "protocol-v5-kubernetes-trial-adapter-v1.1.0"
+    adapter_version = "protocol-v5-kubernetes-trial-adapter-v1.2.0"
 
     def __init__(self, *, image: str, image_state_path: Path = IMAGE_STATE_PATH) -> None:
         if not IMAGE_RE.fullmatch(image):
@@ -309,6 +316,8 @@ class KubernetesTrialAdapter:
             probe_failures.append("CGROUP_CONTROLLER_MISSING")
         if set(self.policy["required_cgroup_files"]) - set(probe.get("available_files") or []):
             probe_failures.append("CGROUP_MEASUREMENT_FILE_MISSING")
+        if set(self.policy["required_memory_event_keys"]) - set(probe.get("memory_event_keys") or []):
+            probe_failures.append("CGROUP_MEMORY_EVENT_KEY_MISSING")
         if probe.get("cleanup_status") != "succeeded":
             probe_failures.append("ELIGIBILITY_PROBE_CLEANUP_FAILED")
         if probe_failures:
@@ -316,7 +325,7 @@ class KubernetesTrialAdapter:
         facts = read_only["facts"]
         node_info = facts.get("node_info") or {}
         return {
-            "schema_version": "protocol-v5-resource-environment-v1.0.0",
+            "schema_version": "protocol-v5-resource-environment-v1.1.0",
             "captured_at_utc": _utc_now(),
             "environment_id": f"{REQUIRED_CONTEXT}:{NAMESPACE}",
             "eligibility_status": "ELIGIBLE",
@@ -336,6 +345,10 @@ class KubernetesTrialAdapter:
             "operating_system": node_info.get("operatingSystem"),
             "architecture": node_info.get("architecture"),
             "cgroup_requirement": "v2",
+            "required_memory_event_keys": self.policy["required_memory_event_keys"],
+            "workload_timeout_basis": "measured_workload_runtime_seconds",
+            "pod_lifecycle_grace_seconds": POD_LIFECYCLE_GRACE_SECONDS,
+            "adapter_monitor_grace_seconds": ADAPTER_MONITOR_GRACE_SECONDS,
             "single_active_workload": True,
         }
 
@@ -344,9 +357,11 @@ class KubernetesTrialAdapter:
         script = (
             "import json,pathlib; p=pathlib.Path('/sys/fs/cgroup'); "
             "files=['cgroup.controllers','cpu.max','cpu.stat','memory.current','memory.events','memory.max','memory.peak']; "
+            "e=p/'memory.events'; "
             "print(json.dumps({'cgroup_version':'v2' if (p/'cgroup.controllers').is_file() else None,"
             "'controllers':(p/'cgroup.controllers').read_text().split() if (p/'cgroup.controllers').is_file() else [],"
-            "'available_files':[x for x in files if (p/x).is_file()]}))"
+            "'available_files':[x for x in files if (p/x).is_file()],"
+            "'memory_event_keys':[line.split()[0] for line in e.read_text().splitlines() if line.split()] if e.is_file() else []}))"
         )
         identity = self.policy["node_identity_label"]
         pod = {
@@ -406,7 +421,7 @@ class KubernetesTrialAdapter:
         )
         if created.returncode != 0:
             return self._observation(spec, infrastructure_invalid=True, exclusion_reason="pod_create_failed", exit_reason="CreateFailed")
-        deadline = time.monotonic() + spec.timeout_seconds + 35
+        deadline = time.monotonic() + spec.timeout_seconds + POD_LIFECYCLE_GRACE_SECONDS + ADAPTER_MONITOR_GRACE_SECONDS
         pod: dict[str, Any] | None = None
         while time.monotonic() < deadline:
             pod = self._json(["get", "pod", pod_name, "-n", NAMESPACE])
@@ -421,8 +436,7 @@ class KubernetesTrialAdapter:
         terminated = status.get("state", {}).get("terminated", {})
         reason = terminated.get("reason") or (pod or {}).get("status", {}).get("reason")
         exit_code = terminated.get("exitCode")
-        oom = reason == "OOMKilled"
-        timeout = time.monotonic() >= deadline or reason == "DeadlineExceeded"
+        runtime = (payload or {}).get("runtime_seconds")
         infrastructure_reason = None
         if reason in {"Evicted", "ImagePullBackOff", "ErrImagePull", "CreateContainerConfigError"}:
             infrastructure_reason = f"kubernetes_{reason}"
@@ -430,6 +444,28 @@ class KubernetesTrialAdapter:
         if deletion.returncode != 0 and infrastructure_reason is None:
             infrastructure_reason = "pod_cleanup_failed"
         metrics = dict((payload or {}).get("cgroup_metrics") or {})
+        memory_events = metrics.get("memory_events_delta")
+        oom_kill_event = bool(
+            isinstance(memory_events, Mapping)
+            and any(
+                isinstance(memory_events.get(key), int)
+                and not isinstance(memory_events.get(key), bool)
+                and memory_events[key] > 0
+                for key in ("oom_kill", "oom_group_kill")
+            )
+        )
+        oom = reason == "OOMKilled" or oom_kill_event
+        timeout = bool(
+            time.monotonic() >= deadline
+            or reason == "DeadlineExceeded"
+            or (
+                isinstance(runtime, (int, float))
+                and not isinstance(runtime, bool)
+                and runtime > spec.timeout_seconds
+            )
+        )
+        if oom or timeout:
+            infrastructure_reason = None
         return self._observation(
             spec,
             observed_marker=(payload or {}).get("observed_marker_sha256"),
@@ -437,7 +473,7 @@ class KubernetesTrialAdapter:
             exit_reason=reason,
             oom=oom,
             timeout=timeout,
-            runtime=(payload or {}).get("runtime_seconds"),
+            runtime=runtime,
             metrics=metrics,
             correctness_invariants_ok=bool((payload or {}).get("correctness_invariants_ok")),
             correctness_details=dict((payload or {}).get("correctness_details") or {}),
@@ -450,6 +486,10 @@ class KubernetesTrialAdapter:
                 "finished_at": terminated.get("finishedAt"),
                 "restart_count": status.get("restartCount"),
                 "cleanup_status": "succeeded" if deletion.returncode == 0 else "failed",
+                "workload_timeout_seconds": spec.timeout_seconds,
+                "pod_lifecycle_grace_seconds": POD_LIFECYCLE_GRACE_SECONDS,
+                "pod_active_deadline_seconds": spec.timeout_seconds + POD_LIFECYCLE_GRACE_SECONDS,
+                "adapter_monitor_grace_seconds": ADAPTER_MONITOR_GRACE_SECONDS,
             },
         )
 
@@ -471,7 +511,24 @@ class KubernetesTrialAdapter:
         kubernetes: Mapping[str, Any] | None = None,
     ) -> TrialObservation:
         metrics = dict(metrics or {})
+        memory_events = metrics.get("memory_events_delta")
+        if isinstance(memory_events, Mapping):
+            oom = oom or any(
+                isinstance(memory_events.get(key), int)
+                and not isinstance(memory_events.get(key), bool)
+                and memory_events[key] > 0
+                for key in ("oom_kill", "oom_group_kill")
+            )
+        timeout = bool(
+            timeout
+            or (
+                isinstance(runtime, (int, float))
+                and not isinstance(runtime, bool)
+                and runtime > spec.timeout_seconds
+            )
+        )
         return TrialObservation(
+            schema_version=TRIAL_SCHEMA_VERSION,
             run_id=spec.run_id, family_id=spec.family_id,
             workload_instance_id=spec.workload_instance_id,
             workload_fingerprint=spec.workload_fingerprint, phase=spec.phase,
@@ -480,6 +537,7 @@ class KubernetesTrialAdapter:
             expected_marker_sha256=spec.expected_marker_sha256,
             observed_marker_sha256=observed_marker, exit_code=exit_code,
             exit_reason=exit_reason, oom_killed=oom, timeout=timeout,
+            workload_timeout_seconds=spec.timeout_seconds,
             runtime_seconds=runtime,
             correctness_marker_ok=observed_marker == spec.expected_marker_sha256,
             correctness_invariants_ok=correctness_invariants_ok,
