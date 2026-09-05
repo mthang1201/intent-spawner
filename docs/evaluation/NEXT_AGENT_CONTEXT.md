@@ -306,32 +306,41 @@ with their manifests; do not rerun or overwrite any authoritative directory.
 - Dedicated worktree: `/Users/mthang1201/Documents/datn/intent-spawner-protocol-v5-e4-observed-run`
 - Base commit SHA: `2cf206773e63f7086e3c9716a5077793b189fa6d`
 - Execution Git SHA (`execution_git_sha`): `2cf206773e63f7086e3c9716a5077793b189fa6d`
+- Delivery commit SHA: `d72f273300c7f647c5b292b6664751e0f86ac27f` (corrective update in progress)
 - Final Verdict: `OBSERVED_EXECUTION_NOT_AUTHORIZED`
-  - E4 readiness/freeze audit completed; OBSERVED execution was not authorized because live cluster eligibility, image verification, oracle approval, and confirmatory freeze gates failed closed.
+  - E4 readiness and freeze audit completed; OBSERVED execution was not authorized because live cluster eligibility, image verification, oracle package approval, and confirmatory freeze gates failed closed.
   - Zero OBSERVED trials were executed or attempted (planned = 640, attempted = 0, completed = 0, successful = 0).
   - No Kubernetes experiment mutation was performed against the unapproved `orbstack` context; all cluster interactions were strictly read-only inspection.
 - Plan package: `results_v5/protocol-v5.0.0/E4/e4-resource-efficiency-plan-20260905T082000Z`
-  - Plan SHA-256: `eec8b92fcc6750b466cde3a15893babe2aacba71ef95ee4adb636ead75354466`
-  - 16 families × 4 conditions × 10 repetitions = 640 planned primary trials (independent semantic N = 16)
-  - Sealed with SHA256SUMS; execution was not authorized.
+  - Raw file SHA-256 (`plan.json`): `5260288122847397f2ec7d1db80f20044be2a7fa39e8dab7a885847e38d6db81` (in `SHA256SUMS`)
+  - Canonical plan identity hash (`plan_sha256`): `eec8b92fcc6750b466cde3a15893babe2aacba71ef95ee4adb636ead75354466`
+  - Frozen conditions: Exactly 4 (`STATIC_LARGE`, `P1_CATALOG`, `P2_CATALOG`, `P2_DYNAMIC`). P3 is strictly excluded (`p3.included: false`, `p3.authoritative_gate: not_retained`).
+  - 16 workload families × 4 conditions × 10 repetitions = 640 planned primary trials (160 trials per condition; primary independent semantic unit $N = 16$).
+  - Sealed with SHA256SUMS; execution was not authorized; local only (`LOCAL ONLY / NOT PERSISTED REMOTELY`).
 - Sealed readiness evidence package: `results_v5/protocol-v5.0.0/E4/e4-resource-efficiency-observed-run-20260905T081825Z`
   - Execution status: `NOT_EXECUTED` (Cluster measurement status: `NOT_EXECUTED`)
   - Blocker codes recorded: `APPROVED_ORACLE_UNAVAILABLE`, `CGROUP_V2_REQUIRED`, `CLUSTER_INELIGIBLE`, `CONFIRMATORY_FREEZE_INACTIVE`, `IMAGE_DIGEST_UNVERIFIED`, `KUBERNETES_VERSION_UNAVAILABLE`, `NODE_CAPACITY_NOT_FROZEN`, `REQUIRED_API_ACCESS_MISSING`, `WRONG_CLUSTER_FINGERPRINT`, `WRONG_KUBERNETES_CONTEXT`, `WRONG_NODE_COUNT`
+  - Sealed with SHA256SUMS; local only (`LOCAL ONLY / NOT PERSISTED REMOTELY`).
 - Sealed preflight calibration package: `results_v5/protocol-v5.0.0/E4/e4-resource-envelope-observed-run-20260905T081833Z`
   - Execution status: `DRY_RUN` (`NOT_EXECUTED`), manual review status: `NOT_APPLICABLE`
+  - Sealed with SHA256SUMS; local only (`LOCAL ONLY / NOT PERSISTED REMOTELY`).
 - Comprehensive report: `docs/evaluation/PROTOCOL_V5_E4_OBSERVED_EXECUTION_REPORT.md`
-- Test status: 290 passed in pytest suite (resource efficiency, resource envelope, research analysis, recommender, config, reprovisioning, evaluation v4/v5, isolation)
+- Test status:
+  - Comprehensive suite: `PYTHONPATH=. /Users/mthang1201/Documents/datn/intent-spawner/.venv/bin/pytest ...` $\to$ `290 passed in 20.25s`.
+  - E4 efficiency and envelope suite: `PYTHONPATH=. /Users/mthang1201/Documents/datn/intent-spawner/.venv/bin/pytest tests/test_resource_efficiency_v5.py tests/test_resource_envelope_v5.py -v` $\to$ `110 passed in 12.71s`.
+  - Secret scan: `/Users/mthang1201/Documents/datn/intent-spawner/.venv/bin/python scripts/scan-secrets.py` $\to$ `Secret scan passed: 2362 text files, high-confidence formats only.`
+  - Isolation audit: `/Users/mthang1201/Documents/datn/intent-spawner/.venv/bin/python -m evaluation_v5.isolation_audit` $\to$ PASS.
 
 ### Next Agent Instructions
 
-Do NOT simply run E4 or attempt to initiate the 640-trial OBSERVED experiment. The next agent must revalidate all gates and ensure the following conditions are legitimately satisfied in a clean committed Git revision before OBSERVED execution can be authorized:
-1. **Approved Kubernetes Target**: Active context must be `intent-spawner-eval-v5`.
-2. **Dedicated Labeled Node**: A single node labeled `z2jh-context-demo.local/node-identity: e4-node-v1` and `z2jh-context-demo.local/dedicated-e4: "true"`.
-3. **Namespace Safety Contract**: Namespace `z2jh-context-demo` labeled `z2jh-context-demo.local/disposable-experiment-v5: "true"`.
-4. **Immutable Workload Image**: Built from `cluster_evaluation/Dockerfile.resource-v5`, pushed, pre-pulled onto the dedicated node, with its SHA-256 digest verified and recorded in `cluster_evaluation/resource-v5-image-state.yaml`.
-5. **Frozen Node Capacity**: Allocatable quantities read from `kubectl get node -o json` and frozen in `benchmarks_v5/resource-efficiency-capacity-v1.yaml` (`freeze_status: FROZEN`).
-6. **Approved Oracle Package**: Sealed and approved independent envelope calibration package recorded in `benchmarks_v5/resource-efficiency-freeze-contract-v1.yaml`.
-7. **Confirmatory Freeze Activation**: `confirmatory_freeze_status: FROZEN` activated in both freeze contracts.
-8. **Telemetry Readiness**: Dedicated node verified for cgroup v2 with active `cpu`, `memory`, and `pids` controllers and `memory.events` counters.
-9. **Passing Live Preflight**: Non-mutating preflight returning `eligibility_status: ELIGIBLE` with zero failure codes.
+Do NOT simply run E4 or attempt to initiate the 640-trial OBSERVED experiment. The next agent must revalidate all contract-defined gates and ensure the following conditions are legitimately satisfied in a clean committed Git revision before OBSERVED execution can be authorized:
+1. **Disposable Experimental Target Cluster**: Active context must be `intent-spawner-eval-v5` on a disposable non-production cluster (`z2jh-context-demo.local/disposable-experiment-v5: "true"`). Production clusters and uncontrolled shared clusters are strictly prohibited.
+2. **Dedicated Single Labeled Node**: Exactly one dedicated node (`required_node_count: 1`, not multinode) labeled `z2jh-context-demo.local/node-identity: e4-node-v1` and `z2jh-context-demo.local/dedicated-e4: "true"`, with minimum allocatable 2000m CPU and 2560MiB memory, and no non-daemonset workloads.
+3. **Dedicated Target Namespace**: Namespace `z2jh-context-demo` labeled `z2jh-context-demo.local/disposable-experiment-v5: "true"` and `z2jh-context-demo.local/cluster-identity: intent-spawner-eval-v5`, with zero Kubernetes resource quotas.
+4. **Verified Workload Container Image**: Exactly one workload container image built from `cluster_evaluation/Dockerfile.resource-v5`, pushed, pre-pulled onto the dedicated node, with its SHA-256 digest pinned (`IMAGE_RE`) and verified in `cluster_evaluation/resource-v5-image-state.yaml`. (P3 is excluded from E4; no P3 container image is required or permitted.)
+5. **Frozen Node Allocatable Capacity**: Allocatable quantities read from `kubectl get node -o json` and frozen in `benchmarks_v5/resource-efficiency-capacity-v1.yaml` (`freeze_status: FROZEN`).
+6. **Approved Independent Oracle Package**: Sealed and approved independent calibration evidence package (`safe-envelopes.json`) covering all 16 families with status `OBSERVED`, `eligible_for_comparison: true`, and manual review `APPROVED`, bound by SHA-256 in `benchmarks_v5/resource-efficiency-freeze-contract-v1.yaml`. (Provides baseline error envelopes; does not involve human cryptographic signatures or cluster permission tokens.)
+7. **Confirmatory Freeze Activation**: `confirmatory_freeze_status: FROZEN` and `current_phase: confirmatory` activated in `benchmarks_v5/resource-efficiency-freeze-contract-v1.yaml`.
+8. **Contract-Defined cgroup v2 Telemetry**: Dedicated node verified for cgroup v2 with active `cpu`, `memory`, and `pids` controllers and `memory.events` counters (`oom`, `oom_kill`). Telemetry is read directly via cgroup files and pod status; Prometheus, Metrics Server, and cAdvisor are NOT required.
+9. **Passing Live Read-Only Preflight**: Non-mutating preflight returning `eligibility_status: ELIGIBLE` with zero failure codes.
 
