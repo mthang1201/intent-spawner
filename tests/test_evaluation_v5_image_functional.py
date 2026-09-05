@@ -1544,3 +1544,56 @@ def test_e5_current_v13_package_is_current_valid_and_eligible():
     assert target_rec["dimension_c_status"] == "PASS"
     assert target_rec["dimension_c_functional_satisfied"] is True
     assert "CATALOG_UNDERCLAIM_FUNCTIONAL_PASS" in target_rec["mismatch_types"]
+
+
+def test_e5_r7_validator_detects_derived_metrics_disagreement(tmp_path):
+    """R7: Validator detects derived metrics that disagree with raw evaluation records."""
+    import hashlib
+    import shutil
+
+    src_dir = Path("results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T040730Z")
+    if not src_dir.is_dir():
+        pytest.skip("040730Z package not present")
+
+    pkg_dir = tmp_path / "pkg"
+    shutil.copytree(src_dir, pkg_dir)
+
+    def recompute_sha256sums():
+        lines = []
+        for p in sorted(pkg_dir.rglob("*")):
+            if p.is_file() and p.name != "SHA256SUMS":
+                rel = p.relative_to(pkg_dir)
+                digest = hashlib.sha256(p.read_bytes()).hexdigest()
+                lines.append(f"{digest}  {rel}")
+        (pkg_dir / "SHA256SUMS").write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+    # Base package validates
+    assert validate_e5_evidence(pkg_dir)["status"] == "PASS"
+
+    metrics_path = pkg_dir / "derived" / "functional_metrics.json"
+    orig_content = metrics_path.read_text(encoding="utf-8")
+
+    fields_to_test = [
+        ("catalog_capability_satisfied_count", "catalog_capability_satisfied_count mismatch"),
+        ("functional_validation_eligible_count", "functional_validation_eligible_count mismatch"),
+        ("functional_passed_count", "functional_passed_count mismatch"),
+        ("required_probe_not_defined_count", "required_probe_not_defined_count mismatch"),
+        ("execution_unavailable_count", "execution_unavailable_count mismatch"),
+        ("catalog_underclaim_count", "catalog_underclaim_count mismatch"),
+        ("operationally_adequate_count", "operationally_adequate_count mismatch"),
+    ]
+
+    for field_name, expected_error in fields_to_test:
+        data = json.loads(orig_content)
+        data["systems"]["P2"][field_name] = 999
+        metrics_path.write_text(json.dumps(data, indent=2), encoding="utf-8")
+        recompute_sha256sums()
+
+        with pytest.raises(EvidenceValidationError, match=expected_error):
+            validate_e5_evidence(pkg_dir)
+
+    # Restore and verify clean pass
+    metrics_path.write_text(orig_content, encoding="utf-8")
+    recompute_sha256sums()
+    assert validate_e5_evidence(pkg_dir)["status"] == "PASS"
+

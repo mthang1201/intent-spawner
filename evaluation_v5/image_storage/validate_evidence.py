@@ -490,6 +490,16 @@ def validate_e5_evidence(package_dir: Path | str) -> dict[str, Any]:
             if summary.get("gold_acceptable_count") != expected_acc:
                 raise EvidenceValidationError(f"System {sys_id}: gold_acceptable_count mismatch")
 
+            expected_req_probe_not_def = sum(1 for r in sys_records if "REQUIRED_PROBE_NOT_DEFINED" in r.get("mismatch_types", []))
+            expected_exec_unavail = sum(1 for r in sys_records if "EXECUTION_UNAVAILABLE" in r.get("mismatch_types", []))
+            expected_underclaim = sum(1 for r in sys_records if "CATALOG_UNDERCLAIM_FUNCTIONAL_PASS" in r.get("mismatch_types", []))
+            if summary.get("required_probe_not_defined_count") != expected_req_probe_not_def:
+                raise EvidenceValidationError(f"System {sys_id}: required_probe_not_defined_count mismatch")
+            if summary.get("execution_unavailable_count") != expected_exec_unavail:
+                raise EvidenceValidationError(f"System {sys_id}: execution_unavailable_count mismatch")
+            if summary.get("catalog_underclaim_count") != expected_underclaim:
+                raise EvidenceValidationError(f"System {sys_id}: catalog_underclaim_count mismatch")
+
         exec_count = summary.get("functional_executed_count", 0)
         success_rate = summary.get("functional_success_rate_among_executed")
         coverage_rate = summary.get("functional_execution_coverage", 0.0)
