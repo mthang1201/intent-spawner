@@ -1516,3 +1516,31 @@ def test_e5_deterministic_raw_to_derived_recomputation(catalog_data):
     rep1 = compute_functional_metrics([eval1], catalog_data, probe_results=[python_probe])
     rep2 = compute_functional_metrics([eval2], catalog_data, probe_results=[python_probe])
     assert rep1.to_dict() == rep2.to_dict()
+
+
+def test_e5_current_v13_package_is_current_valid_and_eligible():
+    """Regression Test 8: Current v1.3 package is explicitly CURRENT_VALID and eligible_as_current_e5_evidence == True."""
+    v13_dir = Path("results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T040730Z")
+    if not v13_dir.is_dir():
+        pytest.skip("v1.3 package 040730Z not present")
+
+    res = validate_e5_evidence(v13_dir)
+    assert res["status"] == "PASS"
+    assert res["validator_status"] == "CURRENT_VALID"
+    assert res["eligible_as_current_e5_evidence"] is True
+    assert res["validation_profile"] == "CURRENT_V1_3"
+
+    eval_records = [
+        json.loads(line)
+        for line in (v13_dir / "raw" / "functional_evaluations.jsonl").read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    ]
+    target_rec = next(
+        (r for r in eval_records if r["case_id"] == "threshold-below-vi" and r["system_id"] == "P2"),
+        None,
+    )
+    assert target_rec is not None
+    assert target_rec["dimension_b_catalog_satisfied"] is False
+    assert target_rec["dimension_c_status"] == "PASS"
+    assert target_rec["dimension_c_functional_satisfied"] is True
+    assert "CATALOG_UNDERCLAIM_FUNCTIONAL_PASS" in target_rec["mismatch_types"]
