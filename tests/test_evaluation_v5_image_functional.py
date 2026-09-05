@@ -1139,3 +1139,94 @@ def test_e5_abc_counts_recompute_exactly_from_raw_records():
         assert s["functional_passed_count"] == pass_c
         assert s["functional_failed_count"] == fail_c
         assert s["functional_unavailable_count"] == unavail_c
+
+
+def test_e5_dimension_b_exact_recomputability_invariant(catalog_data):
+    """Regression Test 9: Dimension B is strictly recomputable as required subset of declared."""
+    v12_dir = Path("results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T033832Z")
+    if not v12_dir.is_dir():
+        pytest.skip("Final package 033832Z not present")
+
+    eval_records = [
+        json.loads(line)
+        for line in (v12_dir / "raw" / "functional_evaluations.jsonl").read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    ]
+    catalog_images = catalog_data.get("images", {})
+
+    for rec in eval_records:
+        img_id = rec.get("predicted_image_id")
+        req_caps = set(rec.get("required_capabilities", []))
+
+        # Check non-image constraints did not leak into required_capabilities
+        for non_image_term in ("small", "medium", "large", "cpu", "memory", "gpu", "cuda"):
+            assert non_image_term not in req_caps, f"Non-image constraint '{non_image_term}' leaked in {rec['case_id']}"
+
+        if not img_id:
+            assert rec["dimension_b_catalog_satisfied"] is False
+            continue
+
+        cat_entry = catalog_images.get(img_id)
+        assert cat_entry is not None, f"Image {img_id} not found in catalog"
+
+        declared = set(cat_entry.get("capabilities", []))
+        expected_missing = sorted(list(req_caps - declared))
+        actual_missing = sorted(list(rec.get("missing_catalog_capabilities", [])))
+
+        # 1. Missing capabilities must be mathematically exact (required - declared)
+        assert actual_missing == expected_missing, (
+            f"Case {rec['case_id']} ({rec['system_id']}): missing mismatch {actual_missing} vs {expected_missing}"
+        )
+
+        # 2. Declared capabilities must NEVER be reported as missing
+        for dec in declared:
+            assert dec not in actual_missing, f"Declared cap {dec} reported missing in {rec['case_id']}"
+
+        # 3. Dimension B satisfied iff expected_missing is empty
+        assert rec["dimension_b_catalog_satisfied"] == (len(expected_missing) == 0)
+
+
+def test_e5_catalog_underclaim_is_not_container_execution_failure(catalog_data):
+    """Regression Test 10: CATALOG_UNDERCLAIM_FUNCTIONAL_PASS is distinct from execution failure."""
+    v12_dir = Path("results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T033832Z")
+    if not v12_dir.is_dir():
+        pytest.skip("Final package 033832Z not present")
+
+    # 1. Inspect P2 threshold-below-vi in evaluation records
+    eval_records = [
+        json.loads(line)
+        for line in (v12_dir / "raw" / "functional_evaluations.jsonl").read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    ]
+    target_rec = next(
+        (r for r in eval_records if r["case_id"] == "threshold-below-vi" and r["system_id"] == "P2"),
+        None,
+    )
+    assert target_rec is not None
+    assert target_rec["predicted_image_id"] == "pytorch-deep-learning"
+    assert target_rec["required_capabilities"] == ["python"]
+
+    # Catalog does NOT declare python -> Dimension B is False
+    assert target_rec["dimension_b_catalog_satisfied"] is False
+    assert target_rec["missing_catalog_capabilities"] == ["python"]
+    assert "CAPABILITY_UNSATISFIED" in target_rec["mismatch_types"]
+
+    # Dimension C is gated out (NOT_EXECUTED), but no probe failed
+    assert target_rec["dimension_c_status"] == "NOT_EXECUTED"
+    assert target_rec["failed_probes"] == []
+
+    # 2. Inspect the probe results for pytorch-deep-learning:python
+    probe_results = [
+        json.loads(line)
+        for line in (v12_dir / "raw" / "probe_results.jsonl").read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    ]
+    python_probe = next(
+        (p for p in probe_results if p["probe_id"] == "probe:pytorch-deep-learning:python"),
+        None,
+    )
+    assert python_probe is not None
+    # Crucial distinction: the container itself is operationally functional for Python!
+    assert python_probe["execution_status"] == "EXECUTED"
+    assert python_probe["success"] is True
+    assert "python_version" in python_probe["import_version_metadata"]
