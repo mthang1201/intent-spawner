@@ -12,9 +12,9 @@ from typing import Any, Mapping, Sequence
 
 IMAGE_PROBE_MANIFEST_SCHEMA_VERSION = "protocol-v5-image-probe-manifest-v1.1.0"
 IMAGE_PROBE_RECORD_SCHEMA_VERSION = "protocol-v5-image-probe-record-v1.1.0"
-FUNCTIONAL_EVALUATION_SCHEMA_VERSION = "protocol-v5-image-functional-evaluation-v1.2.0"
-FUNCTIONAL_METRICS_SCHEMA_VERSION = "protocol-v5-image-functional-metrics-v1.2.0"
-E5_RUN_SCHEMA_VERSION = "protocol-v5-image-validation-run-v1.2.0"
+FUNCTIONAL_EVALUATION_SCHEMA_VERSION = "protocol-v5-image-functional-evaluation-v1.3.0"
+FUNCTIONAL_METRICS_SCHEMA_VERSION = "protocol-v5-image-functional-metrics-v1.3.0"
+E5_RUN_SCHEMA_VERSION = "protocol-v5-image-validation-run-v1.3.0"
 
 DIGEST_PATTERN = re.compile(r"@sha256:([a-f0-9]{64})$")
 
@@ -247,10 +247,12 @@ class FunctionalEvaluationRecord:
     dimension_c_status: str
     dimension_c_functional_satisfied: bool | None
     dimension_c_execution_coverage: bool
-    failed_probes: tuple[str, ...]
-    unavailable_probes: tuple[str, ...]
-    mismatch_types: tuple[str, ...]
-    execution_status: str
+    dimension_c_eligible: bool = True
+    failed_probes: tuple[str, ...] = ()
+    unavailable_probes: tuple[str, ...] = ()
+    undefined_probes: tuple[str, ...] = ()
+    mismatch_types: tuple[str, ...] = ()
+    execution_status: str = "COMPLETED"
     source_predicted_image_value: str | None = None
     schema_version: str = FUNCTIONAL_EVALUATION_SCHEMA_VERSION
 
@@ -277,8 +279,10 @@ class FunctionalEvaluationRecord:
             "dimension_c_status": self.dimension_c_status,
             "dimension_c_functional_satisfied": self.dimension_c_functional_satisfied,
             "dimension_c_execution_coverage": self.dimension_c_execution_coverage,
+            "dimension_c_eligible": self.dimension_c_eligible,
             "failed_probes": list(self.failed_probes),
             "unavailable_probes": list(self.unavailable_probes),
+            "undefined_probes": list(self.undefined_probes),
             "mismatch_types": list(self.mismatch_types),
             "execution_status": self.execution_status,
         }
@@ -322,8 +326,12 @@ class FunctionalEvaluationRecord:
             dimension_c_execution_coverage=bool(
                 data.get("dimension_c_execution_coverage", status_c in (DimensionCStatus.PASS.value, DimensionCStatus.FAIL.value))
             ),
+            dimension_c_eligible=bool(
+                data.get("dimension_c_eligible", data.get("dimension_b_catalog_satisfied", True))
+            ),
             failed_probes=tuple(data.get("failed_probes", ())),
             unavailable_probes=tuple(data.get("unavailable_probes", ())),
+            undefined_probes=tuple(data.get("undefined_probes", ())),
             mismatch_types=tuple(data.get("mismatch_types", ())),
             execution_status=str(data.get("execution_status", "COMPLETED")),
         )

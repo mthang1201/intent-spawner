@@ -1048,17 +1048,17 @@ def test_e5_legacy_package_not_mistaken_for_current_v12_valid():
             validate_e5_evidence(invalid_dir)
 
 
-def test_e5_current_v12_package_is_current_valid_and_eligible():
-    """Regression Test 6: Current v1.2 package is explicitly CURRENT_VALID and eligible_as_current_e5_evidence == True."""
+def test_e5_legacy_v12_package_validates_under_legacy_profile():
+    """Regression Test 6: Historical v1.2 package validates as LEGACY_VALID with eligible_as_current_e5_evidence == False."""
     v12_dir = Path("results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T032437Z")
     if not v12_dir.is_dir():
         pytest.skip("v1.2 package 032437Z not present")
 
     res = validate_e5_evidence(v12_dir)
     assert res["status"] == "PASS"
-    assert res["validator_status"] == "CURRENT_VALID"
-    assert res["eligible_as_current_e5_evidence"] is True
-    assert res["validation_profile"] == "CURRENT_V1_2"
+    assert res["validator_status"] == "LEGACY_VALID"
+    assert res["eligible_as_current_e5_evidence"] is False
+    assert res["validation_profile"] == "LEGACY_SCHEMA_V1_2"
 
 
 def test_e5_dimension_a_appears_independently_in_report_and_metrics():
@@ -1230,3 +1230,289 @@ def test_e5_catalog_underclaim_is_not_container_execution_failure(catalog_data):
     assert python_probe["execution_status"] == "EXECUTED"
     assert python_probe["success"] is True
     assert "python_version" in python_probe["import_version_metadata"]
+
+
+# =============================================================================
+# 6. Decoupled Dimension C & Discrepancy Taxonomy Regression Tests (v1.3)
+# =============================================================================
+
+
+def test_e5_target_case_threshold_below_vi_underclaim_functional_pass(catalog_data):
+    """Regression Test 1: threshold-below-vi has B=False, Python probe PASS, C=PASS, and CATALOG_UNDERCLAIM_FUNCTIONAL_PASS."""
+    python_probe = ImageProbeResult(
+        probe_id="probe:pytorch-deep-learning:python",
+        image_id="pytorch-deep-learning",
+        image_reference=catalog_data["images"]["pytorch-deep-learning"]["reference"],
+        image_digest=parse_image_digest(catalog_data["images"]["pytorch-deep-learning"]["reference"]),
+        capability="python",
+        success=True,
+        execution_status=ProbeExecutionStatus.EXECUTED.value,
+        runtime_seconds=0.15,
+        execution_mode="docker",
+    )
+    probe_map = {("pytorch-deep-learning", "python"): python_probe}
+
+    eval_rec = evaluate_recommendation_functional(
+        case_id="threshold-below-vi",
+        system_id="P2",
+        predicted_image_id="pytorch-deep-learning",
+        required_capabilities=["python"],
+        gold_preferred_image_id="minimal-python",
+        gold_acceptable_image_ids=["minimal-python"],
+        catalog=catalog_data,
+        probe_results=probe_map,
+    )
+
+    # Invariant: Dimension B is False because catalog metadata does not claim python
+    assert eval_rec.dimension_b_catalog_satisfied is False
+    assert eval_rec.missing_catalog_capabilities == ("python",)
+
+    # Invariant: Dimension C is PASS because actual probe executed and passed
+    assert eval_rec.dimension_c_status == DimensionCStatus.PASS.value
+    assert eval_rec.dimension_c_functional_satisfied is True
+    assert eval_rec.dimension_c_execution_coverage is True
+    assert eval_rec.dimension_c_eligible is True
+
+    # Invariant: CATALOG_UNDERCLAIM_FUNCTIONAL_PASS is present
+    assert "CATALOG_UNDERCLAIM_FUNCTIONAL_PASS" in eval_rec.mismatch_types
+    assert "EXECUTION_UNAVAILABLE" not in eval_rec.mismatch_types
+
+
+def test_e5_rapids_no_exact_probe_not_executed(catalog_data):
+    """Regression Test 2: RAPIDS workload has B=False, no probe defined, C=NOT_EXECUTED, and REQUIRED_PROBE_NOT_DEFINED."""
+    # Selected image is minimal-python, required capability is rapids (no probe defined)
+    eval_rec = evaluate_recommendation_functional(
+        case_id="p2-required-rapids-unsupported-en",
+        system_id="P2",
+        predicted_image_id="minimal-python",
+        required_capabilities=["rapids"],
+        gold_preferred_image_id=None,
+        gold_acceptable_image_ids=[],
+        catalog=catalog_data,
+        probe_results={},
+    )
+
+    # Dimension B = False
+    assert eval_rec.dimension_b_catalog_satisfied is False
+    assert eval_rec.missing_catalog_capabilities == ("rapids",)
+
+    # Dimension C = NOT_EXECUTED, reason = REQUIRED_PROBE_NOT_DEFINED
+    assert eval_rec.dimension_c_status == DimensionCStatus.NOT_EXECUTED.value
+    assert eval_rec.dimension_c_functional_satisfied is None
+    assert eval_rec.dimension_c_execution_coverage is False
+    assert eval_rec.dimension_c_eligible is False
+    assert "REQUIRED_PROBE_NOT_DEFINED" in eval_rec.mismatch_types
+    assert "CAPABILITY_UNSATISFIED_UNOBSERVED" in eval_rec.mismatch_types
+    # Must NOT claim functional failure or execution unavailable
+    assert eval_rec.dimension_c_status != DimensionCStatus.FAIL.value
+    assert "EXECUTION_UNAVAILABLE" not in eval_rec.mismatch_types
+
+
+def test_e5_p1_pandas_no_silent_data_science_substitution(catalog_data):
+    """Regression Test 3: Broad data-science probe does not silently substitute for pandas without an exact probe."""
+    # On pytorch-deep-learning, a data-science probe passes, but there is no exact pandas probe
+    data_science_probe = ImageProbeResult(
+        probe_id="probe:pytorch-deep-learning:data-science",
+        image_id="pytorch-deep-learning",
+        image_reference=catalog_data["images"]["pytorch-deep-learning"]["reference"],
+        image_digest=parse_image_digest(catalog_data["images"]["pytorch-deep-learning"]["reference"]),
+        capability="data-science",
+        success=True,
+        execution_status=ProbeExecutionStatus.EXECUTED.value,
+        runtime_seconds=0.2,
+        execution_mode="docker",
+    )
+    probe_map = {("pytorch-deep-learning", "data-science"): data_science_probe}
+
+    eval_rec = evaluate_recommendation_functional(
+        case_id="p2-cpu-only-pandas-feasible-en",
+        system_id="P1",
+        predicted_image_id="pytorch-deep-learning",
+        required_capabilities=["pandas"],
+        gold_preferred_image_id="scipy-data-science",
+        gold_acceptable_image_ids=["scipy-data-science"],
+        catalog=catalog_data,
+        probe_results=probe_map,
+    )
+
+    # Must be NOT_EXECUTED due to REQUIRED_PROBE_NOT_DEFINED; data-science cannot substitute
+    assert eval_rec.dimension_b_catalog_satisfied is False
+    assert eval_rec.dimension_c_status == DimensionCStatus.NOT_EXECUTED.value
+    assert eval_rec.dimension_c_functional_satisfied is None
+    assert eval_rec.dimension_c_eligible is False
+    assert "REQUIRED_PROBE_NOT_DEFINED" in eval_rec.mismatch_types
+
+
+def test_e5_exact_probe_failure_yields_c_fail(catalog_data):
+    """Regression Test 4: Genuine probe failure produces Dimension C = FAIL regardless of Dimension B."""
+    # Case A: B=True, probe fails
+    failed_pandas_probe = ImageProbeResult(
+        probe_id="probe:scipy-data-science:pandas",
+        image_id="scipy-data-science",
+        image_reference=catalog_data["images"]["scipy-data-science"]["reference"],
+        image_digest=parse_image_digest(catalog_data["images"]["scipy-data-science"]["reference"]),
+        capability="pandas",
+        success=False,
+        execution_status=ProbeExecutionStatus.EXECUTED.value,
+        error_category="ASSERTION_ERROR",
+        error_message="DataFrame assertion failed",
+        runtime_seconds=0.1,
+        execution_mode="docker",
+    )
+    eval_b_true_fail = evaluate_recommendation_functional(
+        case_id="pandas-fail-test",
+        system_id="P2",
+        predicted_image_id="scipy-data-science",
+        required_capabilities=["pandas"],
+        gold_preferred_image_id="scipy-data-science",
+        gold_acceptable_image_ids=["scipy-data-science"],
+        catalog=catalog_data,
+        probe_results={("scipy-data-science", "pandas"): failed_pandas_probe},
+    )
+    assert eval_b_true_fail.dimension_b_catalog_satisfied is True
+    assert eval_b_true_fail.dimension_c_status == DimensionCStatus.FAIL.value
+    assert eval_b_true_fail.dimension_c_functional_satisfied is False
+    assert "CATALOG_PROBE_MISMATCH" in eval_b_true_fail.mismatch_types
+
+    # Case B: B=False, probe executed and failed
+    failed_python_probe = ImageProbeResult(
+        probe_id="probe:pytorch-deep-learning:python",
+        image_id="pytorch-deep-learning",
+        image_reference=catalog_data["images"]["pytorch-deep-learning"]["reference"],
+        image_digest=parse_image_digest(catalog_data["images"]["pytorch-deep-learning"]["reference"]),
+        capability="python",
+        success=False,
+        execution_status=ProbeExecutionStatus.EXECUTED.value,
+        error_category="RUNTIME_ERROR",
+        error_message="Python crashed",
+        runtime_seconds=0.1,
+        execution_mode="docker",
+    )
+    eval_b_false_fail = evaluate_recommendation_functional(
+        case_id="python-fail-test",
+        system_id="P2",
+        predicted_image_id="pytorch-deep-learning",
+        required_capabilities=["python"],
+        gold_preferred_image_id="minimal-python",
+        gold_acceptable_image_ids=["minimal-python"],
+        catalog=catalog_data,
+        probe_results={("pytorch-deep-learning", "python"): failed_python_probe},
+    )
+    assert eval_b_false_fail.dimension_b_catalog_satisfied is False
+    assert eval_b_false_fail.dimension_c_status == DimensionCStatus.FAIL.value
+    assert eval_b_false_fail.dimension_c_functional_satisfied is False
+    assert len(eval_b_false_fail.failed_probes) == 1
+
+
+def test_e5_runtime_unavailable_distinct_from_missing_probe(catalog_data):
+    """Regression Test 5: Exact probe exists but container unavailable -> C=NOT_EXECUTED, EXECUTION_UNAVAILABLE."""
+    unavail_probe = ImageProbeResult(
+        probe_id="probe:minimal-python:python",
+        image_id="minimal-python",
+        image_reference=catalog_data["images"]["minimal-python"]["reference"],
+        image_digest=parse_image_digest(catalog_data["images"]["minimal-python"]["reference"]),
+        capability="python",
+        success=False,
+        execution_status=ProbeExecutionStatus.IMAGE_NOT_PRESENT.value,
+        error_category="IMAGE_NOT_PRESENT",
+        runtime_seconds=0.0,
+        execution_mode="docker",
+    )
+    eval_rec = evaluate_recommendation_functional(
+        case_id="unavail-test",
+        system_id="P1",
+        predicted_image_id="minimal-python",
+        required_capabilities=["python"],
+        gold_preferred_image_id="minimal-python",
+        gold_acceptable_image_ids=["minimal-python"],
+        catalog=catalog_data,
+        probe_results={("minimal-python", "python"): unavail_probe},
+    )
+    assert eval_rec.dimension_c_status == DimensionCStatus.NOT_EXECUTED.value
+    assert eval_rec.dimension_c_functional_satisfied is None
+    assert eval_rec.dimension_c_execution_coverage is False
+    assert "EXECUTION_UNAVAILABLE" in eval_rec.mismatch_types
+    assert "REQUIRED_PROBE_NOT_DEFINED" not in eval_rec.mismatch_types
+
+
+def test_e5_operational_adequacy_requires_both_b_and_c(catalog_data):
+    """Regression Test 6: B=False + C=PASS produces operational_adequacy = False."""
+    python_probe = ImageProbeResult(
+        probe_id="probe:pytorch-deep-learning:python",
+        image_id="pytorch-deep-learning",
+        image_reference=catalog_data["images"]["pytorch-deep-learning"]["reference"],
+        image_digest=parse_image_digest(catalog_data["images"]["pytorch-deep-learning"]["reference"]),
+        capability="python",
+        success=True,
+        execution_status=ProbeExecutionStatus.EXECUTED.value,
+        runtime_seconds=0.1,
+        execution_mode="docker",
+    )
+    eval_underclaim = evaluate_recommendation_functional(
+        case_id="threshold-below-vi",
+        system_id="P2",
+        predicted_image_id="pytorch-deep-learning",
+        required_capabilities=["python"],
+        gold_preferred_image_id="minimal-python",
+        gold_acceptable_image_ids=["minimal-python"],
+        catalog=catalog_data,
+        probe_results={("pytorch-deep-learning", "python"): python_probe},
+    )
+    assert eval_underclaim.dimension_b_catalog_satisfied is False
+    assert eval_underclaim.dimension_c_status == DimensionCStatus.PASS.value
+
+    report = compute_functional_metrics([eval_underclaim], catalog_data, probe_results=[python_probe])
+    summary = report.systems["P2"]
+
+    assert summary.total_recommendations == 1
+    assert summary.catalog_capability_satisfied_count == 0
+    assert summary.catalog_unsatisfied_count == 1
+    assert summary.functional_validation_eligible_count == 1
+    assert summary.functional_executed_count == 1
+    assert summary.functional_passed_count == 1
+    assert summary.catalog_underclaim_count == 1
+    # Operational adequacy strictly requires both B and C:
+    assert summary.operationally_adequate_count == 0
+    assert summary.operational_adequacy_rate == 0.0
+
+
+def test_e5_deterministic_raw_to_derived_recomputation(catalog_data):
+    """Regression Test 7: Raw records recompute B and C deterministically with identical metrics."""
+    python_probe = ImageProbeResult(
+        probe_id="probe:minimal-python:python",
+        image_id="minimal-python",
+        image_reference=catalog_data["images"]["minimal-python"]["reference"],
+        image_digest=parse_image_digest(catalog_data["images"]["minimal-python"]["reference"]),
+        capability="python",
+        success=True,
+        execution_status=ProbeExecutionStatus.EXECUTED.value,
+        runtime_seconds=0.1,
+        execution_mode="docker",
+    )
+    probe_map = {("minimal-python", "python"): python_probe}
+
+    eval1 = evaluate_recommendation_functional(
+        case_id="case-det",
+        system_id="P2",
+        predicted_image_id="minimal-python",
+        required_capabilities=["python"],
+        gold_preferred_image_id="minimal-python",
+        gold_acceptable_image_ids=["minimal-python"],
+        catalog=catalog_data,
+        probe_results=probe_map,
+    )
+    eval2 = evaluate_recommendation_functional(
+        case_id="case-det",
+        system_id="P2",
+        predicted_image_id="minimal-python",
+        required_capabilities=["python"],
+        gold_preferred_image_id="minimal-python",
+        gold_acceptable_image_ids=["minimal-python"],
+        catalog=catalog_data,
+        probe_results=probe_map,
+    )
+    assert eval1.to_dict() == eval2.to_dict()
+
+    rep1 = compute_functional_metrics([eval1], catalog_data, probe_results=[python_probe])
+    rep2 = compute_functional_metrics([eval2], catalog_data, probe_results=[python_probe])
+    assert rep1.to_dict() == rep2.to_dict()

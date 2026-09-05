@@ -173,6 +173,8 @@ def validate_e5_evidence(package_dir: Path | str) -> dict[str, Any]:
     eval_records_raw = [
         json.loads(line) for line in evaluations_path.read_text(encoding="utf-8").splitlines() if line.strip()
     ]
+    probe_results_map = {(res["image_id"], res["capability"]): res for res in probe_results_raw}
+    cat_images_caps = {img_id: set(img_data.get("documented_capabilities", [])) for img_id, img_data in cat_images.items()}
 
     for rec in eval_records_raw:
         case_id = rec["case_id"]
@@ -182,15 +184,16 @@ def validate_e5_evidence(package_dir: Path | str) -> dict[str, Any]:
         satisfied_c = rec.get("dimension_c_functional_satisfied")
         coverage_c = rec.get("dimension_c_execution_coverage")
         mismatches = rec.get("mismatch_types", [])
+        is_v13 = rec.get("schema_version") == "protocol-v5-image-functional-evaluation-v1.3.0"
         is_v12 = rec.get("schema_version") == "protocol-v5-image-functional-evaluation-v1.2.0"
 
         # Invariant: If predicted_image_id is None
         if not pimg:
-            if is_v12 and "NO_IMAGE_RECOMMENDATION" not in mismatches:
+            if (is_v12 or is_v13) and "NO_IMAGE_RECOMMENDATION" not in mismatches:
                 raise EvidenceValidationError(
                     f"Case {case_id}: missing image recommendation must emit NO_IMAGE_RECOMMENDATION"
                 )
-            if is_v12 and "EXECUTION_UNAVAILABLE" in mismatches:
+            if (is_v12 or is_v13) and "EXECUTION_UNAVAILABLE" in mismatches:
                 raise EvidenceValidationError(
                     f"Case {case_id}: missing image recommendation must NOT emit EXECUTION_UNAVAILABLE"
                 )
@@ -199,22 +202,32 @@ def validate_e5_evidence(package_dir: Path | str) -> dict[str, Any]:
                     f"Case {case_id}: missing image recommendation must have status NOT_APPLICABLE or NOT_EXECUTED, got {dim_c_status}"
                 )
 
-        # Invariant: If dimension_b_catalog_satisfied is False
-        if not dim_b_sat:
-            if is_v12 and dim_c_status == DimensionCStatus.PASS.value:
+        # Invariant: Dimension B strictly recomputable from catalog capabilities
+        if is_v13 and pimg:
+            declared_caps = cat_images_caps.get(pimg, set())
+            req_caps = set(rec.get("required_capabilities", []))
+            expected_b_sat = req_caps.issubset(declared_caps)
+            if dim_b_sat != expected_b_sat:
                 raise EvidenceValidationError(
-                    f"Case {case_id}: Dimension B is unsatisfied; Dimension C MUST NOT be PASS"
+                    f"Case {case_id}: Dimension B mismatch: expected {expected_b_sat}, got {dim_b_sat}"
                 )
-            if is_v12 and pimg and "CAPABILITY_UNSATISFIED" not in mismatches:
+
+        # Invariant: If dimension_b_catalog_satisfied is False in v1.2
+        if not dim_b_sat and is_v12:
+            if dim_c_status == DimensionCStatus.PASS.value:
+                raise EvidenceValidationError(
+                    f"Case {case_id}: Dimension B is unsatisfied; Dimension C MUST NOT be PASS in v1.2"
+                )
+            if pimg and "CAPABILITY_UNSATISFIED" not in mismatches:
                 raise EvidenceValidationError(
                     f"Case {case_id}: Dimension B is unsatisfied; mismatch_types must include CAPABILITY_UNSATISFIED"
                 )
-            if is_v12 and "EXECUTION_UNAVAILABLE" in mismatches:
+            if "EXECUTION_UNAVAILABLE" in mismatches:
                 raise EvidenceValidationError(
                     f"Case {case_id}: Dimension B is unsatisfied; mismatch_types must NOT include EXECUTION_UNAVAILABLE"
                 )
 
-        # Invariant: EXECUTION_UNAVAILABLE requires predicted_image_id and dim_b_satisfied
+        # Invariant: EXECUTION_UNAVAILABLE in v1.2 requires predicted_image_id and dim_b_satisfied
         if "EXECUTION_UNAVAILABLE" in mismatches and is_v12:
             if not pimg:
                 raise EvidenceValidationError(
@@ -226,7 +239,7 @@ def validate_e5_evidence(package_dir: Path | str) -> dict[str, Any]:
                 )
 
         # Invariant: LABEL_FAIL_FUNCTIONAL_PASS requires dim_b_satisfied is True and dim_c_status is PASS
-        if "LABEL_FAIL_FUNCTIONAL_PASS" in mismatches and is_v12:
+        if "LABEL_FAIL_FUNCTIONAL_PASS" in mismatches and (is_v12 or is_v13):
             if not dim_b_sat:
                 raise EvidenceValidationError(
                     f"Case {case_id}: LABEL_FAIL_FUNCTIONAL_PASS cannot be asserted when Dimension B is unsatisfied"
@@ -235,6 +248,77 @@ def validate_e5_evidence(package_dir: Path | str) -> dict[str, Any]:
                 raise EvidenceValidationError(
                     f"Case {case_id}: LABEL_FAIL_FUNCTIONAL_PASS requires Dimension C to be PASS, got {dim_c_status}"
                 )
+
+        # Invariants for v1.3 Dimension C decoupling and discrepancy taxonomy
+        if is_v13 and pimg:
+            req_caps = rec.get("required_capabilities", [])
+            caps_to_check = set(req_caps) if req_caps else {"python"}
+
+            all_probes_executed_and_passed = True
+            any_probe_failed = False
+            any_probe_unavailable = False
+            missing_probe_defs = []
+
+            for cap in sorted(caps_to_check):
+                key = (pimg, cap)
+                res = probe_results_map.get(key)
+                if res is None:
+                    all_probes_executed_and_passed = False
+                    missing_probe_defs.append(cap)
+                elif res.get("execution_status") != ProbeExecutionStatus.EXECUTED.value:
+                    all_probes_executed_and_passed = False
+                    any_probe_unavailable = True
+                elif not res.get("success"):
+                    all_probes_executed_and_passed = False
+                    any_probe_failed = True
+
+            # Invariant 2 & 6 & 7: C=PASS requires all required capabilities to have executed successful exact probes
+            if all_probes_executed_and_passed:
+                if dim_c_status != DimensionCStatus.PASS.value:
+                    raise EvidenceValidationError(
+                        f"Case {case_id}: All required probes for {caps_to_check} passed on {pimg}, "
+                        f"so Dimension C MUST be PASS; got {dim_c_status} (B={dim_b_sat} does not suppress C)"
+                    )
+            elif dim_c_status == DimensionCStatus.PASS.value:
+                raise EvidenceValidationError(
+                    f"Case {case_id}: Dimension C is PASS but required capabilities {caps_to_check} "
+                    f"did not all have executed successful exact probes on {pimg}."
+                )
+
+            # Invariant 3: If exact probes exist and passed, cannot claim NOT_EXECUTED
+            if dim_c_status == DimensionCStatus.NOT_EXECUTED.value and all_probes_executed_and_passed:
+                raise EvidenceValidationError(
+                    f"Case {case_id}: Record cannot claim NOT_EXECUTED when all required probes executed and passed."
+                )
+
+            # Invariant 4: Catalog underclaim + successful exact probe emits CATALOG_UNDERCLAIM_FUNCTIONAL_PASS
+            if not dim_b_sat and dim_c_status == DimensionCStatus.PASS.value:
+                if "CATALOG_UNDERCLAIM_FUNCTIONAL_PASS" not in mismatches:
+                    raise EvidenceValidationError(
+                        f"Case {case_id}: Catalog underclaim with passing functional probe must emit "
+                        f"CATALOG_UNDERCLAIM_FUNCTIONAL_PASS."
+                    )
+            if "CATALOG_UNDERCLAIM_FUNCTIONAL_PASS" in mismatches:
+                if dim_b_sat:
+                    raise EvidenceValidationError(
+                        f"Case {case_id}: CATALOG_UNDERCLAIM_FUNCTIONAL_PASS cannot be asserted when Dimension B is satisfied."
+                    )
+                if dim_c_status != DimensionCStatus.PASS.value:
+                    raise EvidenceValidationError(
+                        f"Case {case_id}: CATALOG_UNDERCLAIM_FUNCTIONAL_PASS requires Dimension C to be PASS, got {dim_c_status}."
+                    )
+
+            # Invariant 5: Missing probe definition is distinct from runtime execution unavailable
+            if missing_probe_defs:
+                if "REQUIRED_PROBE_NOT_DEFINED" not in mismatches:
+                    raise EvidenceValidationError(
+                        f"Case {case_id}: Missing probe definition for {missing_probe_defs} must emit REQUIRED_PROBE_NOT_DEFINED."
+                    )
+                if not any_probe_unavailable and "EXECUTION_UNAVAILABLE" in mismatches:
+                    raise EvidenceValidationError(
+                        f"Case {case_id}: EXECUTION_UNAVAILABLE emitted when probe definition was missing; "
+                        f"missing probe definition must not collapse into EXECUTION_UNAVAILABLE."
+                    )
 
         if dim_c_status in (DimensionCStatus.NOT_EXECUTED.value, DimensionCStatus.NOT_APPLICABLE.value):
             if satisfied_c is not None:
@@ -279,6 +363,7 @@ def validate_e5_evidence(package_dir: Path | str) -> dict[str, Any]:
     # 7. Validate derived functional metrics against recomputation
     derived_metrics_raw = json.loads(metrics_path.read_text(encoding="utf-8"))
     systems = derived_metrics_raw.get("systems", {})
+    is_metrics_v13 = derived_metrics_raw.get("schema_version") == "protocol-v5-image-functional-metrics-v1.3.0"
     is_metrics_v12 = derived_metrics_raw.get("schema_version") == "protocol-v5-image-functional-metrics-v1.2.0"
 
     by_system_recs = defaultdict(list)
@@ -346,6 +431,65 @@ def validate_e5_evidence(package_dir: Path | str) -> dict[str, Any]:
             if summary.get("gold_acceptable_count") != expected_acc:
                 raise EvidenceValidationError(f"System {sys_id}: gold_acceptable_count mismatch")
 
+        elif is_metrics_v13:
+            expected_with_img = sum(1 for r in sys_records if r.get("predicted_image_id") is not None)
+            expected_no_img = n - expected_with_img
+            expected_b_sat = sum(1 for r in sys_records if r.get("dimension_b_catalog_satisfied"))
+            expected_b_unsat = n - expected_b_sat
+            expected_eligible = sum(
+                1 for r in sys_records
+                if r.get("predicted_image_id") is not None and r.get("dimension_c_eligible", True)
+            )
+            expected_exec = sum(
+                1 for r in sys_records
+                if r.get("predicted_image_id") is not None and r.get("dimension_c_eligible", True) and r.get("dimension_c_execution_coverage")
+            )
+            expected_pass = sum(
+                1 for r in sys_records
+                if r.get("predicted_image_id") is not None and r.get("dimension_c_eligible", True) and r.get("dimension_c_status") == DimensionCStatus.PASS.value
+            )
+            expected_fail = sum(
+                1 for r in sys_records
+                if r.get("predicted_image_id") is not None and r.get("dimension_c_eligible", True) and r.get("dimension_c_status") == DimensionCStatus.FAIL.value
+            )
+            expected_unavail = sum(
+                1 for r in sys_records
+                if r.get("predicted_image_id") is not None and r.get("dimension_c_eligible", True) and r.get("dimension_c_status") == DimensionCStatus.NOT_EXECUTED.value
+            )
+            expected_op_adequate = sum(
+                1 for r in sys_records
+                if r.get("predicted_image_id") is not None
+                and r.get("dimension_b_catalog_satisfied")
+                and r.get("dimension_c_status") == DimensionCStatus.PASS.value
+            )
+            expected_pref = sum(1 for r in sys_records if r.get("dimension_a_preferred_match"))
+            expected_acc = sum(1 for r in sys_records if r.get("dimension_a_gold_match"))
+
+            if summary.get("recommendations_with_image_count") != expected_with_img:
+                raise EvidenceValidationError(f"System {sys_id}: recommendations_with_image_count mismatch")
+            if summary.get("no_image_recommendation_count") != expected_no_img:
+                raise EvidenceValidationError(f"System {sys_id}: no_image_recommendation_count mismatch")
+            if summary.get("catalog_capability_satisfied_count") != expected_b_sat:
+                raise EvidenceValidationError(f"System {sys_id}: catalog_capability_satisfied_count mismatch")
+            if summary.get("catalog_unsatisfied_count") != expected_b_unsat:
+                raise EvidenceValidationError(f"System {sys_id}: catalog_unsatisfied_count mismatch")
+            if summary.get("functional_validation_eligible_count") != expected_eligible:
+                raise EvidenceValidationError(f"System {sys_id}: functional_validation_eligible_count mismatch")
+            if summary.get("functional_executed_count") != expected_exec:
+                raise EvidenceValidationError(f"System {sys_id}: functional_executed_count mismatch")
+            if summary.get("functional_passed_count") != expected_pass:
+                raise EvidenceValidationError(f"System {sys_id}: functional_passed_count mismatch")
+            if summary.get("functional_failed_count") != expected_fail:
+                raise EvidenceValidationError(f"System {sys_id}: functional_failed_count mismatch")
+            if summary.get("functional_unavailable_count") != expected_unavail:
+                raise EvidenceValidationError(f"System {sys_id}: functional_unavailable_count mismatch")
+            if summary.get("operationally_adequate_count") != expected_op_adequate:
+                raise EvidenceValidationError(f"System {sys_id}: operationally_adequate_count mismatch")
+            if summary.get("gold_preferred_count") != expected_pref:
+                raise EvidenceValidationError(f"System {sys_id}: gold_preferred_count mismatch")
+            if summary.get("gold_acceptable_count") != expected_acc:
+                raise EvidenceValidationError(f"System {sys_id}: gold_acceptable_count mismatch")
+
         exec_count = summary.get("functional_executed_count", 0)
         success_rate = summary.get("functional_success_rate_among_executed")
         coverage_rate = summary.get("functional_execution_coverage", 0.0)
@@ -376,10 +520,14 @@ def validate_e5_evidence(package_dir: Path | str) -> dict[str, Any]:
     metrics_schema = derived_metrics_raw.get("schema_version", "")
     eval_schema = eval_records_raw[0].get("schema_version", "") if eval_records_raw else ""
 
-    if "v1.2.0" in metrics_schema or "v1.2.0" in eval_schema:
-        validation_profile = "CURRENT_V1_2"
+    if "v1.3.0" in metrics_schema or "v1.3.0" in eval_schema:
+        validation_profile = "CURRENT_V1_3"
         validator_status = "CURRENT_VALID"
         eligible_as_current_e5_evidence = (execution_status == EvidenceStatus.OBSERVED)
+    elif "v1.2.0" in metrics_schema or "v1.2.0" in eval_schema:
+        validation_profile = "LEGACY_SCHEMA_V1_2"
+        validator_status = "LEGACY_VALID"
+        eligible_as_current_e5_evidence = False
     elif "v1.1.0" in metrics_schema or "v1.1.0" in eval_schema:
         validation_profile = "LEGACY_SCHEMA_V1_1"
         validator_status = "LEGACY_VALID"

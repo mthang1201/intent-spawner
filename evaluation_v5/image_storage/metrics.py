@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections import defaultdict
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, field
 import json
 from typing import Any, Mapping, Sequence
 
@@ -48,6 +48,8 @@ class SystemFunctionalSummary:
     label_fail_functional_pass_count: int
     capability_unsatisfied_count: int
     execution_unavailable_count: int
+    catalog_underclaim_count: int = 0
+    required_probe_not_defined_count: int = 0
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -86,9 +88,11 @@ class SystemFunctionalSummary:
                 else None
             ),
             "catalog_probe_mismatch_count": self.catalog_probe_mismatch_count,
+            "catalog_underclaim_count": self.catalog_underclaim_count,
             "label_pass_functional_fail_count": self.label_pass_functional_fail_count,
             "label_fail_functional_pass_count": self.label_fail_functional_pass_count,
             "capability_unsatisfied_count": self.capability_unsatisfied_count,
+            "required_probe_not_defined_count": self.required_probe_not_defined_count,
             "execution_unavailable_count": self.execution_unavailable_count,
         }
 
@@ -104,6 +108,7 @@ class FunctionalMetricsReport:
     systems: dict[str, SystemFunctionalSummary]
     catalog_probe_mismatches: list[dict[str, Any]]
     label_operational_discrepancies: list[dict[str, Any]]
+    catalog_underclaims: list[dict[str, Any]] = field(default_factory=list)
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -113,6 +118,7 @@ class FunctionalMetricsReport:
             "probe_summary": dict(self.probe_summary),
             "systems": {k: v.to_dict() for k, v in self.systems.items()},
             "catalog_probe_mismatches": self.catalog_probe_mismatches,
+            "catalog_underclaims": self.catalog_underclaims,
             "label_operational_discrepancies": self.label_operational_discrepancies,
         }
 
@@ -135,7 +141,7 @@ def evaluate_recommendation_functional(
     execution_status: str = "COMPLETED",
     source_predicted_image_value: Any = _UNSET,
 ) -> FunctionalEvaluationRecord:
-    """Evaluate one recommendation row across Dimensions A, B, and C with strict 3-state logic."""
+    """Evaluate one recommendation row across Dimensions A, B, and C with independent empirical logic."""
     if source_predicted_image_value is _UNSET:
         actual_source_val = predicted_image_id
     else:
@@ -166,22 +172,18 @@ def evaluate_recommendation_functional(
     mismatches: list[str] = []
     failed_probes_list: list[str] = []
     unavailable_probes_list: list[str] = []
+    undefined_probes_list: list[str] = []
 
     if not predicted_image_id:
         # Case 1: No image recommendation provided
         dim_c_status = DimensionCStatus.NOT_APPLICABLE.value
         dim_c_satisfied: bool | None = None
         dim_c_coverage = False
+        dim_c_eligible = False
         mismatches.append("NO_IMAGE_RECOMMENDATION")
-    elif not dim_b_satisfied:
-        # Case 2: Selected image / catalog does NOT satisfy workload required capabilities
-        # Dimension C CANNOT pass.
-        dim_c_status = DimensionCStatus.NOT_EXECUTED.value
-        dim_c_satisfied = None
-        dim_c_coverage = False
-        mismatches.append("CAPABILITY_UNSATISFIED")
     else:
-        # Case 3: Eligible recommendation - evaluate workload required capabilities in container
+        # Case 2: Recommendation has an image.
+        # Evaluate Dimension C independently from Dimension B.
         caps_to_check = set(norm_required)
         if not caps_to_check:
             caps_to_check.add("python")
@@ -190,31 +192,44 @@ def evaluate_recommendation_functional(
             key = (predicted_image_id, cap)
             result = probe_results.get(key)
             if result is None:
-                unavailable_probes_list.append(f"probe:{predicted_image_id}:{cap}(missing)")
+                undefined_probes_list.append(f"probe:{predicted_image_id}:{cap}(REQUIRED_PROBE_NOT_DEFINED)")
             elif not result.is_executed:
                 unavailable_probes_list.append(f"probe:{predicted_image_id}:{cap}({result.execution_status})")
             elif not result.success:
                 failed_probes_list.append(f"probe:{predicted_image_id}:{cap}({result.error_category or 'failed'})")
 
-        if unavailable_probes_list:
+        dim_c_eligible = (len(undefined_probes_list) == 0)
+
+        if failed_probes_list:
+            dim_c_status = DimensionCStatus.FAIL.value
+            dim_c_satisfied = False
+            dim_c_coverage = True
+        elif undefined_probes_list:
+            dim_c_status = DimensionCStatus.NOT_EXECUTED.value
+            dim_c_satisfied = None
+            dim_c_coverage = False
+            mismatches.append("REQUIRED_PROBE_NOT_DEFINED")
+            if not dim_b_satisfied:
+                mismatches.append("CAPABILITY_UNSATISFIED")
+                mismatches.append("CAPABILITY_UNSATISFIED_UNOBSERVED")
+        elif unavailable_probes_list:
             dim_c_status = DimensionCStatus.NOT_EXECUTED.value
             dim_c_satisfied = None
             dim_c_coverage = False
             mismatches.append("EXECUTION_UNAVAILABLE")
-        elif failed_probes_list:
-            dim_c_status = DimensionCStatus.FAIL.value
-            dim_c_satisfied = False
-            dim_c_coverage = True
         else:
             dim_c_status = DimensionCStatus.PASS.value
             dim_c_satisfied = True
             dim_c_coverage = True
+            if not dim_b_satisfied:
+                mismatches.append("CATALOG_UNDERCLAIM_FUNCTIONAL_PASS")
 
     failed_probes = tuple(failed_probes_list)
     unavailable_probes = tuple(unavailable_probes_list)
+    undefined_probes = tuple(undefined_probes_list)
 
     # Mismatch 1: Catalog claims capability exists, AND container was started & executed, but probe failed!
-    if predicted_image_id and dim_b_satisfied:
+    if predicted_image_id:
         for cap in sorted(catalog_caps):
             key = (predicted_image_id, cap)
             result = probe_results.get(key)
@@ -248,8 +263,10 @@ def evaluate_recommendation_functional(
         dimension_c_status=dim_c_status,
         dimension_c_functional_satisfied=dim_c_satisfied,
         dimension_c_execution_coverage=dim_c_coverage,
+        dimension_c_eligible=dim_c_eligible,
         failed_probes=failed_probes,
         unavailable_probes=unavailable_probes,
+        undefined_probes=undefined_probes,
         mismatch_types=tuple(mismatches),
         execution_status=execution_status,
     )
@@ -269,6 +286,7 @@ def compute_functional_metrics(
     systems_summary: dict[str, SystemFunctionalSummary] = {}
     catalog_probe_mismatches: list[dict[str, Any]] = []
     label_operational_discrepancies: list[dict[str, Any]] = []
+    catalog_underclaims: list[dict[str, Any]] = []
 
     # Probe-level counts
     probes_list = list(probe_results or ())
@@ -293,31 +311,35 @@ def compute_functional_metrics(
         catalog_count = sum(1 for r in records if r.dimension_b_catalog_satisfied)
         catalog_unsat_count = n - catalog_count
 
-        # Functional eligibility: has image AND Dimension B is satisfied
+        # Functional eligibility: has image AND every required capability has a concrete probe defined
         eligible_count = sum(
-            1 for r in records if r.predicted_image_id is not None and r.dimension_b_catalog_satisfied
+            1 for r in records
+            if r.predicted_image_id is not None and getattr(r, "dimension_c_eligible", True)
         )
 
         # Dimension C counts among eligible recommendations
         func_exec_count = sum(
             1 for r in records
-            if r.predicted_image_id is not None and r.dimension_b_catalog_satisfied and r.dimension_c_execution_coverage
+            if r.predicted_image_id is not None and getattr(r, "dimension_c_eligible", True) and r.dimension_c_execution_coverage
         )
         func_pass_count = sum(
             1 for r in records
-            if r.predicted_image_id is not None and r.dimension_b_catalog_satisfied and r.dimension_c_status == DimensionCStatus.PASS.value
+            if r.predicted_image_id is not None and getattr(r, "dimension_c_eligible", True) and r.dimension_c_status == DimensionCStatus.PASS.value
         )
         func_fail_count = sum(
             1 for r in records
-            if r.predicted_image_id is not None and r.dimension_b_catalog_satisfied and r.dimension_c_status == DimensionCStatus.FAIL.value
+            if r.predicted_image_id is not None and getattr(r, "dimension_c_eligible", True) and r.dimension_c_status == DimensionCStatus.FAIL.value
         )
         func_unavail_count = sum(
             1 for r in records
-            if r.predicted_image_id is not None and r.dimension_b_catalog_satisfied and r.dimension_c_status == DimensionCStatus.NOT_EXECUTED.value
+            if r.predicted_image_id is not None and getattr(r, "dimension_c_eligible", True) and r.dimension_c_status == DimensionCStatus.NOT_EXECUTED.value
         )
 
         # Operational adequacy: Image present AND Dim B satisfied AND Dim C PASS
-        op_adequate_count = func_pass_count
+        op_adequate_count = sum(
+            1 for r in records
+            if r.predicted_image_id is not None and r.dimension_b_catalog_satisfied and r.dimension_c_status == DimensionCStatus.PASS.value
+        )
 
         # Rates
         gold_acc_rate = gold_acc_count / n
@@ -332,19 +354,21 @@ def compute_functional_metrics(
         )
         op_adequacy_rate = op_adequate_count / n
 
-        # Joint pass: Dimension A gold acceptable AND Dimension B satisfied AND Dimension C PASS
+        # Joint pass: Dimension A gold acceptable AND Dimension C PASS
         joint_count = sum(
             1 for r in records
-            if r.dimension_a_gold_match and r.dimension_b_catalog_satisfied and r.dimension_c_status == DimensionCStatus.PASS.value
+            if r.dimension_a_gold_match and r.dimension_c_status == DimensionCStatus.PASS.value
         )
         joint_rate = (
             joint_count / func_exec_count if func_exec_count > 0 else None
         )
 
         cat_probe_mismatch = sum(1 for r in records if "CATALOG_PROBE_MISMATCH" in r.mismatch_types)
+        cat_underclaim = sum(1 for r in records if "CATALOG_UNDERCLAIM_FUNCTIONAL_PASS" in r.mismatch_types)
         label_pass_func_fail = sum(1 for r in records if "LABEL_PASS_FUNCTIONAL_FAIL" in r.mismatch_types)
         label_fail_func_pass = sum(1 for r in records if "LABEL_FAIL_FUNCTIONAL_PASS" in r.mismatch_types)
-        cap_unsat = sum(1 for r in records if "CAPABILITY_UNSATISFIED" in r.mismatch_types)
+        cap_unsat = sum(1 for r in records if "CAPABILITY_UNSATISFIED" in r.mismatch_types or "CAPABILITY_UNSATISFIED_UNOBSERVED" in r.mismatch_types)
+        req_probe_not_def = sum(1 for r in records if "REQUIRED_PROBE_NOT_DEFINED" in r.mismatch_types)
         exec_unavail = sum(1 for r in records if "EXECUTION_UNAVAILABLE" in r.mismatch_types)
 
         summary = SystemFunctionalSummary(
@@ -371,9 +395,11 @@ def compute_functional_metrics(
             operational_adequacy_rate=op_adequacy_rate,
             joint_gold_and_functional_rate=joint_rate,
             catalog_probe_mismatch_count=cat_probe_mismatch,
+            catalog_underclaim_count=cat_underclaim,
             label_pass_functional_fail_count=label_pass_func_fail,
             label_fail_functional_pass_count=label_fail_func_pass,
             capability_unsatisfied_count=cap_unsat,
+            required_probe_not_defined_count=req_probe_not_def,
             execution_unavailable_count=exec_unavail,
         )
         systems_summary[sys_id] = summary
@@ -384,6 +410,8 @@ def compute_functional_metrics(
                 catalog_probe_mismatches.append(r.to_dict())
             if "LABEL_PASS_FUNCTIONAL_FAIL" in r.mismatch_types or "LABEL_FAIL_FUNCTIONAL_PASS" in r.mismatch_types:
                 label_operational_discrepancies.append(r.to_dict())
+            if "CATALOG_UNDERCLAIM_FUNCTIONAL_PASS" in r.mismatch_types:
+                catalog_underclaims.append(r.to_dict())
 
     return FunctionalMetricsReport(
         schema_version=FUNCTIONAL_METRICS_SCHEMA_VERSION,
@@ -393,4 +421,5 @@ def compute_functional_metrics(
         systems=systems_summary,
         catalog_probe_mismatches=catalog_probe_mismatches,
         label_operational_discrepancies=label_operational_discrepancies,
+        catalog_underclaims=catalog_underclaims,
     )

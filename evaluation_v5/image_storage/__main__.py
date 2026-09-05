@@ -182,12 +182,22 @@ def _format_markdown_report(
 
     lines.append("## 3. Mismatch and Discrepancy Detection\n")
     cat_mismatches = metrics_report.get("catalog_probe_mismatches", [])
+    cat_underclaims = metrics_report.get("catalog_underclaims", [])
     discrepancies = metrics_report.get("label_operational_discrepancies", [])
 
     lines.append(f"- **Catalog vs Probe Failures (`CATALOG_PROBE_MISMATCH`)**: {len(cat_mismatches)}")
+    lines.append(f"- **Catalog Underclaim Functional Pass (`CATALOG_UNDERCLAIM_FUNCTIONAL_PASS`)**: {len(cat_underclaims)}")
     lines.append(
         f"- **Label vs Operational Discrepancies (`LABEL_PASS_FUNCTIONAL_FAIL` / `LABEL_FAIL_FUNCTIONAL_PASS`)**: {len(discrepancies)}\n"
     )
+
+    if cat_underclaims:
+        lines.append("### Catalog Underclaim (Metadata Absent, Empirical Probe Passed)")
+        lines.append("| Case ID | System | Predicted Image | Underclaimed Capabilities |")
+        lines.append("| :--- | :--- | :--- | :--- |")
+        for u in cat_underclaims[:10]:
+            lines.append(f"| `{u['case_id']}` | {u['system_id']} | `{u['predicted_image_id']}` | {', '.join(u.get('missing_catalog_capabilities', []))} |")
+        lines.append("")
 
     if cat_mismatches:
         lines.append("### Catalog vs Probe Failures")
