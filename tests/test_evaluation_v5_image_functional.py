@@ -782,3 +782,143 @@ def test_end_to_end_cli_with_recommendations_file(tmp_path):
     assert metrics_raw["total_evaluations"] == 36
     assert "P1" in metrics_raw["systems"]
     assert "P2" in metrics_raw["systems"]
+
+
+def test_e5_rapids_unsupported_workload_semantics(catalog_data):
+    """Regression Test 13: Workload requiring unsupported library (e.g. RAPIDS) fails Dimension B and C."""
+    manifest = build_image_probe_manifest(catalog_data, CATALOG_PATH)
+    runner = SyntheticProbeRunner(catalog_data)
+    results = runner.run_all(manifest)
+    probe_map = {(r.image_id, r.capability): r for r in results}
+
+    # Workload requiring rapids, recommended minimal-python
+    eval_rec = evaluate_recommendation_functional(
+        case_id="case-rapids",
+        system_id="P2",
+        predicted_image_id="minimal-python",
+        required_capabilities=["rapids"],
+        gold_preferred_image_id=None,
+        gold_acceptable_image_ids=[],
+        catalog=catalog_data,
+        probe_results=probe_map,
+    )
+
+    assert eval_rec.dimension_b_catalog_satisfied is False
+    assert eval_rec.missing_catalog_capabilities == ("rapids",)
+    assert eval_rec.dimension_c_status == DimensionCStatus.NOT_EXECUTED.value
+    assert eval_rec.dimension_c_functional_satisfied is None
+    assert eval_rec.dimension_c_execution_coverage is False
+    assert "CAPABILITY_UNSATISFIED" in eval_rec.mismatch_types
+    assert "LABEL_FAIL_FUNCTIONAL_PASS" not in eval_rec.mismatch_types
+    assert "EXECUTION_UNAVAILABLE" not in eval_rec.mismatch_types
+
+    # Metrics aggregation: must not be in functional_validation_eligible_count
+    report = compute_functional_metrics([eval_rec], catalog_data, probe_results=results)
+    summary = report.systems["P2"]
+    assert summary.total_recommendations == 1
+    assert summary.catalog_capability_satisfied_count == 0
+    assert summary.catalog_unsatisfied_count == 1
+    assert summary.functional_validation_eligible_count == 0
+    assert summary.functional_executed_count == 0
+    assert summary.functional_passed_count == 0
+    assert summary.capability_unsatisfied_count == 1
+    assert summary.execution_unavailable_count == 0
+    assert summary.operationally_adequate_count == 0
+
+
+def test_e5_no_image_recommendation_semantics(catalog_data):
+    """Regression Test 14: Absent image recommendation is NOT_APPLICABLE and NO_IMAGE_RECOMMENDATION."""
+    manifest = build_image_probe_manifest(catalog_data, CATALOG_PATH)
+    runner = SyntheticProbeRunner(catalog_data)
+    results = runner.run_all(manifest)
+    probe_map = {(r.image_id, r.capability): r for r in results}
+
+    eval_rec = evaluate_recommendation_functional(
+        case_id="case-no-img",
+        system_id="P1",
+        predicted_image_id=None,
+        required_capabilities=["python"],
+        gold_preferred_image_id="minimal-python",
+        gold_acceptable_image_ids=["minimal-python"],
+        catalog=catalog_data,
+        probe_results=probe_map,
+    )
+
+    assert eval_rec.dimension_b_catalog_satisfied is False
+    assert eval_rec.dimension_c_status == DimensionCStatus.NOT_APPLICABLE.value
+    assert eval_rec.dimension_c_functional_satisfied is None
+    assert eval_rec.dimension_c_execution_coverage is False
+    assert "NO_IMAGE_RECOMMENDATION" in eval_rec.mismatch_types
+    assert "EXECUTION_UNAVAILABLE" not in eval_rec.mismatch_types
+
+    report = compute_functional_metrics([eval_rec], catalog_data, probe_results=results)
+    summary = report.systems["P1"]
+    assert summary.total_recommendations == 1
+    assert summary.recommendations_with_image_count == 0
+    assert summary.no_image_recommendation_count == 1
+    assert summary.functional_validation_eligible_count == 0
+    assert summary.functional_executed_count == 0
+    assert summary.functional_passed_count == 0
+    assert summary.execution_unavailable_count == 0
+
+
+def test_e5_explicit_denominators_mixed_workload(catalog_data):
+    """Regression Test 15: Denominators correctly separate total, eligible, executed, passed, and adequate."""
+    manifest = build_image_probe_manifest(catalog_data, CATALOG_PATH)
+    runner = SyntheticProbeRunner(catalog_data)
+    results = runner.run_all(manifest)
+    probe_map = {(r.image_id, r.capability): r for r in results}
+
+    evals = [
+        # 1. Eligible, executed, passed (adequate)
+        evaluate_recommendation_functional(
+            case_id="c1",
+            system_id="SYS",
+            predicted_image_id="minimal-python",
+            required_capabilities=["python"],
+            gold_preferred_image_id="minimal-python",
+            gold_acceptable_image_ids=["minimal-python"],
+            catalog=catalog_data,
+            probe_results=probe_map,
+        ),
+        # 2. Unsupported capability (ineligible)
+        evaluate_recommendation_functional(
+            case_id="c2",
+            system_id="SYS",
+            predicted_image_id="minimal-python",
+            required_capabilities=["rapids"],
+            gold_preferred_image_id=None,
+            gold_acceptable_image_ids=[],
+            catalog=catalog_data,
+            probe_results=probe_map,
+        ),
+        # 3. No image recommendation (ineligible)
+        evaluate_recommendation_functional(
+            case_id="c3",
+            system_id="SYS",
+            predicted_image_id=None,
+            required_capabilities=["python"],
+            gold_preferred_image_id="minimal-python",
+            gold_acceptable_image_ids=["minimal-python"],
+            catalog=catalog_data,
+            probe_results=probe_map,
+        ),
+    ]
+
+    report = compute_functional_metrics(evals, catalog_data, probe_results=results)
+    summary = report.systems["SYS"]
+    assert summary.total_recommendations == 3
+    assert summary.recommendations_with_image_count == 2
+    assert summary.no_image_recommendation_count == 1
+    assert summary.catalog_capability_satisfied_count == 1
+    assert summary.catalog_unsatisfied_count == 2
+    assert summary.functional_validation_eligible_count == 1
+    assert summary.functional_executed_count == 1
+    assert summary.functional_passed_count == 1
+    assert summary.operationally_adequate_count == 1
+    assert summary.functional_execution_coverage == 1.0
+    assert summary.functional_success_rate_among_executed == 1.0
+    assert summary.conservative_functional_success_rate == pytest.approx(1 / 3)
+    assert summary.operational_adequacy_rate == pytest.approx(1 / 3)
+    assert summary.capability_unsatisfied_count == 1
+    assert summary.execution_unavailable_count == 0

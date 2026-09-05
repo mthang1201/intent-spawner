@@ -137,8 +137,8 @@ def _format_markdown_report(
         "- **Dimension C (Actual Functional Execution)**: Bounded in-container probes pass.\n"
     )
 
-    lines.append("| System | Evaluated | Gold Acceptable (A) | Catalog Coverage (B) | Functional Coverage | Functional Pass (among executed) | Joint A & C |")
-    lines.append("| :--- | :---: | :---: | :---: | :---: | :---: | :---: |")
+    lines.append("| System | Total | With Image | Catalog Covered (B) | Functional Eligible | Functional Executed | Functional Pass (C) | Operational Adequacy |")
+    lines.append("| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |")
 
     systems = metrics_report.get("systems", {})
     for sys_id, summary in sorted(systems.items()):
@@ -148,20 +148,16 @@ def _format_markdown_report(
             if func_pass_val is not None
             else f"N/A ({summary['functional_passed_count']}/{summary['functional_executed_count']})"
         )
-        joint_val = summary.get("joint_gold_and_functional_rate")
-        joint_str = (
-            f"{joint_val:.1%}"
-            if joint_val is not None
-            else "N/A"
-        )
+        op_adeq_val = summary.get("operational_adequacy_rate", 0.0)
         exec_cov_val = summary.get("functional_execution_coverage", 0.0)
         lines.append(
             f"| **{sys_id}** | {summary['total_recommendations']} | "
-            f"{summary['gold_acceptable_rate']:.1%} ({summary['gold_acceptable_count']}/{summary['total_recommendations']}) | "
+            f"{summary.get('recommendations_with_image_count', summary['total_recommendations'])} | "
             f"{summary['catalog_capability_coverage_rate']:.1%} ({summary['catalog_capability_satisfied_count']}/{summary['total_recommendations']}) | "
-            f"{exec_cov_val:.1%} ({summary['functional_executed_count']}/{summary['total_recommendations']}) | "
+            f"{summary.get('functional_validation_eligible_count', summary['catalog_capability_satisfied_count'])} | "
+            f"{exec_cov_val:.1%} ({summary['functional_executed_count']}/{summary.get('functional_validation_eligible_count', summary['catalog_capability_satisfied_count'])}) | "
             f"{func_pass_str} | "
-            f"{joint_str} |"
+            f"{op_adeq_val:.1%} ({summary.get('operationally_adequate_count', summary['functional_passed_count'])}/{summary['total_recommendations']}) |"
         )
     lines.append("")
 
@@ -289,6 +285,8 @@ def run_e5_evaluation(
 
     # 5. Gather recommendation items to evaluate
     evaluation_records: list[FunctionalEvaluationRecord] = []
+    split_cases = _extract_split_cases(split_path) if split_path.is_file() else []
+    split_cases_by_id = {c["case_id"]: c for c in split_cases}
 
     if recommendations_path and recommendations_path.is_file():
         raw_recs = _load_recommendations_file(recommendations_path)
@@ -299,7 +297,17 @@ def run_e5_evaluation(
             variant_id = row.get("variant_id", "")
             predicted_img = row.get("predicted_image_id")
             gold = row.get("evaluation_gold", {})
-            req_caps = gold.get("required_image_capabilities", [])
+            req_caps = list(gold.get("required_image_capabilities", []))
+            if not req_caps:
+                split_case = split_cases_by_id.get(case_id, {})
+                split_gold = split_case.get("gold", {})
+                req_caps = list(split_gold.get("required_image_capabilities", []))
+                if not req_caps:
+                    exp = split_gold.get("expected_extraction") or {}
+                    req_caps = list(exp.get("required_libraries", []))
+                if not req_caps:
+                    intent = row.get("structured_intent") or {}
+                    req_caps = list(intent.get("required_libraries", []))
             pref_cand = gold.get("preferred_candidate_id")
             # Extract image component from candidate ID (e.g. small-minimal-python -> minimal-python)
             pref_img = None
@@ -328,14 +336,16 @@ def run_e5_evaluation(
             evaluation_records.append(eval_rec)
     else:
         # Evaluate against the development split
-        split_cases = _extract_split_cases(split_path)
         default_img = catalog.get("default_image", "minimal-python")
         for case in split_cases:
             case_id = case.get("case_id", "")
             family_id = case.get("family_id", "")
             variant_id = case.get("variant_id", "")
             gold = case.get("gold", {})
-            req_caps = gold.get("required_image_capabilities", [])
+            req_caps = list(gold.get("required_image_capabilities", []))
+            if not req_caps:
+                exp = gold.get("expected_extraction") or {}
+                req_caps = list(exp.get("required_libraries", []))
             pref_cand = gold.get("preferred_candidate_id")
             pref_img = pref_cand.split("-", 1)[1] if pref_cand and "-" in pref_cand else pref_cand
             acc_cands = gold.get("acceptable_candidate_ids", [])

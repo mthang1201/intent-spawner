@@ -12,9 +12,9 @@ from typing import Any, Mapping, Sequence
 
 IMAGE_PROBE_MANIFEST_SCHEMA_VERSION = "protocol-v5-image-probe-manifest-v1.1.0"
 IMAGE_PROBE_RECORD_SCHEMA_VERSION = "protocol-v5-image-probe-record-v1.1.0"
-FUNCTIONAL_EVALUATION_SCHEMA_VERSION = "protocol-v5-image-functional-evaluation-v1.1.0"
-FUNCTIONAL_METRICS_SCHEMA_VERSION = "protocol-v5-image-functional-metrics-v1.1.0"
-E5_RUN_SCHEMA_VERSION = "protocol-v5-image-validation-run-v1.1.0"
+FUNCTIONAL_EVALUATION_SCHEMA_VERSION = "protocol-v5-image-functional-evaluation-v1.2.0"
+FUNCTIONAL_METRICS_SCHEMA_VERSION = "protocol-v5-image-functional-metrics-v1.2.0"
+E5_RUN_SCHEMA_VERSION = "protocol-v5-image-validation-run-v1.2.0"
 
 DIGEST_PATTERN = re.compile(r"@sha256:([a-f0-9]{64})$")
 
@@ -37,11 +37,12 @@ class ProbeExecutionStatus(str, Enum):
 
 
 class DimensionCStatus(str, Enum):
-    """Three-state functional execution result for a recommendation."""
+    """Functional execution result for a recommendation."""
 
     PASS = "PASS"
     FAIL = "FAIL"
     NOT_EXECUTED = "NOT_EXECUTED"
+    NOT_APPLICABLE = "NOT_APPLICABLE"
 
 
 @dataclass(frozen=True, slots=True)
@@ -311,7 +312,9 @@ class FunctionalEvaluationRecord:
             missing_catalog_capabilities=tuple(data.get("missing_catalog_capabilities", ())),
             dimension_c_status=str(status_c),
             dimension_c_functional_satisfied=satisfied_c,
-            dimension_c_execution_coverage=bool(data.get("dimension_c_execution_coverage", status_c != DimensionCStatus.NOT_EXECUTED.value)),
+            dimension_c_execution_coverage=bool(
+                data.get("dimension_c_execution_coverage", status_c in (DimensionCStatus.PASS.value, DimensionCStatus.FAIL.value))
+            ),
             failed_probes=tuple(data.get("failed_probes", ())),
             unavailable_probes=tuple(data.get("unavailable_probes", ())),
             mismatch_types=tuple(data.get("mismatch_types", ())),

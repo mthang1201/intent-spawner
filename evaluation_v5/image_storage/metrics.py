@@ -23,19 +23,25 @@ class SystemFunctionalSummary:
 
     system_id: str
     total_recommendations: int
+    recommendations_with_image_count: int
+    no_image_recommendation_count: int
     gold_acceptable_count: int
     gold_preferred_count: int
     catalog_capability_satisfied_count: int
+    catalog_unsatisfied_count: int
+    functional_validation_eligible_count: int
     functional_executed_count: int
     functional_passed_count: int
     functional_failed_count: int
     functional_unavailable_count: int
+    operationally_adequate_count: int
     gold_acceptable_rate: float
     gold_preferred_rate: float
     catalog_capability_coverage_rate: float
     functional_execution_coverage: float
     functional_success_rate_among_executed: float | None
     conservative_functional_success_rate: float | None
+    operational_adequacy_rate: float
     joint_gold_and_functional_rate: float | None
     catalog_probe_mismatch_count: int
     label_pass_functional_fail_count: int
@@ -47,13 +53,18 @@ class SystemFunctionalSummary:
         return {
             "system_id": self.system_id,
             "total_recommendations": self.total_recommendations,
+            "recommendations_with_image_count": self.recommendations_with_image_count,
+            "no_image_recommendation_count": self.no_image_recommendation_count,
             "gold_acceptable_count": self.gold_acceptable_count,
             "gold_preferred_count": self.gold_preferred_count,
             "catalog_capability_satisfied_count": self.catalog_capability_satisfied_count,
+            "catalog_unsatisfied_count": self.catalog_unsatisfied_count,
+            "functional_validation_eligible_count": self.functional_validation_eligible_count,
             "functional_executed_count": self.functional_executed_count,
             "functional_passed_count": self.functional_passed_count,
             "functional_failed_count": self.functional_failed_count,
             "functional_unavailable_count": self.functional_unavailable_count,
+            "operationally_adequate_count": self.operationally_adequate_count,
             "gold_acceptable_rate": round(self.gold_acceptable_rate, 4),
             "gold_preferred_rate": round(self.gold_preferred_rate, 4),
             "catalog_capability_coverage_rate": round(self.catalog_capability_coverage_rate, 4),
@@ -68,6 +79,7 @@ class SystemFunctionalSummary:
                 if self.conservative_functional_success_rate is not None
                 else None
             ),
+            "operational_adequacy_rate": round(self.operational_adequacy_rate, 4),
             "joint_gold_and_functional_rate": (
                 round(self.joint_gold_and_functional_rate, 4)
                 if self.joint_gold_and_functional_rate is not None
@@ -135,18 +147,29 @@ def evaluate_recommendation_functional(
     missing_catalog_caps = tuple(sorted([c for c in norm_required if c not in catalog_caps]))
     dim_b_satisfied = bool(predicted_image_id and len(missing_catalog_caps) == 0)
 
-    # Dimension C: Actual functional execution (3-state: PASS, FAIL, NOT_EXECUTED)
+    # Dimension C & Mismatch detection
+    mismatches: list[str] = []
     failed_probes_list: list[str] = []
     unavailable_probes_list: list[str] = []
 
     if not predicted_image_id:
-        dim_c_status = DimensionCStatus.NOT_EXECUTED.value
+        # Case 1: No image recommendation provided
+        dim_c_status = DimensionCStatus.NOT_APPLICABLE.value
         dim_c_satisfied: bool | None = None
         dim_c_coverage = False
+        mismatches.append("NO_IMAGE_RECOMMENDATION")
+    elif not dim_b_satisfied:
+        # Case 2: Selected image / catalog does NOT satisfy workload required capabilities
+        # Dimension C CANNOT pass.
+        dim_c_status = DimensionCStatus.NOT_EXECUTED.value
+        dim_c_satisfied = None
+        dim_c_coverage = False
+        mismatches.append("CAPABILITY_UNSATISFIED")
     else:
-        # Check all required capabilities plus baseline python
+        # Case 3: Eligible recommendation - evaluate workload required capabilities in container
         caps_to_check = set(norm_required)
-        caps_to_check.add("python")
+        if not caps_to_check:
+            caps_to_check.add("python")
 
         for cap in sorted(caps_to_check):
             key = (predicted_image_id, cap)
@@ -159,17 +182,15 @@ def evaluate_recommendation_functional(
                 failed_probes_list.append(f"probe:{predicted_image_id}:{cap}({result.error_category or 'failed'})")
 
         if unavailable_probes_list:
-            # If any required probe was not executed, Dimension C is NOT_EXECUTED
             dim_c_status = DimensionCStatus.NOT_EXECUTED.value
             dim_c_satisfied = None
             dim_c_coverage = False
+            mismatches.append("EXECUTION_UNAVAILABLE")
         elif failed_probes_list:
-            # If all required probes executed and at least one genuinely failed
             dim_c_status = DimensionCStatus.FAIL.value
             dim_c_satisfied = False
             dim_c_coverage = True
         else:
-            # All required probes actually executed and passed
             dim_c_status = DimensionCStatus.PASS.value
             dim_c_satisfied = True
             dim_c_coverage = True
@@ -177,14 +198,8 @@ def evaluate_recommendation_functional(
     failed_probes = tuple(failed_probes_list)
     unavailable_probes = tuple(unavailable_probes_list)
 
-    # Mismatch detection
-    mismatches: list[str] = []
-
-    if dim_c_status == DimensionCStatus.NOT_EXECUTED.value:
-        mismatches.append("EXECUTION_UNAVAILABLE")
-
     # Mismatch 1: Catalog claims capability exists, AND container was started & executed, but probe failed!
-    if predicted_image_id:
+    if predicted_image_id and dim_b_satisfied:
         for cap in sorted(catalog_caps):
             key = (predicted_image_id, cap)
             result = probe_results.get(key)
@@ -199,10 +214,6 @@ def evaluate_recommendation_functional(
     # Mismatch 3: Label differs from gold YAML, but functionally passed and catalog satisfies requirements
     if not dim_a_acceptable and dim_c_status == DimensionCStatus.PASS.value and dim_b_satisfied:
         mismatches.append("LABEL_FAIL_FUNCTIONAL_PASS")
-
-    # Mismatch 4: Lacks required capabilities in catalog and fails execution
-    if not dim_b_satisfied and dim_c_status == DimensionCStatus.FAIL.value:
-        mismatches.append("CAPABILITY_UNSATISFIED")
 
     return FunctionalEvaluationRecord(
         schema_version=FUNCTIONAL_EVALUATION_SCHEMA_VERSION,
@@ -258,28 +269,57 @@ def compute_functional_metrics(
         if n == 0:
             continue
 
+        with_img_count = sum(1 for r in records if r.predicted_image_id is not None)
+        no_img_count = n - with_img_count
+
         gold_acc_count = sum(1 for r in records if r.dimension_a_gold_match)
         gold_pref_count = sum(1 for r in records if r.dimension_a_preferred_match)
         catalog_count = sum(1 for r in records if r.dimension_b_catalog_satisfied)
+        catalog_unsat_count = n - catalog_count
 
-        # Dimension C counts
-        func_exec_count = sum(1 for r in records if r.dimension_c_execution_coverage)
-        func_pass_count = sum(1 for r in records if r.dimension_c_status == DimensionCStatus.PASS.value)
-        func_fail_count = sum(1 for r in records if r.dimension_c_status == DimensionCStatus.FAIL.value)
-        func_unavail_count = sum(1 for r in records if r.dimension_c_status == DimensionCStatus.NOT_EXECUTED.value)
-
-        # Joint pass: Dimension A gold acceptable AND Dimension C PASS
-        joint_count = sum(
-            1 for r in records if r.dimension_a_gold_match and r.dimension_c_status == DimensionCStatus.PASS.value
+        # Functional eligibility: has image AND Dimension B is satisfied
+        eligible_count = sum(
+            1 for r in records if r.predicted_image_id is not None and r.dimension_b_catalog_satisfied
         )
 
-        # Rates: empirical rates are None if functional_executed_count == 0 (do NOT report 0.0 for unexecuted!)
-        exec_coverage = func_exec_count / n
+        # Dimension C counts among eligible recommendations
+        func_exec_count = sum(
+            1 for r in records
+            if r.predicted_image_id is not None and r.dimension_b_catalog_satisfied and r.dimension_c_execution_coverage
+        )
+        func_pass_count = sum(
+            1 for r in records
+            if r.predicted_image_id is not None and r.dimension_b_catalog_satisfied and r.dimension_c_status == DimensionCStatus.PASS.value
+        )
+        func_fail_count = sum(
+            1 for r in records
+            if r.predicted_image_id is not None and r.dimension_b_catalog_satisfied and r.dimension_c_status == DimensionCStatus.FAIL.value
+        )
+        func_unavail_count = sum(
+            1 for r in records
+            if r.predicted_image_id is not None and r.dimension_b_catalog_satisfied and r.dimension_c_status == DimensionCStatus.NOT_EXECUTED.value
+        )
+
+        # Operational adequacy: Image present AND Dim B satisfied AND Dim C PASS
+        op_adequate_count = func_pass_count
+
+        # Rates
+        gold_acc_rate = gold_acc_count / n
+        gold_pref_rate = gold_pref_count / n
+        catalog_cov_rate = catalog_count / n
+        exec_coverage = func_exec_count / eligible_count if eligible_count > 0 else 0.0
         success_rate_among_executed = (
             func_pass_count / func_exec_count if func_exec_count > 0 else None
         )
         conservative_success_rate = (
             func_pass_count / n if func_exec_count > 0 else None
+        )
+        op_adequacy_rate = op_adequate_count / n
+
+        # Joint pass: Dimension A gold acceptable AND Dimension B satisfied AND Dimension C PASS
+        joint_count = sum(
+            1 for r in records
+            if r.dimension_a_gold_match and r.dimension_b_catalog_satisfied and r.dimension_c_status == DimensionCStatus.PASS.value
         )
         joint_rate = (
             joint_count / func_exec_count if func_exec_count > 0 else None
@@ -294,19 +334,25 @@ def compute_functional_metrics(
         summary = SystemFunctionalSummary(
             system_id=sys_id,
             total_recommendations=n,
+            recommendations_with_image_count=with_img_count,
+            no_image_recommendation_count=no_img_count,
             gold_acceptable_count=gold_acc_count,
             gold_preferred_count=gold_pref_count,
             catalog_capability_satisfied_count=catalog_count,
+            catalog_unsatisfied_count=catalog_unsat_count,
+            functional_validation_eligible_count=eligible_count,
             functional_executed_count=func_exec_count,
             functional_passed_count=func_pass_count,
             functional_failed_count=func_fail_count,
             functional_unavailable_count=func_unavail_count,
-            gold_acceptable_rate=gold_acc_count / n,
-            gold_preferred_rate=gold_pref_count / n,
-            catalog_capability_coverage_rate=catalog_count / n,
+            operationally_adequate_count=op_adequate_count,
+            gold_acceptable_rate=gold_acc_rate,
+            gold_preferred_rate=gold_pref_rate,
+            catalog_capability_coverage_rate=catalog_cov_rate,
             functional_execution_coverage=exec_coverage,
             functional_success_rate_among_executed=success_rate_among_executed,
             conservative_functional_success_rate=conservative_success_rate,
+            operational_adequacy_rate=op_adequacy_rate,
             joint_gold_and_functional_rate=joint_rate,
             catalog_probe_mismatch_count=cat_probe_mismatch,
             label_pass_functional_fail_count=label_pass_func_fail,
