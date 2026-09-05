@@ -440,7 +440,6 @@ def run_e5_evaluation(
         "ranker_version": "p2-deterministic-ranker-v1.0.0",
     }) if execution_status == EvidenceStatus.OBSERVED else {}
 
-    rec_sha = file_sha256(recommendations_path) if recommendations_path and recommendations_path.is_file() else None
     env_identity = {
         "environment_id": f"e5-{active_mode}-{platform.system().lower()}",
         "platform": platform.platform(),
@@ -448,9 +447,11 @@ def run_e5_evaluation(
         "execution_mode": active_mode,
         "git_info": git,
         "runtime_detected": detect_runtime(),
-        "recommendations_input_path": str(recommendations_path) if recommendations_path else None,
-        "recommendations_input_sha256": rec_sha,
     }
+    if recommendations_path and recommendations_path.is_file():
+        env_identity["recommendations_input_path"] = str(recommendations_path)
+        env_identity["recommendations_input_sha256"] = file_sha256(recommendations_path)
+
     write_json_exclusive(raw_dir / "environment.json", env_identity)
 
     # Derived artifacts
