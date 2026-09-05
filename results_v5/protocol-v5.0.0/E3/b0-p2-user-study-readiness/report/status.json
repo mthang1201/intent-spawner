@@ -1,0 +1,20 @@
+{
+  "analyzable_event_count": 0,
+  "analyzable_questionnaire_submission_count": 0,
+  "execution_status": "NOT_EXECUTED",
+  "experiment_executed": false,
+  "experiment_id": "E3",
+  "formal_inference_emitted": false,
+  "measured_task_outcome_count": 0,
+  "observed_evidence": false,
+  "participant_target": 36,
+  "protocol_version": "5.0.0",
+  "raw_event_count": 0,
+  "raw_questionnaire_submission_count": 0,
+  "run_id": "b0-p2-user-study-readiness",
+  "schema_version": "protocol-v5-user-study-status-v1.0.0",
+  "synthetic_only": false,
+  "task_set_stage": "development",
+  "task_set_status": "draft",
+  "valid_completed_crossover_count": 0
+}

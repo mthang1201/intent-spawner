@@ -1,0 +1,179 @@
+{
+  "contracts": {
+    "analysis_plan_sha256": "1874b426666111362ef79f4e23315dc8f51a97b10827ae2e596cc70523b1a3ce",
+    "analysis_plan_version": "protocol-v5-user-study-analysis-plan-v1.2.0",
+    "analysis_schema_version": "protocol-v5-user-study-analysis-v1.2.0",
+    "assignment_generator_version": "protocol-v5-user-study-counterbalance-v1.2.0",
+    "assignment_schema_version": "protocol-v5-user-study-assignment-v1.1.0",
+    "decision_time_nonconfirmation_bound_seconds": 600.0,
+    "event_schema_version": "protocol-v5-user-study-event-v1.0.0",
+    "exclusion_schema_version": "protocol-v5-user-study-exclusion-v1.0.0",
+    "fairness_manifest_schema_version": "protocol-v5-user-study-environment-fairness-v1.0.0",
+    "matched_pair_outcome_schema_version": "protocol-v5-user-study-matched-pair-outcome-v1.2.0",
+    "questionnaire_instrument_sha256": "5b651d19628d15ef2afa4365cad9eaab5ab2196ea86f84389b09d5d24a000db5",
+    "questionnaire_instrument_version": "protocol-v5-user-study-questionnaire-instrument-v1.1.0",
+    "questionnaire_outcome_schema_version": "protocol-v5-user-study-questionnaire-outcome-v1.0.0",
+    "questionnaire_schema_sha256": "7c2f5950644f16a26f24bec5939646dd4c4a21d6fd1723797c70b29748dbea56",
+    "questionnaire_schema_version": "protocol-v5-user-study-questionnaire-v1.1.0",
+    "selection_scoring_version": "protocol-v5-user-study-final-selection-scoring-v1.0.0",
+    "session_schema_version": "protocol-v5-user-study-session-v1.0.0",
+    "study_timing_contract_sha256": "3a1cbe7ea27d0c52eb909770d8c72f6b7a6c566e049692cae647569dd47e055d",
+    "study_timing_contract_version": "protocol-v5-user-study-timing-contract-v1.0.0",
+    "summary_schema_version": "protocol-v5-user-study-summary-v1.2.0",
+    "task_outcome_schema_version": "protocol-v5-user-study-task-outcome-v1.2.0",
+    "task_set_schema_version": "protocol-v5-user-study-task-set-v1.0.0"
+  },
+  "created_at_utc": "2026-08-26T12:00:00Z",
+  "execution_status": "NOT_EXECUTED",
+  "experiment_id": "E3",
+  "finalizer_version": "protocol-v5-user-study-finalizer-v1.3.0",
+  "git_revision": "2cf206773e63f7086e3c9716a5077793b189fa6d",
+  "input_checksums": {
+    "assignment_manifest": {
+      "artifact_role": "assignment_manifest",
+      "canonical_sha256": "ccde5e5cb288a98f90c1717fd79b3445b93314739fe2ee437b73fc455241ae4a",
+      "file_sha256": "716acaa758da3800925d3a9fce437d23ea127a7fe7bd97058b7099ba33dc55d9"
+    },
+    "events": {
+      "artifact_role": "staging_events",
+      "file_sha256": null,
+      "record_count": 0,
+      "supplied": false
+    },
+    "exclusions": {
+      "artifact_role": "staging_exclusions",
+      "file_sha256": null,
+      "record_count": 0,
+      "supplied": false
+    },
+    "questionnaires": {
+      "artifact_role": "staging_questionnaires",
+      "file_sha256": null,
+      "record_count": 0,
+      "supplied": false
+    },
+    "sessions": {
+      "artifact_role": "staging_sessions",
+      "file_sha256": null,
+      "record_count": 0,
+      "supplied": false
+    },
+    "task_set": {
+      "artifact_role": "authoritative_task_set",
+      "canonical_sha256": "7a1009669359cc87dc510c3e8a85a2c0f318f5b2a4ab5c04a1de221b517604cf",
+      "file_sha256": "234ab087d7b2b2d488ceb73fe98b50f3ee4dcc7560a3c1411b883b7be47431e4"
+    }
+  },
+  "output_checksums": {
+    "derived/analysis.json": "74cdde51d934ce512e136b0d5f1bdc57df42258c09cac2ef2f49351cf0993cb6",
+    "derived/matched-pair-outcomes.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "derived/model-effects.json": "ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356",
+    "derived/questionnaire-outcomes.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "derived/summary.json": "9451a844a94c5686cb92ed3d19185d4798a97f010eb7f820edb7ebc9306c4d52",
+    "derived/task-outcomes.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "raw/assignment-manifest.json": "716acaa758da3800925d3a9fce437d23ea127a7fe7bd97058b7099ba33dc55d9",
+    "raw/events.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "raw/exclusions.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "raw/questionnaires.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "raw/sessions.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "report/USER_STUDY_REPORT.md": "f0f20dab9ee30db4a1afe0e8ce852eef8d65ac5f6f58a62d0591422dab42d094",
+    "report/analysis-manifest.json": "8186ea4c6672e6d10fa69fb60c4d10d4bc027de5c967a8d6951f0c952154fd2d",
+    "report/figures/accuracy.svg": "fd41efe56098dfb382ef91506249fc4b55c314c96e007eaf46445ccf7a47b470",
+    "report/figures/decision-time.svg": "3cf950005c60b1fd8bd802a47856b641a1772e88942b788378179c14b06139ba",
+    "report/figures/interaction-effort.svg": "44d6bf5cd32e015e51a1d51b83ab6351c450e772d6e448e910cf45f589e08fe3",
+    "report/figures/preference.svg": "6c988d1df642703d24cbcbed27066174cd81f8d1010bde1f53b421e976c99350",
+    "report/figures/sus-seq-custom.svg": "3d1363dcfa80d4687c4df2e2b998441a98391f2efe3a798298a7b8ac89c77f7e",
+    "report/limitations.md": "4ad53cececff5ee9fd8d7937badecf46911eb0aaf16489044ccc33533f83fa89",
+    "report/privacy-audit.json": "aa45de88730cb967e61e9e7b8f082f7697fdcfb9cb4935534b66df677c8d3d9a",
+    "report/status.json": "6db980c7b1f0d1b29538497eca1b77359e4fba278a9422039e13fdf6cd5b03a2",
+    "report/tables/condition-summary.csv": "2ba7a5b4941ab5470b786e06e8692af576c890dca6b67a9826fbb08a4c0232a6",
+    "report/tables/condition-summary.json": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+    "report/tables/missingness.csv": "2ba7a5b4941ab5470b786e06e8692af576c890dca6b67a9826fbb08a4c0232a6",
+    "report/tables/missingness.json": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+    "report/tables/participant-flow.csv": "a142b8c930e1f84d123aca8c39fe564efd52027ab62b637f236db1bc8fa5686b",
+    "report/tables/participant-flow.json": "7ff5bafc66b55354e9179e734242e0222b5732717933bccefffbb6f7b853f859",
+    "report/tables/preference.csv": "2ba7a5b4941ab5470b786e06e8692af576c890dca6b67a9826fbb08a4c0232a6",
+    "report/tables/preference.json": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570"
+  },
+  "protocol_version": "5.0.0",
+  "run_id": "b0-p2-user-study-readiness",
+  "runtime": {
+    "analysis_dependencies": {
+      "matplotlib": "3.11.1",
+      "numpy": "2.5.1",
+      "pandas": "3.0.5",
+      "patsy": "1.0.2",
+      "scipy": "1.18.1",
+      "statsmodels": "0.14.6"
+    },
+    "analysis_dependency_requires_python": {
+      "matplotlib": ">=3.11",
+      "numpy": ">=3.12",
+      "pandas": ">=3.11",
+      "patsy": ">=3.6",
+      "scipy": ">=3.12",
+      "statsmodels": ">=3.9"
+    },
+    "pinned_analysis_dependencies": {
+      "matplotlib": "3.11.1",
+      "numpy": "2.5.1",
+      "pandas": "3.0.5",
+      "patsy": "1.0.2",
+      "scipy": "1.18.1",
+      "statsmodels": "0.14.6"
+    },
+    "pinned_analysis_dependency_requires_python": {
+      "matplotlib": ">=3.11",
+      "numpy": ">=3.12",
+      "pandas": ">=3.11",
+      "patsy": ">=3.6",
+      "scipy": ">=3.12",
+      "statsmodels": ">=3.9"
+    },
+    "platform": "macOS-15.3.2-arm64-arm-64bit-Mach-O",
+    "python_implementation": "CPython",
+    "python_version": "3.14.6",
+    "supported_python": ">=3.12,<3.15"
+  },
+  "schema_version": "protocol-v5-user-study-provenance-v1.0.0",
+  "study_identity": {
+    "assignment_id": "A-379b25d84ab62b4c423b",
+    "authoritative_catalog": {
+      "catalog_sha256": "bd2211d5fd769b5addec3c41e8cbd48bb0d9cd1c958aa554ada9bf88c29509f3",
+      "catalog_source_role": "repository_default",
+      "catalog_version": "2026-08-06.1",
+      "corpus_sha256": "987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444",
+      "corpus_version": "environment-candidate-corpus-v1",
+      "policy_version": "resource-image-policy-v1"
+    },
+    "catalog_version": "2026-08-06.1",
+    "config_identity": "config-0f8fbd76d2b1603a2f9d6dd7",
+    "consent_version": "consent-v1.0.0",
+    "corpus_version": "environment-candidate-corpus-v1",
+    "environment_identity": {
+      "config_identity_sha256": "0f8fbd76d2b1603a2f9d6dd7097a5bb0c26b652dd4d225c12d08dce4dd5e6b98",
+      "environment_id": "protocol-v5-e3-study-environment",
+      "fairness_manifest": {
+        "b0_environment_sha256": "40b62d0593087aa6b442d650adc3f17314ab2d6ba4244fc3f0c150d9ad088d8a",
+        "configuration_sha256": "deaa769826add4542116366e1f60a9e1c1665b3b8eea14b064b9f30cdcdc04a6",
+        "deployment_revision": "2cf206773e63f7086e3c9716a5077793b189fa6d",
+        "description_config_sha256": "ef34be7dbc4d9b196a344c65531af30dfd779787ebd46684aca74f7f1d896ac6",
+        "freeze_id": "development-unfrozen",
+        "image_catalog_sha256": "bd2211d5fd769b5addec3c41e8cbd48bb0d9cd1c958aa554ada9bf88c29509f3",
+        "kubernetes_environment_id": "protocol-v5-e3-cluster",
+        "p2_environment_sha256": "40b62d0593087aa6b442d650adc3f17314ab2d6ba4244fc3f0c150d9ad088d8a",
+        "policy_sha256": "dbd0b1f1e71b29cfa5e099bd3eca4b564cdbb030ecd9bbbbf5dcf9426d16d89f",
+        "profile_catalog_sha256": "c8f797b9c4d30459da99dad8d6d1c28e07e6803d76fab7cf88cdcd0f6c679348",
+        "schema_version": "protocol-v5-user-study-environment-fairness-v1.0.0",
+        "shared_environment_sha256": "40b62d0593087aa6b442d650adc3f17314ab2d6ba4244fc3f0c150d9ad088d8a"
+      },
+      "mode": "development_unfrozen"
+    },
+    "fairness_manifest_sha256": "3bff2c12f4d205fd35e6e7499ada537a6cb9bcfc46b0fd420456ea571fedcfb4",
+    "freeze_id": "development-unfrozen",
+    "policy_version": "resource-image-policy-v1",
+    "seed": 20260827,
+    "study_id": "protocol-v5-e3-user-study",
+    "task_set_id": "protocol-v5-e3-draft-v1"
+  }
+}

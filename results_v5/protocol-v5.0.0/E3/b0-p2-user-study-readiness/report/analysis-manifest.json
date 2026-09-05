@@ -1,0 +1,101 @@
+{
+  "analysis_dependencies": {
+    "matplotlib": "3.11.1",
+    "numpy": "2.5.1",
+    "pandas": "3.0.5",
+    "patsy": "1.0.2",
+    "scipy": "1.18.1",
+    "statsmodels": "0.14.6"
+  },
+  "analysis_dependency_requires_python": {
+    "matplotlib": ">=3.11",
+    "numpy": ">=3.12",
+    "pandas": ">=3.11",
+    "patsy": ">=3.6",
+    "scipy": ">=3.12",
+    "statsmodels": ">=3.9"
+  },
+  "analysis_plan_sha256": "1874b426666111362ef79f4e23315dc8f51a97b10827ae2e596cc70523b1a3ce",
+  "analysis_plan_version": "protocol-v5-user-study-analysis-plan-v1.2.0",
+  "bootstrap_contract": {
+    "ci": "percentile_equal_tailed_95",
+    "failure_policy": "discard_failed_refit_and_mark_ci_unavailable_below_threshold",
+    "minimum_success_fraction": 0.95,
+    "replicates": 2000,
+    "resampling_unit": "participant_all_rows_together",
+    "rng": "numpy.random.PCG64",
+    "seed": 20260827
+  },
+  "decision_time_contract": {
+    "analysis_plan_sha256": "1874b426666111362ef79f4e23315dc8f51a97b10827ae2e596cc70523b1a3ce",
+    "analysis_plan_version": "protocol-v5-user-study-analysis-plan-v1.2.0",
+    "assigned_trial_accounting": "all_assigned_measured_trials_remain_in_flow_and_missingness_denominators",
+    "nonconfirmation_bound_seconds": 600.0,
+    "nonconfirmation_bound_semantics": "server_enforced_task_decision_limit_and_secondary_analysis_bound_only",
+    "nonconfirmation_policy": "outcome_unavailable_not_participant_or_task_exclusion",
+    "primary_eligibility": "confirmed_complete_matched_tasks_with_positive_times",
+    "primary_estimand": "conditional_on_matched_task_pairs_with_valid_positive_confirmation_times_in_both_B0_and_P2",
+    "sensitivity_primary_holm_family": false,
+    "timing_contract_sha256": "3a1cbe7ea27d0c52eb909770d8c72f6b7a6c566e049692cae647569dd47e055d",
+    "timing_contract_version": "protocol-v5-user-study-timing-contract-v1.0.0"
+  },
+  "execution_status": "NOT_EXECUTED",
+  "figure_renderer": "matplotlib_svg",
+  "generated_file_sha256": {
+    "derived/analysis.json": "74cdde51d934ce512e136b0d5f1bdc57df42258c09cac2ef2f49351cf0993cb6",
+    "derived/model-effects.json": "ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356",
+    "report/USER_STUDY_REPORT.md": "f0f20dab9ee30db4a1afe0e8ce852eef8d65ac5f6f58a62d0591422dab42d094",
+    "report/figures/accuracy.svg": "fd41efe56098dfb382ef91506249fc4b55c314c96e007eaf46445ccf7a47b470",
+    "report/figures/decision-time.svg": "3cf950005c60b1fd8bd802a47856b641a1772e88942b788378179c14b06139ba",
+    "report/figures/interaction-effort.svg": "44d6bf5cd32e015e51a1d51b83ab6351c450e772d6e448e910cf45f589e08fe3",
+    "report/figures/preference.svg": "6c988d1df642703d24cbcbed27066174cd81f8d1010bde1f53b421e976c99350",
+    "report/figures/sus-seq-custom.svg": "3d1363dcfa80d4687c4df2e2b998441a98391f2efe3a798298a7b8ac89c77f7e",
+    "report/tables/condition-summary.csv": "2ba7a5b4941ab5470b786e06e8692af576c890dca6b67a9826fbb08a4c0232a6",
+    "report/tables/condition-summary.json": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+    "report/tables/missingness.csv": "2ba7a5b4941ab5470b786e06e8692af576c890dca6b67a9826fbb08a4c0232a6",
+    "report/tables/missingness.json": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+    "report/tables/participant-flow.csv": "a142b8c930e1f84d123aca8c39fe564efd52027ab62b637f236db1bc8fa5686b",
+    "report/tables/participant-flow.json": "7ff5bafc66b55354e9179e734242e0222b5732717933bccefffbb6f7b853f859",
+    "report/tables/preference.csv": "2ba7a5b4941ab5470b786e06e8692af576c890dca6b67a9826fbb08a4c0232a6",
+    "report/tables/preference.json": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570"
+  },
+  "generated_files": [
+    "derived/analysis.json",
+    "derived/model-effects.json",
+    "report/USER_STUDY_REPORT.md",
+    "report/analysis-manifest.json",
+    "report/figures/accuracy.svg",
+    "report/figures/decision-time.svg",
+    "report/figures/interaction-effort.svg",
+    "report/figures/preference.svg",
+    "report/figures/sus-seq-custom.svg",
+    "report/privacy-audit.json",
+    "report/tables/condition-summary.csv",
+    "report/tables/condition-summary.json",
+    "report/tables/missingness.csv",
+    "report/tables/missingness.json",
+    "report/tables/participant-flow.csv",
+    "report/tables/participant-flow.json",
+    "report/tables/preference.csv",
+    "report/tables/preference.json"
+  ],
+  "pinned_analysis_dependencies": {
+    "matplotlib": "3.11.1",
+    "numpy": "2.5.1",
+    "pandas": "3.0.5",
+    "patsy": "1.0.2",
+    "scipy": "1.18.1",
+    "statsmodels": "0.14.6"
+  },
+  "pinned_analysis_dependency_requires_python": {
+    "matplotlib": ">=3.11",
+    "numpy": ">=3.12",
+    "pandas": ">=3.11",
+    "patsy": ">=3.6",
+    "scipy": ">=3.12",
+    "statsmodels": ">=3.9"
+  },
+  "python_version": "3.14.6",
+  "schema_version": "protocol-v5-user-study-reporting-v1.2.0",
+  "supported_python": ">=3.12,<3.15"
+}

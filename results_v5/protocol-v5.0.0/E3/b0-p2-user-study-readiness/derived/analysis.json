@@ -1,0 +1,88 @@
+{
+  "analysis_plan_sha256": "1874b426666111362ef79f4e23315dc8f51a97b10827ae2e596cc70523b1a3ce",
+  "analysis_plan_version": "protocol-v5-user-study-analysis-plan-v1.2.0",
+  "claims_permitted": false,
+  "condition_summary": [],
+  "decision_time_contract": {
+    "analysis_plan_sha256": "1874b426666111362ef79f4e23315dc8f51a97b10827ae2e596cc70523b1a3ce",
+    "analysis_plan_version": "protocol-v5-user-study-analysis-plan-v1.2.0",
+    "assigned_trial_accounting": "all_assigned_measured_trials_remain_in_flow_and_missingness_denominators",
+    "nonconfirmation_bound_seconds": 600.0,
+    "nonconfirmation_bound_semantics": "server_enforced_task_decision_limit_and_secondary_analysis_bound_only",
+    "nonconfirmation_policy": "outcome_unavailable_not_participant_or_task_exclusion",
+    "primary_eligibility": "confirmed_complete_matched_tasks_with_positive_times",
+    "primary_estimand": "conditional_on_matched_task_pairs_with_valid_positive_confirmation_times_in_both_B0_and_P2",
+    "sensitivity_primary_holm_family": false,
+    "timing_contract_sha256": "3a1cbe7ea27d0c52eb909770d8c72f6b7a6c566e049692cae647569dd47e055d",
+    "timing_contract_version": "protocol-v5-user-study-timing-contract-v1.0.0"
+  },
+  "design_diagnostics": {
+    "condition_order_counts": {},
+    "counterbalance_cell_analysis_role": "coverage_diagnostic_only_redundant_with_frozen_fixed_effect_terms",
+    "counterbalance_cell_counts": {},
+    "period_counts": {},
+    "position_counts": {},
+    "task_pair_counts": {},
+    "variant_slot_counts": {}
+  },
+  "effects": {},
+  "execution_status": "NOT_EXECUTED",
+  "missingness": [],
+  "observed_rows_present": false,
+  "participant_flow": [
+    {
+      "count": 36,
+      "stage": "assignments_issued"
+    },
+    {
+      "count": 0,
+      "stage": "session_records"
+    },
+    {
+      "count": 0,
+      "stage": "consent_acknowledged"
+    },
+    {
+      "count": 0,
+      "stage": "completed_sessions"
+    },
+    {
+      "count": 0,
+      "stage": "excluded_sessions"
+    },
+    {
+      "count": 0,
+      "stage": "incomplete_sessions"
+    },
+    {
+      "count": 0,
+      "stage": "analyzable_participants"
+    }
+  ],
+  "preference": [],
+  "primary_inference_registry": {
+    "family_alpha": 0.05,
+    "family_size": 2,
+    "hypotheses": [
+      {
+        "endpoint": "selection_success",
+        "holm_adjusted_p_value": null,
+        "inference_status": "UNAVAILABLE",
+        "raw_p_value": null,
+        "reject_at_family_alpha": null,
+        "sidedness": "two_sided"
+      },
+      {
+        "endpoint": "decision_time_seconds",
+        "holm_adjusted_p_value": null,
+        "inference_status": "UNAVAILABLE",
+        "raw_p_value": null,
+        "reject_at_family_alpha": null,
+        "sidedness": "two_sided"
+      }
+    ],
+    "method": "holm_step_down",
+    "unavailable_endpoint_policy": "retain_in_family_and_never_reduce_family_size"
+  },
+  "schema_version": "protocol-v5-user-study-analysis-v1.2.0"
+}

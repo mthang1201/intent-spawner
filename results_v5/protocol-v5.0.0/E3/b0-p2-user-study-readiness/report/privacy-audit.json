@@ -1,0 +1,14 @@
+{
+  "checks": [
+    "pseudonym",
+    "email",
+    "IP address",
+    "direct identifier field",
+    "free-text response field",
+    "absolute local path"
+  ],
+  "direct_identifier_findings": 0,
+  "files_scanned": 19,
+  "schema_version": "protocol-v5-user-study-report-privacy-audit-v1.0.0",
+  "status": "PASS"
+}

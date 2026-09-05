@@ -1,0 +1,19 @@
+{
+  "config_identity_sha256": "0f8fbd76d2b1603a2f9d6dd7097a5bb0c26b652dd4d225c12d08dce4dd5e6b98",
+  "environment_id": "protocol-v5-e3-study-environment",
+  "fairness_manifest": {
+    "b0_environment_sha256": "40b62d0593087aa6b442d650adc3f17314ab2d6ba4244fc3f0c150d9ad088d8a",
+    "configuration_sha256": "deaa769826add4542116366e1f60a9e1c1665b3b8eea14b064b9f30cdcdc04a6",
+    "deployment_revision": "2cf206773e63f7086e3c9716a5077793b189fa6d",
+    "description_config_sha256": "ef34be7dbc4d9b196a344c65531af30dfd779787ebd46684aca74f7f1d896ac6",
+    "freeze_id": "development-unfrozen",
+    "image_catalog_sha256": "bd2211d5fd769b5addec3c41e8cbd48bb0d9cd1c958aa554ada9bf88c29509f3",
+    "kubernetes_environment_id": "protocol-v5-e3-cluster",
+    "p2_environment_sha256": "40b62d0593087aa6b442d650adc3f17314ab2d6ba4244fc3f0c150d9ad088d8a",
+    "policy_sha256": "dbd0b1f1e71b29cfa5e099bd3eca4b564cdbb030ecd9bbbbf5dcf9426d16d89f",
+    "profile_catalog_sha256": "c8f797b9c4d30459da99dad8d6d1c28e07e6803d76fab7cf88cdcd0f6c679348",
+    "schema_version": "protocol-v5-user-study-environment-fairness-v1.0.0",
+    "shared_environment_sha256": "40b62d0593087aa6b442d650adc3f17314ab2d6ba4244fc3f0c150d9ad088d8a"
+  },
+  "mode": "development_unfrozen"
+}

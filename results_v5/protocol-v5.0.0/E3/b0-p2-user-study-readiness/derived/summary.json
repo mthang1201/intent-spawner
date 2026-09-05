@@ -1,0 +1,27 @@
+{
+  "complete_matched_pair_count": null,
+  "condition_distributions": null,
+  "exclusions": {
+    "by_reason": {},
+    "count": 0
+  },
+  "execution_status": "NOT_EXECUTED",
+  "formal_inference": {
+    "reason": "No analyzable event stream was supplied; no outcome denominator was invented.",
+    "status": "NOT_COMPUTED"
+  },
+  "matched_pair_row_count": null,
+  "measured_task_count": null,
+  "outcomes_generated": false,
+  "paired_delta_distributions": null,
+  "participant_count": null,
+  "participant_level_paired_deltas": null,
+  "schema_version": "protocol-v5-user-study-summary-v1.2.0",
+  "session_coverage": {
+    "analyzable_event_session_count": 0,
+    "complete_session_count": 0,
+    "excluded_session_count": 0,
+    "incomplete_session_count": 0,
+    "session_record_count": 0
+  }
+}
