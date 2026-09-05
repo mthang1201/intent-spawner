@@ -315,25 +315,56 @@ def test_7_selection_success_computed_from_final_confirmed_state(task_set):
 
 
 def test_8_direct_identifiers_rejected_or_excluded(tmp_path):
-    """Check 8: Direct identifiers are rejected or excluded from research exports/reports."""
-    safe_file = tmp_path / "safe.json"
-    safe_file.write_text('{"status": "PASS", "count": 42}\n')
-    assert audit_report_privacy([safe_file])["status"] == "PASS"
+    """Check 8: Direct personal identifiers are rejected; pseudonyms are permitted in research files but excluded from aggregate reports."""
+    # 1. Valid pseudonym and participant_id are accepted for research files/manifests
+    pseudonym_file = tmp_path / "research_manifest.json"
+    pseudonym_file.write_text('{"participant_id": "P-1234567890ab", "status": "assigned"}\n')
+    assert audit_report_privacy([pseudonym_file], allow_pseudonyms=True)["status"] == "PASS"
 
-    email_file = tmp_path / "email.json"
-    email_file.write_text('{"email": "alice@institution.edu"}\n')
-    with pytest.raises(UserStudyAnalysisError, match="aggregate report privacy audit failed"):
-        audit_report_privacy([email_file])
+    # 2. Direct personal identifiers FAIL privacy verification even when allow_pseudonyms=True
+    for key, value in [
+        ("email", "user@example.com"),
+        ("full_name", "Jane Doe"),
+        ("username", "jdoe123"),
+        ("ip_address", "192.168.1.100"),
+    ]:
+        bad_file = tmp_path / f"bad_{key}.json"
+        bad_file.write_text(json.dumps({key: value}) + "\n")
+        with pytest.raises(UserStudyAnalysisError, match="aggregate report privacy audit failed"):
+            audit_report_privacy([bad_file], allow_pseudonyms=True)
 
-    pseudonym_file = tmp_path / "pseudonym.json"
-    pseudonym_file.write_text('{"user": "P-1234567890ab"}\n')
-    with pytest.raises(UserStudyAnalysisError, match="aggregate report privacy audit failed"):
-        audit_report_privacy([pseudonym_file])
+    # 3. Absolute local filesystem paths FAIL privacy verification
+    for path_val in ["/Users/researcher/thesis/export.json", "/home/ubuntu/data.jsonl"]:
+        path_file = tmp_path / "leaked_path.json"
+        path_file.write_text(json.dumps({"path": path_val}) + "\n")
+        with pytest.raises(UserStudyAnalysisError, match="aggregate report privacy audit failed"):
+            audit_report_privacy([path_file], allow_pseudonyms=True)
 
-    path_file = tmp_path / "path.json"
-    path_file.write_text('{"path": "/Users/researcher/thesis/export.json"}\n')
+    # 4. In public aggregate reports (allow_pseudonyms=False), pseudonyms are also excluded
     with pytest.raises(UserStudyAnalysisError, match="aggregate report privacy audit failed"):
-        audit_report_privacy([path_file])
+        audit_report_privacy([pseudonym_file], allow_pseudonyms=False)
+
+    # 5. Verify the actual repository research and report files:
+    assignment_path = (
+        ROOT
+        / "benchmarks_v5"
+        / "protocol-v5-e3-assignment-target-36"
+        / "assignment-manifest.json"
+    )
+    if assignment_path.exists():
+        assert audit_report_privacy([assignment_path], allow_pseudonyms=True)["status"] == "PASS"
+
+    readiness_report = (
+        ROOT
+        / "results_v5"
+        / "protocol-v5.0.0"
+        / "E3"
+        / "b0-p2-user-study-readiness"
+        / "report"
+        / "USER_STUDY_REPORT.md"
+    )
+    if readiness_report.exists():
+        assert audit_report_privacy([readiness_report], allow_pseudonyms=False)["status"] == "PASS"
 
 
 def test_9_synthetic_fixtures_cannot_become_observed_evidence(tmp_path, task_set, capsys):
@@ -414,3 +445,122 @@ def test_10_empty_production_analysis_returns_not_executed(tmp_path, task_set):
     assert "Evidence status: `NOT_EXECUTED`." in report_md
     assert "NOT_EXECUTED — no empirical condition estimates are available." in report_md
     assert "NOT_EXECUTED — effect sizes, confidence intervals, and p-values are unavailable." in report_md
+
+
+def test_11_readiness_gate_with_approved_frozen_task_set_rejects_observed_without_data_and_finalizes_not_executed(tmp_path, task_set, capsys):
+    """Check 11: With an approved, frozen task set, finalization gates on data presence rather than task set status."""
+    import yaml
+    from evaluation_v5.user_study.fairness import build_fairness_manifest
+
+    # 1. Create a synthetic approved, frozen task set
+    raw_yaml = TASK_SET_PATH.read_text(encoding="utf-8")
+    task_dict = yaml.safe_load(raw_yaml)
+    task_dict["stage"] = "confirmatory"
+    task_dict["status"] = "frozen"
+    for pair in task_dict.get("pairs", []):
+        pair["gold"]["equivalence_review_status"] = "approved"
+
+    frozen_task_set_path = tmp_path / "user-study-frozen-v1.yaml"
+    frozen_task_set_path.write_text(yaml.safe_dump(task_dict, sort_keys=False), encoding="utf-8")
+
+    frozen_task_set = load_task_set(frozen_task_set_path)
+    assert frozen_task_set.stage.value == "confirmatory"
+    assert frozen_task_set.status.value == "frozen"
+    assert all(p.gold.equivalence_review_status.value == "approved" for p in frozen_task_set.pairs)
+
+    from evaluation_v5.user_study.runner import _git_revision
+
+    git_rev = _git_revision()
+    catalog = load_image_catalog()
+    corpus = build_candidate_corpus(image_catalog=catalog)
+    fairness = build_fairness_manifest(
+        catalog=catalog,
+        corpus=corpus,
+        freeze_id="freeze-test-v1",
+        config_identity="config-test-v1",
+        deployment_revision=git_rev,
+        kubernetes_environment_id="protocol-v5-e3-cluster",
+    )
+    env_identity = {
+        "environment_id": "protocol-v5-e3-study-environment",
+        "mode": "frozen",
+        "config_identity_sha256": "0" * 64,
+        "fairness_manifest": fairness,
+    }
+
+    # 2. Generate assignment manifest using this frozen task set
+    manifest = generate_assignment_manifest(
+        frozen_task_set,
+        study_id="confirmatory-readiness-test",
+        participant_count=36,
+        seed=20260827,
+        consent_version="consent-v1",
+        freeze_id="freeze-test-v1",
+        config_identity="config-test-v1",
+        git_revision=git_rev,
+        environment_identity=env_identity,
+    )
+    assignment_path = tmp_path / "assignment.json"
+    assignment_path.write_text(json.dumps(manifest.to_dict()) + "\n", encoding="utf-8")
+
+    # 3. Attempt OBSERVED execution with empty data:
+    # Must FAIL because of lack of real participant data / events, NOT because of task set validation.
+    observed_output = tmp_path / "observed-output"
+    exit_code_obs = user_study_main(
+        [
+            "finalize",
+            "--run-id",
+            "test-observed-gate",
+            "--task-set",
+            str(frozen_task_set_path),
+            "--assignments",
+            str(assignment_path),
+            "--execution-status",
+            "OBSERVED",
+            "--output-dir",
+            str(observed_output),
+        ]
+    )
+    assert exit_code_obs != 0
+    err = capsys.readouterr().err
+    # Must NOT fail on task set validation:
+    assert "confirmatory preparation rejects a development task set" not in err
+    assert "confirmatory preparation rejects a draft task set" not in err
+    # Must fail on missing data/events:
+    assert "requires analyzable events" in err or "real evidence requires" in err
+
+    # 4. Finalize with NOT_EXECUTED status:
+    # Must exit cleanly with 0 and preserve confirmatory/frozen task set stage without fake numbers.
+    not_exec_output = tmp_path / "not-exec-output"
+    exit_code_not_exec = user_study_main(
+        [
+            "finalize",
+            "--run-id",
+            "test-not-exec-gate",
+            "--task-set",
+            str(frozen_task_set_path),
+            "--assignments",
+            str(assignment_path),
+            "--execution-status",
+            "NOT_EXECUTED",
+            "--output-dir",
+            str(not_exec_output),
+            "--created-at-utc",
+            "2026-08-26T12:00:00Z",
+        ]
+    )
+    assert exit_code_not_exec == 0
+    status_json = json.loads((not_exec_output / "report" / "status.json").read_text())
+    assert status_json["execution_status"] == "NOT_EXECUTED"
+    assert status_json["experiment_executed"] is False
+    assert status_json["observed_evidence"] is False
+    assert status_json["task_set_stage"] == "confirmatory"
+    assert status_json["task_set_status"] == "frozen"
+    assert status_json["raw_event_count"] == 0
+
+    analysis_json = json.loads((not_exec_output / "derived" / "analysis.json").read_text())
+    assert analysis_json["condition_summary"] == []
+    assert analysis_json["effects"] == {}
+
+    report_md = (not_exec_output / "report" / "USER_STUDY_REPORT.md").read_text()
+    assert "Evidence status: `NOT_EXECUTED`." in report_md

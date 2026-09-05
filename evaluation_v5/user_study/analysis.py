@@ -1581,6 +1581,12 @@ _DIRECT_KEY_PATTERN = re.compile(
     r'|,(?:full_name|email|username|account_id|participant_id|session_id|ip_address)(?:,|$))',
     re.IGNORECASE | re.MULTILINE,
 )
+_DIRECT_PERSONAL_KEY_PATTERN = re.compile(
+    r'(?:"(?:full_name|email|username|account_id|ip_address)"\s*:'
+    r'|^(?:full_name|email|username|account_id|ip_address)(?:,|$)'
+    r'|,(?:full_name|email|username|account_id|ip_address)(?:,|$))',
+    re.IGNORECASE | re.MULTILINE,
+)
 _FREE_TEXT_KEY_PATTERN = re.compile(
     r"\b(?:comment|comments|free_text|participant_notes|response_text)\b",
     re.IGNORECASE,
@@ -1591,38 +1597,51 @@ _ABSOLUTE_PATH_PATTERN = re.compile(
 )
 
 
-def audit_report_privacy(paths: Sequence[Path]) -> dict[str, Any]:
+def audit_report_privacy(
+    paths: Sequence[Path], *, allow_pseudonyms: bool = False
+) -> dict[str, Any]:
     violations: list[dict[str, str]] = []
+    checks = [
+        "email",
+        "IP address",
+        "direct identifier field",
+        "free-text response field",
+        "absolute local path",
+    ]
+    if not allow_pseudonyms:
+        checks.insert(0, "pseudonym")
+
     for path in paths:
         text = path.read_text(encoding="utf-8")
-        for code, pattern in (
-            ("PSEUDONYM", _PSEUDONYM_PATTERN),
+        patterns: list[tuple[str, re.Pattern[str]]] = [
             ("EMAIL", _EMAIL_PATTERN),
             ("IP_ADDRESS", _IP_PATTERN),
-            ("DIRECT_IDENTIFIER_KEY", _DIRECT_KEY_PATTERN),
             ("FREE_TEXT_FIELD", _FREE_TEXT_KEY_PATTERN),
             ("ABSOLUTE_PATH", _ABSOLUTE_PATH_PATTERN),
-        ):
+        ]
+        if not allow_pseudonyms:
+            patterns.append(("PSEUDONYM", _PSEUDONYM_PATTERN))
+            patterns.append(("DIRECT_IDENTIFIER_KEY", _DIRECT_KEY_PATTERN))
+        else:
+            patterns.append(("DIRECT_IDENTIFIER_KEY", _DIRECT_PERSONAL_KEY_PATTERN))
+
+        for code, pattern in patterns:
             if pattern.search(text):
                 violations.append({"file": path.name, "code": code})
     if violations:
         raise UserStudyAnalysisError(
             "aggregate report privacy audit failed: " + ", ".join(item["code"] for item in violations)
         )
-    return {
+    result = {
+        "checks": checks,
+        "direct_identifier_findings": 0,
+        "files_scanned": len(paths),
         "schema_version": "protocol-v5-user-study-report-privacy-audit-v1.0.0",
         "status": "PASS",
-        "files_scanned": len(paths),
-        "direct_identifier_findings": 0,
-        "checks": [
-            "pseudonym",
-            "email",
-            "IP address",
-            "direct identifier field",
-            "free-text response field",
-            "absolute local path",
-        ],
     }
+    if allow_pseudonyms:
+        result["allow_pseudonyms"] = True
+    return result
 
 
 def _display(value: object, digits: int = 3) -> str:

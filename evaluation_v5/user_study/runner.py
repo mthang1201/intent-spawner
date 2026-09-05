@@ -1524,3 +1524,7 @@ __all__ = [
     "validate_events_command",
     "validate_tasks_command",
 ]
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
