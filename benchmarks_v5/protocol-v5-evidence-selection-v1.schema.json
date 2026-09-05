@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "protocol-v5-evidence-selection-v1.schema.json",
+  "title": "Protocol-v5 checksum-bound evidence selection",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "protocol_version", "registry_sha256", "selections"],
+  "properties": {
+    "schema_version": {"const": "protocol-v5-evidence-selection-v1.0.0"},
+    "protocol_version": {"const": "5.0.0"},
+    "registry_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "selections": {
+      "type": "object",
+      "propertyNames": {"pattern": "^[a-z][a-z0-9_]*$"},
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["package_path", "manifest_sha256"],
+        "properties": {
+          "package_path": {"type": "string", "minLength": 1},
+          "manifest_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+        }
+      }
+    }
+  }
+}

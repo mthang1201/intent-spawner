@@ -1,0 +1,71 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "protocol-v5-image-storage-evidence-v1.schema.json",
+  "title": "Protocol-v5 E5 image storage evidence",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "protocol_version", "experiment_id", "execution_status",
+    "split_stage", "claims_permitted", "measured_at_utc", "catalog",
+    "platform", "measurement_method", "prefixes", "provenance"
+  ],
+  "properties": {
+    "schema_version": {"const": "protocol-v5-image-storage-evidence-v1.0.0"},
+    "protocol_version": {"const": "5.0.0"},
+    "experiment_id": {"const": "E5"},
+    "execution_status": {"enum": ["OBSERVED", "NOT_EXECUTED"]},
+    "split_stage": {"enum": ["development", "confirmatory"]},
+    "claims_permitted": {"type": "boolean"},
+    "measured_at_utc": {"type": "string", "format": "date-time"},
+    "catalog": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["version", "file_sha256", "ordered_image_digests"],
+      "properties": {
+        "version": {"type": "string", "minLength": 1},
+        "file_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "ordered_image_digests": {
+          "type": "array", "minItems": 1, "uniqueItems": true,
+          "items": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"}
+        }
+      }
+    },
+    "platform": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["environment_id", "runtime", "operating_system", "architecture"],
+      "properties": {
+        "environment_id": {"type": "string", "minLength": 1},
+        "runtime": {"type": "string", "minLength": 1},
+        "operating_system": {"type": "string", "minLength": 1},
+        "architecture": {"type": "string", "minLength": 1}
+      }
+    },
+    "measurement_method": {"type": "string", "minLength": 1},
+    "prefixes": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["prefix_size", "image_digests", "naive_logical_bytes", "unique_layer_bytes"],
+        "properties": {
+          "prefix_size": {"type": "integer", "minimum": 1},
+          "image_digests": {"type": "array", "minItems": 1, "items": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"}},
+          "naive_logical_bytes": {"type": "integer", "minimum": 0},
+          "unique_layer_bytes": {"type": "integer", "minimum": 0}
+        }
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["git_revision", "dataset_sha256", "backend_system_versions"],
+      "properties": {
+        "git_revision": {"type": "string", "minLength": 1},
+        "dataset_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "backend_system_versions": {"type": "object"}
+      }
+    }
+  }
+}

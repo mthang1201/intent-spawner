@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "protocol-v5-p3-overhead-threshold-v1.schema.json",
+  "title": "Protocol-v5 frozen P3 practical-overhead threshold",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "protocol_version", "frozen_at_utc", "frozen_before_confirmatory_evidence",
+    "quality_metric", "overhead_limits"
+  ],
+  "properties": {
+    "schema_version": {"const": "protocol-v5-p3-overhead-threshold-v1.0.0"},
+    "protocol_version": {"const": "5.0.0"},
+    "frozen_at_utc": {"type": "string", "format": "date-time"},
+    "frozen_before_confirmatory_evidence": {"const": true},
+    "quality_metric": {"const": "joint_accept_at_1"},
+    "overhead_limits": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["metric", "maximum_p3_minus_p2", "unit"],
+        "properties": {
+          "metric": {"type": "string", "minLength": 1},
+          "maximum_p3_minus_p2": {"type": "number"},
+          "unit": {"type": "string", "minLength": 1}
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,266 @@
+schema_version: protocol-v5-claim-registry-v1.0.0
+protocol_version: 5.0.0
+status_values: [SUPPORTED, NOT_SUPPORTED, NOT_EXECUTED]
+
+research_questions:
+  - id: RQ1
+    question: Does P2 improve top-one recommendation quality relative to frozen P1?
+  - id: RQ2
+    question: Is P2 more robust than P1 to semantically equivalent natural-language surface forms?
+  - id: RQ3
+    question: Does P2 improve real-user selection effectiveness, speed, and perceived usability relative to B0?
+  - id: RQ4
+    question: Does P2 improve resource efficiency and oracle calibration under the frozen Kubernetes protocol?
+  - id: RQ5
+    question: Are P2 image selections functionally correct and is shared-layer storage lower than naive catalog storage?
+  - id: RQ6
+    question: If retained, does P3 improve recommendation quality enough to remain within its frozen practical-overhead budget?
+
+evidence_requirements:
+  - id: offline_recommendation
+    evidence_class: E1
+    experiment: P1 vs P2 offline recommendation
+    accepted_schema_versions: [protocol-v5-statistical-analysis-v1.0.0]
+    semantic_provenance:
+      - {key: p1.backend_version, freeze_pointer: /systems/P1/backend_version}
+      - {key: p2.backend_version, freeze_pointer: /systems/P2/backend_version}
+      - {key: p2.pipeline_version, freeze_pointer: /systems/P2/pipeline_version}
+      - {key: catalog.version, freeze_pointer: /candidate_catalog/version}
+      - {key: corpus.sha256, freeze_pointer: /candidate_catalog/corpus_sha256}
+      - {key: p2.config_version, freeze_pointer: /configuration/P2/config_version}
+      - {key: constraints.evaluator_version, freeze_pointer: /configuration/constraints/evaluator_version}
+      - {key: constraints.policy_version, freeze_pointer: /configuration/constraints/policy_version}
+      - {key: constraints.ranker_version, freeze_pointer: /configuration/constraints/ranker_version}
+      - {key: indexes.dense.sha256, freeze_pointer: /indexes/dense/index_checksum}
+      - {key: indexes.sparse.sha256, freeze_pointer: /indexes/sparse/index_checksum}
+      - {key: indexes.hybrid.sha256, freeze_pointer: /indexes/hybrid/index_checksum}
+      - {key: extractor.prompt_sha256, freeze_pointer: /prompts/P2_extractor/prompt_sha256}
+  - id: natural_language_robustness
+    evidence_class: E2
+    experiment: Natural-language robustness from the E1 paired family evidence
+    accepted_schema_versions: [protocol-v5-statistical-analysis-v1.0.0]
+    semantic_provenance:
+      - {key: p1.backend_version, freeze_pointer: /systems/P1/backend_version}
+      - {key: p2.pipeline_version, freeze_pointer: /systems/P2/pipeline_version}
+      - {key: corpus.sha256, freeze_pointer: /candidate_catalog/corpus_sha256}
+      - {key: extractor.prompt_sha256, freeze_pointer: /prompts/P2_extractor/prompt_sha256}
+  - id: user_study
+    evidence_class: E3
+    experiment: B0 vs P2 consented crossover user study
+    accepted_schema_versions: [protocol-v5-user-study-provenance-v1.0.0]
+    semantic_provenance:
+      - {key: catalog.version, freeze_pointer: /candidate_catalog/version}
+      - {key: corpus.sha256, freeze_pointer: /candidate_catalog/corpus_sha256}
+      - {key: corpus.version, freeze_pointer: /candidate_catalog/corpus_version}
+  - id: resource_efficiency
+    evidence_class: E4
+    experiment: Frozen resource/oracle/Kubernetes comparison
+    accepted_schema_versions: [protocol-v5-resource-efficiency-analysis-package-v1.0.0]
+    semantic_provenance:
+      - {key: p1.backend_version, freeze_pointer: /systems/P1/backend_version}
+      - {key: p2.pipeline_version, freeze_pointer: /systems/P2/pipeline_version}
+      - {key: catalog.version, freeze_pointer: /candidate_catalog/version}
+      - {key: corpus.sha256, freeze_pointer: /candidate_catalog/corpus_sha256}
+      - {key: constraints.evaluator_version, freeze_pointer: /configuration/constraints/evaluator_version}
+      - {key: constraints.ranker_version, freeze_pointer: /configuration/constraints/ranker_version}
+  - id: image_functional
+    evidence_class: E5
+    experiment: Immutable-image functional capability validation
+    accepted_schema_versions: [protocol-v5-manifest-v1.0.0]
+    semantic_provenance:
+      - {key: p1.backend_version, freeze_pointer: /systems/P1/backend_version}
+      - {key: p2.pipeline_version, freeze_pointer: /systems/P2/pipeline_version}
+      - {key: catalog.version, freeze_pointer: /candidate_catalog/version}
+      - {key: catalog.file_sha256, freeze_pointer: /candidate_catalog/file_sha256}
+      - {key: corpus.sha256, freeze_pointer: /candidate_catalog/corpus_sha256}
+      - {key: indexes.dense.sha256, freeze_pointer: /indexes/dense/index_checksum}
+      - {key: indexes.sparse.sha256, freeze_pointer: /indexes/sparse/index_checksum}
+      - {key: indexes.hybrid.sha256, freeze_pointer: /indexes/hybrid/index_checksum}
+      - {key: constraints.evaluator_version, freeze_pointer: /configuration/constraints/evaluator_version}
+      - {key: constraints.ranker_version, freeze_pointer: /configuration/constraints/ranker_version}
+  - id: image_storage
+    evidence_class: E5
+    experiment: Frozen-catalog image storage scalability measurement
+    accepted_schema_versions: [protocol-v5-image-storage-evidence-v1.0.0]
+    semantic_provenance:
+      - {key: catalog.version, freeze_pointer: /candidate_catalog/version}
+      - {key: catalog.file_sha256, freeze_pointer: /candidate_catalog/file_sha256}
+      - {key: p2.pipeline_version, freeze_pointer: /systems/P2/pipeline_version}
+  - id: p2_p3
+    evidence_class: P2_P3
+    experiment: Optional retained P2 vs P3 confirmatory comparison
+    accepted_schema_versions: [protocol-v5-statistical-analysis-v1.0.0]
+    semantic_provenance:
+      - {key: p2.pipeline_version, freeze_pointer: /systems/P2/pipeline_version}
+      - {key: p3.pipeline_version, freeze_pointer: /systems/P3/pipeline_version}
+      - {key: p3.reranker_version, freeze_pointer: /systems/P3/reranker_version}
+      - {key: p3.prompt_sha256, freeze_pointer: /prompts/P3_reranker/prompt_sha256}
+      - {key: corpus.sha256, freeze_pointer: /candidate_catalog/corpus_sha256}
+
+claims:
+  - id: H1
+    research_question: RQ1
+    hypothesis: P2 has higher JointAccept@1 than P1.
+    experiments: [E1]
+    required_evidence: [offline_recommendation]
+    metrics:
+      - {id: joint_accept_at_1_difference, label: P2 minus P1 JointAccept@1, systems: [P1, P2], direction: higher, unit: proportion}
+    statistical_tests:
+      - {id: h1_paired_family_test, method: "exact McNemar when family outcomes are binary, otherwise paired Wilcoxon; family bootstrap CI", alpha: 0.05, multiplicity: null, independent_unit: workload_family}
+    support_all_of:
+      - {path: metrics.effect, operator: gt, value: 0}
+      - {path: metrics.ci_low, operator: gt, value: 0}
+      - {path: metrics.p_value, operator: lt, value: 0.05}
+      - {path: metrics.test_available, operator: eq, value: true}
+    limitations: [family-level benchmark scope, JointAccept construct validity]
+    optional: false
+  - id: H2
+    research_question: RQ2
+    hypothesis: P2 loses less JointAccept@1 under reviewed-equivalent surface-form changes than P1.
+    experiments: [E2]
+    required_evidence: [natural_language_robustness]
+    metrics:
+      - {id: surface_form_loss_difference, label: P2 minus P1 canonical-to-equivalent loss, systems: [P1, P2], direction: lower, unit: proportion}
+    statistical_tests:
+      - {id: h2_paired_family_test, method: paired Wilcoxon over family losses with family bootstrap CI, alpha: 0.05, multiplicity: null, independent_unit: workload_family}
+    support_all_of:
+      - {path: metrics.effect, operator: lt, value: 0}
+      - {path: metrics.ci_high, operator: lt, value: 0}
+      - {path: metrics.p_value, operator: lt, value: 0.05}
+      - {path: metrics.test_available, operator: eq, value: true}
+    limitations: [surface-form coverage, reviewed semantic-equivalence construct]
+    optional: false
+  - id: H3
+    research_question: RQ3
+    hypothesis: Users achieve acceptable selections more often and faster with P2 than B0.
+    experiments: [E3]
+    required_evidence: [user_study]
+    metrics:
+      - {id: selection_success_risk_difference, label: P2 minus B0 SelectionSuccess, systems: [B0, P2], direction: higher, unit: proportion}
+      - {id: decision_time_difference, label: P2 minus B0 DecisionTime, systems: [B0, P2], direction: lower, unit: seconds}
+    statistical_tests:
+      - {id: e3_co_primary, method: frozen participant-clustered models or predeclared fallbacks, alpha: 0.05, multiplicity: Holm across SelectionSuccess and DecisionTime, independent_unit: participant}
+    support_all_of:
+      - {path: metrics.selection_effect, operator: gt, value: 0}
+      - {path: metrics.selection_ci_low, operator: gt, value: 0}
+      - {path: metrics.selection_p_holm, operator: lt, value: 0.05}
+      - {path: metrics.time_effect, operator: lt, value: 0}
+      - {path: metrics.time_ci_high, operator: lt, value: 0}
+      - {path: metrics.time_p_holm, operator: lt, value: 0.05}
+      - {path: metrics.tests_available, operator: eq, value: true}
+    limitations: [conditional confirmed-pair time estimand, participant population, learning and order effects]
+    optional: false
+  - id: H4
+    research_question: RQ3
+    hypothesis: Users report greater task ease and usability with P2 than B0.
+    experiments: [E3]
+    required_evidence: [user_study]
+    metrics:
+      - {id: seq_difference, label: P2 minus B0 SEQ ease, systems: [B0, P2], direction: higher, unit: scale_points}
+      - {id: sus_difference, label: P2 minus B0 SUS, systems: [B0, P2], direction: higher, unit: scale_points}
+    statistical_tests:
+      - {id: e3_secondary_intervals, method: frozen participant bootstrap intervals; CUSTOM items descriptive only, alpha: 0.05, multiplicity: null, independent_unit: participant}
+    support_all_of:
+      - {path: metrics.seq_effect, operator: gt, value: 0}
+      - {path: metrics.seq_ci_low, operator: gt, value: 0}
+      - {path: metrics.sus_effect, operator: gt, value: 0}
+      - {path: metrics.sus_ci_low, operator: gt, value: 0}
+      - {path: metrics.estimates_available, operator: eq, value: true}
+    limitations: [secondary self-report outcomes, participant population, learning and order effects]
+    optional: false
+  - id: H5
+    research_question: RQ4
+    hypothesis: P2 Catalog reduces requested-resource cost per successful workload while preserving reliability relative to Static Large.
+    experiments: [E4]
+    required_evidence: [resource_efficiency]
+    metrics:
+      - {id: cpu_cost_per_success_difference, label: P2 Catalog minus Static Large CPU cost per success, systems: [STATIC_LARGE, P2_CATALOG], direction: lower, unit: cpu_seconds}
+      - {id: memory_cost_per_success_difference, label: P2 Catalog minus Static Large memory cost per success, systems: [STATIC_LARGE, P2_CATALOG], direction: lower, unit: MiB_seconds}
+    statistical_tests:
+      - {id: e4_family_cost_tests, method: paired Wilcoxon with family bootstrap CIs, alpha: 0.05, multiplicity: Holm within endpoint, independent_unit: workload_family}
+    support_all_of:
+      - {path: metrics.pareto_classification, operator: eq, value: STRICT_FRONTIER_IMPROVEMENT}
+      - {path: metrics.cpu_effect, operator: lt, value: 0}
+      - {path: metrics.cpu_ci_high, operator: lt, value: 0}
+      - {path: metrics.cpu_p_holm, operator: lt, value: 0.05}
+      - {path: metrics.memory_effect, operator: lt, value: 0}
+      - {path: metrics.memory_ci_high, operator: lt, value: 0}
+      - {path: metrics.memory_p_holm, operator: lt, value: 0.05}
+      - {path: metrics.tests_available, operator: eq, value: true}
+    limitations: [single-cluster scope, no formal success noninferiority margin]
+    optional: false
+  - id: H6
+    research_question: RQ4
+    hypothesis: P2 Dynamic has lower CPU-request and memory-request absolute oracle error than P2 Catalog.
+    experiments: [E4]
+    required_evidence: [resource_efficiency]
+    metrics:
+      - {id: absolute_cpu_request_error_difference, label: P2 Dynamic minus P2 Catalog absolute CPU request error, systems: [P2_CATALOG, P2_DYNAMIC], direction: lower, unit: millicores}
+      - {id: absolute_memory_request_error_difference, label: P2 Dynamic minus P2 Catalog absolute memory request error, systems: [P2_CATALOG, P2_DYNAMIC], direction: lower, unit: MiB}
+    statistical_tests:
+      - {id: e4_oracle_error_tests, method: paired Wilcoxon with family bootstrap CIs, alpha: 0.05, multiplicity: Holm across CPU and memory request axes, independent_unit: workload_family}
+    support_all_of:
+      - {path: metrics.cpu_effect, operator: lt, value: 0}
+      - {path: metrics.cpu_ci_high, operator: lt, value: 0}
+      - {path: metrics.cpu_p_holm, operator: lt, value: 0.05}
+      - {path: metrics.memory_effect, operator: lt, value: 0}
+      - {path: metrics.memory_ci_high, operator: lt, value: 0}
+      - {path: metrics.memory_p_holm, operator: lt, value: 0.05}
+      - {path: metrics.tests_available, operator: eq, value: true}
+    limitations: [oracle calibration construct, single-cluster workload scope]
+    optional: false
+  - id: H7F
+    research_question: RQ5
+    hypothesis: P2 recommended images satisfy every required functional capability probe at immutable digests.
+    experiments: [E5-functional]
+    required_evidence: [image_functional]
+    metrics:
+      - {id: conservative_functional_success_rate, label: P2 conservative functional success, systems: [P2], direction: exact, unit: proportion}
+      - {id: operational_adequacy_rate, label: P2 operational adequacy, systems: [P2], direction: exact, unit: proportion}
+    statistical_tests:
+      - {id: exact_probe_coverage, method: exact deterministic all-required-probes criterion, alpha: null, multiplicity: null, independent_unit: image_digest_and_required_probe}
+    support_all_of:
+      - {path: metrics.conservative_success, operator: eq, value: 1.0}
+      - {path: metrics.operational_adequacy, operator: eq, value: 1.0}
+      - {path: metrics.required_probe_not_defined_count, operator: eq, value: 0}
+      - {path: metrics.execution_unavailable_count, operator: eq, value: 0}
+      - {path: metrics.failed_probe_count, operator: eq, value: 0}
+      - {path: metrics.all_digests_immutable, operator: eq, value: true}
+    limitations: [probe coverage construct, image runtime and platform dependence]
+    optional: false
+  - id: H7
+    research_question: RQ5
+    hypothesis: Shared image layers require less cumulative storage than a naive logical sum as the frozen catalog grows.
+    experiments: [E5-storage]
+    required_evidence: [image_storage]
+    metrics:
+      - {id: final_storage_savings_bytes, label: Final naive minus unique-layer storage, systems: [P2], direction: higher, unit: bytes}
+      - {id: prefix_nonexpansion, label: Unique-layer bytes no greater than naive bytes at every prefix, systems: [P2], direction: exact, unit: boolean}
+    statistical_tests:
+      - {id: exact_storage_criterion, method: exact deterministic ordered-prefix criterion; no sampling inference, alpha: null, multiplicity: null, independent_unit: frozen_catalog_prefix}
+    support_all_of:
+      - {path: metrics.all_prefixes_nonexpanding, operator: eq, value: true}
+      - {path: metrics.final_savings_bytes, operator: gt, value: 0}
+      - {path: metrics.prefix_order_valid, operator: eq, value: true}
+    limitations: [catalog-specific layer sharing, image runtime and platform dependence]
+    optional: false
+  - id: H8
+    research_question: RQ6
+    hypothesis: Retained P3 improves JointAccept@1 over P2 while remaining within a separately frozen practical-overhead budget.
+    experiments: [P2-vs-P3]
+    required_evidence: [p2_p3]
+    metrics:
+      - {id: p3_joint_accept_difference, label: P3 minus P2 JointAccept@1, systems: [P2, P3], direction: higher, unit: proportion}
+      - {id: p3_overhead_budget, label: P3 minus P2 overhead against frozen limits, systems: [P2, P3], direction: bounded, unit: contract_defined}
+    statistical_tests:
+      - {id: p3_quality_and_overhead_gate, method: paired family quality inference plus frozen per-metric overhead limits, alpha: 0.05, multiplicity: null, independent_unit: workload_family}
+    support_all_of:
+      - {path: metrics.gate_retained, operator: eq, value: true}
+      - {path: metrics.threshold_frozen, operator: eq, value: true}
+      - {path: metrics.quality_effect, operator: gt, value: 0}
+      - {path: metrics.quality_ci_low, operator: gt, value: 0}
+      - {path: metrics.quality_p_value, operator: lt, value: 0.05}
+      - {path: metrics.all_overhead_ci_within_limits, operator: eq, value: true}
+      - {path: metrics.tests_available, operator: eq, value: true}
+    limitations: [external LLM service and pricing dependence, retained-gate population]
+    optional: true

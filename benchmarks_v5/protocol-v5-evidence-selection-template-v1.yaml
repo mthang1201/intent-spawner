@@ -1,0 +1,5 @@
+schema_version: protocol-v5-evidence-selection-v1.0.0
+protocol_version: 5.0.0
+# Replace this placeholder with the SHA-256 of protocol-v5-claim-registry-v1.yaml.
+registry_sha256: 0000000000000000000000000000000000000000000000000000000000000000
+selections: {}
