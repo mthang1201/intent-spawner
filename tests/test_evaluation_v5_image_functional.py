@@ -42,7 +42,7 @@ from evaluation_v5.image_storage import (
     validate_approved_image_reference,
     validate_e5_evidence,
 )
-from evaluation_v5.image_storage.__main__ import run_e5_evaluation
+from evaluation_v5.image_storage.__main__ import _format_markdown_report, run_e5_evaluation
 from evaluation_v5.schemas import EvidenceStatus, ProtocolV5Manifest
 
 
@@ -922,3 +922,220 @@ def test_e5_explicit_denominators_mixed_workload(catalog_data):
     assert summary.operational_adequacy_rate == pytest.approx(1 / 3)
     assert summary.capability_unsatisfied_count == 1
     assert summary.execution_unavailable_count == 0
+
+
+def test_e5_null_source_recommendation_remains_no_image_recommendation():
+    """Regression Test 1: Null source recommendation remains NO_IMAGE_RECOMMENDATION."""
+    catalog_data = {
+        "catalog_version": "2026-08-06.1",
+        "images": {
+            "minimal-python": {"capabilities": ["python"]},
+        },
+    }
+    rec = evaluate_recommendation_functional(
+        case_id="null-rec-1",
+        system_id="P1",
+        predicted_image_id=None,
+        source_predicted_image_value=None,
+        required_capabilities=["python"],
+        gold_preferred_image_id="minimal-python",
+        gold_acceptable_image_ids=["minimal-python"],
+        catalog=catalog_data,
+        probe_results={},
+    )
+    assert rec.predicted_image_id is None
+    assert rec.source_predicted_image_value is None
+    assert "NO_IMAGE_RECOMMENDATION" in rec.mismatch_types
+    assert rec.dimension_c_status == DimensionCStatus.NOT_APPLICABLE.value
+    assert rec.dimension_c_execution_coverage is False
+    assert rec.dimension_c_functional_satisfied is None
+
+
+def test_e5_raises_error_if_synthesis_attempted_from_null():
+    """Regression Test 2: E5 raises error if synthesis attempted from null."""
+    catalog_data = {"catalog_version": "2026-08-06.1", "images": {}}
+    with pytest.raises(ValueError, match="cannot synthesize predicted_image_id"):
+        evaluate_recommendation_functional(
+            case_id="synth-1",
+            system_id="P1",
+            predicted_image_id="pytorch-deep-learning",
+            source_predicted_image_value=None,
+            required_capabilities=["python"],
+            gold_preferred_image_id="pytorch-deep-learning",
+            gold_acceptable_image_ids=["pytorch-deep-learning"],
+            catalog=catalog_data,
+            probe_results={},
+        )
+
+    with pytest.raises(ValueError, match="cannot synthesize predicted_image_id"):
+        evaluate_recommendation_functional(
+            case_id="synth-2",
+            system_id="P1",
+            predicted_image_id="pytorch-deep-learning",
+            source_predicted_image_value="",
+            required_capabilities=["python"],
+            gold_preferred_image_id="pytorch-deep-learning",
+            gold_acceptable_image_ids=["pytorch-deep-learning"],
+            catalog=catalog_data,
+            probe_results={},
+        )
+
+
+def test_e5_canonical_image_id_preserves_both_source_and_normalized_values():
+    """Regression Test 3: Canonical image ID preserves both source and normalized values."""
+    catalog_data = {
+        "catalog_version": "2026-08-06.1",
+        "images": {
+            "pytorch-deep-learning": {"capabilities": ["python", "pytorch"]},
+        },
+    }
+    rec = evaluate_recommendation_functional(
+        case_id="norm-1",
+        system_id="P1",
+        source_predicted_image_value="large-pytorch-deep-learning",
+        predicted_image_id="pytorch-deep-learning",
+        required_capabilities=["python", "pytorch"],
+        gold_preferred_image_id="pytorch-deep-learning",
+        gold_acceptable_image_ids=["pytorch-deep-learning"],
+        catalog=catalog_data,
+        probe_results={},
+    )
+    assert rec.source_predicted_image_value == "large-pytorch-deep-learning"
+    assert rec.predicted_image_id == "pytorch-deep-learning"
+    d = rec.to_dict()
+    assert d["source_predicted_image_value"] == "large-pytorch-deep-learning"
+    assert d["predicted_image_id"] == "pytorch-deep-learning"
+
+
+def test_e5_same_recommendation_input_yields_deterministic_classification():
+    """Regression Test 4: Same recommendation input yields deterministic with-image/no-image classification."""
+    recs_path = Path("results_v5/protocol-v5.0.0/E1/20260825T-observed-p1-p2-development-v1/raw/recommendations.jsonl")
+    if not recs_path.is_file():
+        pytest.skip("Frozen E1 recommendations file not present")
+
+    raw_recs = [json.loads(line) for line in recs_path.read_text(encoding="utf-8").splitlines() if line.strip()]
+    p1_recs = [r for r in raw_recs if r.get("system_id") == "P1"]
+    p2_recs = [r for r in raw_recs if r.get("system_id") == "P2"]
+
+    assert len(p1_recs) == 18
+    assert len(p2_recs) == 18
+
+    # Verify that every single row has non-null predicted_image_id
+    for r in p1_recs:
+        assert r.get("predicted_image_id") is not None
+        assert r.get("predicted_image_id") != ""
+    for r in p2_recs:
+        assert r.get("predicted_image_id") is not None
+        assert r.get("predicted_image_id") != ""
+
+
+def test_e5_legacy_package_not_mistaken_for_current_v12_valid():
+    """Regression Test 5: Legacy package cannot be mistaken for current-v1.2-valid evidence."""
+    legacy_dir = Path("results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T024633Z")
+    if not legacy_dir.is_dir():
+        pytest.skip("Historical package 024633Z not present")
+
+    res = validate_e5_evidence(legacy_dir)
+    assert res["status"] == "PASS"
+    assert res["validator_status"] == "LEGACY_VALID"
+    assert res["eligible_as_current_e5_evidence"] is False
+    assert res["validation_profile"] == "LEGACY_SCHEMA_V1_1"
+
+    # Also check invalid package 020014Z
+    invalid_dir = Path("results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T020014Z")
+    if invalid_dir.is_dir():
+        with pytest.raises(EvidenceValidationError):
+            validate_e5_evidence(invalid_dir)
+
+
+def test_e5_current_v12_package_is_current_valid_and_eligible():
+    """Regression Test 6: Current v1.2 package is explicitly CURRENT_VALID and eligible_as_current_e5_evidence == True."""
+    v12_dir = Path("results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T032437Z")
+    if not v12_dir.is_dir():
+        pytest.skip("v1.2 package 032437Z not present")
+
+    res = validate_e5_evidence(v12_dir)
+    assert res["status"] == "PASS"
+    assert res["validator_status"] == "CURRENT_VALID"
+    assert res["eligible_as_current_e5_evidence"] is True
+    assert res["validation_profile"] == "CURRENT_V1_2"
+
+
+def test_e5_dimension_a_appears_independently_in_report_and_metrics():
+    """Regression Test 7: Dimension A appears independently in report and derived metrics."""
+    v12_dir = Path("results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T032437Z")
+    if not v12_dir.is_dir():
+        pytest.skip("v1.2 package 032437Z not present")
+
+    metrics_data = json.loads((v12_dir / "derived" / "functional_metrics.json").read_text(encoding="utf-8"))
+    for sys_id in ("P1", "P2"):
+        s = metrics_data["systems"][sys_id]
+        assert "gold_preferred_count" in s
+        assert "gold_acceptable_count" in s
+        assert "gold_preferred_rate" in s
+        assert "gold_acceptable_rate" in s
+        assert s["gold_preferred_count"] == 13
+        assert s["gold_acceptable_count"] == 13
+        assert s["gold_preferred_rate"] == pytest.approx(13 / 18, rel=1e-3)
+        assert s["gold_acceptable_rate"] == pytest.approx(13 / 18, rel=1e-3)
+
+    # Check that the markdown formatting contains Dimension A section
+    manifest = ImageProbeManifest.from_dict(json.loads((v12_dir / "raw" / "probe_manifest.json").read_text(encoding="utf-8")))
+    md = _format_markdown_report(
+        run_id="test-run",
+        manifest=manifest,
+        metrics_report=metrics_data,
+        execution_mode="docker",
+        execution_status="OBSERVED",
+        git_info={"git_revision": "test", "git_dirty": False},
+        recommendations_path=Path("results_v5/protocol-v5.0.0/E1/20260825T-observed-p1-p2-development-v1/raw/recommendations.jsonl"),
+    )
+    assert "### Dimension A: Gold-Label Benchmark Correctness" in md
+    assert "Preferred Match" in md
+    assert "Acceptable Match" in md
+    assert "13/18" in md
+
+
+def test_e5_abc_counts_recompute_exactly_from_raw_records():
+    """Regression Test 8: A/B/C counts recompute exactly from raw records."""
+    v12_dir = Path("results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T032437Z")
+    if not v12_dir.is_dir():
+        pytest.skip("v1.2 package 032437Z not present")
+
+    eval_records = [
+        json.loads(line)
+        for line in (v12_dir / "raw" / "functional_evaluations.jsonl").read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    ]
+    metrics_data = json.loads((v12_dir / "derived" / "functional_metrics.json").read_text(encoding="utf-8"))
+
+    for sys_id in ("P1", "P2"):
+        sys_evals = [r for r in eval_records if r["system_id"] == sys_id]
+        s = metrics_data["systems"][sys_id]
+
+        # Dimension A
+        pref_a = sum(1 for r in sys_evals if r["dimension_a_preferred_match"])
+        acc_a = sum(1 for r in sys_evals if r["dimension_a_gold_match"])
+        assert s["gold_preferred_count"] == pref_a
+        assert s["gold_acceptable_count"] == acc_a
+
+        # Dimension B
+        sat_b = sum(1 for r in sys_evals if r["dimension_b_catalog_satisfied"])
+        unsat_b = sum(1 for r in sys_evals if not r["dimension_b_catalog_satisfied"])
+        assert s["catalog_capability_satisfied_count"] == sat_b
+        assert s["catalog_unsatisfied_count"] == unsat_b
+
+        # Dimension C
+        eligible_c = sum(1 for r in sys_evals if r["predicted_image_id"] is not None and r["dimension_b_catalog_satisfied"])
+        exec_c = sum(1 for r in sys_evals if r["dimension_c_execution_coverage"])
+        pass_c = sum(1 for r in sys_evals if r["dimension_c_status"] == "PASS")
+        fail_c = sum(1 for r in sys_evals if r["dimension_c_status"] == "FAIL")
+        unavail_c = sum(
+            1 for r in sys_evals
+            if r["predicted_image_id"] is not None and r["dimension_b_catalog_satisfied"] and r["dimension_c_status"] == "NOT_EXECUTED"
+        )
+        assert s["functional_validation_eligible_count"] == eligible_c
+        assert s["functional_executed_count"] == exec_c
+        assert s["functional_passed_count"] == pass_c
+        assert s["functional_failed_count"] == fail_c
+        assert s["functional_unavailable_count"] == unavail_c

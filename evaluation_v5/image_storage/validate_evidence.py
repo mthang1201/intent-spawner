@@ -13,13 +13,13 @@ import yaml
 from evaluation_v5.schemas import EvidenceStatus, ProtocolV5Manifest
 from evaluation_v5.validation import validate_manifest
 
-from .contracts import (
+from evaluation_v5.image_storage.contracts import (
     DimensionCStatus,
     ProbeExecutionStatus,
     file_sha256,
     parse_image_digest,
 )
-from .metrics import compute_functional_metrics, evaluate_recommendation_functional
+from evaluation_v5.image_storage.metrics import compute_functional_metrics, evaluate_recommendation_functional
 
 
 class EvidenceValidationError(ValueError):
@@ -87,7 +87,10 @@ def validate_e5_evidence(package_dir: Path | str) -> dict[str, Any]:
 
     # 3. Validate ProtocolV5Manifest
     manifest_raw = json.loads(manifest_path.read_text(encoding="utf-8"))
-    manifest = ProtocolV5Manifest.from_dict(manifest_raw)
+    try:
+        manifest = ProtocolV5Manifest.from_dict(manifest_raw)
+    except Exception as exc:
+        raise EvidenceValidationError(f"Invalid manifest in {directory}: {exc}") from exc
 
     if manifest.experiment_id.value != "E5":
         raise EvidenceValidationError(f"Experiment ID must be E5, got {manifest.experiment_id}")
@@ -336,6 +339,13 @@ def validate_e5_evidence(package_dir: Path | str) -> dict[str, Any]:
             if summary.get("operationally_adequate_count") != expected_pass:
                 raise EvidenceValidationError(f"System {sys_id}: operationally_adequate_count mismatch")
 
+            expected_pref = sum(1 for r in sys_records if r.get("dimension_a_preferred_match"))
+            expected_acc = sum(1 for r in sys_records if r.get("dimension_a_gold_match"))
+            if summary.get("gold_preferred_count") != expected_pref:
+                raise EvidenceValidationError(f"System {sys_id}: gold_preferred_count mismatch")
+            if summary.get("gold_acceptable_count") != expected_acc:
+                raise EvidenceValidationError(f"System {sys_id}: gold_acceptable_count mismatch")
+
         exec_count = summary.get("functional_executed_count", 0)
         success_rate = summary.get("functional_success_rate_among_executed")
         coverage_rate = summary.get("functional_execution_coverage", 0.0)
@@ -362,8 +372,32 @@ def validate_e5_evidence(package_dir: Path | str) -> dict[str, Any]:
             f"Status mismatch: status.json has {status_raw.get('status')} vs manifest {execution_status.value}"
         )
 
+    # 9. Determine version-aware profile and eligibility
+    metrics_schema = derived_metrics_raw.get("schema_version", "")
+    eval_schema = eval_records_raw[0].get("schema_version", "") if eval_records_raw else ""
+
+    if "v1.2.0" in metrics_schema or "v1.2.0" in eval_schema:
+        validation_profile = "CURRENT_V1_2"
+        validator_status = "CURRENT_VALID"
+        eligible_as_current_e5_evidence = (execution_status == EvidenceStatus.OBSERVED)
+    elif "v1.1.0" in metrics_schema or "v1.1.0" in eval_schema:
+        validation_profile = "LEGACY_SCHEMA_V1_1"
+        validator_status = "LEGACY_VALID"
+        eligible_as_current_e5_evidence = False
+    elif "v1.0.0" in metrics_schema or "v1.0.0" in eval_schema:
+        validation_profile = "LEGACY_SCHEMA_V1_0"
+        validator_status = "LEGACY_VALID"
+        eligible_as_current_e5_evidence = False
+    else:
+        validation_profile = "UNKNOWN"
+        validator_status = "LEGACY_VALID"
+        eligible_as_current_e5_evidence = False
+
     return {
         "status": "PASS",
+        "validator_status": validator_status,
+        "eligible_as_current_e5_evidence": eligible_as_current_e5_evidence,
+        "validation_profile": validation_profile,
         "evidence_dir": str(directory),
         "experiment_id": "E5",
         "execution_status": execution_status.value,
@@ -384,7 +418,14 @@ def main() -> None:
         res = validate_e5_evidence(args.dir)
         print(json.dumps(res, indent=2))
     except Exception as exc:
-        err = {"status": "FAIL", "error": str(exc), "evidence_dir": str(args.dir)}
+        err = {
+            "status": "FAIL",
+            "validator_status": "INVALID",
+            "eligible_as_current_e5_evidence": False,
+            "validation_profile": "INVALID",
+            "error": str(exc),
+            "evidence_dir": str(args.dir),
+        }
         print(json.dumps(err, indent=2))
         raise SystemExit(1)
 

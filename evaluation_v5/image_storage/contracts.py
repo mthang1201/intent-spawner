@@ -251,6 +251,7 @@ class FunctionalEvaluationRecord:
     unavailable_probes: tuple[str, ...]
     mismatch_types: tuple[str, ...]
     execution_status: str
+    source_predicted_image_value: str | None = None
     schema_version: str = FUNCTIONAL_EVALUATION_SCHEMA_VERSION
 
     def to_dict(self) -> dict[str, Any]:
@@ -260,6 +261,11 @@ class FunctionalEvaluationRecord:
             "family_id": self.family_id,
             "variant_id": self.variant_id,
             "system_id": self.system_id,
+            "source_predicted_image_value": (
+                self.source_predicted_image_value
+                if self.source_predicted_image_value is not None
+                else self.predicted_image_id
+            ),
             "predicted_image_id": self.predicted_image_id,
             "required_capabilities": list(self.required_capabilities),
             "gold_preferred_image_id": self.gold_preferred_image_id,
@@ -302,6 +308,7 @@ class FunctionalEvaluationRecord:
             family_id=str(data.get("family_id", "")),
             variant_id=str(data.get("variant_id", "")),
             system_id=str(data["system_id"]),
+            source_predicted_image_value=data.get("source_predicted_image_value", data.get("predicted_image_id")),
             predicted_image_id=data.get("predicted_image_id"),
             required_capabilities=tuple(data.get("required_capabilities", ())),
             gold_preferred_image_id=data.get("gold_preferred_image_id"),

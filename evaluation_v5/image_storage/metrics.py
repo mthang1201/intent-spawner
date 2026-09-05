@@ -117,6 +117,9 @@ class FunctionalMetricsReport:
         }
 
 
+_UNSET = object()
+
+
 def evaluate_recommendation_functional(
     *,
     case_id: str,
@@ -130,8 +133,20 @@ def evaluate_recommendation_functional(
     catalog: Mapping[str, Any],
     probe_results: Mapping[tuple[str, str], ImageProbeResult],
     execution_status: str = "COMPLETED",
+    source_predicted_image_value: Any = _UNSET,
 ) -> FunctionalEvaluationRecord:
     """Evaluate one recommendation row across Dimensions A, B, and C with strict 3-state logic."""
+    if source_predicted_image_value is _UNSET:
+        actual_source_val = predicted_image_id
+    else:
+        actual_source_val = source_predicted_image_value
+
+    if (actual_source_val is None or actual_source_val == "") and predicted_image_id is not None:
+        raise ValueError(
+            f"Invariant violated: cannot synthesize predicted_image_id='{predicted_image_id}' "
+            f"from empty/null source_predicted_image_value"
+        )
+
     norm_required = tuple(sorted({c.strip().lower() for c in required_capabilities if c.strip()}))
     norm_acceptable = tuple(sorted({img.strip() for img in gold_acceptable_image_ids if img.strip()}))
 
@@ -221,6 +236,7 @@ def evaluate_recommendation_functional(
         family_id=family_id,
         variant_id=variant_id,
         system_id=system_id,
+        source_predicted_image_value=actual_source_val,
         predicted_image_id=predicted_image_id,
         required_capabilities=norm_required,
         gold_preferred_image_id=gold_preferred_image_id,

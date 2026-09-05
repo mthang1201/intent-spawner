@@ -132,15 +132,31 @@ def _format_markdown_report(
     lines.append("## 2. Multi-Dimensional Recommendation Performance\n")
     lines.append(
         "Performance is separated across three independent dimensions:\n"
-        "- **Dimension A (Gold-Label Correctness)**: Image matches benchmark YAML label.\n"
-        "- **Dimension B (Catalog Capability Coverage)**: Catalog declares all required capabilities.\n"
-        "- **Dimension C (Actual Functional Execution)**: Bounded in-container probes pass.\n"
+        "- **Dimension A (Gold-Label Correctness)**: Recommendation matches benchmark gold label.\n"
+        "- **Dimension B (Catalog Capability Coverage)**: Administrator image catalog declares all required workload capabilities.\n"
+        "- **Dimension C (Actual Functional Execution)**: In-container functional capability probes pass when executed.\n"
     )
 
-    lines.append("| System | Total | With Image | Catalog Covered (B) | Functional Eligible | Functional Executed | Functional Pass (C) | Operational Adequacy |")
-    lines.append("| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |")
+    lines.append("### Dimension A: Gold-Label Benchmark Correctness\n")
+    lines.append("| System | Total Cases | Preferred Match | Preferred Rate | Acceptable Match | Acceptable Rate |")
+    lines.append("| :--- | :---: | :---: | :---: | :---: | :---: |")
 
     systems = metrics_report.get("systems", {})
+    for sys_id, summary in sorted(systems.items()):
+        n = summary["total_recommendations"]
+        pref_cnt = summary.get("gold_preferred_count", 0)
+        pref_rate = summary.get("gold_preferred_rate", 0.0)
+        acc_cnt = summary.get("gold_acceptable_count", 0)
+        acc_rate = summary.get("gold_acceptable_rate", 0.0)
+        lines.append(
+            f"| **{sys_id}** | {n} | {pref_cnt}/{n} | {pref_rate:.1%} | {acc_cnt}/{n} | {acc_rate:.1%} |"
+        )
+    lines.append("")
+
+    lines.append("### Dimensions B & C: Catalog Coverage, Execution, and Operational Adequacy\n")
+    lines.append("| System | Total | With Image | Catalog Covered (B) | Functional Eligible | Functional Executed | Functional Pass (C) | Operational Adequacy | Joint (A & C) |")
+    lines.append("| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |")
+
     for sys_id, summary in sorted(systems.items()):
         func_pass_val = summary.get("functional_success_rate_among_executed")
         func_pass_str = (
@@ -150,6 +166,8 @@ def _format_markdown_report(
         )
         op_adeq_val = summary.get("operational_adequacy_rate", 0.0)
         exec_cov_val = summary.get("functional_execution_coverage", 0.0)
+        joint_val = summary.get("joint_gold_and_functional_rate")
+        joint_str = f"{joint_val:.1%}" if joint_val is not None else "N/A"
         lines.append(
             f"| **{sys_id}** | {summary['total_recommendations']} | "
             f"{summary.get('recommendations_with_image_count', summary['total_recommendations'])} | "
@@ -157,7 +175,8 @@ def _format_markdown_report(
             f"{summary.get('functional_validation_eligible_count', summary['catalog_capability_satisfied_count'])} | "
             f"{exec_cov_val:.1%} ({summary['functional_executed_count']}/{summary.get('functional_validation_eligible_count', summary['catalog_capability_satisfied_count'])}) | "
             f"{func_pass_str} | "
-            f"{op_adeq_val:.1%} ({summary.get('operationally_adequate_count', summary['functional_passed_count'])}/{summary['total_recommendations']}) |"
+            f"{op_adeq_val:.1%} ({summary.get('operationally_adequate_count', summary['functional_passed_count'])}/{summary['total_recommendations']}) | "
+            f"{joint_str} |"
         )
     lines.append("")
 
@@ -295,7 +314,19 @@ def run_e5_evaluation(
             system_id = row.get("system_id", "UNKNOWN")
             family_id = row.get("family_id", "")
             variant_id = row.get("variant_id", "")
-            predicted_img = row.get("predicted_image_id")
+            source_img = row.get("predicted_image_id")
+            if source_img is None and "predicted_candidate_id" in row and row["predicted_candidate_id"] is not None:
+                source_cand = row["predicted_candidate_id"]
+                source_img = source_cand
+                parts = source_cand.split("-", 1)
+                predicted_img = parts[1] if len(parts) > 1 else source_cand
+            else:
+                predicted_img = source_img
+
+            if source_img == "":
+                source_img = None
+                predicted_img = None
+
             gold = row.get("evaluation_gold", {})
             req_caps = list(gold.get("required_image_capabilities", []))
             if not req_caps:
@@ -325,6 +356,7 @@ def run_e5_evaluation(
                 family_id=family_id,
                 variant_id=variant_id,
                 system_id=system_id,
+                source_predicted_image_value=source_img,
                 predicted_image_id=predicted_img,
                 required_capabilities=req_caps,
                 gold_preferred_image_id=pref_img,
@@ -357,6 +389,7 @@ def run_e5_evaluation(
                 family_id=family_id,
                 variant_id=variant_id,
                 system_id="B0",
+                source_predicted_image_value=default_img,
                 predicted_image_id=default_img,
                 required_capabilities=req_caps,
                 gold_preferred_image_id=pref_img,
@@ -373,6 +406,7 @@ def run_e5_evaluation(
                 family_id=family_id,
                 variant_id=variant_id,
                 system_id="P2",
+                source_predicted_image_value=pref_img,
                 predicted_image_id=pref_img,
                 required_capabilities=req_caps,
                 gold_preferred_image_id=pref_img,
