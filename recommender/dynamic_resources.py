@@ -210,6 +210,67 @@ class ResourceDecision:
         }
 
 
+@dataclass(frozen=True)
+class ResourceGenerationTrace:
+    """JSON-safe audit details for one unchanged resource decision.
+
+    This trace is observational only.  In particular, ``select`` and its
+    serialized ``ResourceDecision`` retain their established behavior and
+    shape; resource experiments opt in through ``select_with_trace``.
+    """
+
+    requested_mode: str
+    applied_mode: str
+    recommended_profile: str
+    catalog_profile: str
+    dataset_size_gb: float | None
+    input_score: int | float | str | None
+    bounded_score: float | None
+    formula_targets: Mapping[str, float] | None
+    profile_floors: Mapping[str, int] | None
+    floor_adjusted_targets: Mapping[str, float] | None
+    quantized_resources: Mapping[str, int | str | None] | None
+    quantization_deltas: Mapping[str, float] | None
+    quantization_policy: Mapping[str, Mapping[str, int]]
+    profile_floor_applied: Mapping[str, bool] | None
+    policy_clipping_applied: bool
+    clipping_semantics: str
+    fallback_to_catalog: bool
+    fallback_reason: str | None
+
+    def to_dict(self) -> dict[str, object]:
+        return {
+            "requested_mode": self.requested_mode,
+            "applied_mode": self.applied_mode,
+            "recommended_profile": self.recommended_profile,
+            "catalog_profile": self.catalog_profile,
+            "dataset_size_gb": self.dataset_size_gb,
+            "input_score": self.input_score,
+            "bounded_score": self.bounded_score,
+            "formula_targets": dict(self.formula_targets) if self.formula_targets else None,
+            "profile_floors": dict(self.profile_floors) if self.profile_floors else None,
+            "floor_adjusted_targets": (
+                dict(self.floor_adjusted_targets) if self.floor_adjusted_targets else None
+            ),
+            "quantized_resources": (
+                dict(self.quantized_resources) if self.quantized_resources else None
+            ),
+            "quantization_deltas": (
+                dict(self.quantization_deltas) if self.quantization_deltas else None
+            ),
+            "quantization_policy": {
+                key: dict(value) for key, value in self.quantization_policy.items()
+            },
+            "profile_floor_applied": (
+                dict(self.profile_floor_applied) if self.profile_floor_applied else None
+            ),
+            "policy_clipping_applied": self.policy_clipping_applied,
+            "clipping_semantics": self.clipping_semantics,
+            "fallback_to_catalog": self.fallback_to_catalog,
+            "fallback_reason": self.fallback_reason,
+        }
+
+
 def validate_resource_policy(raw: object) -> DynamicResourcePolicy:
     """Strictly validate administrator configuration without silent defaults."""
 
@@ -478,12 +539,11 @@ class ResourceSelector:
                 raise DynamicResourceRejected("GPU count exceeds available quota")
         return resources
 
-    def _generate(
+    def _generate_candidate(
         self,
         recommended_profile: str,
         score: object,
         dataset_size_gb: float | int | str | None,
-        quota_headroom: QuotaCaps | None,
     ) -> DynamicResourceSpec:
         floors = self._PROFILE_FLOORS.get(recommended_profile)
         if floors is None:
@@ -509,7 +569,7 @@ class ResourceSelector:
             if gpu_count and self.policy.gpu_resource_allowlist
             else None
         )
-        candidate = DynamicResourceSpec(
+        return DynamicResourceSpec(
             cpu_request_millicores=cpu_request,
             cpu_limit_millicores=cpu_limit,
             memory_request_mib=memory_request,
@@ -517,9 +577,37 @@ class ResourceSelector:
             gpu_count=gpu_count,
             gpu_resource=gpu_resource,
         )
+
+    def _generate(
+        self,
+        recommended_profile: str,
+        score: object,
+        dataset_size_gb: float | int | str | None,
+        quota_headroom: QuotaCaps | None,
+    ) -> DynamicResourceSpec:
+        candidate = self._generate_candidate(recommended_profile, score, dataset_size_gb)
         return self.validate_dynamic_resources(candidate, quota_headroom=quota_headroom)
 
-    def select(
+    def _quantization_policy(self) -> dict[str, dict[str, int]]:
+        return {
+            "cpu_request_millicores": vars(self.policy.cpu_request),
+            "cpu_limit_millicores": vars(self.policy.cpu_limit),
+            "memory_request_mib": vars(self.policy.memory_request),
+            "memory_limit_mib": vars(self.policy.memory_limit),
+            "gpu_count": vars(self.policy.gpu_count),
+        }
+
+    @staticmethod
+    def _trace_input(value: object) -> int | float | str | None:
+        if value is None or isinstance(value, (int, str)) and not isinstance(value, bool):
+            return value
+        if isinstance(value, float):
+            return value if math.isfinite(value) else repr(value)
+        if isinstance(value, bool):
+            return str(value).lower()
+        return type(value).__name__
+
+    def select_with_trace(
         self,
         *,
         recommended_profile: str,
@@ -527,18 +615,32 @@ class ResourceSelector:
         dataset_size_gb: float | int | str | None = 0.0,
         mode: str | None = None,
         quota_headroom: QuotaCaps | None = None,
-    ) -> ResourceDecision:
+    ) -> tuple[ResourceDecision, ResourceGenerationTrace]:
+        """Return the normal decision plus non-applying generation telemetry."""
+
         requested_mode = configured_resource_mode(
             mode if mode is not None else self.mode,
             environ={},
             default=self.policy.default_mode,
         )
         catalog_profile, catalog_warning = self._catalog_profile(recommended_profile)
+        trace_common = {
+            "requested_mode": requested_mode,
+            "recommended_profile": recommended_profile,
+            "catalog_profile": catalog_profile,
+            "input_score": self._trace_input(score),
+            "quantization_policy": self._quantization_policy(),
+            "policy_clipping_applied": False,
+            "clipping_semantics": (
+                "the frozen selector never clips; a target beyond policy or quota "
+                "bounds is rejected and falls back to catalog"
+            ),
+        }
         if requested_mode == CATALOG_MODE:
             reasons = ["Catalog Mode preserves the administrator-owned profile mapping."]
             if catalog_warning:
                 reasons.append(catalog_warning)
-            return ResourceDecision(
+            decision = ResourceDecision(
                 requested_mode=requested_mode,
                 applied_mode=CATALOG_MODE,
                 catalog_profile=catalog_profile,
@@ -547,17 +649,100 @@ class ResourceSelector:
                 policy_version=self.policy.policy_version,
                 fallback_reason=catalog_warning,
             )
+            return decision, ResourceGenerationTrace(
+                **trace_common,
+                applied_mode=CATALOG_MODE,
+                dataset_size_gb=None,
+                bounded_score=None,
+                formula_targets=None,
+                profile_floors=None,
+                floor_adjusted_targets=None,
+                quantized_resources=None,
+                quantization_deltas=None,
+                profile_floor_applied=None,
+                fallback_to_catalog=False,
+                fallback_reason=catalog_warning,
+            )
 
+        dataset: float | None = None
+        bounded_score: float | None = None
+        formula_targets: dict[str, float] | None = None
+        floors_payload: dict[str, int] | None = None
+        adjusted_targets: dict[str, float] | None = None
+        floor_applied: dict[str, bool] | None = None
+        quantized_candidate: DynamicResourceSpec | None = None
+        quantization_deltas: dict[str, float] | None = None
         try:
-            resources = self._generate(
-                recommended_profile,
-                score,
-                dataset_size_gb,
-                quota_headroom,
+            floors = self._PROFILE_FLOORS.get(recommended_profile)
+            if floors is None:
+                raise DynamicResourceRejected(
+                    "dynamic generation requires a recognized recommendation profile"
+                )
+            dataset = self._coerce_dataset_size_gb(dataset_size_gb)
+            bounded_score = self._coerce_score(score)
+            formula_targets = {
+                "cpu_request_millicores": 100 + dataset * 200 + bounded_score * 100,
+                "memory_request_mib": 256 + dataset * 384 + bounded_score * 96,
+            }
+            floors_payload = {
+                "cpu_request_millicores": floors[0],
+                "cpu_limit_millicores": floors[1],
+                "memory_request_mib": floors[2],
+                "memory_limit_mib": floors[3],
+            }
+            cpu_request_target = max(floors[0], formula_targets["cpu_request_millicores"])
+            memory_request_target = max(floors[2], formula_targets["memory_request_mib"])
+            adjusted_targets = {
+                "cpu_request_millicores": cpu_request_target,
+                "memory_request_mib": memory_request_target,
+            }
+            floor_applied = {
+                "cpu_request_millicores": cpu_request_target > formula_targets["cpu_request_millicores"],
+                "memory_request_mib": memory_request_target > formula_targets["memory_request_mib"],
+            }
+            cpu_request = self.policy.cpu_request.align_up(cpu_request_target, "CPU request")
+            memory_request = self.policy.memory_request.align_up(memory_request_target, "memory request")
+            cpu_limit = self.policy.cpu_limit.align_up(
+                max(floors[1], cpu_request + 400), "CPU limit"
+            )
+            memory_limit = self.policy.memory_limit.align_up(
+                max(floors[3], memory_request + 256), "memory limit"
+            )
+            gpu_count = 1 if recommended_profile == "gpu_or_large" else 0
+            gpu_resource = (
+                self.policy.gpu_resource_allowlist[0]
+                if gpu_count and self.policy.gpu_resource_allowlist
+                else None
+            )
+            quantized_candidate = DynamicResourceSpec(
+                cpu_request_millicores=cpu_request,
+                cpu_limit_millicores=cpu_limit,
+                memory_request_mib=memory_request,
+                memory_limit_mib=memory_limit,
+                gpu_count=gpu_count,
+                gpu_resource=gpu_resource,
+            )
+            limit_targets = {
+                "cpu_limit_millicores": max(floors_payload["cpu_limit_millicores"], quantized_candidate.cpu_request_millicores + 400),
+                "memory_limit_mib": max(floors_payload["memory_limit_mib"], quantized_candidate.memory_request_mib + 256),
+            }
+            adjusted_targets = {**adjusted_targets, **limit_targets}
+            floor_applied = {
+                **floor_applied,
+                "cpu_limit_millicores": floors_payload["cpu_limit_millicores"] > quantized_candidate.cpu_request_millicores + 400,
+                "memory_limit_mib": floors_payload["memory_limit_mib"] > quantized_candidate.memory_request_mib + 256,
+            }
+            quantized_payload = quantized_candidate.to_dict()
+            quantization_deltas = {
+                key: float(quantized_payload[key]) - target
+                for key, target in adjusted_targets.items()
+            }
+            resources = self.validate_dynamic_resources(
+                quantized_candidate, quota_headroom=quota_headroom
             )
         except DynamicResourceRejected as exc:
             fallback_reason = str(exc)
-            return ResourceDecision(
+            decision = ResourceDecision(
                 requested_mode=requested_mode,
                 applied_mode=CATALOG_MODE,
                 catalog_profile=catalog_profile,
@@ -569,8 +754,24 @@ class ResourceSelector:
                 policy_version=self.policy.policy_version,
                 fallback_reason=fallback_reason,
             )
+            return decision, ResourceGenerationTrace(
+                **trace_common,
+                applied_mode=CATALOG_MODE,
+                dataset_size_gb=dataset,
+                bounded_score=bounded_score,
+                formula_targets=formula_targets,
+                profile_floors=floors_payload,
+                floor_adjusted_targets=adjusted_targets,
+                quantized_resources=(
+                    quantized_candidate.to_dict() if quantized_candidate else None
+                ),
+                quantization_deltas=quantization_deltas,
+                profile_floor_applied=floor_applied,
+                fallback_to_catalog=True,
+                fallback_reason=fallback_reason,
+            )
 
-        return ResourceDecision(
+        decision = ResourceDecision(
             requested_mode=requested_mode,
             applied_mode=DYNAMIC_MODE,
             catalog_profile=catalog_profile,
@@ -581,6 +782,40 @@ class ResourceSelector:
             ),
             policy_version=self.policy.policy_version,
         )
+        assert adjusted_targets is not None and quantization_deltas is not None
+        quantized = resources.to_dict()
+        return decision, ResourceGenerationTrace(
+            **trace_common,
+            applied_mode=DYNAMIC_MODE,
+            dataset_size_gb=dataset,
+            bounded_score=bounded_score,
+            formula_targets=formula_targets,
+            profile_floors=floors_payload,
+            floor_adjusted_targets=adjusted_targets,
+            quantized_resources=quantized,
+            quantization_deltas=quantization_deltas,
+            profile_floor_applied=floor_applied,
+            fallback_to_catalog=False,
+            fallback_reason=None,
+        )
+
+    def select(
+        self,
+        *,
+        recommended_profile: str,
+        score: object = None,
+        dataset_size_gb: float | int | str | None = 0.0,
+        mode: str | None = None,
+        quota_headroom: QuotaCaps | None = None,
+    ) -> ResourceDecision:
+        decision, _trace = self.select_with_trace(
+            recommended_profile=recommended_profile,
+            score=score,
+            dataset_size_gb=dataset_size_gb,
+            mode=mode,
+            quota_headroom=quota_headroom,
+        )
+        return decision
 
 
 __all__ = [
@@ -594,6 +829,7 @@ __all__ = [
     "QuotaCaps",
     "RESOURCE_SELECTION_MODE_ENV_VAR",
     "ResourceDecision",
+    "ResourceGenerationTrace",
     "ResourcePolicyConfigurationError",
     "ResourcePolicyError",
     "ResourceSelector",

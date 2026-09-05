@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "protocol-v5-resource-efficiency-capacity-v1.schema.json",
+  "type": "object", "additionalProperties": false,
+  "required": ["schema_version", "protocol_version", "freeze_status", "evidence_label", "evidence_type", "capacity_source", "physical_capacity_permitted", "eligible_node", "allocatable", "packing"],
+  "properties": {
+    "schema_version": {"const": "protocol-v5-resource-efficiency-capacity-v1.0.0"},
+    "protocol_version": {"const": "5.0.0"},
+    "freeze_status": {"enum": ["NOT_FROZEN", "FROZEN"]},
+    "evidence_label": {"const": "SIMULATED_DETERMINISTIC_REQUEST_PACKING"},
+    "evidence_type": {"const": "SIMULATED_CAPACITY"},
+    "capacity_source": {"const": "KUBERNETES_NODE_STATUS_ALLOCATABLE"},
+    "physical_capacity_permitted": {"const": false},
+    "eligible_node": {"type": "object"}, "allocatable": {"type": "object"}, "packing": {"type": "object"}
+  }
+}

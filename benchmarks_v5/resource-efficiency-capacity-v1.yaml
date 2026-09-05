@@ -1,0 +1,16 @@
+schema_version: protocol-v5-resource-efficiency-capacity-v1.0.0
+protocol_version: 5.0.0
+freeze_status: NOT_FROZEN
+evidence_label: SIMULATED_DETERMINISTIC_REQUEST_PACKING
+evidence_type: SIMULATED_CAPACITY
+capacity_source: KUBERNETES_NODE_STATUS_ALLOCATABLE
+physical_capacity_permitted: false
+eligible_node: {name: null, uid: null, verified_at: null, source_preflight_sha256: null}
+allocatable: {cpu_m: null, memory_mib: null, gpu_count: null, gpu_resource: null}
+packing:
+  requests_only: true
+  homogeneous_formula: minimum_integer_floor_across_requested_resources
+  balanced_mix: one_session_per_each_of_16_families
+  algorithm: multidimensional-first-fit-decreasing-v1
+  sort_keys: [maximum_normalized_pressure_descending, total_normalized_pressure_descending, family_id_ascending]
+  concurrency_claim_permitted: false

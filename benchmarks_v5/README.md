@@ -48,3 +48,18 @@ external custody; it is supplied only through the explicit, freeze-gated
 confirmatory loader.
 Development code must not copy it into this directory, repository caches,
 candidate indexes, results, wheels, or container images.
+
+## E4 resource-efficiency contracts
+
+`resource-efficiency-inputs-v1.yaml` mechanically binds recommendation inputs
+to the 16 existing frozen resource workload instances without labels, oracle
+data, or code hints. `resource-efficiency-freeze-contract-v1.yaml` registers the
+four allocation conditions, ten paired repetitions, catalog table, dynamic
+policy, counterbalanced execution-order algorithm, explicit Pareto objectives,
+contrasts, and required oracle/image bindings. No success noninferiority margin
+is registered; one must not be introduced after observing results. The checked-in contract
+is deliberately `NOT_FROZEN`. `resource-efficiency-capacity-v1.yaml` likewise
+contains no invented allocatable capacity and remains `NOT_FROZEN` until it is
+verified against the sole eligible node. It permits only Kubernetes node-status
+`allocatable` values, never raw physical capacity, and labels every result
+`SIMULATED_CAPACITY` / `SIMULATED_DETERMINISTIC_REQUEST_PACKING`.

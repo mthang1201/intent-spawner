@@ -176,9 +176,17 @@ class OfflineAdapterResult:
     fallback: Mapping[str, Any] | None = None
     errors: Mapping[str, Any] | None = None
     backend_provenance: Mapping[str, Any] | None = None
+    # Resource-efficiency planning needs the exact backend-neutral score used
+    # by the deployed dynamic-resource layer. Keeping this at the end preserves
+    # the positional constructor order, and established raw serialization omits
+    # it unless a caller explicitly opts in.
+    recommendation_score: int | float | None = None
 
-    def to_dict(self) -> dict[str, Any]:
-        return _json_value(asdict(self))
+    def to_dict(self, *, include_recommendation_score: bool = False) -> dict[str, Any]:
+        payload = asdict(self)
+        if not include_recommendation_score:
+            payload.pop("recommendation_score")
+        return _json_value(payload)
 
 
 @runtime_checkable
@@ -242,6 +250,7 @@ def _detail_result(detail: P2DetailedResult | P3DetailedResult) -> OfflineAdapte
         predicted_candidate_id=detail.final_candidate_id,
         predicted_profile_id=_normalized_profile(recommendation.profile),
         predicted_image_id=recommendation.image_id,
+        recommendation_score=recommendation.score,
         recommendation_reasons=tuple(str(item) for item in recommendation.reasons),
         recommendation_codes=tuple(
             sorted(
@@ -312,6 +321,7 @@ class P1FrozenAdapter:
             predicted_candidate_id=f"{profile}-{recommendation.image_id}",
             predicted_profile_id=profile,
             predicted_image_id=recommendation.image_id,
+            recommendation_score=recommendation.score,
             recommendation_reasons=tuple(recommendation.reasons),
             recommendation_codes=(),
             latency_components={"total_elapsed_seconds": None, "inference_latency_seconds": None},

@@ -1,6 +1,7 @@
 E4_RESOURCE_DRY_RUN_ID := e4-resource-envelope-dry-run-$(shell date -u +%Y%m%dT%H%M%SZ)
+E4_RESOURCE_EFFICIENCY_DRY_RUN_ID := e4-resource-efficiency-dry-run-$(shell date -u +%Y%m%dT%H%M%SZ)
 
-.PHONY: check validate-cluster-results validate-raw-integrity capacity-dry-run v3-validate v3-dry-run v3-image-policy v4-validate v4-test v5-test v5-resource-validate v5-resource-test v5-resource-dry-run v5-user-study-test v5-user-study-smoke v5-isolation-check regenerate-cluster-results
+.PHONY: check validate-cluster-results validate-raw-integrity capacity-dry-run v3-validate v3-dry-run v3-image-policy v4-validate v4-test v5-test v5-resource-validate v5-resource-test v5-resource-dry-run v5-resource-efficiency-validate v5-resource-efficiency-test v5-resource-efficiency-dry-run v5-user-study-test v5-user-study-smoke v5-isolation-check regenerate-cluster-results
 
 check:
 	bash scripts/check.sh
@@ -63,6 +64,19 @@ v5-resource-dry-run: v5-resource-validate
 		--run-id $(E4_RESOURCE_DRY_RUN_ID) \
 		--image example.invalid/intent-spawner-resource-v5@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa \
 		--reason "Current context is not the required disposable intent-spawner-eval-v5 cluster."
+
+v5-resource-efficiency-validate:
+	PYTHONPATH=. .venv/bin/python -m evaluation_v5.resource.efficiency_runner validate
+
+v5-resource-efficiency-test: v5-resource-efficiency-validate
+	PYTHONPATH=. .venv/bin/python -m pytest -q tests/test_resource_efficiency_v5.py
+
+v5-resource-efficiency-dry-run: v5-resource-efficiency-validate
+	PYTHONPATH=. .venv/bin/python -m evaluation_v5.resource.efficiency_runner dry-run \
+		--result-dir results_v5/protocol-v5.0.0/E4/$(E4_RESOURCE_EFFICIENCY_DRY_RUN_ID) \
+		--run-id $(E4_RESOURCE_EFFICIENCY_DRY_RUN_ID) \
+		--image example.invalid/intent-spawner-resource-v5@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa \
+		--reason "Confirmatory freeze, approved oracle, verified image, and frozen node capacity are unavailable."
 
 v5-user-study-test:
 	PYTHONPATH=. .venv/bin/python -m pytest -q \

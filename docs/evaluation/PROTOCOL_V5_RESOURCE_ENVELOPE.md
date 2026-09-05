@@ -225,3 +225,115 @@ A dry run has zero trials, `NOT_EXECUTED`, null hardware/cgroup trial
 measurements, no derived envelope, and an empty Kubernetes-mutation list. It
 supports planning/readiness claims only—never hardware performance or empirical
 resource claims.
+
+## Comparative resource efficiency layer
+
+The independent calibration above is also the oracle boundary for the separate
+Protocol-v5 comparative E4 layer. The layer does not define new thesis systems:
+it applies `STATIC_LARGE`, `P1_CATALOG`, `P2_CATALOG`, and `P2_DYNAMIC`
+allocation conditions to the same 16 immutable workload instances. Ten
+executions per family/condition form 640 paired primary trials. P1 and P2 are
+called once per family before execution; their decisions are reused across all
+repetitions, and the same P2 result feeds both P2 conditions. P3 is excluded by
+its authoritative `not_retained` gate.
+
+The matrix identity is frozen as 16 families × 4 conditions × 10 repetitions =
+640 primary trials. Family is the semantic independent unit (`N = 16`);
+repetitions are nested run-variability observations. Within each repetition the
+planner seed-shuffles families, then uses a balanced Latin rotation of the four
+condition positions. Each condition occupies every within-family position four
+times per repetition, and the rotation advances across repetitions. The order
+is reproducible and no condition receives a fixed early, late, cold-cache, or
+warm-cache position.
+
+The checked-in comparative freeze and capacity contracts remain development
+`NOT_FROZEN`. The read-only dry run therefore emits an immutable
+`NOT_EXECUTED` package and makes no Kubernetes measurement. Real execution is
+blocked until the independent calibration package is sealed and approved, the
+image digest and dedicated disposable cluster are verified, the exact node
+allocatable capacity is frozen, and the repository is clean.
+The live path additionally requires the exact approved context, safety-labeled
+namespace and node identity, no competing workload, a pre-pulled digest image,
+matching node allocatable values, API access, and a successful cgroup-v2
+telemetry probe and cleanup before any workload trial. The probe is permitted
+only after all non-mutating readiness gates pass. Dry-run never runs it and
+retains an empty Kubernetes mutation log.
+
+The one-way analysis hierarchy is raw attempt → family/condition/repetition →
+family/condition → paired cross-family inference. Infrastructure-invalid
+attempts are kept as a separate evidence class; at most one identical
+replacement is allowed. A repetition without a valid workload attempt makes
+that family-condition estimate incomplete rather than silently shrinking its
+denominator. Family-level paired bootstrap and tests resample the 16 families,
+never the 640 primary trials.
+
+CPU request-time is `cpu_request_m / 1000 × accounting_runtime_seconds` in
+CPU-seconds. Memory request-time is `memory_request_mib ×
+accounting_runtime_seconds` in MiB-seconds. CPUCostPerSuccess and
+MemoryCostPerSuccess sum those request-times over every valid attempt—including
+OOM, timeout, incorrect, runtime-error, and Pending/admission attempts—and
+divide only by `SUCCESS` outcomes. Unscheduled attempts contribute the frozen
+zero request-time accounting value; their Pending/admission rate remains a
+Pareto reliability dimension. A scheduled attempt with missing duration makes
+cost unavailable. Zero-success cells are null with `ZERO_SUCCESS`, never zero
+or an efficiency win.
+
+Pareto minimization dimensions are CPUCostPerSuccess, MemoryCostPerSuccess,
+OOM rate, timeout rate, Pending/admission rate, and incorrect-completion rate.
+Runtime-error rate is also minimized.
+Maximization dimensions are success rate and correct-completion rate. Strict
+improvement requires every dimension to be no worse and at least one to be
+better. Lower request cost with worse reliability is
+`EFFICIENCY_RELIABILITY_TRADEOFF`; unavailable cost or reliability is
+`INDETERMINATE`. No post-hoc noninferiority margin exists in this contract.
+OOM precedes timeout only when both independent signals are present; Pending,
+admission, infrastructure, incorrect, and runtime-error evidence remain
+distinct.
+
+Every derived trial exposes canonical millicores, MiB, integer GPU counts,
+request and limit fields, usage/request ratios, explicit missingness reasons,
+and signed/absolute/percentage oracle errors. Error is allocation minus the
+independent oracle-selected value; percentage uses that oracle value as its
+denominator. Request errors are capacity comparisons and limit errors are
+OOM/runtime-safety comparisons. P2_DYNAMIC lineage retains formula targets,
+profile floors, upward quantization, policy validation, clipping status,
+fallback reason, and final allocation. Generated-allocation uniqueness is
+counted globally across generated P2_DYNAMIC families after quantization and
+validation, using final canonical `(CPU request, CPU limit, memory request,
+memory limit, GPU count, GPU resource)` identities; catalog fallbacks are not
+included.
+
+Capacity output uses only resource requests read back from all ten observed pod
+specifications and the same frozen Kubernetes node-status `allocatable` CPU,
+memory, and GPU values for every condition. Raw physical capacity and usage
+metrics are forbidden scheduler inputs. Homogeneous density and the frozen
+one-of-each-family first-fit-decreasing mix are always labeled
+`SIMULATED_CAPACITY` and `SIMULATED_DETERMINISTIC_REQUEST_PACKING`; they are not
+observed concurrent-cluster evidence and support no measured-throughput claim.
+
+```bash
+make v5-resource-efficiency-validate
+make v5-resource-efficiency-test
+make v5-resource-efficiency-dry-run
+```
+
+After independent review and freeze activation, decision generation and cluster
+execution remain separate commands so every pod is bound to a sealed allocation
+plan:
+
+```bash
+PYTHONPATH=. .venv/bin/python -m evaluation_v5.resource.efficiency_runner plan \
+  --result-dir results_v5/protocol-v5.0.0/E4/<plan-id>
+PYTHONPATH=. .venv/bin/python -m evaluation_v5.resource.efficiency_runner execute \
+  --plan-dir results_v5/protocol-v5.0.0/E4/<plan-id> \
+  --result-dir results_v5/protocol-v5.0.0/E4/<raw-run-id> \
+  --run-id <raw-run-id> --image <repository>@sha256:<64-hex-digest>
+PYTHONPATH=. .venv/bin/python -m evaluation_v5.resource.efficiency_runner analyze \
+  --raw-result results_v5/protocol-v5.0.0/E4/<raw-run-id> \
+  --analysis-dir results_v5/protocol-v5.0.0/E4/<analysis-id> \
+  --oracle <sealed-approved-independent-calibration-package>
+```
+
+`execute --resume` accepts only an unsealed crash prefix whose plan and stable
+environment provenance hashes match. Sealed results, non-prefix attempts, and
+changed plans or provenance are rejected.

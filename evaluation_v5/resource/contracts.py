@@ -149,11 +149,16 @@ def load_crosswalk(path: Path = CROSSWALK_PATH, *, manifest_path: Path = DEFAULT
 def static_independence_scan(directory: Path | None = None) -> dict[str, Any]:
     """Reject recommender imports/calls from calibration runtime modules.
 
-    The data-only comparator is deliberately excluded from the runtime scan.
+    The data-only comparator and separately gated comparative-efficiency layer
+    are deliberately excluded: this guard protects the independent calibration
+    execution path, not downstream experiments that apply frozen decisions.
     """
     directory = directory or Path(__file__).resolve().parent
     violations: list[str] = []
-    files = [path for path in directory.glob("*.py") if path.name != "comparison.py"]
+    excluded = {"comparison.py"}
+    if directory == Path(__file__).resolve().parent:
+        excluded.update(path.name for path in directory.glob("efficiency_*.py"))
+    files = [path for path in directory.glob("*.py") if path.name not in excluded]
     if directory == Path(__file__).resolve().parent:
         files.append(ROOT / "cluster_evaluation" / "resource_adapter_v5.py")
     files = sorted(files)

@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "protocol-v5-resource-efficiency-freeze-v1.schema.json",
+  "type": "object", "additionalProperties": false,
+  "required": ["schema_version", "protocol_version", "current_phase", "confirmatory_freeze_status", "experiment", "conditions", "catalog_profiles", "decision_policy", "oracle_package", "image", "statistics", "capacity", "activation"],
+  "properties": {
+    "schema_version": {"const": "protocol-v5-resource-efficiency-freeze-v1.0.0"},
+    "protocol_version": {"const": "5.0.0"},
+    "current_phase": {"enum": ["development", "confirmatory"]},
+    "confirmatory_freeze_status": {"enum": ["NOT_FROZEN", "FROZEN"]},
+    "experiment": {"type": "object"}, "conditions": {"type": "array", "minItems": 4, "maxItems": 4, "uniqueItems": true},
+    "catalog_profiles": {"type": "object"}, "decision_policy": {"type": "object"}, "oracle_package": {"type": "object"},
+    "image": {"type": "object"}, "statistics": {"type": "object"}, "capacity": {"type": "object"}, "activation": {"type": "string"}
+  }
+}

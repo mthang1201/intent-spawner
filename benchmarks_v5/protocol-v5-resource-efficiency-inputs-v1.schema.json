@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "protocol-v5-resource-efficiency-inputs-v1.schema.json",
+  "title": "Protocol-v5 E4 comparative resource-efficiency inputs",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "protocol_version", "evidence_role", "source_workload_manifest", "prompt_derivation", "inputs"],
+  "properties": {
+    "schema_version": {"const": "protocol-v5-resource-efficiency-inputs-v1.0.0"},
+    "protocol_version": {"const": "5.0.0"},
+    "evidence_role": {"const": "frozen_condition_inputs"},
+    "source_workload_manifest": {"const": "benchmarks_v5/resource-envelope-workloads-v1.yaml"},
+    "prompt_derivation": {"const": "description + ' Parameters: ' + canonical_compact_sorted_parameter_json + '.'"},
+    "inputs": {
+      "type": "array", "minItems": 16, "maxItems": 16,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["case_id", "family_id", "workload_instance_id", "workload_fingerprint", "prompt", "dataset_size_gb", "code_context_hints"],
+        "properties": {
+          "case_id": {"type": "string", "pattern": "^e4-resource-[a-z0-9-]+$"},
+          "family_id": {"type": "string", "pattern": "^[a-z][a-z0-9_]+$"},
+          "workload_instance_id": {"type": "string", "minLength": 3},
+          "workload_fingerprint": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+          "prompt": {"type": "string", "minLength": 1},
+          "dataset_size_gb": {"const": 0.0},
+          "code_context_hints": {"const": []}
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,63 @@
+schema_version: protocol-v5-resource-efficiency-freeze-v1.0.0
+protocol_version: 5.0.0
+current_phase: development
+confirmatory_freeze_status: NOT_FROZEN
+experiment:
+  experiment_id: E4_RESOURCE_EFFICIENCY
+  workload_input_path: benchmarks_v5/resource-efficiency-inputs-v1.yaml
+  workload_input_sha256: dce8d2b65bdfc7e2ce280e05645906b91a5d4bbfa1f089601ff54dbb5ab02e66
+  repetitions: 10
+  plan_seed: 20260904
+  primary_trial_count: 640
+  single_active_pod: true
+  infrastructure_replacements_per_primary_trial: 1
+  execution_order_algorithm: seeded-family-shuffle-with-balanced-latin-condition-rotation-v1
+conditions: [STATIC_LARGE, P1_CATALOG, P2_CATALOG, P2_DYNAMIC]
+catalog_profiles:
+  small: {cpu_request_m: 100, cpu_limit_m: 500, memory_request_mib: 256, memory_limit_mib: 384, gpu_count: 0}
+  medium: {cpu_request_m: 500, cpu_limit_m: 1000, memory_request_mib: 768, memory_limit_mib: 1024, gpu_count: 0}
+  large: {cpu_request_m: 1500, cpu_limit_m: 2000, memory_request_mib: 1536, memory_limit_mib: 2048, gpu_count: 0}
+decision_policy:
+  static_large_profile: large
+  p1_adapter: protocol-v5-p1-frozen-adapter-v1
+  p2_adapter: protocol-v5-p2-frozen-adapter-v1
+  dynamic_policy_path: recommender/resource-policy.yaml
+  dynamic_policy_sha256: fd1e2696452d4c4eae589e1c01bafeca50e84d21b52cc7320e9b467baa745cc3
+  oracle_data_permitted: false
+  calls_per_family: {P1: 1, P2: 1}
+  reuse_p2_for_conditions: [P2_CATALOG, P2_DYNAMIC]
+  policy_clipping_semantics: reject_and_catalog_fallback
+  p3:
+    included: false
+    authoritative_gate: not_retained
+    gate_path: results_v5/protocol-v5.0.0/freezes/frozen-configuration.json
+    gate_sha256: f24559bd5f60f5fffffb51152ba2e46ff7e55794c774daeed5e156e004d5b6bd
+oracle_package:
+  path: null
+  sha256: null
+  manual_approval_status: NOT_APPROVED
+  required_envelope_status: APPROVED
+image: {reference: null, digest_verified: false}
+statistics:
+  family_is_primary_unit: true
+  repetitions_are_independent_families: false
+  primary_endpoints: [family_success_rate, family_oom_rate, cpu_cost_per_success, memory_cost_per_success]
+  secondary_endpoints: [timeout_rate, pending_or_admission_rate, runtime_error_rate, correctness_rate, correct_completion_rate, incorrect_rate, runtime_seconds, cpu_request_ratio, memory_request_ratio, oracle_error]
+  pareto_objectives:
+    minimize: [cpu_cost_per_success, memory_cost_per_success, oom_rate, timeout_rate, pending_or_admission_rate, runtime_error_rate, incorrect_rate]
+    maximize: [success_rate, correct_completion_rate]
+    undefined_cost: INDETERMINATE
+    lower_cost_with_worse_reliability: EFFICIENCY_RELIABILITY_TRADEOFF
+  success_noninferiority_margin: null
+  contrasts:
+    - [P2_CATALOG, STATIC_LARGE]
+    - [P2_DYNAMIC, STATIC_LARGE]
+    - [P2_DYNAMIC, P2_CATALOG]
+    - [P2_CATALOG, P1_CATALOG]
+  multiplicity: holm_within_endpoint
+  bootstrap_replicates: 2000
+capacity:
+  contract_path: benchmarks_v5/resource-efficiency-capacity-v1.yaml
+  contract_sha256: 1ab062a085d8cfd5b87d8a8d8c75b9b5630d6b659c154e0cbe81760dbb45f989
+  evidence_label: SIMULATED_DETERMINISTIC_REQUEST_PACKING
+activation: Populate and verify the oracle package, immutable image digest, and node capacity; then freeze only in a clean committed revision before observing comparative outcomes.
