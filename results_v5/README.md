@@ -18,13 +18,18 @@ generated pseudonym, fake clocks, and temporary `DRY_RUN` finalization. This is
 framework verification, not participant or Kubernetes evidence, and creates no
 tracked E3 result.
 
-The E4 independent resource-envelope harness now contains sixteen bounded
+The E4 independent resource-envelope harness contains sixteen bounded
 synthetic workload families, deterministic discrete CPU/memory calibration,
 cgroup-v2 provenance, raw-evidence validation, interval-censored derivation,
-and manual-review gating. The generated local E4 package is a `DRY_RUN` because the
-required disposable Kubernetes context was unavailable. It contains no CPU,
-memory, runtime, OOM, hardware, or cgroup observations, so E4 remains
-`NOT_EXECUTED` for empirical purposes.
+and manual-review gating. The E4 comparative resource efficiency harness binds
+those 16 families to STATIC_LARGE, P1_CATALOG, P2_CATALOG, and P2_DYNAMIC
+conditions across 10 repetitions (640 primary trials). Generated local E4 packages
+remain explicitly `NOT_EXECUTED` (or `DRY_RUN`) because the required disposable
+`intent-spawner-eval-v5` cluster context, dedicated labeled node, verified image digest,
+confirmatory freeze, approved oracle, and frozen node capacity are unavailable.
+They contain no fabricated CPU, memory, runtime, OOM, hardware, or cgroup observations;
+see `docs/evaluation/PROTOCOL_V5_E4_OBSERVED_EXECUTION_REPORT.md`.
+
 
 The P2/P3 component-scoring and family-level statistical harnesses are
 implemented, but complete Prompt-3 gold and Prompt-5 raw evidence are not

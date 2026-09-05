@@ -299,3 +299,21 @@ are no remaining execution, evidence, analysis, validation, secret, or commit
 blockers. The only optional next action is repository publication (push the
 current `main`) and separate archival of the ignored `results/` directories
 with their manifests; do not rerun or overwrite any authoritative directory.
+
+## Protocol-v5 E4 Observed Execution Handoff (2026-09-05 Asia/Ho_Chi_Minh)
+
+- Branch: `experiment/protocol-v5-e4-observed-run`
+- Dedicated worktree: `/Users/mthang1201/Documents/datn/intent-spawner-protocol-v5-e4-observed-run`
+- Base commit SHA: `2cf206773e63f7086e3c9716a5077793b189fa6d`
+- Execution Git SHA (`execution_git_sha`): `2cf206773e63f7086e3c9716a5077793b189fa6d`
+- Status: `NOT_EXECUTED` (fail-closed, Rule 7 & 8 compliant; no fabricated Kubernetes measurements)
+- Plan package: `results_v5/protocol-v5.0.0/E4/e4-resource-efficiency-plan-20260905T082000Z`
+  - Plan SHA-256: `eec8b92fcc6750b466cde3a15893babe2aacba71ef95ee4adb636ead75354466`
+  - 16 families × 4 conditions × 10 repetitions = 640 primary trials
+- Raw efficiency package: `results_v5/protocol-v5.0.0/E4/e4-resource-efficiency-observed-run-20260905T081825Z`
+  - Blocker codes recorded: `APPROVED_ORACLE_UNAVAILABLE`, `CGROUP_V2_REQUIRED`, `CLUSTER_INELIGIBLE`, `CONFIRMATORY_FREEZE_INACTIVE`, `IMAGE_DIGEST_UNVERIFIED`, `KUBERNETES_VERSION_UNAVAILABLE`, `NODE_CAPACITY_NOT_FROZEN`, `REQUIRED_API_ACCESS_MISSING`, `WRONG_CLUSTER_FINGERPRINT`, `WRONG_KUBERNETES_CONTEXT`, `WRONG_NODE_COUNT`
+- Raw envelope package: `results_v5/protocol-v5.0.0/E4/e4-resource-envelope-observed-run-20260905T081833Z`
+  - Execution status: `DRY_RUN` (`NOT_EXECUTED`)
+- Comprehensive report: `docs/evaluation/PROTOCOL_V5_E4_OBSERVED_EXECUTION_REPORT.md`
+- Test status: 129 passed in pytest suite (resource efficiency, resource envelope, research analysis)
+
