@@ -437,12 +437,21 @@ def test_10_empty_production_analysis_returns_not_executed(tmp_path, task_set):
     assert status_json["observed_evidence"] is False
     assert status_json["raw_event_count"] == 0
 
+    assert status_json["confirmatory_task_set_status"] == "DEVELOPMENT_DRAFT"
+    assert status_json["confirmatory_freeze_status"] == "PENDING_RESEARCHER_APPROVAL"
+    assert status_json["confirmatory_assignment_status"] == "NOT_GENERATED"
+    assert status_json["live_deployment_preflight"] == "NOT_VERIFIED"
+    assert status_json["sub_gates"]["confirmatory_task_set"] == "DEVELOPMENT_DRAFT"
+
     analysis_json = json.loads((output_dir / "derived" / "analysis.json").read_text())
     assert analysis_json["condition_summary"] == []
     assert analysis_json["effects"] == {}
+    assert analysis_json["sub_gates"]["confirmatory_task_set"] == "DEVELOPMENT_DRAFT"
 
     report_md = (output_dir / "report" / "USER_STUDY_REPORT.md").read_text()
     assert "Evidence status: `NOT_EXECUTED`." in report_md
+    assert "OBSERVED HUMAN STUDY NOT EXECUTED" in report_md
+    assert "## Readiness sub-gates" in report_md
     assert "NOT_EXECUTED — no empirical condition estimates are available." in report_md
     assert "NOT_EXECUTED — effect sizes, confidence intervals, and p-values are unavailable." in report_md
 
@@ -556,11 +565,320 @@ def test_11_readiness_gate_with_approved_frozen_task_set_rejects_observed_withou
     assert status_json["observed_evidence"] is False
     assert status_json["task_set_stage"] == "confirmatory"
     assert status_json["task_set_status"] == "frozen"
+    assert status_json["confirmatory_task_set_status"] == "PASS"
+    assert status_json["confirmatory_freeze_status"] == "PASS"
+    assert status_json["confirmatory_assignment_status"] == "PASS"
+    assert status_json["configuration_fairness_status"] == "PASS"
+    assert status_json["local_deterministic_smoke_status"] == "PASS"
+    assert status_json["live_deployment_preflight"] == "NOT_VERIFIED"
+    assert status_json["sub_gates"]["framework_harness"] == "PASS"
     assert status_json["raw_event_count"] == 0
 
     analysis_json = json.loads((not_exec_output / "derived" / "analysis.json").read_text())
     assert analysis_json["condition_summary"] == []
     assert analysis_json["effects"] == {}
+    assert analysis_json["sub_gates"]["confirmatory_task_set"] == "PASS"
 
     report_md = (not_exec_output / "report" / "USER_STUDY_REPORT.md").read_text()
     assert "Evidence status: `NOT_EXECUTED`." in report_md
+    assert "OBSERVED HUMAN STUDY NOT EXECUTED" in report_md
+    assert "## Readiness sub-gates" in report_md
+
+
+def test_12_negative_binding_wrong_freeze_id_fails_closed(tmp_path, task_set, capsys):
+    """Negative binding test 1: Confirmatory execution with wrong freeze ID fails closed."""
+    import yaml
+    from evaluation_v5.user_study.fairness import build_fairness_manifest
+    from evaluation_v5.user_study.runner import _git_revision
+
+    raw_yaml = TASK_SET_PATH.read_text(encoding="utf-8")
+    task_dict = yaml.safe_load(raw_yaml)
+    task_dict["stage"] = "confirmatory"
+    task_dict["status"] = "frozen"
+    for pair in task_dict.get("pairs", []):
+        pair["gold"]["equivalence_review_status"] = "approved"
+
+    frozen_task_set_path = tmp_path / "user-study-frozen-v1.yaml"
+    frozen_task_set_path.write_text(yaml.safe_dump(task_dict, sort_keys=False), encoding="utf-8")
+    frozen_task_set = load_task_set(frozen_task_set_path)
+
+    git_rev = _git_revision()
+    catalog = load_image_catalog()
+    corpus = build_candidate_corpus(image_catalog=catalog)
+    fairness = build_fairness_manifest(
+        catalog=catalog,
+        corpus=corpus,
+        freeze_id="freeze-correct-v1",
+        config_identity="config-test-v1",
+        deployment_revision=git_rev,
+        kubernetes_environment_id="protocol-v5-e3-cluster",
+    )
+    env_identity = {
+        "environment_id": "protocol-v5-e3-study-environment",
+        "mode": "frozen",
+        "config_identity_sha256": "0" * 64,
+        "fairness_manifest": fairness,
+    }
+    manifest_dict = generate_assignment_manifest(
+        frozen_task_set,
+        study_id="confirmatory-test",
+        participant_count=36,
+        seed=20260827,
+        consent_version="consent-v1",
+        freeze_id="freeze-WRONG-v1",
+        config_identity="config-test-v1",
+        git_revision=git_rev,
+        environment_identity=env_identity,
+    ).to_dict()
+    assignment_path = tmp_path / "assignment_wrong_freeze.json"
+    assignment_path.write_text(json.dumps(manifest_dict) + "\n", encoding="utf-8")
+
+    exit_code = user_study_main(
+        [
+            "finalize",
+            "--run-id",
+            "test-wrong-freeze",
+            "--task-set",
+            str(frozen_task_set_path),
+            "--assignments",
+            str(assignment_path),
+            "--execution-status",
+            "OBSERVED",
+            "--output-dir",
+            str(tmp_path / "wrong-freeze-out"),
+        ]
+    )
+    assert exit_code != 0
+    err = capsys.readouterr().err
+    assert "frozen study-environment fairness identity drift" in err
+
+
+def test_13_negative_binding_task_set_checksum_mismatch_fails_closed(tmp_path, task_set, capsys):
+    """Negative binding test 2: Assignment with mismatched task_set_sha256 fails closed."""
+    manifest_dict = generate_assignment_manifest(
+        task_set,
+        study_id="test-cksum-drift",
+        participant_count=36,
+        seed=20260827,
+        consent_version="consent-v1",
+    ).to_dict()
+    manifest_dict["task_set_sha256"] = "0" * 64
+    assignment_path = tmp_path / "assignment_tampered_cksum.json"
+    assignment_path.write_text(json.dumps(manifest_dict) + "\n", encoding="utf-8")
+
+    exit_code = user_study_main(
+        [
+            "finalize",
+            "--run-id",
+            "test-cksum-mismatch",
+            "--task-set",
+            str(TASK_SET_PATH),
+            "--assignments",
+            str(assignment_path),
+            "--execution-status",
+            "NOT_EXECUTED",
+            "--output-dir",
+            str(tmp_path / "cksum-out"),
+        ]
+    )
+    assert exit_code != 0
+    err = capsys.readouterr().err
+    assert "assignment task-set checksum mismatch" in err
+
+
+def test_14_negative_binding_task_set_id_mismatch_fails_closed(tmp_path, task_set, capsys):
+    """Negative binding test 3: Assignment with mismatched task_set_id fails closed."""
+    manifest_dict = generate_assignment_manifest(
+        task_set,
+        study_id="test-id-mismatch",
+        participant_count=36,
+        seed=20260827,
+        consent_version="consent-v1",
+    ).to_dict()
+    manifest_dict["task_set_id"] = "totally-different-task-set-id"
+    assignment_path = tmp_path / "assignment_tampered_id.json"
+    assignment_path.write_text(json.dumps(manifest_dict) + "\n", encoding="utf-8")
+
+    exit_code = user_study_main(
+        [
+            "finalize",
+            "--run-id",
+            "test-id-mismatch",
+            "--task-set",
+            str(TASK_SET_PATH),
+            "--assignments",
+            str(assignment_path),
+            "--execution-status",
+            "NOT_EXECUTED",
+            "--output-dir",
+            str(tmp_path / "id-out"),
+        ]
+    )
+    assert exit_code != 0
+    err = capsys.readouterr().err
+    assert "assignment task-set identity mismatch" in err or "task_set_id" in err
+
+
+def test_15_negative_binding_environment_identity_mismatch_fails_closed(tmp_path, task_set, capsys):
+    """Negative binding test 4: Assignment with tampered environment fairness checksum fails closed."""
+    import yaml
+    from evaluation_v5.user_study.fairness import build_fairness_manifest
+    from evaluation_v5.user_study.runner import _git_revision
+
+    raw_yaml = TASK_SET_PATH.read_text(encoding="utf-8")
+    task_dict = yaml.safe_load(raw_yaml)
+    task_dict["stage"] = "confirmatory"
+    task_dict["status"] = "frozen"
+    for pair in task_dict.get("pairs", []):
+        pair["gold"]["equivalence_review_status"] = "approved"
+
+    frozen_task_set_path = tmp_path / "user-study-frozen-v1.yaml"
+    frozen_task_set_path.write_text(yaml.safe_dump(task_dict, sort_keys=False), encoding="utf-8")
+    frozen_task_set = load_task_set(frozen_task_set_path)
+
+    git_rev = _git_revision()
+    catalog = load_image_catalog()
+    corpus = build_candidate_corpus(image_catalog=catalog)
+    fairness = build_fairness_manifest(
+        catalog=catalog,
+        corpus=corpus,
+        freeze_id="freeze-test-v1",
+        config_identity="config-test-v1",
+        deployment_revision=git_rev,
+        kubernetes_environment_id="protocol-v5-e3-cluster",
+    )
+    env_identity = {
+        "environment_id": "protocol-v5-e3-study-environment",
+        "mode": "frozen",
+        "config_identity_sha256": "0" * 64,
+        "fairness_manifest": fairness,
+    }
+    manifest_dict = generate_assignment_manifest(
+        frozen_task_set,
+        study_id="confirmatory-test",
+        participant_count=36,
+        seed=20260827,
+        consent_version="consent-v1",
+        freeze_id="freeze-test-v1",
+        config_identity="config-test-v1",
+        git_revision=git_rev,
+        environment_identity=env_identity,
+    ).to_dict()
+    manifest_dict["environment_identity"]["fairness_manifest"]["shared_environment_sha256"] = "f" * 64
+    assignment_path = tmp_path / "assignment_tampered_env.json"
+    assignment_path.write_text(json.dumps(manifest_dict) + "\n", encoding="utf-8")
+
+    exit_code = user_study_main(
+        [
+            "finalize",
+            "--run-id",
+            "test-tampered-env",
+            "--task-set",
+            str(frozen_task_set_path),
+            "--assignments",
+            str(assignment_path),
+            "--execution-status",
+            "OBSERVED",
+            "--output-dir",
+            str(tmp_path / "tampered-env-out"),
+        ]
+    )
+    assert exit_code != 0
+    err = capsys.readouterr().err
+    assert "differ" in err or "recompute" in err or "drift" in err
+
+
+def test_16_negative_binding_config_identity_mismatch_fails_closed(tmp_path, task_set, capsys):
+    """Negative binding test 5: Configuration identity mismatch between manifest and fairness fails closed."""
+    import yaml
+    from evaluation_v5.user_study.fairness import build_fairness_manifest
+    from evaluation_v5.user_study.runner import _git_revision
+
+    raw_yaml = TASK_SET_PATH.read_text(encoding="utf-8")
+    task_dict = yaml.safe_load(raw_yaml)
+    task_dict["stage"] = "confirmatory"
+    task_dict["status"] = "frozen"
+    for pair in task_dict.get("pairs", []):
+        pair["gold"]["equivalence_review_status"] = "approved"
+
+    frozen_task_set_path = tmp_path / "user-study-frozen-v1.yaml"
+    frozen_task_set_path.write_text(yaml.safe_dump(task_dict, sort_keys=False), encoding="utf-8")
+    frozen_task_set = load_task_set(frozen_task_set_path)
+
+    git_rev = _git_revision()
+    catalog = load_image_catalog()
+    corpus = build_candidate_corpus(image_catalog=catalog)
+    fairness = build_fairness_manifest(
+        catalog=catalog,
+        corpus=corpus,
+        freeze_id="freeze-test-v1",
+        config_identity="config-AAA",
+        deployment_revision=git_rev,
+        kubernetes_environment_id="protocol-v5-e3-cluster",
+    )
+    env_identity = {
+        "environment_id": "protocol-v5-e3-study-environment",
+        "mode": "frozen",
+        "config_identity_sha256": "0" * 64,
+        "fairness_manifest": fairness,
+    }
+    manifest_dict = generate_assignment_manifest(
+        frozen_task_set,
+        study_id="confirmatory-test",
+        participant_count=36,
+        seed=20260827,
+        consent_version="consent-v1",
+        freeze_id="freeze-test-v1",
+        config_identity="config-BBB",
+        git_revision=git_rev,
+        environment_identity=env_identity,
+    ).to_dict()
+    assignment_path = tmp_path / "assignment_mismatched_config.json"
+    assignment_path.write_text(json.dumps(manifest_dict) + "\n", encoding="utf-8")
+
+    exit_code = user_study_main(
+        [
+            "finalize",
+            "--run-id",
+            "test-config-mismatch",
+            "--task-set",
+            str(frozen_task_set_path),
+            "--assignments",
+            str(assignment_path),
+            "--execution-status",
+            "OBSERVED",
+            "--output-dir",
+            str(tmp_path / "config-mismatch-out"),
+        ]
+    )
+    assert exit_code != 0
+    err = capsys.readouterr().err
+    assert "frozen study-environment fairness identity drift" in err
+
+
+def test_17_negative_binding_development_assignment_as_observed_fails_closed(tmp_path, capsys):
+    """Negative binding test 6: Development assignment attempted as OBSERVED strictly fails closed."""
+    dev_assignment_path = (
+        ROOT
+        / "benchmarks_v5"
+        / "protocol-v5-e3-assignment-target-36"
+        / "assignment-manifest.json"
+    )
+    exit_code = user_study_main(
+        [
+            "finalize",
+            "--run-id",
+            "test-dev-as-obs",
+            "--task-set",
+            str(TASK_SET_PATH),
+            "--assignments",
+            str(dev_assignment_path),
+            "--execution-status",
+            "OBSERVED",
+            "--output-dir",
+            str(tmp_path / "dev-as-obs-out"),
+        ]
+    )
+    assert exit_code != 0
+    err = capsys.readouterr().err
+    assert "confirmatory preparation rejects a development task set" in err

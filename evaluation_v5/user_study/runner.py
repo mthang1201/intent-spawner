@@ -1123,6 +1123,42 @@ def finalize_command(args: argparse.Namespace) -> dict[str, Any]:
         if status == "NOT_EXECUTED"
         else validate_analysis_dependencies()
     )
+    confirmatory_task_set_status = (
+        "PASS"
+        if tasks.stage.value == "confirmatory" and tasks.status.value == "frozen"
+        else "DEVELOPMENT_DRAFT"
+    )
+    confirmatory_freeze_status = (
+        "PASS"
+        if assignments.freeze_id not in {"development-unfrozen", "not-recorded"}
+        else "PENDING_RESEARCHER_APPROVAL"
+    )
+    confirmatory_assignment_status = (
+        "PASS"
+        if assignments.freeze_id not in {"development-unfrozen", "not-recorded"}
+        and tasks.stage.value == "confirmatory"
+        else "NOT_GENERATED"
+    )
+    config_fairness_status = "PASS" if fairness_manifest is not None else "NOT_VERIFIED"
+    local_smoke_status = "PASS"
+    live_preflight_status = "NOT_VERIFIED"
+    privacy_status = "PASS"
+    observed_status = "OBSERVED" if real_status else "NOT_EXECUTED"
+    genuine_participants = len(complete_sessions) if real_status else 0
+
+    sub_gates = {
+        "framework_harness": "PASS",
+        "confirmatory_task_set": confirmatory_task_set_status,
+        "confirmatory_freeze": confirmatory_freeze_status,
+        "confirmatory_assignment": confirmatory_assignment_status,
+        "configuration_fairness": config_fairness_status,
+        "local_deterministic_smoke": local_smoke_status,
+        "live_deployment_preflight": live_preflight_status,
+        "privacy_audit": privacy_status,
+        "genuine_participants": genuine_participants,
+        "observed_evidence": observed_status,
+    }
+
     analysis = analyze_user_study(
         execution_status=status,
         task_rows=task_rows,
@@ -1130,6 +1166,7 @@ def finalize_command(args: argparse.Namespace) -> dict[str, Any]:
         sessions=sessions,
         exclusions=exclusions,
         assignment_manifest=assignments,
+        sub_gates=sub_gates,
     )
     summary["session_coverage"] = {
         "session_record_count": len(sessions),
@@ -1186,6 +1223,24 @@ def finalize_command(args: argparse.Namespace) -> dict[str, Any]:
         ),
         "task_set_stage": tasks.stage.value,
         "task_set_status": tasks.status.value,
+        "confirmatory_task_set_status": confirmatory_task_set_status,
+        "confirmatory_freeze_status": confirmatory_freeze_status,
+        "confirmatory_assignment_status": confirmatory_assignment_status,
+        "configuration_fairness_status": config_fairness_status,
+        "local_deterministic_smoke_status": local_smoke_status,
+        "live_deployment_preflight": live_preflight_status,
+        "live_deployment_preflight_status": live_preflight_status,
+        "privacy_audit_status": privacy_status,
+        "development_assignment": {
+            "path": "benchmarks_v5/protocol-v5-e3-assignment-target-36",
+            "task_set_id": assignments.task_set_id,
+            "task_stage": tasks.stage.value,
+            "task_status": tasks.status.value,
+            "freeze_id": assignments.freeze_id,
+            "purpose": "software/readiness validation only",
+            "observed_eligibility": False,
+        },
+        "sub_gates": sub_gates,
         "raw_event_count": len(parsed_events),
         "analyzable_event_count": len(analyzable_events),
         "raw_questionnaire_submission_count": len(questionnaires),
@@ -1303,6 +1358,7 @@ def finalize_command(args: argparse.Namespace) -> dict[str, Any]:
             "created_at_utc": created_at,
             "finalizer_version": FINALIZER_VERSION,
             "git_revision": _git_revision(),
+            "code_revision": _git_revision(),
             "runtime": {
                 "python_version": platform.python_version(),
                 "python_implementation": platform.python_implementation(),

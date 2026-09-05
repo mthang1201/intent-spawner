@@ -1236,6 +1236,7 @@ def analyze_user_study(
     sessions: Sequence[Mapping[str, Any]],
     exclusions: Sequence[Mapping[str, Any]],
     assignment_manifest: Any,
+    sub_gates: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Return aggregate-only analysis. NOT_EXECUTED never invents denominators."""
 
@@ -1248,6 +1249,7 @@ def analyze_user_study(
         {"stage": "incomplete_sessions", "count": sum(row.get("session_status") == "incomplete" for row in sessions)},
         {"stage": "analyzable_participants", "count": len({row["participant_id"] for row in task_rows})},
     ]
+    sub_gates_dict = dict(sub_gates) if sub_gates is not None else {}
     if execution_status == "NOT_EXECUTED":
         return {
             "schema_version": ANALYSIS_SCHEMA_VERSION,
@@ -1264,6 +1266,7 @@ def analyze_user_study(
             "primary_inference_registry": _primary_inference_registry(None, None),
             "preference": [],
             "missingness": [],
+            "sub_gates": sub_gates_dict,
         }
 
     seq_rows = [row for row in questionnaire_rows if row.get("questionnaire_type") == "seq_task"]
@@ -1480,6 +1483,7 @@ def analyze_user_study(
         ),
         "preference": _preference_summary(questionnaire_rows),
         "missingness": missingness,
+        "sub_gates": sub_gates_dict,
     }
 
 
@@ -1595,6 +1599,10 @@ _ABSOLUTE_PATH_PATTERN = re.compile(
     r"(?:^|[\s\"'=])(?:/(?:Users|home|tmp|private|Volumes)/[^\s\"']+|[A-Za-z]:\\[^\r\n\"']+)",
     re.MULTILINE,
 )
+_SECRET_KEY_PATTERN = re.compile(
+    r'(?:"(?:api_key|secret_key|password|bearer_token)"\s*:|(?:api[_-]?key|secret[_-]?key|password|bearer|token)\s*[:=]\s*["\'][^"\']+)',
+    re.IGNORECASE,
+)
 
 
 def audit_report_privacy(
@@ -1607,9 +1615,31 @@ def audit_report_privacy(
         "direct identifier field",
         "free-text response field",
         "absolute local path",
+        "secret key or token",
     ]
     if not allow_pseudonyms:
         checks.insert(0, "pseudonym")
+
+    violations_per_category: dict[str, int] = {
+        "email": 0,
+        "direct_personal_identifier_key": 0,
+        "ip_address": 0,
+        "unexpected_local_absolute_path": 0,
+        "free_text_response_field": 0,
+        "secret_token_key": 0,
+    }
+    if not allow_pseudonyms:
+        violations_per_category["pseudonym"] = 0
+
+    category_map = {
+        "EMAIL": "email",
+        "DIRECT_IDENTIFIER_KEY": "direct_personal_identifier_key",
+        "IP_ADDRESS": "ip_address",
+        "ABSOLUTE_PATH": "unexpected_local_absolute_path",
+        "FREE_TEXT_FIELD": "free_text_response_field",
+        "SECRET_KEY": "secret_token_key",
+        "PSEUDONYM": "pseudonym",
+    }
 
     for path in paths:
         text = path.read_text(encoding="utf-8")
@@ -1618,6 +1648,7 @@ def audit_report_privacy(
             ("IP_ADDRESS", _IP_PATTERN),
             ("FREE_TEXT_FIELD", _FREE_TEXT_KEY_PATTERN),
             ("ABSOLUTE_PATH", _ABSOLUTE_PATH_PATTERN),
+            ("SECRET_KEY", _SECRET_KEY_PATTERN),
         ]
         if not allow_pseudonyms:
             patterns.append(("PSEUDONYM", _PSEUDONYM_PATTERN))
@@ -1627,6 +1658,9 @@ def audit_report_privacy(
 
         for code, pattern in patterns:
             if pattern.search(text):
+                cat = category_map.get(code, code.lower())
+                if cat in violations_per_category:
+                    violations_per_category[cat] += 1
                 violations.append({"file": path.name, "code": code})
     if violations:
         raise UserStudyAnalysisError(
@@ -1636,6 +1670,14 @@ def audit_report_privacy(
         "checks": checks,
         "direct_identifier_findings": 0,
         "files_scanned": len(paths),
+        "categories_checked": list(violations_per_category.keys()),
+        "violations_per_category": violations_per_category,
+        "pseudonym_handling_policy": (
+            "Permitted in research manifests and event streams (format P-<12 hex digits>); excluded from public aggregate reports."
+            if allow_pseudonyms
+            else "EXCLUDED (pseudonyms and participant IDs rejected in aggregate reports)."
+        ),
+        "public_aggregate_pseudonym_policy": "EXCLUDED (pseudonyms and participant IDs rejected in aggregate reports).",
         "schema_version": "protocol-v5-user-study-report-privacy-audit-v1.0.0",
         "status": "PASS",
     }
@@ -1668,8 +1710,41 @@ def _report_markdown(analysis: Mapping[str, Any]) -> str:
         "",
         f"Evidence status: `{status}`.",
         "",
+    ]
+    if status == "NOT_EXECUTED":
+        lines.extend([
+            "**OBSERVED HUMAN STUDY NOT EXECUTED**",
+            "",
+        ])
+    lines.extend([
         guard,
         "",
+    ])
+    sub_gates = analysis.get("sub_gates")
+    if sub_gates:
+        lines.extend([
+            "## Readiness sub-gates",
+            "",
+            "| Sub-gate | Status |",
+            "|---|---|",
+        ])
+        sub_gate_labels = {
+            "framework_harness": "Framework / Harness",
+            "confirmatory_task_set": "Confirmatory Task Set",
+            "confirmatory_freeze": "Confirmatory Freeze",
+            "confirmatory_assignment": "Confirmatory Assignment",
+            "configuration_fairness": "Configuration Fairness",
+            "local_deterministic_smoke": "Local Deterministic Smoke",
+            "live_deployment_preflight": "Live Deployment Preflight",
+            "privacy_audit": "Privacy Audit",
+            "genuine_participants": "Genuine Participants",
+            "observed_evidence": "Observed Evidence",
+        }
+        for key, val in sub_gates.items():
+            label = sub_gate_labels.get(key, key.replace("_", " ").title())
+            lines.append(f"| {label} | `{val}` |")
+        lines.append("")
+    lines.extend([
         "## Frozen analysis contract",
         "",
         "SelectionSuccess and DecisionTime are the two co-primary outcomes. Their two-sided p-values alone form a fixed-size two-hypothesis Holm family at alpha 0.05, including when one endpoint is unavailable. Interaction effort, corrections, notebook readiness, questionnaires, preference, and the frozen timeout-bound non-confirmation analysis are secondary. The three CUSTOM Likert items are reported separately and are not SUS dimensions.",
@@ -1684,7 +1759,7 @@ def _report_markdown(analysis: Mapping[str, Any]) -> str:
         "",
         "| Stage | Count |",
         "|---|---:|",
-    ]
+    ])
     lines.extend(
         f"| {row['stage']} | {row['count']} |" for row in analysis["participant_flow"]
     )
@@ -1892,8 +1967,29 @@ def write_analysis_artifacts(root: Path, analysis: Mapping[str, Any]) -> tuple[P
             derived_dir / "model-effects.json",
         }
     )
-    audit = audit_report_privacy(aggregate_paths)
-    paths.append(_write(audit_path, _json_text(audit)))
+    aggregate_audit = audit_report_privacy(aggregate_paths, allow_pseudonyms=False)
+
+    all_package_files = sorted(
+        path for path in root.rglob("*")
+        if path.is_file() and path != audit_path
+    )
+    package_audit = audit_report_privacy(all_package_files, allow_pseudonyms=True)
+
+    audit_payload = {
+        "schema_version": "protocol-v5-user-study-report-privacy-audit-v1.0.0",
+        "status": "PASS",
+        "files_scanned": len(all_package_files),
+        "aggregate_files_scanned": len(aggregate_paths),
+        "direct_identifier_findings": 0,
+        "categories_checked": package_audit["categories_checked"],
+        "violations_per_category": package_audit["violations_per_category"],
+        "pseudonym_handling_policy": "Permitted in research manifests and event streams (format P-<12 hex digits>); excluded from public aggregate reports.",
+        "public_aggregate_pseudonym_policy": "EXCLUDED (pseudonyms and participant IDs rejected in aggregate reports).",
+        "checks": aggregate_audit["checks"],
+        "aggregate_audit_status": aggregate_audit["status"],
+        "package_audit_status": package_audit["status"],
+    }
+    paths.append(_write(audit_path, _json_text(audit_payload)))
     return tuple(paths)
 
 
