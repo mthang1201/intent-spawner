@@ -629,6 +629,18 @@ def main() -> None:
         default="amd64",
         help="Target CPU architecture for image storage manifest inspection (default: amd64).",
     )
+    parser.add_argument(
+        "--scales",
+        type=int,
+        nargs="+",
+        default=[4, 8, 16],
+        help="Catalog scales to evaluate (default: 4 8 16).",
+    )
+    parser.add_argument(
+        "--no-recommendation-eval",
+        action="store_true",
+        help="Skip joint recommendation evaluation for catalog scales.",
+    )
 
     args = parser.parse_args()
 
@@ -656,6 +668,9 @@ def main() -> None:
             output_dir=args.output_dir if args.experiment == "storage" else None,
             run_id=args.run_id if args.experiment == "storage" else None,
             timeout_seconds=args.timeout,
+            scales=args.scales,
+            eval_recommendation=not args.no_recommendation_eval,
+            split_path=args.split,
         )
         print(f"E5 storage scalability evaluation completed successfully. Output in: {out_storage}")
 

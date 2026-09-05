@@ -605,11 +605,15 @@ def validate_e5_storage_evidence(package_dir: Path | str) -> dict[str, Any]:
     manifest_path = directory / "manifest.json"
     raw_dir = directory / "raw"
     derived_dir = directory / "derived"
+    figures_dir = directory / "figures"
     report_dir = directory / "report"
 
     layers_path = raw_dir / "image_layers.json"
     env_path = raw_dir / "environment.json"
     storage_metrics_path = derived_dir / "storage_metrics.json"
+    marginal_path = derived_dir / "marginal_storage.json"
+    pairwise_path = derived_dir / "pairwise_layer_reuse.json"
+    scalability_path = derived_dir / "catalog_scalability.json"
     report_md_path = report_dir / "E5_IMAGE_STORAGE_REPORT.md"
     status_path = report_dir / "status.json"
 
@@ -618,11 +622,27 @@ def validate_e5_storage_evidence(package_dir: Path | str) -> dict[str, Any]:
         layers_path,
         env_path,
         storage_metrics_path,
+        marginal_path,
+        pairwise_path,
+        scalability_path,
         report_md_path,
         status_path,
     ):
         if not req_file.is_file():
             raise EvidenceValidationError(f"Required storage package file missing: {req_file.relative_to(directory)}")
+
+    # Check figures presence
+    for fig_stem in (
+        "figure_a_cumulative_storage",
+        "figure_b_marginal_storage",
+        "figure_c_pairwise_reuse_bytes",
+        "figure_d_recommendation_quality",
+        "figure_e_recommendation_latency",
+    ):
+        png_exists = (figures_dir / f"{fig_stem}.png").is_file()
+        svg_exists = (figures_dir / f"{fig_stem}.svg").is_file()
+        if not (png_exists or svg_exists):
+            raise EvidenceValidationError(f"Required figure {fig_stem} missing in {figures_dir}")
 
     # 3. Validate storage_metrics.json schema and contract
     from evaluation_v5.analysis.research_contracts import validate_storage_evidence
@@ -646,7 +666,86 @@ def validate_e5_storage_evidence(package_dir: Path | str) -> dict[str, Any]:
                 f"unique={p['unique_layer_bytes']} > naive={p['naive_logical_bytes']}"
             )
 
-    # 4. Validate manifest.json
+    # 4. Validate marginal_storage.json
+    try:
+        marginal_data = json.loads(marginal_path.read_text(encoding="utf-8"))
+    except Exception as exc:
+        raise EvidenceValidationError(f"Malformed marginal_storage.json: {exc}") from exc
+
+    if not isinstance(marginal_data, list) or len(marginal_data) != len(prefixes):
+        raise EvidenceValidationError("marginal_storage.json row count must match prefix count")
+
+    for idx, m in enumerate(marginal_data, start=1):
+        if m["introduction_index"] != idx:
+            raise EvidenceValidationError(f"Marginal index mismatch at row {idx}")
+        if m["marginal_unique_bytes"] != m["new_unique_bytes"] - m["previous_unique_bytes"]:
+            raise EvidenceValidationError(f"Marginal unique bytes calculation mismatch at index {idx}")
+        if m["new_unique_bytes"] > m["cumulative_logical_bytes"]:
+            raise EvidenceValidationError(f"Marginal record violates non-expansion at index {idx}")
+        if m["size_domain"] not in ("compressed_oci_manifest_layer_bytes", "uncompressed_filesystem_layer_bytes"):
+            raise EvidenceValidationError(f"Invalid size domain in marginal record: {m['size_domain']}")
+
+    # 5. Validate pairwise_layer_reuse.json
+    try:
+        pairwise_data = json.loads(pairwise_path.read_text(encoding="utf-8"))
+    except Exception as exc:
+        raise EvidenceValidationError(f"Malformed pairwise_layer_reuse.json: {exc}") from exc
+
+    c_mat = pairwise_data.get("shared_layer_count_matrix", [])
+    b_mat = pairwise_data.get("shared_layer_byte_matrix", [])
+    n_imgs = len(pairwise_data.get("image_ids", []))
+
+    if len(c_mat) != n_imgs or any(len(row) != n_imgs for row in c_mat):
+        raise EvidenceValidationError("Count matrix dimensions mismatch image count")
+    if len(b_mat) != n_imgs or any(len(row) != n_imgs for row in b_mat):
+        raise EvidenceValidationError("Byte matrix dimensions mismatch image count")
+
+    # Check symmetry and diagonal
+    for i in range(n_imgs):
+        for j in range(n_imgs):
+            if c_mat[i][j] != c_mat[j][i]:
+                raise EvidenceValidationError(f"Count matrix asymmetry at ({i},{j})")
+            if b_mat[i][j] != b_mat[j][i]:
+                raise EvidenceValidationError(f"Byte matrix asymmetry at ({i},{j})")
+
+    # 6. Validate catalog_scalability.json (rejection of fabricated scales)
+    try:
+        scale_data = json.loads(scalability_path.read_text(encoding="utf-8"))
+    except Exception as exc:
+        raise EvidenceValidationError(f"Malformed catalog_scalability.json: {exc}") from exc
+
+    if not isinstance(scale_data, list) or not scale_data:
+        raise EvidenceValidationError("catalog_scalability.json must be a non-empty list of scale records")
+
+    for s in scale_data:
+        scale_sz = int(s["catalog_size"])
+        approved_refs = s.get("ordered_immutable_image_references", [])
+        st_status = s.get("storage_measurement_status")
+
+        # Reject fabricated data if approved images are fewer than scale
+        if len(approved_refs) < scale_sz and st_status == "OBSERVED":
+            raise EvidenceValidationError(
+                f"Fabricated scale observation rejected: scale {scale_sz} marked OBSERVED "
+                f"with only {len(approved_refs)} approved image(s)"
+            )
+        if s.get("size_domain") not in ("compressed_oci_manifest_layer_bytes", "uncompressed_filesystem_layer_bytes"):
+            raise EvidenceValidationError(f"Invalid size domain in scale record: {s.get('size_domain')}")
+
+    # 7. Validate raw image layers provenance
+    try:
+        layers_data = json.loads(layers_path.read_text(encoding="utf-8"))
+    except Exception as exc:
+        raise EvidenceValidationError(f"Malformed image_layers.json: {exc}") from exc
+
+    for img in layers_data:
+        if not img.get("image_digest"):
+            raise EvidenceValidationError(f"Image {img.get('image_id')} missing image_digest")
+        if "is_digest_pinned" not in img:
+            raise EvidenceValidationError(f"Image {img.get('image_id')} missing is_digest_pinned")
+        if not img.get("ordered_layer_digests") and img.get("layers"):
+            raise EvidenceValidationError(f"Image {img.get('image_id')} missing ordered_layer_digests")
+
+    # 8. Validate manifest.json
     try:
         manifest_raw = json.loads(manifest_path.read_text(encoding="utf-8"))
         manifest = ProtocolV5Manifest.from_dict(manifest_raw)
@@ -660,7 +759,7 @@ def validate_e5_storage_evidence(package_dir: Path | str) -> dict[str, Any]:
             f"Execution status mismatch: manifest has {manifest.execution_status.value} vs metrics {execution_status}"
         )
 
-    # 5. Validate status.json
+    # 9. Validate status.json
     status_raw = json.loads(status_path.read_text(encoding="utf-8"))
     if status_raw.get("status") != execution_status:
         raise EvidenceValidationError(
@@ -673,13 +772,32 @@ def validate_e5_storage_evidence(package_dir: Path | str) -> dict[str, Any]:
         else 0
     )
 
-    eligible = (execution_status == "OBSERVED" and split_stage == "confirmatory" and claims_permitted)
+    complete_multiscale = all(
+        s.get("storage_measurement_status") == "OBSERVED" for s in scale_data
+    )
+    eligible_4_image = (
+        execution_status == "OBSERVED" and split_stage == "confirmatory" and claims_permitted
+    )
+    eligible_full = (
+        eligible_4_image and complete_multiscale
+    )
+
+    claim_eligibility = (
+        "ELIGIBLE_FULL_MULTISCALE"
+        if eligible_full
+        else ("ELIGIBLE_4_IMAGE_CATALOG_STORAGE" if eligible_4_image else "NOT_ELIGIBLE")
+    )
 
     return {
         "status": "PASS",
         "validator_status": "CURRENT_VALID",
-        "eligible_as_current_e5_evidence": eligible,
-        "validation_profile": "STORAGE_V1_0",
+        "storage_dedup_valid": True,
+        "partial_scalability_valid": True,
+        "complete_multiscale": complete_multiscale,
+        "claim_eligibility": claim_eligibility,
+        "eligible_as_current_e5_evidence": eligible_4_image,
+        "full_scalability_claim_eligible": eligible_full,
+        "validation_profile": "STORAGE_SCALABILITY_V1_0",
         "evidence_dir": str(directory),
         "experiment_id": "E5",
         "requirement_id": "image_storage",
@@ -687,6 +805,7 @@ def validate_e5_storage_evidence(package_dir: Path | str) -> dict[str, Any]:
         "split_stage": split_stage,
         "claims_permitted": claims_permitted,
         "total_prefixes": len(prefixes),
+        "configured_scales": [s["catalog_size"] for s in scale_data],
         "final_storage_savings_bytes": final_savings,
         "files_checked": len(checked_files),
     }

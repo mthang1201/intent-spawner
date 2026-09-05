@@ -19,6 +19,7 @@ from .storage_contracts import (
     ImageLayerMetadata,
     LayerInspection,
     PrefixStorageMeasurement,
+    SIZE_DOMAIN_COMPRESSED_OCI_BLOB,
     StorageExecutionStatus,
     get_ordered_catalog_images,
 )
@@ -49,9 +50,14 @@ class BaseStorageRunner:
 
     def measure_all(
         self,
+        images: Sequence[tuple[str, str, str]] | None = None,
     ) -> tuple[list[ImageLayerMetadata], list[PrefixStorageMeasurement], str]:
-        """Inspect all catalog images in order and compute cumulative prefix storage."""
-        ordered = get_ordered_catalog_images(self.catalog)
+        """Inspect catalog images in order and compute cumulative prefix storage."""
+        ordered = (
+            list(images)
+            if images is not None
+            else get_ordered_catalog_images(self.catalog)
+        )
         inspections: list[ImageLayerMetadata] = []
 
         for image_id, ref, _ in ordered:
@@ -95,6 +101,7 @@ class DryRunStorageRunner(BaseStorageRunner):
         image_reference: str,
     ) -> ImageLayerMetadata:
         digest = validate_approved_image_reference(image_reference, self.catalog)
+        pinned = "@sha256:" in image_reference
         return ImageLayerMetadata(
             image_id=image_id,
             image_reference=image_reference,
@@ -102,12 +109,21 @@ class DryRunStorageRunner(BaseStorageRunner):
             platform={"architecture": self.target_arch, "os": self.target_os},
             layers=(),
             total_bytes=0,
+            is_digest_pinned=pinned,
+            resolved_digest=digest,
+            manifest_digest=digest,
+            size_domain=SIZE_DOMAIN_COMPRESSED_OCI_BLOB,
         )
 
     def measure_all(
         self,
+        images: Sequence[tuple[str, str, str]] | None = None,
     ) -> tuple[list[ImageLayerMetadata], list[PrefixStorageMeasurement], str]:
-        ordered = get_ordered_catalog_images(self.catalog)
+        ordered = (
+            list(images)
+            if images is not None
+            else get_ordered_catalog_images(self.catalog)
+        )
         inspections = [self.inspect_image_layers(img_id, ref) for img_id, ref, _ in ordered]
 
         prefixes: list[PrefixStorageMeasurement] = []
@@ -168,7 +184,12 @@ class SyntheticStorageRunner(BaseStorageRunner):
                 tf_layer = LayerInspection(digest="sha256:0000000000000000000000000000000000000000000000000000000000000005", size=450_000_000, media_type="application/vnd.oci.image.layer.v1.tar+gzip")
                 layers = tuple(base_layers + [tf_layer])
 
+        for l in layers:
+            if l.size < 0:
+                raise RuntimeError(f"Negative layer size in synthetic layer: {l}")
+
         total = sum(l.size for l in layers)
+        pinned = "@sha256:" in image_reference
         return ImageLayerMetadata(
             image_id=image_id,
             image_reference=image_reference,
@@ -176,6 +197,12 @@ class SyntheticStorageRunner(BaseStorageRunner):
             platform={"architecture": self.target_arch, "os": self.target_os},
             layers=layers,
             total_bytes=total,
+            is_digest_pinned=pinned,
+            resolved_digest=digest,
+            manifest_digest=digest,
+            manifest_media_type="application/vnd.oci.image.manifest.v1+json",
+            config_digest="sha256:c000000000000000000000000000000000000000000000000000000000000000",
+            size_domain=SIZE_DOMAIN_COMPRESSED_OCI_BLOB,
         )
 
 
@@ -228,6 +255,7 @@ class DockerManifestStorageRunner(BaseStorageRunner):
 
         manifest_entries = raw_data if isinstance(raw_data, list) else [raw_data]
         matched_manifest: dict[str, Any] | None = None
+        matched_entry: dict[str, Any] | None = None
 
         for entry in manifest_entries:
             desc = entry.get("Descriptor", {})
@@ -246,6 +274,7 @@ class DockerManifestStorageRunner(BaseStorageRunner):
                     except Exception:
                         pass
                 if matched_manifest:
+                    matched_entry = entry
                     break
 
         if not matched_manifest:
@@ -257,8 +286,25 @@ class DockerManifestStorageRunner(BaseStorageRunner):
         if not raw_layers:
             raise RuntimeError(f"Manifest for {image_reference} contains zero layers")
 
+        desc = matched_entry.get("Descriptor", {}) if matched_entry else {}
+        manifest_digest = str(desc.get("digest", digest))
+        manifest_media_type = str(
+            desc.get(
+                "mediaType",
+                matched_manifest.get(
+                    "mediaType", "application/vnd.oci.image.manifest.v1+json"
+                ),
+            )
+        )
+        config_digest = str(matched_manifest.get("config", {}).get("digest", ""))
+        pinned = "@sha256:" in image_reference
+
         layers: list[LayerInspection] = []
         for l in raw_layers:
+            if "size" not in l or l["size"] is None or int(l["size"]) < 0:
+                raise RuntimeError(
+                    f"Missing or negative layer size in manifest for {image_reference}"
+                )
             layer_digest = str(l["digest"])
             layer_size = int(l["size"])
             media_type = str(l.get("mediaType", ""))
@@ -274,6 +320,12 @@ class DockerManifestStorageRunner(BaseStorageRunner):
             platform={"architecture": self.target_arch, "os": self.target_os},
             layers=tuple(layers),
             total_bytes=total_bytes,
+            is_digest_pinned=pinned,
+            resolved_digest=digest,
+            manifest_digest=manifest_digest,
+            manifest_media_type=manifest_media_type,
+            config_digest=config_digest,
+            size_domain=SIZE_DOMAIN_COMPRESSED_OCI_BLOB,
         )
 
 
