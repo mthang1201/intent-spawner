@@ -23,6 +23,8 @@ import subprocess
 import tempfile
 from typing import Any, Mapping, Sequence
 
+import yaml
+
 from evaluation_v5.analysis.statistics import (
     derive_bootstrap_seed,
     holm_adjust,
@@ -47,10 +49,11 @@ from .research_contracts import (
 )
 
 
-ANALYSIS_PACKAGE_SCHEMA_VERSION = "protocol-v5-research-analysis-package-v1.0.0"
-EVIDENCE_INVENTORY_SCHEMA_VERSION = "protocol-v5-research-evidence-inventory-v1.0.0"
-PROVENANCE_SCHEMA_VERSION = "protocol-v5-research-provenance-check-v1.0.0"
-THREATS_SCHEMA_VERSION = "protocol-v5-threats-to-validity-v1.0.0"
+ANALYSIS_PACKAGE_SCHEMA_VERSION = "protocol-v5-research-analysis-package-v1.1.0"
+LEGACY_ANALYSIS_PACKAGE_SCHEMA_VERSION = "protocol-v5-research-analysis-package-v1.0.0"
+EVIDENCE_INVENTORY_SCHEMA_VERSION = "protocol-v5-research-evidence-inventory-v1.1.0"
+PROVENANCE_SCHEMA_VERSION = "protocol-v5-research-provenance-check-v1.1.0"
+THREATS_SCHEMA_VERSION = "protocol-v5-threats-to-validity-v1.1.0"
 PROTOCOL_VERSION = "5.0.0"
 EXIT_SUCCESS = 0
 EXIT_FAILED = 2
@@ -66,6 +69,16 @@ SEMANTIC_DIGEST_KEYS = {
     "indexes.hybrid.sha256": "hybrid_index_canonical",
     "extractor.prompt_sha256": "extractor_prompt_bytes",
     "p3.prompt_sha256": "p3_prompt_bytes",
+    "benchmark.dataset_sha256": "offline_benchmark_dataset_bytes",
+}
+FREEZE_POINTER_DIGEST_NAMESPACES = {
+    "/candidate_catalog/file_sha256": "catalog_file_bytes",
+    "/candidate_catalog/corpus_sha256": "candidate_corpus_canonical",
+    "/indexes/dense/index_checksum": "dense_index_canonical",
+    "/indexes/sparse/index_checksum": "sparse_index_canonical",
+    "/indexes/hybrid/index_checksum": "hybrid_index_canonical",
+    "/prompts/P2_extractor/prompt_sha256": "extractor_prompt_bytes",
+    "/prompts/P3_reranker/prompt_sha256": "p3_prompt_bytes",
 }
 
 
@@ -93,6 +106,7 @@ class EvidenceCandidate:
     provenance: dict[str, Any] = field(default_factory=dict)
     metadata: dict[str, Any] = field(default_factory=dict)
     artifacts: list[dict[str, Any]] = field(default_factory=list)
+    metric_lineage: dict[str, dict[str, list[dict[str, Any]]]] = field(default_factory=dict)
     reason_codes: list[str] = field(default_factory=list)
     validation_error: str | None = None
 
@@ -120,6 +134,7 @@ class EvidenceCandidate:
             "provenance": self.provenance,
             "metadata": self.metadata,
             "artifacts": self.artifacts,
+            "metric_lineage": self.metric_lineage,
             "reason_codes": sorted(set(self.reason_codes)),
             "validation_error": self.validation_error,
         }
@@ -187,6 +202,43 @@ def _artifact(path: Path, package: Path) -> dict[str, Any]:
         "package_relative_path": str(path.resolve().relative_to(package.resolve())),
         "sha256": file_sha256(path),
     }
+
+
+def _metric_source(
+    path: Path,
+    *,
+    requirement_id: str,
+    evidence_schema_version: str | None,
+    json_pointers: Sequence[str],
+    transformation: str,
+    record_selector: Mapping[str, Any] | None = None,
+    matched_record_count: int = 1,
+) -> dict[str, Any]:
+    """Describe an exact, checksum-bound source for one normalized metric."""
+
+    suffix = path.suffix.lower()
+    source_format = "jsonl" if suffix == ".jsonl" else "yaml" if suffix in {".yaml", ".yml"} else "json"
+    locator: dict[str, Any] = {
+        "format": source_format,
+        "json_pointers": list(json_pointers),
+        "matched_record_count": matched_record_count,
+    }
+    if record_selector is not None:
+        locator["record_selector"] = dict(record_selector)
+    return {
+        "requirement_id": requirement_id,
+        "source_artifact": str(path.resolve()),
+        "artifact_sha256": file_sha256(path),
+        "evidence_schema_version": evidence_schema_version,
+        "locator": locator,
+        "transformation": transformation,
+    }
+
+
+def _lineage_map(
+    fields: Sequence[str], source: Mapping[str, Any]
+) -> dict[str, list[dict[str, Any]]]:
+    return {field: [dict(source)] for field in fields}
 
 
 def _nested(value: Mapping[str, Any], *keys: str) -> Any:
@@ -379,6 +431,8 @@ def _adapt_offline_package(
     *,
     freeze: Mapping[str, Any],
     threshold: Mapping[str, Any] | None,
+    freeze_path: Path | None = None,
+    threshold_path: Path | None = None,
 ) -> list[EvidenceCandidate]:
     provenance_path = package / "raw" / "offline-run-provenance.json"
     completion_path = package / "report" / "offline-run-completion.json"
@@ -427,6 +481,49 @@ def _adapt_offline_package(
     paired_path = statistics_root / "paired-comparisons.jsonl"
     family_rows = _read_jsonl(family_path) if family_path.is_file() else []
     paired_rows = _read_jsonl(paired_path) if paired_path.is_file() else []
+    source_identity = statistics_manifest.get("source") or provenance.get("split") or {}
+    h1_rows = [
+        row for row in paired_rows
+        if row.get("comparison_id") == "P2_minus_P1"
+        and row.get("endpoint") == "joint_accept_at_1"
+    ]
+    h1_lineage: dict[str, list[dict[str, Any]]] = {}
+    if len(h1_rows) == 1:
+        h1_source = _metric_source(
+            paired_path,
+            requirement_id="offline_recommendation",
+            evidence_schema_version=statistics_manifest.get("schema_version"),
+            record_selector={"comparison_id": "P2_minus_P1", "endpoint": "joint_accept_at_1"},
+            json_pointers=[
+                "/effect_sizes/mean_difference", "/effect_ci_low", "/effect_ci_high",
+                "/p_value_holm", "/p_value_raw", "/hypothesis_status",
+                "/statistical_decision", "/test_method", "/effective_family_n",
+            ],
+            transformation="Select the unique P2-minus-P1 JointAccept@1 paired-family comparison; prefer its Holm p-value when present.",
+        )
+        h1_lineage = _lineage_map(
+            ("effect", "ci_low", "ci_high", "p_value", "test_available"), h1_source
+        )
+    h2_source_rows = [row for row in family_rows if row.get("system_id") in {"P1", "P2"}]
+    h2_lineage: dict[str, list[dict[str, Any]]] = {}
+    if h2_source_rows:
+        h2_source = _metric_source(
+            family_path,
+            requirement_id="natural_language_robustness",
+            evidence_schema_version=statistics_manifest.get("schema_version"),
+            record_selector={"system_id": {"in": ["P1", "P2"]}},
+            json_pointers=[
+                "/family_id", "/system_id", "/endpoint_variant_denominators/joint_accept_at_1",
+                "/endpoint_variant_denominators/robustness_rate",
+                "/endpoint_variant_sums/joint_accept_at_1",
+                "/endpoint_variant_sums/robustness_rate",
+            ],
+            matched_record_count=len(h2_source_rows),
+            transformation="Aggregate repeats within variants, derive canonical-minus-reviewed-equivalent JointAccept@1 loss per system and family, then run one paired family-level P2-loss-minus-P1-loss test and bootstrap CI.",
+        )
+        h2_lineage = _lineage_map(
+            ("effect", "ci_low", "ci_high", "p_value", "test_available"), h2_source
+        )
     common = {
         "evidence_class": "E1",
         "experiment_id": "E1",
@@ -468,15 +565,23 @@ def _adapt_offline_package(
         "reason_codes": reasons,
         "validation_error": "; ".join(validation_errors) or None,
     }
+    common["semantic_provenance"].update(
+        {
+            "benchmark.dataset_sha256": source_identity.get("dataset_sha256"),
+            "benchmark.split_id": source_identity.get("split_id"),
+        }
+    )
     offline = EvidenceCandidate(
         requirement_id="offline_recommendation",
         metrics={"H1": _h1_metrics(paired_rows)},
+        metric_lineage={"H1": h1_lineage},
         **common,
     )
     robustness = EvidenceCandidate(
         requirement_id="natural_language_robustness",
         evidence_class="E2",
         metrics={"H2": _h2_metrics(family_rows)},
+        metric_lineage={"H2": h2_lineage},
         **{key: value for key, value in common.items() if key != "evidence_class"},
     )
     candidates = [offline, robustness]
@@ -487,17 +592,71 @@ def _adapt_offline_package(
         if _nested(freeze, "p3_gate", "status") != "retained" or _nested(freeze, "p3_gate", "p3_active") is not True:
             p3_eligibility = "INELIGIBLE"
             p3_reasons.append("P3_NOT_RETAINED")
+        p3_sources: list[dict[str, Any]] = []
+        quality_rows = [
+            row for row in paired_rows
+            if row.get("comparison_id") == "P3_minus_P2"
+            and row.get("endpoint") == "joint_accept_at_1"
+        ]
+        if quality_rows:
+            p3_sources.append(_metric_source(
+                paired_path,
+                requirement_id="p2_p3",
+                evidence_schema_version=statistics_manifest.get("schema_version"),
+                record_selector={"comparison_id": "P3_minus_P2", "endpoint": "joint_accept_at_1"},
+                json_pointers=[
+                    "/effect_sizes/mean_difference", "/effect_ci_low", "/effect_ci_high",
+                    "/p_value_holm", "/p_value_raw", "/hypothesis_status", "/effective_family_n",
+                ],
+                transformation="Select the unique retained P3-minus-P2 JointAccept@1 paired-family comparison.",
+            ))
+        if freeze_path is not None and freeze_path.is_file():
+            p3_sources.append(_metric_source(
+                freeze_path,
+                requirement_id="p2_p3",
+                evidence_schema_version=statistics_manifest.get("schema_version"),
+                json_pointers=["/p3_gate/status", "/p3_gate/p3_active", "/systems/P3", "/prompts/P3_reranker"],
+                transformation="Require the separately frozen P3 gate to be retained and active.",
+            ))
+        if threshold_path is not None and threshold_path.is_file():
+            p3_sources.append(_metric_source(
+                threshold_path,
+                requirement_id="p2_p3",
+                evidence_schema_version=(threshold or {}).get("schema_version"),
+                json_pointers=["/frozen_before_confirmatory_evidence", "/quality_metric", "/overhead_limits"],
+                transformation="Compare every observed P3-minus-P2 overhead CI upper bound with its pre-evidence frozen threshold.",
+            ))
+        p3_artifacts = list(common["artifacts"])
+        for external in (freeze_path, threshold_path):
+            if external is not None and external.is_file():
+                p3_artifacts.append(
+                    {"path": str(external.resolve()), "package_relative_path": None, "sha256": file_sha256(external)}
+                )
         candidates.append(
             EvidenceCandidate(
                 requirement_id="p2_p3",
                 evidence_class="P2_P3",
                 metrics={"H8": _p3_metrics(paired_rows, freeze, threshold)},
+                metric_lineage={
+                    "H8": {
+                        field: [dict(source) for source in p3_sources]
+                        for field in (
+                            "gate_retained", "threshold_frozen", "quality_effect", "quality_ci_low",
+                            "quality_p_value", "all_overhead_ci_within_limits", "tests_available",
+                        )
+                        if p3_sources
+                    }
+                },
+                artifacts=p3_artifacts,
                 claim_eligibility=p3_eligibility,
                 reason_codes=p3_reasons,
                 **{
                     key: value
                     for key, value in common.items()
-                    if key not in {"evidence_class", "claim_eligibility", "reason_codes", "metrics"}
+                    if key not in {
+                        "evidence_class", "claim_eligibility", "reason_codes", "metrics",
+                        "metric_lineage", "artifacts",
+                    }
                 },
             )
         )
@@ -518,6 +677,61 @@ def _validate_output_checksums(package: Path, manifest: Mapping[str, Any]) -> No
             raise ResearchAnalysisError(f"output checksum mismatch: {relative}")
 
 
+def _validate_e3_claim_contract(
+    manifest: Mapping[str, Any],
+    analysis: Mapping[str, Any],
+    status: Mapping[str, Any],
+) -> None:
+    """Verify the frozen E3 endpoints, pairing, and missing-time policy."""
+
+    from evaluation_v5.user_study.questionnaires import (
+        ANALYSIS_PLAN,
+        ANALYSIS_PLAN_SHA256,
+        ANALYSIS_PLAN_VERSION,
+    )
+
+    contracts = manifest.get("contracts") or {}
+    if (
+        contracts.get("analysis_plan_version") != ANALYSIS_PLAN_VERSION
+        or contracts.get("analysis_plan_sha256") != ANALYSIS_PLAN_SHA256
+        or analysis.get("analysis_plan_version") != ANALYSIS_PLAN_VERSION
+        or analysis.get("analysis_plan_sha256") != ANALYSIS_PLAN_SHA256
+    ):
+        raise ResearchAnalysisError("E3 frozen analysis-plan identity mismatch")
+    if status.get("execution_status") != manifest.get("execution_status"):
+        raise ResearchAnalysisError("E3 manifest and status execution statuses disagree")
+    if status.get("task_set_stage") == "confirmatory" and status.get("task_set_status") != "frozen":
+        raise ResearchAnalysisError("E3 confirmatory task set is not frozen")
+    registry = analysis.get("primary_inference_registry") or {}
+    hypotheses = registry.get("hypotheses") or []
+    if (
+        registry.get("method") != "holm_step_down"
+        or registry.get("family_alpha") != ANALYSIS_PLAN["family_alpha"]
+        or registry.get("family_size") != 2
+        or registry.get("unavailable_endpoint_policy")
+        != "retain_in_family_and_never_reduce_family_size"
+        or [row.get("endpoint") for row in hypotheses]
+        != ANALYSIS_PLAN["co_primary_outcomes"]
+        or any(row.get("sidedness") != "two_sided" for row in hypotheses)
+    ):
+        raise ResearchAnalysisError("E3 co-primary inference registry changed")
+    holm = _nested(analysis, "effects", "holm_family") or {}
+    if analysis.get("execution_status") != "NOT_EXECUTED" and holm != {
+        "family": ANALYSIS_PLAN["co_primary_outcomes"],
+        "alpha": ANALYSIS_PLAN["family_alpha"],
+        "method": ANALYSIS_PLAN["multiplicity"],
+    }:
+        raise ResearchAnalysisError("E3 Holm family differs from the frozen plan")
+    decision = _nested(analysis, "effects", "decision_time_seconds") or {}
+    if analysis.get("execution_status") != "NOT_EXECUTED" and (
+        decision.get("estimand") != ANALYSIS_PLAN["decision_time_seconds"]["estimand"]
+        or decision.get("nonconfirmation_policy")
+        != ANALYSIS_PLAN["decision_time_seconds"]["nonconfirmation_policy"]
+        or decision.get("primary_timeout_or_pseudotime_policy") != "none"
+    ):
+        raise ResearchAnalysisError("E3 decision-time estimand or timeout policy changed")
+
+
 def _adapt_user_study_package(package: Path) -> EvidenceCandidate:
     manifest_path = package / "manifest.json"
     manifest = _read_json(manifest_path)
@@ -534,12 +748,16 @@ def _adapt_user_study_package(package: Path) -> EvidenceCandidate:
             raise ResearchAnalysisError("unsupported E3 analysis schema")
         if analysis.get("execution_status") != manifest.get("execution_status"):
             raise ResearchAnalysisError("E3 manifest and analysis execution statuses disagree")
+        status = _read_json(package / "report" / "status.json")
+        _validate_e3_claim_contract(manifest, analysis, status)
     except Exception as exc:
         validation_errors.append(str(exc))
         privacy = {}
         analysis = {}
+        status = {}
     status_path = package / "report" / "status.json"
-    status = _read_json(status_path) if status_path.is_file() else {}
+    if not status and status_path.is_file():
+        status = _read_json(status_path)
     stage = str(status.get("task_set_stage") or "unknown").lower()
     execution_status = str(manifest.get("execution_status") or status.get("execution_status") or "UNKNOWN")
     claims_permitted = bool(analysis.get("claims_permitted"))
@@ -599,6 +817,42 @@ def _adapt_user_study_package(package: Path) -> EvidenceCandidate:
         ),
         "custom_items": effects.get("custom_items") or {},
     }
+    analysis_path = package / "derived" / "analysis.json"
+    h3_source = _metric_source(
+        analysis_path,
+        requirement_id="user_study",
+        evidence_schema_version=manifest.get("schema_version"),
+        json_pointers=[
+            "/effects/selection_success/risk_difference",
+            "/effects/selection_success/risk_difference_ci_95/0",
+            "/effects/selection_success/risk_difference_ci_95/1",
+            "/effects/selection_success/p_value_holm",
+            "/effects/selection_success/status",
+            "/effects/decision_time_seconds/raw_paired_effect/mean_difference",
+            "/effects/decision_time_seconds/raw_paired_effect/confidence_interval_95/0",
+            "/effects/decision_time_seconds/raw_paired_effect/confidence_interval_95/1",
+            "/effects/decision_time_seconds/p_value_holm",
+            "/effects/decision_time_seconds/status",
+            "/primary_inference_registry",
+            "/decision_time_contract",
+        ],
+        transformation="Use the frozen paired/counterbalanced participant design, retain incomplete and timeout tasks in flow/missingness, and require both Holm-adjusted co-primary endpoints.",
+    ) if analysis_path.is_file() else None
+    h4_source = _metric_source(
+        analysis_path,
+        requirement_id="user_study",
+        evidence_schema_version=manifest.get("schema_version"),
+        json_pointers=[
+            "/effects/seq_ease/paired_effect/mean_difference",
+            "/effects/seq_ease/paired_effect/confidence_interval_95/0",
+            "/effects/seq_ease/paired_effect/confidence_interval_95/1",
+            "/effects/sus/mean_difference",
+            "/effects/sus/confidence_interval_95/0",
+            "/effects/sus/confidence_interval_95/1",
+            "/analysis_plan_sha256",
+        ],
+        transformation="Read only the frozen SEQ-ease and SUS participant-level endpoints; CUSTOM questionnaire items remain diagnostic and cannot substitute.",
+    ) if analysis_path.is_file() else None
     catalog = _nested(manifest, "study_identity", "authoritative_catalog") or {}
     return EvidenceCandidate(
         requirement_id="user_study",
@@ -614,6 +868,19 @@ def _adapt_user_study_package(package: Path) -> EvidenceCandidate:
         claims_permitted=claims_permitted,
         claim_eligibility=eligibility,
         metrics={"H3": h3, "H4": h4},
+        metric_lineage={
+            "H3": _lineage_map(
+                (
+                    "selection_effect", "selection_ci_low", "selection_p_holm",
+                    "time_effect", "time_ci_high", "time_p_holm", "tests_available",
+                ),
+                h3_source,
+            ) if h3_source else {},
+            "H4": _lineage_map(
+                ("seq_effect", "seq_ci_low", "sus_effect", "sus_ci_low", "estimates_available"),
+                h4_source,
+            ) if h4_source else {},
+        },
         tests={"primary_inference_registry": analysis.get("primary_inference_registry") or {}},
         semantic_provenance={
             "catalog.version": catalog.get("catalog_version"),
@@ -635,7 +902,7 @@ def _adapt_user_study_package(package: Path) -> EvidenceCandidate:
         },
         artifacts=[
             _artifact(manifest_path, package),
-            *([_artifact(package / "derived" / "analysis.json", package)] if (package / "derived" / "analysis.json").is_file() else []),
+            *([_artifact(analysis_path, package)] if analysis_path.is_file() else []),
             *([_artifact(package / "report" / "privacy-audit.json", package)] if (package / "report" / "privacy-audit.json").is_file() else []),
             *([_artifact(status_path, package)] if status_path.is_file() else []),
         ],
@@ -673,8 +940,13 @@ def _resource_effect(row: Mapping[str, Any]) -> dict[str, Any]:
 
 
 def _h5_metrics(
-    statistics_rows: Sequence[Mapping[str, Any]], pareto_rows: Sequence[Mapping[str, Any]]
+    statistics_rows: Sequence[Mapping[str, Any]],
+    pareto_rows: Sequence[Mapping[str, Any]],
+    condition_rows: Sequence[Mapping[str, Any]],
 ) -> dict[str, Any]:
+    from evaluation_v5.resource.efficiency_analysis import classify_pareto
+    from evaluation_v5.resource.efficiency_contracts import PARETO_OBJECTIVES
+
     cpu = _resource_effect(
         _resource_row(statistics_rows, "cpu_cost_per_success", "P2_CATALOG", "STATIC_LARGE")
     )
@@ -686,8 +958,44 @@ def _h5_metrics(
         for row in pareto_rows
         if row.get("condition") == "P2_CATALOG" and row.get("reference") == "STATIC_LARGE"
     ]
+    conditions = {
+        str(row.get("condition")): row
+        for row in condition_rows
+        if row.get("condition") in {"P2_CATALOG", "STATIC_LARGE"}
+    }
+    candidate = conditions.get("P2_CATALOG")
+    reference = conditions.get("STATIC_LARGE")
+    reported_classification = pareto[0].get("classification") if len(pareto) == 1 else None
+    if candidate is None or reference is None:
+        recomputed_classification = None
+        reliability_preserved = None
+    else:
+        recomputed_classification = classify_pareto(candidate, reference)
+        reliability_minimize = [
+            key for key in PARETO_OBJECTIVES["minimize"]
+            if key not in {"cpu_cost_per_success", "memory_cost_per_success"}
+        ]
+        required_values = [
+            *(candidate.get(key) for key in reliability_minimize),
+            *(reference.get(key) for key in reliability_minimize),
+            *(candidate.get(key) for key in PARETO_OBJECTIVES["maximize"]),
+            *(reference.get(key) for key in PARETO_OBJECTIVES["maximize"]),
+        ]
+        reliability_preserved = (
+            None
+            if any(value is None for value in required_values)
+            else all(candidate[key] <= reference[key] for key in reliability_minimize)
+            and all(candidate[key] >= reference[key] for key in PARETO_OBJECTIVES["maximize"])
+        )
     return {
-        "pareto_classification": pareto[0].get("classification") if len(pareto) == 1 else None,
+        "pareto_classification": reported_classification,
+        "pareto_recomputed_classification": recomputed_classification,
+        "pareto_report_consistent": (
+            reported_classification == recomputed_classification
+            if reported_classification is not None and recomputed_classification is not None
+            else None
+        ),
+        "reliability_preserved": reliability_preserved,
         "cpu_effect": cpu["effect"],
         "cpu_ci_low": cpu["ci_low"],
         "cpu_ci_high": cpu["ci_high"],
@@ -817,6 +1125,8 @@ def _adapt_resource_analysis(package: Path) -> EvidenceCandidate:
     raw_manifest: dict[str, Any] = {}
     plan: dict[str, Any] = {}
     environment: dict[str, Any] = {}
+    freeze_contract: dict[str, Any] = {}
+    resource_freeze_path: Path | None = None
     if raw_root is not None:
         try:
             raw_manifest = _read_json(raw_root / "manifest.json")
@@ -836,6 +1146,7 @@ def _adapt_resource_analysis(package: Path) -> EvidenceCandidate:
             raise ResearchAnalysisError("E4 analysis cannot be bound to a raw package")
         validate_raw_package(raw_root)
         freeze_contract = load_efficiency_freeze()
+        resource_freeze_path = FREEZE_PATH
         freeze_matches = plan.get("freeze_contract_sha256") == file_sha256(FREEZE_PATH)
         stage = (
             "confirmatory"
@@ -850,6 +1161,7 @@ def _adapt_resource_analysis(package: Path) -> EvidenceCandidate:
             from evaluation_v5.resource.efficiency_contracts import FREEZE_PATH, load_efficiency_freeze
 
             freeze_contract = load_efficiency_freeze()
+            resource_freeze_path = FREEZE_PATH
             stage = (
                 "confirmatory"
                 if plan.get("freeze_contract_sha256") == file_sha256(FREEZE_PATH)
@@ -859,6 +1171,39 @@ def _adapt_resource_analysis(package: Path) -> EvidenceCandidate:
             )
         except Exception:
             stage = "unknown"
+    statistics_path = package / "statistics" / "results.json"
+    pareto_path = package / "report" / "pareto.json"
+    trials_path = package / "derived" / "trials.jsonl"
+    condition_path = package / "derived" / "condition-summaries.json"
+    statistics = _read_json(statistics_path) if statistics_path.is_file() else {}
+    pareto = _read_json(pareto_path) if pareto_path.is_file() else {}
+    trials = _read_jsonl(trials_path) if trials_path.is_file() else []
+    conditions = _read_json(condition_path) if condition_path.is_file() else {}
+    h5 = _h5_metrics(
+        statistics.get("rows") or [], pareto.get("rows") or [], conditions.get("rows") or []
+    )
+    decisions = plan.get("decisions") or []
+    frozen_oracle = freeze_contract.get("oracle_package") or {}
+    decision_contract = freeze_contract.get("decision") or {}
+    independence_inputs_present = bool(
+        manifest.get("oracle_package_sha256")
+        and frozen_oracle.get("sha256")
+        and plan.get("freeze_contract_sha256")
+        and resource_freeze_path is not None
+        and "oracle_data_permitted" in decision_contract
+    )
+    oracle_independence_verified = (
+        manifest.get("oracle_package_sha256") == frozen_oracle.get("sha256")
+        and frozen_oracle.get("manual_approval_status") == "APPROVED"
+        and plan.get("freeze_contract_sha256") == file_sha256(resource_freeze_path)
+        and decision_contract.get("oracle_data_permitted") is False
+        if independence_inputs_present
+        else None
+    )
+    if h5["pareto_report_consistent"] is False:
+        validation_errors.append("E4 reported Pareto classification does not independently recompute")
+    if stage == "confirmatory" and raw_manifest.get("execution_status") == "OBSERVED" and oracle_independence_verified is not True:
+        validation_errors.append("E4 oracle/calibration independence provenance did not verify")
     validation_status = VALIDATION_FAIL if validation_errors else VALIDATION_PASS
     execution_status = (
         "DERIVED_EVIDENCE_COMPLETE"
@@ -872,12 +1217,111 @@ def _adapt_resource_analysis(package: Path) -> EvidenceCandidate:
         claims_permitted=claims_permitted,
         validation_status=validation_status,
     )
-    statistics_path = package / "statistics" / "results.json"
-    pareto_path = package / "report" / "pareto.json"
-    trials_path = package / "derived" / "trials.jsonl"
-    statistics = _read_json(statistics_path) if statistics_path.is_file() else {}
-    pareto = _read_json(pareto_path) if pareto_path.is_file() else {}
-    trials = _read_jsonl(trials_path) if trials_path.is_file() else []
+    h6 = _h6_metrics(trials)
+    h6["oracle_independence_verified"] = oracle_independence_verified
+    h5_sources: list[dict[str, Any]] = []
+    if statistics_path.is_file():
+        selected_statistics = [
+            row for row in statistics.get("rows") or []
+            if row.get("candidate_condition") == "P2_CATALOG"
+            and row.get("reference_condition") == "STATIC_LARGE"
+            and row.get("endpoint") in {"cpu_cost_per_success", "memory_cost_per_success"}
+        ]
+        if selected_statistics:
+            h5_sources.append(_metric_source(
+                statistics_path,
+                requirement_id="resource_efficiency",
+                evidence_schema_version=manifest.get("schema_version"),
+                record_selector={
+                    "candidate_condition": "P2_CATALOG",
+                    "reference_condition": "STATIC_LARGE",
+                    "endpoint": {"in": ["cpu_cost_per_success", "memory_cost_per_success"]},
+                },
+                json_pointers=[
+                    "/endpoint", "/effect/mean_difference", "/ci_95_candidate_minus_reference/0",
+                    "/ci_95_candidate_minus_reference/1", "/test/p_value_holm_within_endpoint",
+                    "/test/test_method", "/effective_family_n",
+                ],
+                matched_record_count=len(selected_statistics),
+                transformation="Select the two frozen P2-Catalog-minus-Static-Large family-level cost-per-success contrasts.",
+            ))
+    selected_pareto = [
+        row for row in pareto.get("rows") or []
+        if row.get("condition") == "P2_CATALOG" and row.get("reference") == "STATIC_LARGE"
+    ]
+    if pareto_path.is_file() and selected_pareto:
+        h5_sources.append(_metric_source(
+            pareto_path,
+            requirement_id="resource_efficiency",
+            evidence_schema_version=manifest.get("schema_version"),
+            record_selector={"condition": "P2_CATALOG", "reference": "STATIC_LARGE"},
+            json_pointers=["/classification"],
+            matched_record_count=len(selected_pareto),
+            transformation="Read the frozen reported Pareto classification and compare it with an independent recomputation.",
+        ))
+    if condition_path.is_file():
+        selected_conditions = [
+            row for row in conditions.get("rows") or []
+            if row.get("condition") in {"P2_CATALOG", "STATIC_LARGE"}
+        ]
+        if selected_conditions:
+            h5_sources.append(_metric_source(
+                condition_path,
+                requirement_id="resource_efficiency",
+                evidence_schema_version=manifest.get("schema_version"),
+                record_selector={"condition": {"in": ["P2_CATALOG", "STATIC_LARGE"]}},
+                json_pointers=[
+                    "/condition", "/success_rate", "/correct_completion_rate", "/oom_rate",
+                    "/timeout_rate", "/pending_or_admission_rate", "/runtime_error_rate",
+                    "/incorrect_rate", "/cpu_cost_per_success", "/memory_cost_per_success",
+                ],
+                matched_record_count=len(selected_conditions),
+                transformation="Independently recompute the frozen Pareto and no-worse reliability safeguards from condition summaries.",
+            ))
+    h6_sources: list[dict[str, Any]] = []
+    h6_trial_rows = [row for row in trials if row.get("condition") in {"P2_CATALOG", "P2_DYNAMIC"}]
+    if h6_trial_rows:
+        h6_sources.append(_metric_source(
+            trials_path,
+            requirement_id="resource_efficiency",
+            evidence_schema_version=manifest.get("schema_version"),
+            record_selector={"condition": {"in": ["P2_CATALOG", "P2_DYNAMIC"]}},
+            json_pointers=[
+                "/family_id", "/condition", "/valid_attempt",
+                "/cpu_request_allocation_error_absolute",
+                "/memory_request_allocation_error_absolute",
+            ],
+            matched_record_count=len(h6_trial_rows),
+            transformation="Average repetitions within family and condition, then run paired family-level Dynamic-minus-Catalog tests with Holm correction across request axes.",
+        ))
+    if manifest_path.is_file():
+        h6_sources.append(_metric_source(
+            manifest_path,
+            requirement_id="resource_efficiency",
+            evidence_schema_version=manifest.get("schema_version"),
+            json_pointers=["/oracle_package_sha256", "/raw_package_sha256"],
+            transformation="Bind the analysis to the independently approved sealed oracle and observed raw package.",
+        ))
+    raw_plan_path = raw_root / "plan.json" if raw_root else None
+    if raw_plan_path is not None and raw_plan_path.is_file():
+        h6_sources.append(_metric_source(
+            raw_plan_path,
+            requirement_id="resource_efficiency",
+            evidence_schema_version=manifest.get("schema_version"),
+            json_pointers=["/freeze_contract_sha256", "/decisions"],
+            transformation="Bind every frozen allocation decision to the exact resource-efficiency freeze contract.",
+        ))
+    if resource_freeze_path is not None and resource_freeze_path.is_file():
+        h6_sources.append(_metric_source(
+            resource_freeze_path,
+            requirement_id="resource_efficiency",
+            evidence_schema_version=freeze_contract.get("schema_version"),
+            json_pointers=[
+                "/decision/oracle_data_permitted", "/oracle_package/sha256",
+                "/oracle_package/manual_approval_status",
+            ],
+            transformation="Verify allocation generation was oracle-free and the comparison oracle was independently approved and checksum-frozen.",
+        ))
     return EvidenceCandidate(
         requirement_id="resource_efficiency",
         evidence_class="E4",
@@ -892,8 +1336,27 @@ def _adapt_resource_analysis(package: Path) -> EvidenceCandidate:
         claims_permitted=claims_permitted,
         claim_eligibility=eligibility,
         metrics={
-            "H5": _h5_metrics(statistics.get("rows") or [], pareto.get("rows") or []),
-            "H6": _h6_metrics(trials),
+            "H5": h5,
+            "H6": h6,
+        },
+        metric_lineage={
+            "H5": {
+                field: [dict(source) for source in h5_sources]
+                for field in (
+                    "pareto_classification", "pareto_report_consistent", "reliability_preserved",
+                    "cpu_effect", "cpu_ci_high", "cpu_p_holm", "memory_effect",
+                    "memory_ci_high", "memory_p_holm", "tests_available",
+                )
+                if h5_sources
+            },
+            "H6": {
+                field: [dict(source) for source in h6_sources]
+                for field in (
+                    "oracle_independence_verified", "cpu_effect", "cpu_ci_high", "cpu_p_holm",
+                    "memory_effect", "memory_ci_high", "memory_p_holm", "tests_available",
+                )
+                if h6_sources
+            },
         },
         tests={
             "family_is_primary_unit": statistics.get("family_is_primary_unit"),
@@ -915,13 +1378,18 @@ def _adapt_resource_analysis(package: Path) -> EvidenceCandidate:
             "environment": environment,
             "capacity_evidence_type": manifest.get("capacity_evidence_type"),
             "success_noninferiority_margin": None,
+            "success_noninferiority_margin_declared": "success_noninferiority_margin" in pareto,
+            "oracle_independence_verified": oracle_independence_verified,
         },
         artifacts=[
             _artifact(manifest_path, package),
             *([_artifact(statistics_path, package)] if statistics_path.is_file() else []),
             *([_artifact(pareto_path, package)] if pareto_path.is_file() else []),
             *([_artifact(trials_path, package)] if trials_path.is_file() else []),
+            *([_artifact(condition_path, package)] if condition_path.is_file() else []),
             *([{"path": str((raw_root / "manifest.json").resolve()), "package_relative_path": None, "sha256": file_sha256(raw_root / "manifest.json")}] if raw_root and (raw_root / "manifest.json").is_file() else []),
+            *([{"path": str(raw_plan_path.resolve()), "package_relative_path": None, "sha256": file_sha256(raw_plan_path)}] if raw_plan_path and raw_plan_path.is_file() else []),
+            *([{"path": str(resource_freeze_path.resolve()), "package_relative_path": None, "sha256": file_sha256(resource_freeze_path)}] if resource_freeze_path and resource_freeze_path.is_file() else []),
         ],
         reason_codes=reasons,
         validation_error="; ".join(validation_errors) or None,
@@ -1028,6 +1496,29 @@ def _adapt_image_functional(package: Path) -> EvidenceCandidate:
         "functional_execution_coverage": _finite(p2.get("functional_execution_coverage")),
         "catalog_underclaim_count": p2.get("catalog_underclaim_count"),
     }
+    h7f_sources: list[dict[str, Any]] = []
+    if metrics_path.is_file():
+        h7f_sources.append(_metric_source(
+            metrics_path,
+            requirement_id="image_functional",
+            evidence_schema_version=manifest.get("schema_version"),
+            json_pointers=[
+                "/systems/P2/conservative_functional_success_rate",
+                "/systems/P2/operational_adequacy_rate",
+                "/systems/P2/required_probe_not_defined_count",
+                "/systems/P2/execution_unavailable_count",
+                "/probe_summary/probes_failed",
+            ],
+            transformation="Apply the exact all-required-capability-probes criterion to P2 functional metrics.",
+        ))
+    if probe_manifest_path.is_file():
+        h7f_sources.append(_metric_source(
+            probe_manifest_path,
+            requirement_id="image_functional",
+            evidence_schema_version=manifest.get("schema_version"),
+            json_pointers=["/images"],
+            transformation="Verify every evaluated image reference is bound to its immutable sha256 digest.",
+        ))
     return EvidenceCandidate(
         requirement_id="image_functional",
         evidence_class="E5",
@@ -1042,6 +1533,17 @@ def _adapt_image_functional(package: Path) -> EvidenceCandidate:
         claims_permitted=claims_permitted,
         claim_eligibility=eligibility,
         metrics={"H7F": h7f},
+        metric_lineage={
+            "H7F": {
+                field: [dict(source) for source in h7f_sources]
+                for field in (
+                    "conservative_success", "operational_adequacy",
+                    "required_probe_not_defined_count", "execution_unavailable_count",
+                    "failed_probe_count", "all_digests_immutable",
+                )
+                if h7f_sources
+            }
+        },
         tests={"criterion": "EXACT_ALL_REQUIRED_PROBES", "validator": validation},
         semantic_provenance={
             "p1.backend_version": systems.get("P1"),
@@ -1142,6 +1644,18 @@ def _adapt_image_storage(package: Path, evidence_path: Path) -> EvidenceCandidat
                 "unique_layer_bytes_added": row.get("unique_layer_bytes") if prior is None else row.get("unique_layer_bytes") - prior.get("unique_layer_bytes"),
             }
         )
+    expansion_naive = (
+        prefixes[-1]["naive_logical_bytes"] - prefixes[0]["naive_logical_bytes"]
+        if len(prefixes) >= 2 else None
+    )
+    expansion_unique = (
+        prefixes[-1]["unique_layer_bytes"] - prefixes[0]["unique_layer_bytes"]
+        if len(prefixes) >= 2 else None
+    )
+    expansion_difference = (
+        expansion_unique - expansion_naive
+        if expansion_unique is not None and expansion_naive is not None else None
+    )
     catalog = evidence.get("catalog") or {}
     systems = _nested(evidence, "provenance", "backend_system_versions") or {}
     h7 = {
@@ -1153,9 +1667,29 @@ def _adapt_image_storage(package: Path, evidence_path: Path) -> EvidenceCandidat
             else None
         ),
         "prefix_order_valid": not validation_errors and bool(prefixes),
+        "catalog_prefix_count": len(prefixes),
+        "expansion_naive_bytes": expansion_naive,
+        "expansion_unique_bytes": expansion_unique,
+        "expansion_growth_difference": expansion_difference,
+        "strictly_slower_catalog_expansion": (
+            expansion_difference < 0 if expansion_difference is not None else None
+        ),
         "prefixes": prefixes,
         "marginal_growth": marginal_growth,
     }
+    h7_source = _metric_source(
+        evidence_path,
+        requirement_id="image_storage",
+        evidence_schema_version=evidence.get("schema_version"),
+        json_pointers=[
+            "/catalog/ordered_image_digests", "/prefixes/0/naive_logical_bytes",
+            "/prefixes/0/unique_layer_bytes",
+            f"/prefixes/{len(prefixes) - 1}/naive_logical_bytes",
+            f"/prefixes/{len(prefixes) - 1}/unique_layer_bytes",
+            "/prefixes",
+        ],
+        transformation="Validate every frozen ordered catalog prefix, then compare post-baseline cumulative UniqueLayerBytes growth with LogicalImageBytes growth; a one-scale saving is insufficient.",
+    ) if prefixes else None
     return EvidenceCandidate(
         requirement_id="image_storage",
         evidence_class="E5",
@@ -1170,6 +1704,16 @@ def _adapt_image_storage(package: Path, evidence_path: Path) -> EvidenceCandidat
         claims_permitted=claims_permitted,
         claim_eligibility=eligibility,
         metrics={"H7": h7},
+        metric_lineage={
+            "H7": _lineage_map(
+                (
+                    "catalog_prefix_count", "all_prefixes_nonexpanding", "final_savings_bytes",
+                    "expansion_naive_bytes", "expansion_growth_difference",
+                    "strictly_slower_catalog_expansion", "prefix_order_valid",
+                ),
+                h7_source,
+            ) if h7_source else {}
+        },
         tests={"criterion": "EXACT_ORDERED_PREFIX_STORAGE"},
         semantic_provenance={
             "catalog.version": catalog.get("version"),
@@ -1220,6 +1764,8 @@ def discover_evidence(
     registry: Mapping[str, Any] | None = None,
     freeze: Mapping[str, Any] | None = None,
     p3_threshold: Mapping[str, Any] | None = None,
+    freeze_path: Path | None = None,
+    p3_threshold_path: Path | None = None,
 ) -> list[EvidenceCandidate]:
     """Discover known package schemas and retain ineligible evidence in inventory."""
 
@@ -1233,7 +1779,13 @@ def discover_evidence(
                 continue
             try:
                 candidates.extend(
-                    _adapt_offline_package(package, freeze=freeze, threshold=p3_threshold)
+                    _adapt_offline_package(
+                        package,
+                        freeze=freeze,
+                        threshold=p3_threshold,
+                        freeze_path=freeze_path,
+                        threshold_path=p3_threshold_path,
+                    )
                 )
             except Exception as exc:
                 candidates.extend(
@@ -1286,6 +1838,54 @@ def discover_evidence(
     return sorted(candidates, key=lambda row: (row.requirement_id, str(row.package_path)))
 
 
+def _candidate_integrity_errors(candidate: EvidenceCandidate) -> list[str]:
+    errors: list[str] = []
+    if not candidate.manifest_path.is_file():
+        errors.append("MANIFEST_MISSING")
+    else:
+        actual_manifest = file_sha256(candidate.manifest_path)
+        if actual_manifest != candidate.manifest_sha256:
+            errors.append("MANIFEST_MUTATED_AFTER_DISCOVERY")
+    for artifact in candidate.artifacts:
+        source = Path(str(artifact.get("path", "")))
+        expected = artifact.get("sha256")
+        if not source.is_file():
+            errors.append(f"ARTIFACT_MISSING:{source}")
+        elif not isinstance(expected, str) or file_sha256(source) != expected:
+            errors.append(f"ARTIFACT_CHECKSUM_MISMATCH:{source}")
+    return sorted(set(errors))
+
+
+def _candidate_decision_signature(candidate: EvidenceCandidate) -> str:
+    """Hash only decision-bearing content, excluding path/order/timestamps."""
+
+    return canonical_json_sha256(
+        {
+            "requirement_id": candidate.requirement_id,
+            "experiment_id": candidate.experiment_id,
+            "schema_version": candidate.schema_version,
+            "metrics": candidate.metrics,
+            "tests": candidate.tests,
+            "semantic_provenance": candidate.semantic_provenance,
+        }
+    )
+
+
+def _candidate_content_signature(candidate: EvidenceCandidate) -> str:
+    return canonical_json_sha256(
+        {
+            "manifest_sha256": candidate.manifest_sha256,
+            "artifacts": sorted(
+                (
+                    str(row.get("package_relative_path")),
+                    str(row.get("sha256")),
+                )
+                for row in candidate.artifacts
+            ),
+        }
+    )
+
+
 def select_evidence(
     candidates: Sequence[EvidenceCandidate],
     registry: Mapping[str, Any],
@@ -1309,13 +1909,25 @@ def select_evidence(
 
     for requirement_id, requirement in requirements.items():
         all_candidates = by_requirement.get(requirement_id, [])
+        integrity = {id(candidate): _candidate_integrity_errors(candidate) for candidate in all_candidates}
+        unique_candidates: list[EvidenceCandidate] = []
+        duplicate_reference_of: dict[int, str] = {}
+        identities: dict[tuple[str, str], EvidenceCandidate] = {}
+        for candidate in all_candidates:
+            identity = (str(candidate.package_path.resolve()), candidate.manifest_sha256)
+            if identity in identities:
+                duplicate_reference_of[id(candidate)] = str(identities[identity].package_path.resolve())
+            else:
+                identities[identity] = candidate
+                unique_candidates.append(candidate)
         accepted_schemas = set(requirement["accepted_schema_versions"])
         eligible = [
             candidate
-            for candidate in all_candidates
+            for candidate in unique_candidates
             if candidate.eligible
             and candidate.validation_status == VALIDATION_PASS
             and candidate.schema_version in accepted_schemas
+            and not integrity[id(candidate)]
         ]
         locked = requested.get(requirement_id)
         mode = "NONE"
@@ -1327,7 +1939,7 @@ def select_evidence(
                 locked_path = repository_root / locked_path
             matches = [
                 candidate
-                for candidate in all_candidates
+                for candidate in unique_candidates
                 if candidate.package_path.resolve() == locked_path.resolve()
             ]
             mode = "LOCKFILE"
@@ -1336,20 +1948,33 @@ def select_evidence(
                 fatal_requirements.add(requirement_id)
             else:
                 target = matches[0]
-                if target.manifest_sha256 != locked["manifest_sha256"]:
+                actual_manifest_sha = (
+                    file_sha256(target.manifest_path) if target.manifest_path.is_file() else None
+                )
+                if target.manifest_sha256 != locked["manifest_sha256"] or actual_manifest_sha != locked["manifest_sha256"]:
                     reason_codes.append("SELECTION_CHECKSUM_MISMATCH")
+                    fatal_requirements.add(requirement_id)
+                elif integrity[id(target)]:
+                    reason_codes.extend(integrity[id(target)])
                     fatal_requirements.add(requirement_id)
                 elif target not in eligible:
                     reason_codes.append("SELECTION_TARGET_INELIGIBLE")
                     fatal_requirements.add(requirement_id)
                 else:
                     chosen = target
+                    if len(eligible) > 1:
+                        reason_codes.append("EXPLICIT_CHECKSUM_LOCK_RESOLVED_MULTIPLE_CANDIDATES")
         elif len(eligible) == 1:
             chosen = eligible[0]
             mode = "AUTO_SINGLE_ELIGIBLE"
         elif len(eligible) > 1:
             mode = "AMBIGUOUS"
-            reason_codes.append("MULTIPLE_ELIGIBLE_PACKAGES_REQUIRE_LOCK")
+            signatures = {_candidate_decision_signature(candidate) for candidate in eligible}
+            if len(signatures) > 1:
+                reason_codes.append("CONTRADICTORY_ELIGIBLE_EVIDENCE_REQUIRE_LOCK")
+                fatal_requirements.add(requirement_id)
+            else:
+                reason_codes.append("EQUIVALENT_DUPLICATE_EVIDENCE_REQUIRE_LOCK")
         else:
             reason_codes.append("NO_ELIGIBLE_CONFIRMATORY_EVIDENCE")
             inherited = sorted({code for candidate in all_candidates for code in candidate.reason_codes})
@@ -1357,29 +1982,81 @@ def select_evidence(
             if requirement_id == "p2_p3":
                 reason_codes.append("P3_NOT_RETAINED_OR_NOT_PRESENT")
 
-        invalid_confirmatory = [
+        invalid_candidates = [
             candidate
-            for candidate in all_candidates
-            if candidate.stage == "confirmatory" and candidate.validation_status == VALIDATION_FAIL
+            for candidate in unique_candidates
+            if (candidate.validation_status == VALIDATION_FAIL or integrity[id(candidate)])
+            and (
+                candidate.stage == "confirmatory"
+                or candidate.claims_permitted
+                or candidate.claim_eligibility == "ELIGIBLE_CONFIRMATORY"
+            )
         ]
-        if invalid_confirmatory:
+        if invalid_candidates:
             fatal_requirements.add(requirement_id)
-            reason_codes.append("CONFIRMATORY_EVIDENCE_INVALID")
+            reason_codes.append("EVIDENCE_CANDIDATE_INVALID")
+            for candidate in invalid_candidates:
+                reason_codes.extend(integrity[id(candidate)])
             chosen = None
         if chosen is not None:
             selected[requirement_id] = chosen
+        decision_signatures = {
+            _candidate_decision_signature(candidate) for candidate in eligible
+        }
+        conflict_status = (
+            "NONE"
+            if len(eligible) <= 1
+            else "CONFLICTING"
+            if len(decision_signatures) > 1
+            else "EQUIVALENT_DUPLICATES"
+        )
+        candidate_records = []
+        for candidate in all_candidates:
+            duplicate_of = duplicate_reference_of.get(id(candidate))
+            if duplicate_of is not None:
+                disposition = "DUPLICATE_REFERENCE"
+            elif chosen is candidate:
+                disposition = "SELECTED"
+            elif candidate in eligible and chosen is not None:
+                disposition = "NOT_SELECTED_BY_EXPLICIT_LOCK"
+            elif candidate in eligible:
+                disposition = "UNRESOLVED_ELIGIBLE_CANDIDATE"
+            else:
+                disposition = "INELIGIBLE_OR_INVALID"
+            candidate_records.append(
+                {
+                    "package_path": str(candidate.package_path.resolve()),
+                    "manifest_path": str(candidate.manifest_path.resolve()),
+                    "registered_manifest_sha256": candidate.manifest_sha256,
+                    "actual_manifest_sha256": (
+                        file_sha256(candidate.manifest_path) if candidate.manifest_path.is_file() else None
+                    ),
+                    "content_signature_sha256": _candidate_content_signature(candidate),
+                    "decision_signature_sha256": _candidate_decision_signature(candidate),
+                    "stage": candidate.stage,
+                    "execution_status": candidate.execution_status,
+                    "validation_status": candidate.validation_status,
+                    "claim_eligibility": candidate.claim_eligibility,
+                    "integrity_errors": integrity[id(candidate)],
+                    "disposition": disposition,
+                    "duplicate_reference_of": duplicate_of,
+                }
+            )
         rows.append(
             {
                 "requirement_id": requirement_id,
                 "evidence_class": requirement["evidence_class"],
                 "accepted_schema_versions": requirement["accepted_schema_versions"],
                 "candidate_count": len(all_candidates),
+                "unique_candidate_count": len(unique_candidates),
                 "eligible_candidate_count": len(eligible),
+                "conflict_status": conflict_status,
                 "selection_mode": mode,
                 "selected_package": str(chosen.package_path.resolve()) if chosen else None,
                 "selected_manifest_sha256": chosen.manifest_sha256 if chosen else None,
                 "reason_codes": sorted(set(reason_codes)),
                 "candidate_packages": [str(item.package_path.resolve()) for item in all_candidates],
+                "candidate_records": candidate_records,
             }
         )
     return selected, {
@@ -1404,11 +2081,20 @@ def check_provenance(
         for field in requirements[requirement_id]["semantic_provenance"]:
             key = field["key"]
             observed = candidate.semantic_provenance.get(key)
+            observed_namespace = SEMANTIC_DIGEST_KEYS.get(key)
+            expected_namespace = FREEZE_POINTER_DIGEST_NAMESPACES.get(field["freeze_pointer"])
             try:
                 expected = json_pointer_get(freeze, field["freeze_pointer"])
             except KeyError:
                 expected = None
-            if observed is None or expected is None:
+            if (
+                observed_namespace is not None
+                and expected_namespace is not None
+                and observed_namespace != expected_namespace
+            ):
+                status = "INCOMPATIBLE_DIGEST_NAMESPACE"
+                blocked.add(requirement_id)
+            elif observed is None or expected is None:
                 status = "MISSING"
                 blocked.add(requirement_id)
             elif observed != expected:
@@ -1421,7 +2107,8 @@ def check_provenance(
                     "scope": "FREEZE",
                     "requirement_id": requirement_id,
                     "semantic_key": key,
-                    "digest_namespace": SEMANTIC_DIGEST_KEYS.get(key),
+                    "digest_namespace": observed_namespace,
+                    "freeze_digest_namespace": expected_namespace,
                     "freeze_pointer": field["freeze_pointer"],
                     "expected": expected,
                     "observed": observed,
@@ -1429,6 +2116,55 @@ def check_provenance(
                     "source_manifest": str(candidate.manifest_path.resolve()),
                 }
             )
+
+    cross_values: dict[tuple[str, str, str], list[tuple[str, Any]]] = defaultdict(list)
+    for requirement_id, candidate in selected.items():
+        for field in requirements[requirement_id].get("cross_experiment_provenance") or []:
+            key = str(field["key"])
+            group = str(field["comparison_group"])
+            namespace = str(field["namespace"])
+            observed = candidate.semantic_provenance.get(key)
+            if observed is None:
+                blocked.add(requirement_id)
+                comparisons.append(
+                    {
+                        "scope": "CROSS_EXPERIMENT_REQUIRED_FIELD",
+                        "requirement_id": requirement_id,
+                        "semantic_key": key,
+                        "comparison_group": group,
+                        "digest_namespace": namespace,
+                        "freeze_digest_namespace": None,
+                        "freeze_pointer": None,
+                        "expected": "PRESENT",
+                        "observed": None,
+                        "status": "MISSING",
+                        "source_manifest": str(candidate.manifest_path.resolve()),
+                    }
+                )
+            else:
+                cross_values[(group, key, namespace)].append((requirement_id, observed))
+    for (group, key, namespace), values in sorted(cross_values.items()):
+        if len(values) < 2:
+            continue
+        distinct = {canonical_json_sha256(value) for _, value in values}
+        status = "MATCH" if len(distinct) == 1 else "MISMATCH"
+        if status == "MISMATCH":
+            blocked.update(requirement_id for requirement_id, _ in values)
+        comparisons.append(
+            {
+                "scope": "CROSS_EXPERIMENT_DECLARED",
+                "requirement_id": [requirement_id for requirement_id, _ in values],
+                "semantic_key": key,
+                "comparison_group": group,
+                "digest_namespace": namespace,
+                "freeze_digest_namespace": None,
+                "freeze_pointer": None,
+                "expected": values[0][1],
+                "observed": {requirement_id: value for requirement_id, value in values},
+                "status": status,
+                "source_manifest": [str(selected[item].manifest_path.resolve()) for item, _ in values],
+            }
+        )
 
     values_by_key: dict[str, list[tuple[str, Any]]] = defaultdict(list)
     for requirement_id, candidate in selected.items():
@@ -1448,6 +2184,7 @@ def check_provenance(
                 "requirement_id": [requirement_id for requirement_id, _ in values],
                 "semantic_key": key,
                 "digest_namespace": SEMANTIC_DIGEST_KEYS.get(key),
+                "freeze_digest_namespace": None,
                 "freeze_pointer": None,
                 "expected": values[0][1],
                 "observed": {requirement_id: value for requirement_id, value in values},
@@ -1633,7 +2370,7 @@ def generate_threats(
                 source_pointer="/claims/0/metrics",
                 statement="JointAccept@1 operationalizes acceptability jointly across the frozen profile, image, and constraint criteria rather than every possible deployment objective.",
             )
-        if requirement == "natural_language_robustness":
+        if requirement == "natural_language_robustness" and candidate.metadata.get("variant_n") is not None:
             add(
                 code="REVIEWED_EQUIVALENCE_CONSTRUCT",
                 category="construct",
@@ -1692,44 +2429,53 @@ def generate_threats(
                     source_pointer=inventory_pointer + "/metrics/H3",
                     statement="At least one E3 endpoint used its predeclared paired fallback rather than the requested clustered model.",
                 )
-            add(
-                code="USER_STUDY_POPULATION_BOUNDARY",
-                category="external",
-                severity="boundary",
-                requirements=[requirement],
-                observed={
-                    "participant_target": candidate.metadata.get("participant_target"),
-                    "completed_participants": candidate.metadata.get("completed_participants"),
-                },
-                source_artifact="derived/evidence-inventory.json",
-                source_pointer=inventory_pointer + "/metadata/participant_target",
-                statement="E3 findings generalize only to the recruited participant population and frozen task set.",
-            )
+            if (
+                candidate.metadata.get("participant_target") is not None
+                or candidate.metadata.get("completed_participants") is not None
+            ):
+                add(
+                    code="USER_STUDY_POPULATION_BOUNDARY",
+                    category="external",
+                    severity="boundary",
+                    requirements=[requirement],
+                    observed={
+                        "participant_target": candidate.metadata.get("participant_target"),
+                        "completed_participants": candidate.metadata.get("completed_participants"),
+                    },
+                    source_artifact="derived/evidence-inventory.json",
+                    source_pointer=inventory_pointer + "/metadata/participant_target",
+                    statement="E3 findings generalize only to the recruited participant population and frozen task set.",
+                )
         if requirement == "resource_efficiency":
-            add(
-                code="NO_SUCCESS_NONINFERIORITY_MARGIN",
-                category="construct",
-                severity="boundary",
-                requirements=[requirement],
-                observed=candidate.metadata.get("success_noninferiority_margin"),
-                source_artifact="derived/evidence-inventory.json",
-                source_pointer=inventory_pointer + "/metadata/success_noninferiority_margin",
-                statement="The frozen E4 contract has no formal success noninferiority margin; preservation is limited to the declared Pareto rule.",
-            )
-            add(
-                code="SINGLE_CLUSTER_GENERALIZATION",
-                category="single_cluster_generalization",
-                severity="high",
-                requirements=[requirement],
-                observed={
-                    "cluster_identity": candidate.metadata.get("cluster_identity"),
-                    "scope": "single-pod sequential Kubernetes evidence",
-                },
-                source_artifact="derived/evidence-inventory.json",
-                source_pointer=inventory_pointer + "/metadata/cluster_identity",
-                statement="E4 measurements are bounded to the recorded cluster and sequential single-pod execution; simulated packing is not observed concurrency.",
-            )
-        if requirement in {"image_functional", "image_storage"}:
+            if (
+                candidate.metadata.get("success_noninferiority_margin_declared") is True
+                and candidate.metadata.get("success_noninferiority_margin") is None
+            ):
+                add(
+                    code="NO_SUCCESS_NONINFERIORITY_MARGIN",
+                    category="construct",
+                    severity="boundary",
+                    requirements=[requirement],
+                    observed=candidate.metadata.get("success_noninferiority_margin"),
+                    source_artifact="derived/evidence-inventory.json",
+                    source_pointer=inventory_pointer + "/metadata/success_noninferiority_margin",
+                    statement="The frozen E4 contract explicitly records no formal success noninferiority margin; preservation is limited to the declared Pareto rule.",
+                )
+            if candidate.metadata.get("cluster_identity"):
+                add(
+                    code="SINGLE_CLUSTER_GENERALIZATION",
+                    category="single_cluster_generalization",
+                    severity="high",
+                    requirements=[requirement],
+                    observed={
+                        "cluster_identity": candidate.metadata.get("cluster_identity"),
+                        "scope": "single-pod sequential Kubernetes evidence",
+                    },
+                    source_artifact="derived/evidence-inventory.json",
+                    source_pointer=inventory_pointer + "/metadata/cluster_identity",
+                    statement="E4 measurements are bounded to the recorded cluster and sequential single-pod execution; simulated packing is not observed concurrency.",
+                )
+        if requirement in {"image_functional", "image_storage"} and candidate.metadata.get("environment"):
             add(
                 code="IMAGE_PLATFORM_DEPENDENCE",
                 category="image_platform_dependence",
@@ -1740,7 +2486,7 @@ def generate_threats(
                 source_pointer=inventory_pointer + "/metadata/environment",
                 statement="Image correctness or storage results apply to the recorded runtime, operating system, architecture, and immutable image digests.",
             )
-        if requirement == "p2_p3":
+        if requirement == "p2_p3" and candidate.semantic_provenance.get("p3.reranker_version"):
             add(
                 code="P3_SERVICE_AND_COST_DEPENDENCE",
                 category="external",
@@ -1763,6 +2509,27 @@ def generate_threats(
                 source_artifact="derived/provenance-consistency.json",
                 source_pointer=f"/disclosures/{index}",
                 statement="The selected experiments record different non-semantic execution identities; the difference is disclosed and does not override semantic freeze checks.",
+            )
+
+    for index, comparison in enumerate(provenance_report.get("semantic_comparisons") or []):
+        if comparison.get("status") in {"MISSING", "MISMATCH", "INCOMPATIBLE_DIGEST_NAMESPACE"}:
+            requirements = comparison.get("requirement_id")
+            requirement_list = requirements if isinstance(requirements, list) else [requirements]
+            add(
+                code="SEMANTIC_PROVENANCE_" + str(comparison["status"]),
+                category="internal",
+                severity="blocking",
+                requirements=[str(item) for item in requirement_list if item],
+                observed={
+                    "semantic_key": comparison.get("semantic_key"),
+                    "expected": comparison.get("expected"),
+                    "observed": comparison.get("observed"),
+                    "digest_namespace": comparison.get("digest_namespace"),
+                    "freeze_digest_namespace": comparison.get("freeze_digest_namespace"),
+                },
+                source_artifact="derived/provenance-consistency.json",
+                source_pointer=f"/semantic_comparisons/{index}",
+                statement="Recorded semantic provenance is missing, contradictory, or uses an incompatible digest namespace; affected claims are blocked.",
             )
 
     return {
@@ -1797,6 +2564,7 @@ def evaluate_claims(
         evidence_rows: list[dict[str, Any]] = []
         evidence_status: list[dict[str, Any]] = []
         metrics: dict[str, Any] = {}
+        metric_lineage: dict[str, list[dict[str, Any]]] = {}
         observed_tests: list[dict[str, Any]] = []
         for requirement in requirements:
             candidate = selected.get(requirement)
@@ -1817,6 +2585,9 @@ def evaluate_claims(
             evidence_rows.append(
                 {
                     "requirement_id": requirement,
+                    "evidence_class": candidate.evidence_class,
+                    "experiment_id": candidate.experiment_id,
+                    "schema_version": candidate.schema_version,
                     "package_path": str(candidate.package_path.resolve()),
                     "manifest_path": str(candidate.manifest_path.resolve()),
                     "manifest_sha256": candidate.manifest_sha256,
@@ -1837,12 +2608,17 @@ def evaluate_claims(
                 reasons.append("CLAIM_METRICS_UNAVAILABLE")
             else:
                 metrics.update(candidate.metrics[claim_id])
+                for field, sources in candidate.metric_lineage.get(claim_id, {}).items():
+                    metric_lineage.setdefault(field, []).extend(dict(source) for source in sources)
             observed_tests.append({"requirement_id": requirement, **candidate.tests})
             if requirement in provenance_blocked:
                 reasons.append("SEMANTIC_PROVENANCE_FAILED")
             if requirement in fatal_requirements:
                 reasons.append("INVALID_SELECTED_EVIDENCE")
 
+        decision_fields = [str(row["path"]).removeprefix("metrics.") for row in claim["support_all_of"]]
+        if any(not metric_lineage.get(field) for field in decision_fields) and evidence_rows:
+            reasons.append("EXACT_METRIC_LINEAGE_UNAVAILABLE")
         condition_result, condition_rows = evaluate_conditions(
             claim["support_all_of"], {"metrics": metrics}
         )
@@ -1866,10 +2642,16 @@ def evaluate_claims(
                 {**dict(row), "observed_evidence_tests": observed_tests}
                 for row in claim["statistical_tests"]
             ],
+            "decision_rule": {
+                "logic": "ALL_OF",
+                "conditions": [dict(row) for row in claim["support_all_of"]],
+                "registry_schema_version": registry["schema_version"],
+            },
             "evidence": evidence_rows,
             "evidence_status": evidence_status,
             "result": {
                 "normalized_metrics": metrics,
+                "metric_lineage": metric_lineage,
                 "decision_checks": condition_rows,
                 "all_support_conditions_passed": condition_result,
             },
@@ -1927,6 +2709,17 @@ def _claim_table_rows(claims: Sequence[Mapping[str, Any]]) -> list[dict[str, str
             for key, value in normalized.items()
             if not isinstance(value, (dict, list))
         }
+        lineage = _nested(claim, "result", "metric_lineage") or {}
+        traceability = []
+        for field, sources in sorted(lineage.items()):
+            for source in sources:
+                locator = source.get("locator") or {}
+                selector = locator.get("record_selector")
+                pointers = ",".join(locator.get("json_pointers") or [])
+                traceability.append(
+                    f"{field}={source.get('source_artifact')}@{str(source.get('artifact_sha256'))[:12]}"
+                    f" selector={_compact(selector) if selector is not None else 'root'} fields={pointers}"
+                )
         rows.append(
             {
                 "claim": str(claim["claim_id"]),
@@ -1941,6 +2734,11 @@ def _claim_table_rows(claims: Sequence[Mapping[str, Any]]) -> list[dict[str, str
                 ),
                 "evidence_files": "; ".join(str(row.get("path")) for row in artifacts) or "N/A",
                 "evidence_sha256": "; ".join(str(row.get("sha256")) for row in artifacts) or "N/A",
+                "evidence_schema_versions": "; ".join(
+                    f"{row.get('requirement_id')}:{row.get('schema_version') or 'N/A'}"
+                    for row in evidence
+                ) or "N/A",
+                "metric_traceability": "; ".join(traceability) or "N/A",
                 "result": _compact(table_result),
                 "status": str(claim["claim_status"]),
                 "claimable": str(bool(claim["claimable"])).lower(),
@@ -1992,7 +2790,7 @@ def _latex_escape(value: Any) -> str:
 
 
 def _latex_table(rows: Sequence[Mapping[str, Any]]) -> str:
-    fields = ("claim", "research_question", "result", "status", "reason_codes")
+    fields = ("claim", "research_question", "result", "status", "metric_traceability")
     lines = [
         r"\begin{tabular}{lllll}",
         r"\hline",
@@ -2033,7 +2831,7 @@ def _threats_markdown(threats: Mapping[str, Any]) -> str:
 
 
 def _result_markdown(rows: Sequence[Mapping[str, Any]], package_status: str) -> str:
-    fields = ("claim", "research_question", "result", "status", "reason_codes")
+    fields = ("claim", "research_question", "result", "status", "metric_traceability", "reason_codes")
     return (
         "# Protocol-v5 Thesis Results\n\n"
         f"Analysis package status: `{package_status}`.\n\n"
@@ -2061,6 +2859,7 @@ def _publish_package(
     registry_path: Path,
     freeze_path: Path,
     selection_path: Path | None,
+    p3_threshold_path: Path | None,
     inventory: Mapping[str, Any],
     selection_report: Mapping[str, Any],
     provenance_report: Mapping[str, Any],
@@ -2099,7 +2898,7 @@ def _publish_package(
             ),
         }
         claim_payload = {
-            "schema_version": "protocol-v5-evaluated-claim-registry-v1.0.0",
+            "schema_version": "protocol-v5-evaluated-claim-registry-v1.1.0",
             "protocol_version": PROTOCOL_VERSION,
             "claims": claims,
         }
@@ -2116,7 +2915,10 @@ def _publish_package(
             "tables/claim-matrix.json": _json_text({"rows": rows}),
             "tables/claim-matrix.csv": _csv_text(rows, table_fields),
             "tables/claim-matrix.md": _markdown_table(rows, table_fields),
-            "tables/thesis-results.csv": _csv_text(rows, ("claim", "research_question", "result", "status", "reason_codes")),
+            "tables/thesis-results.csv": _csv_text(
+                rows,
+                ("claim", "research_question", "result", "status", "metric_traceability", "reason_codes"),
+            ),
             "tables/thesis-results.md": _result_markdown(rows, package_status),
             "tables/thesis-results.tex": _latex_table(rows),
             "status.json": _json_text(
@@ -2151,6 +2953,11 @@ def _publish_package(
             "selection": (
                 {"path": str(selection_path.resolve()), "sha256": file_sha256(selection_path)}
                 if selection_path is not None
+                else None
+            ),
+            "p3_threshold": (
+                {"path": str(p3_threshold_path.resolve()), "sha256": file_sha256(p3_threshold_path)}
+                if p3_threshold_path is not None
                 else None
             ),
             "analysis_environment": {
@@ -2222,6 +3029,8 @@ def run_research_analysis(
         registry=registry,
         freeze=freeze,
         p3_threshold=threshold,
+        freeze_path=freeze_path,
+        p3_threshold_path=p3_threshold_path,
     )
     selected, selection_report, fatal_requirements = select_evidence(
         candidates,
@@ -2229,6 +3038,14 @@ def run_research_analysis(
         selection=selection,
         repository_root=registry_path.resolve().parents[1],
     )
+    for requirement_id, candidate in list(selected.items()):
+        integrity_errors = _candidate_integrity_errors(candidate)
+        if integrity_errors:
+            selection_report["global_errors"].append(
+                f"SELECTED_EVIDENCE_MUTATED:{requirement_id}:{'|'.join(integrity_errors)}"
+            )
+            fatal_requirements.add(requirement_id)
+            selected.pop(requirement_id, None)
     if bootstrap_errors:
         selection_report["global_errors"].extend(bootstrap_errors)
         fatal_requirements.update(row["id"] for row in registry["evidence_requirements"])
@@ -2269,6 +3086,7 @@ def run_research_analysis(
         registry_path=registry_path,
         freeze_path=freeze_path,
         selection_path=selection_path,
+        p3_threshold_path=p3_threshold_path,
         inventory=inventory,
         selection_report=selection_report,
         provenance_report=provenance_report,
@@ -2281,11 +3099,106 @@ def run_research_analysis(
     return package, status, exit_code
 
 
+def _json_pointer_any(value: Any, pointer: str) -> Any:
+    if not pointer.startswith("/"):
+        raise KeyError(pointer)
+    current = value
+    for encoded in pointer[1:].split("/"):
+        part = encoded.replace("~1", "/").replace("~0", "~")
+        if isinstance(current, Mapping) and part in current:
+            current = current[part]
+        elif isinstance(current, list) and part.isdigit() and int(part) < len(current):
+            current = current[int(part)]
+        else:
+            raise KeyError(pointer)
+    return current
+
+
+def _selector_matches(row: Mapping[str, Any], selector: Mapping[str, Any]) -> bool:
+    for key, expected in selector.items():
+        observed = row.get(key)
+        if isinstance(expected, Mapping) and set(expected) == {"in"}:
+            if observed not in expected["in"]:
+                return False
+        elif observed != expected:
+            return False
+    return True
+
+
+def _validate_claim_metric_lineage(claim: Mapping[str, Any]) -> None:
+    evidence_artifacts = {
+        (str(artifact.get("path")), str(artifact.get("sha256")))
+        for evidence in claim.get("evidence") or []
+        for artifact in evidence.get("artifacts") or []
+    }
+    lineage = _nested(claim, "result", "metric_lineage") or {}
+    decision_fields = [
+        str(row["path"]).removeprefix("metrics.")
+        for row in _nested(claim, "decision_rule", "conditions") or []
+    ]
+    for field in decision_fields:
+        sources = lineage.get(field)
+        if not isinstance(sources, list) or not sources:
+            raise ResearchAnalysisError(f"{claim['claim_id']}: {field} lacks exact metric lineage")
+        for source in sources:
+            path = Path(str(source.get("source_artifact", "")))
+            sha = str(source.get("artifact_sha256", ""))
+            if (str(path), sha) not in evidence_artifacts:
+                raise ResearchAnalysisError(
+                    f"{claim['claim_id']}: lineage source is not a registered claim artifact"
+                )
+            if not path.is_file() or file_sha256(path) != sha:
+                raise ResearchAnalysisError(
+                    f"{claim['claim_id']}: metric lineage artifact no longer validates"
+                )
+            locator = source.get("locator") or {}
+            source_format = locator.get("format")
+            if source_format == "jsonl":
+                records: list[Any] = _read_jsonl(path)
+            elif source_format == "json":
+                document = _read_json(path)
+                records = list(document.get("rows") or []) if locator.get("record_selector") is not None else [document]
+            elif source_format == "yaml":
+                parsed = yaml.safe_load(path.read_text(encoding="utf-8"))
+                records = [parsed]
+            else:
+                raise ResearchAnalysisError(f"{claim['claim_id']}: unsupported lineage locator format")
+            selector = locator.get("record_selector")
+            if selector is not None:
+                records = [
+                    row for row in records
+                    if isinstance(row, Mapping) and _selector_matches(row, selector)
+                ]
+            if len(records) != locator.get("matched_record_count"):
+                raise ResearchAnalysisError(
+                    f"{claim['claim_id']}: lineage selector no longer has its recorded cardinality"
+                )
+            for pointer in locator.get("json_pointers") or []:
+                if not any(
+                    _pointer_exists(record, str(pointer))
+                    for record in records
+                ):
+                    raise ResearchAnalysisError(
+                        f"{claim['claim_id']}: lineage field locator does not resolve: {pointer}"
+                    )
+
+
+def _pointer_exists(value: Any, pointer: str) -> bool:
+    try:
+        _json_pointer_any(value, pointer)
+    except KeyError:
+        return False
+    return True
+
+
 def validate_research_analysis_package(package: Path) -> dict[str, Any]:
     package = package.resolve()
     _verify_sha256s(package)
     manifest = _read_json(package / "manifest.json")
-    if manifest.get("schema_version") != ANALYSIS_PACKAGE_SCHEMA_VERSION:
+    if manifest.get("schema_version") not in {
+        ANALYSIS_PACKAGE_SCHEMA_VERSION,
+        LEGACY_ANALYSIS_PACKAGE_SCHEMA_VERSION,
+    }:
         raise ResearchAnalysisError("unsupported research-analysis package schema")
     if manifest.get("protocol_version") != PROTOCOL_VERSION:
         raise ResearchAnalysisError("research-analysis protocol version mismatch")
@@ -2322,6 +3235,15 @@ def validate_research_analysis_package(package: Path) -> dict[str, Any]:
     if not registry_path.is_file() or file_sha256(registry_path) != registry_identity.get("sha256"):
         raise ResearchAnalysisError("claim registry identity no longer validates")
     registry = load_claim_registry(registry_path)
+    for identity_name in ("freeze", "selection", "p3_threshold"):
+        identity = manifest.get(identity_name)
+        if identity is None:
+            continue
+        identity_path = Path(str(identity.get("path", "")))
+        if not identity_path.is_file() or file_sha256(identity_path) != identity.get("sha256"):
+            raise ResearchAnalysisError(
+                f"research-analysis {identity_name} identity no longer validates"
+            )
     definitions = {row["id"]: row for row in registry["claims"]}
     claim_payload = _read_json(package / "derived" / "evaluated-claim-registry.json")
     claims = claim_payload.get("claims")
@@ -2330,6 +3252,15 @@ def validate_research_analysis_package(package: Path) -> dict[str, Any]:
     for claim in claims:
         validate_evaluated_claim(claim)
         definition = definitions[claim["claim_id"]]
+        if claim.get("schema_version") == EVALUATED_CLAIM_SCHEMA_VERSION:
+            if claim.get("decision_rule") != {
+                "logic": "ALL_OF",
+                "conditions": definition["support_all_of"],
+                "registry_schema_version": registry["schema_version"],
+            }:
+                raise ResearchAnalysisError(f"{claim['claim_id']}: frozen decision rule differs")
+            if claim["claim_status"] != "NOT_EXECUTED":
+                _validate_claim_metric_lineage(claim)
         decision, checks = evaluate_conditions(
             definition["support_all_of"],
             {"metrics": _nested(claim, "result", "normalized_metrics") or {}},
@@ -2370,6 +3301,11 @@ def validate_research_analysis_package(package: Path) -> dict[str, Any]:
         or any(claim.get("claimable") for claim in claims)
     ):
         raise ResearchAnalysisError("FAILED package exposes claimable thesis results")
+    if manifest.get("status") != "FAILED" and any(
+        claim.get("claimable") != (claim.get("claim_status") in {"SUPPORTED", "NOT_SUPPORTED"})
+        for claim in claims
+    ):
+        raise ResearchAnalysisError("claimable flags disagree with recomputed claim statuses")
     completeness = _read_json(package / "derived" / "evidence-completeness.json")
     counts = {
         name: sum(claim["claim_status"] == name for claim in claims)
@@ -2378,7 +3314,7 @@ def validate_research_analysis_package(package: Path) -> dict[str, Any]:
     if counts != manifest.get("claim_counts") or counts != completeness.get("counts"):
         raise ResearchAnalysisError("claim counts disagree across package artifacts")
     return {
-        "schema_version": ANALYSIS_PACKAGE_SCHEMA_VERSION,
+        "schema_version": manifest["schema_version"],
         "status": "PASS",
         "package_status": manifest["status"],
         "claims_validated": len(claims),
@@ -2429,6 +3365,8 @@ def main(argv: Sequence[str] | None = None) -> int:
                 registry=registry,
                 freeze=freeze,
                 p3_threshold=threshold,
+                freeze_path=args.freeze,
+                p3_threshold_path=args.p3_threshold,
             )
             selection = load_selection(args.selection, registry_path=args.registry) if args.selection else None
             selected, report, fatal = select_evidence(

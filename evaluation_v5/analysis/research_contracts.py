@@ -13,21 +13,75 @@ import yaml
 
 
 ROOT = Path(__file__).resolve().parents[2]
-REGISTRY_PATH = ROOT / "benchmarks_v5" / "protocol-v5-claim-registry-v1.yaml"
-REGISTRY_SCHEMA_PATH = ROOT / "benchmarks_v5" / "protocol-v5-claim-registry-v1.schema.json"
-EVALUATED_CLAIM_SCHEMA_PATH = ROOT / "benchmarks_v5" / "protocol-v5-evaluated-claim-v1.schema.json"
+REGISTRY_PATH = ROOT / "benchmarks_v5" / "protocol-v5-claim-registry-v1.1.yaml"
+REGISTRY_SCHEMA_PATH = ROOT / "benchmarks_v5" / "protocol-v5-claim-registry-v1.1.schema.json"
+LEGACY_REGISTRY_SCHEMA_PATH = ROOT / "benchmarks_v5" / "protocol-v5-claim-registry-v1.schema.json"
+EVALUATED_CLAIM_SCHEMA_PATH = ROOT / "benchmarks_v5" / "protocol-v5-evaluated-claim-v1.1.schema.json"
+LEGACY_EVALUATED_CLAIM_SCHEMA_PATH = ROOT / "benchmarks_v5" / "protocol-v5-evaluated-claim-v1.schema.json"
 SELECTION_SCHEMA_PATH = ROOT / "benchmarks_v5" / "protocol-v5-evidence-selection-v1.schema.json"
 STORAGE_SCHEMA_PATH = ROOT / "benchmarks_v5" / "protocol-v5-image-storage-evidence-v1.schema.json"
 P3_THRESHOLD_SCHEMA_PATH = ROOT / "benchmarks_v5" / "protocol-v5-p3-overhead-threshold-v1.schema.json"
 
-CLAIM_REGISTRY_SCHEMA_VERSION = "protocol-v5-claim-registry-v1.0.0"
-EVALUATED_CLAIM_SCHEMA_VERSION = "protocol-v5-evaluated-claim-v1.0.0"
+CLAIM_REGISTRY_SCHEMA_VERSION = "protocol-v5-claim-registry-v1.1.0"
+LEGACY_CLAIM_REGISTRY_SCHEMA_VERSION = "protocol-v5-claim-registry-v1.0.0"
+EVALUATED_CLAIM_SCHEMA_VERSION = "protocol-v5-evaluated-claim-v1.1.0"
+LEGACY_EVALUATED_CLAIM_SCHEMA_VERSION = "protocol-v5-evaluated-claim-v1.0.0"
 SELECTION_SCHEMA_VERSION = "protocol-v5-evidence-selection-v1.0.0"
 STORAGE_SCHEMA_VERSION = "protocol-v5-image-storage-evidence-v1.0.0"
 P3_THRESHOLD_SCHEMA_VERSION = "protocol-v5-p3-overhead-threshold-v1.0.0"
 CLAIM_STATUSES = ("SUPPORTED", "NOT_SUPPORTED", "NOT_EXECUTED")
 EXPECTED_CLAIMS = frozenset({"H1", "H2", "H3", "H4", "H5", "H6", "H7", "H7F", "H8"})
 FORBIDDEN_B0_RANKING_TOKENS = ("mrr", "ndcg", "hit_at", "hit@")
+FROZEN_SOURCE_ENDPOINTS = {
+    "H1": {"joint_accept_at_1"},
+    "H2": {"joint_accept_at_1", "robustness_rate"},
+    "H3": {"selection_success", "decision_time_seconds"},
+    "H4": {"seq_ease", "sus"},
+    "H5": {
+        "cpu_cost_per_success", "memory_cost_per_success", "success_rate",
+        "correct_completion_rate", "oom_rate", "timeout_rate",
+        "pending_or_admission_rate", "runtime_error_rate", "incorrect_rate",
+    },
+    "H6": {
+        "cpu_request_allocation_error_absolute",
+        "memory_request_allocation_error_absolute",
+        "oracle_package_sha256",
+        "oracle_data_permitted",
+    },
+    "H7": {"prefixes.naive_logical_bytes", "prefixes.unique_layer_bytes"},
+    "H7F": {"conservative_functional_success_rate", "operational_adequacy_rate"},
+    "H8": {"joint_accept_at_1", "frozen_overhead_limits"},
+}
+FROZEN_INDEPENDENT_UNITS = {
+    "H1": "workload_family",
+    "H2": "workload_family",
+    "H3": "participant",
+    "H4": "participant",
+    "H5": "workload_family",
+    "H6": "workload_family",
+    "H7": "frozen_catalog_prefix",
+    "H7F": "image_digest_and_required_probe",
+    "H8": "workload_family",
+}
+DIGEST_NAMESPACE_BY_KEY = {
+    "catalog.file_sha256": "catalog_file_bytes",
+    "corpus.sha256": "candidate_corpus_canonical",
+    "indexes.dense.sha256": "dense_index_canonical",
+    "indexes.sparse.sha256": "sparse_index_canonical",
+    "indexes.hybrid.sha256": "hybrid_index_canonical",
+    "extractor.prompt_sha256": "extractor_prompt_bytes",
+    "p3.prompt_sha256": "p3_prompt_bytes",
+    "benchmark.dataset_sha256": "offline_benchmark_dataset_bytes",
+}
+DIGEST_NAMESPACE_BY_FREEZE_POINTER = {
+    "/candidate_catalog/file_sha256": "catalog_file_bytes",
+    "/candidate_catalog/corpus_sha256": "candidate_corpus_canonical",
+    "/indexes/dense/index_checksum": "dense_index_canonical",
+    "/indexes/sparse/index_checksum": "sparse_index_canonical",
+    "/indexes/hybrid/index_checksum": "hybrid_index_canonical",
+    "/prompts/P2_extractor/prompt_sha256": "extractor_prompt_bytes",
+    "/prompts/P3_reranker/prompt_sha256": "p3_prompt_bytes",
+}
 
 
 class ResearchContractError(ValueError):
@@ -87,7 +141,13 @@ def _validate_schema(value: Mapping[str, Any], schema_path: Path) -> None:
 
 def load_claim_registry(path: Path = REGISTRY_PATH) -> dict[str, Any]:
     registry = _yaml(path)
-    _validate_schema(registry, REGISTRY_SCHEMA_PATH)
+    schema_path = {
+        CLAIM_REGISTRY_SCHEMA_VERSION: REGISTRY_SCHEMA_PATH,
+        LEGACY_CLAIM_REGISTRY_SCHEMA_VERSION: LEGACY_REGISTRY_SCHEMA_PATH,
+    }.get(registry.get("schema_version"))
+    if schema_path is None:
+        raise ResearchContractError("claim registry schema_version is unsupported")
+    _validate_schema(registry, schema_path)
     rq_ids = [row["id"] for row in registry["research_questions"]]
     claim_ids = [row["id"] for row in registry["claims"]]
     evidence_ids = [row["id"] for row in registry["evidence_requirements"]]
@@ -110,6 +170,59 @@ def load_claim_registry(path: Path = REGISTRY_PATH) -> dict[str, Any]:
                 raise ResearchContractError(
                     f"{claim['id']}: B0 does not produce ranking metrics ({metric['id']})"
                 )
+        if registry["schema_version"] == CLAIM_REGISTRY_SCHEMA_VERSION:
+            source_endpoints = {
+                endpoint
+                for metric in claim["metrics"]
+                for endpoint in metric["source_endpoints"]
+            }
+            if source_endpoints != FROZEN_SOURCE_ENDPOINTS[claim["id"]]:
+                raise ResearchContractError(
+                    f"{claim['id']}: source endpoints differ from the frozen claim contract"
+                )
+            independent_units = {
+                test.get("independent_unit") for test in claim["statistical_tests"]
+            }
+            if independent_units != {FROZEN_INDEPENDENT_UNITS[claim["id"]]}:
+                raise ResearchContractError(
+                    f"{claim['id']}: independent statistical unit differs from the frozen claim contract"
+                )
+            decision_paths = [row["path"] for row in claim["support_all_of"]]
+            if len(decision_paths) != len(set(decision_paths)):
+                raise ResearchContractError(f"{claim['id']}: decision paths must be unique")
+    if registry["schema_version"] == CLAIM_REGISTRY_SCHEMA_VERSION:
+        for requirement in registry["evidence_requirements"]:
+            for field in requirement["semantic_provenance"]:
+                key_namespace = DIGEST_NAMESPACE_BY_KEY.get(field["key"])
+                pointer_namespace = DIGEST_NAMESPACE_BY_FREEZE_POINTER.get(
+                    field["freeze_pointer"]
+                )
+                if (key_namespace is None) != (pointer_namespace is None) or (
+                    key_namespace is not None and key_namespace != pointer_namespace
+                ):
+                    raise ResearchContractError(
+                        f"{requirement['id']}: semantic digest namespaces are incompatible"
+                    )
+            for field in requirement["cross_experiment_provenance"]:
+                expected_namespace = DIGEST_NAMESPACE_BY_KEY.get(field["key"])
+                if expected_namespace is not None and field["namespace"] != expected_namespace:
+                    raise ResearchContractError(
+                        f"{requirement['id']}: cross-experiment digest namespace is incompatible"
+                    )
+        by_claim = {claim["id"]: claim for claim in registry["claims"]}
+        required_guards = {
+            "H5": {"metrics.pareto_report_consistent", "metrics.reliability_preserved"},
+            "H6": {"metrics.oracle_independence_verified"},
+            "H7": {
+                "metrics.catalog_prefix_count", "metrics.expansion_growth_difference",
+                "metrics.strictly_slower_catalog_expansion",
+            },
+            "H8": {"metrics.gate_retained", "metrics.all_overhead_ci_within_limits"},
+        }
+        for claim_id, guards in required_guards.items():
+            paths = {row["path"] for row in by_claim[claim_id]["support_all_of"]}
+            if not guards.issubset(paths):
+                raise ResearchContractError(f"{claim_id}: frozen conjunctive decision guards are missing")
     return registry
 
 
@@ -135,6 +248,12 @@ def validate_storage_evidence(value: Mapping[str, Any]) -> None:
             raise ResearchContractError("storage prefix_size values must be consecutive from one")
         if row["image_digests"] != catalog_digests[:index]:
             raise ResearchContractError("storage prefix images differ from the frozen catalog order")
+        if index > 1:
+            prior = prefixes[index - 2]
+            if row["naive_logical_bytes"] < prior["naive_logical_bytes"]:
+                raise ResearchContractError("naive logical bytes must be cumulative and nondecreasing")
+            if row["unique_layer_bytes"] < prior["unique_layer_bytes"]:
+                raise ResearchContractError("unique-layer bytes must be cumulative and nondecreasing")
     if value["execution_status"] == "OBSERVED":
         if value["split_stage"] != "confirmatory" and value["claims_permitted"]:
             raise ResearchContractError("development storage evidence cannot permit claims")
@@ -152,7 +271,13 @@ def load_p3_threshold(path: Path) -> dict[str, Any]:
 
 
 def validate_evaluated_claim(value: Mapping[str, Any]) -> None:
-    _validate_schema(value, EVALUATED_CLAIM_SCHEMA_PATH)
+    schema_path = {
+        EVALUATED_CLAIM_SCHEMA_VERSION: EVALUATED_CLAIM_SCHEMA_PATH,
+        LEGACY_EVALUATED_CLAIM_SCHEMA_VERSION: LEGACY_EVALUATED_CLAIM_SCHEMA_PATH,
+    }.get(value.get("schema_version"))
+    if schema_path is None:
+        raise ResearchContractError("evaluated claim schema_version is unsupported")
+    _validate_schema(value, schema_path)
     if value["claimable"] and value["claim_status"] == "NOT_EXECUTED":
         raise ResearchContractError("NOT_EXECUTED claims cannot be claimable")
 

@@ -1,7 +1,9 @@
 # Protocol-v5 benchmarks
 
 The unified thesis claim registry is
-`protocol-v5-claim-registry-v1.yaml`, validated by its adjacent JSON Schema.
+`protocol-v5-claim-registry-v1.1.yaml`, validated by its adjacent JSON Schema.
+The v1.0 registry and evaluated-claim schema remain unchanged so prior immutable
+analysis packages keep their original checksum-bound contracts.
 Evidence-selection locks, future E5 storage observations, and optional frozen
 P3 overhead thresholds have separate versioned schemas. See
 `docs/evaluation/PROTOCOL_V5_RESEARCH_ANALYSIS.md` for the read-only discovery,

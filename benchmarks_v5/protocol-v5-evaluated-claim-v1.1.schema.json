@@ -1,0 +1,112 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "protocol-v5-evaluated-claim-v1.1.schema.json",
+  "title": "Protocol-v5 evaluated thesis claim with exact lineage",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "claim_id", "research_question", "hypothesis",
+    "experiments", "metrics", "statistical_tests", "decision_rule", "evidence",
+    "evidence_status", "result", "claim_status", "claimable",
+    "reason_codes", "limitations"
+  ],
+  "properties": {
+    "schema_version": {"const": "protocol-v5-evaluated-claim-v1.1.0"},
+    "claim_id": {"type": "string", "pattern": "^H(?:[1-8]|7F)$"},
+    "research_question": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "question"],
+      "properties": {"id": {"type": "string"}, "question": {"type": "string"}}
+    },
+    "hypothesis": {"type": "string"},
+    "experiments": {"type": "array", "items": {"type": "string"}},
+    "metrics": {"type": "array", "items": {"type": "object"}},
+    "statistical_tests": {"type": "array", "items": {"type": "object"}},
+    "decision_rule": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["logic", "conditions", "registry_schema_version"],
+      "properties": {
+        "logic": {"const": "ALL_OF"},
+        "conditions": {"type": "array", "minItems": 1, "items": {"type": "object"}},
+        "registry_schema_version": {"type": "string", "minLength": 1}
+      }
+    },
+    "evidence": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "requirement_id", "evidence_class", "experiment_id", "schema_version",
+          "package_path", "manifest_path", "manifest_sha256", "artifacts"
+        ],
+        "properties": {
+          "requirement_id": {"type": "string"},
+          "evidence_class": {"type": "string"},
+          "experiment_id": {"type": "string"},
+          "schema_version": {"type": ["string", "null"]},
+          "package_path": {"type": "string"},
+          "manifest_path": {"type": "string"},
+          "manifest_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+          "artifacts": {"type": "array", "items": {"type": "object"}}
+        }
+      }
+    },
+    "evidence_status": {"type": "array", "items": {"type": "object"}},
+    "result": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "normalized_metrics", "metric_lineage", "decision_checks",
+        "all_support_conditions_passed"
+      ],
+      "properties": {
+        "normalized_metrics": {"type": "object"},
+        "metric_lineage": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "requirement_id", "source_artifact", "artifact_sha256",
+                "evidence_schema_version", "locator", "transformation"
+              ],
+              "properties": {
+                "requirement_id": {"type": "string"},
+                "source_artifact": {"type": "string", "minLength": 1},
+                "artifact_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+                "evidence_schema_version": {"type": ["string", "null"]},
+                "locator": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": ["format", "json_pointers", "matched_record_count"],
+                  "properties": {
+                    "format": {"enum": ["json", "jsonl", "yaml"]},
+                    "record_selector": {"type": "object"},
+                    "json_pointers": {
+                      "type": "array", "minItems": 1, "uniqueItems": true,
+                      "items": {"type": "string", "pattern": "^/"}
+                    },
+                    "matched_record_count": {"type": "integer", "minimum": 1}
+                  }
+                },
+                "transformation": {"type": "string", "minLength": 1}
+              }
+            }
+          }
+        },
+        "decision_checks": {"type": "array", "items": {"type": "object"}},
+        "all_support_conditions_passed": {"type": ["boolean", "null"]}
+      }
+    },
+    "claim_status": {"enum": ["SUPPORTED", "NOT_SUPPORTED", "NOT_EXECUTED"]},
+    "claimable": {"type": "boolean"},
+    "reason_codes": {"type": "array", "items": {"type": "string"}},
+    "limitations": {"type": "array", "items": {"type": "object"}}
+  }
+}

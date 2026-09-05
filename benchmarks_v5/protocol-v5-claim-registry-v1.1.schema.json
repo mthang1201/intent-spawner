@@ -1,0 +1,174 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "protocol-v5-claim-registry-v1.1.schema.json",
+  "title": "Protocol-v5 thesis claim registry with source-endpoint contracts",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "protocol_version",
+    "status_values",
+    "research_questions",
+    "evidence_requirements",
+    "claims"
+  ],
+  "properties": {
+    "schema_version": {"const": "protocol-v5-claim-registry-v1.1.0"},
+    "protocol_version": {"const": "5.0.0"},
+    "status_values": {"const": ["SUPPORTED", "NOT_SUPPORTED", "NOT_EXECUTED"]},
+    "research_questions": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "question"],
+        "properties": {
+          "id": {"type": "string", "pattern": "^RQ[1-9][0-9]*$"},
+          "question": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "evidence_requirements": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/evidence_requirement"}
+    },
+    "claims": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/claim"}
+    }
+  },
+  "$defs": {
+    "semantic_field": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["key", "freeze_pointer"],
+      "properties": {
+        "key": {"type": "string", "minLength": 1},
+        "freeze_pointer": {"type": "string", "pattern": "^/"}
+      }
+    },
+    "cross_experiment_field": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["key", "comparison_group", "namespace"],
+      "properties": {
+        "key": {"type": "string", "minLength": 1},
+        "comparison_group": {"type": "string", "minLength": 1},
+        "namespace": {"type": "string", "minLength": 1}
+      }
+    },
+    "evidence_requirement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "evidence_class",
+        "experiment",
+        "accepted_schema_versions",
+        "semantic_provenance",
+        "cross_experiment_provenance"
+      ],
+      "properties": {
+        "id": {"type": "string", "pattern": "^[a-z][a-z0-9_]*$"},
+        "evidence_class": {"enum": ["E1", "E2", "E3", "E4", "E5", "P2_P3"]},
+        "experiment": {"type": "string", "minLength": 1},
+        "accepted_schema_versions": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"type": "string", "minLength": 1}
+        },
+        "semantic_provenance": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/semantic_field"}
+        },
+        "cross_experiment_provenance": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/cross_experiment_field"}
+        }
+      }
+    },
+    "condition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "operator", "value"],
+      "properties": {
+        "path": {"type": "string", "pattern": "^metrics\\."},
+        "operator": {"enum": ["eq", "ne", "gt", "ge", "lt", "le", "in"]},
+        "value": {}
+      }
+    },
+    "metric": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "label", "systems", "direction", "source_endpoints"],
+      "properties": {
+        "id": {"type": "string", "minLength": 1},
+        "label": {"type": "string", "minLength": 1},
+        "systems": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"enum": ["B0", "P1", "P2", "P3", "STATIC_LARGE", "P2_CATALOG", "P2_DYNAMIC"]}
+        },
+        "direction": {"enum": ["higher", "lower", "exact", "bounded"]},
+        "unit": {"type": "string"},
+        "source_endpoints": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "test": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "method", "alpha"],
+      "properties": {
+        "id": {"type": "string", "minLength": 1},
+        "method": {"type": "string", "minLength": 1},
+        "alpha": {"type": ["number", "null"], "minimum": 0, "maximum": 1},
+        "multiplicity": {"type": ["string", "null"]},
+        "independent_unit": {"type": ["string", "null"]}
+      }
+    },
+    "claim": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "research_question",
+        "hypothesis",
+        "experiments",
+        "required_evidence",
+        "metrics",
+        "statistical_tests",
+        "support_all_of",
+        "limitations",
+        "optional"
+      ],
+      "properties": {
+        "id": {"type": "string", "pattern": "^H(?:[1-8]|7F)$"},
+        "research_question": {"type": "string", "pattern": "^RQ[1-9][0-9]*$"},
+        "hypothesis": {"type": "string", "minLength": 1},
+        "experiments": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"type": "string", "minLength": 1}
+        },
+        "required_evidence": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"type": "string", "pattern": "^[a-z][a-z0-9_]*$"}
+        },
+        "metrics": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/metric"}},
+        "statistical_tests": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/test"}},
+        "support_all_of": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/condition"}},
+        "limitations": {"type": "array", "items": {"type": "string", "minLength": 1}},
+        "optional": {"type": "boolean"}
+      }
+    }
+  }
+}

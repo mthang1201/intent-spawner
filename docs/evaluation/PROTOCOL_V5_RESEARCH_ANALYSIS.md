@@ -9,11 +9,17 @@ recommender, changes backend behavior, mutates Kubernetes, or rewrites source
 evidence.
 
 The authoritative registry is
-`benchmarks_v5/protocol-v5-claim-registry-v1.yaml`. It connects RQ1–RQ6 to H1–H8
+`benchmarks_v5/protocol-v5-claim-registry-v1.1.yaml`. It connects RQ1–RQ6 to H1–H8
 and H7F, their evidence requirements, metrics, tests, directions, exact
 decision predicates, and limitation boundaries. Observed outcomes are not
 stored in the registry. They are materialized only in a versioned analysis
 package.
+
+Registry v1.1 adds frozen source-endpoint and independent-unit contracts, exact
+metric lineage, explicit H5 reliability and H6 oracle-independence conjunctions,
+and an H7 post-baseline catalog-growth criterion. The prior v1.0 registry and
+evaluated-claim schema are retained byte-for-byte for validation of existing
+immutable packages.
 
 Only complete, validated, observed **confirmatory** evidence is eligible to
 produce `SUPPORTED` or `NOT_SUPPORTED`. Development, Protocol-v4, dry-run,
@@ -46,6 +52,13 @@ JSON selection lock with `--selection`. Every entry binds the repository-relativ
 package path to its exact manifest SHA-256, and the lock binds to the registry
 SHA-256. A stale or invalid lock creates a `FAILED` audit package rather than
 silently choosing evidence.
+
+Without a lock, multiple decision-equivalent packages remain unresolved and
+produce `NOT_EXECUTED`; conflicting decision signatures are an evidence failure
+and exit 2. A valid lock may choose one exact checksum. The selection report
+retains every candidate's registered and current checksum, content and decision
+signatures, integrity errors, and selected/rejected/duplicate disposition. No
+filesystem ordering, timestamp, filename, or mtime participates in selection.
 
 Optional H8 also requires `--p3-threshold` pointing to a contract validated by
 `protocol-v5-p3-overhead-threshold-v1.schema.json`. The file must have been
@@ -83,6 +96,11 @@ semantic identity blocks affected claims. Digest types are named explicitly,
 so a catalog-file digest is never compared with a canonicalized catalog-object
 digest.
 
+E1 and E2 additionally require the same declared offline benchmark dataset and
+split identities. Cross-experiment fields are compared only inside their
+declared comparison group and namespace; unrelated E3, E4, and E5 dataset
+digests are never equated.
+
 Git revisions, dirty-tree state, runtime, platform, and cluster identities are
 recorded and differences are disclosed as limitations. They cannot override a
 semantic mismatch. Dataset identities are validated inside their own
@@ -104,10 +122,15 @@ Every run is created under a new directory and contains:
 - claim matrices and thesis result tables in JSON, CSV, Markdown, and LaTeX
   under `tables/`.
 
-Every evaluated claim contains exact source artifact paths and SHA-256s. A
-later change to a referenced artifact makes validation fail. Missing values are
-rendered as `N/A`, never as zero. B0 ranking metrics are prohibited by registry
-validation because B0 does not create a ranking.
+Every decided claim contains exact source artifact paths and SHA-256s, evidence
+and schema versions, machine-readable JSON/JSONL/YAML locators, selector
+cardinality, normalized estimates and uncertainty, observed tests, and the
+frozen all-of decision rule. The independent validator resolves every decision
+field locator and rejects whole-file-only lineage. Thesis tables retain a
+compact checksum-and-locator form of the same trace. A later change to a
+referenced artifact makes validation fail. Missing values are rendered as
+`N/A`, never as zero. B0 ranking metrics are prohibited by registry validation
+because B0 does not create a ranking.
 
 The threats generator emits a record only when a registry or experiment field
 triggers it. Records include the category, affected claims, observed metadata,
