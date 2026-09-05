@@ -45,7 +45,8 @@ from .runner import (
     create_probe_runner,
     detect_runtime,
 )
-from .validate_evidence import validate_e5_evidence
+from .storage_orchestrator import run_storage_evaluation
+from .validate_evidence import validate_e5_evidence, validate_e5_storage_evidence
 
 
 
@@ -600,7 +601,13 @@ def run_e5_evaluation(
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Protocol-v5 E5 image functional validation.")
+    parser = argparse.ArgumentParser(description="Protocol-v5 E5 image functional and storage scalability evaluation.")
+    parser.add_argument(
+        "--experiment",
+        choices=["functional", "storage", "both"],
+        default="functional",
+        help="Experiment to run: 'functional' (default), 'storage', or 'both'.",
+    )
     parser.add_argument("--catalog", type=Path, default=DEFAULT_CATALOG_PATH, help="Path to image catalog YAML.")
     parser.add_argument("--recommendations", type=Path, default=None, help="Path to recommendations JSONL.")
     parser.add_argument("--split", type=Path, default=DEFAULT_SPLIT_PATH, help="Path to development split YAML.")
@@ -608,22 +615,49 @@ def main() -> None:
     parser.add_argument("--no-dry-run-fallback", action="store_true", help="Fail if container runtime is unavailable.")
     parser.add_argument("--output-dir", type=Path, default=None, help="Results output directory.")
     parser.add_argument("--run-id", type=str, default=None, help="Custom run ID.")
-    parser.add_argument("--timeout", type=float, default=15.0, help="Per-probe timeout seconds.")
+    parser.add_argument("--timeout", type=float, default=60.0, help="Per-probe or inspection timeout seconds.")
     parser.add_argument("--pull-policy", choices=["never", "missing"], default="never", help="Docker image pull policy.")
+    parser.add_argument(
+        "--stage",
+        choices=["development", "confirmatory"],
+        default="confirmatory",
+        help="Split stage for storage evaluation (default: confirmatory).",
+    )
+    parser.add_argument(
+        "--arch",
+        choices=["amd64", "arm64"],
+        default="amd64",
+        help="Target CPU architecture for image storage manifest inspection (default: amd64).",
+    )
 
     args = parser.parse_args()
-    out = run_e5_evaluation(
-        catalog_path=args.catalog,
-        recommendations_path=args.recommendations,
-        split_path=args.split,
-        mode=args.mode,
-        dry_run_if_unavailable=not args.no_dry_run_fallback,
-        output_dir=args.output_dir,
-        run_id=args.run_id,
-        timeout_seconds=args.timeout,
-        pull_policy=args.pull_policy,
-    )
-    print(f"E5 functional validation completed successfully. Output in: {out}")
+
+    if args.experiment in ("functional", "both"):
+        out_func = run_e5_evaluation(
+            catalog_path=args.catalog,
+            recommendations_path=args.recommendations,
+            split_path=args.split,
+            mode=args.mode,
+            dry_run_if_unavailable=not args.no_dry_run_fallback,
+            output_dir=args.output_dir if args.experiment == "functional" else None,
+            run_id=args.run_id if args.experiment == "functional" else None,
+            timeout_seconds=args.timeout,
+            pull_policy=args.pull_policy,
+        )
+        print(f"E5 functional validation completed successfully. Output in: {out_func}")
+
+    if args.experiment in ("storage", "both"):
+        out_storage = run_storage_evaluation(
+            catalog_path=args.catalog,
+            mode=args.mode,
+            stage=args.stage,
+            target_arch=args.arch,
+            dry_run_if_unavailable=not args.no_dry_run_fallback,
+            output_dir=args.output_dir if args.experiment == "storage" else None,
+            run_id=args.run_id if args.experiment == "storage" else None,
+            timeout_seconds=args.timeout,
+        )
+        print(f"E5 storage scalability evaluation completed successfully. Output in: {out_storage}")
 
 
 if __name__ == "__main__":

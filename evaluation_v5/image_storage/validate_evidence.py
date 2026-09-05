@@ -567,13 +567,155 @@ def validate_e5_evidence(package_dir: Path | str) -> dict[str, Any]:
     }
 
 
+def validate_e5_storage_evidence(package_dir: Path | str) -> dict[str, Any]:
+    """Validate a sealed Protocol-v5 E5 image storage scalability evidence package fail-closed."""
+    directory = Path(package_dir).resolve()
+    if not directory.is_dir():
+        raise FileNotFoundError(f"Evidence directory not found: {directory}")
+
+    # 1. Validate SHA256SUMS file
+    sums_file = directory / "SHA256SUMS"
+    if not sums_file.is_file():
+        raise EvidenceValidationError(f"Missing SHA256SUMS in {directory}")
+
+    checksum_lines = sums_file.read_text(encoding="utf-8").splitlines()
+    if not checksum_lines:
+        raise EvidenceValidationError(f"SHA256SUMS is empty in {directory}")
+
+    checked_files = set()
+    for line in checksum_lines:
+        line = line.strip()
+        if not line:
+            continue
+        parts = line.split(maxsplit=1)
+        if len(parts) != 2:
+            raise EvidenceValidationError(f"Malformed SHA256SUMS line: {line!r}")
+        expected_sha, rel_path = parts[0], parts[1].strip()
+        target = directory / rel_path
+        if not target.is_file():
+            raise EvidenceValidationError(f"File listed in SHA256SUMS does not exist: {rel_path}")
+        actual_sha = file_sha256(target)
+        if actual_sha != expected_sha:
+            raise EvidenceValidationError(
+                f"Checksum mismatch for {rel_path}: expected {expected_sha}, got {actual_sha}"
+            )
+        checked_files.add(target)
+
+    # 2. Check required files
+    manifest_path = directory / "manifest.json"
+    raw_dir = directory / "raw"
+    derived_dir = directory / "derived"
+    report_dir = directory / "report"
+
+    layers_path = raw_dir / "image_layers.json"
+    env_path = raw_dir / "environment.json"
+    storage_metrics_path = derived_dir / "storage_metrics.json"
+    report_md_path = report_dir / "E5_IMAGE_STORAGE_REPORT.md"
+    status_path = report_dir / "status.json"
+
+    for req_file in (
+        manifest_path,
+        layers_path,
+        env_path,
+        storage_metrics_path,
+        report_md_path,
+        status_path,
+    ):
+        if not req_file.is_file():
+            raise EvidenceValidationError(f"Required storage package file missing: {req_file.relative_to(directory)}")
+
+    # 3. Validate storage_metrics.json schema and contract
+    from evaluation_v5.analysis.research_contracts import validate_storage_evidence
+
+    try:
+        storage_data = json.loads(storage_metrics_path.read_text(encoding="utf-8"))
+        validate_storage_evidence(storage_data)
+    except Exception as exc:
+        raise EvidenceValidationError(f"Invalid storage metrics in {directory}: {exc}") from exc
+
+    execution_status = storage_data["execution_status"]
+    split_stage = storage_data["split_stage"]
+    claims_permitted = storage_data["claims_permitted"]
+    prefixes = storage_data.get("prefixes", [])
+
+    # Check non-expansion invariant
+    for p in prefixes:
+        if p["unique_layer_bytes"] > p["naive_logical_bytes"]:
+            raise EvidenceValidationError(
+                f"Prefix {p['prefix_size']} violates non-expansion: "
+                f"unique={p['unique_layer_bytes']} > naive={p['naive_logical_bytes']}"
+            )
+
+    # 4. Validate manifest.json
+    try:
+        manifest_raw = json.loads(manifest_path.read_text(encoding="utf-8"))
+        manifest = ProtocolV5Manifest.from_dict(manifest_raw)
+    except Exception as exc:
+        raise EvidenceValidationError(f"Invalid manifest.json in {directory}: {exc}") from exc
+
+    if manifest.experiment_id.value != "E5":
+        raise EvidenceValidationError(f"Manifest experiment ID must be E5, got {manifest.experiment_id}")
+    if manifest.execution_status.value != execution_status:
+        raise EvidenceValidationError(
+            f"Execution status mismatch: manifest has {manifest.execution_status.value} vs metrics {execution_status}"
+        )
+
+    # 5. Validate status.json
+    status_raw = json.loads(status_path.read_text(encoding="utf-8"))
+    if status_raw.get("status") != execution_status:
+        raise EvidenceValidationError(
+            f"Status mismatch: status.json has {status_raw.get('status')} vs metrics {execution_status}"
+        )
+
+    final_savings = (
+        prefixes[-1]["naive_logical_bytes"] - prefixes[-1]["unique_layer_bytes"]
+        if prefixes
+        else 0
+    )
+
+    eligible = (execution_status == "OBSERVED" and split_stage == "confirmatory" and claims_permitted)
+
+    return {
+        "status": "PASS",
+        "validator_status": "CURRENT_VALID",
+        "eligible_as_current_e5_evidence": eligible,
+        "validation_profile": "STORAGE_V1_0",
+        "evidence_dir": str(directory),
+        "experiment_id": "E5",
+        "requirement_id": "image_storage",
+        "execution_status": execution_status,
+        "split_stage": split_stage,
+        "claims_permitted": claims_permitted,
+        "total_prefixes": len(prefixes),
+        "final_storage_savings_bytes": final_savings,
+        "files_checked": len(checked_files),
+    }
+
+
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Validate a Protocol-v5 E5 image functional evidence package.")
+    parser = argparse.ArgumentParser(description="Validate a Protocol-v5 E5 image functional or storage evidence package.")
     parser.add_argument("--dir", type=Path, required=True, help="Path to E5 evidence run directory.")
+    parser.add_argument(
+        "--type",
+        choices=["auto", "functional", "storage"],
+        default="auto",
+        help="Evidence package type to validate (default: auto-detect).",
+    )
     args = parser.parse_args()
 
     try:
-        res = validate_e5_evidence(args.dir)
+        pkg_type = args.type
+        if pkg_type == "auto":
+            if (args.dir / "derived" / "storage_metrics.json").is_file() and not (args.dir / "derived" / "functional_metrics.json").is_file():
+                pkg_type = "storage"
+            else:
+                pkg_type = "functional"
+
+        if pkg_type == "storage":
+            res = validate_e5_storage_evidence(args.dir)
+        else:
+            res = validate_e5_evidence(args.dir)
+
         print(json.dumps(res, indent=2))
     except Exception as exc:
         err = {
