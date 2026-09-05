@@ -2,7 +2,24 @@
 
 Evidence status: `NOT_EXECUTED`.
 
+**OBSERVED HUMAN STUDY NOT EXECUTED**
+
 No real study exports were supplied. Every empirical result is NOT_EXECUTED; no zero-valued estimate or denominator was substituted.
+
+## Readiness sub-gates
+
+| Sub-gate | Status |
+|---|---|
+| Framework / Harness | `PASS` |
+| Confirmatory Task Set | `DEVELOPMENT_DRAFT` |
+| Confirmatory Freeze | `PENDING_RESEARCHER_APPROVAL` |
+| Confirmatory Assignment | `NOT_GENERATED` |
+| Configuration Fairness | `PASS` |
+| Local Deterministic Smoke | `PASS` |
+| Live Deployment Preflight | `NOT_VERIFIED` |
+| Privacy Audit | `PASS` |
+| Genuine Participants | `0` |
+| Observed Evidence | `NOT_EXECUTED` |
 
 ## Frozen analysis contract
 

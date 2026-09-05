@@ -1,4 +1,5 @@
 {
+  "code_revision": "ad6243af254edbf2d3469ec438ebddeb86b9b909",
   "contracts": {
     "analysis_plan_sha256": "1874b426666111362ef79f4e23315dc8f51a97b10827ae2e596cc70523b1a3ce",
     "analysis_plan_version": "protocol-v5-user-study-analysis-plan-v1.2.0",
@@ -27,7 +28,7 @@
   "execution_status": "NOT_EXECUTED",
   "experiment_id": "E3",
   "finalizer_version": "protocol-v5-user-study-finalizer-v1.3.0",
-  "git_revision": "2cf206773e63f7086e3c9716a5077793b189fa6d",
+  "git_revision": "ad6243af254edbf2d3469ec438ebddeb86b9b909",
   "input_checksums": {
     "assignment_manifest": {
       "artifact_role": "assignment_manifest",
@@ -65,7 +66,7 @@
     }
   },
   "output_checksums": {
-    "derived/analysis.json": "74cdde51d934ce512e136b0d5f1bdc57df42258c09cac2ef2f49351cf0993cb6",
+    "derived/analysis.json": "d0619867d9f4460f1e139e5aa2df32c06d6843b1517a1272c9f445b8855e667e",
     "derived/matched-pair-outcomes.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
     "derived/model-effects.json": "ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356",
     "derived/questionnaire-outcomes.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
@@ -76,16 +77,16 @@
     "raw/exclusions.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
     "raw/questionnaires.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
     "raw/sessions.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-    "report/USER_STUDY_REPORT.md": "f0f20dab9ee30db4a1afe0e8ce852eef8d65ac5f6f58a62d0591422dab42d094",
-    "report/analysis-manifest.json": "8186ea4c6672e6d10fa69fb60c4d10d4bc027de5c967a8d6951f0c952154fd2d",
+    "report/USER_STUDY_REPORT.md": "1e13e4e2581d6299f2fc700a1d803b6e214e042ea3e0310b12495880d8541ae8",
+    "report/analysis-manifest.json": "076682ce7f38a8c9a783acae7641a2fa49ceb666381ee55028665643f70281e3",
     "report/figures/accuracy.svg": "fd41efe56098dfb382ef91506249fc4b55c314c96e007eaf46445ccf7a47b470",
     "report/figures/decision-time.svg": "3cf950005c60b1fd8bd802a47856b641a1772e88942b788378179c14b06139ba",
     "report/figures/interaction-effort.svg": "44d6bf5cd32e015e51a1d51b83ab6351c450e772d6e448e910cf45f589e08fe3",
     "report/figures/preference.svg": "6c988d1df642703d24cbcbed27066174cd81f8d1010bde1f53b421e976c99350",
     "report/figures/sus-seq-custom.svg": "3d1363dcfa80d4687c4df2e2b998441a98391f2efe3a798298a7b8ac89c77f7e",
     "report/limitations.md": "4ad53cececff5ee9fd8d7937badecf46911eb0aaf16489044ccc33533f83fa89",
-    "report/privacy-audit.json": "aa45de88730cb967e61e9e7b8f082f7697fdcfb9cb4935534b66df677c8d3d9a",
-    "report/status.json": "6db980c7b1f0d1b29538497eca1b77359e4fba278a9422039e13fdf6cd5b03a2",
+    "report/privacy-audit.json": "23028acbf8dc2acdc1e1a70cf152bcfea8a882270fbd8db03a89ce1a0dc9d9f0",
+    "report/status.json": "de94e53ae14942647411e1e9033dbc9d1ca0b6880e38c7cc5c33e39dc2fb08e2",
     "report/tables/condition-summary.csv": "2ba7a5b4941ab5470b786e06e8692af576c890dca6b67a9826fbb08a4c0232a6",
     "report/tables/condition-summary.json": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
     "report/tables/missingness.csv": "2ba7a5b4941ab5470b786e06e8692af576c890dca6b67a9826fbb08a4c0232a6",

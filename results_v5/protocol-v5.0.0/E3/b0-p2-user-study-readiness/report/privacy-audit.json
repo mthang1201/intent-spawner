@@ -1,14 +1,36 @@
 {
+  "aggregate_audit_status": "PASS",
+  "aggregate_files_scanned": 19,
+  "categories_checked": [
+    "email",
+    "direct_personal_identifier_key",
+    "ip_address",
+    "unexpected_local_absolute_path",
+    "free_text_response_field",
+    "secret_token_key"
+  ],
   "checks": [
     "pseudonym",
     "email",
     "IP address",
     "direct identifier field",
     "free-text response field",
-    "absolute local path"
+    "absolute local path",
+    "secret key or token"
   ],
   "direct_identifier_findings": 0,
-  "files_scanned": 19,
+  "files_scanned": 28,
+  "package_audit_status": "PASS",
+  "pseudonym_handling_policy": "Permitted in research manifests and event streams (format P-<12 hex digits>); excluded from public aggregate reports.",
+  "public_aggregate_pseudonym_policy": "EXCLUDED (pseudonyms and participant IDs rejected in aggregate reports).",
   "schema_version": "protocol-v5-user-study-report-privacy-audit-v1.0.0",
-  "status": "PASS"
+  "status": "PASS",
+  "violations_per_category": {
+    "direct_personal_identifier_key": 0,
+    "email": 0,
+    "free_text_response_field": 0,
+    "ip_address": 0,
+    "secret_token_key": 0,
+    "unexpected_local_absolute_path": 0
+  }
 }

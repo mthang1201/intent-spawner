@@ -84,5 +84,17 @@
     "method": "holm_step_down",
     "unavailable_endpoint_policy": "retain_in_family_and_never_reduce_family_size"
   },
-  "schema_version": "protocol-v5-user-study-analysis-v1.2.0"
+  "schema_version": "protocol-v5-user-study-analysis-v1.2.0",
+  "sub_gates": {
+    "configuration_fairness": "PASS",
+    "confirmatory_assignment": "NOT_GENERATED",
+    "confirmatory_freeze": "PENDING_RESEARCHER_APPROVAL",
+    "confirmatory_task_set": "DEVELOPMENT_DRAFT",
+    "framework_harness": "PASS",
+    "genuine_participants": 0,
+    "live_deployment_preflight": "NOT_VERIFIED",
+    "local_deterministic_smoke": "PASS",
+    "observed_evidence": "NOT_EXECUTED",
+    "privacy_audit": "PASS"
+  }
 }

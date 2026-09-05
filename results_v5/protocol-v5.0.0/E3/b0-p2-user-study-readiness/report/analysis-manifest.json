@@ -42,9 +42,9 @@
   "execution_status": "NOT_EXECUTED",
   "figure_renderer": "matplotlib_svg",
   "generated_file_sha256": {
-    "derived/analysis.json": "74cdde51d934ce512e136b0d5f1bdc57df42258c09cac2ef2f49351cf0993cb6",
+    "derived/analysis.json": "d0619867d9f4460f1e139e5aa2df32c06d6843b1517a1272c9f445b8855e667e",
     "derived/model-effects.json": "ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356",
-    "report/USER_STUDY_REPORT.md": "f0f20dab9ee30db4a1afe0e8ce852eef8d65ac5f6f58a62d0591422dab42d094",
+    "report/USER_STUDY_REPORT.md": "1e13e4e2581d6299f2fc700a1d803b6e214e042ea3e0310b12495880d8541ae8",
     "report/figures/accuracy.svg": "fd41efe56098dfb382ef91506249fc4b55c314c96e007eaf46445ccf7a47b470",
     "report/figures/decision-time.svg": "3cf950005c60b1fd8bd802a47856b641a1772e88942b788378179c14b06139ba",
     "report/figures/interaction-effort.svg": "44d6bf5cd32e015e51a1d51b83ab6351c450e772d6e448e910cf45f589e08fe3",
