@@ -1,1 +1,81 @@
 """E5 image correctness and storage evaluation namespace (measurements required)."""
+
+from .contracts import (
+    DimensionCStatus,
+    E5_RUN_SCHEMA_VERSION,
+    FUNCTIONAL_EVALUATION_SCHEMA_VERSION,
+    FUNCTIONAL_METRICS_SCHEMA_VERSION,
+    IMAGE_PROBE_MANIFEST_SCHEMA_VERSION,
+    IMAGE_PROBE_RECORD_SCHEMA_VERSION,
+    FunctionalEvaluationRecord,
+    ImageProbeManifest,
+    ImageProbeResult,
+    ImageProbeSpec,
+    ProbeExecutionError,
+    ProbeExecutionStatus,
+    ProbeSpec,
+    SecurityVerificationError,
+    parse_image_digest,
+    validate_approved_image_reference,
+)
+from .manifest import (
+    CAPABILITY_PROBE_TEMPLATES,
+    build_image_probe_manifest,
+    build_image_probes,
+    create_capability_probe,
+)
+from .metrics import (
+    FunctionalMetricsReport,
+    SystemFunctionalSummary,
+    compute_functional_metrics,
+    evaluate_recommendation_functional,
+)
+from .runner import (
+    BaseProbeRunner,
+    DockerProbeRunner,
+    DryRunProbeRunner,
+    KubernetesProbeRunner,
+    SyntheticProbeRunner,
+    create_probe_runner,
+    detect_runtime,
+)
+from .validate_evidence import (
+    EvidenceValidationError,
+    validate_e5_evidence,
+)
+
+__all__ = [
+    "CAPABILITY_PROBE_TEMPLATES",
+    "DimensionCStatus",
+    "E5_RUN_SCHEMA_VERSION",
+    "EvidenceValidationError",
+    "FUNCTIONAL_EVALUATION_SCHEMA_VERSION",
+    "FUNCTIONAL_METRICS_SCHEMA_VERSION",
+    "IMAGE_PROBE_MANIFEST_SCHEMA_VERSION",
+    "IMAGE_PROBE_RECORD_SCHEMA_VERSION",
+    "BaseProbeRunner",
+    "DockerProbeRunner",
+    "DryRunProbeRunner",
+    "FunctionalEvaluationRecord",
+    "FunctionalMetricsReport",
+    "ImageProbeManifest",
+    "ImageProbeResult",
+    "ImageProbeSpec",
+    "KubernetesProbeRunner",
+    "ProbeExecutionError",
+    "ProbeExecutionStatus",
+    "ProbeSpec",
+    "SecurityVerificationError",
+    "SyntheticProbeRunner",
+    "SystemFunctionalSummary",
+    "build_image_probe_manifest",
+    "build_image_probes",
+    "compute_functional_metrics",
+    "create_capability_probe",
+    "create_probe_runner",
+    "detect_runtime",
+    "evaluate_recommendation_functional",
+    "parse_image_digest",
+    "validate_approved_image_reference",
+    "validate_e5_evidence",
+]
