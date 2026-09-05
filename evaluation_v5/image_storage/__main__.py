@@ -111,6 +111,7 @@ def _format_markdown_report(
     execution_mode: str,
     execution_status: str,
     git_info: dict[str, Any],
+    recommendations_path: Path | None = None,
 ) -> str:
     lines: list[str] = []
     lines.append(f"# Protocol-v5 E5 Functional Validation Report: `{run_id}`\n")
@@ -121,7 +122,12 @@ def _format_markdown_report(
     lines.append(f"- **Evidence Status**: `{execution_status}`")
     lines.append(f"- **Catalog Version**: `{manifest.catalog_version}` (SHA-256: `{manifest.catalog_sha256}`)")
     lines.append(f"- **Total Probe Specifications**: {sum(len(img.probes) for img in manifest.images)}")
-    lines.append(f"- **Total Recommendations Evaluated**: {metrics_report.get('total_evaluations', 0)}\n")
+    lines.append(f"- **Total Recommendations Evaluated**: {metrics_report.get('total_evaluations', 0)}")
+    if recommendations_path and recommendations_path.is_file():
+        rec_sha = file_sha256(recommendations_path)
+        lines.append(f"- **Recommendations Input**: `{recommendations_path}` (SHA-256: `{rec_sha}`)")
+    lines.append("")
+
 
     lines.append("## 2. Multi-Dimensional Recommendation Performance\n")
     lines.append(
@@ -434,6 +440,7 @@ def run_e5_evaluation(
         "ranker_version": "p2-deterministic-ranker-v1.0.0",
     }) if execution_status == EvidenceStatus.OBSERVED else {}
 
+    rec_sha = file_sha256(recommendations_path) if recommendations_path and recommendations_path.is_file() else None
     env_identity = {
         "environment_id": f"e5-{active_mode}-{platform.system().lower()}",
         "platform": platform.platform(),
@@ -441,6 +448,8 @@ def run_e5_evaluation(
         "execution_mode": active_mode,
         "git_info": git,
         "runtime_detected": detect_runtime(),
+        "recommendations_input_path": str(recommendations_path) if recommendations_path else None,
+        "recommendations_input_sha256": rec_sha,
     }
     write_json_exclusive(raw_dir / "environment.json", env_identity)
 
@@ -455,6 +464,7 @@ def run_e5_evaluation(
         execution_mode=active_mode,
         execution_status=execution_status.value,
         git_info=git,
+        recommendations_path=recommendations_path,
     )
     (report_dir / "E5_IMAGE_FUNCTIONAL_REPORT.md").write_text(report_md, encoding="utf-8")
 
