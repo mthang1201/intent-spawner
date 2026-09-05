@@ -2,129 +2,184 @@
 
 Protocol `5.0.0`, experiment `E4`.
 
-## 1. Executive Summary
+## Final Verdict
 
-This report documents the execution of the Protocol-v5 E4 experiment (covering both independent resource calibration and comparative resource efficiency) in accordance with Protocol-v5 experiment engineering rules.
+`OBSERVED_EXECUTION_NOT_AUTHORIZED`
 
-In compliance with **Rule 7 & 8 of AGENTS.md**:
-* Zero benchmark labels, Kubernetes measurements, latency, or resource usages were fabricated.
-* Because the live dedicated disposable Kubernetes cluster (`intent-spawner-eval-v5`), frozen node allocatable capacity, verified container image digest, and approved calibration oracle package are not currently active in this environment, live execution gates failed closed.
-* Sealed, tamper-evident packages were generated with explicit `NOT_EXECUTED` status, capturing all read-only preflight facts, contract hashes, and blocker codes.
+E4 readiness/freeze audit completed; OBSERVED execution was not authorized because live cluster eligibility, image verification, oracle approval, and confirmatory freeze gates failed closed. Zero OBSERVED trials were executed or attempted.
 
-## 2. Provenance and Git Isolation
+---
 
-* **Task branch**: `experiment/protocol-v5-e4-observed-run`
-* **Isolated worktree path**: `/Users/mthang1201/Documents/datn/intent-spawner-protocol-v5-e4-observed-run`
-* **Base commit SHA**: `2cf206773e63f7086e3c9716a5077793b189fa6d`
-* **Execution Git SHA (`execution_git_sha`)**: `2cf206773e63f7086e3c9716a5077793b189fa6d`
-  (The exact clean committed revision present during plan generation, execution attempts, and discovery).
-* **Delivery commit SHA (`delivery_commit_sha`)**: To be committed with this report artifact.
-* **Concurrent Agent Protection**:
-  * The main working tree (`/Users/mthang1201/Documents/datn/intent-spawner`) on branch `main` remained completely untouched.
-  * Other worktrees (`intent-spawner-b0-p2-user-study`, `intent-spawner-protocol-v5-research-analysis-hardening`, `intent-spawner-image-storage-scalability`) operate independently without interference.
-  * No broad git commands (`git add .`, `git commit -a`, `git reset --hard`, `git clean`) were used; all staged files are explicit paths.
+## 1. Environment Freeze
 
-## 3. Experiment Design and Matrix
+| Identity / Component | Freeze Status | Value / Digest | Note |
+| --- | --- | --- | --- |
+| Recommender Catalog | Frozen | `f45b04efc2ea6f271d49c6806b58bfc0f30503cb68944930609f6e0f71882a71` | `recommender/image-catalog.yaml` (v2026-08-06.1) |
+| Candidate Corpus | Frozen | `987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444` | 12 candidates |
+| Sparse Index | Frozen | `931fac84b818cb934a37bfbfa76092a89626cd5eaffc869887de8558bc6fa747` | BM25 Okapi |
+| Dense Index | Frozen | `c0561bcd1ee6ec5153b710aef3deae88bd259a011ddd454513cbb1c675118387` | Cosine dense retriever |
+| Hybrid Index | Frozen | `45ea08f29492d796189920713636b3a9cae2f0fb264e023124eb38c8cfad83a4` | RRF hybrid retriever |
+| Dynamic Resource Policy | Frozen | `fd1e2696452d4c4eae589e1c01bafeca50e84d21b52cc7320e9b467baa745cc3` | `recommender/resource-policy.yaml` |
+| Workload Manifest | Frozen | `fae8f81014a51eec709b119cb23fa0fdb84cfbbecdf2a6dd403e0984950e30bb` | 16 canonical workload families |
+| Efficiency Condition Inputs | Frozen | `dce8d2b65bdfc7e2ce280e05645906b91a5d4bbfa1f089601ff54dbb5ab02e66` | Mechanically bound, label-free |
+| Efficiency Freeze Contract | Not Frozen | Development phase (`NOT_FROZEN`) | `benchmarks_v5/resource-efficiency-freeze-contract-v1.yaml` |
+| Envelope Freeze Contract | Not Frozen | Development phase (`NOT_FROZEN`) | `benchmarks_v5/resource-envelope-freeze-contract-v1.yaml` |
+| Node Allocatable Capacity | Not Frozen | `NOT_FROZEN` | Contains no invented allocatable values |
+| Workload Container Image | Unavailable | `NOT_BUILT_OR_VERIFIED` | Declared in `cluster_evaluation/resource-v5-image-state.yaml` |
+| Approved Oracle Package | Unavailable | `NOT_APPROVED` (path null, digest null) | Required by comparative freeze contract |
+| P3 Reranker Gate | Not Applicable | `not_retained` | Authoritative gate excludes P3 from E4 |
 
-The Protocol-v5 E4 comparative resource efficiency design binds:
-* **Workload Families**: 16 frozen canonical instances (`N = 16`, independent semantic unit).
-* **Conditions**: 4 allocation policies (`STATIC_LARGE`, `P1_CATALOG`, `P2_CATALOG`, `P2_DYNAMIC`).
-* **Repetitions**: 10 paired repetitions per family-condition combination.
-* **Primary Trials**: $16 \times 4 \times 10 = 640$ primary trials.
-* **Execution Order Algorithm**: `seeded-family-shuffle-with-balanced-latin-condition-rotation-v1`.
-  * Within each repetition, families are shuffled by seed.
-  * Conditions rotate through Latin positions so every condition occupies each within-family temporal position exactly 4 times per repeat block.
-* **Pareto Frontier Objectives**:
-  * Minimization: `cpu_cost_per_success`, `memory_cost_per_success`, `oom_rate`, `timeout_rate`, `pending_or_admission_rate`, `runtime_error_rate`, `incorrect_rate`.
-  * Maximization: `success_rate`, `correct_completion_rate`.
-  * Lower cost with degraded reliability is classified as `EFFICIENCY_RELIABILITY_TRADEOFF`, never an improvement.
-  * No post-hoc success noninferiority margin is permitted.
+---
 
-## 4. Generated Artifacts
+## 2. Live Execution Gates
 
-### 4.1. Comparative Allocation Plan Package
-* **Path**: `results_v5/protocol-v5.0.0/E4/e4-resource-efficiency-plan-20260905T082000Z`
+| Gate | Status | Evidence |
+| --- | --- | --- |
+| Confirmatory Freeze | FAIL (Closed) | `confirmatory_freeze_status: NOT_FROZEN` in both freeze contracts |
+| Git / Provenance | PASS | Clean worktree at execution time; `git_dirty: false`, Git SHA `2cf206773e63f7086e3c9716a5077793b189fa6d` |
+| Workload Manifest | PASS | 16/16 markers verified against frozen canonical workload implementations |
+| Plan Identity | PASS | Plan package sealed (`eec8b92fcc6750b466cde3a15893babe2aacba71ef95ee4adb636ead75354466`) |
+| Oracle Approval / Digest | FAIL (Closed) | `manual_approval_status: NOT_APPROVED`, path null, sha256 null |
+| Workload Image Digest | FAIL (Closed) | Status `NOT_BUILT_OR_VERIFIED`; no pinned image digest verified |
+| Capacity Freeze | FAIL (Closed) | `benchmarks_v5/resource-efficiency-capacity-v1.yaml` is `NOT_FROZEN` |
+| Kubernetes Context | FAIL (Closed) | Active context is `orbstack`; expected `intent-spawner-eval-v5` |
+| Cluster Identity | FAIL (Closed) | Namespace label `z2jh-context-demo.local/cluster-identity` != `intent-spawner-eval-v5` |
+| Namespace Safety Label | FAIL (Closed) | `z2jh-context-demo.local/disposable-experiment-v5: "true"` absent |
+| Node Identity | FAIL (Closed) | `z2jh-context-demo.local/node-identity: e4-node-v1` absent |
+| Isolation / Safety | FAIL (Closed) | `z2jh-context-demo.local/dedicated-e4: "true"` absent; non-dedicated node |
+| API Connectivity | FAIL (Closed) | Verified API access absent for dedicated target namespace |
+| Required Telemetry | FAIL (Closed) | cgroup-v2 controller check failed on non-dedicated node; no cgroup probe created |
+| Cleanup Capability | Not Applicable | Authorization stopped prior to pod creation; no pod created |
+| Resume / Evidence Destination | PASS | Exclusive-created local run directories; sealed with SHA256SUMS |
+
+---
+
+## 3. Frozen Trial Plan
+
+The comparative allocation plan package was generated and sealed prior to live execution preflight:
+* **Package Path**: `results_v5/protocol-v5.0.0/E4/e4-resource-efficiency-plan-20260905T082000Z`
 * **Plan SHA-256**: `eec8b92fcc6750b466cde3a15893babe2aacba71ef95ee4adb636ead75354466`
-* **Status**: Sealed with `SHA256SUMS`.
-* **Contents**:
-  * `plan.json`: Complete specification of 16 allocation decisions, 640 planned trials, random seeds, and input hashes.
+* **Master Planner Seed**: `20260904`
+* **Allocation Conditions**: exactly 4 (`STATIC_LARGE`, `P1_CATALOG`, `P2_CATALOG`, `P2_DYNAMIC`)
+* **Workload Families**: exactly 16 (`N = 16`, independent semantic unit)
+* **Repetitions**: exactly 10 blocks (each block contains 64 paired trials)
+* **Total Planned Trials**: exactly 640 ($16 \times 4 \times 10$)
+* **Execution Order / Counterbalancing**: Validated computationally. Seed-shuffled family order within each repetition; balanced Latin rotation rotates condition position across all 4 slots so each condition occupies every slot exactly 4 times per repeat block.
+* **Status**: Sealed and immutable, but live execution of the plan was **not authorized**.
 
-### 4.2. Resource Efficiency Execution Package
-* **Path**: `results_v5/protocol-v5.0.0/E4/e4-resource-efficiency-observed-run-20260905T081825Z`
-* **Schema Version**: `protocol-v5-resource-efficiency-raw-package-v1.0.0`
-* **Execution Status**: `NOT_EXECUTED`
-* **Cluster Measurement Status**: `NOT_EXECUTED`
-* **Plan Binding SHA-256**: `eec8b92fcc6750b466cde3a15893babe2aacba71ef95ee4adb636ead75354466`
-* **Blocker Codes**:
-  1. `APPROVED_ORACLE_UNAVAILABLE`: Independent calibration oracle package not approved.
-  2. `CGROUP_V2_REQUIRED`: Cluster preflight did not detect cgroup-v2 controllers on dedicated node.
-  3. `CLUSTER_INELIGIBLE`: Cluster fails eligibility criteria.
-  4. `CONFIRMATORY_FREEZE_INACTIVE`: Freeze contract is `NOT_FROZEN` in development phase.
-  5. `IMAGE_DIGEST_UNVERIFIED`: Image state is `NOT_BUILT_OR_VERIFIED`.
-  6. `KUBERNETES_VERSION_UNAVAILABLE`: Read-only preflight did not detect target cluster version.
-  7. `NODE_CAPACITY_NOT_FROZEN`: Allocatable capacity contract remains `NOT_FROZEN`.
-  8. `REQUIRED_API_ACCESS_MISSING`: Verified API access absent for dedicated target namespace.
-  9. `WRONG_CLUSTER_FINGERPRINT`: Cluster label does not match `intent-spawner-eval-v5`.
-  10. `WRONG_KUBERNETES_CONTEXT`: Current context is `orbstack` (expected `intent-spawner-eval-v5`).
-  11. `WRONG_NODE_COUNT`: Target dedicated single-node count not satisfied.
-* **Status**: Sealed with `SHA256SUMS`. Validated with `validate-package`.
+---
 
-### 4.3. Resource Envelope Calibration Package
-* **Path**: `results_v5/protocol-v5.0.0/E4/e4-resource-envelope-observed-run-20260905T081833Z`
-* **Schema Version**: `protocol-v5-resource-calibration-run-v1.1.0`
-* **Execution Status**: `DRY_RUN` (`NOT_EXECUTED`)
-* **Manual Review Status**: `NOT_APPLICABLE`
-* **Status**: Sealed with `SHA256SUMS`. Validated with `validate-evidence`.
+## 4. Execution Result
 
-## 5. Verification Commands and Test Results
+Because readiness gates failed closed, zero OBSERVED trials were initiated:
 
-All commands executed within the dedicated worktree:
+* **Planned Trials**: 640
+* **OBSERVED Trials Attempted**: 0
+* **OBSERVED Trials Completed**: 0
+* **OBSERVED Trials Successful**: 0
+* **Kubernetes Experiment Pods / Jobs Created**: 0
+* **Trial-Level Resource Telemetry Records**: 0
+* **Kubernetes Mutations on `orbstack`**: None. All interaction was strictly read-only preflight inspection (`kubectl get namespace`, `kubectl get nodes`, `kubectl get pods -A`, `kubectl get resourcequota`, `kubectl version`, `kubectl auth can-i`).
 
-1. **Manifest Validation**:
-   ```bash
-   PYTHONPATH=. .venv/bin/python -m evaluation_v5.resource validate-manifest
-   ```
-   *Result*: `PASS` (16 families, 16 verified markers, static independence scan pass).
+> [!IMPORTANT]
+> No Kubernetes experiment mutation was performed against the unapproved `orbstack` context.
 
-2. **Efficiency Contract Validation**:
-   ```bash
-   PYTHONPATH=. .venv/bin/python -m evaluation_v5.resource.efficiency_runner validate
-   ```
-   *Result*: `PASS` (640 primary trials, 16 families, 4 conditions, 10 repetitions).
+---
 
-3. **E4 Unit and Integration Tests**:
-   ```bash
-   PYTHONPATH=. .venv/bin/python -m pytest \
-     tests/test_resource_efficiency_v5.py \
-     tests/test_resource_envelope_v5.py \
-     tests/test_protocol_v5_research_analysis.py
-   ```
-   *Result*: `129 passed in 14.07s`.
+## 5. Evidence Packages
 
-4. **Package Validation**:
-   ```bash
-   PYTHONPATH=. .venv/bin/python -m evaluation_v5.resource.efficiency_runner validate-package \
-     results_v5/protocol-v5.0.0/E4/e4-resource-efficiency-observed-run-20260905T081825Z
-   PYTHONPATH=. .venv/bin/python -m evaluation_v5.resource validate-evidence \
-     --result-dir results_v5/protocol-v5.0.0/E4/e4-resource-envelope-observed-run-20260905T081833Z
-   ```
-   *Result*: `PASS` on both packages.
+Three sealed packages document the planning and fail-closed readiness audit:
 
-5. **Research Analysis Discovery Audit**:
-   ```bash
-   PYTHONPATH=. .venv/bin/python -m evaluation_v5.analysis.research_analysis discover \
-     --results-root results_v5/protocol-v5.0.0 \
-     --freeze results_v5/protocol-v5.0.0/freezes/frozen-configuration.json
-   ```
-   *Result*: `PASS` (Discovered E4 candidate packages; adjudicated with explicit `NOT_EXECUTED` / `CLAIMS_NOT_PERMITTED` without errors).
+1. **Sealed Comparative Allocation Plan Package**:
+   * **Path**: `results_v5/protocol-v5.0.0/E4/e4-resource-efficiency-plan-20260905T082000Z`
+   * **Role**: Deterministic paired trial specifications and allocation decisions.
+   * **Contents**: `plan.json`, `SHA256SUMS`.
+   * **Integrity**: Validated (`validate_efficiency_plan: PASS`, SHA256SUMS verified).
 
-## 6. Prerequisites for Live Execution
+2. **Sealed Fail-Closed Readiness Evidence Package**:
+   * **Path**: `results_v5/protocol-v5.0.0/E4/e4-resource-efficiency-observed-run-20260905T081825Z`
+   * **Role**: Preserves fail-closed blocker codes and read-only cluster preflight facts.
+   * **Execution Status**: `NOT_EXECUTED` (Cluster Measurement Status: `NOT_EXECUTED`).
+   * **Trial Records**: 0.
+   * **Blocker Codes**: `APPROVED_ORACLE_UNAVAILABLE`, `CGROUP_V2_REQUIRED`, `CLUSTER_INELIGIBLE`, `CONFIRMATORY_FREEZE_INACTIVE`, `IMAGE_DIGEST_UNVERIFIED`, `KUBERNETES_VERSION_UNAVAILABLE`, `NODE_CAPACITY_NOT_FROZEN`, `REQUIRED_API_ACCESS_MISSING`, `WRONG_CLUSTER_FINGERPRINT`, `WRONG_KUBERNETES_CONTEXT`, `WRONG_NODE_COUNT`.
+   * **Integrity**: Sealed with `SHA256SUMS`; validated with `validate-package`.
 
-Live physical/cluster execution of E4 requires:
-1. A dedicated Kubernetes cluster with context `intent-spawner-eval-v5`.
-2. Exactly one dedicated node labeled `z2jh-context-demo.local/node-identity: e4-node-v1` and `z2jh-context-demo.local/dedicated-e4: "true"`, running cgroup v2 with `cpu`, `memory`, and `pids` controllers.
-3. Disposable namespace `z2jh-context-demo` labeled `z2jh-context-demo.local/disposable-experiment-v5: "true"`.
-4. An immutable container image built from `cluster_evaluation/Dockerfile.resource-v5` and pre-pulled onto the eligible node, with its SHA-256 digest verified and recorded in `cluster_evaluation/resource-v5-image-state.yaml`.
-5. Confirmatory freeze activation: setting `confirmatory_freeze_status: FROZEN` in `benchmarks_v5/resource-efficiency-freeze-contract-v1.yaml` and `benchmarks_v5/resource-envelope-freeze-contract-v1.yaml`.
-6. Frozen node allocatable capacity recorded in `benchmarks_v5/resource-efficiency-capacity-v1.yaml`.
-7. Sealed, approved independent resource envelope calibration package.
+3. **Sealed Preflight Calibration Package**:
+   * **Path**: `results_v5/protocol-v5.0.0/E4/e4-resource-envelope-observed-run-20260905T081833Z`
+   * **Role**: Preserves read-only calibration preflight facts and dry-run manifest.
+   * **Execution Status**: `DRY_RUN` (`NOT_EXECUTED`).
+   * **Trial Records**: 0 (Manual review status: `NOT_APPLICABLE`).
+   * **Integrity**: Sealed with `SHA256SUMS`; validated with `validate-evidence`.
+
+> [!NOTE]
+> These packages constitute sealed fail-closed readiness evidence. They do NOT contain authorized OBSERVED raw trial observations.
+
+---
+
+## 6. Scientific Results
+
+Because OBSERVED execution was not authorized, **no empirical scientific comparison is available**.
+
+* No empirical claims regarding CPU request-time, memory request-time, OOM frequency, timeout behavior, or execution latency among `STATIC_LARGE`, `P1_CATALOG`, `P2_CATALOG`, and `P2_DYNAMIC` are authorized or reported.
+* No hypothesis testing (H5, H6) is evaluated from these packages. In the unified Protocol-v5 research analysis claim registry, H5 and H6 evaluate to `NOT_EXECUTED`.
+
+---
+
+## 7. Pareto Verdict
+
+`INCONCLUSIVE / NOT AVAILABLE — OBSERVED EXECUTION NOT AUTHORIZED`
+
+Under the registered contract, Pareto frontier evaluation requires valid observed attempt records across all four conditions. Because execution did not occur, all Pareto dimensions remain indeterminate.
+
+---
+
+## 8. Simulated Capacity
+
+`UNAVAILABLE / NOT EXECUTED`
+
+Under `benchmarks_v5/resource-efficiency-capacity-v1.yaml`, capacity packing requires observed pod resource requests read back from actual completed trials. Because no trials ran and node allocatable capacity remains `NOT_FROZEN`, simulated deterministic request-packing was not executed.
+
+---
+
+## 9. Statistical Unit
+
+* **Planned Raw Trials**: 640
+* **Repetitions per Family-Condition**: 10
+* **Workload Families**: 16
+* **Planned Inferential Units ($N$)**: 16 (workload family is the semantic independent unit; repeated runs estimate within-family variability only)
+* **Actual Observed Paired Inferential $N$**: **0** (zero trials authorized)
+
+---
+
+## 10. Validation Results
+
+All verification commands executed cleanly in the dedicated worktree:
+
+| Command | Exit Code | Result Summary |
+| --- | :---: | --- |
+| `pytest` (comprehensive suite) | `0` | `290 passed in 19.60s` (0 failed, 0 skipped, 0 xfailed) |
+| `evaluation_v5.resource validate-manifest` | `0` | `PASS` (16 families, 16 verified markers, static independence pass) |
+| `evaluation_v5.resource.efficiency_runner validate` | `0` | `PASS` (640 primary trials, 16 families, 4 conditions, 10 repetitions) |
+| `evaluation_v5.resource.efficiency_runner validate-package` | `0` | `PASS` (`sealed: true, execution_status: NOT_EXECUTED, trials: 0`) |
+| `evaluation_v5.resource validate-evidence` | `0` | `PASS` (`sealed: true, execution_status: DRY_RUN, trial_records: 0`) |
+| `evaluation_v5.isolation_audit` | `0` | `PASS` (1641 docs inspected, no confirmatory split leakage) |
+| `scripts/scan-secrets.py` | `0` | `PASS` (2362 text files scanned, zero secrets found) |
+| `scripts/validate-portable-evidence.py` | `0` | `PASS` (portable bundle verified, analysis reproduced) |
+| `compileall` across all modules | `0` | `PASS` (clean syntax compilation) |
+| `git diff --check` | `0` | `PASS` (clean whitespace and diff formatting) |
+
+---
+
+## 11. Limitations and Prerequisites for Future Execution
+
+OBSERVED E4 execution cannot occur until the following prerequisite conditions are legitimately satisfied in a clean committed Git revision:
+
+1. **Dedicated Disposable Cluster**: Availability of a disposable cluster matching context `intent-spawner-eval-v5`.
+2. **Dedicated Labeled Node**: A single node labeled `z2jh-context-demo.local/node-identity: e4-node-v1` and `z2jh-context-demo.local/dedicated-e4: "true"`.
+3. **Dedicated Namespace**: Namespace `z2jh-context-demo` labeled `z2jh-context-demo.local/disposable-experiment-v5: "true"`.
+4. **cgroup v2 Telemetry**: Dedicated node exposing cgroup v2 with active `cpu`, `memory`, and `pids` controllers and `memory.events` counters (`oom`, `oom_kill`).
+5. **Verified Container Image**: Workload image built from `cluster_evaluation/Dockerfile.resource-v5`, pushed, pre-pulled onto the dedicated node, with its SHA-256 digest verified and recorded in `cluster_evaluation/resource-v5-image-state.yaml`.
+6. **Frozen Node Capacity**: Allocatable CPU, memory, and GPU quantities read back from `kubectl get node -o json` and frozen in `benchmarks_v5/resource-efficiency-capacity-v1.yaml` with `freeze_status: FROZEN`.
+7. **Approved Oracle Package**: Sealed and manually approved independent envelope calibration package recorded in `benchmarks_v5/resource-efficiency-freeze-contract-v1.yaml`.
+8. **Confirmatory Freeze Activation**: Setting `confirmatory_freeze_status: FROZEN` in `benchmarks_v5/resource-efficiency-freeze-contract-v1.yaml` and `benchmarks_v5/resource-envelope-freeze-contract-v1.yaml`.
+9. **Passing Live Preflight**: Non-mutating preflight returning `eligibility_status: ELIGIBLE` with zero failure codes.
