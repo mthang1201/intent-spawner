@@ -306,8 +306,8 @@ with their manifests; do not rerun or overwrite any authoritative directory.
 - Dedicated worktree: `/Users/mthang1201/Documents/datn/intent-spawner-protocol-v5-e4-observed-run`
 - Base commit SHA: `2cf206773e63f7086e3c9716a5077793b189fa6d`
 - Execution Git SHA (`execution_git_sha`): `2cf206773e63f7086e3c9716a5077793b189fa6d`
-- Previous corrective delivery SHA: `4df87e3bc651b8418135d65076de8e2eba89e5c6`
-- Post-hoc commit audit for `4df87e3`: `POST_HOC_COMMIT_CONTENT_AUDIT: PASS` (verified diff contained strictly documentation corrections for E4 conditions, hashes, validation provenance, and removed hallucinations).
+- Previous corrective delivery SHA: `27a52c125a8eaec804bc00e936ff9fc11d99fc26` (preceded by `4df87e3bc651b8418135d65076de8e2eba89e5c6`, `d72f273300c7f647c5b292b6664751e0f86ac27f`, `71cc157544d71fa0e8d10a744074cbb3b1c1c832`, on base `2cf206773e63f7086e3c9716a5077793b189fa6d`)
+- Post-hoc commit audit: `POST_HOC_COMMIT_CONTENT_AUDIT: PASS` (verified diffs contained strictly documentation corrections for E4 conditions, paths, namespaces, hashes, validation provenance, and removed hallucinations).
 - Final Verdict: `OBSERVED_EXECUTION_NOT_AUTHORIZED`
   - E4 readiness and freeze audit completed; OBSERVED execution was not authorized because live cluster eligibility, image verification, oracle package approval, and confirmatory freeze gates failed closed.
   - Zero OBSERVED trials were executed or attempted (planned = 640, attempted = 0, completed = 0, successful = 0).
@@ -339,7 +339,9 @@ with their manifests; do not rerun or overwrite any authoritative directory.
 
 Do NOT simply run E4 or attempt to initiate the 640-trial OBSERVED experiment. The next agent must follow the exact two-path sequence below:
 
-1. **Path 1 — Independent Resource-Envelope Oracle Calibration**:
+1. **Path 1 — Independent Resource-Envelope Oracle Verification / Calibration**:
+   - Invariant: A valid, approved resource-envelope oracle package satisfying `resource-efficiency-freeze-contract-v1.yaml` **must exist and be frozen into the contract** before E4 efficiency OBSERVED execution is authorized. If a valid, approved oracle package already exists in the repository, it can be consumed directly without recalibration.
+   - Current State: `NO VALID APPROVED E4 ORACLE CURRENTLY AVAILABLE`. The only existing envelope package (`results_v5/protocol-v5.0.0/E4/e4-resource-envelope-observed-run-20260905T081833Z`) has `execution_status: DRY_RUN` and `eligible_for_comparison: false` (manual review status `NOT_APPLICABLE`), and the freeze contract currently records `oracle_package.path: null` with `manual_approval_status: NOT_APPROVED`. Therefore, calibration is required before efficiency OBSERVED execution can proceed.
    - Target context: `intent-spawner-eval-v5` (disposable, non-production).
    - Target namespace: `z2jh-context-demo` labeled `z2jh-context-demo.local/disposable-experiment-v5: "true"`.
    - Single dedicated node (`required_node_count: 1`) labeled `z2jh-context-demo.local/node-identity: e4-node-v1` and `z2jh-context-demo.local/dedicated-e4: "true"`.
@@ -353,4 +355,3 @@ Do NOT simply run E4 or attempt to initiate the 640-trial OBSERVED experiment. T
    - Set `confirmatory_freeze_status: FROZEN` and `current_phase: confirmatory` in `benchmarks_v5/resource-efficiency-freeze-contract-v1.yaml`.
    - Run non-mutating preflight: `python -m evaluation_v5.resource.efficiency_runner validate` and confirm `eligibility_status: ELIGIBLE` with zero failure codes.
    - Only after all gates pass: execute the 640-trial OBSERVED run: `python -m evaluation_v5.resource.efficiency_runner execute ...`
-

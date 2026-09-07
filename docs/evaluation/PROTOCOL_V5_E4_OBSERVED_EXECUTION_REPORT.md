@@ -245,22 +245,41 @@ All verification commands executed cleanly in the dedicated worktree:
 9. **Passing Live Read-Only Preflight**:
    * Non-mutating preflight returning `eligibility_status: ELIGIBLE` with zero failure codes.
 
-### 12.2 Independent Resource-Envelope Oracle Prerequisites (Calibration Run)
-Before the comparative efficiency run can be authorized, an independent resource-envelope calibration run must be executed to produce the oracle:
+### 12.2 Independent Resource-Envelope Oracle Prerequisite (Status and Calibration Workflow)
+
+The scientific invariant required by `benchmarks_v5/resource-efficiency-freeze-contract-v1.yaml` is that a valid, approved resource-envelope oracle package (`safe-envelopes.json`) **must exist and be frozen into the contract** before E4 efficiency OBSERVED execution is authorized.
+If a valid, approved, contract-compliant oracle package already exists in the repository, it can be consumed directly without recalibration.
+
+**Current Repository State**: `NO VALID APPROVED E4 ORACLE CURRENTLY AVAILABLE`.
+- The only envelope package currently present in the repository is `results_v5/protocol-v5.0.0/E4/e4-resource-envelope-observed-run-20260905T081833Z`.
+- This package has `execution_status: DRY_RUN`, `trial_records: 0`, and `eligible_for_comparison: false` (with `manual_review_status: NOT_APPLICABLE`). It cannot serve as an empirical oracle.
+- The contract `benchmarks_v5/resource-efficiency-freeze-contract-v1.yaml` currently records:
+  ```yaml
+  oracle_package:
+    path: null
+    sha256: null
+    manual_approval_status: NOT_APPROVED
+    required_envelope_status: APPROVED
+  ```
+- Therefore, because no valid approved oracle currently exists, an independent resource-envelope calibration execution **must be performed, manually reviewed and APPROVED, and bound to the freeze contract** before the comparative 640-trial efficiency OBSERVED execution can proceed.
+
+When performing this calibration run:
 * Orchestration runner: `python -m evaluation_v5.resource calibrate ...`
-* Same target context: `intent-spawner-eval-v5`
-* Same target namespace: `z2jh-context-demo`
-* Same dedicated node: `e4-node-v1`
+* Target context: `intent-spawner-eval-v5` (disposable, non-production)
+* Target namespace: `z2jh-context-demo`
+* Dedicated node: `e4-node-v1`
 * Requires execution of pre-trial cgroup eligibility probe pod to verify controllers and event keys.
-* Generates `safe-envelopes.json` with manual review gating (`APPROVED`).
+* Generates `safe-envelopes.json` requiring manual review approval (`APPROVED`).
 
 ### 12.3 Execution Sequence for Next Agent
-1. **Calibration Run**: Execute or obtain the independent resource-envelope calibration package (`safe-envelopes.json`) with status `OBSERVED`, `eligible_for_comparison: true`, and manual review `APPROVED`.
-2. **Oracle Binding**: Freeze oracle package path and SHA-256 checksum into `benchmarks_v5/resource-efficiency-freeze-contract-v1.yaml`.
+1. **Oracle Verification / Calibration Run**:
+   - Invariant: Verify whether a valid, approved oracle package satisfying `benchmarks_v5/resource-efficiency-freeze-contract-v1.yaml` exists.
+   - For the current repository state (`NO VALID APPROVED E4 ORACLE CURRENTLY AVAILABLE`), execute the independent resource-envelope calibration run on the disposable cluster (`python -m evaluation_v5.resource calibrate ...`), inspect `safe-envelopes.json`, and set manual review status to `APPROVED`.
+2. **Oracle Binding**: Freeze oracle package path and SHA-256 checksum into `benchmarks_v5/resource-efficiency-freeze-contract-v1.yaml` (setting `manual_approval_status: APPROVED`).
 3. **Node Capacity Freeze**: Read back allocatable CPU/memory/GPU from `kubectl get node -o json` on the dedicated node and freeze in `benchmarks_v5/resource-efficiency-capacity-v1.yaml`.
 4. **Image Verification**: Build workload container from `cluster_evaluation/Dockerfile.resource-v5`, pre-pull onto node, verify and record SHA-256 content digest in `cluster_evaluation/resource-v5-image-state.yaml`.
 5. **Freeze Activation**: Set `confirmatory_freeze_status: FROZEN` in `benchmarks_v5/resource-efficiency-freeze-contract-v1.yaml` and commit to Git.
-6. **Preflight Verification**: Run `python -m evaluation_v5.resource.efficiency_runner` live preflight and verify `ELIGIBLE` status with zero failure codes.
+6. **Preflight Verification**: Run `python -m evaluation_v5.resource.efficiency_runner validate` live preflight and verify `ELIGIBLE` status with zero failure codes.
 7. **Execution**: Execute the 640-trial OBSERVED run.
 
 ### 12.4 Previously Invented Requirements Removed During Audit
