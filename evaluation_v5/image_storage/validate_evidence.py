@@ -731,12 +731,13 @@ def validate_e5_storage_evidence(package_dir: Path | str) -> dict[str, Any]:
         if s.get("size_domain") not in ("compressed_oci_manifest_layer_bytes", "uncompressed_filesystem_layer_bytes"):
             raise EvidenceValidationError(f"Invalid size domain in scale record: {s.get('size_domain')}")
 
-    # 7. Validate raw image layers provenance
+    # 7. Validate raw image layers provenance and immutable catalog gate
     try:
         layers_data = json.loads(layers_path.read_text(encoding="utf-8"))
     except Exception as exc:
         raise EvidenceValidationError(f"Malformed image_layers.json: {exc}") from exc
 
+    immutable_catalog_valid = True
     for img in layers_data:
         if not img.get("image_digest"):
             raise EvidenceValidationError(f"Image {img.get('image_id')} missing image_digest")
@@ -745,7 +746,40 @@ def validate_e5_storage_evidence(package_dir: Path | str) -> dict[str, Any]:
         if not img.get("ordered_layer_digests") and img.get("layers"):
             raise EvidenceValidationError(f"Image {img.get('image_id')} missing ordered_layer_digests")
 
-    # 8. Validate manifest.json
+        # Check immutable requested reference gate
+        req_ref = str(img.get("requested_reference") or img.get("image_reference", ""))
+        pinned = bool(img.get("is_digest_pinned", "@sha256:" in req_ref))
+        if not pinned or "@sha256:" not in req_ref:
+            if split_stage == "confirmatory":
+                raise EvidenceValidationError(
+                    f"MUTABLE_INPUT_REFERENCE_IN_CONFIRMATORY_CATALOG: Image {img.get('image_id')} "
+                    f"requested reference {req_ref!r} is not digest-pinned"
+                )
+            immutable_catalog_valid = False
+
+    # 8. Validate recommendation split integrity and provenance
+    DEV_DATASET_IDENTITIES = {"protocol-v5-development-2026-08-22", "v5-development"}
+    DEV_DATASET_SHAS = {
+        "e3fff5167ef2194fb365fec7510d1efc2b17a18b13182063c2b63c26f021d3cd",
+        "18894b73ec98d895348498bf6b1c4dd4d2dc6004437202bd8b93c17d09b0dc0b",
+    }
+    recommendation_split_valid = True
+    for s in scale_data:
+        p2_status = s.get("p2_evaluation_status")
+        rec_stage = s.get("split_stage", split_stage)
+        rec_role = s.get("split_role", "none")
+        ds_id = s.get("evaluation_dataset_identity", "")
+        ds_sha = s.get("dataset_sha256", "")
+        if p2_status == "OBSERVED":
+            if split_stage == "confirmatory" or rec_stage == "confirmatory":
+                if rec_role == "development" or ds_id in DEV_DATASET_IDENTITIES or ds_sha in DEV_DATASET_SHAS:
+                    recommendation_split_valid = False
+                    raise EvidenceValidationError(
+                        f"CONFIRMATORY_RECOMMENDATION_USES_DEVELOPMENT_SPLIT: Scale {s.get('catalog_size')} "
+                        f"claims confirmatory recommendation but uses development dataset {ds_id} (SHA: {ds_sha})"
+                    )
+
+    # 9. Validate manifest.json
     try:
         manifest_raw = json.loads(manifest_path.read_text(encoding="utf-8"))
         manifest = ProtocolV5Manifest.from_dict(manifest_raw)
@@ -759,7 +793,7 @@ def validate_e5_storage_evidence(package_dir: Path | str) -> dict[str, Any]:
             f"Execution status mismatch: manifest has {manifest.execution_status.value} vs metrics {execution_status}"
         )
 
-    # 9. Validate status.json
+    # 10. Validate status.json
     status_raw = json.loads(status_path.read_text(encoding="utf-8"))
     if status_raw.get("status") != execution_status:
         raise EvidenceValidationError(
@@ -776,22 +810,47 @@ def validate_e5_storage_evidence(package_dir: Path | str) -> dict[str, Any]:
         s.get("storage_measurement_status") == "OBSERVED" for s in scale_data
     )
     eligible_4_image = (
-        execution_status == "OBSERVED" and split_stage == "confirmatory" and claims_permitted
+        execution_status == "OBSERVED"
+        and split_stage == "confirmatory"
+        and claims_permitted
+        and immutable_catalog_valid
     )
     eligible_full = (
         eligible_4_image and complete_multiscale
     )
 
-    claim_eligibility = (
-        "ELIGIBLE_FULL_MULTISCALE"
-        if eligible_full
-        else ("ELIGIBLE_4_IMAGE_CATALOG_STORAGE" if eligible_4_image else "NOT_ELIGIBLE")
+    scale_4_confirmatory_rec_observed = (
+        len(scale_data) > 0
+        and scale_data[0].get("catalog_size") == 4
+        and scale_data[0].get("p2_evaluation_status") == "OBSERVED"
+        and scale_data[0].get("split_stage") == "confirmatory"
+        and scale_data[0].get("split_role") == "confirmatory"
     )
+
+    if not immutable_catalog_valid:
+        claim_eligibility = "INELIGIBLE_MUTABLE_CATALOG_INPUTS"
+    elif not recommendation_split_valid:
+        claim_eligibility = "INELIGIBLE_SPLIT_CONTAMINATION"
+    elif eligible_full and scale_4_confirmatory_rec_observed:
+        claim_eligibility = "ELIGIBLE_FULL_MULTISCALE_WITH_CONFIRMATORY_RECOMMENDATION"
+    elif eligible_full:
+        claim_eligibility = "ELIGIBLE_FULL_MULTISCALE"
+    elif eligible_4_image and scale_4_confirmatory_rec_observed:
+        claim_eligibility = "ELIGIBLE_4_IMAGE_CATALOG_STORAGE_AND_CONFIRMATORY_RECOMMENDATION"
+    elif eligible_4_image:
+        claim_eligibility = "ELIGIBLE_4_IMAGE_CATALOG_STORAGE"
+    else:
+        claim_eligibility = "NOT_ELIGIBLE"
 
     return {
         "status": "PASS",
         "validator_status": "CURRENT_VALID",
+        "storage_structurally_valid": True,
         "storage_dedup_valid": True,
+        "storage_metric_valid": True,
+        "size_domain_valid": True,
+        "immutable_catalog_valid": immutable_catalog_valid,
+        "recommendation_split_valid": recommendation_split_valid,
         "partial_scalability_valid": True,
         "complete_multiscale": complete_multiscale,
         "claim_eligibility": claim_eligibility,

@@ -143,42 +143,78 @@ def generate_all_figures(
     fig_d_path = output_dir / "figure_d_recommendation_quality.png"
     fig_d_svg = output_dir / "figure_d_recommendation_quality.svg"
 
-    obs_scales = [s for s in scale_records if s.p2_evaluation_status == "OBSERVED"]
     all_scale_sizes = [s.catalog_size for s in scale_records]
+    obs_scales = [s for s in scale_records if s.p2_evaluation_status == "OBSERVED"]
+    conf_obs = [
+        s for s in obs_scales
+        if getattr(s, "split_stage", "confirmatory") == "confirmatory"
+        and getattr(s, "split_role", "") == "confirmatory"
+    ]
+    dev_obs = [s for s in obs_scales if s not in conf_obs]
+    not_exec_scales = [s for s in scale_records if s.p2_evaluation_status != "OBSERVED"]
 
     fig, ax = plt.subplots(figsize=(8, 5))
-    if obs_scales:
+
+    # Plot confirmatory observed
+    if conf_obs:
+        c_x = [s.catalog_size for s in conf_obs]
+        c_acc = [s.p2_image_acceptable_accuracy for s in conf_obs]
+        c_pref = [s.p2_image_preferred_accuracy for s in conf_obs]
+        c_rec = [s.p2_retrieval_recall_at_k for s in conf_obs]
+        ax.scatter(c_x, c_acc, color="#2b542c", s=90, zorder=6, label="Confirmatory Acceptable Acc")
+        ax.scatter(c_x, c_pref, color="#3c763d", s=90, marker="^", zorder=6, label="Confirmatory Preferred Acc")
+        ax.scatter(c_x, c_rec, color="#5cb85c", s=90, marker="D", zorder=6, label="Confirmatory Recall@5")
+
+    # Plot development/exploratory observed
+    if dev_obs:
+        d_x = [s.catalog_size for s in dev_obs]
+        d_acc = [s.p2_image_acceptable_accuracy for s in dev_obs]
+        d_pref = [s.p2_image_preferred_accuracy for s in dev_obs]
+        d_rec = [s.p2_retrieval_recall_at_k for s in dev_obs]
+        ax.scatter(d_x, d_acc, facecolors="none", edgecolors="#337ab7", linewidths=2, s=90, zorder=5, label="Dev/Exploratory Acceptable Acc")
+        ax.scatter(d_x, d_pref, facecolors="none", edgecolors="#5bc0de", marker="^", linewidths=2, s=90, zorder=5, label="Dev/Exploratory Preferred Acc")
+        ax.scatter(d_x, d_rec, facecolors="none", edgecolors="#f0ad4e", marker="D", linewidths=2, s=90, zorder=5, label="Dev/Exploratory Recall@5")
+
+    # Only draw trend lines if multiple empirical scales are observed
+    if len(obs_scales) > 1:
         s_x = [s.catalog_size for s in obs_scales]
-        acc_vals = [s.p2_image_acceptable_accuracy for s in obs_scales]
-        pref_vals = [s.p2_image_preferred_accuracy for s in obs_scales]
-        rec_vals = [s.p2_retrieval_recall_at_k for s in obs_scales]
+        ax.plot(s_x, [s.p2_image_acceptable_accuracy for s in obs_scales], color="#337ab7", linestyle="-")
+        ax.plot(s_x, [s.p2_image_preferred_accuracy for s in obs_scales], color="#5bc0de", linestyle="--")
+        ax.plot(s_x, [s.p2_retrieval_recall_at_k for s in obs_scales], color="#f0ad4e", linestyle=":")
 
-        ax.scatter(s_x, acc_vals, color="#337ab7", s=80, zorder=5, label="P2 Image Acceptable Accuracy")
-        ax.scatter(s_x, pref_vals, color="#5bc0de", s=80, marker="^", zorder=5, label="P2 Image Preferred Accuracy")
-        ax.scatter(s_x, rec_vals, color="#f0ad4e", s=80, marker="D", zorder=5, label=f"P2 Retrieval Recall@{obs_scales[0].recall_k}")
+    # Mark NOT_EXECUTED scales visibly
+    for s in not_exec_scales:
+        ax.axvline(s.catalog_size, color="gray", linestyle="--", alpha=0.6)
+        ax.scatter([s.catalog_size], [0.0], color="gray", marker="x", s=80, zorder=4)
+        ax.text(
+            s.catalog_size, 0.45, f"Scale {s.catalog_size}\n(NOT_EXECUTED)",
+            rotation=90, va="center", ha="right", color="dimgray", fontsize=8,
+            bbox=dict(boxstyle="square,pad=0.2", facecolor="white", alpha=0.7, edgecolor="none")
+        )
 
-        if len(s_x) > 1:
-            ax.plot(s_x, acc_vals, color="#337ab7", linestyle="-")
-            ax.plot(s_x, pref_vals, color="#5bc0de", linestyle="--")
-            ax.plot(s_x, rec_vals, color="#f0ad4e", linestyle=":")
-        else:
-            # Single observed point: draw horizontal dashed guide
-            ax.axhline(acc_vals[0], color="#337ab7", linestyle=":", alpha=0.4)
-            ax.axhline(rec_vals[0], color="#f0ad4e", linestyle=":", alpha=0.4)
-
-    for s in scale_records:
-        if s.p2_evaluation_status != "OBSERVED":
-            ax.axvline(s.catalog_size, color="gray", linestyle="--", alpha=0.5)
-            ax.text(s.catalog_size, 0.45, f"Scale {s.catalog_size}\n(NOT_EXECUTED)", rotation=90, va="center", ha="right", color="gray", fontsize=8)
+    # Note if single observed scale or none
+    if len(obs_scales) <= 1:
+        note_text = (
+            "Single observed scale (N=4); no empirical multi-scale trend is yet estimable."
+            if len(obs_scales) == 1
+            else "Confirmatory recommendation NOT_EXECUTED (external sealed split not supplied)."
+        )
+        ax.text(
+            0.5, 0.12, note_text,
+            transform=ax.transAxes, ha="center", va="center",
+            fontsize=9, fontstyle="italic", color="#555555",
+            bbox=dict(boxstyle="round,pad=0.4", facecolor="#f8f9fa", edgecolor="#cccccc")
+        )
 
     ax.set_title("Figure D: P2 Recommendation Accuracy & Retrieval Recall vs Catalog Size", fontsize=12, fontweight="bold")
     ax.set_xlabel("Catalog Size (Approved Images)", fontsize=10)
     ax.set_ylabel("Metric Score [0.0 - 1.0]", fontsize=10)
-    ax.set_ylim(0.0, 1.05)
+    ax.set_ylim(-0.05, 1.08)
     ax.set_xticks(all_scale_sizes)
     ax.grid(True, linestyle="--", alpha=0.5)
-    ax.legend(loc="lower left")
-    # layout handled by bbox_inches
+    handles, labels = ax.get_legend_handles_labels()
+    if handles:
+        ax.legend(loc="lower left", fontsize=8)
     fig.savefig(fig_d_path, dpi=200, bbox_inches="tight")
     fig.savefig(fig_d_svg, bbox_inches="tight")
     plt.close(fig)
@@ -190,28 +226,66 @@ def generate_all_figures(
     fig_e_svg = output_dir / "figure_e_recommendation_latency.svg"
 
     fig, ax = plt.subplots(figsize=(8, 5))
-    if obs_scales:
-        s_x = [s.catalog_size for s in obs_scales]
-        lat_ms = [((s.p2_latency_mean_seconds or 0.0) * 1000.0) for s in obs_scales]
-        lat_p95 = [((s.p2_latency_p95_seconds or 0.0) * 1000.0) for s in obs_scales]
-        lat_min = [((s.p2_latency_min_seconds or 0.0) * 1000.0) for s in obs_scales]
-        lat_max = [((s.p2_latency_max_seconds or 0.0) * 1000.0) for s in obs_scales]
 
-        ax.errorbar(s_x, lat_ms, yerr=[[m - mn for m, mn in zip(lat_ms, lat_min)], [mx - m for m, mx in zip(lat_ms, lat_max)]], fmt="o", color="#d9534f", ecolor="#d9534f", elinewidth=2, capsize=5, label="Mean Latency (Min-Max Range)", zorder=5)
-        ax.scatter(s_x, lat_p95, color="#f0ad4e", marker="s", s=60, zorder=6, label="95th Percentile Latency")
+    if conf_obs:
+        c_x = [s.catalog_size for s in conf_obs]
+        lat_ms = [((s.p2_latency_mean_seconds or 0.0) * 1000.0) for s in conf_obs]
+        lat_p95 = [((s.p2_latency_p95_seconds or 0.0) * 1000.0) for s in conf_obs]
+        lat_min = [((s.p2_latency_min_seconds or 0.0) * 1000.0) for s in conf_obs]
+        lat_max = [((s.p2_latency_max_seconds or 0.0) * 1000.0) for s in conf_obs]
+        ax.errorbar(
+            c_x, lat_ms,
+            yerr=[[m - mn for m, mn in zip(lat_ms, lat_min)], [mx - m for m, mx in zip(lat_ms, lat_max)]],
+            fmt="o", color="#2b542c", ecolor="#2b542c", elinewidth=2, capsize=5,
+            label="Confirmatory Mean Latency (Min-Max)", zorder=6
+        )
+        ax.scatter(c_x, lat_p95, color="#5cb85c", marker="s", s=70, zorder=7, label="Confirmatory 95th Percentile")
 
-    for s in scale_records:
-        if s.p2_evaluation_status != "OBSERVED":
-            ax.axvline(s.catalog_size, color="gray", linestyle="--", alpha=0.5)
-            ax.text(s.catalog_size, 5.0, f"Scale {s.catalog_size}\n(NOT_EXECUTED)", rotation=90, va="center", ha="right", color="gray", fontsize=8)
+    if dev_obs:
+        d_x = [s.catalog_size for s in dev_obs]
+        lat_ms = [((s.p2_latency_mean_seconds or 0.0) * 1000.0) for s in dev_obs]
+        lat_p95 = [((s.p2_latency_p95_seconds or 0.0) * 1000.0) for s in dev_obs]
+        lat_min = [((s.p2_latency_min_seconds or 0.0) * 1000.0) for s in dev_obs]
+        lat_max = [((s.p2_latency_max_seconds or 0.0) * 1000.0) for s in dev_obs]
+        ax.errorbar(
+            d_x, lat_ms,
+            yerr=[[m - mn for m, mn in zip(lat_ms, lat_min)], [mx - m for m, mx in zip(lat_ms, lat_max)]],
+            fmt="o", color="#d9534f", ecolor="#d9534f", elinewidth=2, capsize=5,
+            markerfacecolor="none", label="Dev/Exploratory Mean Latency (Min-Max)", zorder=5
+        )
+        ax.scatter(d_x, lat_p95, facecolors="none", edgecolors="#f0ad4e", linewidths=2, marker="s", s=70, zorder=6, label="Dev/Exploratory 95th Percentile")
+
+    # Mark NOT_EXECUTED scales visibly
+    for s in not_exec_scales:
+        ax.axvline(s.catalog_size, color="gray", linestyle="--", alpha=0.6)
+        ax.scatter([s.catalog_size], [0.0], color="gray", marker="x", s=80, zorder=4)
+        ax.text(
+            s.catalog_size, 5.0, f"Scale {s.catalog_size}\n(NOT_EXECUTED)",
+            rotation=90, va="center", ha="right", color="dimgray", fontsize=8,
+            bbox=dict(boxstyle="square,pad=0.2", facecolor="white", alpha=0.7, edgecolor="none")
+        )
+
+    if len(obs_scales) <= 1:
+        note_text = (
+            "Single observed scale (N=4); no empirical multi-scale trend is yet estimable."
+            if len(obs_scales) == 1
+            else "Confirmatory recommendation NOT_EXECUTED (external sealed split not supplied)."
+        )
+        ax.text(
+            0.5, 0.85, note_text,
+            transform=ax.transAxes, ha="center", va="center",
+            fontsize=9, fontstyle="italic", color="#555555",
+            bbox=dict(boxstyle="round,pad=0.4", facecolor="#f8f9fa", edgecolor="#cccccc")
+        )
 
     ax.set_title("Figure E: P2 Recommendation Latency vs Catalog Size", fontsize=12, fontweight="bold")
     ax.set_xlabel("Catalog Size (Approved Images)", fontsize=10)
     ax.set_ylabel("Recommendation Latency (ms)", fontsize=10)
     ax.set_xticks(all_scale_sizes)
     ax.grid(True, linestyle="--", alpha=0.5)
-    ax.legend(loc="upper left")
-    # layout handled by bbox_inches
+    handles, labels = ax.get_legend_handles_labels()
+    if handles:
+        ax.legend(loc="upper left", fontsize=8)
     fig.savefig(fig_e_path, dpi=200, bbox_inches="tight")
     fig.savefig(fig_e_svg, bbox_inches="tight")
     plt.close(fig)

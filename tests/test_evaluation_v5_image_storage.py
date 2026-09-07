@@ -37,6 +37,7 @@ from evaluation_v5.image_storage.storage_contracts import (
     StorageEvidenceRecord,
     StorageExecutionStatus,
     assert_size_domain_consistent,
+    check_immutable_catalog_gate,
     compute_marginal_storage,
     compute_pairwise_layer_reuse,
     get_experimental_catalog_config,
@@ -285,7 +286,7 @@ def test_provenance_and_immutable_digest_pinning(catalog):
 def test_recommendation_scale_aggregation(catalog):
     exp_cfg = get_experimental_catalog_config(catalog, scales=(4,))
     scale_imgs = exp_cfg.get_scale_images(4)
-    res = evaluate_catalog_scale_recommendation(catalog, scale_imgs, k=5)
+    res = evaluate_catalog_scale_recommendation(catalog, scale_imgs, stage="development", k=5)
     assert res["status"] == "OBSERVED"
     assert res["image_acceptable_accuracy"] > 0.8
     assert res["image_preferred_accuracy"] > 0.8
@@ -395,3 +396,247 @@ def test_docker_manifest_storage_runner_inspect(catalog):
     assert metadata.total_bytes > 100_000_000
     assert len(metadata.layers) > 5
     assert metadata.size_domain == SIZE_DOMAIN_COMPRESSED_OCI_BLOB
+
+
+# Case 25: --stage development selects development split
+def test_stage_development_selects_development_split(catalog):
+    config = get_experimental_catalog_config(catalog)
+    res = evaluate_catalog_scale_recommendation(
+        base_catalog=catalog,
+        scale_images=config.get_scale_images(4),
+        stage="development",
+    )
+    assert res["status"] == "OBSERVED"
+    assert res["stage"] == "development"
+    assert res["split_role"] == "development"
+    assert res["dataset_id"] == "protocol-v5-development-2026-08-22"
+    assert res["image_acceptable_accuracy"] is not None
+
+
+# Case 26: --stage confirmatory requires external confirmatory split
+def test_stage_confirmatory_requires_confirmatory_split(catalog):
+    config = get_experimental_catalog_config(catalog)
+    res = evaluate_catalog_scale_recommendation(
+        base_catalog=catalog,
+        scale_images=config.get_scale_images(4),
+        stage="confirmatory",
+    )
+    assert res["status"] == "NOT_EXECUTED"
+    assert "confirmatory_dataset_not_provided" in res["reason"]
+    assert res["stage"] == "confirmatory"
+    assert res["split_role"] == "none"
+    assert res["dataset_id"] == "none"
+    assert res["image_acceptable_accuracy"] is None
+
+
+# Case 27: Confirmatory mode cannot silently fall back to development data
+def test_confirmatory_cannot_silently_fallback(catalog):
+    config = get_experimental_catalog_config(catalog)
+    res = evaluate_catalog_scale_recommendation(
+        base_catalog=catalog,
+        scale_images=config.get_scale_images(4),
+        stage="confirmatory",
+        dataset_path=None,
+    )
+    assert res["dataset_id"] != "protocol-v5-development-2026-08-22"
+    assert res["status"] == "NOT_EXECUTED"
+
+
+# Case 28: Validator rejects confirmatory recommendation backed by development split
+def test_validator_rejects_confirmatory_rec_backed_by_dev_split(catalog):
+    with tempfile.TemporaryDirectory() as tmp:
+        out_dir = run_storage_evaluation(
+            catalog_path=CATALOG_PATH,
+            mode="synthetic",
+            output_dir=Path(tmp) / "out",
+            stage="confirmatory",
+            claims_permitted=True,
+            scales=(4,),
+        )
+        scalability_path = out_dir / "derived" / "catalog_scalability.json"
+        data = json.loads(scalability_path.read_text(encoding="utf-8"))
+        data[0]["p2_evaluation_status"] = "OBSERVED"
+        data[0]["split_stage"] = "confirmatory"
+        data[0]["evaluation_dataset_identity"] = "protocol-v5-development-2026-08-22"
+        data[0]["dataset_sha256"] = "e3fff5167ef2194fb365fec7510d1efc2b17a18b13182063c2b63c26f021d3cd"
+        scalability_path.write_text(json.dumps(data, indent=2), encoding="utf-8")
+        sums_file = out_dir / "SHA256SUMS"
+        records = []
+        for p in sorted(out_dir.rglob("*")):
+            if p.is_file() and p.name != "SHA256SUMS":
+                records.append(f"{file_sha256(p)}  {p.relative_to(out_dir)}")
+        sums_file.write_text("\n".join(records) + "\n", encoding="utf-8")
+
+        with pytest.raises(EvidenceValidationError, match="CONFIRMATORY_RECOMMENDATION_USES_DEVELOPMENT_SPLIT"):
+            validate_e5_storage_evidence(out_dir)
+
+
+# Case 29: Dataset identity and hash are persisted
+def test_dataset_identity_and_hash_persisted(catalog):
+    with tempfile.TemporaryDirectory() as tmp:
+        out_dir = run_storage_evaluation(
+            catalog_path=CATALOG_PATH,
+            mode="synthetic",
+            output_dir=Path(tmp) / "out",
+            stage="development",
+            claims_permitted=False,
+            scales=(4,),
+        )
+        data = json.loads((out_dir / "derived" / "catalog_scalability.json").read_text(encoding="utf-8"))
+        assert len(data) == 1
+        assert data[0]["evaluation_dataset_identity"] == "protocol-v5-development-2026-08-22"
+        assert len(data[0]["dataset_sha256"]) == 64
+        assert data[0]["split_stage"] == "development"
+        assert data[0]["split_role"] == "development"
+
+
+# Case 30: Digest-pinned requested reference passes immutable gate
+def test_digest_pinned_requested_reference_passes_immutable_gate():
+    meta = [
+        ImageLayerMetadata(
+            image_id="img1",
+            image_reference="quay.io/repo@sha256:1111111111111111111111111111111111111111111111111111111111111111",
+            image_digest="sha256:1111111111111111111111111111111111111111111111111111111111111111",
+            platform={"os": "linux", "architecture": "amd64"},
+            layers=(LayerInspection(digest="sha256:aaa", size=100),),
+            total_bytes=100,
+            is_digest_pinned=True,
+            requested_reference="quay.io/repo@sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        )
+    ]
+    gate_res = check_immutable_catalog_gate(meta, stage="confirmatory")
+    assert gate_res.is_immutable is True
+    assert len(gate_res.violating_images) == 0
+
+
+# Case 31: Mutable tag requested reference fails confirmatory immutable-input gate
+def test_mutable_tag_requested_reference_fails_confirmatory_gate():
+    meta = [
+        ImageLayerMetadata(
+            image_id="img-mutable",
+            image_reference="quay.io/repo:latest",
+            image_digest="sha256:2222222222222222222222222222222222222222222222222222222222222222",
+            platform={"os": "linux", "architecture": "amd64"},
+            layers=(LayerInspection(digest="sha256:bbb", size=100),),
+            total_bytes=100,
+            is_digest_pinned=False,
+            requested_reference="quay.io/repo:latest",
+        )
+    ]
+    gate_res = check_immutable_catalog_gate(meta, stage="confirmatory")
+    assert gate_res.is_immutable is False
+    assert len(gate_res.violating_images) == 1
+    assert gate_res.violating_images[0]["image_id"] == "img-mutable"
+    assert "FAILED" in gate_res.details
+
+
+# Case 32: Resolved digest alone does NOT make mutable reference immutable
+def test_resolved_digest_alone_does_not_make_reference_immutable():
+    meta = [
+        ImageLayerMetadata(
+            image_id="img-resolved-only",
+            image_reference="docker.io/library/ubuntu:latest",
+            image_digest="sha256:3333333333333333333333333333333333333333333333333333333333333333",
+            platform={"os": "linux", "architecture": "amd64"},
+            layers=(LayerInspection(digest="sha256:ccc", size=200),),
+            total_bytes=200,
+            is_digest_pinned=False,
+            requested_reference="docker.io/library/ubuntu:latest",
+            resolved_digest="sha256:3333333333333333333333333333333333333333333333333333333333333333",
+        )
+    ]
+    gate_res = check_immutable_catalog_gate(meta, stage="confirmatory")
+    assert gate_res.is_immutable is False
+    assert len(gate_res.violating_images) == 1
+
+
+# Case 33: Mixed immutable/mutable catalog fails confirmatory gate
+def test_mixed_immutable_mutable_catalog_fails_confirmatory_gate():
+    meta = [
+        ImageLayerMetadata(
+            image_id="img-pinned",
+            image_reference="quay.io/repo@sha256:aaaa",
+            image_digest="sha256:aaaa",
+            platform={"os": "linux", "architecture": "amd64"},
+            layers=(),
+            total_bytes=0,
+            is_digest_pinned=True,
+            requested_reference="quay.io/repo@sha256:aaaa",
+        ),
+        ImageLayerMetadata(
+            image_id="img-unpinned",
+            image_reference="quay.io/repo:v1.0",
+            image_digest="sha256:bbbb",
+            platform={"os": "linux", "architecture": "amd64"},
+            layers=(),
+            total_bytes=0,
+            is_digest_pinned=False,
+            requested_reference="quay.io/repo:v1.0",
+        ),
+    ]
+    gate_res = check_immutable_catalog_gate(meta, stage="confirmatory")
+    assert gate_res.is_immutable is False
+    assert len(gate_res.violating_images) == 1
+    assert gate_res.violating_images[0]["image_id"] == "img-unpinned"
+
+
+# Case 34: Development runs may inspect mutable inputs with warning
+def test_development_runs_may_inspect_mutable_inputs_with_warning():
+    meta = [
+        ImageLayerMetadata(
+            image_id="img-dev",
+            image_reference="quay.io/repo:dev",
+            image_digest="sha256:cccc",
+            platform={"os": "linux", "architecture": "amd64"},
+            layers=(),
+            total_bytes=0,
+            is_digest_pinned=False,
+            requested_reference="quay.io/repo:dev",
+        )
+    ]
+    gate_res = check_immutable_catalog_gate(meta, stage="development")
+    assert gate_res.is_immutable is False
+    assert "Development catalog" in gate_res.details
+
+
+# Case 35: Report claim eligibility changes based on split validity
+def test_claim_eligibility_changes_based_on_split_validity(catalog):
+    with tempfile.TemporaryDirectory() as tmp:
+        out_dir = run_storage_evaluation(
+            catalog_path=CATALOG_PATH,
+            mode="synthetic",
+            output_dir=Path(tmp) / "out",
+            stage="confirmatory",
+            claims_permitted=True,
+            scales=(4, 8, 16),
+        )
+        val = validate_e5_storage_evidence(out_dir)
+        assert val["claim_eligibility"] == "ELIGIBLE_4_IMAGE_CATALOG_STORAGE"
+        assert val["recommendation_split_valid"] is True
+
+
+# Case 36: Report claim eligibility changes based on immutable-input validity
+def test_claim_eligibility_changes_based_on_immutable_input_validity(catalog):
+    with tempfile.TemporaryDirectory() as tmp:
+        out_dir = run_storage_evaluation(
+            catalog_path=CATALOG_PATH,
+            mode="synthetic",
+            output_dir=Path(tmp) / "out",
+            stage="confirmatory",
+            claims_permitted=True,
+            scales=(4, 8, 16),
+        )
+        layers_path = out_dir / "raw" / "image_layers.json"
+        data = json.loads(layers_path.read_text(encoding="utf-8"))
+        data[0]["requested_reference"] = "quay.io/jupyter/minimal-notebook:latest"
+        data[0]["is_digest_pinned"] = False
+        layers_path.write_text(json.dumps(data, indent=2), encoding="utf-8")
+        sums_file = out_dir / "SHA256SUMS"
+        records = []
+        for p in sorted(out_dir.rglob("*")):
+            if p.is_file() and p.name != "SHA256SUMS":
+                records.append(f"{file_sha256(p)}  {p.relative_to(out_dir)}")
+        sums_file.write_text("\n".join(records) + "\n", encoding="utf-8")
+
+        with pytest.raises(EvidenceValidationError, match="MUTABLE_INPUT_REFERENCE_IN_CONFIRMATORY_CATALOG"):
+            validate_e5_storage_evidence(out_dir)

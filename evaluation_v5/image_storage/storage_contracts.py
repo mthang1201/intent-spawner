@@ -90,7 +90,9 @@ class ImageLayerMetadata:
     layers: tuple[LayerInspection, ...]
     total_bytes: int
     is_digest_pinned: bool = True
+    requested_reference: str = ""
     resolved_digest: str = ""
+    canonical_resolved_reference: str = ""
     manifest_digest: str = ""
     manifest_media_type: str = ""
     config_digest: str = ""
@@ -101,8 +103,15 @@ class ImageLayerMetadata:
     uncompressed_layer_bytes: int | None = None
 
     def __post_init__(self) -> None:
+        if not self.requested_reference:
+            object.__setattr__(self, "requested_reference", self.image_reference)
         if not self.resolved_digest and self.image_digest:
             object.__setattr__(self, "resolved_digest", self.image_digest)
+        if not self.canonical_resolved_reference and self.resolved_digest:
+            repo = (self.requested_reference or self.image_reference).split("@")[0].split(":")[0]
+            object.__setattr__(
+                self, "canonical_resolved_reference", f"{repo}@{self.resolved_digest}"
+            )
         if not self.ordered_layer_digests and self.layers:
             object.__setattr__(
                 self, "ordered_layer_digests", tuple(l.digest for l in self.layers)
@@ -120,9 +129,11 @@ class ImageLayerMetadata:
         return {
             "image_id": self.image_id,
             "image_reference": self.image_reference,
+            "requested_reference": self.requested_reference,
             "is_digest_pinned": self.is_digest_pinned,
             "image_digest": self.image_digest,
             "resolved_digest": self.resolved_digest,
+            "canonical_resolved_reference": self.canonical_resolved_reference,
             "platform": dict(self.platform),
             "manifest_digest": self.manifest_digest,
             "manifest_media_type": self.manifest_media_type,
@@ -140,10 +151,12 @@ class ImageLayerMetadata:
     @classmethod
     def from_dict(cls, data: Mapping[str, Any]) -> ImageLayerMetadata:
         layers = tuple(LayerInspection.from_dict(l) for l in data.get("layers", ()))
-        ref = str(data["image_reference"])
-        pinned = bool(data.get("is_digest_pinned", "@sha256:" in ref))
+        ref = str(data.get("image_reference", ""))
+        req_ref = str(data.get("requested_reference", ref))
+        pinned = bool(data.get("is_digest_pinned", "@sha256:" in req_ref))
         digest = str(data.get("image_digest", ""))
         resolved = str(data.get("resolved_digest", digest))
+        canonical = str(data.get("canonical_resolved_reference", ""))
         return cls(
             image_id=str(data["image_id"]),
             image_reference=ref,
@@ -152,7 +165,9 @@ class ImageLayerMetadata:
             layers=layers,
             total_bytes=int(data["total_bytes"]),
             is_digest_pinned=pinned,
+            requested_reference=req_ref,
             resolved_digest=resolved,
+            canonical_resolved_reference=canonical,
             manifest_digest=str(data.get("manifest_digest", "")),
             manifest_media_type=str(data.get("manifest_media_type", "")),
             config_digest=str(data.get("config_digest", "")),
@@ -172,6 +187,74 @@ class ImageLayerMetadata:
                 else None
             ),
         )
+
+
+@dataclass(frozen=True, slots=True)
+class ImmutabilityGateResult:
+    """Result of evaluating the immutable input reference contract for a catalog."""
+
+    is_immutable: bool
+    violating_images: tuple[dict[str, Any], ...]
+    details: str
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "is_immutable": self.is_immutable,
+            "violating_images": list(self.violating_images),
+            "details": self.details,
+        }
+
+
+def check_immutable_catalog_gate(
+    images_metadata: Sequence[ImageLayerMetadata],
+    stage: str = "confirmatory",
+) -> ImmutabilityGateResult:
+    """Audit participating images against the immutable requested reference contract.
+
+    For confirmatory evaluation, all requested references MUST be syntactically digest-pinned
+    (@sha256:). A mutable tag (e.g. :latest) does NOT become immutable merely because Docker
+    resolves it to a digest during inspection.
+    """
+    violating: list[dict[str, Any]] = []
+    for meta in images_metadata:
+        req_ref = meta.requested_reference or meta.image_reference
+        is_pinned = "@sha256:" in req_ref
+        if not is_pinned or not meta.is_digest_pinned:
+            violating.append(
+                {
+                    "image_id": meta.image_id,
+                    "requested_reference": req_ref,
+                    "resolved_digest": meta.resolved_digest,
+                    "canonical_resolved_reference": meta.canonical_resolved_reference,
+                    "reason": "requested_reference_not_digest_pinned",
+                }
+            )
+
+    if stage == "confirmatory" and violating:
+        return ImmutabilityGateResult(
+            is_immutable=False,
+            violating_images=tuple(violating),
+            details=(
+                f"Confirmatory immutable catalog gate FAILED: {len(violating)} unpinned image reference(s) detected. "
+                "Confirmatory evaluation requires all requested references to be digest-pinned (@sha256:)."
+            ),
+        )
+
+    if not violating:
+        return ImmutabilityGateResult(
+            is_immutable=True,
+            violating_images=(),
+            details=f"All {len(images_metadata)} image reference(s) are digest-pinned and satisfy immutable catalog gate.",
+        )
+
+    return ImmutabilityGateResult(
+        is_immutable=False,
+        violating_images=tuple(violating),
+        details=(
+            f"Development catalog: {len(violating)} unpinned reference(s) present. "
+            "Permitted in development, but strictly ineligible for confirmatory claims."
+        ),
+    )
 
 
 @dataclass(frozen=True, slots=True)
@@ -480,6 +563,7 @@ class CatalogImageEntry:
     match_terms: tuple[str, ...] = ()
     priority: int = 0
     resolved_digest: str = ""
+    canonical_resolved_reference: str = ""
 
 
 @dataclass(frozen=True, slots=True)
@@ -521,6 +605,8 @@ def get_experimental_catalog_config(
         ref = str(item.get("reference", ""))
         pinned = "@sha256:" in ref
         digest = parse_image_digest(ref) if pinned else ""
+        repo = ref.split("@")[0].split(":")[0]
+        canonical_ref = f"{repo}@{digest}" if digest else ref
         entries.append(
             CatalogImageEntry(
                 image_id=str(img_id),
@@ -532,6 +618,7 @@ def get_experimental_catalog_config(
                 match_terms=tuple(str(t) for t in item.get("match_terms", ())),
                 priority=int(item.get("priority", 100)),
                 resolved_digest=digest,
+                canonical_resolved_reference=canonical_ref,
             )
         )
 
@@ -584,7 +671,7 @@ class ScaleLevelEvaluationRecord:
     p2_latency_max_seconds: float | None
     p2_latency_std_seconds: float | None
 
-    # Provenance and dataset info
+    # Provenance, stage, and dataset info
     evaluation_dataset_identity: str
     dataset_sha256: str
     evaluated_case_count: int
@@ -592,6 +679,13 @@ class ScaleLevelEvaluationRecord:
     p2_config_version: str
     provenance: dict[str, Any]
     status_reason: str = ""
+    split_stage: str = "confirmatory"
+    split_role: str = "none"
+    dataset_path: str = ""
+    ordered_requested_references: tuple[str, ...] = ()
+    canonical_resolved_references: tuple[str, ...] = ()
+    all_references_digest_pinned: bool = True
+    p2_version: str = "p2-hybrid-v1.0.0"
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -601,6 +695,9 @@ class ScaleLevelEvaluationRecord:
             "ordered_immutable_image_references": list(
                 self.ordered_immutable_image_references
             ),
+            "ordered_requested_references": list(self.ordered_requested_references),
+            "canonical_resolved_references": list(self.canonical_resolved_references),
+            "all_references_digest_pinned": self.all_references_digest_pinned,
             "storage_measurement_status": self.storage_measurement_status,
             "logical_image_bytes": self.logical_image_bytes,
             "unique_layer_bytes": self.unique_layer_bytes,
@@ -612,7 +709,11 @@ class ScaleLevelEvaluationRecord:
             ),
             "marginal_unique_bytes": self.marginal_unique_bytes,
             "size_domain": self.size_domain,
+            "split_stage": self.split_stage,
+            "split_role": self.split_role,
             "p2_evaluation_status": self.p2_evaluation_status,
+            "p2_version": self.p2_version,
+            "p2_config_version": self.p2_config_version,
             "p2_image_acceptable_accuracy": (
                 round(self.p2_image_acceptable_accuracy, 6)
                 if self.p2_image_acceptable_accuracy is not None
@@ -660,10 +761,10 @@ class ScaleLevelEvaluationRecord:
                 else None
             ),
             "evaluation_dataset_identity": self.evaluation_dataset_identity,
+            "dataset_path": self.dataset_path,
             "dataset_sha256": self.dataset_sha256,
             "evaluated_case_count": self.evaluated_case_count,
             "feasible_case_count": self.feasible_case_count,
-            "p2_config_version": self.p2_config_version,
             "provenance": dict(self.provenance),
             "status_reason": self.status_reason,
         }

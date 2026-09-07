@@ -36,6 +36,7 @@ from .storage_contracts import (
     SplitStage,
     StorageEvidenceRecord,
     StorageExecutionStatus,
+    check_immutable_catalog_gate,
     compute_marginal_storage,
     compute_pairwise_layer_reuse,
     get_experimental_catalog_config,
@@ -131,13 +132,18 @@ def _format_storage_markdown_report(
         )
     lines.append("")
 
-    lines.append("## 3. Catalog Images and Layer Compositions\n")
-    lines.append("| Priority | Image ID | Pinned Reference / Digest | Layers | Compressed Size | Size Domain |")
-    lines.append("| :---: | :--- | :--- | :---: | :---: | :---: |")
+    lines.append("## 3. Administrator-Approved Catalog Immutability Audit\n")
+    lines.append("Every participating image must satisfy the immutable input contract (`is_digest_pinned == True`).\n")
+    lines.append("| Priority | Image ID | Requested Reference | Digest Pinned? | Resolved Digest | Canonical Resolved Reference | Gate Status |")
+    lines.append("| :---: | :--- | :--- | :---: | :--- | :--- | :---: |")
     for idx, img in enumerate(inspections, 1):
-        digest_short = img.resolved_digest[:23] + "..." if img.resolved_digest else img.image_digest[:23] + "..."
+        req_ref = img.requested_reference or img.image_reference
+        pinned = img.is_digest_pinned and ("@sha256:" in req_ref)
+        res_short = (img.resolved_digest[:19] + "...") if img.resolved_digest else "unknown"
+        canon_short = (img.canonical_resolved_reference[:25] + "...") if img.canonical_resolved_reference else "unknown"
+        gate = "PASS (Immutable)" if pinned else "**FAIL (Mutable)**"
         lines.append(
-            f"| {idx} | **{img.image_id}** | `{digest_short}` | {len(img.layers)} | {img.total_bytes:,} B | `{img.size_domain}` |"
+            f"| {idx} | **{img.image_id}** | `{req_ref}` | {'YES' if pinned else '**NO**'} | `{res_short}` | `{canon_short}` | {gate} |"
         )
     lines.append("")
 
@@ -188,18 +194,26 @@ def _format_storage_markdown_report(
         lines.append(f"| **{short_names[i]}** | {row_str} |")
     lines.append("")
 
-    lines.append("## 7. Joint Recommendation Scalability at Configured Scales\n")
-    lines.append("| Scale | Status | P2 Acceptable Acc | P2 Preferred Acc | P2 Recall@5 | Mean Latency (ms) | p95 Latency (ms) |")
-    lines.append("| :---: | :---: | :---: | :---: | :---: | :---: | :---: |")
+    lines.append("## 7. Joint Recommendation Scalability & Split Provenance\n")
+    lines.append("| Scale | Storage Status | P2 Rec Status | Stage | Split Role | Dataset ID | Cases | P2 Acceptable Acc | P2 Preferred Acc | P2 Recall@5 | Mean Latency |")
+    lines.append("| :---: | :---: | :---: | :---: | :---: | :--- | :---: | :---: | :---: | :---: | :---: |")
     for s in scale_records:
         if s.p2_evaluation_status == "OBSERVED":
+            acc_str = f"{s.p2_image_acceptable_accuracy:.2%}" if s.p2_image_acceptable_accuracy is not None else "N/A"
+            pref_str = f"{s.p2_image_preferred_accuracy:.2%}" if s.p2_image_preferred_accuracy is not None else "N/A"
+            rec_str = f"{s.p2_retrieval_recall_at_k:.2%}" if s.p2_retrieval_recall_at_k is not None else "N/A"
+            lat_str = f"{(s.p2_latency_mean_seconds or 0)*1000:.2f} ms"
             lines.append(
-                f"| {s.catalog_size} | `{s.p2_evaluation_status}` | {s.p2_image_acceptable_accuracy:.2%} | "
-                f"{s.p2_image_preferred_accuracy:.2%} | {s.p2_retrieval_recall_at_k:.2%} | "
-                f"{(s.p2_latency_mean_seconds or 0)*1000:.2f} ms | {(s.p2_latency_p95_seconds or 0)*1000:.2f} ms |"
+                f"| {s.catalog_size} | `{s.storage_measurement_status}` | `{s.p2_evaluation_status}` | "
+                f"`{s.split_stage}` | `{s.split_role}` | `{s.evaluation_dataset_identity}` | "
+                f"{s.evaluated_case_count} | {acc_str} | {pref_str} | {rec_str} | {lat_str} |"
             )
         else:
-            lines.append(f"| {s.catalog_size} | `{s.p2_evaluation_status}` | N/A | N/A | N/A | N/A | N/A |")
+            lines.append(
+                f"| {s.catalog_size} | `{s.storage_measurement_status}` | `{s.p2_evaluation_status}` | "
+                f"`{s.split_stage}` | `{s.split_role}` | `{s.evaluation_dataset_identity}` | "
+                f"0 | N/A | N/A | N/A | N/A |"
+            )
     lines.append("")
 
     lines.append("## 8. Metric Definitions & Auditability\n")
@@ -209,6 +223,8 @@ def _format_storage_markdown_report(
         "- **`retrieval_recall_at_k`**: Macro Recall@K of acceptable candidates within the top-K pre-constraint hybrid retrieval fused hit list ($K=5$ by default, consistent with `DEFAULT_RETRIEVAL_KS` in Protocol-v5 reporting).\n"
         "- **`recommendation_latency`**: Total end-to-end elapsed time in seconds from request arrival to recommendation generation.\n"
         "- **`marginal_unique_bytes`**: $U_n - U_{n-1}$, the incremental unique storage introduced by each new image in priority sequence.\n"
+        "- **`requested_reference`**: The administrator-approved reference configured in the catalog, audited for syntactical digest pinning (`@sha256:`).\n"
+        "- **`canonical_resolved_reference`**: The immutable content-addressable reference (`repository@sha256:<digest>`).\n"
     )
 
     lines.append("## 9. Generated Reproducible Figures\n")
@@ -225,7 +241,25 @@ def _format_storage_markdown_report(
         and all_nonexpanding
         and final_savings > 0
     )
+    scale_4_rec = scale_records[0] if scale_records else None
+    rec_is_confirmatory = (
+        scale_4_rec is not None
+        and scale_4_rec.p2_evaluation_status == "OBSERVED"
+        and scale_4_rec.split_stage == "confirmatory"
+        and scale_4_rec.split_role == "confirmatory"
+    )
     if support_h7 and len(inspections) == 4:
+        rec_note = (
+            "Joint scale-4 recommendation evaluation was also observed with confirmatory split."
+            if rec_is_confirmatory
+            else (
+                "Joint recommendation evaluation at scale 4 was NOT_EXECUTED for confirmatory stage "
+                "because an external sealed confirmatory split was not supplied; development data was "
+                "strictly excluded to prevent split contamination."
+                if (scale_4_rec and scale_4_rec.p2_evaluation_status == "NOT_EXECUTED")
+                else "Recommendation evaluation was executed on development data only (exploratory/non-confirmatory)."
+            )
+        )
         lines.append(
             "> [!IMPORTANT]\n"
             "> **Constrained Claim Verdict (PASS_WITH_LIMITATIONS)**:\n"
@@ -233,10 +267,12 @@ def _format_storage_markdown_report(
             f"for this frozen four-image catalog ({final_savings:,} bytes / {final_savings / prefixes[-1].naive_logical_bytes:.2%} savings). "
             "> This empirically confirms Hypothesis **H7** for the frozen 4-image catalog.\n"
             ">\n"
+            f"> **Recommendation Evaluation Scope**: {rec_note}\n"
+            ">\n"
             "> **Scalability Boundary Limitation**:\n"
-            "> Larger catalog scales (e.g. 8 and 16 images) remain `NOT_EXECUTED` because additional administrator-approved "
-            "> immutable images have not been published in the repository catalog. This evidence package does NOT assert "
-            "> empirical scalability claims beyond the observed 4-image catalog.\n"
+            "> Larger catalog scales (8 and 16 images) remain `NOT_EXECUTED` because additional administrator-approved "
+            "> immutable images have not been published in the repository catalog. With only scale 4 observed, "
+            "> **no empirical 4→8→16 multi-scale trend is yet estimable**.\n"
         )
     elif execution_status == StorageExecutionStatus.NOT_EXECUTED.value:
         lines.append(
@@ -261,6 +297,7 @@ def run_storage_evaluation(
     timeout_seconds: float = 60.0,
     scales: Sequence[int] = DEFAULT_CATALOG_SCALES,
     eval_recommendation: bool = True,
+    dataset_path: Path | str | None = None,
     split_path: Path | str | None = None,
     recall_k: int = DEFAULT_RECALL_K,
     injected_image_layers: Mapping[str, Sequence[Mapping[str, Any]]] | None = None,
@@ -332,6 +369,9 @@ def run_storage_evaluation(
     timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
     run_id = run_id or f"e5-storage-scalability-{timestamp}"
 
+    # Audit immutable catalog gate
+    immutability_result = check_immutable_catalog_gate(inspections, stage=norm_stage)
+
     # Prepare directories
     out_dir = output_dir or (DEFAULT_STORAGE_RESULTS_ROOT / run_id)
     raw_dir = out_dir / "raw"
@@ -359,16 +399,25 @@ def run_storage_evaluation(
 
             # Recommendation evaluation
             if eval_recommendation and execution_status == StorageExecutionStatus.OBSERVED.value:
+                rec_dataset_path = (
+                    dataset_path
+                    if norm_stage == "confirmatory"
+                    else (dataset_path or split_path)
+                )
                 rec_res = evaluate_catalog_scale_recommendation(
                     base_catalog=catalog,
                     scale_images=scale_imgs,
-                    split_path=split_path,
+                    stage=norm_stage,
+                    dataset_path=rec_dataset_path,
+                    freeze_path=freeze_path,
                     k=recall_k,
                 )
             else:
                 rec_res = {
                     "status": "NOT_EXECUTED",
                     "reason": "recommendation_eval_skipped" if not eval_recommendation else "dry_run_mode",
+                    "stage": norm_stage,
+                    "split_role": "none",
                     "image_acceptable_accuracy": None,
                     "image_preferred_accuracy": None,
                     "retrieval_recall_at_k": None,
@@ -377,8 +426,10 @@ def run_storage_evaluation(
                     "evaluated_cases": 0,
                     "feasible_cases": 0,
                     "dataset_id": "none",
+                    "dataset_path": "",
                     "dataset_sha256": "0" * 64,
                     "p2_config_version": "none",
+                    "p2_version": "p2-hybrid-v1.0.0",
                 }
 
             lat_info = rec_res.get("latency", {})
@@ -413,6 +464,13 @@ def run_storage_evaluation(
                     p2_config_version=rec_res.get("p2_config_version", "none"),
                     provenance={"git_revision": git.get("git_revision")},
                     status_reason=rec_res.get("reason", ""),
+                    split_stage=norm_stage,
+                    split_role=rec_res.get("split_role", "none"),
+                    dataset_path=rec_res.get("dataset_path", ""),
+                    ordered_requested_references=tuple(img.reference for img in scale_imgs),
+                    canonical_resolved_references=tuple(img.canonical_resolved_reference for img in scale_imgs),
+                    all_references_digest_pinned=all(img.is_digest_pinned for img in scale_imgs),
+                    p2_version=rec_res.get("p2_version", "p2-hybrid-v1.0.0"),
                 )
             )
         else:
@@ -448,6 +506,13 @@ def run_storage_evaluation(
                     p2_config_version="none",
                     provenance={"git_revision": git.get("git_revision")},
                     status_reason=reason,
+                    split_stage=norm_stage,
+                    split_role="none",
+                    dataset_path="",
+                    ordered_requested_references=ordered_refs,
+                    canonical_resolved_references=ordered_refs,
+                    all_references_digest_pinned=all("@sha256:" in r for r in ordered_refs),
+                    p2_version="none",
                 )
             )
 
@@ -548,6 +613,11 @@ def run_storage_evaluation(
         "total_images": len(inspections),
         "total_prefixes": len(prefixes),
         "configured_scales": list(exp_catalog.catalog_scales),
+        "immutable_catalog_valid": immutability_result.is_immutable,
+        "immutability_details": immutability_result.details,
+        "recommendation_scale_4_status": scale_records[0].p2_evaluation_status if scale_records else "NOT_EXECUTED",
+        "recommendation_scale_4_stage": scale_records[0].split_stage if scale_records else "none",
+        "recommendation_scale_4_role": scale_records[0].split_role if scale_records else "none",
         "catalog_4_status": scale_records[0].storage_measurement_status if scale_records else "UNKNOWN",
         "catalog_8_status": scale_records[1].storage_measurement_status if len(scale_records) > 1 else "UNKNOWN",
         "catalog_16_status": scale_records[2].storage_measurement_status if len(scale_records) > 2 else "UNKNOWN",

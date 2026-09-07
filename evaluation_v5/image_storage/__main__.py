@@ -641,6 +641,8 @@ def main() -> None:
         action="store_true",
         help="Skip joint recommendation evaluation for catalog scales.",
     )
+    parser.add_argument("--dataset", type=Path, default=None, help="Path to sealed confirmatory dataset YAML.")
+    parser.add_argument("--freeze", type=Path, default=None, help="Path to frozen configuration/freeze artifact.")
 
     args = parser.parse_args()
 
@@ -670,7 +672,9 @@ def main() -> None:
             timeout_seconds=args.timeout,
             scales=args.scales,
             eval_recommendation=not args.no_recommendation_eval,
-            split_path=args.split,
+            dataset_path=args.dataset,
+            split_path=args.split if args.stage == "development" else None,
+            freeze_path=args.freeze,
         )
         print(f"E5 storage scalability evaluation completed successfully. Output in: {out_storage}")
 
