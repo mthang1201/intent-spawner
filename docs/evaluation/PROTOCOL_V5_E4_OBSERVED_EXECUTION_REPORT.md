@@ -76,7 +76,7 @@ The comparative allocation plan package was generated and sealed prior to live e
 
 ---
 
-## 4. Execution Result
+## 4. Execution Result and Kubernetes Safety Audit
 
 Because readiness and safety gates failed closed, zero OBSERVED trials were initiated:
 
@@ -86,14 +86,40 @@ Because readiness and safety gates failed closed, zero OBSERVED trials were init
 * **OBSERVED Trials Successful**: 0
 * **Kubernetes Experiment Pods / Jobs Created**: 0
 * **Trial-Level Resource Telemetry Records**: 0
-* **Kubernetes Mutations on `orbstack`**: None. All interaction was strictly read-only preflight inspection (`kubectl get namespace`, `kubectl get nodes`, `kubectl get pods -A`, `kubectl get resourcequota`, `kubectl version`, `kubectl auth can-i`).
+* **Kubernetes Operations on `orbstack`**: Strictly non-mutating context check (`kubectl config current-context`). Because the current context was `orbstack` (and not `intent-spawner-eval-v5`), `collect_read_only_preflight` aborted immediately at context evaluation without querying or mutating namespaces, nodes, pods, or quotas on `orbstack` (verified in `raw/environment.json`: `namespace_name: null`, `node_name: null`, `kubernetes_version: null`).
+* **Namespace Discrepancy Resolution**:
+  - The repository contracts and code define exactly one target namespace: **`z2jh-context-demo`**.
+  - Both the independent resource-envelope calibration adapter (`cluster_evaluation/resource_adapter_v5.py`) and the comparative resource-efficiency adapter (`cluster_evaluation/resource_efficiency_adapter_v5.py`) hard-code/import `NAMESPACE = "z2jh-context-demo"`.
+  - The string `intent-spawner-e4-observed` appeared solely as a conversational hallucination in a previous assistant report summary. It never existed in any codebase artifact, runner script, or Kubernetes cluster.
+  - Zero pods, jobs, or namespaces were created, modified, or deleted on any cluster.
 
 > [!IMPORTANT]
 > No Kubernetes experiment mutation was performed against the unapproved `orbstack` context.
 
 ---
 
-## 5. Evidence Packages & Persistence Audit
+## 5. E4 Execution Path Separation Matrix
+
+The repository implements two distinct but sequential execution pipelines for E4:
+
+| Dimension / Property | Path 1: Resource Envelope / Oracle Calibration | Path 2: Resource Efficiency OBSERVED Comparison |
+| :--- | :--- | :--- |
+| **Scientific Purpose** | Independent empirical calibration to discover safe CPU/memory bounds for 16 workload families | 640-trial empirical comparison of 4 conditions across 10 repetitions |
+| **Orchestration Runner** | `evaluation_v5/resource/runner.py` (`python -m evaluation_v5.resource`) | `evaluation_v5/resource/efficiency_runner.py` (`python -m evaluation_v5.resource.efficiency_runner`) |
+| **Kubernetes Adapter** | `cluster_evaluation.resource_adapter_v5.KubernetesTrialAdapter` | `cluster_evaluation.resource_efficiency_adapter_v5.KubernetesResourceEfficiencyAdapter` |
+| **Target Namespace** | `z2jh-context-demo` (hard-coded `NAMESPACE = "z2jh-context-demo"`) | `z2jh-context-demo` (imported `from .resource_adapter_v5 import NAMESPACE`) |
+| **Cluster Context** | `intent-spawner-eval-v5` | `intent-spawner-eval-v5` |
+| **Required Labels** | Namespace: `z2jh-context-demo.local/disposable-experiment-v5: "true"`, `.../cluster-identity: intent-spawner-eval-v5`<br>Node: `.../node-identity: e4-node-v1`, `.../dedicated-e4: "true"` | Namespace: `z2jh-context-demo.local/disposable-experiment-v5: "true"`, `.../cluster-identity: intent-spawner-eval-v5`<br>Node: `.../node-identity: e4-node-v1`, `.../dedicated-e4: "true"` |
+| **Target Node Count** | Exactly 1 dedicated node (`required_node_count: 1`) | Exactly 1 dedicated node (`required_node_count: 1`) |
+| **Allocatable Capacity Gate** | Minimum allocatable 2000m CPU / 2560MiB RAM; no non-daemonset pods | Must match frozen `benchmarks_v5/resource-efficiency-capacity-v1.yaml` (`freeze_status: FROZEN`) |
+| **Workload Image** | Single image from `cluster_evaluation/Dockerfile.resource-v5`, digest pinned in `resource-v5-image-state.yaml` | Same single image from `cluster_evaluation/Dockerfile.resource-v5`, digest pinned (P3 strictly excluded) |
+| **Telemetry Collection** | Pre-trial cgroup v2 probe pod; trial cgroup delta tracking & container stdout payload | Pod container stdout payload (mean CPU, peak memory, memory event delta), container timestamps, Pod status, Kubernetes events |
+| **Oracle Role** | **Generates** the oracle (`derived/safe-envelopes.json`) | **Consumes** the oracle to evaluate allocation errors |
+| **Evidence Package Schema** | `protocol-v5-resource-calibration-run-v1.1.0` | `protocol-v5-resource-efficiency-raw-package-v1.0.0` |
+
+---
+
+## 6. Evidence Packages & Persistence Audit
 
 Three sealed local packages document the planning, readiness preflight, and calibration state:
 
@@ -130,7 +156,7 @@ Three sealed local packages document the planning, readiness preflight, and cali
 
 ---
 
-## 6. Scientific Results
+## 7. Scientific Results
 
 Because OBSERVED execution was not authorized, **no empirical scientific comparison is available**.
 
@@ -139,7 +165,7 @@ Because OBSERVED execution was not authorized, **no empirical scientific compari
 
 ---
 
-## 7. Pareto Verdict
+## 8. Pareto Verdict
 
 `INCONCLUSIVE / NOT AVAILABLE — OBSERVED EXECUTION NOT AUTHORIZED`
 
@@ -147,7 +173,7 @@ Under the registered contract, Pareto frontier evaluation requires valid observe
 
 ---
 
-## 8. Simulated Capacity
+## 9. Simulated Capacity
 
 `UNAVAILABLE / NOT EXECUTED`
 
@@ -155,7 +181,7 @@ Under `benchmarks_v5/resource-efficiency-capacity-v1.yaml`, capacity packing req
 
 ---
 
-## 9. Statistical Unit
+## 10. Statistical Unit
 
 * **Planned Raw Trials**: 640
 * **Repetitions per Family-Condition**: 10
@@ -165,32 +191,31 @@ Under `benchmarks_v5/resource-efficiency-capacity-v1.yaml`, capacity packing req
 
 ---
 
-## 10. Validation Results
+## 11. Validation Results and Exact Provenance
 
 All verification commands executed cleanly in the dedicated worktree:
 
-| Command | Exit Code | Result Summary |
-| --- | :---: | --- |
-| `PYTHONPATH=. /Users/mthang1201/Documents/datn/intent-spawner/.venv/bin/pytest recommender/test_recommender.py tests/test_config_validation.py tests/test_dynamic_profile_overlay.py tests/test_reprovisioning.py tests/test_evaluation_v4.py tests/test_evaluation_v5.py tests/test_evaluation_v5_isolation.py tests/test_resource_efficiency_v5.py tests/test_resource_envelope_v5.py tests/test_protocol_v5_research_analysis.py` | `0` | `290 passed in 20.25s` |
-| `PYTHONPATH=. /Users/mthang1201/Documents/datn/intent-spawner/.venv/bin/pytest tests/test_resource_efficiency_v5.py tests/test_resource_envelope_v5.py -v` | `0` | `110 passed in 12.71s` |
-| `/Users/mthang1201/Documents/datn/intent-spawner/.venv/bin/python scripts/scan-secrets.py` | `0` | `Secret scan passed: 2362 text files, high-confidence formats only.` |
-| `/Users/mthang1201/Documents/datn/intent-spawner/.venv/bin/python scripts/validate-portable-evidence.py` | `0` | `PASS` (13 portable files, Stage C 320 records, v4 matrices verified, RQ1-RQ5 claim gates reproduced) |
-| `/Users/mthang1201/Documents/datn/intent-spawner/.venv/bin/python -m compileall evaluation_v5 tests cluster_evaluation` | `0` | `PASS` (clean syntax compilation across all modules) |
-| `/Users/mthang1201/Documents/datn/intent-spawner/.venv/bin/python -m evaluation_v5.isolation_audit` | `0` | `PASS: Protocol-v5 isolation audit found no confirmatory gold datasets or split bundles (1641 repository document(s), 0 archive(s), 0 archive document(s) inspected).` |
-| Direct Python validator: `validate_efficiency_contracts()` | `0` | `status: pass` (16 families, 4 conditions, 10 repetitions, 640 primary trials) |
-| Direct Python validator: `validate_efficiency_plan(plan)` | `0` | `PASS` (640 trials match plan_sha256, 16 decisions match decision_sha256) |
-| Direct Python validator: `validate_raw_package(readiness_pkg)` | `0` | `status: pass, sealed: True, execution_status: NOT_EXECUTED, trials: 0` |
-| Direct Python validator: `validate_evidence_package(envelope_pkg)` | `0` | `status: pass, execution_status: DRY_RUN, trial_records: 0, eligible_for_comparison: False` |
-| `git diff --check` | `0` | `PASS` (clean whitespace and diff formatting) |
+| Command | Exit Code | Result Summary | Execution Provenance |
+| :--- | :---: | :--- | :---: |
+| `PYTHONPATH=. /Users/mthang1201/Documents/datn/intent-spawner/.venv/bin/pytest recommender/test_recommender.py tests/test_config_validation.py tests/test_dynamic_profile_overlay.py tests/test_reprovisioning.py tests/test_evaluation_v4.py tests/test_evaluation_v5.py tests/test_evaluation_v5_isolation.py tests/test_resource_efficiency_v5.py tests/test_resource_envelope_v5.py tests/test_protocol_v5_research_analysis.py` | `0` | `290 passed in 18.69s` | `EXECUTED_THIS_CORRECTIVE_RUN` |
+| `PYTHONPATH=. /Users/mthang1201/Documents/datn/intent-spawner/.venv/bin/pytest tests/test_resource_efficiency_v5.py tests/test_resource_envelope_v5.py -v` | `0` | `110 passed in 12.65s` | `EXECUTED_THIS_CORRECTIVE_RUN` |
+| `/Users/mthang1201/Documents/datn/intent-spawner/.venv/bin/python scripts/scan-secrets.py` | `0` | `Secret scan passed: 2362 text files, high-confidence formats only.` | `EXECUTED_THIS_CORRECTIVE_RUN` |
+| `/Users/mthang1201/Documents/datn/intent-spawner/.venv/bin/python scripts/validate-portable-evidence.py` | `0` | `PASS` (13 portable files, Stage C 320 records, v4 matrices verified, RQ1-RQ5 claim gates reproduced) | `EXECUTED_THIS_CORRECTIVE_RUN` |
+| `/Users/mthang1201/Documents/datn/intent-spawner/.venv/bin/python -m compileall evaluation_v5 tests cluster_evaluation` | `0` | `PASS` (clean syntax compilation across all modules) | `EXECUTED_THIS_CORRECTIVE_RUN` |
+| `/Users/mthang1201/Documents/datn/intent-spawner/.venv/bin/python -m evaluation_v5.isolation_audit` | `0` | `PASS: Protocol-v5 isolation audit found no confirmatory gold datasets or split bundles (1641 repository document(s), 0 archive(s), 0 archive document(s) inspected).` | `EXECUTED_THIS_CORRECTIVE_RUN` |
+| Direct Python: `validate_efficiency_contracts()` | `0` | `status: pass` (16 families, 4 conditions, 10 repetitions, 640 primary trials) | `EXECUTED_THIS_CORRECTIVE_RUN` |
+| Direct Python: `validate_efficiency_plan(plan)` | `0` | `PASS` (640 trials match plan_sha256, 16 decisions match decision_sha256) | `EXECUTED_THIS_CORRECTIVE_RUN` |
+| Direct Python: `validate_raw_package(readiness_pkg)` | `0` | `status: pass, sealed: True, execution_status: NOT_EXECUTED, trials: 0` | `EXECUTED_THIS_CORRECTIVE_RUN` |
+| Direct Python: `validate_evidence_package(envelope_pkg)` | `0` | `status: pass, execution_status: DRY_RUN, trial_records: 0, eligible_for_comparison: False` | `EXECUTED_THIS_CORRECTIVE_RUN` |
+| `git diff --check` | `0` | `PASS` (clean whitespace and diff formatting) | `EXECUTED_THIS_CORRECTIVE_RUN` |
 
 ---
 
-## 11. Limitations and Prerequisites for Future Execution
+## 12. Limitations and Prerequisites for Future Execution
 
-OBSERVED E4 execution cannot occur until the following prerequisite conditions are legitimately satisfied according to the frozen repository contracts in a clean committed Git revision:
-
+### 12.1 Resource-Efficiency OBSERVED Authorization Requirements (640-Trial Comparative Run)
 1. **Disposable Experimental Target Cluster**:
-   * Context name must be `intent-spawner-eval-v5` (per `benchmarks_v5/resource-envelope-cluster-eligibility-v1.yaml`).
+   * Active context must be `intent-spawner-eval-v5` (per `benchmarks_v5/resource-envelope-cluster-eligibility-v1.yaml`).
    * Must be a dedicated, disposable non-production cluster (`z2jh-context-demo.local/disposable-experiment-v5: "true"`). Production clusters or uncontrolled shared environments are strictly prohibited by protocol rules.
 2. **Dedicated Single Labeled Node**:
    * Contract requires `required_node_count: 1` (a single dedicated node, NOT a multinode cluster).
@@ -220,7 +245,25 @@ OBSERVED E4 execution cannot occur until the following prerequisite conditions a
 9. **Passing Live Read-Only Preflight**:
    * Non-mutating preflight returning `eligibility_status: ELIGIBLE` with zero failure codes.
 
-### Previously Invented Requirements Removed During Audit
+### 12.2 Independent Resource-Envelope Oracle Prerequisites (Calibration Run)
+Before the comparative efficiency run can be authorized, an independent resource-envelope calibration run must be executed to produce the oracle:
+* Orchestration runner: `python -m evaluation_v5.resource calibrate ...`
+* Same target context: `intent-spawner-eval-v5`
+* Same target namespace: `z2jh-context-demo`
+* Same dedicated node: `e4-node-v1`
+* Requires execution of pre-trial cgroup eligibility probe pod to verify controllers and event keys.
+* Generates `safe-envelopes.json` with manual review gating (`APPROVED`).
+
+### 12.3 Execution Sequence for Next Agent
+1. **Calibration Run**: Execute or obtain the independent resource-envelope calibration package (`safe-envelopes.json`) with status `OBSERVED`, `eligible_for_comparison: true`, and manual review `APPROVED`.
+2. **Oracle Binding**: Freeze oracle package path and SHA-256 checksum into `benchmarks_v5/resource-efficiency-freeze-contract-v1.yaml`.
+3. **Node Capacity Freeze**: Read back allocatable CPU/memory/GPU from `kubectl get node -o json` on the dedicated node and freeze in `benchmarks_v5/resource-efficiency-capacity-v1.yaml`.
+4. **Image Verification**: Build workload container from `cluster_evaluation/Dockerfile.resource-v5`, pre-pull onto node, verify and record SHA-256 content digest in `cluster_evaluation/resource-v5-image-state.yaml`.
+5. **Freeze Activation**: Set `confirmatory_freeze_status: FROZEN` in `benchmarks_v5/resource-efficiency-freeze-contract-v1.yaml` and commit to Git.
+6. **Preflight Verification**: Run `python -m evaluation_v5.resource.efficiency_runner` live preflight and verify `ELIGIBLE` status with zero failure codes.
+7. **Execution**: Execute the 640-trial OBSERVED run.
+
+### 12.4 Previously Invented Requirements Removed During Audit
 * **"Approved production cluster" / "multinode cluster"**: REMOVED. Contract explicitly requires a disposable experimental target and exactly 1 dedicated node (`required_node_count: 1`). Protocol strictly forbids mutating production clusters.
 * **"P3 container image / P3 profiles / P3 trials"**: REMOVED. P3 is excluded from E4 by authoritative freeze gate.
 * **"Human cryptographic signature / commit token oracle sign-off"**: REMOVED. Oracle is an independent empirical calibration package (`safe-envelopes.json`) for metric baseline calculation, not a cluster permission authorization mechanism.

@@ -306,11 +306,15 @@ with their manifests; do not rerun or overwrite any authoritative directory.
 - Dedicated worktree: `/Users/mthang1201/Documents/datn/intent-spawner-protocol-v5-e4-observed-run`
 - Base commit SHA: `2cf206773e63f7086e3c9716a5077793b189fa6d`
 - Execution Git SHA (`execution_git_sha`): `2cf206773e63f7086e3c9716a5077793b189fa6d`
-- Delivery commit SHA: `d72f273300c7f647c5b292b6664751e0f86ac27f` (corrective update in progress)
+- Previous corrective delivery SHA: `4df87e3bc651b8418135d65076de8e2eba89e5c6`
+- Post-hoc commit audit for `4df87e3`: `POST_HOC_COMMIT_CONTENT_AUDIT: PASS` (verified diff contained strictly documentation corrections for E4 conditions, hashes, validation provenance, and removed hallucinations).
 - Final Verdict: `OBSERVED_EXECUTION_NOT_AUTHORIZED`
   - E4 readiness and freeze audit completed; OBSERVED execution was not authorized because live cluster eligibility, image verification, oracle package approval, and confirmatory freeze gates failed closed.
   - Zero OBSERVED trials were executed or attempted (planned = 640, attempted = 0, completed = 0, successful = 0).
-  - No Kubernetes experiment mutation was performed against the unapproved `orbstack` context; all cluster interactions were strictly read-only inspection.
+  - No Kubernetes experiment mutation was performed against the unapproved `orbstack` context; all cluster interactions were strictly read-only context verification.
+- Namespace Resolution:
+  - Both E4 pipelines (envelope calibration and 640-trial efficiency comparison) strictly target namespace **`z2jh-context-demo`** (per contracts and adapter implementations).
+  - The string `intent-spawner-e4-observed` was an inadvertent conversational hallucination in previous assistant report prose and never existed in repository code, contracts, or clusters.
 - Plan package: `results_v5/protocol-v5.0.0/E4/e4-resource-efficiency-plan-20260905T082000Z`
   - Raw file SHA-256 (`plan.json`): `5260288122847397f2ec7d1db80f20044be2a7fa39e8dab7a885847e38d6db81` (in `SHA256SUMS`)
   - Canonical plan identity hash (`plan_sha256`): `eec8b92fcc6750b466cde3a15893babe2aacba71ef95ee4adb636ead75354466`
@@ -325,22 +329,28 @@ with their manifests; do not rerun or overwrite any authoritative directory.
   - Execution status: `DRY_RUN` (`NOT_EXECUTED`), manual review status: `NOT_APPLICABLE`
   - Sealed with SHA256SUMS; local only (`LOCAL ONLY / NOT PERSISTED REMOTELY`).
 - Comprehensive report: `docs/evaluation/PROTOCOL_V5_E4_OBSERVED_EXECUTION_REPORT.md`
-- Test status:
-  - Comprehensive suite: `PYTHONPATH=. /Users/mthang1201/Documents/datn/intent-spawner/.venv/bin/pytest ...` $\to$ `290 passed in 20.25s`.
-  - E4 efficiency and envelope suite: `PYTHONPATH=. /Users/mthang1201/Documents/datn/intent-spawner/.venv/bin/pytest tests/test_resource_efficiency_v5.py tests/test_resource_envelope_v5.py -v` $\to$ `110 passed in 12.71s`.
-  - Secret scan: `/Users/mthang1201/Documents/datn/intent-spawner/.venv/bin/python scripts/scan-secrets.py` $\to$ `Secret scan passed: 2362 text files, high-confidence formats only.`
-  - Isolation audit: `/Users/mthang1201/Documents/datn/intent-spawner/.venv/bin/python -m evaluation_v5.isolation_audit` $\to$ PASS.
+- Test status (freshly executed this corrective run):
+  - Comprehensive suite: `PYTHONPATH=. /Users/mthang1201/Documents/datn/intent-spawner/.venv/bin/pytest ...` $\to$ `290 passed in 18.69s` (`EXECUTED_THIS_CORRECTIVE_RUN`).
+  - E4 efficiency and envelope suite: `PYTHONPATH=. /Users/mthang1201/Documents/datn/intent-spawner/.venv/bin/pytest tests/test_resource_efficiency_v5.py tests/test_resource_envelope_v5.py -v` $\to$ `110 passed in 12.65s` (`EXECUTED_THIS_CORRECTIVE_RUN`).
+  - Secret scan: `/Users/mthang1201/Documents/datn/intent-spawner/.venv/bin/python scripts/scan-secrets.py` $\to$ `Secret scan passed: 2362 text files, high-confidence formats only.` (`EXECUTED_THIS_CORRECTIVE_RUN`).
+  - Isolation audit: `/Users/mthang1201/Documents/datn/intent-spawner/.venv/bin/python -m evaluation_v5.isolation_audit` $\to$ `PASS` (`EXECUTED_THIS_CORRECTIVE_RUN`).
 
 ### Next Agent Instructions
 
-Do NOT simply run E4 or attempt to initiate the 640-trial OBSERVED experiment. The next agent must revalidate all contract-defined gates and ensure the following conditions are legitimately satisfied in a clean committed Git revision before OBSERVED execution can be authorized:
-1. **Disposable Experimental Target Cluster**: Active context must be `intent-spawner-eval-v5` on a disposable non-production cluster (`z2jh-context-demo.local/disposable-experiment-v5: "true"`). Production clusters and uncontrolled shared clusters are strictly prohibited.
-2. **Dedicated Single Labeled Node**: Exactly one dedicated node (`required_node_count: 1`, not multinode) labeled `z2jh-context-demo.local/node-identity: e4-node-v1` and `z2jh-context-demo.local/dedicated-e4: "true"`, with minimum allocatable 2000m CPU and 2560MiB memory, and no non-daemonset workloads.
-3. **Dedicated Target Namespace**: Namespace `z2jh-context-demo` labeled `z2jh-context-demo.local/disposable-experiment-v5: "true"` and `z2jh-context-demo.local/cluster-identity: intent-spawner-eval-v5`, with zero Kubernetes resource quotas.
-4. **Verified Workload Container Image**: Exactly one workload container image built from `cluster_evaluation/Dockerfile.resource-v5`, pushed, pre-pulled onto the dedicated node, with its SHA-256 digest pinned (`IMAGE_RE`) and verified in `cluster_evaluation/resource-v5-image-state.yaml`. (P3 is excluded from E4; no P3 container image is required or permitted.)
-5. **Frozen Node Allocatable Capacity**: Allocatable quantities read from `kubectl get node -o json` and frozen in `benchmarks_v5/resource-efficiency-capacity-v1.yaml` (`freeze_status: FROZEN`).
-6. **Approved Independent Oracle Package**: Sealed and approved independent calibration evidence package (`safe-envelopes.json`) covering all 16 families with status `OBSERVED`, `eligible_for_comparison: true`, and manual review `APPROVED`, bound by SHA-256 in `benchmarks_v5/resource-efficiency-freeze-contract-v1.yaml`. (Provides baseline error envelopes; does not involve human cryptographic signatures or cluster permission tokens.)
-7. **Confirmatory Freeze Activation**: `confirmatory_freeze_status: FROZEN` and `current_phase: confirmatory` activated in `benchmarks_v5/resource-efficiency-freeze-contract-v1.yaml`.
-8. **Contract-Defined cgroup v2 Telemetry**: Dedicated node verified for cgroup v2 with active `cpu`, `memory`, and `pids` controllers and `memory.events` counters (`oom`, `oom_kill`). Telemetry is read directly via cgroup files and pod status; Prometheus, Metrics Server, and cAdvisor are NOT required.
-9. **Passing Live Read-Only Preflight**: Non-mutating preflight returning `eligibility_status: ELIGIBLE` with zero failure codes.
+Do NOT simply run E4 or attempt to initiate the 640-trial OBSERVED experiment. The next agent must follow the exact two-path sequence below:
+
+1. **Path 1 — Independent Resource-Envelope Oracle Calibration**:
+   - Target context: `intent-spawner-eval-v5` (disposable, non-production).
+   - Target namespace: `z2jh-context-demo` labeled `z2jh-context-demo.local/disposable-experiment-v5: "true"`.
+   - Single dedicated node (`required_node_count: 1`) labeled `z2jh-context-demo.local/node-identity: e4-node-v1` and `z2jh-context-demo.local/dedicated-e4: "true"`.
+   - Workload container image built from `cluster_evaluation/Dockerfile.resource-v5`, pre-pulled, digest pinned in `cluster_evaluation/resource-v5-image-state.yaml`.
+   - Run calibration runner: `python -m evaluation_v5.resource calibrate ...`
+   - Complete manual review gate to produce approved `safe-envelopes.json`.
+2. **Path 2 — Resource-Efficiency 640-Trial Comparison Execution**:
+   - Bind approved calibration package path and SHA256SUMS digest in `benchmarks_v5/resource-efficiency-freeze-contract-v1.yaml` (`manual_approval_status: APPROVED`).
+   - Read back allocatable CPU/memory/GPU from `kubectl get node -o json` on the dedicated node and freeze in `benchmarks_v5/resource-efficiency-capacity-v1.yaml` (`freeze_status: FROZEN`).
+   - Verify workload container image state in `cluster_evaluation/resource-v5-image-state.yaml` (`status: VERIFIED`, `digest_verified: true`). (P3 is excluded from E4; no P3 image is required.)
+   - Set `confirmatory_freeze_status: FROZEN` and `current_phase: confirmatory` in `benchmarks_v5/resource-efficiency-freeze-contract-v1.yaml`.
+   - Run non-mutating preflight: `python -m evaluation_v5.resource.efficiency_runner validate` and confirm `eligibility_status: ELIGIBLE` with zero failure codes.
+   - Only after all gates pass: execute the 640-trial OBSERVED run: `python -m evaluation_v5.resource.efficiency_runner execute ...`
 
