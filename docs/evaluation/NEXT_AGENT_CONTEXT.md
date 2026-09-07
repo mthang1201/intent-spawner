@@ -299,3 +299,59 @@ are no remaining execution, evidence, analysis, validation, secret, or commit
 blockers. The only optional next action is repository publication (push the
 current `main`) and separate archival of the ignored `results/` directories
 with their manifests; do not rerun or overwrite any authoritative directory.
+
+## Protocol-v5 E4 Observed Execution Handoff (2026-09-05 Asia/Ho_Chi_Minh)
+
+- Branch: `experiment/protocol-v5-e4-observed-run`
+- Dedicated worktree: `/Users/mthang1201/Documents/datn/intent-spawner-protocol-v5-e4-observed-run`
+- Base commit SHA: `2cf206773e63f7086e3c9716a5077793b189fa6d`
+- Execution Git SHA (`execution_git_sha`): `2cf206773e63f7086e3c9716a5077793b189fa6d`
+- Previous corrective delivery SHA: `fa7f4272604e035cd8bba0cce17ab4d7dec7d156` (preceded by `27a52c125a8eaec804bc00e936ff9fc11d99fc26`, `4df87e3bc651b8418135d65076de8e2eba89e5c6`, `d72f273300c7f647c5b292b6664751e0f86ac27f`, `71cc157544d71fa0e8d10a744074cbb3b1c1c832`, on base `2cf206773e63f7086e3c9716a5077793b189fa6d`)
+- Post-hoc commit audit: `POST_HOC_COMMIT_CONTENT_AUDIT: PASS` (verified diffs contained strictly documentation corrections for E4 conditions, paths, namespaces, hashes, validation provenance, and removed hallucinations).
+- Final Verdict: `OBSERVED_EXECUTION_NOT_AUTHORIZED`
+  - E4 readiness and freeze audit completed; OBSERVED execution was not authorized because live cluster eligibility, image verification, oracle package approval, and confirmatory freeze gates failed closed.
+  - Zero OBSERVED trials were executed or attempted (planned = 640, attempted = 0, completed = 0, successful = 0).
+  - No Kubernetes experiment mutation was performed against the unapproved `orbstack` context; all cluster interactions were strictly read-only context verification.
+- Namespace Resolution:
+  - Both E4 pipelines (envelope calibration and 640-trial efficiency comparison) strictly target namespace **`z2jh-context-demo`** (per contracts and adapter implementations).
+  - The string `intent-spawner-e4-observed` was an inadvertent conversational hallucination in previous assistant report prose and never existed in repository code, contracts, or clusters.
+- Plan package: `results_v5/protocol-v5.0.0/E4/e4-resource-efficiency-plan-20260905T082000Z`
+  - Raw file SHA-256 (`plan.json`): `5260288122847397f2ec7d1db80f20044be2a7fa39e8dab7a885847e38d6db81` (in `SHA256SUMS`)
+  - Canonical plan identity hash (`plan_sha256`): `eec8b92fcc6750b466cde3a15893babe2aacba71ef95ee4adb636ead75354466`
+  - Frozen conditions: Exactly 4 (`STATIC_LARGE`, `P1_CATALOG`, `P2_CATALOG`, `P2_DYNAMIC`). P3 is strictly excluded (`p3.included: false`, `p3.authoritative_gate: not_retained`).
+  - 16 workload families × 4 conditions × 10 repetitions = 640 planned primary trials (160 trials per condition; primary independent semantic unit $N = 16$).
+  - Sealed with SHA256SUMS; execution was not authorized; local only (`LOCAL ONLY / NOT PERSISTED REMOTELY`).
+- Sealed readiness evidence package: `results_v5/protocol-v5.0.0/E4/e4-resource-efficiency-observed-run-20260905T081825Z`
+  - Execution status: `NOT_EXECUTED` (Cluster measurement status: `NOT_EXECUTED`)
+  - Blocker codes recorded: `APPROVED_ORACLE_UNAVAILABLE`, `CGROUP_V2_REQUIRED`, `CLUSTER_INELIGIBLE`, `CONFIRMATORY_FREEZE_INACTIVE`, `IMAGE_DIGEST_UNVERIFIED`, `KUBERNETES_VERSION_UNAVAILABLE`, `NODE_CAPACITY_NOT_FROZEN`, `REQUIRED_API_ACCESS_MISSING`, `WRONG_CLUSTER_FINGERPRINT`, `WRONG_KUBERNETES_CONTEXT`, `WRONG_NODE_COUNT`
+  - Sealed with SHA256SUMS; local only (`LOCAL ONLY / NOT PERSISTED REMOTELY`).
+- Sealed preflight calibration package: `results_v5/protocol-v5.0.0/E4/e4-resource-envelope-observed-run-20260905T081833Z`
+  - Execution status: `DRY_RUN` (`NOT_EXECUTED`), manual review status: `NOT_APPLICABLE`
+  - Sealed with SHA256SUMS; local only (`LOCAL ONLY / NOT PERSISTED REMOTELY`).
+- Comprehensive report: `docs/evaluation/PROTOCOL_V5_E4_OBSERVED_EXECUTION_REPORT.md`
+- Test status (authoritative final validation runs succeeded):
+  - Comprehensive suite: `PYTHONPATH=. /Users/mthang1201/Documents/datn/intent-spawner/.venv/bin/pytest ...` $\to$ `290 passed in 18.69s` (`EXECUTED_THIS_CORRECTIVE_RUN`).
+  - E4 efficiency and envelope suite: `PYTHONPATH=. /Users/mthang1201/Documents/datn/intent-spawner/.venv/bin/pytest tests/test_resource_efficiency_v5.py tests/test_resource_envelope_v5.py -v` $\to$ `110 passed in 12.65s` (`EXECUTED_THIS_CORRECTIVE_RUN`).
+  - Secret scan: `/Users/mthang1201/Documents/datn/intent-spawner/.venv/bin/python scripts/scan-secrets.py` $\to$ `Secret scan passed: 2362 text files, high-confidence formats only.` (`EXECUTED_THIS_CORRECTIVE_RUN`).
+  - Isolation audit: `/Users/mthang1201/Documents/datn/intent-spawner/.venv/bin/python -m evaluation_v5.isolation_audit` $\to$ `PASS` (`EXECUTED_THIS_CORRECTIVE_RUN`).
+
+### Next Agent Instructions
+
+Do NOT simply run E4 or attempt to initiate the 640-trial OBSERVED experiment. The next agent must follow the exact two-path sequence below:
+
+1. **Path 1 — Independent Resource-Envelope Oracle Verification / Calibration**:
+   - Invariant: A valid, approved resource-envelope oracle package satisfying `resource-efficiency-freeze-contract-v1.yaml` **must exist and be frozen into the contract** before E4 efficiency OBSERVED execution is authorized. If a valid, approved oracle package already exists in a future execution state and its exact identity is legitimately frozen, recalibration is not required merely for procedural reasons.
+   - Current State: `NO VALID APPROVED E4 ORACLE CURRENTLY AVAILABLE`. The only currently available local E4 resource-envelope package in this worktree (`results_v5/protocol-v5.0.0/E4/e4-resource-envelope-observed-run-20260905T081833Z`, local-only/gitignored) has `execution_status: DRY_RUN` and `eligible_for_comparison: false` (manual review status `NOT_APPLICABLE`), and the freeze contract currently records `oracle_package.path: null` with `manual_approval_status: NOT_APPROVED`. Therefore, calibration is required before efficiency OBSERVED execution can proceed.
+   - Target context: `intent-spawner-eval-v5` (disposable, non-production).
+   - Target namespace: `z2jh-context-demo` labeled `z2jh-context-demo.local/disposable-experiment-v5: "true"`.
+   - Single dedicated node (`required_node_count: 1`) labeled `z2jh-context-demo.local/node-identity: e4-node-v1` and `z2jh-context-demo.local/dedicated-e4: "true"`.
+   - Workload container image built from `cluster_evaluation/Dockerfile.resource-v5`, pre-pulled, digest pinned in `cluster_evaluation/resource-v5-image-state.yaml`.
+   - Run calibration runner: `python -m evaluation_v5.resource calibrate ...`
+   - Complete manual review gate to produce approved `safe-envelopes.json`.
+2. **Path 2 — Resource-Efficiency 640-Trial Comparison Execution**:
+   - Bind approved calibration package path and SHA256SUMS digest in `benchmarks_v5/resource-efficiency-freeze-contract-v1.yaml` (`manual_approval_status: APPROVED`).
+   - Read back allocatable CPU/memory/GPU from `kubectl get node -o json` on the dedicated node and freeze in `benchmarks_v5/resource-efficiency-capacity-v1.yaml` (`freeze_status: FROZEN`).
+   - Verify workload container image state in `cluster_evaluation/resource-v5-image-state.yaml` (`status: VERIFIED`, `digest_verified: true`). (P3 is excluded from E4; no P3 image is required.)
+   - Set `confirmatory_freeze_status: FROZEN` and `current_phase: confirmatory` in `benchmarks_v5/resource-efficiency-freeze-contract-v1.yaml`.
+   - Run non-mutating preflight: `python -m evaluation_v5.resource.efficiency_runner validate` and confirm `eligibility_status: ELIGIBLE` with zero failure codes.
+   - Only after all gates pass: execute the 640-trial OBSERVED run: `python -m evaluation_v5.resource.efficiency_runner execute ...`
