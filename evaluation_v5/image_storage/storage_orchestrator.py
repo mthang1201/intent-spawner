@@ -149,19 +149,36 @@ def _format_storage_markdown_report(
 
     lines.append("## 4. Cumulative Storage & Prefix Deduplication (Hypothesis H7)\n")
     lines.append("Hypothesis H7 states: *Shared image layers require less cumulative storage than a naive logical sum as the frozen catalog grows.*\n")
-    lines.append("| Prefix | Introduced Image | Naive Logical Bytes | Unique Layer Bytes | Deduplication Savings | Savings Ratio |")
-    lines.append("| :---: | :--- | :---: | :---: | :---: | :---: |")
+    lines.append(
+        "**Storage Accounting Semantics**:\n"
+        "- `LogicalImageBytes`: Sum of every ordered manifest layer descriptor occurrence in the prefix.\n"
+        "- `UniqueLayerBytes`: Cumulative byte volume of unique content-addressed layer digests in the prefix.\n"
+        "- `Deduplication Savings`: `LogicalImageBytes - UniqueLayerBytes`.\n\n"
+        "> [!NOTE]\n"
+        "> **Within-Image Duplicate Layer Descriptors (Prefix 1 Audit)**:\n"
+        "> For prefix 1 (`minimal-python`), `LogicalImageBytes = 575,161,576 B` and `UniqueLayerBytes = 575,161,288 B`, "
+        "yielding a 288-byte difference. This difference is fully and deterministically explained by raw OCI manifest analysis: "
+        "the 32-byte empty tar layer digest `sha256:4f4fb700ef54461cfa02571ae0db9a0dc1e0cdb5577484a6d75e68dc38e8acc1` "
+        "appears 10 times in `minimal-python`'s ordered layer descriptors (from Dockerfile metadata instructions). "
+        "Counting repeated descriptors once produces $(10 - 1) \\times 32\\text{ B} = 288\\text{ B}$ of within-image deduplication. "
+        "Zero unexplained residual bytes exist.\n"
+    )
+    lines.append("| Prefix | Introduced Image | Naive Logical Bytes | Unique Layer Bytes | Deduplication Savings | Savings Ratio | Within-Image Dups |")
+    lines.append("| :---: | :--- | :---: | :---: | :---: | :---: | :---: |")
 
     all_nonexpanding = True
     final_savings = prefixes[-1].savings_bytes if prefixes else 0
+    final_logical = prefixes[-1].naive_logical_bytes if prefixes else 0
+    final_unique = prefixes[-1].unique_layer_bytes if prefixes else 0
 
     for p in prefixes:
         idx = p.prefix_size
         img_name = inspections[idx - 1].image_id if idx <= len(inspections) else f"img-{idx}"
+        dup_info = f"{p.within_image_duplicate_digest_count} digest(s) ({p.within_image_duplicate_bytes:,} B)" if p.within_image_duplicate_bytes else "0 B"
         if p.unique_layer_bytes > p.naive_logical_bytes:
             all_nonexpanding = False
         lines.append(
-            f"| {p.prefix_size} | **{img_name}** | {p.naive_logical_bytes:,} B | {p.unique_layer_bytes:,} B | {p.savings_bytes:,} B | {p.savings_ratio:.2%} |"
+            f"| {p.prefix_size} | **{img_name}** | {p.naive_logical_bytes:,} B | {p.unique_layer_bytes:,} B | {p.savings_bytes:,} B | {p.savings_ratio:.2%} | {dup_info} |"
         )
     lines.append("")
 
@@ -175,8 +192,15 @@ def _format_storage_markdown_report(
     lines.append("")
 
     lines.append("## 6. Pairwise Layer-Reuse Matrices\n")
-    lines.append("Layer matching uses exact content digest equality (`layer.digest == other.digest`).\n")
-    lines.append("### 6.1 Pairwise Shared Layer Storage (Bytes)\n")
+    lines.append(
+        "Layer matching uses exact content digest equality (`layer.digest == other.digest`).\n"
+        "Pairwise shared layer count and byte metrics operate on **unique content-addressed layer digests**, "
+        "not on ordered descriptor occurrences. Diagonal entries reflect the self unique layer digest count and "
+        "self unique layer byte volume of each image.\n\n"
+        "*Example*: `minimal-python ∩ scipy-data-science`: 23 shared unique content digests, 575,161,288 shared unique layer bytes "
+        "(100% of minimal-python's unique layer digests are present in scipy-data-science).\n"
+    )
+    lines.append("### 6.1 Pairwise Shared Layer Storage (Bytes - Unique Digest Semantics)\n")
     short_names = [img.replace("-deep-learning", "").replace("-data-science", "") for img in pairwise_analysis.image_ids]
     hdr = "| Image | " + " | ".join(short_names) + " |"
     lines.append(hdr)
@@ -186,7 +210,7 @@ def _format_storage_markdown_report(
         lines.append(f"| **{short_names[i]}** | {row_str} |")
     lines.append("")
 
-    lines.append("### 6.2 Pairwise Shared Layer Count\n")
+    lines.append("### 6.2 Pairwise Shared Layer Count (Unique Content Digests)\n")
     lines.append(hdr)
     lines.append("| :--- | " + " | ".join([":---:"] * len(short_names)) + " |")
     for i, row in enumerate(pairwise_analysis.shared_layer_count_matrix):
@@ -195,6 +219,14 @@ def _format_storage_markdown_report(
     lines.append("")
 
     lines.append("## 7. Joint Recommendation Scalability & Split Provenance\n")
+    all_rec_not_executed = all(s.p2_evaluation_status != "OBSERVED" for s in scale_records)
+    if all_rec_not_executed:
+        lines.append(
+            "> [!NOTE]\n"
+            "> **Zero Confirmatory Recommendation Observations**: Scale 4 recommendation is `NOT_EXECUTED` "
+            "(`confirmatory_dataset_not_provided: sealed confirmatory split required for confirmatory stage`); "
+            "Scales 8 and 16 are `NOT_EXECUTED` (`insufficient_approved_images`).\n"
+        )
     lines.append("| Scale | Storage Status | P2 Rec Status | Stage | Split Role | Dataset ID | Cases | P2 Acceptable Acc | P2 Preferred Acc | P2 Recall@5 | Mean Latency |")
     lines.append("| :---: | :---: | :---: | :---: | :---: | :--- | :---: | :---: | :---: | :---: | :---: |")
     for s in scale_records:
@@ -232,8 +264,8 @@ def _format_storage_markdown_report(
     lines.append(f"- **Figure B (Marginal Storage)**: `figures/{figures.get('figure_b', 'figure_b_marginal_storage.png')}`")
     lines.append(f"- **Figure C (Pairwise Reuse - Bytes)**: `figures/{figures.get('figure_c_bytes', 'figure_c_pairwise_reuse_bytes.png')}`")
     lines.append(f"- **Figure C (Pairwise Reuse - Count)**: `figures/{figures.get('figure_c_count', 'figure_c_pairwise_reuse_count.png')}`")
-    lines.append(f"- **Figure D (Recommendation Quality)**: `figures/{figures.get('figure_d', 'figure_d_recommendation_quality.png')}`")
-    lines.append(f"- **Figure E (Recommendation Latency)**: `figures/{figures.get('figure_e', 'figure_e_recommendation_latency.png')}`\n")
+    lines.append(f"- **Figure D (Recommendation Quality)**: `figures/{figures.get('figure_d', 'figure_d_recommendation_quality.png')}` (Configured scale markers; zero observed recommendation points plotted when confirmatory split is not supplied)")
+    lines.append(f"- **Figure E (Recommendation Latency)**: `figures/{figures.get('figure_e', 'figure_e_recommendation_latency.png')}` (Configured scale markers; zero latency points or error bars plotted when recommendation evaluation is not executed)\n")
 
     lines.append("## 10. Honest Scientific Claim Boundary\n")
     support_h7 = (
@@ -249,29 +281,37 @@ def _format_storage_markdown_report(
         and scale_4_rec.split_role == "confirmatory"
     )
     if support_h7 and len(inspections) == 4:
-        rec_note = (
-            "Joint scale-4 recommendation evaluation was also observed with confirmatory split."
+        rec_scope = (
+            "Joint scale-4 recommendation evaluation was observed with confirmatory split."
             if rec_is_confirmatory
             else (
-                "Joint recommendation evaluation at scale 4 was NOT_EXECUTED for confirmatory stage "
-                "because an external sealed confirmatory split was not supplied; development data was "
-                "strictly excluded to prevent split contamination."
+                "Zero confirmatory recommendation observations (Scale 4 NOT_EXECUTED due to absence "
+                "of sealed confirmatory split; Scales 8 and 16 NOT_EXECUTED due to insufficient approved images). "
+                "Storage measurement has 1 observed scale (N=4); recommendation has 0 confirmatory observed scales."
                 if (scale_4_rec and scale_4_rec.p2_evaluation_status == "NOT_EXECUTED")
                 else "Recommendation evaluation was executed on development data only (exploratory/non-confirmatory)."
             )
         )
+        savings_ratio = (final_savings / final_logical) if final_logical > 0 else 0.0
         lines.append(
             "> [!IMPORTANT]\n"
             "> **Constrained Claim Verdict (PASS_WITH_LIMITATIONS)**:\n"
-            "> Measured shared OCI layers reduce unique compressed layer bytes relative to the naive logical layer-byte sum "
-            f"for this frozen four-image catalog ({final_savings:,} bytes / {final_savings / prefixes[-1].naive_logical_bytes:.2%} savings). "
+            f"> For the frozen four-image amd64 catalog, direct OCI manifest inspection measured {final_logical:,} "
+            f"logical compressed layer bytes and {final_unique:,} unique content-addressed compressed layer bytes, "
+            f"corresponding to {savings_ratio:.2%} deduplication under the experiment's digest-based storage accounting. "
             "> This empirically confirms Hypothesis **H7** for the frozen 4-image catalog.\n"
             ">\n"
-            f"> **Recommendation Evaluation Scope**: {rec_note}\n"
+            "> **Storage Claim Semantics & Size Domain**:\n"
+            "> The measured domain is `compressed_oci_manifest_layer_bytes` (content-addressed compressed OCI layer-blob "
+            "> accounting under digest deduplication). This represents immutable registry/container image manifest layer bytes "
+            "> and does not represent unpacked container filesystem disk usage, snapshotter storage, overlay filesystem overhead, "
+            "> or actual filesystem block allocation.\n"
+            ">\n"
+            f"> **Recommendation Evaluation Scope**: {rec_scope}\n"
             ">\n"
             "> **Scalability Boundary Limitation**:\n"
             "> Larger catalog scales (8 and 16 images) remain `NOT_EXECUTED` because additional administrator-approved "
-            "> immutable images have not been published in the repository catalog. With only scale 4 observed, "
+            "> immutable images have not been published in the repository catalog. With only scale 4 observed for storage, "
             "> **no empirical 4→8→16 multi-scale trend is yet estimable**.\n"
         )
     elif execution_status == StorageExecutionStatus.NOT_EXECUTED.value:

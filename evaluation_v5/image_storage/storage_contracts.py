@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections import Counter
 from collections.abc import Mapping, Sequence
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
@@ -101,6 +102,10 @@ class ImageLayerMetadata:
     layer_sizes: tuple[int, ...] = ()
     size_domain: str = SIZE_DOMAIN_COMPRESSED_OCI_BLOB
     uncompressed_layer_bytes: int | None = None
+    within_image_duplicate_digest_count: int = 0
+    within_image_duplicate_bytes: int = 0
+    unique_layer_count: int = 0
+    unique_layer_bytes: int = 0
 
     def __post_init__(self) -> None:
         if not self.requested_reference:
@@ -124,6 +129,20 @@ class ImageLayerMetadata:
             object.__setattr__(
                 self, "layer_sizes", tuple(l.size for l in self.layers)
             )
+        if self.layers:
+            counts = Counter(l.digest for l in self.layers)
+            dups = {d: c for d, c in counts.items() if c > 1}
+            sizes = {l.digest: l.size for l in self.layers}
+            dup_bytes = sum((c - 1) * sizes[d] for d, c in dups.items())
+            uniq_bytes = sum(sizes.values())
+            if not self.within_image_duplicate_digest_count and dups:
+                object.__setattr__(self, "within_image_duplicate_digest_count", len(dups))
+            if not self.within_image_duplicate_bytes and dup_bytes:
+                object.__setattr__(self, "within_image_duplicate_bytes", dup_bytes)
+            if not self.unique_layer_count and sizes:
+                object.__setattr__(self, "unique_layer_count", len(sizes))
+            if not self.unique_layer_bytes and uniq_bytes:
+                object.__setattr__(self, "unique_layer_bytes", uniq_bytes)
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -143,6 +162,10 @@ class ImageLayerMetadata:
             "layer_sizes": list(self.layer_sizes),
             "size_domain": self.size_domain,
             "uncompressed_layer_bytes": self.uncompressed_layer_bytes,
+            "within_image_duplicate_digest_count": self.within_image_duplicate_digest_count,
+            "within_image_duplicate_bytes": self.within_image_duplicate_bytes,
+            "unique_layer_count": self.unique_layer_count,
+            "unique_layer_bytes": self.unique_layer_bytes,
             "layers": [layer.to_dict() for layer in self.layers],
             "total_bytes": self.total_bytes,
             "layer_count": len(self.layers),
@@ -186,6 +209,10 @@ class ImageLayerMetadata:
                 if data.get("uncompressed_layer_bytes") is not None
                 else None
             ),
+            within_image_duplicate_digest_count=int(data.get("within_image_duplicate_digest_count", 0)),
+            within_image_duplicate_bytes=int(data.get("within_image_duplicate_bytes", 0)),
+            unique_layer_count=int(data.get("unique_layer_count", 0)),
+            unique_layer_bytes=int(data.get("unique_layer_bytes", 0)),
         )
 
 
@@ -267,6 +294,8 @@ class PrefixStorageMeasurement:
     unique_layer_bytes: int
     savings_bytes: int = 0
     savings_ratio: float = 0.0
+    within_image_duplicate_digest_count: int = 0
+    within_image_duplicate_bytes: int = 0
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -284,6 +313,8 @@ class PrefixStorageMeasurement:
             "unique_layer_bytes": self.unique_layer_bytes,
             "savings_bytes": self.savings_bytes,
             "savings_ratio": round(self.savings_ratio, 6),
+            "within_image_duplicate_digest_count": self.within_image_duplicate_digest_count,
+            "within_image_duplicate_bytes": self.within_image_duplicate_bytes,
         }
 
     @classmethod
@@ -299,6 +330,8 @@ class PrefixStorageMeasurement:
             unique_layer_bytes=unique,
             savings_bytes=savings,
             savings_ratio=ratio,
+            within_image_duplicate_digest_count=int(data.get("within_image_duplicate_digest_count", 0)),
+            within_image_duplicate_bytes=int(data.get("within_image_duplicate_bytes", 0)),
         )
 
 
@@ -446,7 +479,10 @@ class PairwiseReuseAnalysis:
     shared_layer_byte_matrix: tuple[tuple[int, ...], ...]
     jaccard_byte_matrix: tuple[tuple[float, ...], ...]
     pairwise_records: tuple[PairwiseReuseRecord, ...]
-    diagonal_semantics: str = "Self total layer count and self total logical layer bytes"
+    diagonal_semantics: str = (
+        "Self unique content digest count and self unique layer bytes "
+        "(content-addressed unique digest semantics)"
+    )
     symmetry_verified: bool = True
     size_domain: str = SIZE_DOMAIN_COMPRESSED_OCI_BLOB
 
@@ -469,7 +505,14 @@ class PairwiseReuseAnalysis:
 def compute_pairwise_layer_reuse(
     inspections: Sequence[ImageLayerMetadata],
 ) -> PairwiseReuseAnalysis:
-    """Compute pairwise layer reuse matrices and long-form records using exact digest matching."""
+    """Compute pairwise layer reuse matrices using content-addressed unique digest semantics.
+
+    Both shared_layer_count and shared_layer_bytes operate on unique layer digests:
+    - shared_layer_count is the number of distinct layer digests shared between image A and image B.
+    - shared_layer_bytes is the sum of unique layer bytes of those shared content digests.
+    - Diagonal entries M[i, i] reflect the unique layer digest count and unique layer bytes for image i.
+    Duplicate layer descriptors within a single image are not double-counted.
+    """
     image_ids = tuple(meta.image_id for meta in inspections)
     image_digests = tuple(meta.resolved_digest or meta.image_digest for meta in inspections)
     n = len(inspections)
@@ -768,6 +811,50 @@ class ScaleLevelEvaluationRecord:
             "provenance": dict(self.provenance),
             "status_reason": self.status_reason,
         }
+
+    @classmethod
+    def from_dict(cls, data: Mapping[str, Any]) -> ScaleLevelEvaluationRecord:
+        return cls(
+            catalog_size=int(data["catalog_size"]),
+            catalog_id=str(data.get("catalog_id", f"scale-{data['catalog_size']}")),
+            catalog_hash=str(data.get("catalog_hash", "default-hash")),
+            ordered_immutable_image_references=tuple(
+                str(r) for r in data.get("ordered_immutable_image_references", ())
+            ),
+            storage_measurement_status=str(data.get("storage_measurement_status", "NOT_EXECUTED")),
+            logical_image_bytes=int(data["logical_image_bytes"]) if data.get("logical_image_bytes") is not None else None,
+            unique_layer_bytes=int(data["unique_layer_bytes"]) if data.get("unique_layer_bytes") is not None else None,
+            dedup_saving_bytes=int(data["dedup_saving_bytes"]) if data.get("dedup_saving_bytes") is not None else None,
+            dedup_saving_ratio=float(data["dedup_saving_ratio"]) if data.get("dedup_saving_ratio") is not None else None,
+            marginal_unique_bytes=int(data["marginal_unique_bytes"]) if data.get("marginal_unique_bytes") is not None else None,
+            size_domain=str(data.get("size_domain", SIZE_DOMAIN_COMPRESSED_OCI_BLOB)),
+            p2_evaluation_status=str(data.get("p2_evaluation_status", "NOT_EXECUTED")),
+            p2_image_acceptable_accuracy=float(data["p2_image_acceptable_accuracy"]) if data.get("p2_image_acceptable_accuracy") is not None else None,
+            p2_image_preferred_accuracy=float(data["p2_image_preferred_accuracy"]) if data.get("p2_image_preferred_accuracy") is not None else None,
+            p2_retrieval_recall_at_k=float(data["p2_retrieval_recall_at_k"]) if data.get("p2_retrieval_recall_at_k") is not None else None,
+            recall_k=int(data.get("recall_k", 3)),
+            p2_latency_mean_seconds=float(data["p2_latency_mean_seconds"]) if data.get("p2_latency_mean_seconds") is not None else None,
+            p2_latency_median_seconds=float(data["p2_latency_median_seconds"]) if data.get("p2_latency_median_seconds") is not None else None,
+            p2_latency_p95_seconds=float(data["p2_latency_p95_seconds"]) if data.get("p2_latency_p95_seconds") is not None else None,
+            p2_latency_min_seconds=float(data["p2_latency_min_seconds"]) if data.get("p2_latency_min_seconds") is not None else None,
+            p2_latency_max_seconds=float(data["p2_latency_max_seconds"]) if data.get("p2_latency_max_seconds") is not None else None,
+            p2_latency_std_seconds=float(data["p2_latency_std_seconds"]) if data.get("p2_latency_std_seconds") is not None else None,
+            evaluation_dataset_identity=str(data.get("evaluation_dataset_identity", "none")),
+            dataset_sha256=str(data.get("dataset_sha256", "none")),
+            evaluated_case_count=int(data.get("evaluated_case_count", 0)),
+            feasible_case_count=int(data.get("feasible_case_count", 0)),
+            p2_config_version=str(data.get("p2_config_version", "v1")),
+            provenance=dict(data.get("provenance", {})),
+            status_reason=str(data.get("status_reason", "")),
+            split_stage=str(data.get("split_stage", "confirmatory")),
+            split_role=str(data.get("split_role", "none")),
+            dataset_path=str(data.get("dataset_path", "")),
+            ordered_requested_references=tuple(str(r) for r in data.get("ordered_requested_references", ())),
+            canonical_resolved_references=tuple(str(r) for r in data.get("canonical_resolved_references", ())),
+            all_references_digest_pinned=bool(data.get("all_references_digest_pinned", True)),
+            p2_version=str(data.get("p2_version", "p2-hybrid-v1.0.0")),
+        )
+
 
 
 @dataclass(frozen=True, slots=True)

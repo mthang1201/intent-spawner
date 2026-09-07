@@ -86,6 +86,8 @@ class BaseStorageRunner:
                     unique_layer_bytes=unique_bytes,
                     savings_bytes=savings,
                     savings_ratio=ratio,
+                    within_image_duplicate_digest_count=meta.within_image_duplicate_digest_count,
+                    within_image_duplicate_bytes=meta.within_image_duplicate_bytes,
                 )
             )
 

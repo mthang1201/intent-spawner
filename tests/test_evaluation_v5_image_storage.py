@@ -640,3 +640,358 @@ def test_claim_eligibility_changes_based_on_immutable_input_validity(catalog):
 
         with pytest.raises(EvidenceValidationError, match="MUTABLE_INPUT_REFERENCE_IN_CONFIRMATORY_CATALOG"):
             validate_e5_storage_evidence(out_dir)
+
+
+# Case 37: Single image with all unique layer digests (logical == unique, savings == 0)
+def test_single_image_with_all_unique_layer_digests():
+    digest_a = "sha256:" + "1" * 64
+    ref_a = f"quay.io/test@{digest_a}"
+    meta = ImageLayerMetadata(
+        image_id="img-unique",
+        image_reference=ref_a,
+        image_digest=digest_a,
+        platform={"os": "linux", "architecture": "amd64"},
+        layers=(
+            LayerInspection(digest="sha256:l1", size=100),
+            LayerInspection(digest="sha256:l2", size=200),
+            LayerInspection(digest="sha256:l3", size=300),
+        ),
+        total_bytes=600,
+        is_digest_pinned=True,
+    )
+    assert meta.within_image_duplicate_digest_count == 0
+    assert meta.within_image_duplicate_bytes == 0
+    assert meta.unique_layer_count == 3
+    assert meta.unique_layer_bytes == 600
+
+    catalog_dict = {"images": {"img-unique": {"reference": ref_a}}}
+    runner = SyntheticStorageRunner(
+        catalog=catalog_dict,
+        injected_image_layers={"img-unique": [{"digest": "sha256:l1", "size": 100}, {"digest": "sha256:l2", "size": 200}, {"digest": "sha256:l3", "size": 300}]},
+    )
+    inspections, prefixes, status = runner.measure_all([("img-unique", ref_a, digest_a)])
+    p1 = prefixes[0]
+    assert p1.naive_logical_bytes == 600
+    assert p1.unique_layer_bytes == 600
+    assert p1.savings_bytes == 0
+    assert p1.within_image_duplicate_bytes == 0
+
+
+# Case 38: Single image containing a repeated digest (difference exactly explained)
+def test_single_image_with_repeated_layer_digest():
+    digest_b = "sha256:" + "2" * 64
+    ref_b = f"quay.io/test@{digest_b}"
+    meta = ImageLayerMetadata(
+        image_id="img-dup",
+        image_reference=ref_b,
+        image_digest=digest_b,
+        platform={"os": "linux", "architecture": "amd64"},
+        layers=(
+            LayerInspection(digest="sha256:empty", size=32),
+            LayerInspection(digest="sha256:data1", size=100),
+            LayerInspection(digest="sha256:empty", size=32),
+            LayerInspection(digest="sha256:data2", size=200),
+            LayerInspection(digest="sha256:empty", size=32),
+        ),
+        total_bytes=396,
+        is_digest_pinned=True,
+    )
+    # 3 occurrences of 32 B => (3 - 1) * 32 = 64 duplicate bytes
+    assert meta.within_image_duplicate_digest_count == 1
+    assert meta.within_image_duplicate_bytes == 64
+    assert meta.unique_layer_count == 3
+    assert meta.unique_layer_bytes == 332
+    assert meta.total_bytes - meta.unique_layer_bytes == 64
+
+    catalog_dict = {"images": {"img-dup": {"reference": ref_b}}}
+    runner = SyntheticStorageRunner(
+        catalog=catalog_dict,
+        injected_image_layers={"img-dup": [
+            {"digest": "sha256:empty", "size": 32},
+            {"digest": "sha256:data1", "size": 100},
+            {"digest": "sha256:empty", "size": 32},
+            {"digest": "sha256:data2", "size": 200},
+            {"digest": "sha256:empty", "size": 32},
+        ]},
+    )
+    inspections, prefixes, status = runner.measure_all([("img-dup", ref_b, digest_b)])
+    p1 = prefixes[0]
+    assert p1.naive_logical_bytes == 396
+    assert p1.unique_layer_bytes == 332
+    assert p1.savings_bytes == 64
+    assert p1.within_image_duplicate_bytes == 64
+
+
+# Case 39: Pairwise matrix with duplicate descriptors follows unique digest semantics
+def test_pairwise_matrix_with_duplicate_descriptors():
+    meta_a = ImageLayerMetadata(
+        image_id="img-a",
+        image_reference="quay.io/test/a@sha256:aaaa",
+        image_digest="sha256:aaaa",
+        platform={"os": "linux", "architecture": "amd64"},
+        layers=(
+            LayerInspection(digest="sha256:dup_shared", size=50),
+            LayerInspection(digest="sha256:dup_shared", size=50),
+            LayerInspection(digest="sha256:uniq_a", size=100),
+        ),
+        total_bytes=200,
+        is_digest_pinned=True,
+    )
+    meta_b = ImageLayerMetadata(
+        image_id="img-b",
+        image_reference="quay.io/test/b@sha256:bbbb",
+        image_digest="sha256:bbbb",
+        platform={"os": "linux", "architecture": "amd64"},
+        layers=(
+            LayerInspection(digest="sha256:dup_shared", size=50),
+            LayerInspection(digest="sha256:dup_shared", size=50),
+            LayerInspection(digest="sha256:dup_shared", size=50),
+            LayerInspection(digest="sha256:uniq_b", size=300),
+        ),
+        total_bytes=450,
+        is_digest_pinned=True,
+    )
+
+    analysis = compute_pairwise_layer_reuse([meta_a, meta_b])
+    # Unique shared layer count: exactly 1 (sha256:dup_shared)
+    assert analysis.shared_layer_count_matrix[0][1] == 1
+    assert analysis.shared_layer_count_matrix[1][0] == 1
+    # Unique shared layer bytes: exactly 50 (not 100 or 150)
+    assert analysis.shared_layer_byte_matrix[0][1] == 50
+    assert analysis.shared_layer_byte_matrix[1][0] == 50
+    # Diagonal uses unique layer counts and unique layer bytes
+    assert analysis.shared_layer_count_matrix[0][0] == 2  # dup_shared and uniq_a
+    assert analysis.shared_layer_byte_matrix[0][0] == 150  # 50 + 100
+    assert analysis.shared_layer_count_matrix[1][1] == 2  # dup_shared and uniq_b
+    assert analysis.shared_layer_byte_matrix[1][1] == 350  # 50 + 300
+    assert analysis.symmetry_verified is True
+
+
+# Case 40: NOT_EXECUTED P2 record cannot contain accuracy metrics
+def test_not_executed_p2_record_cannot_contain_accuracy_metrics(catalog):
+    with tempfile.TemporaryDirectory() as tmp:
+        out_dir = run_storage_evaluation(
+            catalog_path=CATALOG_PATH,
+            mode="synthetic",
+            output_dir=Path(tmp) / "out",
+            stage="confirmatory",
+            claims_permitted=True,
+            scales=(4, 8, 16),
+        )
+        scal_path = out_dir / "derived" / "catalog_scalability.json"
+        scales = json.loads(scal_path.read_text(encoding="utf-8"))
+        # Tamper scale 8 (NOT_EXECUTED) to carry accuracy
+        scales[1]["p2_image_acceptable_accuracy"] = 0.95
+        scal_path.write_text(json.dumps(scales, indent=2), encoding="utf-8")
+        sums_file = out_dir / "SHA256SUMS"
+        records = [f"{file_sha256(p)}  {p.relative_to(out_dir)}" for p in sorted(out_dir.rglob("*")) if p.is_file() and p.name != "SHA256SUMS"]
+        sums_file.write_text("\n".join(records) + "\n", encoding="utf-8")
+
+        with pytest.raises(EvidenceValidationError, match="NOT_EXECUTED_RECORD_CONTAINS_OBSERVED_METRICS"):
+            validate_e5_storage_evidence(out_dir)
+
+
+# Case 41: NOT_EXECUTED P2 record cannot contain latency metrics
+def test_not_executed_p2_record_cannot_contain_latency_metrics(catalog):
+    with tempfile.TemporaryDirectory() as tmp:
+        out_dir = run_storage_evaluation(
+            catalog_path=CATALOG_PATH,
+            mode="synthetic",
+            output_dir=Path(tmp) / "out",
+            stage="confirmatory",
+            claims_permitted=True,
+            scales=(4, 8, 16),
+        )
+        scal_path = out_dir / "derived" / "catalog_scalability.json"
+        scales = json.loads(scal_path.read_text(encoding="utf-8"))
+        # Tamper scale 8 (NOT_EXECUTED) to carry latency
+        scales[1]["p2_latency_mean_seconds"] = 0.005
+        scal_path.write_text(json.dumps(scales, indent=2), encoding="utf-8")
+        sums_file = out_dir / "SHA256SUMS"
+        records = [f"{file_sha256(p)}  {p.relative_to(out_dir)}" for p in sorted(out_dir.rglob("*")) if p.is_file() and p.name != "SHA256SUMS"]
+        sums_file.write_text("\n".join(records) + "\n", encoding="utf-8")
+
+        with pytest.raises(EvidenceValidationError, match="NOT_EXECUTED_RECORD_CONTAINS_OBSERVED_METRICS"):
+            validate_e5_storage_evidence(out_dir)
+
+
+# Case 42: Figure D with zero confirmatory recommendation observations
+def test_figure_d_with_zero_confirmatory_recommendation_observations():
+    with tempfile.TemporaryDirectory() as tmp:
+        out_path = Path(tmp)
+        scale_records = [
+            ScaleLevelEvaluationRecord.from_dict({
+                "catalog_size": 4,
+                "catalog_id": "scale-4",
+                "catalog_hash": "hash4",
+                "ordered_immutable_image_references": (),
+                "all_references_digest_pinned": True,
+                "p2_evaluation_status": "NOT_EXECUTED",
+                "split_stage": "confirmatory",
+                "split_role": "none",
+                "status_reason": "confirmatory_dataset_not_provided",
+            }),
+            ScaleLevelEvaluationRecord.from_dict({
+                "catalog_size": 8,
+                "catalog_id": "scale-8",
+                "catalog_hash": "hash8",
+                "ordered_immutable_image_references": (),
+                "all_references_digest_pinned": True,
+                "p2_evaluation_status": "NOT_EXECUTED",
+                "split_stage": "confirmatory",
+                "split_role": "none",
+                "status_reason": "insufficient_approved_images",
+            }),
+        ]
+        figs = generate_all_figures(
+            prefixes=(),
+            marginal_records=(),
+            pairwise_analysis=PairwiseReuseAnalysis(
+                image_ids=(),
+                image_digests=(),
+                shared_layer_count_matrix=(),
+                shared_layer_byte_matrix=(),
+                jaccard_byte_matrix=(),
+                pairwise_records=(),
+            ),
+            scale_records=scale_records,
+            output_dir=out_path,
+        )
+        assert (out_path / "figure_d_recommendation_quality.png").is_file()
+
+
+# Case 43: Figure E with zero confirmatory recommendation observations
+def test_figure_e_with_zero_confirmatory_recommendation_observations():
+    with tempfile.TemporaryDirectory() as tmp:
+        out_path = Path(tmp)
+        scale_records = [
+            ScaleLevelEvaluationRecord.from_dict({
+                "catalog_size": 4,
+                "catalog_id": "scale-4",
+                "catalog_hash": "hash4",
+                "ordered_immutable_image_references": (),
+                "all_references_digest_pinned": True,
+                "p2_evaluation_status": "NOT_EXECUTED",
+                "split_stage": "confirmatory",
+                "split_role": "none",
+                "status_reason": "confirmatory_dataset_not_provided",
+            }),
+        ]
+        figs = generate_all_figures(
+            prefixes=(),
+            marginal_records=(),
+            pairwise_analysis=PairwiseReuseAnalysis(
+                image_ids=(),
+                image_digests=(),
+                shared_layer_count_matrix=(),
+                shared_layer_byte_matrix=(),
+                jaccard_byte_matrix=(),
+                pairwise_records=(),
+            ),
+            scale_records=scale_records,
+            output_dir=out_path,
+        )
+        assert (out_path / "figure_e_recommendation_latency.png").is_file()
+
+
+# Case 44: Development recommendation observation is visually distinct from confirmatory
+def test_development_recommendation_observation_distinct_from_confirmatory():
+    with tempfile.TemporaryDirectory() as tmp:
+        out_path = Path(tmp)
+        scale_records = [
+            ScaleLevelEvaluationRecord.from_dict({
+                "catalog_size": 4,
+                "catalog_id": "scale-4",
+                "catalog_hash": "hash4",
+                "ordered_immutable_image_references": (),
+                "all_references_digest_pinned": True,
+                "p2_evaluation_status": "OBSERVED",
+                "p2_image_acceptable_accuracy": 0.92,
+                "p2_image_preferred_accuracy": 0.92,
+                "p2_retrieval_recall_at_k": 0.71,
+                "p2_latency_mean_seconds": 0.0025,
+                "p2_latency_p95_seconds": 0.004,
+                "p2_latency_min_seconds": 0.001,
+                "p2_latency_max_seconds": 0.006,
+                "split_stage": "development",
+                "split_role": "development",
+            }),
+            ScaleLevelEvaluationRecord.from_dict({
+                "catalog_size": 8,
+                "catalog_id": "scale-8",
+                "catalog_hash": "hash8",
+                "ordered_immutable_image_references": (),
+                "all_references_digest_pinned": True,
+                "p2_evaluation_status": "NOT_EXECUTED",
+                "split_stage": "confirmatory",
+                "split_role": "none",
+            }),
+        ]
+        figs = generate_all_figures(
+            prefixes=(),
+            marginal_records=(),
+            pairwise_analysis=PairwiseReuseAnalysis(
+                image_ids=(),
+                image_digests=(),
+                shared_layer_count_matrix=(),
+                shared_layer_byte_matrix=(),
+                jaccard_byte_matrix=(),
+                pairwise_records=(),
+            ),
+            scale_records=scale_records,
+            output_dir=out_path,
+        )
+        assert (out_path / "figure_d_recommendation_quality.png").is_file()
+        assert (out_path / "figure_e_recommendation_latency.png").is_file()
+
+
+# Case 45: Figure generation consumes only supplied records without reading stale run state
+def test_figure_generation_consumes_only_supplied_records():
+    with tempfile.TemporaryDirectory() as tmp:
+        out_path = Path(tmp)
+        scale_records = [
+            ScaleLevelEvaluationRecord.from_dict({
+                "catalog_size": 4,
+                "catalog_id": "scale-4",
+                "catalog_hash": "hash4",
+                "ordered_immutable_image_references": (),
+                "all_references_digest_pinned": True,
+                "p2_evaluation_status": "NOT_EXECUTED",
+                "split_stage": "confirmatory",
+                "split_role": "none",
+            }),
+        ]
+        figs = generate_all_figures(
+            prefixes=(),
+            marginal_records=(),
+            pairwise_analysis=PairwiseReuseAnalysis(
+                image_ids=(),
+                image_digests=(),
+                shared_layer_count_matrix=(),
+                shared_layer_byte_matrix=(),
+                jaccard_byte_matrix=(),
+                pairwise_records=(),
+            ),
+            scale_records=scale_records,
+            output_dir=out_path,
+        )
+        assert "figure_d" in figs
+        assert "figure_e" in figs
+
+
+# Case 46: Report does not call deterministic storage measurement statistically confirmed
+def test_report_does_not_call_deterministic_storage_statistically_confirmed(catalog):
+    with tempfile.TemporaryDirectory() as tmp:
+        out_dir = run_storage_evaluation(
+            catalog_path=CATALOG_PATH,
+            mode="synthetic",
+            output_dir=Path(tmp) / "out",
+            stage="confirmatory",
+            claims_permitted=True,
+            scales=(4, 8, 16),
+        )
+        report_text = (out_dir / "report" / "E5_IMAGE_STORAGE_REPORT.md").read_text(encoding="utf-8")
+        assert "statistically confirmed" not in report_text.lower()
+        assert "empirically confirms" in report_text or "direct oci manifest inspection measured" in report_text.lower()
+        assert "compressed_oci_manifest_layer_bytes" in report_text
+

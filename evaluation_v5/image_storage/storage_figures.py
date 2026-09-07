@@ -45,15 +45,18 @@ def generate_all_figures(
     unique_gib = [p.unique_layer_bytes / (1024**3) for p in prefixes]
 
     fig, ax = plt.subplots(figsize=(8, 5))
-    ax.plot(x_vals, logical_gib, marker="o", color="#d9534f", label="Logical Image Bytes (Naive Sum)", linewidth=2)
-    ax.plot(x_vals, unique_gib, marker="s", color="#2e6da4", label="Unique Layer Bytes (Deduplicated)", linewidth=2)
-    ax.fill_between(x_vals, unique_gib, logical_gib, color="#2e6da4", alpha=0.15, label="Layer Deduplication Savings")
+    if prefixes:
+        ax.plot(x_vals, logical_gib, marker="o", color="#d9534f", label="Logical Image Bytes (Naive Sum)", linewidth=2)
+        ax.plot(x_vals, unique_gib, marker="s", color="#2e6da4", label="Unique Layer Bytes (Deduplicated)", linewidth=2)
+        ax.fill_between(x_vals, unique_gib, logical_gib, color="#2e6da4", alpha=0.15, label="Layer Deduplication Savings")
+        ax.set_xticks(x_vals)
+        ax.legend(loc="upper left")
+    else:
+        ax.text(0.5, 0.5, "No prefix storage measurements available", ha="center", va="center", transform=ax.transAxes)
     ax.set_title("Figure A: Cumulative Storage vs Available Catalog Images", fontsize=12, fontweight="bold")
     ax.set_xlabel("Number of Available Images (Catalog Prefix Size)", fontsize=10)
     ax.set_ylabel("Storage (GiB - Compressed OCI Layer Blobs)", fontsize=10)
-    ax.set_xticks(x_vals)
     ax.grid(True, linestyle="--", alpha=0.5)
-    ax.legend(loc="upper left")
     # layout handled by bbox_inches
     fig.savefig(fig_a_path, dpi=200, bbox_inches="tight")
     fig.savefig(fig_a_svg, bbox_inches="tight")
@@ -70,14 +73,17 @@ def generate_all_figures(
     marginal_gib = [m.marginal_unique_bytes / (1024**3) for m in marginal_records]
 
     fig, ax = plt.subplots(figsize=(9, 5))
-    bars = ax.bar(m_indices, marginal_gib, color="#5cb85c", width=0.5, edgecolor="#4cae4c")
+    if marginal_records:
+        bars = ax.bar(m_indices, marginal_gib, color="#5cb85c", width=0.5, edgecolor="#4cae4c")
+        ax.set_xticks(m_indices)
+        ax.set_xticklabels(m_labels, rotation=15, ha="right", fontsize=9)
+        for bar, val in zip(bars, marginal_gib):
+            ax.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 0.05, f"{val:.2f} GiB", ha="center", va="bottom", fontsize=8)
+    else:
+        ax.text(0.5, 0.5, "No marginal storage records available", ha="center", va="center", transform=ax.transAxes)
     ax.set_title("Figure B: Marginal Unique Storage per Introduced Image (U_n - U_{n-1})", fontsize=12, fontweight="bold")
     ax.set_xlabel("Introduced Image", fontsize=10)
     ax.set_ylabel("Marginal Unique Bytes (GiB)", fontsize=10)
-    ax.set_xticks(m_indices)
-    ax.set_xticklabels(m_labels, rotation=15, ha="right", fontsize=9)
-    for bar, val in zip(bars, marginal_gib):
-        ax.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 0.05, f"{val:.2f} GiB", ha="center", va="bottom", fontsize=8)
     ax.grid(True, axis="y", linestyle="--", alpha=0.5)
     # layout handled by bbox_inches
     fig.savefig(fig_b_path, dpi=200, bbox_inches="tight")
@@ -98,17 +104,20 @@ def generate_all_figures(
     ]
 
     fig, ax = plt.subplots(figsize=(7, 6))
-    cax = ax.matshow(byte_matrix_gib, cmap="Blues")
-    fig.colorbar(cax, label="Shared Layer Storage (GiB)")
+    if n_images > 0:
+        cax = ax.matshow(byte_matrix_gib, cmap="Blues")
+        fig.colorbar(cax, label="Shared Layer Storage (GiB)")
+        ax.set_xticks(range(n_images))
+        ax.set_yticks(range(n_images))
+        ax.set_xticklabels(short_names, rotation=25, ha="left", fontsize=9)
+        ax.set_yticklabels(short_names, fontsize=9)
+        for i in range(n_images):
+            for j in range(n_images):
+                val = byte_matrix_gib[i][j]
+                ax.text(j, i, f"{val:.2f}", ha="center", va="center", color="white" if val > 2.5 else "black", fontsize=9)
+    else:
+        ax.text(0.5, 0.5, "No pairwise image records available", ha="center", va="center", transform=ax.transAxes)
     ax.set_title("Figure C: Pairwise Shared Layer Storage (GiB)", fontsize=12, fontweight="bold", pad=20)
-    ax.set_xticks(range(n_images))
-    ax.set_yticks(range(n_images))
-    ax.set_xticklabels(short_names, rotation=25, ha="left", fontsize=9)
-    ax.set_yticklabels(short_names, fontsize=9)
-    for i in range(n_images):
-        for j in range(n_images):
-            val = byte_matrix_gib[i][j]
-            ax.text(j, i, f"{val:.2f}", ha="center", va="center", color="white" if val > 2.5 else "black", fontsize=9)
     # layout handled by bbox_inches
     fig.savefig(fig_c_bytes_path, dpi=200, bbox_inches="tight")
     fig.savefig(fig_c_bytes_svg, bbox_inches="tight")
@@ -121,17 +130,20 @@ def generate_all_figures(
 
     count_matrix = pairwise_analysis.shared_layer_count_matrix
     fig, ax = plt.subplots(figsize=(7, 6))
-    cax2 = ax.matshow(count_matrix, cmap="Purples")
-    fig.colorbar(cax2, label="Shared Layer Count")
+    if n_images > 0:
+        cax2 = ax.matshow(count_matrix, cmap="Purples")
+        fig.colorbar(cax2, label="Shared Layer Count")
+        ax.set_xticks(range(n_images))
+        ax.set_yticks(range(n_images))
+        ax.set_xticklabels(short_names, rotation=25, ha="left", fontsize=9)
+        ax.set_yticklabels(short_names, fontsize=9)
+        for i in range(n_images):
+            for j in range(n_images):
+                c_val = count_matrix[i][j]
+                ax.text(j, i, str(c_val), ha="center", va="center", color="white" if c_val > 15 else "black", fontsize=9)
+    else:
+        ax.text(0.5, 0.5, "No pairwise image records available", ha="center", va="center", transform=ax.transAxes)
     ax.set_title("Figure C: Pairwise Shared Layer Count", fontsize=12, fontweight="bold", pad=20)
-    ax.set_xticks(range(n_images))
-    ax.set_yticks(range(n_images))
-    ax.set_xticklabels(short_names, rotation=25, ha="left", fontsize=9)
-    ax.set_yticklabels(short_names, fontsize=9)
-    for i in range(n_images):
-        for j in range(n_images):
-            c_val = count_matrix[i][j]
-            ax.text(j, i, str(c_val), ha="center", va="center", color="white" if c_val > 15 else "black", fontsize=9)
     # layout handled by bbox_inches
     fig.savefig(fig_c_count_path, dpi=200, bbox_inches="tight")
     fig.savefig(fig_c_count_svg, bbox_inches="tight")
@@ -149,13 +161,19 @@ def generate_all_figures(
         s for s in obs_scales
         if getattr(s, "split_stage", "confirmatory") == "confirmatory"
         and getattr(s, "split_role", "") == "confirmatory"
+        and s.p2_image_acceptable_accuracy is not None
     ]
-    dev_obs = [s for s in obs_scales if s not in conf_obs]
+    dev_obs = [
+        s for s in obs_scales
+        if s not in conf_obs
+        and s.p2_image_acceptable_accuracy is not None
+    ]
     not_exec_scales = [s for s in scale_records if s.p2_evaluation_status != "OBSERVED"]
 
     fig, ax = plt.subplots(figsize=(8, 5))
 
-    # Plot confirmatory observed
+    # FAIL-CLOSED: ONLY plot for records where p2_evaluation_status == "OBSERVED"
+    # Never plot for NOT_EXECUTED records
     if conf_obs:
         c_x = [s.catalog_size for s in conf_obs]
         c_acc = [s.p2_image_acceptable_accuracy for s in conf_obs]
@@ -165,7 +183,7 @@ def generate_all_figures(
         ax.scatter(c_x, c_pref, color="#3c763d", s=90, marker="^", zorder=6, label="Confirmatory Preferred Acc")
         ax.scatter(c_x, c_rec, color="#5cb85c", s=90, marker="D", zorder=6, label="Confirmatory Recall@5")
 
-    # Plot development/exploratory observed
+    # Plot development/exploratory observed (visibly distinguished)
     if dev_obs:
         d_x = [s.catalog_size for s in dev_obs]
         d_acc = [s.p2_image_acceptable_accuracy for s in dev_obs]
@@ -176,11 +194,12 @@ def generate_all_figures(
         ax.scatter(d_x, d_rec, facecolors="none", edgecolors="#f0ad4e", marker="D", linewidths=2, s=90, zorder=5, label="Dev/Exploratory Recall@5")
 
     # Only draw trend lines if multiple empirical scales are observed
-    if len(obs_scales) > 1:
-        s_x = [s.catalog_size for s in obs_scales]
-        ax.plot(s_x, [s.p2_image_acceptable_accuracy for s in obs_scales], color="#337ab7", linestyle="-")
-        ax.plot(s_x, [s.p2_image_preferred_accuracy for s in obs_scales], color="#5bc0de", linestyle="--")
-        ax.plot(s_x, [s.p2_retrieval_recall_at_k for s in obs_scales], color="#f0ad4e", linestyle=":")
+    valid_obs = conf_obs + dev_obs
+    if len(valid_obs) > 1:
+        s_x = [s.catalog_size for s in valid_obs]
+        ax.plot(s_x, [s.p2_image_acceptable_accuracy for s in valid_obs], color="#337ab7", linestyle="-")
+        ax.plot(s_x, [s.p2_image_preferred_accuracy for s in valid_obs], color="#5bc0de", linestyle="--")
+        ax.plot(s_x, [s.p2_retrieval_recall_at_k for s in valid_obs], color="#f0ad4e", linestyle=":")
 
     # Mark NOT_EXECUTED scales visibly
     for s in not_exec_scales:
@@ -192,13 +211,20 @@ def generate_all_figures(
             bbox=dict(boxstyle="square,pad=0.2", facecolor="white", alpha=0.7, edgecolor="none")
         )
 
-    # Note if single observed scale or none
-    if len(obs_scales) <= 1:
+    # Note if zero or single observed scale
+    if len(valid_obs) == 0:
         note_text = (
-            "Single observed scale (N=4); no empirical multi-scale trend is yet estimable."
-            if len(obs_scales) == 1
-            else "Confirmatory recommendation NOT_EXECUTED (external sealed split not supplied)."
+            "No confirmatory recommendation-quality observations available\n"
+            "(all configured scales NOT_EXECUTED; external sealed split not supplied)."
         )
+        ax.text(
+            0.5, 0.5, note_text,
+            transform=ax.transAxes, ha="center", va="center",
+            fontsize=10, fontweight="bold", fontstyle="italic", color="#a94442",
+            bbox=dict(boxstyle="round,pad=0.6", facecolor="#f2dede", edgecolor="#ebccd1")
+        )
+    elif len(valid_obs) == 1:
+        note_text = "Single observed scale (N=4); no empirical multi-scale trend is yet estimable."
         ax.text(
             0.5, 0.12, note_text,
             transform=ax.transAxes, ha="center", va="center",
@@ -227,12 +253,18 @@ def generate_all_figures(
 
     fig, ax = plt.subplots(figsize=(8, 5))
 
-    if conf_obs:
-        c_x = [s.catalog_size for s in conf_obs]
-        lat_ms = [((s.p2_latency_mean_seconds or 0.0) * 1000.0) for s in conf_obs]
-        lat_p95 = [((s.p2_latency_p95_seconds or 0.0) * 1000.0) for s in conf_obs]
-        lat_min = [((s.p2_latency_min_seconds or 0.0) * 1000.0) for s in conf_obs]
-        lat_max = [((s.p2_latency_max_seconds or 0.0) * 1000.0) for s in conf_obs]
+    # FAIL-CLOSED: ONLY plot for records where p2_evaluation_status == "OBSERVED"
+    # Never substitute zeros, never plot for NOT_EXECUTED records
+    conf_with_lat = [
+        s for s in conf_obs
+        if s.p2_evaluation_status == "OBSERVED" and s.p2_latency_mean_seconds is not None
+    ]
+    if conf_with_lat:
+        c_x = [s.catalog_size for s in conf_with_lat]
+        lat_ms = [((s.p2_latency_mean_seconds or 0.0) * 1000.0) for s in conf_with_lat]
+        lat_p95 = [((s.p2_latency_p95_seconds or 0.0) * 1000.0) for s in conf_with_lat]
+        lat_min = [((s.p2_latency_min_seconds or 0.0) * 1000.0) for s in conf_with_lat]
+        lat_max = [((s.p2_latency_max_seconds or 0.0) * 1000.0) for s in conf_with_lat]
         ax.errorbar(
             c_x, lat_ms,
             yerr=[[m - mn for m, mn in zip(lat_ms, lat_min)], [mx - m for m, mx in zip(lat_ms, lat_max)]],
@@ -241,12 +273,16 @@ def generate_all_figures(
         )
         ax.scatter(c_x, lat_p95, color="#5cb85c", marker="s", s=70, zorder=7, label="Confirmatory 95th Percentile")
 
-    if dev_obs:
-        d_x = [s.catalog_size for s in dev_obs]
-        lat_ms = [((s.p2_latency_mean_seconds or 0.0) * 1000.0) for s in dev_obs]
-        lat_p95 = [((s.p2_latency_p95_seconds or 0.0) * 1000.0) for s in dev_obs]
-        lat_min = [((s.p2_latency_min_seconds or 0.0) * 1000.0) for s in dev_obs]
-        lat_max = [((s.p2_latency_max_seconds or 0.0) * 1000.0) for s in dev_obs]
+    dev_with_lat = [
+        s for s in dev_obs
+        if s.p2_evaluation_status == "OBSERVED" and s.p2_latency_mean_seconds is not None
+    ]
+    if dev_with_lat:
+        d_x = [s.catalog_size for s in dev_with_lat]
+        lat_ms = [((s.p2_latency_mean_seconds or 0.0) * 1000.0) for s in dev_with_lat]
+        lat_p95 = [((s.p2_latency_p95_seconds or 0.0) * 1000.0) for s in dev_with_lat]
+        lat_min = [((s.p2_latency_min_seconds or 0.0) * 1000.0) for s in dev_with_lat]
+        lat_max = [((s.p2_latency_max_seconds or 0.0) * 1000.0) for s in dev_with_lat]
         ax.errorbar(
             d_x, lat_ms,
             yerr=[[m - mn for m, mn in zip(lat_ms, lat_min)], [mx - m for m, mx in zip(lat_ms, lat_max)]],
@@ -265,12 +301,19 @@ def generate_all_figures(
             bbox=dict(boxstyle="square,pad=0.2", facecolor="white", alpha=0.7, edgecolor="none")
         )
 
-    if len(obs_scales) <= 1:
+    if len(conf_with_lat) == 0 and len(dev_with_lat) == 0:
         note_text = (
-            "Single observed scale (N=4); no empirical multi-scale trend is yet estimable."
-            if len(obs_scales) == 1
-            else "Confirmatory recommendation NOT_EXECUTED (external sealed split not supplied)."
+            "No confirmatory recommendation-latency observations available\n"
+            "(all configured scales NOT_EXECUTED; external sealed split not supplied)."
         )
+        ax.text(
+            0.5, 0.5, note_text,
+            transform=ax.transAxes, ha="center", va="center",
+            fontsize=10, fontweight="bold", fontstyle="italic", color="#a94442",
+            bbox=dict(boxstyle="round,pad=0.6", facecolor="#f2dede", edgecolor="#ebccd1")
+        )
+    elif len(conf_with_lat) + len(dev_with_lat) == 1:
+        note_text = "Single observed scale (N=4); no empirical multi-scale trend is yet estimable."
         ax.text(
             0.5, 0.85, note_text,
             transform=ax.transAxes, ha="center", va="center",
