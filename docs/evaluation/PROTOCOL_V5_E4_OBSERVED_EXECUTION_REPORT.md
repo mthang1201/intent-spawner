@@ -193,7 +193,10 @@ Under `benchmarks_v5/resource-efficiency-capacity-v1.yaml`, capacity packing req
 
 ## 11. Validation Results and Exact Provenance
 
-All verification commands executed cleanly in the dedicated worktree:
+All authoritative final validation commands completed successfully in the dedicated worktree.
+
+> [!NOTE]
+> Several exploratory API-discovery invocations failed before the correct validator APIs were identified; these were not authoritative validation runs and produced no evidence mutation. All authoritative final validation commands ran cleanly as recorded below:
 
 | Command | Exit Code | Result Summary | Execution Provenance |
 | :--- | :---: | :--- | :---: |
@@ -248,11 +251,11 @@ All verification commands executed cleanly in the dedicated worktree:
 ### 12.2 Independent Resource-Envelope Oracle Prerequisite (Status and Calibration Workflow)
 
 The scientific invariant required by `benchmarks_v5/resource-efficiency-freeze-contract-v1.yaml` is that a valid, approved resource-envelope oracle package (`safe-envelopes.json`) **must exist and be frozen into the contract** before E4 efficiency OBSERVED execution is authorized.
-If a valid, approved, contract-compliant oracle package already exists in the repository, it can be consumed directly without recalibration.
+If a valid, approved, contract-compliant oracle package already exists in a future execution state and its exact identity is legitimately frozen, recalibration is not required merely for procedural reasons.
 
 **Current Repository State**: `NO VALID APPROVED E4 ORACLE CURRENTLY AVAILABLE`.
-- The only envelope package currently present in the repository is `results_v5/protocol-v5.0.0/E4/e4-resource-envelope-observed-run-20260905T081833Z`.
-- This package has `execution_status: DRY_RUN`, `trial_records: 0`, and `eligible_for_comparison: false` (with `manual_review_status: NOT_APPLICABLE`). It cannot serve as an empirical oracle.
+- The only currently available local E4 resource-envelope package in this worktree is `results_v5/protocol-v5.0.0/E4/e4-resource-envelope-observed-run-20260905T081833Z`. (Note: packages under `results_v5/protocol-v5.0.0/` are gitignored and local-only; they are not tracked in Git or recoverable from `origin`.)
+- This available local package has `execution_status: DRY_RUN`, `trial_records: 0`, and `eligible_for_comparison: false` (with `manual_review_status: NOT_APPLICABLE`). It cannot serve as an empirical oracle.
 - The contract `benchmarks_v5/resource-efficiency-freeze-contract-v1.yaml` currently records:
   ```yaml
   oracle_package:

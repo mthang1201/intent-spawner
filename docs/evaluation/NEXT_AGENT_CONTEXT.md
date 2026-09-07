@@ -306,7 +306,7 @@ with their manifests; do not rerun or overwrite any authoritative directory.
 - Dedicated worktree: `/Users/mthang1201/Documents/datn/intent-spawner-protocol-v5-e4-observed-run`
 - Base commit SHA: `2cf206773e63f7086e3c9716a5077793b189fa6d`
 - Execution Git SHA (`execution_git_sha`): `2cf206773e63f7086e3c9716a5077793b189fa6d`
-- Previous corrective delivery SHA: `27a52c125a8eaec804bc00e936ff9fc11d99fc26` (preceded by `4df87e3bc651b8418135d65076de8e2eba89e5c6`, `d72f273300c7f647c5b292b6664751e0f86ac27f`, `71cc157544d71fa0e8d10a744074cbb3b1c1c832`, on base `2cf206773e63f7086e3c9716a5077793b189fa6d`)
+- Previous corrective delivery SHA: `fa7f4272604e035cd8bba0cce17ab4d7dec7d156` (preceded by `27a52c125a8eaec804bc00e936ff9fc11d99fc26`, `4df87e3bc651b8418135d65076de8e2eba89e5c6`, `d72f273300c7f647c5b292b6664751e0f86ac27f`, `71cc157544d71fa0e8d10a744074cbb3b1c1c832`, on base `2cf206773e63f7086e3c9716a5077793b189fa6d`)
 - Post-hoc commit audit: `POST_HOC_COMMIT_CONTENT_AUDIT: PASS` (verified diffs contained strictly documentation corrections for E4 conditions, paths, namespaces, hashes, validation provenance, and removed hallucinations).
 - Final Verdict: `OBSERVED_EXECUTION_NOT_AUTHORIZED`
   - E4 readiness and freeze audit completed; OBSERVED execution was not authorized because live cluster eligibility, image verification, oracle package approval, and confirmatory freeze gates failed closed.
@@ -329,7 +329,7 @@ with their manifests; do not rerun or overwrite any authoritative directory.
   - Execution status: `DRY_RUN` (`NOT_EXECUTED`), manual review status: `NOT_APPLICABLE`
   - Sealed with SHA256SUMS; local only (`LOCAL ONLY / NOT PERSISTED REMOTELY`).
 - Comprehensive report: `docs/evaluation/PROTOCOL_V5_E4_OBSERVED_EXECUTION_REPORT.md`
-- Test status (freshly executed this corrective run):
+- Test status (authoritative final validation runs succeeded):
   - Comprehensive suite: `PYTHONPATH=. /Users/mthang1201/Documents/datn/intent-spawner/.venv/bin/pytest ...` $\to$ `290 passed in 18.69s` (`EXECUTED_THIS_CORRECTIVE_RUN`).
   - E4 efficiency and envelope suite: `PYTHONPATH=. /Users/mthang1201/Documents/datn/intent-spawner/.venv/bin/pytest tests/test_resource_efficiency_v5.py tests/test_resource_envelope_v5.py -v` $\to$ `110 passed in 12.65s` (`EXECUTED_THIS_CORRECTIVE_RUN`).
   - Secret scan: `/Users/mthang1201/Documents/datn/intent-spawner/.venv/bin/python scripts/scan-secrets.py` $\to$ `Secret scan passed: 2362 text files, high-confidence formats only.` (`EXECUTED_THIS_CORRECTIVE_RUN`).
@@ -340,8 +340,8 @@ with their manifests; do not rerun or overwrite any authoritative directory.
 Do NOT simply run E4 or attempt to initiate the 640-trial OBSERVED experiment. The next agent must follow the exact two-path sequence below:
 
 1. **Path 1 — Independent Resource-Envelope Oracle Verification / Calibration**:
-   - Invariant: A valid, approved resource-envelope oracle package satisfying `resource-efficiency-freeze-contract-v1.yaml` **must exist and be frozen into the contract** before E4 efficiency OBSERVED execution is authorized. If a valid, approved oracle package already exists in the repository, it can be consumed directly without recalibration.
-   - Current State: `NO VALID APPROVED E4 ORACLE CURRENTLY AVAILABLE`. The only existing envelope package (`results_v5/protocol-v5.0.0/E4/e4-resource-envelope-observed-run-20260905T081833Z`) has `execution_status: DRY_RUN` and `eligible_for_comparison: false` (manual review status `NOT_APPLICABLE`), and the freeze contract currently records `oracle_package.path: null` with `manual_approval_status: NOT_APPROVED`. Therefore, calibration is required before efficiency OBSERVED execution can proceed.
+   - Invariant: A valid, approved resource-envelope oracle package satisfying `resource-efficiency-freeze-contract-v1.yaml` **must exist and be frozen into the contract** before E4 efficiency OBSERVED execution is authorized. If a valid, approved oracle package already exists in a future execution state and its exact identity is legitimately frozen, recalibration is not required merely for procedural reasons.
+   - Current State: `NO VALID APPROVED E4 ORACLE CURRENTLY AVAILABLE`. The only currently available local E4 resource-envelope package in this worktree (`results_v5/protocol-v5.0.0/E4/e4-resource-envelope-observed-run-20260905T081833Z`, local-only/gitignored) has `execution_status: DRY_RUN` and `eligible_for_comparison: false` (manual review status `NOT_APPLICABLE`), and the freeze contract currently records `oracle_package.path: null` with `manual_approval_status: NOT_APPROVED`. Therefore, calibration is required before efficiency OBSERVED execution can proceed.
    - Target context: `intent-spawner-eval-v5` (disposable, non-production).
    - Target namespace: `z2jh-context-demo` labeled `z2jh-context-demo.local/disposable-experiment-v5: "true"`.
    - Single dedicated node (`required_node_count: 1`) labeled `z2jh-context-demo.local/node-identity: e4-node-v1` and `z2jh-context-demo.local/dedicated-e4: "true"`.
