@@ -1,0 +1,12 @@
+{
+  "all_required_claims_decided": false,
+  "claim_counts": {
+    "NOT_EXECUTED": 9,
+    "NOT_SUPPORTED": 0,
+    "SUPPORTED": 0
+  },
+  "run_id": "research-analysis-20260905T-implementation",
+  "schema_version": "protocol-v5-research-analysis-status-v1.0.0",
+  "status": "INCOMPLETE",
+  "thesis_claims_permitted": true
+}

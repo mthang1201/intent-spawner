@@ -1,7 +1,27 @@
 E4_RESOURCE_DRY_RUN_ID := e4-resource-envelope-dry-run-$(shell date -u +%Y%m%dT%H%M%SZ)
 E4_RESOURCE_EFFICIENCY_DRY_RUN_ID := e4-resource-efficiency-dry-run-$(shell date -u +%Y%m%dT%H%M%SZ)
+V5_PYTHON ?= .venv/bin/python
+V5_AUDIT_ARGS = $(if $(V5_RUN_ID),--run-id "$(V5_RUN_ID)",)
 
 .PHONY: check validate-cluster-results validate-raw-integrity capacity-dry-run v3-validate v3-dry-run v3-image-policy v4-validate v4-test v5-test v5-resource-validate v5-resource-test v5-resource-dry-run v5-resource-efficiency-validate v5-resource-efficiency-test v5-resource-efficiency-dry-run v5-user-study-test v5-user-study-smoke v5-isolation-check regenerate-cluster-results
+.PHONY: v5-validate v5-analyze v5-figures v5-audit v5-audit-test
+
+# These stages never execute recommenders, participant sessions, or cluster jobs.
+# The Python orchestrator collects findings before returning audit exit code 2.
+v5-validate:
+	$(V5_PYTHON) -m evaluation_v5.final_audit validate $(V5_AUDIT_ARGS)
+
+v5-analyze:
+	$(V5_PYTHON) -m evaluation_v5.final_audit analyze $(V5_AUDIT_ARGS)
+
+v5-figures:
+	$(V5_PYTHON) -m evaluation_v5.final_audit figures $(V5_AUDIT_ARGS)
+
+v5-audit:
+	$(V5_PYTHON) -m evaluation_v5.final_audit audit $(V5_AUDIT_ARGS)
+
+v5-audit-test:
+	$(V5_PYTHON) -m pytest -q tests/test_protocol_v5_final_audit.py
 
 check:
 	bash scripts/check.sh

@@ -1,5 +1,12 @@
 # Protocol-v5 Unified Research Analysis
 
+> For complete evidence auditing and portable reproduction, run `make v5-audit`
+> and read [PROTOCOL_V5_FINAL_REPORT.md](PROTOCOL_V5_FINAL_REPORT.md).
+> The `frozen-configuration.json` used in the historical examples below is a
+> configuration snapshot, not an authoritative production freeze. The final
+> audit checks that distinction separately and preserves legacy validation
+> failures instead of treating discovery success as a complete audit pass.
+
 ## Purpose and claim boundary
 
 `evaluation_v5.analysis.research_analysis` is the Protocol-v5 thesis claim

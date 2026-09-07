@@ -1,0 +1,157 @@
+{
+  "global_errors": [],
+  "requirements": [
+    {
+      "accepted_schema_versions": [
+        "protocol-v5-statistical-analysis-v1.0.0"
+      ],
+      "candidate_count": 1,
+      "candidate_packages": [
+        "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E1/20260825T-observed-p1-p2-development-v1"
+      ],
+      "eligible_candidate_count": 0,
+      "evidence_class": "E1",
+      "reason_codes": [
+        "CLAIMS_NOT_PERMITTED",
+        "EVIDENCE_NOT_OBSERVED_COMPLETE",
+        "NON_CONFIRMATORY_EVIDENCE",
+        "NO_ELIGIBLE_CONFIRMATORY_EVIDENCE"
+      ],
+      "requirement_id": "offline_recommendation",
+      "selected_manifest_sha256": null,
+      "selected_package": null,
+      "selection_mode": "NONE"
+    },
+    {
+      "accepted_schema_versions": [
+        "protocol-v5-statistical-analysis-v1.0.0"
+      ],
+      "candidate_count": 1,
+      "candidate_packages": [
+        "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E1/20260825T-observed-p1-p2-development-v1"
+      ],
+      "eligible_candidate_count": 0,
+      "evidence_class": "E2",
+      "reason_codes": [
+        "CLAIMS_NOT_PERMITTED",
+        "EVIDENCE_NOT_OBSERVED_COMPLETE",
+        "NON_CONFIRMATORY_EVIDENCE",
+        "NO_ELIGIBLE_CONFIRMATORY_EVIDENCE"
+      ],
+      "requirement_id": "natural_language_robustness",
+      "selected_manifest_sha256": null,
+      "selected_package": null,
+      "selection_mode": "NONE"
+    },
+    {
+      "accepted_schema_versions": [
+        "protocol-v5-user-study-provenance-v1.0.0"
+      ],
+      "candidate_count": 0,
+      "candidate_packages": [],
+      "eligible_candidate_count": 0,
+      "evidence_class": "E3",
+      "reason_codes": [
+        "NO_ELIGIBLE_CONFIRMATORY_EVIDENCE"
+      ],
+      "requirement_id": "user_study",
+      "selected_manifest_sha256": null,
+      "selected_package": null,
+      "selection_mode": "NONE"
+    },
+    {
+      "accepted_schema_versions": [
+        "protocol-v5-resource-efficiency-analysis-package-v1.0.0"
+      ],
+      "candidate_count": 5,
+      "candidate_packages": [
+        "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E4/e4-resource-efficiency-dry-run-20260904T093503Z",
+        "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E4/e4-resource-efficiency-dry-run-20260904T094050Z",
+        "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E4/e4-resource-efficiency-dry-run-20260904T094316Z",
+        "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E4/e4-resource-efficiency-dry-run-20260905T013330Z",
+        "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E4/e4-resource-efficiency-dry-run-20260905T013619Z"
+      ],
+      "eligible_candidate_count": 0,
+      "evidence_class": "E4",
+      "reason_codes": [
+        "CLAIMS_NOT_PERMITTED",
+        "DERIVED_ANALYSIS_PACKAGE_REQUIRED",
+        "EVIDENCE_NOT_OBSERVED_COMPLETE",
+        "EVIDENCE_VALIDATION_FAILED",
+        "NON_CONFIRMATORY_EVIDENCE",
+        "NO_ELIGIBLE_CONFIRMATORY_EVIDENCE"
+      ],
+      "requirement_id": "resource_efficiency",
+      "selected_manifest_sha256": null,
+      "selected_package": null,
+      "selection_mode": "NONE"
+    },
+    {
+      "accepted_schema_versions": [
+        "protocol-v5-manifest-v1.0.0"
+      ],
+      "candidate_count": 10,
+      "candidate_packages": [
+        "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T015905Z",
+        "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T020014Z",
+        "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T021913Z",
+        "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T024426Z",
+        "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T024633Z",
+        "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T032437Z",
+        "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T033805Z",
+        "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T033832Z",
+        "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T040730Z",
+        "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T071910Z"
+      ],
+      "eligible_candidate_count": 0,
+      "evidence_class": "E5",
+      "reason_codes": [
+        "CLAIMS_NOT_PERMITTED",
+        "EVIDENCE_NOT_OBSERVED_COMPLETE",
+        "EVIDENCE_VALIDATION_FAILED",
+        "LEGACY_E5_SCHEMA",
+        "NON_CONFIRMATORY_EVIDENCE",
+        "NO_ELIGIBLE_CONFIRMATORY_EVIDENCE"
+      ],
+      "requirement_id": "image_functional",
+      "selected_manifest_sha256": null,
+      "selected_package": null,
+      "selection_mode": "NONE"
+    },
+    {
+      "accepted_schema_versions": [
+        "protocol-v5-image-storage-evidence-v1.0.0"
+      ],
+      "candidate_count": 0,
+      "candidate_packages": [],
+      "eligible_candidate_count": 0,
+      "evidence_class": "E5",
+      "reason_codes": [
+        "NO_ELIGIBLE_CONFIRMATORY_EVIDENCE"
+      ],
+      "requirement_id": "image_storage",
+      "selected_manifest_sha256": null,
+      "selected_package": null,
+      "selection_mode": "NONE"
+    },
+    {
+      "accepted_schema_versions": [
+        "protocol-v5-statistical-analysis-v1.0.0"
+      ],
+      "candidate_count": 0,
+      "candidate_packages": [],
+      "eligible_candidate_count": 0,
+      "evidence_class": "P2_P3",
+      "reason_codes": [
+        "NO_ELIGIBLE_CONFIRMATORY_EVIDENCE",
+        "P3_NOT_RETAINED_OR_NOT_PRESENT"
+      ],
+      "requirement_id": "p2_p3",
+      "selected_manifest_sha256": null,
+      "selected_package": null,
+      "selection_mode": "NONE"
+    }
+  ],
+  "schema_version": "protocol-v5-evidence-selection-result-v1.0.0",
+  "selection_lock_present": false
+}

@@ -1,5 +1,10 @@
 # Protocol-v5 Experiment Architecture
 
+> Historical architecture/design snapshot. Its original execution-status
+> statements describe implementation time. For the audited current evidence,
+> defects and unavailable experiments, use
+> [PROTOCOL_V5_FINAL_REPORT.md](PROTOCOL_V5_FINAL_REPORT.md).
+
 Protocol version: `5.0.0`
 
 Manifest schema: `protocol-v5-manifest-v1.0.0`

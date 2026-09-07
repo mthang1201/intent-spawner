@@ -55,18 +55,6 @@ and [Zero to JupyterHub storage guide](https://z2jh.jupyter.org/en/stable/jupyte
 8. Select **Stop old pod and create replacement**.
 9. Follow the standard JupyterHub spawn-progress page to the replacement server.
 
-## User flow
-
-1. Start a notebook through the normal recommendation-confirmation form.
-2. Save notebooks and other files under `/home/jovyan`.
-3. Open `/hub/reprovision` while the default server is running.
-4. Enter the new intent, dataset estimate, and optional code context.
-5. Select **Preview replacement**. No pod is changed at this point.
-6. Review current versus proposed profile/image, reasons, and restart warnings.
-7. Check the acknowledgement that kernel and terminal state will be lost.
-8. Select **Stop old pod and create replacement**.
-9. Follow the standard JupyterHub spawn-progress page to the replacement server.
-
 The Task D handler accepts `action: "accept"` for confirmed re-provisioning. Manual override (`action: "override"`) is intentionally disabled during re-provisioning to prevent unpreviewed profile/image forgery; only administrator-approved, server-recomputed recommendations matching the previewed contract are applied.
 
 ## State machine

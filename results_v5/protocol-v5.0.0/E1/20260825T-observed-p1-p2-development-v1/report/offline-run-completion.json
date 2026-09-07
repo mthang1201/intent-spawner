@@ -1,0 +1,10 @@
+{
+  "claims_permitted": false,
+  "completed_utc": "2026-08-25T06:55:56.713859Z",
+  "error_records": 0,
+  "provenance_fingerprint": "39fab351a50c64922208221b3a4aae08605801a66744178e0ef35938a36b89c9",
+  "recommendations_jsonl_sha256": "25868752054231fa271e540210aad0845113ba3974722376029b18184959daf8",
+  "records": 36,
+  "schema_version": "protocol-v5-offline-recommendation-completion-v1.0.0",
+  "status": "RAW_EVIDENCE_COMPLETE"
+}

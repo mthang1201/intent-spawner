@@ -1,0 +1,55 @@
+{
+  "captured_at": "2026-09-04T09:43:18.585965Z",
+  "cgroup_measurements": null,
+  "hardware_measurements": null,
+  "kubernetes_mutations": [],
+  "read_only_preflight": {
+    "eligibility_status": "CLUSTER_INELIGIBLE",
+    "facts": {
+      "api_access": {},
+      "cgroup_probe": {},
+      "current_context": "orbstack",
+      "expected_context": "intent-spawner-eval-v5",
+      "image_declared_state": {
+        "build_context_dockerignore_path": "cluster_evaluation/Dockerfile.resource-v5.dockerignore",
+        "build_context_dockerignore_sha256": "1cedf3c42d1173e18b735eb92bebd3fbc80872ce6c8e6e31111a73ecdcc315ad",
+        "built": false,
+        "digest_syntactically_pinned": false,
+        "digest_verified": false,
+        "dockerfile_path": "cluster_evaluation/Dockerfile.resource-v5",
+        "dockerfile_sha256": "a9ce83468dbdf19569a703cb9277a39f5d26308a1230e2b00ed88d614bc10ed4",
+        "image_reference": null,
+        "note": "This repository records no image build or registry verification; observed execution must use a separately frozen verified state artifact.",
+        "operationally_verified": false,
+        "pre_pulled_on_eligible_node": false,
+        "protocol_version": "5.0.0",
+        "reference_configured": false,
+        "resolved_digest": null,
+        "schema_version": "protocol-v5-resource-image-state-v1.0.0",
+        "status": "NOT_BUILT_OR_VERIFIED"
+      },
+      "image_reference": "example.invalid/intent-spawner-resource-v5@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "image_reference_pinned": true,
+      "kubernetes_version": null,
+      "namespace_labels": {},
+      "namespace_name": null,
+      "node_allocatable": null,
+      "node_capacity": null,
+      "node_info": null,
+      "node_labels": {},
+      "node_name": null,
+      "node_uid": null
+    },
+    "failure_codes": [
+      "CGROUP_V2_REQUIRED",
+      "CLUSTER_INELIGIBLE",
+      "IMAGE_DIGEST_UNVERIFIED",
+      "KUBERNETES_VERSION_UNAVAILABLE",
+      "REQUIRED_API_ACCESS_MISSING",
+      "WRONG_CLUSTER_FINGERPRINT",
+      "WRONG_KUBERNETES_CONTEXT",
+      "WRONG_NODE_COUNT"
+    ],
+    "schema_version": "protocol-v5-resource-cluster-preflight-v1.1.0"
+  }
+}

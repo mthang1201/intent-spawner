@@ -1,0 +1,293 @@
+{
+  "categories": [
+    "benchmark_contamination",
+    "statistical_conclusion"
+  ],
+  "generation_policy": "metadata_triggered_only",
+  "schema_version": "protocol-v5-threats-to-validity-v1.0.0",
+  "threats": [
+    {
+      "affected_claims": [
+        "H1"
+      ],
+      "affected_evidence_requirements": [
+        "offline_recommendation"
+      ],
+      "category": "statistical_conclusion",
+      "code": "REQUIRED_EVIDENCE_UNAVAILABLE",
+      "observed_value": {
+        "candidate_count": 1,
+        "eligible_candidate_count": 0,
+        "reason_codes": [
+          "CLAIMS_NOT_PERMITTED",
+          "EVIDENCE_NOT_OBSERVED_COMPLETE",
+          "NON_CONFIRMATORY_EVIDENCE",
+          "NO_ELIGIBLE_CONFIRMATORY_EVIDENCE"
+        ]
+      },
+      "severity": "blocking",
+      "source_artifact": "derived/evidence-selection.json",
+      "source_pointer": "/requirements/0",
+      "statement": "The required confirmatory evidence was unavailable or unselected, so the linked claim cannot be decided.",
+      "threat_id": "TV-001"
+    },
+    {
+      "affected_claims": [
+        "H2"
+      ],
+      "affected_evidence_requirements": [
+        "natural_language_robustness"
+      ],
+      "category": "statistical_conclusion",
+      "code": "REQUIRED_EVIDENCE_UNAVAILABLE",
+      "observed_value": {
+        "candidate_count": 1,
+        "eligible_candidate_count": 0,
+        "reason_codes": [
+          "CLAIMS_NOT_PERMITTED",
+          "EVIDENCE_NOT_OBSERVED_COMPLETE",
+          "NON_CONFIRMATORY_EVIDENCE",
+          "NO_ELIGIBLE_CONFIRMATORY_EVIDENCE"
+        ]
+      },
+      "severity": "blocking",
+      "source_artifact": "derived/evidence-selection.json",
+      "source_pointer": "/requirements/1",
+      "statement": "The required confirmatory evidence was unavailable or unselected, so the linked claim cannot be decided.",
+      "threat_id": "TV-002"
+    },
+    {
+      "affected_claims": [
+        "H3",
+        "H4"
+      ],
+      "affected_evidence_requirements": [
+        "user_study"
+      ],
+      "category": "statistical_conclusion",
+      "code": "REQUIRED_EVIDENCE_UNAVAILABLE",
+      "observed_value": {
+        "candidate_count": 0,
+        "eligible_candidate_count": 0,
+        "reason_codes": [
+          "NO_ELIGIBLE_CONFIRMATORY_EVIDENCE"
+        ]
+      },
+      "severity": "blocking",
+      "source_artifact": "derived/evidence-selection.json",
+      "source_pointer": "/requirements/2",
+      "statement": "The required confirmatory evidence was unavailable or unselected, so the linked claim cannot be decided.",
+      "threat_id": "TV-003"
+    },
+    {
+      "affected_claims": [
+        "H5",
+        "H6"
+      ],
+      "affected_evidence_requirements": [
+        "resource_efficiency"
+      ],
+      "category": "statistical_conclusion",
+      "code": "REQUIRED_EVIDENCE_UNAVAILABLE",
+      "observed_value": {
+        "candidate_count": 5,
+        "eligible_candidate_count": 0,
+        "reason_codes": [
+          "CLAIMS_NOT_PERMITTED",
+          "DERIVED_ANALYSIS_PACKAGE_REQUIRED",
+          "EVIDENCE_NOT_OBSERVED_COMPLETE",
+          "EVIDENCE_VALIDATION_FAILED",
+          "NON_CONFIRMATORY_EVIDENCE",
+          "NO_ELIGIBLE_CONFIRMATORY_EVIDENCE"
+        ]
+      },
+      "severity": "blocking",
+      "source_artifact": "derived/evidence-selection.json",
+      "source_pointer": "/requirements/3",
+      "statement": "The required confirmatory evidence was unavailable or unselected, so the linked claim cannot be decided.",
+      "threat_id": "TV-004"
+    },
+    {
+      "affected_claims": [
+        "H7F"
+      ],
+      "affected_evidence_requirements": [
+        "image_functional"
+      ],
+      "category": "statistical_conclusion",
+      "code": "REQUIRED_EVIDENCE_UNAVAILABLE",
+      "observed_value": {
+        "candidate_count": 10,
+        "eligible_candidate_count": 0,
+        "reason_codes": [
+          "CLAIMS_NOT_PERMITTED",
+          "EVIDENCE_NOT_OBSERVED_COMPLETE",
+          "EVIDENCE_VALIDATION_FAILED",
+          "LEGACY_E5_SCHEMA",
+          "NON_CONFIRMATORY_EVIDENCE",
+          "NO_ELIGIBLE_CONFIRMATORY_EVIDENCE"
+        ]
+      },
+      "severity": "blocking",
+      "source_artifact": "derived/evidence-selection.json",
+      "source_pointer": "/requirements/4",
+      "statement": "The required confirmatory evidence was unavailable or unselected, so the linked claim cannot be decided.",
+      "threat_id": "TV-005"
+    },
+    {
+      "affected_claims": [
+        "H7"
+      ],
+      "affected_evidence_requirements": [
+        "image_storage"
+      ],
+      "category": "statistical_conclusion",
+      "code": "REQUIRED_EVIDENCE_UNAVAILABLE",
+      "observed_value": {
+        "candidate_count": 0,
+        "eligible_candidate_count": 0,
+        "reason_codes": [
+          "NO_ELIGIBLE_CONFIRMATORY_EVIDENCE"
+        ]
+      },
+      "severity": "blocking",
+      "source_artifact": "derived/evidence-selection.json",
+      "source_pointer": "/requirements/5",
+      "statement": "The required confirmatory evidence was unavailable or unselected, so the linked claim cannot be decided.",
+      "threat_id": "TV-006"
+    },
+    {
+      "affected_claims": [
+        "H8"
+      ],
+      "affected_evidence_requirements": [
+        "p2_p3"
+      ],
+      "category": "statistical_conclusion",
+      "code": "REQUIRED_EVIDENCE_UNAVAILABLE",
+      "observed_value": {
+        "candidate_count": 0,
+        "eligible_candidate_count": 0,
+        "reason_codes": [
+          "NO_ELIGIBLE_CONFIRMATORY_EVIDENCE",
+          "P3_NOT_RETAINED_OR_NOT_PRESENT"
+        ]
+      },
+      "severity": "blocking",
+      "source_artifact": "derived/evidence-selection.json",
+      "source_pointer": "/requirements/6",
+      "statement": "The required confirmatory evidence was unavailable or unselected, so the linked claim cannot be decided.",
+      "threat_id": "TV-007"
+    },
+    {
+      "affected_claims": [
+        "H7F"
+      ],
+      "affected_evidence_requirements": [
+        "image_functional"
+      ],
+      "category": "benchmark_contamination",
+      "code": "NON_CONFIRMATORY_EVIDENCE_PRESENT",
+      "observed_value": {
+        "count": 10,
+        "manifests": [
+          "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T015905Z/manifest.json",
+          "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T020014Z/manifest.json",
+          "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T021913Z/manifest.json",
+          "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T024426Z/manifest.json",
+          "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T024633Z/manifest.json",
+          "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T032437Z/manifest.json",
+          "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T033805Z/manifest.json",
+          "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T033832Z/manifest.json",
+          "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T040730Z/manifest.json",
+          "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T071910Z/manifest.json"
+        ],
+        "stages": [
+          "development"
+        ]
+      },
+      "severity": "boundary",
+      "source_artifact": "derived/evidence-inventory.json",
+      "source_pointer": "/candidates",
+      "statement": "Development, historical, or unknown-stage packages are inventoried but excluded from confirmatory claim decisions.",
+      "threat_id": "TV-008"
+    },
+    {
+      "affected_claims": [
+        "H2"
+      ],
+      "affected_evidence_requirements": [
+        "natural_language_robustness"
+      ],
+      "category": "benchmark_contamination",
+      "code": "NON_CONFIRMATORY_EVIDENCE_PRESENT",
+      "observed_value": {
+        "count": 1,
+        "manifests": [
+          "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E1/20260825T-observed-p1-p2-development-v1/derived/statistical_analysis/analysis-manifest.json"
+        ],
+        "stages": [
+          "development"
+        ]
+      },
+      "severity": "boundary",
+      "source_artifact": "derived/evidence-inventory.json",
+      "source_pointer": "/candidates",
+      "statement": "Development, historical, or unknown-stage packages are inventoried but excluded from confirmatory claim decisions.",
+      "threat_id": "TV-009"
+    },
+    {
+      "affected_claims": [
+        "H1"
+      ],
+      "affected_evidence_requirements": [
+        "offline_recommendation"
+      ],
+      "category": "benchmark_contamination",
+      "code": "NON_CONFIRMATORY_EVIDENCE_PRESENT",
+      "observed_value": {
+        "count": 1,
+        "manifests": [
+          "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E1/20260825T-observed-p1-p2-development-v1/derived/statistical_analysis/analysis-manifest.json"
+        ],
+        "stages": [
+          "development"
+        ]
+      },
+      "severity": "boundary",
+      "source_artifact": "derived/evidence-inventory.json",
+      "source_pointer": "/candidates",
+      "statement": "Development, historical, or unknown-stage packages are inventoried but excluded from confirmatory claim decisions.",
+      "threat_id": "TV-010"
+    },
+    {
+      "affected_claims": [
+        "H5",
+        "H6"
+      ],
+      "affected_evidence_requirements": [
+        "resource_efficiency"
+      ],
+      "category": "benchmark_contamination",
+      "code": "NON_CONFIRMATORY_EVIDENCE_PRESENT",
+      "observed_value": {
+        "count": 5,
+        "manifests": [
+          "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E4/e4-resource-efficiency-dry-run-20260904T093503Z/manifest.json",
+          "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E4/e4-resource-efficiency-dry-run-20260904T094050Z/manifest.json",
+          "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E4/e4-resource-efficiency-dry-run-20260904T094316Z/manifest.json",
+          "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E4/e4-resource-efficiency-dry-run-20260905T013330Z/manifest.json",
+          "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E4/e4-resource-efficiency-dry-run-20260905T013619Z/manifest.json"
+        ],
+        "stages": [
+          "development"
+        ]
+      },
+      "severity": "boundary",
+      "source_artifact": "derived/evidence-inventory.json",
+      "source_pointer": "/candidates",
+      "statement": "Development, historical, or unknown-stage packages are inventoried but excluded from confirmatory claim decisions.",
+      "threat_id": "TV-011"
+    }
+  ]
+}

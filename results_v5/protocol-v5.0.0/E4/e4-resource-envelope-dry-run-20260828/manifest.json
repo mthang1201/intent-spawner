@@ -1,0 +1,17 @@
+{
+  "cluster_measurement_status": "NOT_EXECUTED",
+  "container_image": "example.invalid/intent-spawner-resource-v5@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "environment_identity": "local-dry-run-no-cluster-measurement",
+  "execution_status": "DRY_RUN",
+  "execution_timestamp_utc": "2026-08-28T06:49:15.090536Z",
+  "experiment_id": "E4",
+  "frozen_comparison_sha256": "f24559bd5f60f5fffffb51152ba2e46ff7e55794c774daeed5e156e004d5b6bd",
+  "git_dirty": true,
+  "git_revision": "42cb29274ec3fe6a0acae6816cb1a2848fed218e",
+  "manual_review_status": "NOT_APPLICABLE",
+  "measurement_claims_permitted": false,
+  "protocol_version": "5.0.0",
+  "run_id": "e4-resource-envelope-dry-run-20260828",
+  "schema_version": "protocol-v5-resource-calibration-run-v1.0.0",
+  "workload_manifest_sha256": "95738ea87ca788802a257a40e0fb26b7d91eff5df9818b12d1122224637eb958"
+}

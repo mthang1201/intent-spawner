@@ -1,0 +1,14 @@
+{
+  "cluster_measurement_status": "NOT_EXECUTED",
+  "derived_envelopes": 0,
+  "executed_trials": 0,
+  "limitations": [
+    "No Kubernetes workload was executed.",
+    "No CPU, memory, runtime, OOM, hardware, or cgroup value was observed.",
+    "This package validates planning and provenance only and supports no empirical claim."
+  ],
+  "manual_review_status": "NOT_APPLICABLE",
+  "planned_families": 16,
+  "reason": "Current context is not the required disposable intent-spawner-eval-v5 cluster.",
+  "status": "DRY_RUN"
+}

@@ -1,37 +1,37 @@
 # Getting Started
 
-This guide provides a comprehensive walkthrough for onboarding, running the interactive JupyterHub prototype, configuring pluggable LLM backends, and executing evaluation benchmarks.
-
----
+Start with the offline Protocol-v5 evidence audit. Demo deployment and synthetic
+benchmarks are separate workflows and do not supply missing research results.
+Run commands from the repository root.
 
 ## Quick Navigation
 
-| Goal | Recommended Path | Cluster Required |
-| :--- | :--- | :--- |
-| **Verify repository & unit tests** | Setup & Verification Suite | No |
-| **Run local synthetic benchmark** | Path A: Local Synthetic Benchmark | No |
-| **Run interactive JupyterHub demo** | Path B: Interactive JupyterHub Demo | Yes (Local disposable cluster) |
-| **Configure External LLM (Gemini API)** | Path B-LLM: Gemini Recommender Setup | Yes |
-| **Configure Self-Hosted LLM (Ollama)** | Path B-Ollama: Local Ollama Setup | Yes |
-| **Test Intent-Aware Re-Provisioning** | Path B10: Re-provisioning Workflow | Yes |
-| **Test Policy-Bounded Dynamic Mode** | Path B11: Dynamic Profile Generation | Yes |
-| **Run Evaluation Framework v4** | Path D: Evaluation Protocol v4 Suite | No (Offline evaluation) |
-| **Validate preserved Kubernetes evidence** | Path C: Preserved Cluster Evaluation | No |
+| Goal | Guide section | Cluster required |
+| --- | --- | --- |
+| Reproduce the current evidence audit | [Protocol-v5 audit](#protocol-v5-evidence-audit) | No |
+| Inspect historical evidence | [Protocol-v4 reproduction](#path-d-historical-protocol-v4-reproduction) | No |
+| Run software checks or synthetic examples | [Local checks](#path-a-local-synthetic-benchmark--unit-tests) | No |
+| Deploy P1/P2 or configure reference LLM adapters | [Interactive demo](#path-b-interactive-jupyterhub-demo) | Disposable demo cluster |
+| Try reprovisioning or dynamic resources | [Reprovisioning](#path-b10-storage-preserving-notebook-re-provisioning), [dynamic sizing](#path-b11-policy-bounded-dynamic-resource-sizing) | Disposable demo cluster |
 
----
+See the [artifact index](ARTIFACT_MANIFEST.md) for detailed contracts and
+[the final report](evaluation/PROTOCOL_V5_FINAL_REPORT.md) for measured outcomes.
 
 ## 1. Prerequisites & Local Environment Setup
 
 ### Local Tools Required:
+
 * Python 3.11+
 * Git and Bash
 * `pip` and Python `venv` support
 
 ### Optional Tools for the Interactive Demo:
+
 * `kubectl` and Helm 3
 * A disposable local Kubernetes cluster (Minikube, Docker Desktop, k3d, kind, or OrbStack)
 
 ### Clone & Install Dependencies:
+
 ```bash
 git clone https://github.com/mthang1201/intent-spawner.git
 cd intent-spawner
@@ -40,17 +40,59 @@ cd intent-spawner
 bash scripts/setup.sh
 ```
 
-### Run Repository Integrity Verification:
-```bash
-bash scripts/check.sh
-```
-This script validates unit tests, smoke tests, preserved cluster artifacts, capacity runner planning, Python/Shell syntax, and Helm template rendering.
+## Protocol-v5 evidence audit
 
----
+Run the complete workflow after dependency setup:
+
+```bash
+make v5-audit
+```
+
+When `V5_RUN_ID` is unset, a new run ID is generated automatically. Outputs are written under
+`results_v5/protocol-v5.0.0/final-audit/<run-id>/`: validation findings,
+regenerated analysis, figures/tables, and `report/PROTOCOL_V5_FINAL_REPORT.md`.
+The existing [reviewed final report](evaluation/PROTOCOL_V5_FINAL_REPORT.md)
+remains the published snapshot; a new run does not overwrite it.
+
+For stages invoked separately, generate and export one ID once:
+
+```bash
+export V5_RUN_ID="docs-audit-$(.venv/bin/python -c 'import uuid; print(uuid.uuid4().hex)')"
+make v5-validate
+make v5-analyze
+make v5-figures
+make v5-audit
+```
+
+Each stage completes its findings before returning its audit status. With the
+current evidence, each command returns **2** for preserved integrity/provenance
+failures; continue to the next command to inspect the available regeneration.
+For a single invocation that attempts all stages despite those failures, use:
+
+```bash
+make -k v5-validate v5-analyze v5-figures v5-audit
+```
+
+Keep the exported `V5_RUN_ID` for that invocation. Do not connect stages with
+`&&`, because the known audit failure would stop the sequence. A valid
+`NOT_EXECUTED` package alone does not cause failure. The current overall verdict
+remains **FAIL**, with confirmatory, human, resource, and storage outcomes
+**NOT EXECUTED**; completing these commands does not fill those evidence gaps.
+
+Completed stages are sealed and may be reused only with matching inputs and
+implementation. Changed inputs or code require a new run ID. Inputs are selected
+by the [checksum-bound inventory](../benchmarks_v5/protocol-v5-final-audit-inputs-v1.json),
+never by filename recency. Original raw observations and damaged packages remain
+unchanged. No stage calls a recommender, LLM provider, participant, registry, or
+Kubernetes cluster, and unavailable private evidence is handled explicitly.
+
+The [audit verification record](evaluation/PROTOCOL_V5_FINAL_AUDIT_VERIFICATION.md)
+contains the reviewed commands, results, and reproduction limitations.
 
 ## Path A: Local Synthetic Benchmark & Unit Tests
 
 ### A1. Inspect the Standalone Recommender
+
 Test intent and code-context parsing directly from the command line:
 
 ```bash
@@ -60,20 +102,22 @@ Test intent and code-context parsing directly from the command line:
   --code-context "import pandas as pd; from sklearn.ensemble import RandomForestClassifier; model.fit(X, y)"
 ```
 
-### A2. Run the Full Test Suite
-Test all backends (Rule-based, External LLM, Self-hosted LLM, Dynamic Resources, and Reliability layers):
+### A2. Run Software Tests
+
+Run the full Python test suite, including P2/P3 and evaluation harness checks:
 
 ```bash
-.venv/bin/python -m pytest recommender/test_recommender.py \
-  recommender/test_external_llm.py \
-  recommender/test_self_hosted_llm.py \
-  recommender/test_reliability.py \
-  recommender/test_dynamic_resources.py \
-  tests/test_helm_recommender_deployment.py \
-  tests/test_recommender_backends_integration.py
+.venv/bin/python -m pytest
 ```
 
+For the focused final-audit tests, use `make v5-audit-test`. The broader
+`bash scripts/check.sh` runs tests, synthetic smoke checks, evidence validators,
+and optional Helm/Kubernetes checks; Helm may fetch charts and Kubernetes client
+checks may need API access. Use the Protocol-v5 audit above for offline evidence
+reproduction without those services.
+
 ### A3. Run Local Matrix Benchmark Dry-Run
+
 ```bash
 .venv/bin/python -m experiments.runner \
   --full-matrix \
@@ -90,6 +134,7 @@ Test all backends (Rule-based, External LLM, Self-hosted LLM, Dynamic Resources,
 > **Safety Notice:** Run only on a disposable local Kubernetes cluster. The scripts create and mutate resources inside namespace `z2jh-context-demo`.
 
 ### B1. Install Baseline (Static Hardware Profiles)
+
 ```bash
 # Check cluster context
 kubectl config current-context
@@ -102,10 +147,23 @@ bash scripts/port-forward.sh
 ```
 Open `http://127.0.0.1:8000` and log in with any credentials. Notice the baseline asks you to choose raw hardware (Small, Medium, Large) without guidance.
 
-### B2. Upgrade to Proposed Method (Context-Aware Pre-Spawn Form)
+### B2. Install the Context-Aware Form with P1 or P2
+
+The default installer selects the P1 rule-based backend:
+
 ```bash
 bash scripts/install-proposed.sh
 ```
+
+To select the main proposed P2 backend explicitly:
+
+```bash
+BACKEND_VALUES=helm/recommender-p2-values.yaml bash scripts/install-proposed.sh
+```
+
+The installer packages the runtime, verifies configuration, and applies its
+rollout checksum. See [Helm backend deployment](HELM_BACKEND_DEPLOYMENT.md).
+
 Open `http://127.0.0.1:8000`. You will see the new **Workload Intent Form**:
 1. Enter your task (e.g., `I will train a scikit-learn model on a 1.5GB CSV dataset`).
 2. Enter dataset size: `1.5`.
@@ -116,16 +174,19 @@ Open `http://127.0.0.1:8000`. You will see the new **Workload Intent Form**:
    df = pd.read_csv("data.csv")
    model.fit(X, y)
    ```
-4. Click **Preview recommendation**: Inspect the recommended profile (`large`), image (`scipy-data-science`), and human-readable explanation reasons.
+4. Click **Preview recommendation**: Inspect the returned profile, image, explanation, and any fallback/manual-selection notice for the selected backend.
 5. Click **Confirm recommendation**: KubeSpawner applies the configuration and creates the user pod.
 
 ---
 
 ## Path B-LLM: Configuring External LLM (Google Gemini)
 
-To replace the rule-based backend with Google `gemini-3.5-flash` via its OpenAI-compatible endpoint:
+The checked-in Gemini overlay records the Protocol-v4 reference configuration.
+Using it makes live provider calls; it is separate from offline audit reproduction.
+See [external LLM configuration](EXTERNAL_LLM_RECOMMENDER.md).
 
 ### 1. Create the Kubernetes Secret
+
 ```bash
 read -rsp 'Enter Gemini API key: ' GEMINI_KEY; echo
 kubectl create secret generic intent-spawner-external-llm \
@@ -136,28 +197,19 @@ unset GEMINI_KEY
 ```
 
 ### 2. Deploy with Gemini Configuration
-```bash
-# 1. Package recommender runtime
-bash scripts/install-dynamic.sh
 
-# 2. Upgrade Helm with Gemini values
-helm upgrade context-demo jupyterhub/jupyterhub \
-  --version 4.0.0 \
-  --namespace z2jh-context-demo \
-  --values helm/proposed-values.yaml \
-  --values helm/dynamic-values.yaml \
-  --values helm/reprovision-values.yaml \
-  --values helm/gemini-values.yaml \
-  --wait
+```bash
+BACKEND_VALUES=helm/gemini-values.yaml bash scripts/install-proposed.sh
 ```
 
 ---
 
 ## Path B-Ollama: Configuring Self-Hosted LLM (Local Ollama)
 
-To run private inference with zero external network dependencies:
+To run inference on a local Ollama service (installation and model download require network access):
 
 ### 1. Start Local Ollama
+
 ```bash
 # Install Ollama (macOS)
 brew install ollama
@@ -170,16 +222,9 @@ ollama pull llama3
 ```
 
 ### 2. Deploy with Ollama Configuration
+
 ```bash
-# Upgrade Helm with Ollama values (connecting to host.docker.internal)
-helm upgrade context-demo jupyterhub/jupyterhub \
-  --version 4.0.0 \
-  --namespace z2jh-context-demo \
-  --values helm/proposed-values.yaml \
-  --values helm/dynamic-values.yaml \
-  --values helm/reprovision-values.yaml \
-  --values helm/ollama-values.yaml \
-  --wait
+BACKEND_VALUES=helm/ollama-values.yaml bash scripts/install-proposed.sh
 ```
 
 ---
@@ -215,20 +260,23 @@ This activates [`helm/dynamic-values.yaml`](../helm/dynamic-values.yaml) and app
 
 ---
 
-## Path D: Evaluation Protocol v4 Suite
+## Path D: Historical Protocol-v4 Reproduction
 
-To validate the bilingual 60-sample benchmark (12 development + 48 held-out) and preview the Protocol-v4 plans without making live model or cluster calls:
+Protocol-v4 is historical/formative evidence. Validate its portable core and
+reproduce its headline analysis without private services:
 
 ```bash
-# 1. Validate Gold-Set Schema & Stratification
-make v4-validate
-
-# 2. Run Recommender Benchmark Across All Backends
-.venv/bin/python -m evaluation_v4.run_recommenders --dry-run
-
-# 3. Execute System Effectiveness Pairing Plan
-.venv/bin/python -m evaluation_v4.plan_system --dry-run
+.venv/bin/python scripts/validate-portable-evidence.py
 ```
+
+To validate the frozen bilingual benchmark and preview its original matrices:
+
+```bash
+make v4-validate
+```
+
+This target runs the recommendation and system planners with `--dry-run`; it
+collects no new model responses or cluster measurements.
 
 The authoritative observed matrices are already complete. Do not overwrite or present a new dry run as those results. Their interpretation and exact evidence identities are documented in:
 
@@ -242,13 +290,6 @@ Live external or Stage C reproduction requires an explicit operator decision, fr
 
 ## Cleanup
 
-When you are finished with the demo, remove all created Kubernetes resources:
-
-```bash
-bash scripts/uninstall.sh
-```
-
-Confirm deletion:
-```bash
-kubectl get namespace z2jh-context-demo
-```
+Follow the [cleanup runbook](../CLEANUP.md) for the exact demo namespace and local
+artifact lifecycle. Namespace deletion can delete notebook PVC data. Preserve
+all checksum-bound evidence and sealed audit outputs, including failed audits.

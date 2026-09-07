@@ -1,0 +1,11 @@
+{
+  "execution_mode": "docker",
+  "probes_passed": 17,
+  "run_id": "e5-image-validation-20260905T024426Z",
+  "schema_version": "protocol-v5-image-validation-run-v1.1.0",
+  "status": "OBSERVED",
+  "timestamp_utc": "2026-09-05T02:44:50.837012Z",
+  "total_evaluations": 36,
+  "total_images": 4,
+  "total_probes": 17
+}

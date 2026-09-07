@@ -1,0 +1,146 @@
+{
+  "candidate_catalog": {
+    "candidate_count": 12,
+    "corpus_sha256": "987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444",
+    "corpus_version": "environment-candidate-corpus-v1",
+    "file_sha256": "f45b04efc2ea6f271d49c6806b58bfc0f30503cb68944930609f6e0f71882a71",
+    "path": "recommender/image-catalog.yaml",
+    "version": "2026-08-06.1"
+  },
+  "configuration": {
+    "P2": {
+      "config_version": "p2-config-v1.0.0",
+      "dense_top_k": 10,
+      "dense_weight": 1.0,
+      "extractor_mode": "local",
+      "max_concurrent_recommendations": 4,
+      "rrf_k": 60.0,
+      "sparse_top_k": 10,
+      "sparse_weight": 1.0,
+      "top_k": 10,
+      "total_timeout": 30.0
+    },
+    "P3": {
+      "config_version": "p3-config-v1.0.0",
+      "max_concurrent_recommendations": 4,
+      "reranker_mode": "llm",
+      "total_timeout": 30.0
+    },
+    "constraints": {
+      "evaluator_version": "p2-deterministic-constraint-evaluator-v1.0.0",
+      "policy_version": "p2-constraint-policy-v1.0.0",
+      "ranker_version": "p2-deterministic-ranker-v1.0.0",
+      "retrieval_rank_weight": 0.75,
+      "soft_preference_weight": 0.25
+    },
+    "provider": {
+      "P2_extractor": null,
+      "P3_reranker": null,
+      "pricing_configuration": null
+    }
+  },
+  "development_dataset": {
+    "canonical_sha256": "18894b73ec98d895348498bf6b1c4dd4d2dc6004437202bd8b93c17d09b0dc0b",
+    "case_count": 18,
+    "dataset_id": "protocol-v5-development-2026-08-22",
+    "family_count": 10,
+    "file_sha256": "e3fff5167ef2194fb365fec7510d1efc2b17a18b13182063c2b63c26f021d3cd",
+    "path": "benchmarks_v5/v5-development.yaml",
+    "role": "development",
+    "schema_version": "protocol-v5-split-bundle-v1.0.0",
+    "split_id": "v5-development"
+  },
+  "environment": {
+    "platform": "macOS-15.3.2-arm64-arm-64bit-Mach-O",
+    "python_version": "3.14.6"
+  },
+  "indexes": {
+    "dense": {
+      "catalog_version": "2026-08-06.1",
+      "corpus_checksum": "987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444",
+      "dimensions": 384,
+      "index_checksum": "c0561bcd1ee6ec5153b710aef3deae88bd259a011ddd454513cbb1c675118387",
+      "index_version": "environment-dense-index-v1",
+      "model_id": "intent-spawner-local-feature-hash",
+      "model_revision": "feature-hash-embedding-v1.0.0",
+      "normalization": "l2",
+      "query_representation_version": "dense-query-representation-v1",
+      "retriever_version": "cosine-dense-retriever-v1",
+      "schema_version": "dense-embedding-index-v1"
+    },
+    "hybrid": {
+      "catalog_version": "2026-08-06.1",
+      "corpus_checksum": "987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444",
+      "corpus_version": "environment-candidate-corpus-v1",
+      "dense_index_version": "environment-dense-index-v1",
+      "dense_retriever_version": "cosine-dense-retriever-v1",
+      "dense_top_k": 10,
+      "dense_weight": 1.0,
+      "index_checksum": "45ea08f29492d796189920713636b3a9cae2f0fb264e023124eb38c8cfad83a4",
+      "index_version": "environment-hybrid-index-v1",
+      "retriever_version": "reciprocal-rank-fusion-hybrid-retriever-v1",
+      "rrf_k": 60.0,
+      "schema_version": "hybrid-retrieval-metadata-v1",
+      "sparse_index_version": "environment-sparse-index-v1",
+      "sparse_retriever_version": "bm25-okapi-retriever-v1",
+      "sparse_top_k": 10,
+      "sparse_weight": 1.0,
+      "top_k": 10
+    },
+    "source": "administrator_catalog_only",
+    "sparse": {
+      "b": 0.75,
+      "catalog_version": "2026-08-06.1",
+      "corpus_checksum": "987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444",
+      "corpus_version": "environment-candidate-corpus-v1",
+      "index_checksum": "931fac84b818cb934a37bfbfa76092a89626cd5eaffc869887de8558bc6fa747",
+      "index_version": "environment-sparse-index-v1",
+      "k1": 1.5,
+      "retriever_version": "bm25-okapi-retriever-v1",
+      "schema_version": "sparse-retrieval-index-v1",
+      "tokenizer_version": "unicode-alphanumeric-tokenizer-v1"
+    }
+  },
+  "p3_gate": {
+    "evidence_path": "docs/evaluation/P3_INCREMENTAL_EVALUATION_V1.md",
+    "evidence_sha256": "3ed59ae76bd79e5e86cb08f63f86d7a49c8c5632f578b74f8ee51a1f8c4b8d9f",
+    "p3_active": false,
+    "snapshot_version": "protocol-v5-p3-gate-snapshot-v1.0.0",
+    "status": "not_retained"
+  },
+  "prompts": {
+    "P2_extractor": {
+      "model_id": "deterministic-explicit-parser-v1.1.0-python-3.14",
+      "model_source": "built_in_local_model",
+      "name": "p2-local-structured-parser",
+      "prompt_sha256": "88f4f6935bf7c3f7e0be87cc29af97761f72fcfa1f95c0a0e54ac7b800a16972",
+      "prompt_version": "local-parser-contract-v1.1.0",
+      "version": "local-structured-parser-v1.1.0"
+    },
+    "P3_reranker": {
+      "prompt_sha256": "696dabd22010a03c110b315c48b84efb5b8517733c2174a21aa79be4807d1e44",
+      "prompt_version": "p3-reranker-prompt-v1.0.0"
+    }
+  },
+  "runtime_package": {
+    "sha256": "9326f84528fa5b54d178632a69ead1fda56e7f9c3a93e5429eeef6d4a581e977",
+    "version": "intent-spawner-recommender-v3"
+  },
+  "systems": {
+    "P1": {
+      "backend_version": "rule-based-v1"
+    },
+    "P2": {
+      "backend_version": "p2-hybrid-v1.0.0",
+      "pipeline_version": "p2-pipeline-v1.0.0"
+    },
+    "P3": {
+      "active": false,
+      "backend_version": "p3-reranker-v1.0.0",
+      "pipeline_version": "p3-pipeline-v1.0.0",
+      "reranker_model_id": null,
+      "reranker_model_source": "EXTERNAL_LLM_MODEL",
+      "reranker_version": "p3-reranker-v1.0.0"
+    }
+  }
+}

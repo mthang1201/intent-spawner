@@ -1,0 +1,26 @@
+{
+  "blocker_codes": [
+    "APPROVED_ORACLE_UNAVAILABLE",
+    "CGROUP_V2_REQUIRED",
+    "CLUSTER_INELIGIBLE",
+    "CONFIRMATORY_FREEZE_INACTIVE",
+    "GIT_TREE_NOT_CLEAN",
+    "IMAGE_DIGEST_UNVERIFIED",
+    "KUBERNETES_VERSION_UNAVAILABLE",
+    "NODE_CAPACITY_NOT_FROZEN",
+    "REQUIRED_API_ACCESS_MISSING",
+    "WRONG_CLUSTER_FINGERPRINT",
+    "WRONG_KUBERNETES_CONTEXT",
+    "WRONG_NODE_COUNT"
+  ],
+  "cluster_measurement_status": "NOT_EXECUTED",
+  "created_at": "2026-09-05T01:33:32.446828Z",
+  "execution_status": "NOT_EXECUTED",
+  "image": "example.invalid/intent-spawner-resource-v5@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "kubernetes_mutations": [],
+  "plan_sha256": "354d25df0ff856e55ded7fd2e388a4f89c9037f7143e845455d50472b4492a02",
+  "protocol_version": "5.0.0",
+  "reason": "Confirmatory freeze, approved oracle, verified image, and frozen node capacity are unavailable.",
+  "run_id": "e4-resource-efficiency-dry-run-20260905T013330Z",
+  "schema_version": "protocol-v5-resource-efficiency-raw-package-v1.0.0"
+}

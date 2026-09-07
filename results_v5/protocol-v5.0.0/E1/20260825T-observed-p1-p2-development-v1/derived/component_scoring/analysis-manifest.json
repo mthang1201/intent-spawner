@@ -1,0 +1,12 @@
+{
+  "claims_permitted": false,
+  "created_at_utc": "2026-08-25T06:56:07Z",
+  "git_revision": "6726e48fe48b1614f661cbe1e7ec354dd08a6ecf",
+  "outputs": {},
+  "p3_headroom_gate_status": "NOT_EXECUTED",
+  "protocol_version": "5.0.0",
+  "reason": "Component inputs unavailable or invalid: complete gold must be a frozen family dataset or compiled split v2",
+  "reason_code": "INPUTS_UNAVAILABLE_OR_INVALID",
+  "schema_version": "protocol-v5-component-analysis-v1.0.0",
+  "status": "NOT_EXECUTED"
+}

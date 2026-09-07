@@ -1,0 +1,113 @@
+{
+  "catalog_probe_mismatches": [],
+  "catalog_version": "2026-08-06.1",
+  "label_operational_discrepancies": [
+    {
+      "case_id": "p2-minimum-eight-cpu-en",
+      "dimension_a_gold_match": false,
+      "dimension_a_preferred_match": false,
+      "dimension_b_catalog_satisfied": true,
+      "dimension_c_execution_coverage": true,
+      "dimension_c_functional_satisfied": true,
+      "dimension_c_status": "PASS",
+      "execution_status": "INCOMPLETE",
+      "failed_probes": [],
+      "family_id": "p2-minimum-eight-cpu",
+      "gold_acceptable_image_ids": [],
+      "gold_preferred_image_id": null,
+      "mismatch_types": [
+        "LABEL_FAIL_FUNCTIONAL_PASS"
+      ],
+      "missing_catalog_capabilities": [],
+      "predicted_image_id": "minimal-python",
+      "required_capabilities": [
+        "python"
+      ],
+      "schema_version": "protocol-v5-image-functional-evaluation-v1.1.0",
+      "system_id": "B0",
+      "unavailable_probes": [],
+      "variant_id": "diagnostic"
+    },
+    {
+      "case_id": "p2-required-rapids-unsupported-en",
+      "dimension_a_gold_match": false,
+      "dimension_a_preferred_match": false,
+      "dimension_b_catalog_satisfied": true,
+      "dimension_c_execution_coverage": true,
+      "dimension_c_functional_satisfied": true,
+      "dimension_c_status": "PASS",
+      "execution_status": "INCOMPLETE",
+      "failed_probes": [],
+      "family_id": "p2-required-rapids-unsupported",
+      "gold_acceptable_image_ids": [],
+      "gold_preferred_image_id": null,
+      "mismatch_types": [
+        "LABEL_FAIL_FUNCTIONAL_PASS"
+      ],
+      "missing_catalog_capabilities": [],
+      "predicted_image_id": "minimal-python",
+      "required_capabilities": [],
+      "schema_version": "protocol-v5-image-functional-evaluation-v1.1.0",
+      "system_id": "B0",
+      "unavailable_probes": [],
+      "variant_id": "diagnostic"
+    }
+  ],
+  "probe_summary": {
+    "probes_executed": 13,
+    "probes_failed": 0,
+    "probes_passed": 13,
+    "probes_unavailable": 4,
+    "total_probes_configured": 17
+  },
+  "schema_version": "protocol-v5-image-functional-metrics-v1.1.0",
+  "systems": {
+    "B0": {
+      "capability_unsatisfied_count": 0,
+      "catalog_capability_coverage_rate": 0.4444,
+      "catalog_capability_satisfied_count": 8,
+      "catalog_probe_mismatch_count": 0,
+      "conservative_functional_success_rate": 0.4444,
+      "execution_unavailable_count": 10,
+      "functional_executed_count": 8,
+      "functional_execution_coverage": 0.4444,
+      "functional_failed_count": 0,
+      "functional_passed_count": 8,
+      "functional_success_rate_among_executed": 1.0,
+      "functional_unavailable_count": 10,
+      "gold_acceptable_count": 6,
+      "gold_acceptable_rate": 0.3333,
+      "gold_preferred_count": 6,
+      "gold_preferred_rate": 0.3333,
+      "joint_gold_and_functional_rate": 0.75,
+      "label_fail_functional_pass_count": 2,
+      "label_pass_functional_fail_count": 0,
+      "system_id": "B0",
+      "total_recommendations": 18
+    },
+    "P2": {
+      "capability_unsatisfied_count": 0,
+      "catalog_capability_coverage_rate": 0.7778,
+      "catalog_capability_satisfied_count": 14,
+      "catalog_probe_mismatch_count": 0,
+      "conservative_functional_success_rate": 0.7778,
+      "execution_unavailable_count": 4,
+      "functional_executed_count": 14,
+      "functional_execution_coverage": 0.7778,
+      "functional_failed_count": 0,
+      "functional_passed_count": 14,
+      "functional_success_rate_among_executed": 1.0,
+      "functional_unavailable_count": 4,
+      "gold_acceptable_count": 14,
+      "gold_acceptable_rate": 0.7778,
+      "gold_preferred_count": 14,
+      "gold_preferred_rate": 0.7778,
+      "joint_gold_and_functional_rate": 1.0,
+      "label_fail_functional_pass_count": 0,
+      "label_pass_functional_fail_count": 0,
+      "system_id": "P2",
+      "total_recommendations": 18
+    }
+  },
+  "total_evaluations": 36
+}

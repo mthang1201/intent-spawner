@@ -1,0 +1,5 @@
+run,system,stage,recommendations,gold_image_matches,eligible_functional_cases,functional_passes,undefined_required_probe_cases,probe_passes,configured_probes
+e5-image-validation-20260905T040730Z,P1,development,18,13,16,16,2,17,17
+e5-image-validation-20260905T040730Z,P2,development,18,13,17,17,1,17,17
+e5-image-validation-20260905T071910Z,P1,development,18,13,16,16,2,17,17
+e5-image-validation-20260905T071910Z,P2,development,18,13,17,17,1,17,17

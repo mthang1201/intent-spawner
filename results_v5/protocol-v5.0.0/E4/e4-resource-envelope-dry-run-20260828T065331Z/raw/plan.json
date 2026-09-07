@@ -1,0 +1,111 @@
+{
+  "algorithm": {
+    "cpu_search": {
+      "memory_source": "selected_memory_upper_bound",
+      "repeats_per_probe": 2
+    },
+    "infrastructure_replacement_limit": 1,
+    "joint_verification_repeats": 5,
+    "memory_search": {
+      "fixed_cpu_m": 2000,
+      "repeats_per_probe": 2
+    },
+    "midpoint_rule": "floor((known_unsafe_index + known_safe_index) / 2)",
+    "reference": {
+      "cpu_m": 2000,
+      "memory_mib": 2048,
+      "repeats": 3
+    },
+    "version": "deterministic-discrete-bisection-v1"
+  },
+  "candidate_lattices": {
+    "cpu_m": [
+      100,
+      200,
+      300,
+      500,
+      750,
+      1000,
+      1500,
+      2000
+    ],
+    "memory_mib": [
+      64,
+      96,
+      128,
+      192,
+      256,
+      384,
+      512,
+      768,
+      1024,
+      1280,
+      1536,
+      1792,
+      2048
+    ]
+  },
+  "cluster_mutation": false,
+  "cpu_lattice_m": [
+    100,
+    200,
+    300,
+    500,
+    750,
+    1000,
+    1500,
+    2000
+  ],
+  "evidence_role": "confirmatory_reference",
+  "experiment_id": "E4",
+  "family_count": 16,
+  "family_ids": [
+    "streaming_statistics",
+    "relational_transform",
+    "hash_join",
+    "sort_group_reduction",
+    "categorical_encoding",
+    "iterative_linear_fit",
+    "dense_matrix_computation",
+    "sparse_graph_traversal",
+    "text_tfidf",
+    "json_normalization",
+    "image_convolution",
+    "compression_roundtrip",
+    "rolling_timeseries",
+    "monte_carlo",
+    "content_deduplication",
+    "bounded_producer_consumer"
+  ],
+  "master_seed": 20260828,
+  "maximum_primary_trials": 384,
+  "maximum_primary_trials_per_family": 24,
+  "measurement_status": "NOT_EXECUTED",
+  "memory_lattice_mib": [
+    64,
+    96,
+    128,
+    192,
+    256,
+    384,
+    512,
+    768,
+    1024,
+    1280,
+    1536,
+    1792,
+    2048
+  ],
+  "possible_replacement_trials": 384,
+  "protocol_version": "5.0.0",
+  "safe_rule": {
+    "individual_runtime_ratio_max": 1.5,
+    "infrastructure_replacements_per_trial": 1,
+    "joint_verification_repeats": 5,
+    "median_runtime_ratio_max": 1.25,
+    "probe_repeats": 2,
+    "reference_repeats": 3,
+    "required_joint_successes": 5
+  },
+  "schema_version": "protocol-v5-resource-calibration-plan-v1.0.0"
+}

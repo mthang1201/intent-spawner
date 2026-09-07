@@ -1,0 +1,262 @@
+{
+  "catalog_path": "recommender/image-catalog.yaml",
+  "catalog_sha256": "f45b04efc2ea6f271d49c6806b58bfc0f30503cb68944930609f6e0f71882a71",
+  "catalog_version": "2026-08-06.1",
+  "images": [
+    {
+      "documented_capabilities": [
+        "python",
+        "jupyterlab"
+      ],
+      "image_digest": "sha256:a153ceb6b41db4f86b7d7dc20c7b63d08e75e2038d5e8758b954fda50ed2e18d",
+      "image_id": "minimal-python",
+      "image_reference": "quay.io/jupyter/minimal-notebook@sha256:a153ceb6b41db4f86b7d7dc20c7b63d08e75e2038d5e8758b954fda50ed2e18d",
+      "probes": [
+        {
+          "capability": "python",
+          "cpu_limit": "1000m",
+          "description": "Python startup, standard library, and basic calculation",
+          "expected_metadata_keys": [
+            "python_version"
+          ],
+          "memory_limit": "1Gi",
+          "probe_id": "probe:minimal-python:python",
+          "script": "import sys, math, json, os\nassert math.sqrt(16.0) == 4.0\nassert json.loads(json.dumps({'k': 1}))['k'] == 1\nmeta = {'python_version': sys.version.split()[0]}\nprint('PROBE_META:' + json.dumps(meta))\n",
+          "timeout_seconds": 15.0
+        },
+        {
+          "capability": "jupyterlab",
+          "cpu_limit": "1000m",
+          "description": "JupyterLab library and version accessibility",
+          "expected_metadata_keys": [
+            "jupyterlab_version"
+          ],
+          "memory_limit": "1Gi",
+          "probe_id": "probe:minimal-python:jupyterlab",
+          "script": "import json, jupyterlab\nmeta = {'jupyterlab_version': str(getattr(jupyterlab, '__version__', 'unknown'))}\nprint('PROBE_META:' + json.dumps(meta))\n",
+          "timeout_seconds": 15.0
+        }
+      ]
+    },
+    {
+      "documented_capabilities": [
+        "pytorch",
+        "cuda-userspace",
+        "data-science"
+      ],
+      "image_digest": "sha256:69c72823a4e0dbee17114bbe44d0377bc9a39504a76f6314995f7d5bfaa98d60",
+      "image_id": "pytorch-deep-learning",
+      "image_reference": "quay.io/jupyter/pytorch-notebook@sha256:69c72823a4e0dbee17114bbe44d0377bc9a39504a76f6314995f7d5bfaa98d60",
+      "probes": [
+        {
+          "capability": "python",
+          "cpu_limit": "1000m",
+          "description": "Python startup, standard library, and basic calculation",
+          "expected_metadata_keys": [
+            "python_version"
+          ],
+          "memory_limit": "1Gi",
+          "probe_id": "probe:pytorch-deep-learning:python",
+          "script": "import sys, math, json, os\nassert math.sqrt(16.0) == 4.0\nassert json.loads(json.dumps({'k': 1}))['k'] == 1\nmeta = {'python_version': sys.version.split()[0]}\nprint('PROBE_META:' + json.dumps(meta))\n",
+          "timeout_seconds": 15.0
+        },
+        {
+          "capability": "pytorch",
+          "cpu_limit": "1000m",
+          "description": "PyTorch CPU tensor allocation, math, and verification",
+          "expected_metadata_keys": [
+            "torch_version"
+          ],
+          "memory_limit": "1Gi",
+          "probe_id": "probe:pytorch-deep-learning:pytorch",
+          "script": "import json, torch\nx = torch.tensor([1.0, 2.0, 3.0])\ny = x * 2.0\nassert y.tolist() == [2.0, 4.0, 6.0]\nmeta = {'torch_version': str(torch.__version__)}\nprint('PROBE_META:' + json.dumps(meta))\n",
+          "timeout_seconds": 15.0
+        },
+        {
+          "capability": "cuda-userspace",
+          "cpu_limit": "1000m",
+          "description": "CUDA user-space libraries query on CPU without crashing",
+          "expected_metadata_keys": [
+            "cuda_userspace_accessible"
+          ],
+          "memory_limit": "1Gi",
+          "probe_id": "probe:pytorch-deep-learning:cuda-userspace",
+          "script": "import json\ndetails = {'cuda_userspace_accessible': 'true'}\ntry:\n    import torch\n    details['torch_cuda_available'] = str(torch.cuda.is_available())\nexcept ImportError:\n    pass\ntry:\n    import tensorflow as tf\n    details['tf_cuda_built'] = str(tf.test.is_built_with_cuda())\nexcept (ImportError, AttributeError):\n    pass\nprint('PROBE_META:' + json.dumps(details))\n",
+          "timeout_seconds": 15.0
+        },
+        {
+          "capability": "data-science",
+          "cpu_limit": "1000m",
+          "description": "Combined data science tabular calculation",
+          "expected_metadata_keys": [
+            "data_science_stack"
+          ],
+          "memory_limit": "1Gi",
+          "probe_id": "probe:pytorch-deep-learning:data-science",
+          "script": "import json, numpy as np, pandas as pd\ndf = pd.DataFrame({'x': np.arange(5, dtype=float)})\nassert float(df['x'].mean()) == 2.0\nmeta = {'data_science_stack': 'ok'}\nprint('PROBE_META:' + json.dumps(meta))\n",
+          "timeout_seconds": 15.0
+        }
+      ]
+    },
+    {
+      "documented_capabilities": [
+        "numpy",
+        "pandas",
+        "scipy",
+        "scikit-learn",
+        "visualization"
+      ],
+      "image_digest": "sha256:1a91a693c8cb086f3607f2ed38a2743ecd53dd1dac2d3e84e6cd647b33fd2bba",
+      "image_id": "scipy-data-science",
+      "image_reference": "quay.io/jupyter/scipy-notebook@sha256:1a91a693c8cb086f3607f2ed38a2743ecd53dd1dac2d3e84e6cd647b33fd2bba",
+      "probes": [
+        {
+          "capability": "python",
+          "cpu_limit": "1000m",
+          "description": "Python startup, standard library, and basic calculation",
+          "expected_metadata_keys": [
+            "python_version"
+          ],
+          "memory_limit": "1Gi",
+          "probe_id": "probe:scipy-data-science:python",
+          "script": "import sys, math, json, os\nassert math.sqrt(16.0) == 4.0\nassert json.loads(json.dumps({'k': 1}))['k'] == 1\nmeta = {'python_version': sys.version.split()[0]}\nprint('PROBE_META:' + json.dumps(meta))\n",
+          "timeout_seconds": 15.0
+        },
+        {
+          "capability": "numpy",
+          "cpu_limit": "1000m",
+          "description": "NumPy import and vector math operation",
+          "expected_metadata_keys": [
+            "numpy_version"
+          ],
+          "memory_limit": "1Gi",
+          "probe_id": "probe:scipy-data-science:numpy",
+          "script": "import json, numpy as np\narr = np.arange(10, dtype=np.float64)\nassert np.isclose(arr.mean(), 4.5)\nmeta = {'numpy_version': str(np.__version__)}\nprint('PROBE_META:' + json.dumps(meta))\n",
+          "timeout_seconds": 15.0
+        },
+        {
+          "capability": "pandas",
+          "cpu_limit": "1000m",
+          "description": "Pandas DataFrame creation and column aggregation",
+          "expected_metadata_keys": [
+            "pandas_version"
+          ],
+          "memory_limit": "1Gi",
+          "probe_id": "probe:scipy-data-science:pandas",
+          "script": "import json, pandas as pd\ndf = pd.DataFrame({'a': [1, 2, 3], 'b': [4, 5, 6]})\nassert int(df['a'].sum()) == 6\nmeta = {'pandas_version': str(pd.__version__)}\nprint('PROBE_META:' + json.dumps(meta))\n",
+          "timeout_seconds": 15.0
+        },
+        {
+          "capability": "scipy",
+          "cpu_limit": "1000m",
+          "description": "SciPy linear algebra operation",
+          "expected_metadata_keys": [
+            "scipy_version"
+          ],
+          "memory_limit": "1Gi",
+          "probe_id": "probe:scipy-data-science:scipy",
+          "script": "import json, scipy, scipy.linalg\ninv = scipy.linalg.inv([[1.0, 0.0], [0.0, 1.0]])\nassert inv[0, 0] == 1.0\nmeta = {'scipy_version': str(scipy.__version__)}\nprint('PROBE_META:' + json.dumps(meta))\n",
+          "timeout_seconds": 15.0
+        },
+        {
+          "capability": "scikit-learn",
+          "cpu_limit": "1000m",
+          "description": "Scikit-Learn estimator fitting and prediction",
+          "expected_metadata_keys": [
+            "sklearn_version"
+          ],
+          "memory_limit": "1Gi",
+          "probe_id": "probe:scipy-data-science:scikit-learn",
+          "script": "import json, sklearn\nfrom sklearn.linear_model import Ridge\nmodel = Ridge().fit([[0.0], [1.0]], [0.0, 1.0])\npred = float(model.predict([[2.0]])[0])\nassert 1.0 <= pred <= 2.5\nmeta = {'sklearn_version': str(sklearn.__version__)}\nprint('PROBE_META:' + json.dumps(meta))\n",
+          "timeout_seconds": 15.0
+        },
+        {
+          "capability": "visualization",
+          "cpu_limit": "1000m",
+          "description": "Headless Matplotlib chart rendering and figure close",
+          "expected_metadata_keys": [
+            "matplotlib_version"
+          ],
+          "memory_limit": "1Gi",
+          "probe_id": "probe:scipy-data-science:visualization",
+          "script": "import json, matplotlib\nmatplotlib.use('Agg')\nimport matplotlib.pyplot as plt\nfig, ax = plt.subplots()\nax.plot([1, 2], [3, 4])\nplt.close(fig)\nmeta = {'matplotlib_version': str(matplotlib.__version__)}\nprint('PROBE_META:' + json.dumps(meta))\n",
+          "timeout_seconds": 15.0
+        }
+      ]
+    },
+    {
+      "documented_capabilities": [
+        "tensorflow",
+        "keras",
+        "cuda-userspace",
+        "data-science"
+      ],
+      "image_digest": "sha256:25ddc4f73bea5a252335775b59c0e1d4969bbf70ee78d3c6d1d9da02ce58fb68",
+      "image_id": "tensorflow-deep-learning",
+      "image_reference": "quay.io/jupyter/tensorflow-notebook@sha256:25ddc4f73bea5a252335775b59c0e1d4969bbf70ee78d3c6d1d9da02ce58fb68",
+      "probes": [
+        {
+          "capability": "python",
+          "cpu_limit": "1000m",
+          "description": "Python startup, standard library, and basic calculation",
+          "expected_metadata_keys": [
+            "python_version"
+          ],
+          "memory_limit": "1Gi",
+          "probe_id": "probe:tensorflow-deep-learning:python",
+          "script": "import sys, math, json, os\nassert math.sqrt(16.0) == 4.0\nassert json.loads(json.dumps({'k': 1}))['k'] == 1\nmeta = {'python_version': sys.version.split()[0]}\nprint('PROBE_META:' + json.dumps(meta))\n",
+          "timeout_seconds": 15.0
+        },
+        {
+          "capability": "tensorflow",
+          "cpu_limit": "1000m",
+          "description": "TensorFlow CPU constant tensor addition",
+          "expected_metadata_keys": [
+            "tensorflow_version"
+          ],
+          "memory_limit": "1Gi",
+          "probe_id": "probe:tensorflow-deep-learning:tensorflow",
+          "script": "import os, json\nos.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'\nimport tensorflow as tf\na = tf.constant([1.0, 2.0])\nb = a + a\nassert b.numpy().tolist() == [2.0, 4.0]\nmeta = {'tensorflow_version': str(tf.__version__)}\nprint('PROBE_META:' + json.dumps(meta))\n",
+          "timeout_seconds": 15.0
+        },
+        {
+          "capability": "keras",
+          "cpu_limit": "1000m",
+          "description": "Keras package accessibility and version query",
+          "expected_metadata_keys": [
+            "keras_version"
+          ],
+          "memory_limit": "1Gi",
+          "probe_id": "probe:tensorflow-deep-learning:keras",
+          "script": "import json\ntry:\n    import keras\n    v = keras.__version__\nexcept ImportError:\n    from tensorflow import keras\n    v = keras.__version__\nmeta = {'keras_version': str(v)}\nprint('PROBE_META:' + json.dumps(meta))\n",
+          "timeout_seconds": 15.0
+        },
+        {
+          "capability": "cuda-userspace",
+          "cpu_limit": "1000m",
+          "description": "CUDA user-space libraries query on CPU without crashing",
+          "expected_metadata_keys": [
+            "cuda_userspace_accessible"
+          ],
+          "memory_limit": "1Gi",
+          "probe_id": "probe:tensorflow-deep-learning:cuda-userspace",
+          "script": "import json\ndetails = {'cuda_userspace_accessible': 'true'}\ntry:\n    import torch\n    details['torch_cuda_available'] = str(torch.cuda.is_available())\nexcept ImportError:\n    pass\ntry:\n    import tensorflow as tf\n    details['tf_cuda_built'] = str(tf.test.is_built_with_cuda())\nexcept (ImportError, AttributeError):\n    pass\nprint('PROBE_META:' + json.dumps(details))\n",
+          "timeout_seconds": 15.0
+        },
+        {
+          "capability": "data-science",
+          "cpu_limit": "1000m",
+          "description": "Combined data science tabular calculation",
+          "expected_metadata_keys": [
+            "data_science_stack"
+          ],
+          "memory_limit": "1Gi",
+          "probe_id": "probe:tensorflow-deep-learning:data-science",
+          "script": "import json, numpy as np, pandas as pd\ndf = pd.DataFrame({'x': np.arange(5, dtype=float)})\nassert float(df['x'].mean()) == 2.0\nmeta = {'data_science_stack': 'ok'}\nprint('PROBE_META:' + json.dumps(meta))\n",
+          "timeout_seconds": 15.0
+        }
+      ]
+    }
+  ],
+  "schema_version": "protocol-v5-image-probe-manifest-v1.1.0"
+}

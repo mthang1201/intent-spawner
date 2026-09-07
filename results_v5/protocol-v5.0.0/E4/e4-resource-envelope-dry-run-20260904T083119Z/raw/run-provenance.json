@@ -1,0 +1,154 @@
+{
+  "adapter_version": "dry-run-adapter-v1",
+  "calibration_independence": {
+    "pressure_padding_used": false,
+    "profile_labels_used": false,
+    "recommendation_backends_called": false,
+    "recommendation_outputs_used": false,
+    "static_guard": {
+      "files_scanned": 12,
+      "recommender_imports": 0,
+      "scanned_files": [
+        "cluster_evaluation/resource_adapter_v5.py",
+        "evaluation_v5/resource/__init__.py",
+        "evaluation_v5/resource/__main__.py",
+        "evaluation_v5/resource/contracts.py",
+        "evaluation_v5/resource/derive.py",
+        "evaluation_v5/resource/evidence.py",
+        "evaluation_v5/resource/manifest.py",
+        "evaluation_v5/resource/models.py",
+        "evaluation_v5/resource/planner.py",
+        "evaluation_v5/resource/pod_runner.py",
+        "evaluation_v5/resource/runner.py",
+        "evaluation_v5/resource/workloads.py"
+      ],
+      "status": "pass"
+    }
+  },
+  "collection_status": "INCOMPLETE_UNTIL_ROOT_MANIFEST_AND_REVIEW",
+  "comparison_provenance": {
+    "candidate_catalog": {
+      "candidate_count": 12,
+      "corpus_sha256": "987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444",
+      "corpus_version": "environment-candidate-corpus-v1",
+      "file_sha256": "f45b04efc2ea6f271d49c6806b58bfc0f30503cb68944930609f6e0f71882a71",
+      "path": "recommender/image-catalog.yaml",
+      "version": "2026-08-06.1"
+    },
+    "freeze_path": "results_v5/protocol-v5.0.0/freezes/frozen-configuration.json",
+    "freeze_sha256": "f24559bd5f60f5fffffb51152ba2e46ff7e55794c774daeed5e156e004d5b6bd",
+    "indexes": {
+      "dense": {
+        "catalog_version": "2026-08-06.1",
+        "corpus_checksum": "987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444",
+        "dimensions": 384,
+        "index_checksum": "c0561bcd1ee6ec5153b710aef3deae88bd259a011ddd454513cbb1c675118387",
+        "index_version": "environment-dense-index-v1",
+        "model_id": "intent-spawner-local-feature-hash",
+        "model_revision": "feature-hash-embedding-v1.0.0",
+        "normalization": "l2",
+        "query_representation_version": "dense-query-representation-v1",
+        "retriever_version": "cosine-dense-retriever-v1",
+        "schema_version": "dense-embedding-index-v1"
+      },
+      "hybrid": {
+        "catalog_version": "2026-08-06.1",
+        "corpus_checksum": "987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444",
+        "corpus_version": "environment-candidate-corpus-v1",
+        "dense_index_version": "environment-dense-index-v1",
+        "dense_retriever_version": "cosine-dense-retriever-v1",
+        "dense_top_k": 10,
+        "dense_weight": 1.0,
+        "index_checksum": "45ea08f29492d796189920713636b3a9cae2f0fb264e023124eb38c8cfad83a4",
+        "index_version": "environment-hybrid-index-v1",
+        "retriever_version": "reciprocal-rank-fusion-hybrid-retriever-v1",
+        "rrf_k": 60.0,
+        "schema_version": "hybrid-retrieval-metadata-v1",
+        "sparse_index_version": "environment-sparse-index-v1",
+        "sparse_retriever_version": "bm25-okapi-retriever-v1",
+        "sparse_top_k": 10,
+        "sparse_weight": 1.0,
+        "top_k": 10
+      },
+      "source": "administrator_catalog_only",
+      "sparse": {
+        "b": 0.75,
+        "catalog_version": "2026-08-06.1",
+        "corpus_checksum": "987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444",
+        "corpus_version": "environment-candidate-corpus-v1",
+        "index_checksum": "931fac84b818cb934a37bfbfa76092a89626cd5eaffc869887de8558bc6fa747",
+        "index_version": "environment-sparse-index-v1",
+        "k1": 1.5,
+        "retriever_version": "bm25-okapi-retriever-v1",
+        "schema_version": "sparse-retrieval-index-v1",
+        "tokenizer_version": "unicode-alphanumeric-tokenizer-v1"
+      }
+    },
+    "p3_gate": {
+      "p3_active": false,
+      "status": "not_retained"
+    },
+    "role": "comparison_provenance_only_not_calibration_input",
+    "systems": {
+      "P1": {
+        "backend_version": "rule-based-v1"
+      },
+      "P2": {
+        "backend_version": "p2-hybrid-v1.0.0",
+        "pipeline_version": "p2-pipeline-v1.0.0"
+      }
+    }
+  },
+  "container_image": "example.invalid/intent-spawner-resource-v5@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "created_at_utc": "2026-09-04T08:31:24.700355Z",
+  "experiment_id": "E4",
+  "frozen_contracts": {
+    "allocation_comparison": {
+      "crosswalk_path": "benchmarks_v5/resource-allocation-crosswalk-v1.yaml",
+      "crosswalk_sha256": "d585a6626afd66eecce65b2489fc6c7cdabf7193635ae6c52f32f33bf3533f2c",
+      "schema_path": "benchmarks_v5/protocol-v5-resource-allocation-comparison-v1.schema.json",
+      "schema_sha256": "0466fbf3742d3b48a249fd29726d9e698a421d3d3b421a06ec2377b74685d4f3",
+      "version": "protocol-v5-resource-allocation-comparison-v1.0.0"
+    },
+    "cluster_eligibility": {
+      "path": "benchmarks_v5/resource-envelope-cluster-eligibility-v1.yaml",
+      "schema_version": "protocol-v5-resource-cluster-eligibility-v1.1.0",
+      "sha256": "8d12fed8b50de92278f18dd1e7a242931e32e9162326c88e7105a51b49c59af8"
+    },
+    "freeze_contract": {
+      "path": "benchmarks_v5/resource-envelope-freeze-contract-v1.yaml",
+      "schema_version": "protocol-v5-resource-freeze-contract-v1.0.0",
+      "sha256": "3395f25e5a3e425a368f5706a24a3bca821ecf8da0c5011d6a64b50872d4fa14",
+      "status": "NOT_FROZEN"
+    },
+    "image_state": {
+      "path": "cluster_evaluation/resource-v5-image-state.yaml",
+      "schema_version": "protocol-v5-resource-image-state-v1.0.0",
+      "sha256": "4600f45aa83862475f409722ff31c6e9a10404eadaafcdc20f729c5f986f2a1f",
+      "status": "NOT_BUILT_OR_VERIFIED"
+    },
+    "semantic_independence": {
+      "path": "benchmarks_v5/resource-envelope-semantic-independence-v1.yaml",
+      "schema_version": "protocol-v5-resource-semantic-independence-v1.0.0",
+      "sha256": "389e129642a593367d517ae772e51b17d0e33d17fc365e69514dbe29e8d26f60"
+    }
+  },
+  "git_dirty": false,
+  "git_revision": "f3dba9391970ea1a6324589337847e5cefbe1c34",
+  "plan_fingerprint": "dd89299110b95b9ff4558b56184a09c321b4b99688f9490f5e7b0d177dea5a9b",
+  "protocol_version": "5.0.0",
+  "run_id": "e4-resource-envelope-dry-run-20260904T083119Z",
+  "runner_version": "protocol-v5-resource-calibration-runner-v1.2.0",
+  "safe_rule": {
+    "reference_stability_rule_version": "max-relative-spread-v1.0.0",
+    "trial_observation_schema_version": "protocol-v5-resource-trial-v1.1.0",
+    "version": "protocol-v5-resource-safe-rule-v1.2.0"
+  },
+  "schema_version": "protocol-v5-resource-run-provenance-v1.0.0",
+  "workload_manifest": {
+    "family_count": 16,
+    "path": "benchmarks_v5/resource-envelope-workloads-v1.yaml",
+    "schema_version": "protocol-v5-resource-workloads-v1.1.0",
+    "sha256": "85221bce48b42e0c9421d463503843b530117781db2e5a58a2c332f1adb7e98f"
+  }
+}

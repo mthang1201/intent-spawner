@@ -1,0 +1,70 @@
+[
+  {
+    "configured_probes": 17,
+    "eligible_functional_cases": 16,
+    "functional_passes": 16,
+    "gold_image_matches": 13,
+    "probe_passes": 17,
+    "recommendations": 18,
+    "run": "e5-image-validation-20260905T040730Z",
+    "source": {
+      "locator": "",
+      "path": "results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T040730Z/derived/functional_metrics.json",
+      "sha256": "ca2ac88bf9d89e94c7df8b472e284652bacd662e612607730371e7c7921dafea"
+    },
+    "stage": "development",
+    "system": "P1",
+    "undefined_required_probe_cases": 2
+  },
+  {
+    "configured_probes": 17,
+    "eligible_functional_cases": 17,
+    "functional_passes": 17,
+    "gold_image_matches": 13,
+    "probe_passes": 17,
+    "recommendations": 18,
+    "run": "e5-image-validation-20260905T040730Z",
+    "source": {
+      "locator": "",
+      "path": "results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T040730Z/derived/functional_metrics.json",
+      "sha256": "ca2ac88bf9d89e94c7df8b472e284652bacd662e612607730371e7c7921dafea"
+    },
+    "stage": "development",
+    "system": "P2",
+    "undefined_required_probe_cases": 1
+  },
+  {
+    "configured_probes": 17,
+    "eligible_functional_cases": 16,
+    "functional_passes": 16,
+    "gold_image_matches": 13,
+    "probe_passes": 17,
+    "recommendations": 18,
+    "run": "e5-image-validation-20260905T071910Z",
+    "source": {
+      "locator": "",
+      "path": "results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T071910Z/derived/functional_metrics.json",
+      "sha256": "ca2ac88bf9d89e94c7df8b472e284652bacd662e612607730371e7c7921dafea"
+    },
+    "stage": "development",
+    "system": "P1",
+    "undefined_required_probe_cases": 2
+  },
+  {
+    "configured_probes": 17,
+    "eligible_functional_cases": 17,
+    "functional_passes": 17,
+    "gold_image_matches": 13,
+    "probe_passes": 17,
+    "recommendations": 18,
+    "run": "e5-image-validation-20260905T071910Z",
+    "source": {
+      "locator": "",
+      "path": "results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T071910Z/derived/functional_metrics.json",
+      "sha256": "ca2ac88bf9d89e94c7df8b472e284652bacd662e612607730371e7c7921dafea"
+    },
+    "stage": "development",
+    "system": "P2",
+    "undefined_required_probe_cases": 1
+  }
+]

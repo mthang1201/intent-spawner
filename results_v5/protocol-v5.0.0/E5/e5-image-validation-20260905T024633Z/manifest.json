@@ -1,0 +1,82 @@
+{
+  "backend_system_versions": {
+    "B0": "jupyterhub-default-selection",
+    "P1": "rule-based-v1",
+    "P2": "p2-pipeline-v1.0.0"
+  },
+  "candidate_catalog": {
+    "catalog_sha256": "f45b04efc2ea6f271d49c6806b58bfc0f30503cb68944930609f6e0f71882a71",
+    "catalog_version": "2026-08-06.1",
+    "corpus_sha256": "987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444",
+    "corpus_version": "environment-candidate-corpus-v1"
+  },
+  "constraint_ranking_configuration": {
+    "evaluator_version": "p2-deterministic-constraint-evaluator-v1.0.0",
+    "policy_version": "p2-constraint-policy-v1.0.0",
+    "ranker_version": "p2-deterministic-ranker-v1.0.0",
+    "retrieval_rank_weight": 0.75,
+    "soft_preference_weight": 0.25
+  },
+  "dataset_identity": {
+    "dataset_id": "protocol-v5-development-2026-08-22",
+    "dataset_sha256": "e3fff5167ef2194fb365fec7510d1efc2b17a18b13182063c2b63c26f021d3cd"
+  },
+  "embedding_indexes": {
+    "dense_index_sha256": "c0561bcd1ee6ec5153b710aef3deae88bd259a011ddd454513cbb1c675118387",
+    "dense_index_version": "environment-dense-index-v1",
+    "embedding_model_id": "intent-spawner-local-feature-hash",
+    "embedding_model_revision": "feature-hash-embedding-v1.0.0",
+    "hybrid_index_sha256": "45ea08f29492d796189920713636b3a9cae2f0fb264e023124eb38c8cfad83a4",
+    "hybrid_index_version": "environment-hybrid-index-v1",
+    "sparse_index_sha256": "931fac84b818cb934a37bfbfa76092a89626cd5eaffc869887de8558bc6fa747",
+    "sparse_index_version": "environment-sparse-index-v1"
+  },
+  "environment_identity": {
+    "environment_id": "e5-docker-darwin",
+    "execution_mode": "docker",
+    "git_info": {
+      "git_dirty": false,
+      "git_revision": "fbf91ee65f1623102970e7863226baf0c8a27b0b"
+    },
+    "platform": "macOS-15.3.2-arm64-arm-64bit-Mach-O",
+    "python_version": "3.14.6 (main, Jun 10 2026, 10:03:53) [Clang 17.0.0 (clang-1700.6.4.2)]",
+    "recommendations_input_path": "results_v5/protocol-v5.0.0/E1/20260825T-observed-p1-p2-development-v1/raw/recommendations.jsonl",
+    "recommendations_input_sha256": "25868752054231fa271e540210aad0845113ba3974722376029b18184959daf8",
+    "runtime_detected": "docker"
+  },
+  "execution_status": "OBSERVED",
+  "execution_timestamp_utc": "2026-09-05T02:46:52.290403Z",
+  "experiment_id": "E5",
+  "extractor": {
+    "extractor_model_id": "intent-spawner-local-rule-hash",
+    "extractor_name": "intent-spawner-local-feature-extractor",
+    "extractor_prompt_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "extractor_prompt_version": "prompt-v1.0.0",
+    "extractor_version": "feature-extractor-v1.0.0"
+  },
+  "git_revision": "fbf91ee65f1623102970e7863226baf0c8a27b0b",
+  "p3_reranker_version": null,
+  "protocol_version": "5.0.0",
+  "random_seeds": [
+    42
+  ],
+  "retrieval_configuration": {
+    "config_version": "p2-config-v1.0.0",
+    "dense_top_k": 10,
+    "dense_weight": 1.0,
+    "extractor_mode": "local",
+    "max_concurrent_recommendations": 4,
+    "rrf_k": 60.0,
+    "sparse_top_k": 10,
+    "sparse_weight": 1.0,
+    "top_k": 10,
+    "total_timeout": 30.0
+  },
+  "run_id": "e5-image-validation-20260905T024633Z",
+  "schema_version": "protocol-v5-manifest-v1.0.0",
+  "split_identity": {
+    "split_id": "v5-development",
+    "stage": "development"
+  },
+  "structured_intent_schema_version": "protocol-v5-structured-intent-v1.0.0"
+}

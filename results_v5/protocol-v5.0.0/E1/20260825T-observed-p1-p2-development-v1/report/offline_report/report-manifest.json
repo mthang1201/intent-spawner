@@ -1,0 +1,11 @@
+{
+  "claims_permitted": false,
+  "created_at_utc": "2026-08-25T06:56:39Z",
+  "git_revision": "6726e48fe48b1614f661cbe1e7ec354dd08a6ecf",
+  "outputs": {},
+  "protocol_version": "5.0.0",
+  "reason": "Real P1/P2 recommendation run executed on development split; full component scoring and statistical analysis require compiled v2 gold labels or sealed confirmatory dataset.",
+  "reason_code": "INPUTS_NOT_SUPPLIED",
+  "schema_version": "protocol-v5-offline-reporting-v1.0.0",
+  "status": "NOT_EXECUTED"
+}

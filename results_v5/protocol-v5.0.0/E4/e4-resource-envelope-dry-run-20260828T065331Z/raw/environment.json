@@ -1,0 +1,14 @@
+{
+  "captured_at_utc": "2026-08-28T06:53:33.751548Z",
+  "cgroup_measurements": null,
+  "cluster_measurement_status": "NOT_EXECUTED",
+  "environment_id": "local-dry-run-no-cluster-measurement",
+  "hardware_measurements": null,
+  "kubernetes_mutations": [],
+  "platform": "darwin",
+  "platform_release": "24.3.0",
+  "python_version": "3.14.6",
+  "reason": "Current context is not the required disposable intent-spawner-eval-v5 cluster.",
+  "reason_code": "KUBERNETES_PRECONDITION_UNAVAILABLE",
+  "schema_version": "protocol-v5-resource-environment-v1.0.0"
+}

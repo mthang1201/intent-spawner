@@ -1,0 +1,11 @@
+{
+  "execution_mode": "dry_run",
+  "probes_passed": 0,
+  "run_id": "e5-image-validation-20260905T015905Z",
+  "schema_version": "protocol-v5-image-validation-run-v1.0.0",
+  "status": "DRY_RUN",
+  "timestamp_utc": "2026-09-05T01:59:05.876957Z",
+  "total_evaluations": 36,
+  "total_images": 4,
+  "total_probes": 17
+}

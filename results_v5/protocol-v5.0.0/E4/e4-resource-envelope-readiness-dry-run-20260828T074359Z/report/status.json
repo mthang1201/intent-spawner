@@ -1,0 +1,38 @@
+{
+  "cluster_eligibility_status": "CLUSTER_INELIGIBLE",
+  "cluster_measurement_status": "NOT_EXECUTED",
+  "derived_envelopes": 0,
+  "executed_trials": 0,
+  "image_state": {
+    "built": false,
+    "declared_state_status": "NOT_BUILT_OR_VERIFIED",
+    "digest_syntactically_pinned": true,
+    "digest_verified": false,
+    "operationally_verified": false,
+    "pre_pulled_on_eligible_node": false,
+    "reference_configured": true,
+    "resolved_digest": null
+  },
+  "limitations": [
+    "No Kubernetes workload was executed.",
+    "No CPU, memory, runtime, OOM, hardware, or cgroup value was observed.",
+    "This package validates planning and provenance only and supports no empirical claim."
+  ],
+  "manual_review_status": "NOT_APPLICABLE",
+  "observed_execution_blockers": [
+    "CGROUP_V2_REQUIRED",
+    "CLUSTER_INELIGIBLE",
+    "CONFIRMATORY_FREEZE_NOT_ACTIVE",
+    "DIRTY_GIT_TREE",
+    "IMAGE_DIGEST_UNVERIFIED",
+    "KUBERNETES_VERSION_UNAVAILABLE",
+    "REQUIRED_API_ACCESS_MISSING",
+    "WRONG_CLUSTER_FINGERPRINT",
+    "WRONG_KUBERNETES_CONTEXT",
+    "WRONG_NODE_COUNT"
+  ],
+  "observed_execution_readiness": "BLOCKED",
+  "planned_families": 16,
+  "reason": "Current orbstack context is not the frozen disposable Protocol-v5 E4 cluster; image and confirmatory freeze are not operationally verified.",
+  "status": "DRY_RUN"
+}

@@ -1,1 +1,4 @@
 *.csv text eol=lf
+
+# Evidence checksums bind exact bytes; never normalize the reviewed portable core.
+results_v5/protocol-v5.0.0/** -text

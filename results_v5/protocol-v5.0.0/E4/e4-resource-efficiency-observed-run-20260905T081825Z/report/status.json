@@ -1,0 +1,19 @@
+{
+  "blocker_codes": [
+    "APPROVED_ORACLE_UNAVAILABLE",
+    "CGROUP_V2_REQUIRED",
+    "CLUSTER_INELIGIBLE",
+    "CONFIRMATORY_FREEZE_INACTIVE",
+    "IMAGE_DIGEST_UNVERIFIED",
+    "KUBERNETES_VERSION_UNAVAILABLE",
+    "NODE_CAPACITY_NOT_FROZEN",
+    "REQUIRED_API_ACCESS_MISSING",
+    "WRONG_CLUSTER_FINGERPRINT",
+    "WRONG_KUBERNETES_CONTEXT",
+    "WRONG_NODE_COUNT"
+  ],
+  "empirical_claims_permitted": false,
+  "executed_trials": 0,
+  "reason": "Confirmatory freeze, approved oracle, verified image, and frozen node capacity are unavailable.",
+  "status": "NOT_EXECUTED"
+}

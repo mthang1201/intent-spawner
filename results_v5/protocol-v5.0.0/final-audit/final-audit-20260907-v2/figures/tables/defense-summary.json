@@ -1,0 +1,51 @@
+[
+  [
+    "satisfaction",
+    "E3",
+    "SEQ ease; SUS usability",
+    "NOT EXECUTED",
+    "results_v5/protocol-v5.0.0/E3/b0-p2-user-study-readiness/report/status.json /execution_status SHA-256 de94e53ae14942647411e1e9033dbc9d1ca0b6880e38c7cc5c33e39dc2fb08e2"
+  ],
+  [
+    "time saving",
+    "E3",
+    "Paired decision time",
+    "NOT EXECUTED",
+    "results_v5/protocol-v5.0.0/E3/b0-p2-user-study-readiness/report/status.json /execution_status SHA-256 de94e53ae14942647411e1e9033dbc9d1ca0b6880e38c7cc5c33e39dc2fb08e2"
+  ],
+  [
+    "correct image",
+    "E5 functional",
+    "Gold image match; required functional probes",
+    "e5-image-validation-20260905T040730Z: P1 13/18 image-label matches; e5-image-validation-20260905T040730Z: P2 13/18 image-label matches; e5-image-validation-20260905T071910Z: P1 13/18 image-label matches; e5-image-validation-20260905T071910Z: P2 13/18 image-label matches; development only; provenance limitations apply",
+    "results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T040730Z/derived/functional_metrics.json /systems SHA-256 ca2ac88bf9d89e94c7df8b472e284652bacd662e612607730371e7c7921dafea; results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T071910Z/derived/functional_metrics.json /systems SHA-256 ca2ac88bf9d89e94c7df8b472e284652bacd662e612607730371e7c7921dafea"
+  ],
+  [
+    "image storage reuse",
+    "E5 storage",
+    "LogicalImageBytes; UniqueLayerBytes; marginal reuse",
+    "NOT EXECUTED",
+    "benchmarks_v5/protocol-v5-final-audit-inputs-v1.json  SHA-256 8898df1187694e6a3e185d7ba23b253c23377ef2f05aba2f69378f3c1bf70f62"
+  ],
+  [
+    "additional/fine-grained profiles",
+    "E4",
+    "Dynamic CPU/memory oracle error; allocation coverage",
+    "NOT EXECUTED",
+    "results_v5/protocol-v5.0.0/E4/e4-resource-efficiency-plan-20260905T082000Z/plan.json /primary_trial_count SHA-256 5260288122847397f2ec7d1db80f20044be2a7fa39e8dab7a885847e38d6db81"
+  ],
+  [
+    "resource saving",
+    "E4",
+    "CPU/memory request cost per successful workload; reliability",
+    "NOT EXECUTED",
+    "results_v5/protocol-v5.0.0/E4/e4-resource-efficiency-plan-20260905T082000Z/plan.json /primary_trial_count SHA-256 5260288122847397f2ec7d1db80f20044be2a7fa39e8dab7a885847e38d6db81"
+  ],
+  [
+    "flexible natural-language interaction",
+    "E2",
+    "Family-level robustness across equivalent variants",
+    "NOT EXECUTED",
+    "results_v5/protocol-v5.0.0/E1/20260825T-observed-p1-p2-development-v1/derived/statistical_analysis/analysis-manifest.json /status SHA-256 772422aa46e8ae19ffb77cc1c0f395fca4e26919a21e78417603dd35c6c81e93"
+  ]
+]

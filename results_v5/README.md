@@ -1,76 +1,49 @@
-# Protocol-v5 results
+# Protocol-v5 evidence and reproducibility
 
-No Protocol-v5 experiment has been executed in this package.
+The authoritative current evidence boundary is documented in
+[the final report](../docs/evaluation/PROTOCOL_V5_FINAL_REPORT.md).
 
-The E3 B0-versus-P2 human-study protocol, deterministic assignment tooling,
-content-free event and questionnaire instrumentation, session validation,
-participant/task-aware analysis, aggregate tables and figures, provenance,
-and report privacy audit are implemented, but no participant session has been
-collected. The checked-in task bundle is a development-only draft requiring
-independent review; synthetic event and questionnaire streams exist only in
-tests and the temporary dry-run smoke harness. E3 therefore remains explicitly
-`NOT_EXECUTED`, and no accuracy, time, effort, preference, ease, confidence, or
-usability claim is available.
+The reviewed portable core preserves 34 existing packages byte-for-byte,
+including invalid, legacy, incomplete and unexecuted evidence. Its exact file
+allowlist and checksums are in
+[the input inventory](../benchmarks_v5/protocol-v5-final-audit-inputs-v1.json).
+An inventory digest identifies the bytes audited; it does not repair a broken
+original checksum, establish a final freeze, or certify an observation.
 
-The real study-adapter interaction path is exercised only by a deterministic
-researcher/CI smoke test using synthetic actions, closed synthetic responses, a
-generated pseudonym, fake clocks, and temporary `DRY_RUN` finalization. This is
-framework verification, not participant or Kubernetes evidence, and creates no
-tracked E3 result.
+Available observations are development-only E1 recommendation outputs and E5
+container functional probes. Complete E1/E2 statistical analyses, real E3 human
+sessions, E4 hardware trials, E5 storage measurements and v5 confirmation are
+**NOT EXECUTED**. P2 remains primary and P3 is not retained. The file
+`freezes/frozen-configuration.json` is a design/configuration snapshot, not an
+authoritative production freeze.
 
-The E4 independent resource-envelope harness contains sixteen bounded
-synthetic workload families, deterministic discrete CPU/memory calibration,
-cgroup-v2 provenance, raw-evidence validation, interval-censored derivation,
-and manual-review gating. The E4 comparative resource efficiency harness binds
-those 16 families to STATIC_LARGE, P1_CATALOG, P2_CATALOG, and P2_DYNAMIC
-conditions across 10 repetitions (640 primary trials). Generated local E4 packages
-remain explicitly `NOT_EXECUTED` (or `DRY_RUN`) because the required disposable
-`intent-spawner-eval-v5` cluster context, dedicated labeled node, verified image digest,
-confirmatory freeze, approved oracle, and frozen node capacity are unavailable.
-They contain no fabricated CPU, memory, runtime, OOM, hardware, or cgroup observations;
-see `docs/evaluation/PROTOCOL_V5_E4_OBSERVED_EXECUTION_REPORT.md`.
+Run the complete offline workflow from the repository root:
 
-
-The P2/P3 component-scoring and family-level statistical harnesses are
-implemented, but complete Prompt-3 gold and Prompt-5 raw evidence are not
-tracked. Their empirical status therefore remains explicitly `NOT_EXECUTED`;
-see `docs/evaluation/PROTOCOL_V5_COMPONENT_SCORING.md` and
-`docs/evaluation/PROTOCOL_V5_STATISTICAL_ANALYSIS.md`. Synthetic tests validate
-the harnesses and their failure modes but are not observed thesis evidence.
-
-In particular, no Protocol-v5 accuracy, robustness, retrieval, latency,
-confidence interval, effect-size, p-value, or significance result is currently
-available. The statistical harness treats workload family as the independent
-unit and never promotes variants or repeated model calls into additional
-accuracy samples.
-
-P3 records, if later present, do not by themselves authorize P2-versus-P3
-inference. Ordinary paired P3 inference requires the authoritative frozen gate
-to say `retained`; `not_retained` P3 remains descriptive only. Because the
-implemented P3 reranker inherits the internal P2 retrieval result, the
-statistical package labels that retrieval provenance as shared and never tests
-P2 against P3 on retrieval endpoints.
-
-Future runs use this immutable convention:
-
-```text
-results_v5/
-  protocol-v5.0.0/
-    E1|E2|E3|E4|E5|E6/
-      <run-id>/
-        manifest.json
-        raw/
-        derived/
-        report/
+```bash
+make v5-audit
 ```
 
-Raw observations are preserved separately from derived metrics and narrative
-reports. Run directories and provenance files are exclusive-created. The only
-overwrite escape hatch is an explicit development override for non-observed
-development work; it is prohibited for confirmatory and `OBSERVED` packages.
-`SHA256SUMS`, exclusive creation, and resume refusal after sealing provide
-application-level immutability; an ignored local directory is not durable or
-externally immutable storage. Approved observed E4 packages must be copied
-byte-for-byte to the thesis evidence archive with its checksum manifest and a
-recorded retention/object-lock receipt. Local dry runs are planning evidence
-only and are not promoted into that archive as hardware observations.
+It writes all findings and the final report before returning nonzero for
+integrity errors. The current preserved defects intentionally produce exit 2.
+A valid `NOT_EXECUTED` state alone is not a command failure. No command collects
+new predictions, participant responses, registry data or Kubernetes metrics.
+
+For separate stages, export one unique `V5_RUN_ID`, then run `make v5-validate`,
+`make v5-analyze`, `make v5-figures`, and `make v5-audit`. All stage outputs live
+under `protocol-v5.0.0/final-audit/<run-id>/` and are exclusive-created and
+sealed. Completed stages may only be reused with identical code and inputs;
+changed runs need a new ID. Source observations are never overwritten.
+
+Git exceptions enumerate only reviewed files. New evidence stays ignored until
+separately reviewed and enrolled. Git attributes disable byte normalization in
+this namespace so checksums survive checkout. Human-study raw files currently
+contain no participant observations. The legacy path relocation map identifies
+old absolute references by SHA-256 of the reference string and resolves only
+explicit, checksum-matching repository inputs; it never reads an external
+custodian path.
+
+The observed evidence's own timestamp, protocol, dataset checksum, backend,
+catalog/index and environment metadata remain in its original manifests. Audit
+runs independently record their source inventory, code hashes, Git revision,
+Python and dependency versions. Application-level sealing is not external
+object-lock storage or proof against deliberate tampering.

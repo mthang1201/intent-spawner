@@ -1,0 +1,1913 @@
+{
+  "candidate_count": 17,
+  "candidates": [
+    {
+      "artifacts": [
+        {
+          "package_relative_path": "manifest.json",
+          "path": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T015905Z/manifest.json",
+          "sha256": "82bdda5fa5e42397aa189623480a9b82e849b8d406ccd97d7d929ef54beff937"
+        },
+        {
+          "package_relative_path": "derived/functional_metrics.json",
+          "path": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T015905Z/derived/functional_metrics.json",
+          "sha256": "29799f0dee97840920e50598324f58d7e0986453248ecb8a402ef830e4d0dd6a"
+        },
+        {
+          "package_relative_path": "raw/probe_manifest.json",
+          "path": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T015905Z/raw/probe_manifest.json",
+          "sha256": "7780cd761d8edd41254ac7ba9bbcdca97ba1c492e00ad73efecf4d46ac071f0b"
+        },
+        {
+          "package_relative_path": "report/status.json",
+          "path": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T015905Z/report/status.json",
+          "sha256": "b3a0a7375dd8f2661fa5569ebdb33e60b9d830806738d38b5cec5987ee23b08e"
+        }
+      ],
+      "claim_eligibility": "INELIGIBLE",
+      "claims_permitted": false,
+      "evidence_class": "E5",
+      "execution_status": "DRY_RUN",
+      "experiment_id": "E5_IMAGE_FUNCTIONAL",
+      "manifest_path": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T015905Z/manifest.json",
+      "manifest_sha256": "82bdda5fa5e42397aa189623480a9b82e849b8d406ccd97d7d929ef54beff937",
+      "metadata": {
+        "catalog_underclaim_count": null,
+        "environment": {
+          "execution_mode": "dry_run",
+          "git_info": {
+            "git_dirty": true,
+            "git_revision": "4af44621a03f78b33bcfb4317a428f45510d78ee"
+          },
+          "platform": "macOS-15.3.2-arm64-arm-64bit-Mach-O",
+          "python_version": "3.14.6 (main, Jun 10 2026, 10:03:53) [Clang 17.0.0 (clang-1700.6.4.2)]",
+          "runtime_detected": "docker"
+        },
+        "image_count": 4,
+        "probe_count": 17,
+        "required_probe_not_defined_count": null
+      },
+      "metrics": {
+        "H7F": {
+          "all_digests_immutable": true,
+          "catalog_underclaim_count": null,
+          "conservative_success": null,
+          "execution_unavailable_count": 18,
+          "failed_probe_count": null,
+          "functional_execution_coverage": null,
+          "operational_adequacy": null,
+          "required_probe_not_defined_count": null
+        }
+      },
+      "package_path": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T015905Z",
+      "provenance": {
+        "dataset": {
+          "dataset_id": "protocol-v5-development-2026-08-22",
+          "dataset_sha256": "e3fff5167ef2194fb365fec7510d1efc2b17a18b13182063c2b63c26f021d3cd"
+        },
+        "environment": {
+          "execution_mode": "dry_run",
+          "git_info": {
+            "git_dirty": true,
+            "git_revision": "4af44621a03f78b33bcfb4317a428f45510d78ee"
+          },
+          "platform": "macOS-15.3.2-arm64-arm-64bit-Mach-O",
+          "python_version": "3.14.6 (main, Jun 10 2026, 10:03:53) [Clang 17.0.0 (clang-1700.6.4.2)]",
+          "runtime_detected": "docker"
+        },
+        "git_revision": "4af44621a03f78b33bcfb4317a428f45510d78ee",
+        "random_seeds": [
+          42
+        ]
+      },
+      "reason_codes": [
+        "CLAIMS_NOT_PERMITTED",
+        "EVIDENCE_NOT_OBSERVED_COMPLETE",
+        "LEGACY_E5_SCHEMA",
+        "NON_CONFIRMATORY_EVIDENCE"
+      ],
+      "requirement_id": "image_functional",
+      "schema_version": "protocol-v5-manifest-v1.0.0",
+      "semantic_provenance": {
+        "catalog.file_sha256": "f45b04efc2ea6f271d49c6806b58bfc0f30503cb68944930609f6e0f71882a71",
+        "catalog.version": "2026-08-06.1",
+        "constraints.evaluator_version": null,
+        "constraints.ranker_version": null,
+        "corpus.sha256": "987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444",
+        "indexes.dense.sha256": null,
+        "indexes.hybrid.sha256": null,
+        "indexes.sparse.sha256": null,
+        "p1.backend_version": "rule-based-v1",
+        "p2.pipeline_version": "p2-pipeline-v1.0.0"
+      },
+      "stage": "development",
+      "tests": {
+        "criterion": "EXACT_ALL_REQUIRED_PROBES",
+        "validator": {
+          "eligible_as_current_e5_evidence": false,
+          "evidence_dir": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T015905Z",
+          "execution_status": "DRY_RUN",
+          "experiment_id": "E5",
+          "files_checked": 8,
+          "probes_executed": 0,
+          "probes_unavailable": 17,
+          "recommendations_evaluated": 36,
+          "status": "PASS",
+          "total_probes_configured": 17,
+          "validation_profile": "LEGACY_SCHEMA_V1_0",
+          "validator_status": "LEGACY_VALID"
+        }
+      },
+      "validation_error": null,
+      "validation_status": "PASS"
+    },
+    {
+      "artifacts": [
+        {
+          "package_relative_path": "manifest.json",
+          "path": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T020014Z/manifest.json",
+          "sha256": "4556cc0ccfc0f21bc480adc962424a102205c73ba76f5ab4b2ce041c6eafab28"
+        },
+        {
+          "package_relative_path": "derived/functional_metrics.json",
+          "path": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T020014Z/derived/functional_metrics.json",
+          "sha256": "04f47ed03205ead0ff726ddbd0ed3a9844e043924e2e2dbfc6dceb6778af1487"
+        },
+        {
+          "package_relative_path": "raw/probe_manifest.json",
+          "path": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T020014Z/raw/probe_manifest.json",
+          "sha256": "7780cd761d8edd41254ac7ba9bbcdca97ba1c492e00ad73efecf4d46ac071f0b"
+        },
+        {
+          "package_relative_path": "report/status.json",
+          "path": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T020014Z/report/status.json",
+          "sha256": "1ee86983cf078d3c89c66ab5b565fade2bd4fbfb991d56d90a32072e4fa9cd41"
+        }
+      ],
+      "claim_eligibility": "INELIGIBLE",
+      "claims_permitted": false,
+      "evidence_class": "E5",
+      "execution_status": "OBSERVED",
+      "experiment_id": "E5_IMAGE_FUNCTIONAL",
+      "manifest_path": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T020014Z/manifest.json",
+      "manifest_sha256": "4556cc0ccfc0f21bc480adc962424a102205c73ba76f5ab4b2ce041c6eafab28",
+      "metadata": {
+        "catalog_underclaim_count": null,
+        "environment": {
+          "execution_mode": "docker",
+          "git_info": {
+            "git_dirty": true,
+            "git_revision": "4af44621a03f78b33bcfb4317a428f45510d78ee"
+          },
+          "platform": "macOS-15.3.2-arm64-arm-64bit-Mach-O",
+          "python_version": "3.14.6 (main, Jun 10 2026, 10:03:53) [Clang 17.0.0 (clang-1700.6.4.2)]",
+          "runtime_detected": "docker"
+        },
+        "image_count": 4,
+        "probe_count": 17,
+        "required_probe_not_defined_count": null
+      },
+      "metrics": {
+        "H7F": {
+          "all_digests_immutable": true,
+          "catalog_underclaim_count": null,
+          "conservative_success": null,
+          "execution_unavailable_count": 0,
+          "failed_probe_count": null,
+          "functional_execution_coverage": null,
+          "operational_adequacy": null,
+          "required_probe_not_defined_count": null
+        }
+      },
+      "package_path": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T020014Z",
+      "provenance": {
+        "dataset": {
+          "dataset_id": "protocol-v5-development-2026-08-22",
+          "dataset_sha256": "e3fff5167ef2194fb365fec7510d1efc2b17a18b13182063c2b63c26f021d3cd"
+        },
+        "environment": {
+          "execution_mode": "docker",
+          "git_info": {
+            "git_dirty": true,
+            "git_revision": "4af44621a03f78b33bcfb4317a428f45510d78ee"
+          },
+          "platform": "macOS-15.3.2-arm64-arm-64bit-Mach-O",
+          "python_version": "3.14.6 (main, Jun 10 2026, 10:03:53) [Clang 17.0.0 (clang-1700.6.4.2)]",
+          "runtime_detected": "docker"
+        },
+        "git_revision": "4af44621a03f78b33bcfb4317a428f45510d78ee",
+        "random_seeds": [
+          42
+        ]
+      },
+      "reason_codes": [
+        "CLAIMS_NOT_PERMITTED",
+        "EVIDENCE_VALIDATION_FAILED",
+        "NON_CONFIRMATORY_EVIDENCE"
+      ],
+      "requirement_id": "image_functional",
+      "schema_version": "protocol-v5-manifest-v1.0.0",
+      "semantic_provenance": {
+        "catalog.file_sha256": "f45b04efc2ea6f271d49c6806b58bfc0f30503cb68944930609f6e0f71882a71",
+        "catalog.version": "2026-08-06.1",
+        "constraints.evaluator_version": null,
+        "constraints.ranker_version": null,
+        "corpus.sha256": "987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444",
+        "indexes.dense.sha256": "c0561bcd1ee6ec5153b710aef3deae88bd259a011ddd454513cbb1c675118387",
+        "indexes.hybrid.sha256": "45ea08f29492d796189920713636b3a9cae2f0fb264e023124eb38c8cfad83a4",
+        "indexes.sparse.sha256": "931fac84b818cb934a37bfbfa76092a89626cd5eaffc869887de8558bc6fa747",
+        "p1.backend_version": "rule-based-v1",
+        "p2.pipeline_version": "p2-pipeline-v1.0.0"
+      },
+      "stage": "development",
+      "tests": {
+        "criterion": "EXACT_ALL_REQUIRED_PROBES",
+        "validator": {}
+      },
+      "validation_error": "Invalid manifest in /Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T020014Z: OBSERVED manifest requires retrieval_configuration",
+      "validation_status": "FAIL"
+    },
+    {
+      "artifacts": [
+        {
+          "package_relative_path": "manifest.json",
+          "path": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T021913Z/manifest.json",
+          "sha256": "189c9d0b5a5d3d6b6b347be3577c3678d37ef25ec1232285436973f6f3c6880d"
+        },
+        {
+          "package_relative_path": "derived/functional_metrics.json",
+          "path": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T021913Z/derived/functional_metrics.json",
+          "sha256": "2273d27f6dbc1efaa9a224ea938c7de384e943933b6ddf5c0f2c135b970d527a"
+        },
+        {
+          "package_relative_path": "raw/probe_manifest.json",
+          "path": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T021913Z/raw/probe_manifest.json",
+          "sha256": "2bf86be0caaceedb962f6ff93ec97302effa2b7463bc08ad2b7a145cb449f709"
+        },
+        {
+          "package_relative_path": "report/status.json",
+          "path": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T021913Z/report/status.json",
+          "sha256": "e658e15fca1ffddf9fadb82db05c4604a8b29a2b08b92ac8c8b50912a59f58ba"
+        }
+      ],
+      "claim_eligibility": "INELIGIBLE",
+      "claims_permitted": false,
+      "evidence_class": "E5",
+      "execution_status": "INCOMPLETE",
+      "experiment_id": "E5_IMAGE_FUNCTIONAL",
+      "manifest_path": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T021913Z/manifest.json",
+      "manifest_sha256": "189c9d0b5a5d3d6b6b347be3577c3678d37ef25ec1232285436973f6f3c6880d",
+      "metadata": {
+        "catalog_underclaim_count": null,
+        "environment": {
+          "environment_id": "e5-docker-darwin",
+          "execution_mode": "docker",
+          "git_info": {
+            "git_dirty": true,
+            "git_revision": "4af44621a03f78b33bcfb4317a428f45510d78ee"
+          },
+          "platform": "macOS-15.3.2-arm64-arm-64bit-Mach-O",
+          "python_version": "3.14.6 (main, Jun 10 2026, 10:03:53) [Clang 17.0.0 (clang-1700.6.4.2)]",
+          "runtime_detected": "docker"
+        },
+        "image_count": 4,
+        "probe_count": 17,
+        "required_probe_not_defined_count": null
+      },
+      "metrics": {
+        "H7F": {
+          "all_digests_immutable": true,
+          "catalog_underclaim_count": null,
+          "conservative_success": 0.7778,
+          "execution_unavailable_count": 4,
+          "failed_probe_count": 0,
+          "functional_execution_coverage": 0.7778,
+          "operational_adequacy": null,
+          "required_probe_not_defined_count": null
+        }
+      },
+      "package_path": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T021913Z",
+      "provenance": {
+        "dataset": {
+          "dataset_id": "protocol-v5-development-2026-08-22",
+          "dataset_sha256": "e3fff5167ef2194fb365fec7510d1efc2b17a18b13182063c2b63c26f021d3cd"
+        },
+        "environment": {
+          "environment_id": "e5-docker-darwin",
+          "execution_mode": "docker",
+          "git_info": {
+            "git_dirty": true,
+            "git_revision": "4af44621a03f78b33bcfb4317a428f45510d78ee"
+          },
+          "platform": "macOS-15.3.2-arm64-arm-64bit-Mach-O",
+          "python_version": "3.14.6 (main, Jun 10 2026, 10:03:53) [Clang 17.0.0 (clang-1700.6.4.2)]",
+          "runtime_detected": "docker"
+        },
+        "git_revision": "4af44621a03f78b33bcfb4317a428f45510d78ee",
+        "random_seeds": [
+          42
+        ]
+      },
+      "reason_codes": [
+        "CLAIMS_NOT_PERMITTED",
+        "EVIDENCE_NOT_OBSERVED_COMPLETE",
+        "LEGACY_E5_SCHEMA",
+        "NON_CONFIRMATORY_EVIDENCE"
+      ],
+      "requirement_id": "image_functional",
+      "schema_version": "protocol-v5-manifest-v1.0.0",
+      "semantic_provenance": {
+        "catalog.file_sha256": "f45b04efc2ea6f271d49c6806b58bfc0f30503cb68944930609f6e0f71882a71",
+        "catalog.version": "2026-08-06.1",
+        "constraints.evaluator_version": null,
+        "constraints.ranker_version": null,
+        "corpus.sha256": "987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444",
+        "indexes.dense.sha256": null,
+        "indexes.hybrid.sha256": null,
+        "indexes.sparse.sha256": null,
+        "p1.backend_version": "rule-based-v1",
+        "p2.pipeline_version": "p2-pipeline-v1.0.0"
+      },
+      "stage": "development",
+      "tests": {
+        "criterion": "EXACT_ALL_REQUIRED_PROBES",
+        "validator": {
+          "eligible_as_current_e5_evidence": false,
+          "evidence_dir": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T021913Z",
+          "execution_status": "INCOMPLETE",
+          "experiment_id": "E5",
+          "files_checked": 8,
+          "probes_executed": 13,
+          "probes_unavailable": 4,
+          "recommendations_evaluated": 36,
+          "status": "PASS",
+          "total_probes_configured": 17,
+          "validation_profile": "LEGACY_SCHEMA_V1_1",
+          "validator_status": "LEGACY_VALID"
+        }
+      },
+      "validation_error": null,
+      "validation_status": "PASS"
+    },
+    {
+      "artifacts": [
+        {
+          "package_relative_path": "manifest.json",
+          "path": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T024426Z/manifest.json",
+          "sha256": "51e935616f191b8001a067fdad27ca4d7a7c0350129b2eeb41e4717ed098efdb"
+        },
+        {
+          "package_relative_path": "derived/functional_metrics.json",
+          "path": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T024426Z/derived/functional_metrics.json",
+          "sha256": "4cbdd72174c769cf829efec1258132e9567ef7a913de26646f7b7390a3f5a929"
+        },
+        {
+          "package_relative_path": "raw/probe_manifest.json",
+          "path": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T024426Z/raw/probe_manifest.json",
+          "sha256": "30841776ad60916ecd41fc86fb92b244c38ee7b53c8acea3e6bb362f7a8cdf3f"
+        },
+        {
+          "package_relative_path": "report/status.json",
+          "path": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T024426Z/report/status.json",
+          "sha256": "c0c45ac4e9ef2a3bc5a658dd19b34cdccb72c7766e6a0bd932caf4ea409208c7"
+        }
+      ],
+      "claim_eligibility": "INELIGIBLE",
+      "claims_permitted": false,
+      "evidence_class": "E5",
+      "execution_status": "OBSERVED",
+      "experiment_id": "E5_IMAGE_FUNCTIONAL",
+      "manifest_path": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T024426Z/manifest.json",
+      "manifest_sha256": "51e935616f191b8001a067fdad27ca4d7a7c0350129b2eeb41e4717ed098efdb",
+      "metadata": {
+        "catalog_underclaim_count": null,
+        "environment": {
+          "environment_id": "e5-docker-darwin",
+          "execution_mode": "docker",
+          "git_info": {
+            "git_dirty": false,
+            "git_revision": "45f8f2ef1e531fa2f96763e8daaf4db6804b6718"
+          },
+          "platform": "macOS-15.3.2-arm64-arm-64bit-Mach-O",
+          "python_version": "3.14.6 (main, Jun 10 2026, 10:03:53) [Clang 17.0.0 (clang-1700.6.4.2)]",
+          "recommendations_input_path": "results_v5/protocol-v5.0.0/E1/20260825T-observed-p1-p2-development-v1/raw/recommendations.jsonl",
+          "recommendations_input_sha256": "25868752054231fa271e540210aad0845113ba3974722376029b18184959daf8",
+          "runtime_detected": "docker"
+        },
+        "image_count": 4,
+        "probe_count": 17,
+        "required_probe_not_defined_count": null
+      },
+      "metrics": {
+        "H7F": {
+          "all_digests_immutable": true,
+          "catalog_underclaim_count": null,
+          "conservative_success": 1.0,
+          "execution_unavailable_count": 0,
+          "failed_probe_count": 0,
+          "functional_execution_coverage": 1.0,
+          "operational_adequacy": null,
+          "required_probe_not_defined_count": null
+        }
+      },
+      "package_path": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T024426Z",
+      "provenance": {
+        "dataset": {
+          "dataset_id": "protocol-v5-development-2026-08-22",
+          "dataset_sha256": "e3fff5167ef2194fb365fec7510d1efc2b17a18b13182063c2b63c26f021d3cd"
+        },
+        "environment": {
+          "environment_id": "e5-docker-darwin",
+          "execution_mode": "docker",
+          "git_info": {
+            "git_dirty": false,
+            "git_revision": "45f8f2ef1e531fa2f96763e8daaf4db6804b6718"
+          },
+          "platform": "macOS-15.3.2-arm64-arm-64bit-Mach-O",
+          "python_version": "3.14.6 (main, Jun 10 2026, 10:03:53) [Clang 17.0.0 (clang-1700.6.4.2)]",
+          "recommendations_input_path": "results_v5/protocol-v5.0.0/E1/20260825T-observed-p1-p2-development-v1/raw/recommendations.jsonl",
+          "recommendations_input_sha256": "25868752054231fa271e540210aad0845113ba3974722376029b18184959daf8",
+          "runtime_detected": "docker"
+        },
+        "git_revision": "45f8f2ef1e531fa2f96763e8daaf4db6804b6718",
+        "random_seeds": [
+          42
+        ]
+      },
+      "reason_codes": [
+        "CLAIMS_NOT_PERMITTED",
+        "LEGACY_E5_SCHEMA",
+        "NON_CONFIRMATORY_EVIDENCE"
+      ],
+      "requirement_id": "image_functional",
+      "schema_version": "protocol-v5-manifest-v1.0.0",
+      "semantic_provenance": {
+        "catalog.file_sha256": "f45b04efc2ea6f271d49c6806b58bfc0f30503cb68944930609f6e0f71882a71",
+        "catalog.version": "2026-08-06.1",
+        "constraints.evaluator_version": "p2-deterministic-constraint-evaluator-v1.0.0",
+        "constraints.ranker_version": "p2-deterministic-ranker-v1.0.0",
+        "corpus.sha256": "987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444",
+        "indexes.dense.sha256": "c0561bcd1ee6ec5153b710aef3deae88bd259a011ddd454513cbb1c675118387",
+        "indexes.hybrid.sha256": "45ea08f29492d796189920713636b3a9cae2f0fb264e023124eb38c8cfad83a4",
+        "indexes.sparse.sha256": "931fac84b818cb934a37bfbfa76092a89626cd5eaffc869887de8558bc6fa747",
+        "p1.backend_version": "rule-based-v1",
+        "p2.pipeline_version": "p2-pipeline-v1.0.0"
+      },
+      "stage": "development",
+      "tests": {
+        "criterion": "EXACT_ALL_REQUIRED_PROBES",
+        "validator": {
+          "eligible_as_current_e5_evidence": false,
+          "evidence_dir": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T024426Z",
+          "execution_status": "OBSERVED",
+          "experiment_id": "E5",
+          "files_checked": 8,
+          "probes_executed": 17,
+          "probes_unavailable": 0,
+          "recommendations_evaluated": 36,
+          "status": "PASS",
+          "total_probes_configured": 17,
+          "validation_profile": "LEGACY_SCHEMA_V1_1",
+          "validator_status": "LEGACY_VALID"
+        }
+      },
+      "validation_error": null,
+      "validation_status": "PASS"
+    },
+    {
+      "artifacts": [
+        {
+          "package_relative_path": "manifest.json",
+          "path": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T024633Z/manifest.json",
+          "sha256": "b2aee3180e6fae0c6e2df248798149b5c063da8efac557704dca4c31c322bee5"
+        },
+        {
+          "package_relative_path": "derived/functional_metrics.json",
+          "path": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T024633Z/derived/functional_metrics.json",
+          "sha256": "4cbdd72174c769cf829efec1258132e9567ef7a913de26646f7b7390a3f5a929"
+        },
+        {
+          "package_relative_path": "raw/probe_manifest.json",
+          "path": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T024633Z/raw/probe_manifest.json",
+          "sha256": "30841776ad60916ecd41fc86fb92b244c38ee7b53c8acea3e6bb362f7a8cdf3f"
+        },
+        {
+          "package_relative_path": "report/status.json",
+          "path": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T024633Z/report/status.json",
+          "sha256": "6fd00c6985611807a5b309348db1d592c00c0ec4ddd365fd1ae2b50e0cbd132f"
+        }
+      ],
+      "claim_eligibility": "INELIGIBLE",
+      "claims_permitted": false,
+      "evidence_class": "E5",
+      "execution_status": "OBSERVED",
+      "experiment_id": "E5_IMAGE_FUNCTIONAL",
+      "manifest_path": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T024633Z/manifest.json",
+      "manifest_sha256": "b2aee3180e6fae0c6e2df248798149b5c063da8efac557704dca4c31c322bee5",
+      "metadata": {
+        "catalog_underclaim_count": null,
+        "environment": {
+          "environment_id": "e5-docker-darwin",
+          "execution_mode": "docker",
+          "git_info": {
+            "git_dirty": false,
+            "git_revision": "fbf91ee65f1623102970e7863226baf0c8a27b0b"
+          },
+          "platform": "macOS-15.3.2-arm64-arm-64bit-Mach-O",
+          "python_version": "3.14.6 (main, Jun 10 2026, 10:03:53) [Clang 17.0.0 (clang-1700.6.4.2)]",
+          "recommendations_input_path": "results_v5/protocol-v5.0.0/E1/20260825T-observed-p1-p2-development-v1/raw/recommendations.jsonl",
+          "recommendations_input_sha256": "25868752054231fa271e540210aad0845113ba3974722376029b18184959daf8",
+          "runtime_detected": "docker"
+        },
+        "image_count": 4,
+        "probe_count": 17,
+        "required_probe_not_defined_count": null
+      },
+      "metrics": {
+        "H7F": {
+          "all_digests_immutable": true,
+          "catalog_underclaim_count": null,
+          "conservative_success": 1.0,
+          "execution_unavailable_count": 0,
+          "failed_probe_count": 0,
+          "functional_execution_coverage": 1.0,
+          "operational_adequacy": null,
+          "required_probe_not_defined_count": null
+        }
+      },
+      "package_path": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T024633Z",
+      "provenance": {
+        "dataset": {
+          "dataset_id": "protocol-v5-development-2026-08-22",
+          "dataset_sha256": "e3fff5167ef2194fb365fec7510d1efc2b17a18b13182063c2b63c26f021d3cd"
+        },
+        "environment": {
+          "environment_id": "e5-docker-darwin",
+          "execution_mode": "docker",
+          "git_info": {
+            "git_dirty": false,
+            "git_revision": "fbf91ee65f1623102970e7863226baf0c8a27b0b"
+          },
+          "platform": "macOS-15.3.2-arm64-arm-64bit-Mach-O",
+          "python_version": "3.14.6 (main, Jun 10 2026, 10:03:53) [Clang 17.0.0 (clang-1700.6.4.2)]",
+          "recommendations_input_path": "results_v5/protocol-v5.0.0/E1/20260825T-observed-p1-p2-development-v1/raw/recommendations.jsonl",
+          "recommendations_input_sha256": "25868752054231fa271e540210aad0845113ba3974722376029b18184959daf8",
+          "runtime_detected": "docker"
+        },
+        "git_revision": "fbf91ee65f1623102970e7863226baf0c8a27b0b",
+        "random_seeds": [
+          42
+        ]
+      },
+      "reason_codes": [
+        "CLAIMS_NOT_PERMITTED",
+        "LEGACY_E5_SCHEMA",
+        "NON_CONFIRMATORY_EVIDENCE"
+      ],
+      "requirement_id": "image_functional",
+      "schema_version": "protocol-v5-manifest-v1.0.0",
+      "semantic_provenance": {
+        "catalog.file_sha256": "f45b04efc2ea6f271d49c6806b58bfc0f30503cb68944930609f6e0f71882a71",
+        "catalog.version": "2026-08-06.1",
+        "constraints.evaluator_version": "p2-deterministic-constraint-evaluator-v1.0.0",
+        "constraints.ranker_version": "p2-deterministic-ranker-v1.0.0",
+        "corpus.sha256": "987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444",
+        "indexes.dense.sha256": "c0561bcd1ee6ec5153b710aef3deae88bd259a011ddd454513cbb1c675118387",
+        "indexes.hybrid.sha256": "45ea08f29492d796189920713636b3a9cae2f0fb264e023124eb38c8cfad83a4",
+        "indexes.sparse.sha256": "931fac84b818cb934a37bfbfa76092a89626cd5eaffc869887de8558bc6fa747",
+        "p1.backend_version": "rule-based-v1",
+        "p2.pipeline_version": "p2-pipeline-v1.0.0"
+      },
+      "stage": "development",
+      "tests": {
+        "criterion": "EXACT_ALL_REQUIRED_PROBES",
+        "validator": {
+          "eligible_as_current_e5_evidence": false,
+          "evidence_dir": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T024633Z",
+          "execution_status": "OBSERVED",
+          "experiment_id": "E5",
+          "files_checked": 8,
+          "probes_executed": 17,
+          "probes_unavailable": 0,
+          "recommendations_evaluated": 36,
+          "status": "PASS",
+          "total_probes_configured": 17,
+          "validation_profile": "LEGACY_SCHEMA_V1_1",
+          "validator_status": "LEGACY_VALID"
+        }
+      },
+      "validation_error": null,
+      "validation_status": "PASS"
+    },
+    {
+      "artifacts": [
+        {
+          "package_relative_path": "manifest.json",
+          "path": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T032437Z/manifest.json",
+          "sha256": "63b62a578c2c382bcf36fee63f254bc7c0fdf3dd0776d706ff28bea27ea26078"
+        },
+        {
+          "package_relative_path": "derived/functional_metrics.json",
+          "path": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T032437Z/derived/functional_metrics.json",
+          "sha256": "650ab958f95c6d84ed9d2fa1324d119dd7566c98ab062779d0ac747560468824"
+        },
+        {
+          "package_relative_path": "raw/probe_manifest.json",
+          "path": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T032437Z/raw/probe_manifest.json",
+          "sha256": "30841776ad60916ecd41fc86fb92b244c38ee7b53c8acea3e6bb362f7a8cdf3f"
+        },
+        {
+          "package_relative_path": "report/status.json",
+          "path": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T032437Z/report/status.json",
+          "sha256": "0958de9b6152819f9b08bbc0e78ac8eb3febb075a24a3d41b22e127ed458f194"
+        }
+      ],
+      "claim_eligibility": "INELIGIBLE",
+      "claims_permitted": false,
+      "evidence_class": "E5",
+      "execution_status": "OBSERVED",
+      "experiment_id": "E5_IMAGE_FUNCTIONAL",
+      "manifest_path": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T032437Z/manifest.json",
+      "manifest_sha256": "63b62a578c2c382bcf36fee63f254bc7c0fdf3dd0776d706ff28bea27ea26078",
+      "metadata": {
+        "catalog_underclaim_count": null,
+        "environment": {
+          "environment_id": "e5-docker-darwin",
+          "execution_mode": "docker",
+          "git_info": {
+            "git_dirty": false,
+            "git_revision": "8c5e1786165464b6be2d4c0488d6c4de6a3f2fd4"
+          },
+          "platform": "macOS-15.3.2-arm64-arm-64bit-Mach-O",
+          "python_version": "3.14.6 (main, Jun 10 2026, 10:03:53) [Clang 17.0.0 (clang-1700.6.4.2)]",
+          "recommendations_input_path": "results_v5/protocol-v5.0.0/E1/20260825T-observed-p1-p2-development-v1/raw/recommendations.jsonl",
+          "recommendations_input_sha256": "25868752054231fa271e540210aad0845113ba3974722376029b18184959daf8",
+          "runtime_detected": "docker"
+        },
+        "image_count": 4,
+        "probe_count": 17,
+        "required_probe_not_defined_count": null
+      },
+      "metrics": {
+        "H7F": {
+          "all_digests_immutable": true,
+          "catalog_underclaim_count": null,
+          "conservative_success": 0.8889,
+          "execution_unavailable_count": 0,
+          "failed_probe_count": 0,
+          "functional_execution_coverage": 1.0,
+          "operational_adequacy": 0.8889,
+          "required_probe_not_defined_count": null
+        }
+      },
+      "package_path": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T032437Z",
+      "provenance": {
+        "dataset": {
+          "dataset_id": "protocol-v5-development-2026-08-22",
+          "dataset_sha256": "e3fff5167ef2194fb365fec7510d1efc2b17a18b13182063c2b63c26f021d3cd"
+        },
+        "environment": {
+          "environment_id": "e5-docker-darwin",
+          "execution_mode": "docker",
+          "git_info": {
+            "git_dirty": false,
+            "git_revision": "8c5e1786165464b6be2d4c0488d6c4de6a3f2fd4"
+          },
+          "platform": "macOS-15.3.2-arm64-arm-64bit-Mach-O",
+          "python_version": "3.14.6 (main, Jun 10 2026, 10:03:53) [Clang 17.0.0 (clang-1700.6.4.2)]",
+          "recommendations_input_path": "results_v5/protocol-v5.0.0/E1/20260825T-observed-p1-p2-development-v1/raw/recommendations.jsonl",
+          "recommendations_input_sha256": "25868752054231fa271e540210aad0845113ba3974722376029b18184959daf8",
+          "runtime_detected": "docker"
+        },
+        "git_revision": "8c5e1786165464b6be2d4c0488d6c4de6a3f2fd4",
+        "random_seeds": [
+          42
+        ]
+      },
+      "reason_codes": [
+        "CLAIMS_NOT_PERMITTED",
+        "LEGACY_E5_SCHEMA",
+        "NON_CONFIRMATORY_EVIDENCE"
+      ],
+      "requirement_id": "image_functional",
+      "schema_version": "protocol-v5-manifest-v1.0.0",
+      "semantic_provenance": {
+        "catalog.file_sha256": "f45b04efc2ea6f271d49c6806b58bfc0f30503cb68944930609f6e0f71882a71",
+        "catalog.version": "2026-08-06.1",
+        "constraints.evaluator_version": "p2-deterministic-constraint-evaluator-v1.0.0",
+        "constraints.ranker_version": "p2-deterministic-ranker-v1.0.0",
+        "corpus.sha256": "987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444",
+        "indexes.dense.sha256": "c0561bcd1ee6ec5153b710aef3deae88bd259a011ddd454513cbb1c675118387",
+        "indexes.hybrid.sha256": "45ea08f29492d796189920713636b3a9cae2f0fb264e023124eb38c8cfad83a4",
+        "indexes.sparse.sha256": "931fac84b818cb934a37bfbfa76092a89626cd5eaffc869887de8558bc6fa747",
+        "p1.backend_version": "rule-based-v1",
+        "p2.pipeline_version": "p2-pipeline-v1.0.0"
+      },
+      "stage": "development",
+      "tests": {
+        "criterion": "EXACT_ALL_REQUIRED_PROBES",
+        "validator": {
+          "eligible_as_current_e5_evidence": false,
+          "evidence_dir": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T032437Z",
+          "execution_status": "OBSERVED",
+          "experiment_id": "E5",
+          "files_checked": 8,
+          "probes_executed": 17,
+          "probes_unavailable": 0,
+          "recommendations_evaluated": 36,
+          "status": "PASS",
+          "total_probes_configured": 17,
+          "validation_profile": "LEGACY_SCHEMA_V1_2",
+          "validator_status": "LEGACY_VALID"
+        }
+      },
+      "validation_error": null,
+      "validation_status": "PASS"
+    },
+    {
+      "artifacts": [
+        {
+          "package_relative_path": "manifest.json",
+          "path": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T033805Z/manifest.json",
+          "sha256": "539bdacfbe7318b3af04803f19aad26bad7d1b8d42947b0c51e96b696a04baa1"
+        },
+        {
+          "package_relative_path": "derived/functional_metrics.json",
+          "path": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T033805Z/derived/functional_metrics.json",
+          "sha256": "2abd095e2dbcc829c146ff24154afc64ddd1842253a5c4153132660aa9631a80"
+        },
+        {
+          "package_relative_path": "raw/probe_manifest.json",
+          "path": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T033805Z/raw/probe_manifest.json",
+          "sha256": "30841776ad60916ecd41fc86fb92b244c38ee7b53c8acea3e6bb362f7a8cdf3f"
+        },
+        {
+          "package_relative_path": "report/status.json",
+          "path": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T033805Z/report/status.json",
+          "sha256": "77fc005c5e38610545b467098d3f0bec3a01092094b76d3e276eaee6346ce977"
+        }
+      ],
+      "claim_eligibility": "INELIGIBLE",
+      "claims_permitted": false,
+      "evidence_class": "E5",
+      "execution_status": "OBSERVED",
+      "experiment_id": "E5_IMAGE_FUNCTIONAL",
+      "manifest_path": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T033805Z/manifest.json",
+      "manifest_sha256": "539bdacfbe7318b3af04803f19aad26bad7d1b8d42947b0c51e96b696a04baa1",
+      "metadata": {
+        "catalog_underclaim_count": null,
+        "environment": {
+          "environment_id": "e5-docker-darwin",
+          "execution_mode": "docker",
+          "git_info": {
+            "git_dirty": false,
+            "git_revision": "d0f955caeb5d0efa9627305bbe8b0b9b2395e7de"
+          },
+          "platform": "macOS-15.3.2-arm64-arm-64bit-Mach-O",
+          "python_version": "3.14.6 (main, Jun 10 2026, 10:03:53) [Clang 17.0.0 (clang-1700.6.4.2)]",
+          "recommendations_input_path": "results_v5/protocol-v5.0.0/E1/20260825T-observed-p1-p2-development-v1/raw/recommendations.jsonl",
+          "recommendations_input_sha256": "25868752054231fa271e540210aad0845113ba3974722376029b18184959daf8",
+          "runtime_detected": "docker"
+        },
+        "image_count": 4,
+        "probe_count": 17,
+        "required_probe_not_defined_count": null
+      },
+      "metrics": {
+        "H7F": {
+          "all_digests_immutable": true,
+          "catalog_underclaim_count": null,
+          "conservative_success": 0.8889,
+          "execution_unavailable_count": 0,
+          "failed_probe_count": 0,
+          "functional_execution_coverage": 1.0,
+          "operational_adequacy": 0.8889,
+          "required_probe_not_defined_count": null
+        }
+      },
+      "package_path": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T033805Z",
+      "provenance": {
+        "dataset": {
+          "dataset_id": "protocol-v5-development-2026-08-22",
+          "dataset_sha256": "e3fff5167ef2194fb365fec7510d1efc2b17a18b13182063c2b63c26f021d3cd"
+        },
+        "environment": {
+          "environment_id": "e5-docker-darwin",
+          "execution_mode": "docker",
+          "git_info": {
+            "git_dirty": false,
+            "git_revision": "d0f955caeb5d0efa9627305bbe8b0b9b2395e7de"
+          },
+          "platform": "macOS-15.3.2-arm64-arm-64bit-Mach-O",
+          "python_version": "3.14.6 (main, Jun 10 2026, 10:03:53) [Clang 17.0.0 (clang-1700.6.4.2)]",
+          "recommendations_input_path": "results_v5/protocol-v5.0.0/E1/20260825T-observed-p1-p2-development-v1/raw/recommendations.jsonl",
+          "recommendations_input_sha256": "25868752054231fa271e540210aad0845113ba3974722376029b18184959daf8",
+          "runtime_detected": "docker"
+        },
+        "git_revision": "d0f955caeb5d0efa9627305bbe8b0b9b2395e7de",
+        "random_seeds": [
+          42
+        ]
+      },
+      "reason_codes": [
+        "CLAIMS_NOT_PERMITTED",
+        "LEGACY_E5_SCHEMA",
+        "NON_CONFIRMATORY_EVIDENCE"
+      ],
+      "requirement_id": "image_functional",
+      "schema_version": "protocol-v5-manifest-v1.0.0",
+      "semantic_provenance": {
+        "catalog.file_sha256": "f45b04efc2ea6f271d49c6806b58bfc0f30503cb68944930609f6e0f71882a71",
+        "catalog.version": "2026-08-06.1",
+        "constraints.evaluator_version": "p2-deterministic-constraint-evaluator-v1.0.0",
+        "constraints.ranker_version": "p2-deterministic-ranker-v1.0.0",
+        "corpus.sha256": "987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444",
+        "indexes.dense.sha256": "c0561bcd1ee6ec5153b710aef3deae88bd259a011ddd454513cbb1c675118387",
+        "indexes.hybrid.sha256": "45ea08f29492d796189920713636b3a9cae2f0fb264e023124eb38c8cfad83a4",
+        "indexes.sparse.sha256": "931fac84b818cb934a37bfbfa76092a89626cd5eaffc869887de8558bc6fa747",
+        "p1.backend_version": "rule-based-v1",
+        "p2.pipeline_version": "p2-pipeline-v1.0.0"
+      },
+      "stage": "development",
+      "tests": {
+        "criterion": "EXACT_ALL_REQUIRED_PROBES",
+        "validator": {
+          "eligible_as_current_e5_evidence": false,
+          "evidence_dir": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T033805Z",
+          "execution_status": "OBSERVED",
+          "experiment_id": "E5",
+          "files_checked": 8,
+          "probes_executed": 17,
+          "probes_unavailable": 0,
+          "recommendations_evaluated": 36,
+          "status": "PASS",
+          "total_probes_configured": 17,
+          "validation_profile": "LEGACY_SCHEMA_V1_2",
+          "validator_status": "LEGACY_VALID"
+        }
+      },
+      "validation_error": null,
+      "validation_status": "PASS"
+    },
+    {
+      "artifacts": [
+        {
+          "package_relative_path": "manifest.json",
+          "path": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T033832Z/manifest.json",
+          "sha256": "0b7c5eb1894e8c4508fbe30703643eecf12c55b303032e6c156d05a21e56015a"
+        },
+        {
+          "package_relative_path": "derived/functional_metrics.json",
+          "path": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T033832Z/derived/functional_metrics.json",
+          "sha256": "2abd095e2dbcc829c146ff24154afc64ddd1842253a5c4153132660aa9631a80"
+        },
+        {
+          "package_relative_path": "raw/probe_manifest.json",
+          "path": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T033832Z/raw/probe_manifest.json",
+          "sha256": "30841776ad60916ecd41fc86fb92b244c38ee7b53c8acea3e6bb362f7a8cdf3f"
+        },
+        {
+          "package_relative_path": "report/status.json",
+          "path": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T033832Z/report/status.json",
+          "sha256": "0d407cd816755d84f815ebd635a30ab9f37fc4fed2f6ff3661ab148c545499e2"
+        }
+      ],
+      "claim_eligibility": "INELIGIBLE",
+      "claims_permitted": false,
+      "evidence_class": "E5",
+      "execution_status": "OBSERVED",
+      "experiment_id": "E5_IMAGE_FUNCTIONAL",
+      "manifest_path": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T033832Z/manifest.json",
+      "manifest_sha256": "0b7c5eb1894e8c4508fbe30703643eecf12c55b303032e6c156d05a21e56015a",
+      "metadata": {
+        "catalog_underclaim_count": null,
+        "environment": {
+          "environment_id": "e5-docker-darwin",
+          "execution_mode": "docker",
+          "git_info": {
+            "git_dirty": false,
+            "git_revision": "d0f955caeb5d0efa9627305bbe8b0b9b2395e7de"
+          },
+          "platform": "macOS-15.3.2-arm64-arm-64bit-Mach-O",
+          "python_version": "3.14.6 (main, Jun 10 2026, 10:03:53) [Clang 17.0.0 (clang-1700.6.4.2)]",
+          "recommendations_input_path": "results_v5/protocol-v5.0.0/E1/20260825T-observed-p1-p2-development-v1/raw/recommendations.jsonl",
+          "recommendations_input_sha256": "25868752054231fa271e540210aad0845113ba3974722376029b18184959daf8",
+          "runtime_detected": "docker"
+        },
+        "image_count": 4,
+        "probe_count": 17,
+        "required_probe_not_defined_count": null
+      },
+      "metrics": {
+        "H7F": {
+          "all_digests_immutable": true,
+          "catalog_underclaim_count": null,
+          "conservative_success": 0.8889,
+          "execution_unavailable_count": 0,
+          "failed_probe_count": 0,
+          "functional_execution_coverage": 1.0,
+          "operational_adequacy": 0.8889,
+          "required_probe_not_defined_count": null
+        }
+      },
+      "package_path": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T033832Z",
+      "provenance": {
+        "dataset": {
+          "dataset_id": "protocol-v5-development-2026-08-22",
+          "dataset_sha256": "e3fff5167ef2194fb365fec7510d1efc2b17a18b13182063c2b63c26f021d3cd"
+        },
+        "environment": {
+          "environment_id": "e5-docker-darwin",
+          "execution_mode": "docker",
+          "git_info": {
+            "git_dirty": false,
+            "git_revision": "d0f955caeb5d0efa9627305bbe8b0b9b2395e7de"
+          },
+          "platform": "macOS-15.3.2-arm64-arm-64bit-Mach-O",
+          "python_version": "3.14.6 (main, Jun 10 2026, 10:03:53) [Clang 17.0.0 (clang-1700.6.4.2)]",
+          "recommendations_input_path": "results_v5/protocol-v5.0.0/E1/20260825T-observed-p1-p2-development-v1/raw/recommendations.jsonl",
+          "recommendations_input_sha256": "25868752054231fa271e540210aad0845113ba3974722376029b18184959daf8",
+          "runtime_detected": "docker"
+        },
+        "git_revision": "d0f955caeb5d0efa9627305bbe8b0b9b2395e7de",
+        "random_seeds": [
+          42
+        ]
+      },
+      "reason_codes": [
+        "CLAIMS_NOT_PERMITTED",
+        "LEGACY_E5_SCHEMA",
+        "NON_CONFIRMATORY_EVIDENCE"
+      ],
+      "requirement_id": "image_functional",
+      "schema_version": "protocol-v5-manifest-v1.0.0",
+      "semantic_provenance": {
+        "catalog.file_sha256": "f45b04efc2ea6f271d49c6806b58bfc0f30503cb68944930609f6e0f71882a71",
+        "catalog.version": "2026-08-06.1",
+        "constraints.evaluator_version": "p2-deterministic-constraint-evaluator-v1.0.0",
+        "constraints.ranker_version": "p2-deterministic-ranker-v1.0.0",
+        "corpus.sha256": "987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444",
+        "indexes.dense.sha256": "c0561bcd1ee6ec5153b710aef3deae88bd259a011ddd454513cbb1c675118387",
+        "indexes.hybrid.sha256": "45ea08f29492d796189920713636b3a9cae2f0fb264e023124eb38c8cfad83a4",
+        "indexes.sparse.sha256": "931fac84b818cb934a37bfbfa76092a89626cd5eaffc869887de8558bc6fa747",
+        "p1.backend_version": "rule-based-v1",
+        "p2.pipeline_version": "p2-pipeline-v1.0.0"
+      },
+      "stage": "development",
+      "tests": {
+        "criterion": "EXACT_ALL_REQUIRED_PROBES",
+        "validator": {
+          "eligible_as_current_e5_evidence": false,
+          "evidence_dir": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T033832Z",
+          "execution_status": "OBSERVED",
+          "experiment_id": "E5",
+          "files_checked": 8,
+          "probes_executed": 17,
+          "probes_unavailable": 0,
+          "recommendations_evaluated": 36,
+          "status": "PASS",
+          "total_probes_configured": 17,
+          "validation_profile": "LEGACY_SCHEMA_V1_2",
+          "validator_status": "LEGACY_VALID"
+        }
+      },
+      "validation_error": null,
+      "validation_status": "PASS"
+    },
+    {
+      "artifacts": [
+        {
+          "package_relative_path": "manifest.json",
+          "path": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T040730Z/manifest.json",
+          "sha256": "6e8635a1d11c500d722ae2d6d98f6c1618809ceda80a2ea79ee5c8dff76a18d0"
+        },
+        {
+          "package_relative_path": "derived/functional_metrics.json",
+          "path": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T040730Z/derived/functional_metrics.json",
+          "sha256": "ca2ac88bf9d89e94c7df8b472e284652bacd662e612607730371e7c7921dafea"
+        },
+        {
+          "package_relative_path": "raw/probe_manifest.json",
+          "path": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T040730Z/raw/probe_manifest.json",
+          "sha256": "30841776ad60916ecd41fc86fb92b244c38ee7b53c8acea3e6bb362f7a8cdf3f"
+        },
+        {
+          "package_relative_path": "report/status.json",
+          "path": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T040730Z/report/status.json",
+          "sha256": "b1379e215502edafe67f3d230e7bf275b3e30626cbcdfdcd7bc08004df84e8ca"
+        }
+      ],
+      "claim_eligibility": "INELIGIBLE",
+      "claims_permitted": false,
+      "evidence_class": "E5",
+      "execution_status": "OBSERVED",
+      "experiment_id": "E5_IMAGE_FUNCTIONAL",
+      "manifest_path": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T040730Z/manifest.json",
+      "manifest_sha256": "6e8635a1d11c500d722ae2d6d98f6c1618809ceda80a2ea79ee5c8dff76a18d0",
+      "metadata": {
+        "catalog_underclaim_count": 1,
+        "environment": {
+          "environment_id": "e5-docker-darwin",
+          "execution_mode": "docker",
+          "git_info": {
+            "git_dirty": false,
+            "git_revision": "800c048875e776b863f286c56db753949bf96f58"
+          },
+          "platform": "macOS-15.3.2-arm64-arm-64bit-Mach-O",
+          "python_version": "3.14.6 (main, Jun 10 2026, 10:03:53) [Clang 17.0.0 (clang-1700.6.4.2)]",
+          "recommendations_input_path": "results_v5/protocol-v5.0.0/E1/20260825T-observed-p1-p2-development-v1/raw/recommendations.jsonl",
+          "recommendations_input_sha256": "25868752054231fa271e540210aad0845113ba3974722376029b18184959daf8",
+          "runtime_detected": "docker"
+        },
+        "image_count": 4,
+        "probe_count": 17,
+        "required_probe_not_defined_count": 1
+      },
+      "metrics": {
+        "H7F": {
+          "all_digests_immutable": true,
+          "catalog_underclaim_count": 1,
+          "conservative_success": 0.9444,
+          "execution_unavailable_count": 0,
+          "failed_probe_count": 0,
+          "functional_execution_coverage": 1.0,
+          "operational_adequacy": 0.8889,
+          "required_probe_not_defined_count": 1
+        }
+      },
+      "package_path": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T040730Z",
+      "provenance": {
+        "dataset": {
+          "dataset_id": "protocol-v5-development-2026-08-22",
+          "dataset_sha256": "e3fff5167ef2194fb365fec7510d1efc2b17a18b13182063c2b63c26f021d3cd"
+        },
+        "environment": {
+          "environment_id": "e5-docker-darwin",
+          "execution_mode": "docker",
+          "git_info": {
+            "git_dirty": false,
+            "git_revision": "800c048875e776b863f286c56db753949bf96f58"
+          },
+          "platform": "macOS-15.3.2-arm64-arm-64bit-Mach-O",
+          "python_version": "3.14.6 (main, Jun 10 2026, 10:03:53) [Clang 17.0.0 (clang-1700.6.4.2)]",
+          "recommendations_input_path": "results_v5/protocol-v5.0.0/E1/20260825T-observed-p1-p2-development-v1/raw/recommendations.jsonl",
+          "recommendations_input_sha256": "25868752054231fa271e540210aad0845113ba3974722376029b18184959daf8",
+          "runtime_detected": "docker"
+        },
+        "git_revision": "800c048875e776b863f286c56db753949bf96f58",
+        "random_seeds": [
+          42
+        ]
+      },
+      "reason_codes": [
+        "CLAIMS_NOT_PERMITTED",
+        "NON_CONFIRMATORY_EVIDENCE"
+      ],
+      "requirement_id": "image_functional",
+      "schema_version": "protocol-v5-manifest-v1.0.0",
+      "semantic_provenance": {
+        "catalog.file_sha256": "f45b04efc2ea6f271d49c6806b58bfc0f30503cb68944930609f6e0f71882a71",
+        "catalog.version": "2026-08-06.1",
+        "constraints.evaluator_version": "p2-deterministic-constraint-evaluator-v1.0.0",
+        "constraints.ranker_version": "p2-deterministic-ranker-v1.0.0",
+        "corpus.sha256": "987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444",
+        "indexes.dense.sha256": "c0561bcd1ee6ec5153b710aef3deae88bd259a011ddd454513cbb1c675118387",
+        "indexes.hybrid.sha256": "45ea08f29492d796189920713636b3a9cae2f0fb264e023124eb38c8cfad83a4",
+        "indexes.sparse.sha256": "931fac84b818cb934a37bfbfa76092a89626cd5eaffc869887de8558bc6fa747",
+        "p1.backend_version": "rule-based-v1",
+        "p2.pipeline_version": "p2-pipeline-v1.0.0"
+      },
+      "stage": "development",
+      "tests": {
+        "criterion": "EXACT_ALL_REQUIRED_PROBES",
+        "validator": {
+          "eligible_as_current_e5_evidence": true,
+          "evidence_dir": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T040730Z",
+          "execution_status": "OBSERVED",
+          "experiment_id": "E5",
+          "files_checked": 8,
+          "probes_executed": 17,
+          "probes_unavailable": 0,
+          "recommendations_evaluated": 36,
+          "status": "PASS",
+          "total_probes_configured": 17,
+          "validation_profile": "CURRENT_V1_3",
+          "validator_status": "CURRENT_VALID"
+        }
+      },
+      "validation_error": null,
+      "validation_status": "PASS"
+    },
+    {
+      "artifacts": [
+        {
+          "package_relative_path": "manifest.json",
+          "path": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T071910Z/manifest.json",
+          "sha256": "5142657dd2122080ca722b0b1b701486a71e63306ab3bd7d609030e54d166be6"
+        },
+        {
+          "package_relative_path": "derived/functional_metrics.json",
+          "path": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T071910Z/derived/functional_metrics.json",
+          "sha256": "ca2ac88bf9d89e94c7df8b472e284652bacd662e612607730371e7c7921dafea"
+        },
+        {
+          "package_relative_path": "raw/probe_manifest.json",
+          "path": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T071910Z/raw/probe_manifest.json",
+          "sha256": "30841776ad60916ecd41fc86fb92b244c38ee7b53c8acea3e6bb362f7a8cdf3f"
+        },
+        {
+          "package_relative_path": "report/status.json",
+          "path": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T071910Z/report/status.json",
+          "sha256": "154490d7d0b92185df74cc5fbdbfb0a8aa525669bcbebb5601c44abdcc665e62"
+        }
+      ],
+      "claim_eligibility": "INELIGIBLE",
+      "claims_permitted": false,
+      "evidence_class": "E5",
+      "execution_status": "OBSERVED",
+      "experiment_id": "E5_IMAGE_FUNCTIONAL",
+      "manifest_path": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T071910Z/manifest.json",
+      "manifest_sha256": "5142657dd2122080ca722b0b1b701486a71e63306ab3bd7d609030e54d166be6",
+      "metadata": {
+        "catalog_underclaim_count": 1,
+        "environment": {
+          "environment_id": "e5-docker-darwin",
+          "execution_mode": "docker",
+          "git_info": {
+            "git_dirty": false,
+            "git_revision": "90d3889eb423eeb50c84eb1000061c938043f960"
+          },
+          "platform": "macOS-15.3.2-arm64-arm-64bit-Mach-O",
+          "python_version": "3.14.6 (main, Jun 10 2026, 10:03:53) [Clang 17.0.0 (clang-1700.6.4.2)]",
+          "recommendations_input_path": "results_v5/protocol-v5.0.0/E1/20260825T-observed-p1-p2-development-v1/raw/recommendations.jsonl",
+          "recommendations_input_sha256": "25868752054231fa271e540210aad0845113ba3974722376029b18184959daf8",
+          "runtime_detected": "docker"
+        },
+        "image_count": 4,
+        "probe_count": 17,
+        "required_probe_not_defined_count": 1
+      },
+      "metrics": {
+        "H7F": {
+          "all_digests_immutable": true,
+          "catalog_underclaim_count": 1,
+          "conservative_success": 0.9444,
+          "execution_unavailable_count": 0,
+          "failed_probe_count": 0,
+          "functional_execution_coverage": 1.0,
+          "operational_adequacy": 0.8889,
+          "required_probe_not_defined_count": 1
+        }
+      },
+      "package_path": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T071910Z",
+      "provenance": {
+        "dataset": {
+          "dataset_id": "protocol-v5-development-2026-08-22",
+          "dataset_sha256": "e3fff5167ef2194fb365fec7510d1efc2b17a18b13182063c2b63c26f021d3cd"
+        },
+        "environment": {
+          "environment_id": "e5-docker-darwin",
+          "execution_mode": "docker",
+          "git_info": {
+            "git_dirty": false,
+            "git_revision": "90d3889eb423eeb50c84eb1000061c938043f960"
+          },
+          "platform": "macOS-15.3.2-arm64-arm-64bit-Mach-O",
+          "python_version": "3.14.6 (main, Jun 10 2026, 10:03:53) [Clang 17.0.0 (clang-1700.6.4.2)]",
+          "recommendations_input_path": "results_v5/protocol-v5.0.0/E1/20260825T-observed-p1-p2-development-v1/raw/recommendations.jsonl",
+          "recommendations_input_sha256": "25868752054231fa271e540210aad0845113ba3974722376029b18184959daf8",
+          "runtime_detected": "docker"
+        },
+        "git_revision": "90d3889eb423eeb50c84eb1000061c938043f960",
+        "random_seeds": [
+          42
+        ]
+      },
+      "reason_codes": [
+        "CLAIMS_NOT_PERMITTED",
+        "NON_CONFIRMATORY_EVIDENCE"
+      ],
+      "requirement_id": "image_functional",
+      "schema_version": "protocol-v5-manifest-v1.0.0",
+      "semantic_provenance": {
+        "catalog.file_sha256": "f45b04efc2ea6f271d49c6806b58bfc0f30503cb68944930609f6e0f71882a71",
+        "catalog.version": "2026-08-06.1",
+        "constraints.evaluator_version": "p2-deterministic-constraint-evaluator-v1.0.0",
+        "constraints.ranker_version": "p2-deterministic-ranker-v1.0.0",
+        "corpus.sha256": "987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444",
+        "indexes.dense.sha256": "c0561bcd1ee6ec5153b710aef3deae88bd259a011ddd454513cbb1c675118387",
+        "indexes.hybrid.sha256": "45ea08f29492d796189920713636b3a9cae2f0fb264e023124eb38c8cfad83a4",
+        "indexes.sparse.sha256": "931fac84b818cb934a37bfbfa76092a89626cd5eaffc869887de8558bc6fa747",
+        "p1.backend_version": "rule-based-v1",
+        "p2.pipeline_version": "p2-pipeline-v1.0.0"
+      },
+      "stage": "development",
+      "tests": {
+        "criterion": "EXACT_ALL_REQUIRED_PROBES",
+        "validator": {
+          "eligible_as_current_e5_evidence": true,
+          "evidence_dir": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T071910Z",
+          "execution_status": "OBSERVED",
+          "experiment_id": "E5",
+          "files_checked": 8,
+          "probes_executed": 17,
+          "probes_unavailable": 0,
+          "recommendations_evaluated": 36,
+          "status": "PASS",
+          "total_probes_configured": 17,
+          "validation_profile": "CURRENT_V1_3",
+          "validator_status": "CURRENT_VALID"
+        }
+      },
+      "validation_error": null,
+      "validation_status": "PASS"
+    },
+    {
+      "artifacts": [
+        {
+          "package_relative_path": "derived/statistical_analysis/analysis-manifest.json",
+          "path": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E1/20260825T-observed-p1-p2-development-v1/derived/statistical_analysis/analysis-manifest.json",
+          "sha256": "772422aa46e8ae19ffb77cc1c0f395fca4e26919a21e78417603dd35c6c81e93"
+        },
+        {
+          "package_relative_path": "raw/offline-run-provenance.json",
+          "path": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E1/20260825T-observed-p1-p2-development-v1/raw/offline-run-provenance.json",
+          "sha256": "53a366ad40991d303a5e4e41b4e699f424dc1e05ff1c64bd455ff50105aabb17"
+        },
+        {
+          "package_relative_path": "report/offline-run-completion.json",
+          "path": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E1/20260825T-observed-p1-p2-development-v1/report/offline-run-completion.json",
+          "sha256": "1d682e18668076485dd48b15321e361f781232839c71ce2fcd6db33c4c62563a"
+        }
+      ],
+      "claim_eligibility": "INELIGIBLE",
+      "claims_permitted": false,
+      "evidence_class": "E2",
+      "execution_status": "NOT_EXECUTED",
+      "experiment_id": "E1",
+      "manifest_path": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E1/20260825T-observed-p1-p2-development-v1/derived/statistical_analysis/analysis-manifest.json",
+      "manifest_sha256": "772422aa46e8ae19ffb77cc1c0f395fca4e26919a21e78417603dd35c6c81e93",
+      "metadata": {
+        "family_n": 10,
+        "repeat_policy": {},
+        "split_role": "development",
+        "variant_n": 18
+      },
+      "metrics": {
+        "H2": {
+          "ci_high": null,
+          "ci_low": null,
+          "derivation": "canonical JointAccept@1 minus mean reviewed-equivalent JointAccept@1; P2 loss minus P1 loss",
+          "effect": null,
+          "effective_family_n": 0,
+          "p_value": null,
+          "test_available": false,
+          "test_method": null
+        }
+      },
+      "package_path": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E1/20260825T-observed-p1-p2-development-v1",
+      "provenance": {
+        "analysis_environment": null,
+        "dataset": {
+          "bundle_checksum": "18894b73ec98d895348498bf6b1c4dd4d2dc6004437202bd8b93c17d09b0dc0b",
+          "case_count": 18,
+          "dataset_id": "protocol-v5-development-2026-08-22",
+          "dataset_sha256": "e3fff5167ef2194fb365fec7510d1efc2b17a18b13182063c2b63c26f021d3cd",
+          "family_count": 10,
+          "role": "development",
+          "split_id": "v5-development"
+        },
+        "freeze_identity": {
+          "freeze_id": null,
+          "frozen_at_utc": "2026-08-22T00:00:00Z",
+          "frozen_by": "protocol-v5-experiment-engineering",
+          "source": "development_split_manifest"
+        },
+        "git_dirty": null,
+        "git_revision": "6726e48fe48b1614f661cbe1e7ec354dd08a6ecf",
+        "source_environment": {
+          "platform": "darwin",
+          "platform_release": "24.3.0",
+          "python_version": "3.14.6"
+        }
+      },
+      "reason_codes": [
+        "CLAIMS_NOT_PERMITTED",
+        "EVIDENCE_NOT_OBSERVED_COMPLETE",
+        "NON_CONFIRMATORY_EVIDENCE"
+      ],
+      "requirement_id": "natural_language_robustness",
+      "schema_version": "protocol-v5-statistical-analysis-v1.0.0",
+      "semantic_provenance": {
+        "catalog.version": "2026-08-06.1",
+        "constraints.evaluator_version": "p2-deterministic-constraint-evaluator-v1.0.0",
+        "constraints.policy_version": "p2-constraint-policy-v1.0.0",
+        "constraints.ranker_version": "p2-deterministic-ranker-v1.0.0",
+        "corpus.sha256": "987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444",
+        "corpus.version": "environment-candidate-corpus-v1",
+        "extractor.prompt_sha256": "88f4f6935bf7c3f7e0be87cc29af97761f72fcfa1f95c0a0e54ac7b800a16972",
+        "indexes.dense.sha256": "c0561bcd1ee6ec5153b710aef3deae88bd259a011ddd454513cbb1c675118387",
+        "indexes.hybrid.sha256": "45ea08f29492d796189920713636b3a9cae2f0fb264e023124eb38c8cfad83a4",
+        "indexes.sparse.sha256": "931fac84b818cb934a37bfbfa76092a89626cd5eaffc869887de8558bc6fa747",
+        "p1.backend_version": "rule-based-v1",
+        "p2.backend_version": "p2-hybrid-v1.0.0",
+        "p2.config_version": "p2-config-v1.0.0",
+        "p2.pipeline_version": "p2-pipeline-v1.0.0",
+        "p3.pipeline_version": "p3-pipeline-v1.0.0",
+        "p3.prompt_sha256": "696dabd22010a03c110b315c48b84efb5b8517733c2174a21aa79be4807d1e44",
+        "p3.reranker_version": "p3-reranker-v1.0.0"
+      },
+      "stage": "development",
+      "tests": {
+        "statistical_package": {
+          "analysis_status": "NOT_EXECUTED",
+          "outputs_validated": 0,
+          "schema_version": "protocol-v5-statistical-analysis-v1.0.0",
+          "status": "PASS"
+        },
+        "testing_policy": {}
+      },
+      "validation_error": null,
+      "validation_status": "PASS"
+    },
+    {
+      "artifacts": [
+        {
+          "package_relative_path": "derived/statistical_analysis/analysis-manifest.json",
+          "path": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E1/20260825T-observed-p1-p2-development-v1/derived/statistical_analysis/analysis-manifest.json",
+          "sha256": "772422aa46e8ae19ffb77cc1c0f395fca4e26919a21e78417603dd35c6c81e93"
+        },
+        {
+          "package_relative_path": "raw/offline-run-provenance.json",
+          "path": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E1/20260825T-observed-p1-p2-development-v1/raw/offline-run-provenance.json",
+          "sha256": "53a366ad40991d303a5e4e41b4e699f424dc1e05ff1c64bd455ff50105aabb17"
+        },
+        {
+          "package_relative_path": "report/offline-run-completion.json",
+          "path": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E1/20260825T-observed-p1-p2-development-v1/report/offline-run-completion.json",
+          "sha256": "1d682e18668076485dd48b15321e361f781232839c71ce2fcd6db33c4c62563a"
+        }
+      ],
+      "claim_eligibility": "INELIGIBLE",
+      "claims_permitted": false,
+      "evidence_class": "E1",
+      "execution_status": "NOT_EXECUTED",
+      "experiment_id": "E1",
+      "manifest_path": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E1/20260825T-observed-p1-p2-development-v1/derived/statistical_analysis/analysis-manifest.json",
+      "manifest_sha256": "772422aa46e8ae19ffb77cc1c0f395fca4e26919a21e78417603dd35c6c81e93",
+      "metadata": {
+        "family_n": 10,
+        "repeat_policy": {},
+        "split_role": "development",
+        "variant_n": 18
+      },
+      "metrics": {
+        "H1": {
+          "ci_high": null,
+          "ci_low": null,
+          "effect": null,
+          "effective_family_n": null,
+          "p_value": null,
+          "test_available": false,
+          "test_method": null
+        }
+      },
+      "package_path": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E1/20260825T-observed-p1-p2-development-v1",
+      "provenance": {
+        "analysis_environment": null,
+        "dataset": {
+          "bundle_checksum": "18894b73ec98d895348498bf6b1c4dd4d2dc6004437202bd8b93c17d09b0dc0b",
+          "case_count": 18,
+          "dataset_id": "protocol-v5-development-2026-08-22",
+          "dataset_sha256": "e3fff5167ef2194fb365fec7510d1efc2b17a18b13182063c2b63c26f021d3cd",
+          "family_count": 10,
+          "role": "development",
+          "split_id": "v5-development"
+        },
+        "freeze_identity": {
+          "freeze_id": null,
+          "frozen_at_utc": "2026-08-22T00:00:00Z",
+          "frozen_by": "protocol-v5-experiment-engineering",
+          "source": "development_split_manifest"
+        },
+        "git_dirty": null,
+        "git_revision": "6726e48fe48b1614f661cbe1e7ec354dd08a6ecf",
+        "source_environment": {
+          "platform": "darwin",
+          "platform_release": "24.3.0",
+          "python_version": "3.14.6"
+        }
+      },
+      "reason_codes": [
+        "CLAIMS_NOT_PERMITTED",
+        "EVIDENCE_NOT_OBSERVED_COMPLETE",
+        "NON_CONFIRMATORY_EVIDENCE"
+      ],
+      "requirement_id": "offline_recommendation",
+      "schema_version": "protocol-v5-statistical-analysis-v1.0.0",
+      "semantic_provenance": {
+        "catalog.version": "2026-08-06.1",
+        "constraints.evaluator_version": "p2-deterministic-constraint-evaluator-v1.0.0",
+        "constraints.policy_version": "p2-constraint-policy-v1.0.0",
+        "constraints.ranker_version": "p2-deterministic-ranker-v1.0.0",
+        "corpus.sha256": "987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444",
+        "corpus.version": "environment-candidate-corpus-v1",
+        "extractor.prompt_sha256": "88f4f6935bf7c3f7e0be87cc29af97761f72fcfa1f95c0a0e54ac7b800a16972",
+        "indexes.dense.sha256": "c0561bcd1ee6ec5153b710aef3deae88bd259a011ddd454513cbb1c675118387",
+        "indexes.hybrid.sha256": "45ea08f29492d796189920713636b3a9cae2f0fb264e023124eb38c8cfad83a4",
+        "indexes.sparse.sha256": "931fac84b818cb934a37bfbfa76092a89626cd5eaffc869887de8558bc6fa747",
+        "p1.backend_version": "rule-based-v1",
+        "p2.backend_version": "p2-hybrid-v1.0.0",
+        "p2.config_version": "p2-config-v1.0.0",
+        "p2.pipeline_version": "p2-pipeline-v1.0.0",
+        "p3.pipeline_version": "p3-pipeline-v1.0.0",
+        "p3.prompt_sha256": "696dabd22010a03c110b315c48b84efb5b8517733c2174a21aa79be4807d1e44",
+        "p3.reranker_version": "p3-reranker-v1.0.0"
+      },
+      "stage": "development",
+      "tests": {
+        "statistical_package": {
+          "analysis_status": "NOT_EXECUTED",
+          "outputs_validated": 0,
+          "schema_version": "protocol-v5-statistical-analysis-v1.0.0",
+          "status": "PASS"
+        },
+        "testing_policy": {}
+      },
+      "validation_error": null,
+      "validation_status": "PASS"
+    },
+    {
+      "artifacts": [
+        {
+          "package_relative_path": "manifest.json",
+          "path": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E4/e4-resource-efficiency-dry-run-20260904T093503Z/manifest.json",
+          "sha256": "c8a53aefeadbe635cd784661f5291d40bfdd39884bb7f973dd17bb1b599e0b07"
+        },
+        {
+          "package_relative_path": "plan.json",
+          "path": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E4/e4-resource-efficiency-dry-run-20260904T093503Z/plan.json",
+          "sha256": "a89434716c0dc89d70a30dfcbecbcd1dd3feb8a10581ad14a3c9484f606257e3"
+        }
+      ],
+      "claim_eligibility": "INELIGIBLE",
+      "claims_permitted": false,
+      "evidence_class": "E4",
+      "execution_status": "NOT_EXECUTED",
+      "experiment_id": "E4_RESOURCE_EFFICIENCY",
+      "manifest_path": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E4/e4-resource-efficiency-dry-run-20260904T093503Z/manifest.json",
+      "manifest_sha256": "c8a53aefeadbe635cd784661f5291d40bfdd39884bb7f973dd17bb1b599e0b07",
+      "metadata": {
+        "blocker_codes": [
+          "APPROVED_ORACLE_UNAVAILABLE",
+          "CGROUP_V2_REQUIRED",
+          "CLUSTER_INELIGIBLE",
+          "CONFIRMATORY_FREEZE_INACTIVE",
+          "GIT_TREE_NOT_CLEAN",
+          "IMAGE_DIGEST_UNVERIFIED",
+          "KUBERNETES_VERSION_UNAVAILABLE",
+          "NODE_CAPACITY_NOT_FROZEN",
+          "REQUIRED_API_ACCESS_MISSING",
+          "WRONG_CLUSTER_FINGERPRINT",
+          "WRONG_KUBERNETES_CONTEXT",
+          "WRONG_NODE_COUNT"
+        ]
+      },
+      "metrics": {},
+      "package_path": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E4/e4-resource-efficiency-dry-run-20260904T093503Z",
+      "provenance": {
+        "git_revision": "7440f36acba0e1f0424334ffff073be99ac2e7dd",
+        "manifest": {
+          "blocker_codes": [
+            "APPROVED_ORACLE_UNAVAILABLE",
+            "CGROUP_V2_REQUIRED",
+            "CLUSTER_INELIGIBLE",
+            "CONFIRMATORY_FREEZE_INACTIVE",
+            "GIT_TREE_NOT_CLEAN",
+            "IMAGE_DIGEST_UNVERIFIED",
+            "KUBERNETES_VERSION_UNAVAILABLE",
+            "NODE_CAPACITY_NOT_FROZEN",
+            "REQUIRED_API_ACCESS_MISSING",
+            "WRONG_CLUSTER_FINGERPRINT",
+            "WRONG_KUBERNETES_CONTEXT",
+            "WRONG_NODE_COUNT"
+          ],
+          "cluster_measurement_status": "NOT_EXECUTED",
+          "created_at": "2026-09-04T09:35:05.279972Z",
+          "execution_status": "NOT_EXECUTED",
+          "image": "example.invalid/intent-spawner-resource-v5@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "kubernetes_mutations": [],
+          "plan_sha256": "6352b9dba94802c6d1b7e9f417bc95fe067b35e82e3f6436f1b1157100c4b65f",
+          "protocol_version": "5.0.0",
+          "reason": "Confirmatory freeze, approved oracle, verified image, and frozen node capacity are unavailable.",
+          "run_id": "e4-resource-efficiency-dry-run-20260904T093503Z",
+          "schema_version": "protocol-v5-resource-efficiency-raw-package-v1.0.0"
+        }
+      },
+      "reason_codes": [
+        "CLAIMS_NOT_PERMITTED",
+        "DERIVED_ANALYSIS_PACKAGE_REQUIRED",
+        "EVIDENCE_NOT_OBSERVED_COMPLETE",
+        "EVIDENCE_VALIDATION_FAILED",
+        "NON_CONFIRMATORY_EVIDENCE"
+      ],
+      "requirement_id": "resource_efficiency",
+      "schema_version": "protocol-v5-resource-efficiency-raw-package-v1.0.0",
+      "semantic_provenance": {
+        "constraints.evaluator_version": "p2-deterministic-constraint-evaluator-v1.0.0",
+        "constraints.policy_version": "p2-constraint-policy-v1.0.0",
+        "constraints.ranker_version": "p2-deterministic-ranker-v1.0.0",
+        "extractor.prompt_sha256": "88f4f6935bf7c3f7e0be87cc29af97761f72fcfa1f95c0a0e54ac7b800a16972",
+        "indexes.dense.sha256": "c0561bcd1ee6ec5153b710aef3deae88bd259a011ddd454513cbb1c675118387",
+        "indexes.hybrid.sha256": "45ea08f29492d796189920713636b3a9cae2f0fb264e023124eb38c8cfad83a4",
+        "indexes.sparse.sha256": "931fac84b818cb934a37bfbfa76092a89626cd5eaffc869887de8558bc6fa747",
+        "p1.backend_version": "rule-based-v1",
+        "p2.backend_version": "p2-hybrid-v1.0.0",
+        "p2.config_version": "p2-config-v1.0.0",
+        "p2.pipeline_version": "p2-pipeline-v1.0.0"
+      },
+      "stage": "development",
+      "tests": {},
+      "validation_error": "resource-efficiency design-size or execution-order invariant differs",
+      "validation_status": "FAIL"
+    },
+    {
+      "artifacts": [
+        {
+          "package_relative_path": "manifest.json",
+          "path": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E4/e4-resource-efficiency-dry-run-20260904T094050Z/manifest.json",
+          "sha256": "f35ea5cc6d75615178672d62c3a65592ab959d1dbcb416120c52d5fb4e82584a"
+        },
+        {
+          "package_relative_path": "plan.json",
+          "path": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E4/e4-resource-efficiency-dry-run-20260904T094050Z/plan.json",
+          "sha256": "b59d83e5c14df0d17b21a5a4cf661f28537c2969b673f39c1d88d9389b9b4da9"
+        }
+      ],
+      "claim_eligibility": "INELIGIBLE",
+      "claims_permitted": false,
+      "evidence_class": "E4",
+      "execution_status": "NOT_EXECUTED",
+      "experiment_id": "E4_RESOURCE_EFFICIENCY",
+      "manifest_path": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E4/e4-resource-efficiency-dry-run-20260904T094050Z/manifest.json",
+      "manifest_sha256": "f35ea5cc6d75615178672d62c3a65592ab959d1dbcb416120c52d5fb4e82584a",
+      "metadata": {
+        "blocker_codes": [
+          "APPROVED_ORACLE_UNAVAILABLE",
+          "CGROUP_V2_REQUIRED",
+          "CLUSTER_INELIGIBLE",
+          "CONFIRMATORY_FREEZE_INACTIVE",
+          "GIT_TREE_NOT_CLEAN",
+          "IMAGE_DIGEST_UNVERIFIED",
+          "KUBERNETES_VERSION_UNAVAILABLE",
+          "NODE_CAPACITY_NOT_FROZEN",
+          "REQUIRED_API_ACCESS_MISSING",
+          "WRONG_CLUSTER_FINGERPRINT",
+          "WRONG_KUBERNETES_CONTEXT",
+          "WRONG_NODE_COUNT"
+        ]
+      },
+      "metrics": {},
+      "package_path": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E4/e4-resource-efficiency-dry-run-20260904T094050Z",
+      "provenance": {
+        "git_revision": "7440f36acba0e1f0424334ffff073be99ac2e7dd",
+        "manifest": {
+          "blocker_codes": [
+            "APPROVED_ORACLE_UNAVAILABLE",
+            "CGROUP_V2_REQUIRED",
+            "CLUSTER_INELIGIBLE",
+            "CONFIRMATORY_FREEZE_INACTIVE",
+            "GIT_TREE_NOT_CLEAN",
+            "IMAGE_DIGEST_UNVERIFIED",
+            "KUBERNETES_VERSION_UNAVAILABLE",
+            "NODE_CAPACITY_NOT_FROZEN",
+            "REQUIRED_API_ACCESS_MISSING",
+            "WRONG_CLUSTER_FINGERPRINT",
+            "WRONG_KUBERNETES_CONTEXT",
+            "WRONG_NODE_COUNT"
+          ],
+          "cluster_measurement_status": "NOT_EXECUTED",
+          "created_at": "2026-09-04T09:40:52.125116Z",
+          "execution_status": "NOT_EXECUTED",
+          "image": "example.invalid/intent-spawner-resource-v5@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "kubernetes_mutations": [],
+          "plan_sha256": "1978752d428253518533c1cda677052fedecf276e57f85411ed3985a582bee85",
+          "protocol_version": "5.0.0",
+          "reason": "Confirmatory freeze, approved oracle, verified image, and frozen node capacity are unavailable.",
+          "run_id": "e4-resource-efficiency-dry-run-20260904T094050Z",
+          "schema_version": "protocol-v5-resource-efficiency-raw-package-v1.0.0"
+        }
+      },
+      "reason_codes": [
+        "CLAIMS_NOT_PERMITTED",
+        "DERIVED_ANALYSIS_PACKAGE_REQUIRED",
+        "EVIDENCE_NOT_OBSERVED_COMPLETE",
+        "EVIDENCE_VALIDATION_FAILED",
+        "NON_CONFIRMATORY_EVIDENCE"
+      ],
+      "requirement_id": "resource_efficiency",
+      "schema_version": "protocol-v5-resource-efficiency-raw-package-v1.0.0",
+      "semantic_provenance": {
+        "constraints.evaluator_version": "p2-deterministic-constraint-evaluator-v1.0.0",
+        "constraints.policy_version": "p2-constraint-policy-v1.0.0",
+        "constraints.ranker_version": "p2-deterministic-ranker-v1.0.0",
+        "extractor.prompt_sha256": "88f4f6935bf7c3f7e0be87cc29af97761f72fcfa1f95c0a0e54ac7b800a16972",
+        "indexes.dense.sha256": "c0561bcd1ee6ec5153b710aef3deae88bd259a011ddd454513cbb1c675118387",
+        "indexes.hybrid.sha256": "45ea08f29492d796189920713636b3a9cae2f0fb264e023124eb38c8cfad83a4",
+        "indexes.sparse.sha256": "931fac84b818cb934a37bfbfa76092a89626cd5eaffc869887de8558bc6fa747",
+        "p1.backend_version": "rule-based-v1",
+        "p2.backend_version": "p2-hybrid-v1.0.0",
+        "p2.config_version": "p2-config-v1.0.0",
+        "p2.pipeline_version": "p2-pipeline-v1.0.0"
+      },
+      "stage": "development",
+      "tests": {},
+      "validation_error": "resource-efficiency design-size or execution-order invariant differs",
+      "validation_status": "FAIL"
+    },
+    {
+      "artifacts": [
+        {
+          "package_relative_path": "manifest.json",
+          "path": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E4/e4-resource-efficiency-dry-run-20260904T094316Z/manifest.json",
+          "sha256": "ad109b7711535d7120b82879ba96b472ee0f7e7873c4881721f19eff5b40d8f0"
+        },
+        {
+          "package_relative_path": "plan.json",
+          "path": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E4/e4-resource-efficiency-dry-run-20260904T094316Z/plan.json",
+          "sha256": "8d0d253c63e3cf5ade8197f4d6b6528af9967c7bf00c22cde644557594658e38"
+        }
+      ],
+      "claim_eligibility": "INELIGIBLE",
+      "claims_permitted": false,
+      "evidence_class": "E4",
+      "execution_status": "NOT_EXECUTED",
+      "experiment_id": "E4_RESOURCE_EFFICIENCY",
+      "manifest_path": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E4/e4-resource-efficiency-dry-run-20260904T094316Z/manifest.json",
+      "manifest_sha256": "ad109b7711535d7120b82879ba96b472ee0f7e7873c4881721f19eff5b40d8f0",
+      "metadata": {
+        "blocker_codes": [
+          "APPROVED_ORACLE_UNAVAILABLE",
+          "CGROUP_V2_REQUIRED",
+          "CLUSTER_INELIGIBLE",
+          "CONFIRMATORY_FREEZE_INACTIVE",
+          "GIT_TREE_NOT_CLEAN",
+          "IMAGE_DIGEST_UNVERIFIED",
+          "KUBERNETES_VERSION_UNAVAILABLE",
+          "NODE_CAPACITY_NOT_FROZEN",
+          "REQUIRED_API_ACCESS_MISSING",
+          "WRONG_CLUSTER_FINGERPRINT",
+          "WRONG_KUBERNETES_CONTEXT",
+          "WRONG_NODE_COUNT"
+        ]
+      },
+      "metrics": {},
+      "package_path": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E4/e4-resource-efficiency-dry-run-20260904T094316Z",
+      "provenance": {
+        "git_revision": "7440f36acba0e1f0424334ffff073be99ac2e7dd",
+        "manifest": {
+          "blocker_codes": [
+            "APPROVED_ORACLE_UNAVAILABLE",
+            "CGROUP_V2_REQUIRED",
+            "CLUSTER_INELIGIBLE",
+            "CONFIRMATORY_FREEZE_INACTIVE",
+            "GIT_TREE_NOT_CLEAN",
+            "IMAGE_DIGEST_UNVERIFIED",
+            "KUBERNETES_VERSION_UNAVAILABLE",
+            "NODE_CAPACITY_NOT_FROZEN",
+            "REQUIRED_API_ACCESS_MISSING",
+            "WRONG_CLUSTER_FINGERPRINT",
+            "WRONG_KUBERNETES_CONTEXT",
+            "WRONG_NODE_COUNT"
+          ],
+          "cluster_measurement_status": "NOT_EXECUTED",
+          "created_at": "2026-09-04T09:43:18.586533Z",
+          "execution_status": "NOT_EXECUTED",
+          "image": "example.invalid/intent-spawner-resource-v5@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "kubernetes_mutations": [],
+          "plan_sha256": "5bdab35de76643a4814fd5cc636fb69251b87823f9572f30067ebb0e5265bba9",
+          "protocol_version": "5.0.0",
+          "reason": "Confirmatory freeze, approved oracle, verified image, and frozen node capacity are unavailable.",
+          "run_id": "e4-resource-efficiency-dry-run-20260904T094316Z",
+          "schema_version": "protocol-v5-resource-efficiency-raw-package-v1.0.0"
+        }
+      },
+      "reason_codes": [
+        "CLAIMS_NOT_PERMITTED",
+        "DERIVED_ANALYSIS_PACKAGE_REQUIRED",
+        "EVIDENCE_NOT_OBSERVED_COMPLETE",
+        "EVIDENCE_VALIDATION_FAILED",
+        "NON_CONFIRMATORY_EVIDENCE"
+      ],
+      "requirement_id": "resource_efficiency",
+      "schema_version": "protocol-v5-resource-efficiency-raw-package-v1.0.0",
+      "semantic_provenance": {
+        "constraints.evaluator_version": "p2-deterministic-constraint-evaluator-v1.0.0",
+        "constraints.policy_version": "p2-constraint-policy-v1.0.0",
+        "constraints.ranker_version": "p2-deterministic-ranker-v1.0.0",
+        "extractor.prompt_sha256": "88f4f6935bf7c3f7e0be87cc29af97761f72fcfa1f95c0a0e54ac7b800a16972",
+        "indexes.dense.sha256": "c0561bcd1ee6ec5153b710aef3deae88bd259a011ddd454513cbb1c675118387",
+        "indexes.hybrid.sha256": "45ea08f29492d796189920713636b3a9cae2f0fb264e023124eb38c8cfad83a4",
+        "indexes.sparse.sha256": "931fac84b818cb934a37bfbfa76092a89626cd5eaffc869887de8558bc6fa747",
+        "p1.backend_version": "rule-based-v1",
+        "p2.backend_version": "p2-hybrid-v1.0.0",
+        "p2.config_version": "p2-config-v1.0.0",
+        "p2.pipeline_version": "p2-pipeline-v1.0.0"
+      },
+      "stage": "development",
+      "tests": {},
+      "validation_error": "resource-efficiency design-size or execution-order invariant differs",
+      "validation_status": "FAIL"
+    },
+    {
+      "artifacts": [
+        {
+          "package_relative_path": "manifest.json",
+          "path": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E4/e4-resource-efficiency-dry-run-20260905T013330Z/manifest.json",
+          "sha256": "48b5ffd71a9dc20e52a9fd3a10e09020e2cf3caa92c51762032cf87c54ade79d"
+        },
+        {
+          "package_relative_path": "plan.json",
+          "path": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E4/e4-resource-efficiency-dry-run-20260905T013330Z/plan.json",
+          "sha256": "225cc77778b4c8887f72aaa48a382cc1530f408c77bcd3dd971833de89281145"
+        }
+      ],
+      "claim_eligibility": "INELIGIBLE",
+      "claims_permitted": false,
+      "evidence_class": "E4",
+      "execution_status": "NOT_EXECUTED",
+      "experiment_id": "E4_RESOURCE_EFFICIENCY",
+      "manifest_path": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E4/e4-resource-efficiency-dry-run-20260905T013330Z/manifest.json",
+      "manifest_sha256": "48b5ffd71a9dc20e52a9fd3a10e09020e2cf3caa92c51762032cf87c54ade79d",
+      "metadata": {
+        "blocker_codes": [
+          "APPROVED_ORACLE_UNAVAILABLE",
+          "CGROUP_V2_REQUIRED",
+          "CLUSTER_INELIGIBLE",
+          "CONFIRMATORY_FREEZE_INACTIVE",
+          "GIT_TREE_NOT_CLEAN",
+          "IMAGE_DIGEST_UNVERIFIED",
+          "KUBERNETES_VERSION_UNAVAILABLE",
+          "NODE_CAPACITY_NOT_FROZEN",
+          "REQUIRED_API_ACCESS_MISSING",
+          "WRONG_CLUSTER_FINGERPRINT",
+          "WRONG_KUBERNETES_CONTEXT",
+          "WRONG_NODE_COUNT"
+        ]
+      },
+      "metrics": {},
+      "package_path": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E4/e4-resource-efficiency-dry-run-20260905T013330Z",
+      "provenance": {
+        "git_revision": "7440f36acba0e1f0424334ffff073be99ac2e7dd",
+        "manifest": {
+          "blocker_codes": [
+            "APPROVED_ORACLE_UNAVAILABLE",
+            "CGROUP_V2_REQUIRED",
+            "CLUSTER_INELIGIBLE",
+            "CONFIRMATORY_FREEZE_INACTIVE",
+            "GIT_TREE_NOT_CLEAN",
+            "IMAGE_DIGEST_UNVERIFIED",
+            "KUBERNETES_VERSION_UNAVAILABLE",
+            "NODE_CAPACITY_NOT_FROZEN",
+            "REQUIRED_API_ACCESS_MISSING",
+            "WRONG_CLUSTER_FINGERPRINT",
+            "WRONG_KUBERNETES_CONTEXT",
+            "WRONG_NODE_COUNT"
+          ],
+          "cluster_measurement_status": "NOT_EXECUTED",
+          "created_at": "2026-09-05T01:33:32.446828Z",
+          "execution_status": "NOT_EXECUTED",
+          "image": "example.invalid/intent-spawner-resource-v5@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "kubernetes_mutations": [],
+          "plan_sha256": "354d25df0ff856e55ded7fd2e388a4f89c9037f7143e845455d50472b4492a02",
+          "protocol_version": "5.0.0",
+          "reason": "Confirmatory freeze, approved oracle, verified image, and frozen node capacity are unavailable.",
+          "run_id": "e4-resource-efficiency-dry-run-20260905T013330Z",
+          "schema_version": "protocol-v5-resource-efficiency-raw-package-v1.0.0"
+        }
+      },
+      "reason_codes": [
+        "CLAIMS_NOT_PERMITTED",
+        "DERIVED_ANALYSIS_PACKAGE_REQUIRED",
+        "EVIDENCE_NOT_OBSERVED_COMPLETE",
+        "NON_CONFIRMATORY_EVIDENCE"
+      ],
+      "requirement_id": "resource_efficiency",
+      "schema_version": "protocol-v5-resource-efficiency-raw-package-v1.0.0",
+      "semantic_provenance": {
+        "constraints.evaluator_version": "p2-deterministic-constraint-evaluator-v1.0.0",
+        "constraints.policy_version": "p2-constraint-policy-v1.0.0",
+        "constraints.ranker_version": "p2-deterministic-ranker-v1.0.0",
+        "extractor.prompt_sha256": "88f4f6935bf7c3f7e0be87cc29af97761f72fcfa1f95c0a0e54ac7b800a16972",
+        "indexes.dense.sha256": "c0561bcd1ee6ec5153b710aef3deae88bd259a011ddd454513cbb1c675118387",
+        "indexes.hybrid.sha256": "45ea08f29492d796189920713636b3a9cae2f0fb264e023124eb38c8cfad83a4",
+        "indexes.sparse.sha256": "931fac84b818cb934a37bfbfa76092a89626cd5eaffc869887de8558bc6fa747",
+        "p1.backend_version": "rule-based-v1",
+        "p2.backend_version": "p2-hybrid-v1.0.0",
+        "p2.config_version": "p2-config-v1.0.0",
+        "p2.pipeline_version": "p2-pipeline-v1.0.0"
+      },
+      "stage": "development",
+      "tests": {},
+      "validation_error": null,
+      "validation_status": "PASS"
+    },
+    {
+      "artifacts": [
+        {
+          "package_relative_path": "manifest.json",
+          "path": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E4/e4-resource-efficiency-dry-run-20260905T013619Z/manifest.json",
+          "sha256": "d19f97de92a2fe1a2d2aa2fb2a370af9faecae570db9ff2248f74154836a3e7a"
+        },
+        {
+          "package_relative_path": "plan.json",
+          "path": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E4/e4-resource-efficiency-dry-run-20260905T013619Z/plan.json",
+          "sha256": "25181515743e78ae23135ba2fcb1a4a23051332df6fa60b09de8edf639d7bbdb"
+        }
+      ],
+      "claim_eligibility": "INELIGIBLE",
+      "claims_permitted": false,
+      "evidence_class": "E4",
+      "execution_status": "NOT_EXECUTED",
+      "experiment_id": "E4_RESOURCE_EFFICIENCY",
+      "manifest_path": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E4/e4-resource-efficiency-dry-run-20260905T013619Z/manifest.json",
+      "manifest_sha256": "d19f97de92a2fe1a2d2aa2fb2a370af9faecae570db9ff2248f74154836a3e7a",
+      "metadata": {
+        "blocker_codes": [
+          "APPROVED_ORACLE_UNAVAILABLE",
+          "CGROUP_V2_REQUIRED",
+          "CLUSTER_INELIGIBLE",
+          "CONFIRMATORY_FREEZE_INACTIVE",
+          "GIT_TREE_NOT_CLEAN",
+          "IMAGE_DIGEST_UNVERIFIED",
+          "KUBERNETES_VERSION_UNAVAILABLE",
+          "NODE_CAPACITY_NOT_FROZEN",
+          "REQUIRED_API_ACCESS_MISSING",
+          "WRONG_CLUSTER_FINGERPRINT",
+          "WRONG_KUBERNETES_CONTEXT",
+          "WRONG_NODE_COUNT"
+        ]
+      },
+      "metrics": {},
+      "package_path": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E4/e4-resource-efficiency-dry-run-20260905T013619Z",
+      "provenance": {
+        "git_revision": "7440f36acba0e1f0424334ffff073be99ac2e7dd",
+        "manifest": {
+          "blocker_codes": [
+            "APPROVED_ORACLE_UNAVAILABLE",
+            "CGROUP_V2_REQUIRED",
+            "CLUSTER_INELIGIBLE",
+            "CONFIRMATORY_FREEZE_INACTIVE",
+            "GIT_TREE_NOT_CLEAN",
+            "IMAGE_DIGEST_UNVERIFIED",
+            "KUBERNETES_VERSION_UNAVAILABLE",
+            "NODE_CAPACITY_NOT_FROZEN",
+            "REQUIRED_API_ACCESS_MISSING",
+            "WRONG_CLUSTER_FINGERPRINT",
+            "WRONG_KUBERNETES_CONTEXT",
+            "WRONG_NODE_COUNT"
+          ],
+          "cluster_measurement_status": "NOT_EXECUTED",
+          "created_at": "2026-09-05T01:36:21.020056Z",
+          "execution_status": "NOT_EXECUTED",
+          "image": "example.invalid/intent-spawner-resource-v5@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "kubernetes_mutations": [],
+          "plan_sha256": "516f135de12270faed603fb903e7656693069d70b33252b469a6d436e5f664bd",
+          "protocol_version": "5.0.0",
+          "reason": "Confirmatory freeze, approved oracle, verified image, and frozen node capacity are unavailable.",
+          "run_id": "e4-resource-efficiency-dry-run-20260905T013619Z",
+          "schema_version": "protocol-v5-resource-efficiency-raw-package-v1.0.0"
+        }
+      },
+      "reason_codes": [
+        "CLAIMS_NOT_PERMITTED",
+        "DERIVED_ANALYSIS_PACKAGE_REQUIRED",
+        "EVIDENCE_NOT_OBSERVED_COMPLETE",
+        "NON_CONFIRMATORY_EVIDENCE"
+      ],
+      "requirement_id": "resource_efficiency",
+      "schema_version": "protocol-v5-resource-efficiency-raw-package-v1.0.0",
+      "semantic_provenance": {
+        "constraints.evaluator_version": "p2-deterministic-constraint-evaluator-v1.0.0",
+        "constraints.policy_version": "p2-constraint-policy-v1.0.0",
+        "constraints.ranker_version": "p2-deterministic-ranker-v1.0.0",
+        "extractor.prompt_sha256": "88f4f6935bf7c3f7e0be87cc29af97761f72fcfa1f95c0a0e54ac7b800a16972",
+        "indexes.dense.sha256": "c0561bcd1ee6ec5153b710aef3deae88bd259a011ddd454513cbb1c675118387",
+        "indexes.hybrid.sha256": "45ea08f29492d796189920713636b3a9cae2f0fb264e023124eb38c8cfad83a4",
+        "indexes.sparse.sha256": "931fac84b818cb934a37bfbfa76092a89626cd5eaffc869887de8558bc6fa747",
+        "p1.backend_version": "rule-based-v1",
+        "p2.backend_version": "p2-hybrid-v1.0.0",
+        "p2.config_version": "p2-config-v1.0.0",
+        "p2.pipeline_version": "p2-pipeline-v1.0.0"
+      },
+      "stage": "development",
+      "tests": {},
+      "validation_error": null,
+      "validation_status": "PASS"
+    }
+  ],
+  "observations_are_copied": false,
+  "protocol_version": "5.0.0",
+  "results_root": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0",
+  "schema_version": "protocol-v5-research-evidence-inventory-v1.0.0"
+}
