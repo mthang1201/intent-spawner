@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 
-from .schemas import EvidenceStatus, ProtocolV5Manifest, SplitStage
+from .schemas import ProtocolV5Manifest
 from .validation import validate_manifest
 
 
@@ -49,15 +49,9 @@ def result_paths(
 def require_development_override(manifest: ProtocolV5Manifest) -> None:
     """Reject override use outside non-observed development work."""
 
-    validate_manifest(manifest)
-    if manifest.split_identity.stage is not SplitStage.DEVELOPMENT:
-        raise PermissionError(
-            "development_override is prohibited for confirmatory splits"
-        )
-    if manifest.execution_status is EvidenceStatus.OBSERVED:
-        raise PermissionError(
-            "development_override is prohibited for OBSERVED evidence"
-        )
+    from .evidence_trust import require_incoming_development_override
+
+    require_incoming_development_override(manifest)
 
 
 def create_result_directory(
@@ -70,7 +64,9 @@ def create_result_directory(
 
     paths = result_paths(manifest, results_root=results_root)
     if development_override:
-        require_development_override(manifest)
+        from .evidence_trust import authorize_development_override
+
+        authorize_development_override(manifest, root=paths.root)
     if paths.root.exists() and not development_override:
         raise FileExistsError(paths.root)
     paths.root.mkdir(parents=True, exist_ok=development_override)

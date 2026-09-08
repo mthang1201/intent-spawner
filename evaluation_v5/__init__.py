@@ -15,11 +15,14 @@ from .isolation import (
     ContaminationReport,
     SplitContaminationError,
     SplitIsolationError,
+    VerifiedConfirmatorySplit,
     check_contamination,
     load_confirmatory_split,
     normalize_prompt,
+    verify_confirmatory_split,
 )
 from .provenance import write_json_exclusive, write_provenance_json
+from .evidence_trust import EvidenceImmutabilityError
 from .schemas import (
     MANIFEST_SCHEMA_VERSION,
     PROTOCOL_VERSION,
@@ -80,15 +83,32 @@ _GOLD_EXPORTS = frozenset(
         "validate_gold_dataset",
     }
 )
+_FREEZE_EXPORTS = frozenset(
+    {
+        "DesignSnapshot",
+        "FreezeValidationError",
+        "ProductionFreezeManifest",
+        "VerifiedProductionFreeze",
+        "load_design_snapshot",
+        "parse_design_snapshot",
+        "parse_production_freeze",
+        "reverify_production_freeze",
+        "verify_production_freeze",
+    }
+)
 
 
 def __getattr__(name: str):
-    """Lazily expose gold authoring APIs without preloading its CLI module."""
+    """Lazily expose gold/freeze APIs without preloading their heavy modules."""
 
     if name in _GOLD_EXPORTS:
         from . import gold_dataset
 
         return getattr(gold_dataset, name)
+    if name in _FREEZE_EXPORTS:
+        from . import freeze
+
+        return getattr(freeze, name)
     raise AttributeError(name)
 
 __all__ = [
@@ -103,10 +123,13 @@ __all__ = [
     "DEFAULT_DEVELOPMENT_SPLIT_ID",
     "DEFAULT_RESULTS_ROOT",
     "DatasetIdentity",
+    "DesignSnapshot",
     "EmbeddingIndexIdentity",
+    "EvidenceImmutabilityError",
     "EvidenceStatus",
     "ExperimentId",
     "ExtractorIdentity",
+    "FreezeValidationError",
     "FREEZE_ARTIFACT_ENV_VAR",
     "GOLD_DATASET_SCHEMA_VERSION",
     "GOLD_REVIEW_SCHEMA_VERSION",
@@ -121,6 +144,7 @@ __all__ = [
     "PROTOCOL_DIRECTORY",
     "PROTOCOL_VERSION",
     "ProtocolV5Manifest",
+    "ProductionFreezeManifest",
     "ResultPaths",
     "ReviewFinding",
     "ReviewReport",
@@ -130,6 +154,7 @@ __all__ = [
     "SplitCase",
     "SplitContaminationError",
     "SplitIsolationError",
+    "VerifiedConfirmatorySplit",
     "SplitManifest",
     "SplitRole",
     "SplitStage",
@@ -137,6 +162,7 @@ __all__ = [
     "SPLIT_BUNDLE_SCHEMA_VERSION_V2",
     "SUPPORTED_SPLIT_BUNDLE_SCHEMA_VERSIONS",
     "Variant",
+    "VerifiedProductionFreeze",
     "WorkloadFamily",
     "adapt_operational_provenance",
     "check_contamination",
@@ -145,17 +171,23 @@ __all__ = [
     "current_catalog_identity",
     "import_v4_dataset",
     "load_gold_dataset",
+    "load_design_snapshot",
     "load_manifest",
     "load_confirmatory_split",
     "load_development_split",
     "normalize_prompt",
+    "parse_design_snapshot",
+    "parse_production_freeze",
+    "reverify_production_freeze",
     "result_paths",
     "review_gold_dataset",
     "summarize_gold_dataset",
     "validate_gold_dataset",
     "validate_manifest",
     "verify_file_checksum",
+    "verify_confirmatory_split",
     "verify_manifest_checksums",
+    "verify_production_freeze",
     "write_manifest",
     "write_json_exclusive",
     "write_provenance_json",

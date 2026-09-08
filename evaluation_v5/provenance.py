@@ -8,7 +8,7 @@ from pathlib import Path
 import tempfile
 from typing import Any, Mapping
 
-from .paths import ResultPaths, require_development_override
+from .paths import ResultPaths
 from .schemas import ProtocolV5Manifest
 from .validation import validate_manifest
 
@@ -108,9 +108,16 @@ def write_provenance_json(
     """Write one provenance object under a run with guarded overwrite rules."""
 
     validate_manifest(manifest)
-    if development_override:
-        require_development_override(manifest)
     target = _safe_target(paths, relative_path)
+    if development_override:
+        from .evidence_trust import authorize_development_override
+
+        authorize_development_override(
+            manifest,
+            root=paths.root,
+            target=target,
+            payload=payload,
+        )
     return _atomic_write_json(
         target,
         payload,

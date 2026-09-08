@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from difflib import SequenceMatcher
 import hashlib
+import json
 import os
 from pathlib import Path
 import unicodedata
@@ -87,12 +88,119 @@ class ContaminationReport:
         }
 
 
-@dataclass(frozen=True, slots=True)
-class ConfirmatoryLoadResult:
-    split: LoadedSplit
-    development_split: LoadedSplit
-    freeze_manifest: Mapping[str, Any]
-    contamination: ContaminationReport
+_VERIFIED_SPLIT_CONSTRUCTION_KEY = object()
+
+
+class VerifiedConfirmatorySplit:
+    """Reverifiable custody capability for one sealed confirmatory split.
+
+    The loaded dataclasses remain useful data containers, but class identity or
+    a relabelled role is not authorization.  This capability binds them to the
+    external source path and a verified production-freeze artifact so a
+    downstream execution boundary can open and validate both again.
+    """
+
+    __slots__ = (
+        "_split",
+        "_development_split",
+        "_freeze_manifest_json",
+        "_contamination",
+        "_dataset_path",
+        "_freeze_path",
+        "_freeze_artifact_sha256",
+        "_expected_split_id",
+        "_similarity_threshold",
+        "_workload_manifests",
+    )
+
+    def __init__(
+        self,
+        *,
+        split: LoadedSplit,
+        development_split: LoadedSplit,
+        freeze_manifest: Mapping[str, Any],
+        contamination: ContaminationReport,
+        dataset_path: Path,
+        freeze_path: Path,
+        freeze_artifact_sha256: str | None,
+        expected_split_id: str,
+        similarity_threshold: float,
+        workload_manifests: Sequence[Path],
+        _construction_key: object,
+    ) -> None:
+        if _construction_key is not _VERIFIED_SPLIT_CONSTRUCTION_KEY:
+            raise TypeError(
+                "VerifiedConfirmatorySplit is produced only by "
+                "load_confirmatory_split()"
+            )
+        object.__setattr__(self, "_split", split)
+        object.__setattr__(self, "_development_split", development_split)
+        object.__setattr__(
+            self,
+            "_freeze_manifest_json",
+            json.dumps(
+                dict(freeze_manifest),
+                ensure_ascii=False,
+                allow_nan=False,
+                sort_keys=True,
+                separators=(",", ":"),
+            ),
+        )
+        object.__setattr__(self, "_contamination", contamination)
+        object.__setattr__(self, "_dataset_path", dataset_path)
+        object.__setattr__(self, "_freeze_path", freeze_path)
+        object.__setattr__(self, "_freeze_artifact_sha256", freeze_artifact_sha256)
+        object.__setattr__(self, "_expected_split_id", expected_split_id)
+        object.__setattr__(self, "_similarity_threshold", similarity_threshold)
+        object.__setattr__(self, "_workload_manifests", tuple(workload_manifests))
+
+    def __setattr__(self, name: str, value: object) -> None:
+        raise AttributeError("VerifiedConfirmatorySplit is immutable")
+
+    @property
+    def split(self) -> LoadedSplit:
+        return self._split
+
+    @property
+    def development_split(self) -> LoadedSplit:
+        return self._development_split
+
+    @property
+    def freeze_manifest(self) -> Mapping[str, Any]:
+        value = json.loads(self._freeze_manifest_json)
+        assert isinstance(value, dict)
+        return value
+
+    @property
+    def contamination(self) -> ContaminationReport:
+        return self._contamination
+
+    @property
+    def dataset_path(self) -> Path:
+        return self._dataset_path
+
+    @property
+    def freeze_path(self) -> Path:
+        return self._freeze_path
+
+    @property
+    def freeze_identity(self) -> Mapping[str, Any]:
+        if self._freeze_artifact_sha256 is None:
+            raise SplitIsolationError(
+                "confirmatory capability lacks a verified production freeze identity"
+            )
+        manifest = self.freeze_manifest
+        return {
+            "freeze_id": manifest["freeze_id"],
+            "freeze_manifest_sha256": self._freeze_artifact_sha256,
+            "frozen_at_utc": manifest["created_at_utc"],
+            "frozen_by": "authoritative_protocol_v5_freeze",
+            "source": "confirmatory_freeze_manifest",
+        }
+
+
+# Read-only source compatibility for callers that used the prior result name.
+ConfirmatoryLoadResult = VerifiedConfirmatorySplit
 
 
 def normalize_prompt(value: str) -> str:
@@ -333,7 +441,7 @@ def load_confirmatory_split(
     expected_split_id: str = DEFAULT_CONFIRMATORY_SPLIT_ID,
     similarity_threshold: float = DEFAULT_SIMILARITY_THRESHOLD,
     workload_manifests: Sequence[Path] = (),
-) -> ConfirmatoryLoadResult:
+) -> VerifiedConfirmatorySplit:
     """Verify the pre-data freeze before opening and comparing sealed material."""
 
     threshold = _validated_similarity_threshold(similarity_threshold)
@@ -359,12 +467,86 @@ def load_confirmatory_split(
         forbid_family_overlap=True,
         similarity_threshold=threshold,
     )
-    return ConfirmatoryLoadResult(
+    from .freeze import VerifiedProductionFreeze
+
+    if not isinstance(freeze_manifest, VerifiedProductionFreeze):
+        raise SplitIsolationError(
+            "freeze verifier did not return a verified production capability"
+        )
+    verified_freeze = freeze_manifest
+    return VerifiedConfirmatorySplit(
         split=confirmatory,
         development_split=development,
         freeze_manifest=freeze_manifest,
         contamination=report,
+        dataset_path=external,
+        freeze_path=verified_freeze.artifact_path,
+        freeze_artifact_sha256=verified_freeze.artifact_sha256,
+        expected_split_id=expected_split_id,
+        similarity_threshold=threshold,
+        workload_manifests=workload_manifests,
+        _construction_key=_VERIFIED_SPLIT_CONSTRUCTION_KEY,
     )
+
+
+def verify_confirmatory_split(
+    capability: VerifiedConfirmatorySplit,
+) -> VerifiedConfirmatorySplit:
+    """Revalidate split role/checksums/custody and freeze at a use boundary."""
+
+    if type(capability) is not VerifiedConfirmatorySplit:
+        raise TypeError(
+            "confirmatory execution requires a VerifiedConfirmatorySplit from "
+            "load_confirmatory_split()"
+        )
+    current = load_confirmatory_split(
+        capability._dataset_path,
+        capability._freeze_path,
+        expected_split_id=capability._expected_split_id,
+        similarity_threshold=capability._similarity_threshold,
+        workload_manifests=capability._workload_manifests,
+    )
+    expected_split = capability._split
+    actual_split = current._split
+    expected_identity = (
+        expected_split.manifest.dataset_id,
+        expected_split.manifest.split_id,
+        expected_split.manifest.role,
+        expected_split.manifest.checksum,
+        expected_split.source_file_sha256,
+    )
+    actual_identity = (
+        actual_split.manifest.dataset_id,
+        actual_split.manifest.split_id,
+        actual_split.manifest.role,
+        actual_split.manifest.checksum,
+        actual_split.source_file_sha256,
+    )
+    if actual_identity != expected_identity:
+        raise SplitIsolationError(
+            "confirmatory split capability no longer matches its verified source"
+        )
+    expected_development = capability._development_split
+    actual_development = current._development_split
+    if (
+        actual_development.manifest.checksum,
+        actual_development.source_file_sha256,
+    ) != (
+        expected_development.manifest.checksum,
+        expected_development.source_file_sha256,
+    ):
+        raise SplitIsolationError(
+            "development split changed after confirmatory preparation"
+        )
+    if current._freeze_artifact_sha256 != capability._freeze_artifact_sha256:
+        raise SplitIsolationError(
+            "production freeze changed after confirmatory preparation"
+        )
+    if current.freeze_manifest != capability.freeze_manifest:
+        raise SplitIsolationError(
+            "production freeze identity changed after confirmatory preparation"
+        )
+    return current
 
 
 __all__ = [
@@ -375,10 +557,12 @@ __all__ = [
     "ContaminationReport",
     "SplitContaminationError",
     "SplitIsolationError",
+    "VerifiedConfirmatorySplit",
     "check_contamination",
     "load_confirmatory_split",
     "normalize_prompt",
     "prompt_fingerprint",
     "require_external_dataset_path",
     "resolve_confirmatory_sources",
+    "verify_confirmatory_split",
 ]

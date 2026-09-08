@@ -1,0 +1,315 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://intent-spawner.local/schemas/protocol-v5-production-freeze-v1.schema.json",
+  "title": "Protocol-v5 verified production freeze",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "protocol_version",
+    "freeze_id",
+    "created_at_utc",
+    "status",
+    "source_control",
+    "configuration_snapshot",
+    "integrity_rules"
+  ],
+  "properties": {
+    "schema_version": {"const": "protocol-v5-freeze-v1.0.0"},
+    "protocol_version": {"const": "5.0.0"},
+    "freeze_id": {"$ref": "#/$defs/safeId"},
+    "created_at_utc": {"$ref": "#/$defs/utcTimestamp"},
+    "status": {"enum": ["FROZEN", "DRY_RUN"]},
+    "source_control": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["git_revision", "git_worktree_clean"],
+      "properties": {
+        "git_revision": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+        "git_worktree_clean": {"type": "boolean"}
+      }
+    },
+    "configuration_snapshot": {"$ref": "#/$defs/configurationSnapshot"},
+    "integrity_rules": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "created_before_sealed_data_supply",
+        "sealed_data_not_read_by_freeze",
+        "tuning_after_freeze_prohibited",
+        "exclusive_create_no_overwrite"
+      ],
+      "properties": {
+        "created_before_sealed_data_supply": {"const": true},
+        "sealed_data_not_read_by_freeze": {"const": true},
+        "tuning_after_freeze_prohibited": {"const": true},
+        "exclusive_create_no_overwrite": {"const": true}
+      }
+    }
+  },
+  "$defs": {
+    "safeId": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "nonblank": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": ".*\\S.*"
+    },
+    "utcTimestamp": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(?:\\.[0-9]+)?Z$"
+    },
+    "indexIdentity": {
+      "type": "object",
+      "minProperties": 4,
+      "required": [
+        "schema_version",
+        "index_version",
+        "index_checksum",
+        "corpus_checksum"
+      ],
+      "properties": {
+        "schema_version": {"$ref": "#/$defs/nonblank"},
+        "index_version": {"$ref": "#/$defs/nonblank"},
+        "index_checksum": {"$ref": "#/$defs/sha256"},
+        "corpus_checksum": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "configurationSnapshot": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "p3_gate",
+        "systems",
+        "runtime_package",
+        "candidate_catalog",
+        "indexes",
+        "prompts",
+        "configuration",
+        "development_dataset",
+        "environment"
+      ],
+      "properties": {
+        "p3_gate": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "snapshot_version",
+            "status",
+            "evidence_path",
+            "evidence_sha256",
+            "p3_active"
+          ],
+          "properties": {
+            "snapshot_version": {"const": "protocol-v5-p3-gate-snapshot-v1.0.0"},
+            "status": {"enum": ["retained", "not_retained"]},
+            "evidence_path": {"$ref": "#/$defs/nonblank"},
+            "evidence_sha256": {"$ref": "#/$defs/sha256"},
+            "p3_active": {"type": "boolean"}
+          }
+        },
+        "systems": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["P1", "P2", "P3"],
+          "properties": {
+            "P1": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["backend_version"],
+              "properties": {"backend_version": {"$ref": "#/$defs/nonblank"}}
+            },
+            "P2": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["backend_version", "pipeline_version"],
+              "properties": {
+                "backend_version": {"$ref": "#/$defs/nonblank"},
+                "pipeline_version": {"$ref": "#/$defs/nonblank"}
+              }
+            },
+            "P3": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "backend_version",
+                "pipeline_version",
+                "reranker_version",
+                "reranker_model_id",
+                "reranker_model_source",
+                "active"
+              ],
+              "properties": {
+                "backend_version": {"$ref": "#/$defs/nonblank"},
+                "pipeline_version": {"$ref": "#/$defs/nonblank"},
+                "reranker_version": {"$ref": "#/$defs/nonblank"},
+                "reranker_model_id": {"type": ["string", "null"]},
+                "reranker_model_source": {"$ref": "#/$defs/nonblank"},
+                "active": {"type": "boolean"}
+              }
+            }
+          }
+        },
+        "runtime_package": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["version", "sha256"],
+          "properties": {
+            "version": {"$ref": "#/$defs/nonblank"},
+            "sha256": {"$ref": "#/$defs/sha256"}
+          }
+        },
+        "candidate_catalog": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "version",
+            "path",
+            "file_sha256",
+            "corpus_version",
+            "corpus_sha256",
+            "candidate_count"
+          ],
+          "properties": {
+            "version": {"$ref": "#/$defs/nonblank"},
+            "path": {"$ref": "#/$defs/nonblank"},
+            "file_sha256": {"$ref": "#/$defs/sha256"},
+            "corpus_version": {"$ref": "#/$defs/nonblank"},
+            "corpus_sha256": {"$ref": "#/$defs/sha256"},
+            "candidate_count": {"type": "integer", "minimum": 1}
+          }
+        },
+        "indexes": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["sparse", "dense", "hybrid", "source"],
+          "properties": {
+            "sparse": {"$ref": "#/$defs/indexIdentity"},
+            "dense": {"$ref": "#/$defs/indexIdentity"},
+            "hybrid": {"$ref": "#/$defs/indexIdentity"},
+            "source": {"const": "administrator_catalog_only"}
+          }
+        },
+        "prompts": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["P2_extractor", "P3_reranker"],
+          "properties": {
+            "P2_extractor": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "name",
+                "version",
+                "model_id",
+                "model_source",
+                "prompt_version",
+                "prompt_sha256"
+              ],
+              "properties": {
+                "name": {"$ref": "#/$defs/nonblank"},
+                "version": {"$ref": "#/$defs/nonblank"},
+                "model_id": {"type": ["string", "null"]},
+                "model_source": {"$ref": "#/$defs/nonblank"},
+                "prompt_version": {"$ref": "#/$defs/nonblank"},
+                "prompt_sha256": {"$ref": "#/$defs/sha256"}
+              }
+            },
+            "P3_reranker": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["prompt_version", "prompt_sha256"],
+              "properties": {
+                "prompt_version": {"$ref": "#/$defs/nonblank"},
+                "prompt_sha256": {"$ref": "#/$defs/sha256"}
+              }
+            }
+          }
+        },
+        "configuration": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["P2", "P3", "provider", "constraints"],
+          "properties": {
+            "P2": {"type": "object", "minProperties": 1},
+            "P3": {"type": "object", "minProperties": 1},
+            "provider": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["P2_extractor", "P3_reranker", "pricing_configuration"],
+              "properties": {
+                "P2_extractor": {"type": ["object", "null"]},
+                "P3_reranker": {"type": ["object", "null"]},
+                "pricing_configuration": {"type": ["object", "null"]}
+              }
+            },
+            "constraints": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "evaluator_version",
+                "policy_version",
+                "ranker_version",
+                "retrieval_rank_weight",
+                "soft_preference_weight"
+              ],
+              "properties": {
+                "evaluator_version": {"$ref": "#/$defs/nonblank"},
+                "policy_version": {"$ref": "#/$defs/nonblank"},
+                "ranker_version": {"$ref": "#/$defs/nonblank"},
+                "retrieval_rank_weight": {"type": "number"},
+                "soft_preference_weight": {"type": "number"}
+              }
+            }
+          }
+        },
+        "development_dataset": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "dataset_id",
+            "split_id",
+            "role",
+            "schema_version",
+            "canonical_sha256",
+            "file_sha256",
+            "case_count",
+            "family_count",
+            "path"
+          ],
+          "properties": {
+            "dataset_id": {"$ref": "#/$defs/safeId"},
+            "split_id": {"const": "v5-development"},
+            "role": {"const": "development"},
+            "schema_version": {
+              "enum": [
+                "protocol-v5-split-bundle-v1.0.0",
+                "protocol-v5-split-bundle-v2.0.0"
+              ]
+            },
+            "canonical_sha256": {"$ref": "#/$defs/sha256"},
+            "file_sha256": {"$ref": "#/$defs/sha256"},
+            "case_count": {"type": "integer", "minimum": 1},
+            "family_count": {"type": "integer", "minimum": 1},
+            "path": {"$ref": "#/$defs/nonblank"}
+          }
+        },
+        "environment": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["python_version", "platform"],
+          "properties": {
+            "python_version": {"$ref": "#/$defs/nonblank"},
+            "platform": {"$ref": "#/$defs/nonblank"}
+          }
+        }
+      }
+    }
+  }
+}

@@ -180,10 +180,14 @@ flushed and fsynced, and atomically published. A failed write leaves the prior
 file byte-identical and removes the temporary file.
 
 An explicit `development_override=True` may reuse a development run directory
-or replace an addressed JSON file only when its status is not `OBSERVED`.
-Supplying the flag for a confirmatory split or `OBSERVED` package fails before
-filesystem mutation. The override never deletes an entire directory; unique
-development run IDs remain preferred.
+or replace an addressed JSON file only after both sides of the replacement are
+validated as development-mutable. The writer loads the existing canonical run
+manifest and addressed JSON identity before replacement. Existing or incoming
+`OBSERVED`, confirmatory, frozen/sealed, claim-eligible, or production markers
+fail before filesystem mutation; a `DRY_RUN` manifest therefore cannot
+downgrade an existing observation. An existing nonempty package without a
+valid canonical manifest also fails closed. The override never deletes an
+entire directory; unique development run IDs remain preferred.
 
 ## 5. Reuse and validation
 

@@ -24,8 +24,14 @@ import time
 from typing import Any
 
 from evaluation_v4.dataset import file_sha256
+from evaluation_v5.isolation import VerifiedConfirmatorySplit
 from evaluation_v5.provenance import write_json_exclusive
-from evaluation_v5.split_dataset import LoadedSplit, SplitCase
+from evaluation_v5.split_dataset import (
+    LoadedSplit,
+    SplitCase,
+    SplitRole,
+    validate_split_bundle,
+)
 
 from .recommenders import (
     OfflineAdapterResult,
@@ -444,14 +450,14 @@ def _build_provenance(
     include_benchmark_prompts: bool,
     result_dir: Path,
     p3_explicitly_enabled: bool,
-    freeze_identity: Mapping[str, Any] | None,
+    freeze_identity: Mapping[str, Any],
 ) -> dict[str, Any]:
     _reject_secrets(frozen_configuration, label="frozen_configuration")
     frozen = _finite_json(frozen_configuration, label="frozen_configuration")
     assert isinstance(frozen, dict)
     systems = _adapter_provenance(system_ids, adapters)
     candidate_catalog = _candidate_catalog_provenance(system_ids, systems)
-    selected_freeze = dict(freeze_identity or _freeze_identity(split))
+    selected_freeze = dict(freeze_identity)
     _reject_secrets(selected_freeze, label="freeze_identity")
     if split.manifest.role.value == "confirmatory":
         freeze_id = selected_freeze.get("freeze_id")
@@ -1021,7 +1027,7 @@ def _validate_existing_completion(
 
 
 def run_offline_recommendations(
-    split: LoadedSplit,
+    split: LoadedSplit | VerifiedConfirmatorySplit,
     *,
     result_dir: Path,
     system_ids: Sequence[str] = ("P1", "P2"),
@@ -1037,13 +1043,65 @@ def run_offline_recommendations(
 ) -> OfflineRunResult:
     """Run or safely resume a raw Protocol-v5 recommendation evidence matrix.
 
-    ``split`` must already be loaded by the v5 split-isolation layer.  This
-    keeps confirmatory loading decisions outside the runner and ensures sealed
-    labels are not part of any adapter call.
+    Confirmatory work requires a reverifiable capability.  The runner reopens
+    the external split and production-freeze artifact before it builds the
+    matrix, so a constructed/relabelled ``LoadedSplit`` or caller-supplied
+    freeze string cannot authorize execution.
     """
 
-    if not isinstance(split, LoadedSplit):
-        raise TypeError("split must be a LoadedSplit from the Protocol-v5 loader")
+    if freeze_identity is not None:
+        raise ValueError(
+            "caller-supplied freeze_identity is prohibited; provenance is "
+            "derived from verified source artifacts"
+        )
+    from evaluation_v5.isolation import verify_confirmatory_split
+
+    if isinstance(split, VerifiedConfirmatorySplit):
+        verified = verify_confirmatory_split(split)
+        selected_split = verified.split
+        selected_freeze_identity = verified.freeze_identity
+        frozen_from_capability = dict(verified.freeze_manifest)[
+            "configuration_snapshot"
+        ]
+        if (
+            frozen_configuration is not None
+            and dict(frozen_configuration) != frozen_from_capability
+        ):
+            raise ProvenanceMismatchError(
+                "confirmatory frozen configuration does not match the verified "
+                "production freeze"
+            )
+        frozen_configuration = frozen_from_capability
+    elif isinstance(split, LoadedSplit):
+        if split.manifest.role is SplitRole.CONFIRMATORY:
+            raise PermissionError(
+                "constructed LoadedSplit cannot authorize confirmatory execution; "
+                "use load_confirmatory_split()"
+            )
+        validated_bundle = validate_split_bundle(
+            split.bundle.to_dict(),
+            expected_role=SplitRole.DEVELOPMENT,
+            expected_split_id=split.manifest.split_id,
+        )
+        if validated_bundle != split.bundle or not (
+            isinstance(split.source_file_sha256, str)
+            and len(split.source_file_sha256) == 64
+            and all(
+                character in "0123456789abcdef"
+                for character in split.source_file_sha256
+            )
+        ):
+            raise PermissionError(
+                "development execution requires a schema/checksum-validated split"
+            )
+        selected_split = split
+        selected_freeze_identity = _freeze_identity(split)
+    else:
+        raise TypeError(
+            "split must be a loader-verified Protocol-v5 development split or "
+            "VerifiedConfirmatorySplit"
+        )
+    split = selected_split
     selected_adapters = dict(adapters) if adapters is not None else default_adapters(enable_p3=enable_p3)
     selected_systems = _validate_system_ids(
         system_ids, selected_adapters, enable_p3=enable_p3
@@ -1068,7 +1126,7 @@ def run_offline_recommendations(
         include_benchmark_prompts=include_benchmark_prompts,
         result_dir=result_dir,
         p3_explicitly_enabled=enable_p3,
-        freeze_identity=freeze_identity,
+        freeze_identity=selected_freeze_identity,
     )
     root, raw_dir, report_dir, provenance_path, records_path = _result_layout(result_dir)
     completion_path = report_dir / COMPLETION_FILENAME
@@ -1232,15 +1290,14 @@ def _load_frozen_configuration(path: Path) -> Mapping[str, Any]:
     return dict(value)
 
 
-def _cli_split(args: argparse.Namespace) -> tuple[LoadedSplit, Mapping[str, Any] | None]:
+def _cli_split(args: argparse.Namespace) -> LoadedSplit | VerifiedConfirmatorySplit:
     if args.split == "development":
         if args.dataset is not None or args.freeze is not None:
             raise ValueError("development mode loads only the repository's frozen development split")
         from evaluation_v5.split_dataset import load_development_split
 
-        return (
-            load_development_split(expected_split_id=args.split_id or "v5-development"),
-            None,
+        return load_development_split(
+            expected_split_id=args.split_id or "v5-development"
         )
 
     from evaluation_v5.isolation import load_confirmatory_split, resolve_confirmatory_sources
@@ -1254,16 +1311,7 @@ def _cli_split(args: argparse.Namespace) -> tuple[LoadedSplit, Mapping[str, Any]
         freeze,
         expected_split_id=args.split_id or "v5-confirmatory",
     )
-    return (
-        loaded.split,
-        {
-            "freeze_id": loaded.freeze_manifest["freeze_id"],
-            "freeze_manifest_sha256": file_sha256(freeze),
-            "frozen_at_utc": loaded.freeze_manifest["created_at_utc"],
-            "frozen_by": "authoritative_protocol_v5_freeze",
-            "source": "confirmatory_freeze_manifest",
-        },
-    )
+    return loaded
 
 
 def _parser() -> argparse.ArgumentParser:
@@ -1296,7 +1344,7 @@ def _parser() -> argparse.ArgumentParser:
 def main(argv: Sequence[str] | None = None) -> int:
     args = _parser().parse_args(argv)
     try:
-        split, freeze_identity = _cli_split(args)
+        split = _cli_split(args)
         result = run_offline_recommendations(
             split,
             result_dir=args.result_dir,
@@ -1308,7 +1356,6 @@ def main(argv: Sequence[str] | None = None) -> int:
             resume=args.resume,
             dry_run=args.dry_run,
             include_benchmark_prompts=args.include_benchmark_prompts,
-            freeze_identity=freeze_identity,
         )
         print(json.dumps(result.to_dict(), ensure_ascii=False, indent=2, sort_keys=True))
         return 0

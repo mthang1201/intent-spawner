@@ -180,7 +180,14 @@ Library callers use the role-specific public interfaces
 `load_development_split()` and `load_confirmatory_split(dataset_path,
 freeze_path, ...)`. The arbitrary file parser is private. The development
 loader is fixed to the tracked bundle; the confirmatory loader always applies
-the freeze, external-path, schema, and contamination gates.
+the freeze, external-path, schema, and contamination gates. Its return value is
+a `VerifiedConfirmatorySplit`, not an ordinary `LoadedSplit`: it binds the
+validated bytes to their external dataset path, production-freeze artifact,
+development split, checksums, role, split ID, and contamination result.
+Execution and raw-evidence validation call `verify_confirmatory_split()` at
+their own boundary, reopening and revalidating those sources. Direct
+construction, `dataclasses.replace()`, `role="confirmatory"`, or a nonblank
+freeze string cannot create that authority.
 
 ### Development preflight
 
@@ -242,6 +249,23 @@ claim. Freeze verification reconstructs catalog-derived P2 index metadata only
 to check the frozen identity.
 
 ## 5. Freeze-before-supply gate
+
+The canonical machine-readable production schema is
+`benchmarks_v5/protocol-v5-production-freeze-v1.schema.json`. The public trust
+API separates three states:
+
+- `parse_design_snapshot()`/`load_design_snapshot()` validate configuration
+  design only;
+- `parse_production_freeze()` validates a complete freeze envelope but does not
+  assert that its recorded sources still match; and
+- `verify_production_freeze()` validates authoritative path custody, schema,
+  artifact identity, Git state, and recomputed configuration sources and
+  returns `VerifiedProductionFreeze`.
+
+The tracked `results_v5/protocol-v5.0.0/freezes/frozen-configuration.json` is a
+legacy-compatible design snapshot. It is intentionally not a production
+envelope and cannot satisfy `verify_production_freeze()` or confirmatory
+loading.
 
 Create a rehearsal snapshot without writing an artifact:
 

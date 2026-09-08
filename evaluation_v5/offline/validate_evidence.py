@@ -12,6 +12,7 @@ import re
 from typing import Any
 
 from evaluation_v4.dataset import file_sha256
+from evaluation_v5.isolation import VerifiedConfirmatorySplit
 from evaluation_v5.split_dataset import LoadedSplit, load_development_split
 from recommender.candidate_corpus import load_candidate_corpus
 
@@ -257,7 +258,7 @@ def _validate_provenance(
     value: Mapping[str, Any],
     *,
     split: LoadedSplit,
-    freeze_identity: Mapping[str, Any] | None,
+    freeze_identity: Mapping[str, Any],
 ) -> dict[str, Any]:
     provenance = _exact_mapping(
         value, _PROVENANCE_FIELDS, "offline provenance"
@@ -336,7 +337,7 @@ def _validate_provenance(
         split_identity == expected_split,
         "offline provenance does not match the supplied frozen dataset/split",
     )
-    expected_freeze = dict(freeze_identity or _freeze_identity(split))
+    expected_freeze = dict(freeze_identity)
     _require(
         provenance["freeze_identity"] == expected_freeze,
         "offline provenance freeze identity does not match",
@@ -939,10 +940,16 @@ def _validate_completion(
 def validate_offline_evidence(
     evidence_dir: Path,
     *,
-    split: LoadedSplit | None = None,
+    split: LoadedSplit | VerifiedConfirmatorySplit | None = None,
     freeze_identity: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Validate a complete result directory without deriving statistics."""
+
+    if freeze_identity is not None:
+        raise OfflineEvidenceValidationError(
+            "caller-supplied freeze_identity is prohibited; validation derives "
+            "it from verified source artifacts"
+        )
 
     root = evidence_dir.resolve()
     raw = root / RAW_DIRECTORY_NAME
@@ -962,14 +969,29 @@ def validate_offline_evidence(
     role = (
         raw_split.get("role") if isinstance(raw_split, Mapping) else None
     )
-    if split is None:
+    if isinstance(split, VerifiedConfirmatorySplit):
+        from evaluation_v5.isolation import verify_confirmatory_split
+
+        capability = verify_confirmatory_split(split)
+        split = capability.split
+        selected_freeze_identity = capability.freeze_identity
+    elif split is None:
         _require(
             role == "development",
             "confirmatory validation requires an isolation-verified split",
         )
         split = load_development_split()
+        selected_freeze_identity = _freeze_identity(split)
+    elif split.manifest.role.value == "confirmatory":
+        raise OfflineEvidenceValidationError(
+            "constructed LoadedSplit cannot authorize confirmatory validation"
+        )
+    else:
+        selected_freeze_identity = _freeze_identity(split)
     provenance = _validate_provenance(
-        provenance_value, split=split, freeze_identity=freeze_identity
+        provenance_value,
+        split=split,
+        freeze_identity=selected_freeze_identity,
     )
     records = _read_records(records_path)
 
@@ -1083,8 +1105,7 @@ def _parser() -> argparse.ArgumentParser:
 def main(argv: Sequence[str] | None = None) -> int:
     args = _parser().parse_args(argv)
     try:
-        split: LoadedSplit | None = None
-        freeze_identity: Mapping[str, Any] | None = None
+        split: LoadedSplit | VerifiedConfirmatorySplit | None = None
         if args.dataset is not None or args.freeze is not None:
             _require(
                 args.dataset is not None and args.freeze is not None,
@@ -1097,17 +1118,8 @@ def main(argv: Sequence[str] | None = None) -> int:
                 args.freeze,
                 expected_split_id=args.split_id or "v5-confirmatory",
             )
-            split = loaded.split
-            freeze_identity = {
-                "freeze_id": loaded.freeze_manifest["freeze_id"],
-                "freeze_manifest_sha256": file_sha256(args.freeze),
-                "frozen_at_utc": loaded.freeze_manifest["created_at_utc"],
-                "frozen_by": "authoritative_protocol_v5_freeze",
-                "source": "confirmatory_freeze_manifest",
-            }
-        result = validate_offline_evidence(
-            args.dir, split=split, freeze_identity=freeze_identity
-        )
+            split = loaded
+        result = validate_offline_evidence(args.dir, split=split)
         print(
             json.dumps(
                 result, ensure_ascii=False, indent=2, sort_keys=True

@@ -174,6 +174,7 @@ def test_checksum_mismatch_is_rejected(tmp_path: Path):
 def test_atomic_write_succeeds_and_failure_leaves_original_unchanged(tmp_path: Path):
     manifest = _manifest()
     paths = create_result_directory(manifest, results_root=tmp_path)
+    write_manifest(paths, manifest)
     target = write_provenance_json(
         paths,
         "raw/provenance.json",
@@ -208,6 +209,7 @@ def test_atomic_write_succeeds_and_failure_leaves_original_unchanged(tmp_path: P
 def test_development_override_can_reuse_and_replace_dry_run_files(tmp_path: Path):
     manifest = _manifest()
     paths = create_result_directory(manifest, results_root=tmp_path)
+    write_manifest(paths, manifest)
     write_provenance_json(
         paths,
         "report/status.json",
@@ -229,6 +231,58 @@ def test_development_override_can_reuse_and_replace_dry_run_files(tmp_path: Path
     )
 
     assert json.loads((reused.report / "status.json").read_text()) == {"revision": 2}
+
+
+def test_development_override_cannot_downgrade_existing_observed_manifest(
+    tmp_path: Path,
+):
+    observed = _manifest(status=EvidenceStatus.OBSERVED)
+    paths = create_result_directory(observed, results_root=tmp_path)
+    write_manifest(paths, observed)
+    before = paths.manifest.read_bytes()
+
+    incoming = replace(observed, execution_status=EvidenceStatus.DRY_RUN)
+    with pytest.raises(PermissionError, match="existing manifest|OBSERVED"):
+        write_manifest(paths, incoming, development_override=True)
+
+    assert paths.manifest.read_bytes() == before
+    assert ProtocolV5Manifest.from_dict(json.loads(before)) == observed
+
+
+@pytest.mark.parametrize(
+    "protected_payload",
+    [
+        {"sealed": True},
+        {"claim_eligible": True},
+        {"evidence_role": "confirmatory"},
+        {"evidence_role": "production"},
+    ],
+)
+def test_development_override_protects_claim_sensitive_target_payloads(
+    tmp_path: Path,
+    protected_payload: dict[str, object],
+):
+    manifest = _manifest()
+    paths = create_result_directory(manifest, results_root=tmp_path)
+    write_manifest(paths, manifest)
+    target = write_provenance_json(
+        paths,
+        "report/status.json",
+        protected_payload,
+        manifest=manifest,
+    )
+    before = target.read_bytes()
+
+    with pytest.raises(PermissionError, match="immutable|claim-sensitive"):
+        write_provenance_json(
+            paths,
+            "report/status.json",
+            {"status": "DRY_RUN"},
+            manifest=manifest,
+            development_override=True,
+        )
+
+    assert target.read_bytes() == before
 
 
 @pytest.mark.parametrize(

@@ -31,7 +31,10 @@ from evaluation_v5.gold_dataset import (
     compile_gold_dataset,
     load_gold_dataset,
 )
-from evaluation_v5.isolation import load_confirmatory_split
+from evaluation_v5.isolation import (
+    VerifiedConfirmatorySplit,
+    load_confirmatory_split,
+)
 from evaluation_v5.offline.runner import (
     PROVENANCE_FILENAME,
     RAW_DIRECTORY_NAME,
@@ -126,6 +129,7 @@ class GoldSource:
     split: LoadedSplit | None = None
     freeze_identity: Mapping[str, Any] | None = None
     p3_gate_identity: Mapping[str, Any] | None = None
+    confirmatory_capability: VerifiedConfirmatorySplit | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -310,6 +314,7 @@ def _gold_cases_from_split(
     *,
     freeze_identity: Mapping[str, Any] | None,
     p3_gate_identity: Mapping[str, Any] | None = None,
+    confirmatory_capability: VerifiedConfirmatorySplit | None = None,
 ) -> GoldSource:
     if split.bundle.schema_version != SPLIT_BUNDLE_SCHEMA_VERSION_V2:
         raise ComponentAnalysisError(
@@ -344,6 +349,7 @@ def _gold_cases_from_split(
         p3_gate_identity=(
             dict(p3_gate_identity) if p3_gate_identity is not None else None
         ),
+        confirmatory_capability=confirmatory_capability,
     )
 
 
@@ -368,13 +374,17 @@ def load_component_gold(
             freeze_path,
             expected_split_id=split_id or "v5-confirmatory",
         )
-        freeze_identity = {
-            "freeze_id": loaded.freeze_manifest["freeze_id"],
-            "freeze_manifest_sha256": file_sha256(freeze_path),
-            "frozen_at_utc": loaded.freeze_manifest["created_at_utc"],
-            "frozen_by": "authoritative_protocol_v5_freeze",
-            "source": "confirmatory_freeze_manifest",
-        }
+        freeze_identity = (
+            dict(loaded.freeze_identity)
+            if isinstance(loaded, VerifiedConfirmatorySplit)
+            else {
+                "freeze_id": loaded.freeze_manifest["freeze_id"],
+                "freeze_manifest_sha256": file_sha256(freeze_path),
+                "frozen_at_utc": loaded.freeze_manifest["created_at_utc"],
+                "frozen_by": "authoritative_protocol_v5_freeze",
+                "source": "confirmatory_freeze_manifest",
+            }
+        )
         gate = loaded.freeze_manifest["configuration_snapshot"]["p3_gate"]
         p3_gate_identity = {
             "status": gate["status"],
@@ -387,6 +397,9 @@ def load_component_gold(
             loaded.split,
             freeze_identity=freeze_identity,
             p3_gate_identity=p3_gate_identity,
+            confirmatory_capability=(
+                loaded if isinstance(loaded, VerifiedConfirmatorySplit) else None
+            ),
         )
     if freeze_path is not None:
         raise ComponentAnalysisError("development scoring prohibits --freeze")
@@ -509,8 +522,7 @@ def load_validated_evidence(
         )
     validate_offline_evidence(
         evidence_dir,
-        split=validation_split,
-        freeze_identity=gold.freeze_identity,
+        split=gold.confirmatory_capability or validation_split,
     )
     try:
         validated_provenance = json.loads(

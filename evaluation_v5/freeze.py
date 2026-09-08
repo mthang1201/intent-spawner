@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+from collections.abc import Iterator, Mapping as MappingABC
 from dataclasses import asdict
 from datetime import datetime, timezone
 import hashlib
@@ -13,6 +14,9 @@ import platform
 import re
 import subprocess
 from typing import Any, Mapping
+
+from jsonschema import Draft202012Validator
+from jsonschema.exceptions import SchemaError
 
 from evaluation_v4.dataset import file_sha256
 from recommender.candidate_corpus import build_candidate_corpus
@@ -71,10 +75,15 @@ from .split_dataset import DEFAULT_DEVELOPMENT_DATASET, load_development_split
 
 ROOT = Path(__file__).resolve().parents[1]
 FREEZE_SCHEMA_VERSION = "protocol-v5-freeze-v1.0.0"
+PRODUCTION_FREEZE_SCHEMA_VERSION = FREEZE_SCHEMA_VERSION
 FREEZE_STATUS = "FROZEN"
 DRY_RUN_STATUS = "DRY_RUN"
 P3_GATE_SNAPSHOT_VERSION = "protocol-v5-p3-gate-snapshot-v1.0.0"
 DEFAULT_FREEZE_ROOT = ROOT / "results_v5" / "protocol-v5.0.0" / "freezes"
+DEFAULT_DESIGN_SNAPSHOT = DEFAULT_FREEZE_ROOT / "frozen-configuration.json"
+PRODUCTION_FREEZE_SCHEMA_PATH = (
+    ROOT / "benchmarks_v5" / "protocol-v5-production-freeze-v1.schema.json"
+)
 FREEZE_CUSTODY_ROOT = ROOT
 DEFAULT_P3_GATE_EVIDENCE = ROOT / "docs/evaluation/P3_INCREMENTAL_EVALUATION_V1.md"
 CONFIRMATORY_DATASET_ENV_VAR = "PROTOCOL_V5_CONFIRMATORY_DATASET"
@@ -82,22 +91,129 @@ FREEZE_ARTIFACT_BASENAME = "freeze-manifest.json"
 
 _SAFE_ID = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$")
 _GIT_REVISION = re.compile(r"^[0-9a-f]{40}$")
-_ROOT_FIELDS = frozenset(
-    {
-        "schema_version",
-        "protocol_version",
-        "freeze_id",
-        "created_at_utc",
-        "status",
-        "source_control",
-        "configuration_snapshot",
-        "integrity_rules",
-    }
-)
 
 
 class FreezeValidationError(RuntimeError):
     """A freeze cannot be created or no longer matches current configuration."""
+
+
+def _canonical_json(value: Mapping[str, Any]) -> str:
+    try:
+        return json.dumps(
+            value,
+            ensure_ascii=False,
+            allow_nan=False,
+            sort_keys=True,
+            separators=(",", ":"),
+        )
+    except (TypeError, ValueError) as exc:
+        raise FreezeValidationError(
+            "freeze data must contain finite JSON values"
+        ) from exc
+
+
+class _ImmutableJsonMapping(MappingABC[str, Any]):
+    """Expose immutable typed state while returning copies of nested JSON."""
+
+    __slots__ = ("_json",)
+
+    def __init__(self, document: Mapping[str, Any]) -> None:
+        object.__setattr__(self, "_json", _canonical_json(document))
+
+    def __setattr__(self, name: str, value: object) -> None:
+        raise AttributeError(f"{type(self).__name__} is immutable")
+
+    def to_dict(self) -> dict[str, Any]:
+        value = json.loads(self._json)
+        assert isinstance(value, dict)
+        return value
+
+    def __getitem__(self, key: str) -> Any:
+        return self.to_dict()[key]
+
+    def __iter__(self) -> Iterator[str]:
+        return iter(self.to_dict())
+
+    def __len__(self) -> int:
+        return len(self.to_dict())
+
+    def __repr__(self) -> str:
+        return f"{type(self).__name__}({self.to_dict()!r})"
+
+
+class DesignSnapshot(_ImmutableJsonMapping):
+    """Validated configuration design; never a confirmatory capability."""
+
+
+class ProductionFreezeManifest(_ImmutableJsonMapping):
+    """Schema-valid production-freeze envelope, not yet source-verified."""
+
+    @property
+    def freeze_id(self) -> str:
+        return str(self["freeze_id"])
+
+
+_VERIFIED_FREEZE_CONSTRUCTION_KEY = object()
+
+
+class VerifiedProductionFreeze(MappingABC[str, Any]):
+    """A production freeze whose artifact and recorded sources were verified."""
+
+    __slots__ = ("_manifest", "_artifact_path", "_artifact_sha256")
+
+    def __init__(
+        self,
+        *,
+        manifest: ProductionFreezeManifest,
+        artifact_path: Path,
+        artifact_sha256: str,
+        _construction_key: object,
+    ) -> None:
+        if _construction_key is not _VERIFIED_FREEZE_CONSTRUCTION_KEY:
+            raise TypeError(
+                "VerifiedProductionFreeze is produced only by verify_production_freeze()"
+            )
+        object.__setattr__(self, "_manifest", manifest)
+        object.__setattr__(self, "_artifact_path", artifact_path)
+        object.__setattr__(self, "_artifact_sha256", artifact_sha256)
+
+    def __setattr__(self, name: str, value: object) -> None:
+        raise AttributeError("VerifiedProductionFreeze is immutable")
+
+    @property
+    def manifest(self) -> ProductionFreezeManifest:
+        return self._manifest
+
+    @property
+    def artifact_path(self) -> Path:
+        return self._artifact_path
+
+    @property
+    def artifact_sha256(self) -> str:
+        return self._artifact_sha256
+
+    @property
+    def freeze_id(self) -> str:
+        return self._manifest.freeze_id
+
+    @property
+    def identity(self) -> dict[str, Any]:
+        return {
+            "freeze_id": self.freeze_id,
+            "freeze_manifest_sha256": self.artifact_sha256,
+            "frozen_at_utc": self._manifest["created_at_utc"],
+            "frozen_by": "authoritative_protocol_v5_freeze",
+            "source": "confirmatory_freeze_manifest",
+        }
+
+    def __getitem__(self, key: str) -> Any:
+        return self._manifest[key]
+
+    def __iter__(self) -> Iterator[str]:
+        return iter(self._manifest)
+
+    def __len__(self) -> int:
+        return len(self._manifest)
 
 
 def _now_utc() -> str:
@@ -120,20 +236,169 @@ def _mapping(value: object, label: str) -> dict[str, Any]:
     return dict(value)
 
 
-def _exact_mapping(
-    value: object,
-    fields: frozenset[str],
-    label: str,
-) -> dict[str, Any]:
-    payload = _mapping(value, label)
-    missing = sorted(fields - set(payload))
-    extra = sorted(set(payload) - fields)
-    if missing or extra:
-        raise FreezeValidationError(
-            f"{label} fields differ from the schema; "
-            f"missing={missing}, extra_count={len(extra)}"
+def _strict_json_document(raw: bytes, *, label: str) -> dict[str, Any]:
+    def reject_duplicate(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
+        value: dict[str, Any] = {}
+        for key, item in pairs:
+            if key in value:
+                raise FreezeValidationError(f"{label} contains duplicate JSON keys")
+            value[key] = item
+        return value
+
+    try:
+        document = json.loads(
+            raw.decode("utf-8"),
+            object_pairs_hook=reject_duplicate,
+            parse_constant=lambda value: (_ for _ in ()).throw(
+                FreezeValidationError(
+                    f"{label} contains non-finite JSON value {value}"
+                )
+            ),
         )
-    return payload
+    except FreezeValidationError:
+        raise
+    except (UnicodeError, json.JSONDecodeError) as exc:
+        raise FreezeValidationError(f"{label} is not valid UTF-8 JSON") from exc
+    if not isinstance(document, Mapping):
+        raise FreezeValidationError(f"{label} must contain a JSON object")
+    return dict(document)
+
+
+def _production_freeze_schema() -> dict[str, Any]:
+    try:
+        document = _strict_json_document(
+            PRODUCTION_FREEZE_SCHEMA_PATH.read_bytes(),
+            label="production freeze schema",
+        )
+        Draft202012Validator.check_schema(document)
+    except (OSError, SchemaError, ValueError) as exc:
+        raise FreezeValidationError(
+            "the canonical production freeze schema is unavailable"
+        ) from exc
+    return document
+
+
+def _validate_against_schema(
+    document: Mapping[str, Any],
+    *,
+    design_snapshot: bool,
+) -> None:
+    schema = _production_freeze_schema()
+    selected_schema: Mapping[str, Any]
+    if design_snapshot:
+        selected_schema = {
+            "$schema": schema["$schema"],
+            "$ref": "#/$defs/configurationSnapshot",
+            "$defs": schema["$defs"],
+        }
+    else:
+        selected_schema = schema
+    errors = sorted(
+        Draft202012Validator(selected_schema).iter_errors(document),
+        key=lambda error: tuple(str(part) for part in error.absolute_path),
+    )
+    if errors:
+        first = errors[0]
+        location = ".".join(str(part) for part in first.absolute_path) or "root"
+        kind = "design snapshot" if design_snapshot else "production freeze"
+        raise FreezeValidationError(
+            f"{kind} schema violation at {location}: {first.message}"
+        )
+
+
+def _validate_snapshot_semantics(snapshot: Mapping[str, Any]) -> None:
+    gate = _mapping(snapshot.get("p3_gate"), "configuration_snapshot.p3_gate")
+    systems = _mapping(snapshot.get("systems"), "configuration_snapshot.systems")
+    p3 = _mapping(systems.get("P3"), "configuration_snapshot.systems.P3")
+    gate_active = gate.get("status") == "retained"
+    if gate.get("p3_active") is not gate_active or p3.get("active") is not gate_active:
+        raise FreezeValidationError(
+            "P3 gate status and active identities must agree"
+        )
+    configuration = _mapping(
+        snapshot.get("configuration"), "configuration_snapshot.configuration"
+    )
+    p2_configuration = _mapping(
+        configuration.get("P2"), "configuration_snapshot.configuration.P2"
+    )
+    p3_configuration = _mapping(
+        configuration.get("P3"), "configuration_snapshot.configuration.P3"
+    )
+    prompts = _mapping(snapshot.get("prompts"), "configuration_snapshot.prompts")
+    p2_prompt = _mapping(
+        prompts.get("P2_extractor"),
+        "configuration_snapshot.prompts.P2_extractor",
+    )
+    if p2_configuration.get("extractor_mode") == "llm" and not p2_prompt.get(
+        "model_id"
+    ):
+        raise FreezeValidationError(
+            "LLM P2 extraction requires a bound model identity"
+        )
+    if gate_active and p3_configuration.get("reranker_mode") == "llm" and not p3.get(
+        "reranker_model_id"
+    ):
+        raise FreezeValidationError(
+            "retained LLM P3 requires a bound reranker model identity"
+        )
+    catalog = _mapping(
+        snapshot.get("candidate_catalog"),
+        "configuration_snapshot.candidate_catalog",
+    )
+    indexes = _mapping(snapshot.get("indexes"), "configuration_snapshot.indexes")
+    for name in ("sparse", "dense", "hybrid"):
+        identity = _mapping(
+            indexes.get(name), f"configuration_snapshot.indexes.{name}"
+        )
+        if identity.get("corpus_checksum") != catalog.get("corpus_sha256"):
+            raise FreezeValidationError(
+                f"{name} index corpus identity does not match candidate catalog"
+            )
+
+
+def parse_design_snapshot(document: object) -> DesignSnapshot:
+    """Validate a configuration snapshot without granting production status."""
+
+    payload = _mapping(document, "design snapshot")
+    _validate_against_schema(payload, design_snapshot=True)
+    _validate_snapshot_semantics(payload)
+    return DesignSnapshot(payload)
+
+
+def load_design_snapshot(path: Path = DEFAULT_DESIGN_SNAPSHOT) -> DesignSnapshot:
+    """Load the legacy/current design snapshot through its explicit API."""
+
+    try:
+        payload = _strict_json_document(path.read_bytes(), label="design snapshot")
+    except OSError as exc:
+        raise FreezeValidationError("design snapshot could not be read") from exc
+    return parse_design_snapshot(payload)
+
+
+def parse_production_freeze(
+    document: object,
+    *,
+    require_production: bool = True,
+) -> ProductionFreezeManifest:
+    """Parse the one canonical production-freeze schema into typed state."""
+
+    payload = _mapping(document, "production freeze")
+    _validate_against_schema(payload, design_snapshot=False)
+    created = payload["created_at_utc"]
+    try:
+        parsed = datetime.fromisoformat(created.replace("Z", "+00:00"))
+    except ValueError as exc:
+        raise FreezeValidationError("created_at_utc is invalid") from exc
+    if parsed.utcoffset() != timezone.utc.utcoffset(parsed):
+        raise FreezeValidationError("created_at_utc must use UTC")
+    if require_production and payload["status"] != FREEZE_STATUS:
+        raise FreezeValidationError(
+            "confirmatory access requires a verified production FROZEN artifact"
+        )
+    if require_production and not payload["source_control"]["git_worktree_clean"]:
+        raise FreezeValidationError("production freeze must record a clean worktree")
+    _validate_snapshot_semantics(payload["configuration_snapshot"])
+    return ProductionFreezeManifest(payload)
 
 
 def _git_state() -> tuple[str, bool]:
@@ -596,79 +861,11 @@ def validate_freeze_manifest(
     *,
     require_production: bool = True,
 ) -> dict[str, Any]:
-    """Validate the freeze envelope without recomputing current inputs."""
+    """Compatibility adapter for the canonical typed production parser."""
 
-    root = _exact_mapping(document, _ROOT_FIELDS, "freeze manifest")
-    if root["schema_version"] != FREEZE_SCHEMA_VERSION:
-        raise FreezeValidationError("freeze schema_version is unsupported")
-    if root["protocol_version"] != PROTOCOL_VERSION:
-        raise FreezeValidationError("freeze protocol_version is unsupported")
-    _safe_id(root["freeze_id"], "freeze_id")
-    created = root["created_at_utc"]
-    if not isinstance(created, str) or not created.endswith("Z"):
-        raise FreezeValidationError("created_at_utc must be a UTC timestamp")
-    try:
-        parsed = datetime.fromisoformat(created.replace("Z", "+00:00"))
-    except ValueError as exc:
-        raise FreezeValidationError("created_at_utc is invalid") from exc
-    if parsed.utcoffset() != timezone.utc.utcoffset(parsed):
-        raise FreezeValidationError("created_at_utc must use UTC")
-    if root["status"] not in {FREEZE_STATUS, DRY_RUN_STATUS}:
-        raise FreezeValidationError("freeze status is unsupported")
-    if require_production and root["status"] != FREEZE_STATUS:
-        raise FreezeValidationError(
-            "confirmatory access requires a production FROZEN artifact"
-        )
-    source = _exact_mapping(
-        root["source_control"],
-        frozenset({"git_revision", "git_worktree_clean"}),
-        "source_control",
-    )
-    if not isinstance(source["git_revision"], str) or not _GIT_REVISION.fullmatch(
-        source["git_revision"]
-    ):
-        raise FreezeValidationError("source_control.git_revision is invalid")
-    if not isinstance(source["git_worktree_clean"], bool):
-        raise FreezeValidationError(
-            "source_control.git_worktree_clean must be boolean"
-        )
-    if require_production and not source["git_worktree_clean"]:
-        raise FreezeValidationError("production freeze must record a clean worktree")
-    snapshot = _mapping(root["configuration_snapshot"], "configuration_snapshot")
-    required_snapshot = {
-        "p3_gate",
-        "systems",
-        "runtime_package",
-        "candidate_catalog",
-        "indexes",
-        "prompts",
-        "configuration",
-        "development_dataset",
-        "environment",
-    }
-    if set(snapshot) != required_snapshot:
-        raise FreezeValidationError(
-            "configuration_snapshot fields differ from the schema"
-        )
-    rules = _exact_mapping(
-        root["integrity_rules"],
-        frozenset(
-            {
-                "created_before_sealed_data_supply",
-                "sealed_data_not_read_by_freeze",
-                "tuning_after_freeze_prohibited",
-                "exclusive_create_no_overwrite",
-            }
-        ),
-        "integrity_rules",
-    )
-    if not all(value is True for value in rules.values()):
-        raise FreezeValidationError("freeze integrity rules must all be true")
-    try:
-        json.dumps(root, allow_nan=False)
-    except (TypeError, ValueError) as exc:
-        raise FreezeValidationError("freeze must contain finite JSON data") from exc
-    return root
+    return parse_production_freeze(
+        document, require_production=require_production
+    ).to_dict()
 
 
 def create_freeze_artifact(
@@ -692,18 +889,19 @@ def create_freeze_artifact(
     return write_json_exclusive(target / FREEZE_ARTIFACT_BASENAME, manifest)
 
 
-def verify_freeze_artifact(path: Path) -> dict[str, Any]:
-    """Require an authoritative freeze and fail when any current input drifted."""
+def verify_production_freeze(path: Path) -> VerifiedProductionFreeze:
+    """Verify the authoritative artifact and recompute every recorded source."""
 
     artifact, path_freeze_id = _require_authoritative_freeze_artifact(path)
     try:
-        raw = json.loads(artifact.read_text(encoding="utf-8"))
-    except (OSError, UnicodeError, json.JSONDecodeError) as exc:
+        raw_bytes = artifact.read_bytes()
+        raw = _strict_json_document(raw_bytes, label="production freeze artifact")
+    except OSError as exc:
         raise FreezeValidationError(
             "freeze artifact could not be read as valid JSON"
         ) from exc
-    manifest = validate_freeze_manifest(raw, require_production=True)
-    if manifest["freeze_id"] != path_freeze_id:
+    manifest = parse_production_freeze(raw, require_production=True)
+    if manifest.freeze_id != path_freeze_id:
         raise FreezeValidationError(
             "freeze manifest identity does not match its authoritative directory"
         )
@@ -729,7 +927,39 @@ def verify_freeze_artifact(path: Path) -> dict[str, Any]:
         raise FreezeValidationError(
             "frozen Protocol-v5 inputs changed: " + ", ".join(changed)
         )
-    return manifest
+    return VerifiedProductionFreeze(
+        manifest=manifest,
+        artifact_path=artifact,
+        artifact_sha256=hashlib.sha256(raw_bytes).hexdigest(),
+        _construction_key=_VERIFIED_FREEZE_CONSTRUCTION_KEY,
+    )
+
+
+def reverify_production_freeze(
+    freeze: VerifiedProductionFreeze,
+) -> VerifiedProductionFreeze:
+    """Revalidate a capability at a downstream execution/analysis boundary."""
+
+    if not isinstance(freeze, VerifiedProductionFreeze):
+        raise TypeError(
+            "a VerifiedProductionFreeze from verify_production_freeze() is required"
+        )
+    current = verify_production_freeze(freeze.artifact_path)
+    if (
+        current.freeze_id != freeze.freeze_id
+        or current.artifact_sha256 != freeze.artifact_sha256
+        or current.manifest.to_dict() != freeze.manifest.to_dict()
+    ):
+        raise FreezeValidationError(
+            "production freeze capability no longer matches its verified artifact"
+        )
+    return current
+
+
+def verify_freeze_artifact(path: Path) -> VerifiedProductionFreeze:
+    """Compatibility name for :func:`verify_production_freeze`."""
+
+    return verify_production_freeze(path)
 
 
 def _parser() -> argparse.ArgumentParser:
@@ -803,16 +1033,27 @@ if __name__ == "__main__":
 
 
 __all__ = [
+    "DEFAULT_DESIGN_SNAPSHOT",
     "DEFAULT_FREEZE_ROOT",
     "DEFAULT_P3_GATE_EVIDENCE",
     "DRY_RUN_STATUS",
     "FREEZE_ARTIFACT_BASENAME",
     "FREEZE_SCHEMA_VERSION",
     "FREEZE_STATUS",
+    "PRODUCTION_FREEZE_SCHEMA_PATH",
+    "PRODUCTION_FREEZE_SCHEMA_VERSION",
+    "DesignSnapshot",
     "FreezeValidationError",
+    "ProductionFreezeManifest",
+    "VerifiedProductionFreeze",
     "build_configuration_snapshot",
     "build_freeze_manifest",
     "create_freeze_artifact",
+    "load_design_snapshot",
+    "parse_design_snapshot",
+    "parse_production_freeze",
+    "reverify_production_freeze",
     "validate_freeze_manifest",
     "verify_freeze_artifact",
+    "verify_production_freeze",
 ]

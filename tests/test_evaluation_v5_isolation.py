@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from argparse import Namespace
 import copy
+from dataclasses import replace
 import hashlib
 import io
 import json
@@ -17,30 +18,39 @@ from evaluation_v5 import isolation as isolation_module
 from evaluation_v5 import isolation_audit as isolation_audit_module
 from evaluation_v5 import split_dataset as split_dataset_module
 from evaluation_v5.freeze import (
+    DEFAULT_DESIGN_SNAPSHOT,
     DRY_RUN_STATUS,
     FREEZE_ARTIFACT_BASENAME,
     FREEZE_SCHEMA_VERSION,
     FreezeValidationError,
+    VerifiedProductionFreeze,
     build_configuration_snapshot,
     build_freeze_manifest,
     create_freeze_artifact,
+    load_design_snapshot,
+    parse_production_freeze,
     verify_freeze_artifact,
+    verify_production_freeze,
 )
 from evaluation_v5.isolation import (
     CONFIRMATORY_DATASET_ENV_VAR,
     FREEZE_ARTIFACT_ENV_VAR,
     SplitContaminationError,
     SplitIsolationError,
+    VerifiedConfirmatorySplit,
     check_contamination,
     load_confirmatory_split,
     normalize_prompt,
     require_external_dataset_path,
     resolve_confirmatory_sources,
+    verify_confirmatory_split,
 )
 from evaluation_v5.isolation_audit import IsolationAuditError, audit_repository
 from evaluation_v5.offline.run import main as offline_main, run_preflight
+from evaluation_v5.offline.runner import run_offline_recommendations
 from evaluation_v5.split_dataset import (
     DEFAULT_DEVELOPMENT_DATASET,
+    LoadedSplit,
     SPLIT_BUNDLE_SCHEMA_VERSION,
     SplitBundle,
     SplitBundleValidationError,
@@ -536,15 +546,16 @@ def test_public_cli_confirmation_fails_closed_without_external_inputs(
 
 
 def test_public_cli_cannot_use_a_repository_bundled_dataset(
+    tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
     capsys: pytest.CaptureFixture[str],
 ):
     monkeypatch.delenv(CONFIRMATORY_DATASET_ENV_VAR, raising=False)
     monkeypatch.delenv(FREEZE_ARTIFACT_ENV_VAR, raising=False)
-    monkeypatch.setattr(
-        freeze_module,
-        "verify_freeze_artifact",
-        lambda _path: {"freeze_id": "synthetic-verification-only"},
+    artifact = _production_freeze(
+        tmp_path,
+        monkeypatch,
+        freeze_id="repository-dataset-rejection",
     )
 
     assert offline_main(
@@ -554,7 +565,7 @@ def test_public_cli_cannot_use_a_repository_bundled_dataset(
             "--dataset",
             str(DEFAULT_DEVELOPMENT_DATASET),
             "--freeze",
-            str(ROOT / "results_v5/protocol-v5.0.0/freezes/fake/freeze-manifest.json"),
+            str(artifact),
         ]
     ) == 2
     result = json.loads(capsys.readouterr().out)
@@ -590,13 +601,13 @@ def test_ancestor_symlink_swap_between_resolution_and_open_fails_closed(
     sealed = _write_bundle(external_directory / "sealed.yaml")
     _write_bundle(repository / sealed.name)
     moved_directory = tmp_path / "moved-external-custody"
+    artifact = _production_freeze(
+        tmp_path,
+        monkeypatch,
+        freeze_id="ancestor-symlink-freeze",
+    )
 
     monkeypatch.setattr(isolation_module, "ROOT", repository)
-    monkeypatch.setattr(
-        freeze_module,
-        "verify_freeze_artifact",
-        lambda _path: {"freeze_id": "fixture"},
-    )
     original_guard = isolation_module.require_external_dataset_path
 
     def swap_ancestor(path: Path) -> Path:
@@ -612,7 +623,7 @@ def test_ancestor_symlink_swap_between_resolution_and_open_fails_closed(
     )
 
     with pytest.raises(SplitBundleValidationError) as error:
-        load_confirmatory_split(sealed, tmp_path / "freeze.json")
+        load_confirmatory_split(sealed, artifact)
     encoded_error = str(error.value)
     assert "external-custody" not in encoded_error
     assert "repository" not in encoded_error
@@ -640,13 +651,13 @@ def test_confirmatory_loader_rejects_wrong_role_id_or_checksum(
     else:
         document["split_manifest"]["checksum"] = "e" * 64  # type: ignore[index]
     sealed = _write_bundle(tmp_path / "sealed.yaml", document)
-    monkeypatch.setattr(
-        freeze_module,
-        "verify_freeze_artifact",
-        lambda _path: {"freeze_id": "fixture"},
+    artifact = _production_freeze(
+        tmp_path,
+        monkeypatch,
+        freeze_id="invalid-split-freeze",
     )
     with pytest.raises(SplitBundleValidationError, match=message):
-        load_confirmatory_split(sealed, tmp_path / "freeze.json")
+        load_confirmatory_split(sealed, artifact)
 
 
 def test_confirmatory_loader_accepts_an_explicit_future_safe_split_id(
@@ -657,19 +668,76 @@ def test_confirmatory_loader_accepts_an_explicit_future_safe_split_id(
         tmp_path / "sealed.yaml",
         _document(split_id="v5-confirmatory-replication-2"),
     )
-    monkeypatch.setattr(
-        freeze_module,
-        "verify_freeze_artifact",
-        lambda _path: {"freeze_id": "fixture"},
+    artifact = _production_freeze(
+        tmp_path,
+        monkeypatch,
+        freeze_id="future-split-id-freeze",
     )
 
     loaded = load_confirmatory_split(
         sealed,
-        tmp_path / "freeze.json",
+        artifact,
         expected_split_id="v5-confirmatory-replication-2",
     )
 
     assert loaded.split.manifest.split_id == "v5-confirmatory-replication-2"
+
+
+def test_constructed_confirmatory_loaded_split_cannot_authorize_runner(
+    tmp_path: Path,
+):
+    constructed = LoadedSplit(
+        bundle=_bundle(),
+        source_file_sha256="a" * 64,
+    )
+
+    with pytest.raises(PermissionError, match="cannot authorize confirmatory"):
+        run_offline_recommendations(
+            constructed,
+            result_dir=tmp_path / "constructed-run",
+            system_ids=("P1",),
+            frozen_configuration={"snapshot": "design-only"},
+            dry_run=True,
+        )
+
+
+def test_dataclasses_replace_development_to_confirmatory_cannot_authorize_runner(
+    tmp_path: Path,
+):
+    development = load_development_split()
+    relabelled_manifest = replace(
+        development.manifest,
+        split_id="v5-confirmatory",
+        role=SplitRole.CONFIRMATORY,
+    )
+    relabelled = replace(
+        development,
+        bundle=replace(
+            development.bundle,
+            split_manifest=relabelled_manifest,
+        ),
+    )
+
+    with pytest.raises(PermissionError, match="cannot authorize confirmatory"):
+        run_offline_recommendations(
+            relabelled,
+            result_dir=tmp_path / "relabelled-run",
+            system_ids=("P1",),
+            frozen_configuration={"snapshot": "design-only"},
+            dry_run=True,
+        )
+
+
+def test_arbitrary_freeze_identity_string_cannot_authorize_runner(tmp_path: Path):
+    with pytest.raises(ValueError, match="caller-supplied freeze_identity"):
+        run_offline_recommendations(
+            load_development_split(),
+            result_dir=tmp_path / "fake-freeze-run",
+            system_ids=("P1",),
+            frozen_configuration={"snapshot": "development"},
+            freeze_identity={"freeze_id": "foo"},
+            dry_run=True,
+        )
 
 
 def test_confirmatory_bundle_is_opened_once_and_hashes_the_parsed_bytes(
@@ -677,10 +745,10 @@ def test_confirmatory_bundle_is_opened_once_and_hashes_the_parsed_bytes(
     monkeypatch: pytest.MonkeyPatch,
 ):
     sealed = _write_bundle(tmp_path / "sealed.yaml")
-    monkeypatch.setattr(
-        freeze_module,
-        "verify_freeze_artifact",
-        lambda _path: {"freeze_id": "fixture"},
+    artifact = _production_freeze(
+        tmp_path,
+        monkeypatch,
+        freeze_id="single-open-freeze",
     )
     original_open = split_dataset_module.os.open
     sealed_opens = 0
@@ -692,7 +760,7 @@ def test_confirmatory_bundle_is_opened_once_and_hashes_the_parsed_bytes(
         return original_open(path, flags, *args, **kwargs)  # type: ignore[arg-type]
 
     monkeypatch.setattr(split_dataset_module.os, "open", counted_open)
-    loaded = load_confirmatory_split(sealed, tmp_path / "freeze.json")
+    loaded = load_confirmatory_split(sealed, artifact)
 
     assert sealed_opens == 1
     assert loaded.split.source_file_sha256 == hashlib.sha256(
@@ -786,12 +854,12 @@ def test_contamination_intersections_are_symmetric_after_supply(
     monkeypatch: pytest.MonkeyPatch,
 ):
     sealed = _write_bundle(tmp_path / "sealed.yaml")
-    monkeypatch.setattr(
-        freeze_module,
-        "verify_freeze_artifact",
-        lambda _path: {"freeze_id": "synthetic-verification-only"},
+    artifact = _production_freeze(
+        tmp_path,
+        monkeypatch,
+        freeze_id="contamination-intersection-freeze",
     )
-    supplied = load_confirmatory_split(sealed, tmp_path / "freeze.json")
+    supplied = load_confirmatory_split(sealed, artifact)
     confirmatory_case = supplied.split.bundle.cases[0]
     development = supplied.development_split.bundle
     modified_document = development.to_dict()
@@ -881,13 +949,78 @@ def test_production_freeze_is_complete_immutable_and_contains_no_sealed_data(
     assert _is_sha256(snapshot["development_dataset"]["file_sha256"])
     assert "confirmatory" not in encoded
     assert "credential-must-not-be-recorded" not in encoded
-    assert verify_freeze_artifact(artifact)["freeze_id"] == "fixture-freeze"
+    verified = verify_freeze_artifact(artifact)
+    assert isinstance(verified, VerifiedProductionFreeze)
+    assert verified["freeze_id"] == "fixture-freeze"
+    assert verified.identity["freeze_manifest_sha256"] == hashlib.sha256(
+        artifact.read_bytes()
+    ).hexdigest()
     with pytest.raises(FileExistsError):
         create_freeze_artifact(
             freeze_id="fixture-freeze",
             p3_gate_status="not_retained",
             output_root=tmp_path / "freezes",
         )
+
+
+def test_design_snapshot_is_typed_but_never_a_production_freeze():
+    snapshot = load_design_snapshot(DEFAULT_DESIGN_SNAPSHOT)
+    assert snapshot["development_dataset"]["role"] == "development"
+
+    with pytest.raises(FreezeValidationError):
+        parse_production_freeze(snapshot.to_dict())
+    with pytest.raises(FreezeValidationError, match=FREEZE_ARTIFACT_BASENAME):
+        verify_production_freeze(DEFAULT_DESIGN_SNAPSHOT)
+
+
+def test_modified_production_freeze_fails_source_reverification(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+):
+    artifact = _production_freeze(
+        tmp_path,
+        monkeypatch,
+        freeze_id="modified-freeze",
+    )
+    modified = json.loads(artifact.read_text(encoding="utf-8"))
+    modified["configuration_snapshot"]["systems"]["P2"][
+        "pipeline_version"
+    ] = "forged-pipeline"
+    artifact.write_text(json.dumps(modified), encoding="utf-8")
+
+    with pytest.raises(FreezeValidationError, match="frozen Protocol-v5 inputs changed"):
+        verify_production_freeze(artifact)
+
+
+def test_verified_confirmatory_preparation_and_runner_reverification_succeed(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+):
+    artifact = _production_freeze(
+        tmp_path,
+        monkeypatch,
+        freeze_id="verified-confirmatory-path",
+    )
+    sealed = _write_bundle(tmp_path / "sealed-confirmatory.yaml")
+
+    capability = load_confirmatory_split(sealed, artifact)
+    assert isinstance(capability, VerifiedConfirmatorySplit)
+    reverified = verify_confirmatory_split(capability)
+    assert reverified.freeze_identity["freeze_id"] == "verified-confirmatory-path"
+    with pytest.raises(TypeError):
+        replace(capability, split=load_development_split())
+
+    result = run_offline_recommendations(
+        capability,
+        result_dir=tmp_path / "verified-confirmatory-dry-run",
+        system_ids=("P1",),
+        frozen_configuration=capability.freeze_manifest[
+            "configuration_snapshot"
+        ],
+        dry_run=True,
+    )
+    assert result.dry_run is True
+    assert result.planned_records == capability.split.manifest.case_count
 
 
 @pytest.mark.parametrize(
@@ -1182,7 +1315,7 @@ def test_freeze_artifact_read_errors_are_generic_and_basename_is_canonical(
     def denied_read(*_args: object, **_kwargs: object):
         raise PermissionError("/private/custody/path-must-not-appear")
 
-    monkeypatch.setattr(Path, "read_text", denied_read)
+    monkeypatch.setattr(Path, "read_bytes", denied_read)
     with pytest.raises(FreezeValidationError) as error:
         verify_freeze_artifact(canonical)
     assert str(error.value) == "freeze artifact could not be read as valid JSON"
@@ -1404,16 +1537,16 @@ def test_loading_synthetic_confirmation_does_not_change_candidate_indexes(
         tmp_path / "sealed.yaml",
         _document(cases=[_case(prompt=sentinel)]),
     )
-    monkeypatch.setattr(
-        freeze_module,
-        "verify_freeze_artifact",
-        lambda _path: {"freeze_id": "fixture"},
+    artifact = _production_freeze(
+        tmp_path,
+        monkeypatch,
+        freeze_id="index-isolation-freeze",
     )
     before = build_configuration_snapshot(
         p3_gate_status="not_retained",
         p3_gate_evidence=freeze_module.DEFAULT_P3_GATE_EVIDENCE,
     )["indexes"]
-    loaded = load_confirmatory_split(sealed, tmp_path / "freeze.json")
+    loaded = load_confirmatory_split(sealed, artifact)
     after = build_configuration_snapshot(
         p3_gate_status="not_retained",
         p3_gate_evidence=freeze_module.DEFAULT_P3_GATE_EVIDENCE,

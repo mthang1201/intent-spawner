@@ -33,9 +33,15 @@ dataset policy permits this; the runner never writes them to operational logs.
 
 Confirmatory execution requires both an external sealed dataset and its
 authoritative freeze artifact. The isolation loader verifies both before the
-runner constructs an execution plan. Development smoke evidence under `/tmp`
-is not confirmatory evidence and must not be moved into a final evidence
-namespace.
+runner constructs an execution plan. It returns a source-bound
+`VerifiedConfirmatorySplit`; the runner reopens and revalidates the split and
+production freeze at the execution boundary. An ordinary/relabelled
+`LoadedSplit`, a caller-supplied `freeze_identity`, or the tracked
+`frozen-configuration.json` design snapshot cannot authorize confirmation.
+Confirmatory provenance and configuration are derived from the reverified
+artifacts, and any caller-provided configuration must match that production
+freeze. Development smoke evidence under `/tmp` is not confirmatory evidence
+and must not be moved into a final evidence namespace.
 
 ## Repeats and P3
 
@@ -94,5 +100,7 @@ metrics. It emits only a PASS/FAIL integrity report; it does not calculate
 aggregate metrics, confidence intervals, significance, or thesis claims.
 
 Confirmatory validation must again supply `--dataset` and `--freeze`; the
-validator invokes the same isolation loader. A confirmatory package is never
+validator invokes the same isolation loader and re-verifies its capability at
+the validation boundary. Freeze provenance is derived from that artifact, not
+accepted as a caller-authored mapping. A confirmatory package is never
 implicitly validated against the visible development split.
