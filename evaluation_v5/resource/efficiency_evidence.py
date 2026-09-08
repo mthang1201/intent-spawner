@@ -134,6 +134,11 @@ def write_sidecar(root: Path, row: Mapping[str, Any]) -> Path:
 
 
 def validate_raw_package(root: Path, *, allow_unsealed: bool = False) -> dict[str, Any]:
+    from .authenticity import validate_resource_authenticity
+    from .legacy_compatibility import is_bounded_legacy_package, verify_bounded_legacy_integrity
+
+    if is_bounded_legacy_package(root):
+        verify_bounded_legacy_integrity(root)
     if (root / "SHA256SUMS").exists():
         integrity = verify_integrity(root)
     elif not allow_unsealed:
@@ -219,6 +224,13 @@ def validate_raw_package(root: Path, *, allow_unsealed: bool = False) -> dict[st
         completion = json.loads(completion_path.read_text(encoding="utf-8"))
         if completion.get("expected_primary_trials") != PRIMARY_TRIAL_COUNT or completion.get("completed_primary_trials") != PRIMARY_TRIAL_COUNT or completion.get("attempt_records") != len(trials):
             raise ValueError("completion manifest disagrees with raw trials")
+        environment = json.loads(environment_path.read_text(encoding="utf-8"))
+        validate_resource_authenticity(meta, environment, trials, is_efficiency=True)
+    elif manifest_path.exists() and meta.get("execution_status") in ("SYNTHETIC", "TEST_ONLY"):
+        environment_path = root / "raw" / "environment.json"
+        if environment_path.is_file():
+            environment = json.loads(environment_path.read_text(encoding="utf-8"))
+            validate_resource_authenticity(meta, environment, trials, is_efficiency=True)
     return {"status": "pass", "sealed": integrity is not None, "execution_status": meta.get("execution_status"), "trials": len(trials), "plan_sha256": meta.get("plan_sha256")}
 
 

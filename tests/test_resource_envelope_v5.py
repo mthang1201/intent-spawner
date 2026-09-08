@@ -20,7 +20,7 @@ from cluster_evaluation.resource_adapter_v5 import (
 )
 from evaluation_v5.resource.comparison import classify_axis, compare_allocations
 from evaluation_v5.resource.contracts import (
-    load_cluster_policy, load_crosswalk, load_semantic_independence,
+    load_cluster_policy, load_crosswalk, load_image_state, load_semantic_independence,
     static_independence_scan,
 )
 from evaluation_v5.resource.derive import (
@@ -191,6 +191,97 @@ class AlwaysInfrastructureAdapter(FakeAdapter):
             exclusion_reason="fixture_infrastructure_failure", cgroup_version=None,
             cgroup_metrics={},
         )
+
+
+def make_authenticated_test_adapter(*, memory_threshold: int = 256, cpu_threshold: int = 500):
+    adapter = KubernetesTrialAdapter.__new__(KubernetesTrialAdapter)
+    adapter.adapter_version = "protocol-v5-kubernetes-trial-adapter-v1.2.0"
+    adapter._is_authenticated_real_kubernetes_collector = True
+    adapter.collector_origin = "REAL_KUBERNETES_COLLECTOR"
+    adapter.image = IMAGE
+    adapter.image_state = load_image_state()
+    adapter.policy = load_cluster_policy()
+
+    def environment_provenance():
+        return {
+            "schema_version": "protocol-v5-resource-environment-v1.1.0",
+            "captured_at_utc": _now(),
+            "environment_id": "intent-spawner-eval-v5:z2jh-context-demo",
+            "collector_origin": "REAL_KUBERNETES_COLLECTOR",
+            "collector_implementation": "cluster_evaluation.resource_adapter_v5.KubernetesTrialAdapter",
+            "collector_version": "protocol-v5-kubernetes-trial-adapter-v1.2.0",
+            "cluster_measurement_status": "OBSERVED",
+            "eligibility_status": "ELIGIBLE",
+            "eligibility_policy_version": "protocol-v5-cluster-eligibility-v1.1.0",
+            "read_only_preflight": {
+                "schema_version": "protocol-v5-cluster-eligibility-preflight-v1.1.0",
+                "eligibility_status": "ELIGIBLE",
+                "failure_codes": [],
+                "facts": {
+                    "current_context": "intent-spawner-eval-v5",
+                    "namespace_name": "z2jh-context-demo",
+                    "node_name": "e4-node-v1",
+                    "node_uid": "node-uid-12345678",
+                    "node_info": {
+                        "kubelet_version": "v1.29.0",
+                        "container_runtime": "containerd://1.7.0",
+                        "kernel_version": "6.1.0",
+                        "operating_system": "linux",
+                        "architecture": "amd64",
+                    },
+                },
+            },
+            "kubernetes_version": {"gitVersion": "v1.29.0", "major": "1", "minor": "29"},
+            "required_context": "intent-spawner-eval-v5",
+            "namespace": "z2jh-context-demo",
+            "node_name": "e4-node-v1",
+            "node_uid": "node-uid-12345678",
+            "kubelet_version": "v1.29.0",
+            "container_runtime": "containerd://1.7.0",
+            "kernel_version": "6.1.0",
+            "operating_system": "linux",
+            "architecture": "amd64",
+            "observed_execution_readiness": True,
+        }
+
+    def run_trial(spec):
+        enough_memory = spec.memory_mib >= memory_threshold
+        enough_cpu = spec.cpu_m >= cpu_threshold
+        runtime = 1.0 if enough_cpu else 2.0
+        marker = spec.expected_marker_sha256 if enough_memory else None
+        return TrialObservation(
+            schema_version=TRIAL_SCHEMA_VERSION,
+            run_id=spec.run_id, family_id=spec.family_id, phase=spec.phase,
+            workload_instance_id=spec.workload_instance_id,
+            workload_fingerprint=spec.workload_fingerprint,
+            cpu_m=spec.cpu_m, memory_mib=spec.memory_mib,
+            repeat_index=spec.repeat_index, deterministic_seed=spec.deterministic_seed,
+            expected_marker_sha256=spec.expected_marker_sha256,
+            observed_marker_sha256=marker, exit_code=0 if enough_memory else 137,
+            exit_reason="Completed" if enough_memory else "OOMKilled",
+            oom_killed=not enough_memory, timeout=False,
+            workload_timeout_seconds=spec.timeout_seconds,
+            runtime_seconds=runtime if enough_memory else None,
+            correctness_marker_ok=enough_memory, infrastructure_invalid=False,
+            correctness_invariants_ok=enough_memory, correctness_details={"pass": enough_memory},
+            exclusion_reason=None, cgroup_version="v2",
+            cgroup_metrics=_metrics(spec.cpu_m, spec.memory_mib, min(spec.memory_mib - 1, memory_threshold)),
+            kubernetes={
+                "pod_name": f"e4-{spec.run_id[:20]}",
+                "pod_uid": f"pod-uid-{spec.run_id[:16]}",
+                "node_name": "e4-node-v1",
+                "started_at": "2026-09-08T12:00:00Z",
+                "finished_at": "2026-09-08T12:00:01Z",
+                "cleanup_status": "succeeded",
+            },
+            replacement_of=spec.replacement_of,
+            collector_origin="REAL_KUBERNETES_COLLECTOR",
+            recorded_at_utc=_now(),
+        )
+
+    adapter.environment_provenance = environment_provenance
+    adapter.run_trial = run_trial
+    return adapter
 
 
 @pytest.fixture(scope="module")
@@ -649,7 +740,7 @@ def test_fake_adapter_drives_search_and_manual_review_gate(tmp_path, monkeypatch
         result_dir=result_dir, run_id="fixture-observed", adapter=FakeAdapter(), image=IMAGE,
         enforce_readiness=False,
     )
-    assert report["execution_status"] == "OBSERVED"
+    assert report["execution_status"] == "SYNTHETIC"
     assert report["sealed"] is False
     derived = json.loads((result_dir / "derived" / "safe-envelopes.json").read_text())
     assert len(derived["envelopes"]) == 16
@@ -658,15 +749,10 @@ def test_fake_adapter_drives_search_and_manual_review_gate(tmp_path, monkeypatch
     decisions = [json.loads(line) for line in (result_dir / "raw" / "decision-ledger.jsonl").read_text().splitlines()]
     assert any(row.get("phase") == "memory_probe" and row.get("memory_mib") == 192 for row in decisions)
     assert any(row.get("phase") == "cpu_probe" and row.get("cpu_m") == 300 for row in decisions)
-    reviewed = record_manual_review(
-        result_dir, reviewer_id="reviewer-fixture", decision="APPROVED",
-        reason="Synthetic fixture verifies the review gate only.",
-    )
-    assert reviewed["sealed"] is True
-    assert reviewed["eligible_for_comparison"] is True
-    with pytest.raises(FileExistsError):
+    with pytest.raises(ValueError, match="illegal manual-review state transition"):
         record_manual_review(
-            result_dir, reviewer_id="reviewer-fixture", decision="REJECTED", reason="duplicate",
+            result_dir, reviewer_id="reviewer-fixture", decision="APPROVED",
+            reason="Synthetic fixture verifies the review gate only.",
         )
 
 
@@ -682,7 +768,7 @@ def test_observed_package_rejects_incompatible_derivation_schema(
     result_dir = tmp_path / "old-derivation-schema"
     run_calibration(
         result_dir=result_dir, run_id="old-derivation-schema",
-        adapter=FakeAdapter(), image=IMAGE, enforce_readiness=False,
+        adapter=make_authenticated_test_adapter(), image=IMAGE, enforce_readiness=False,
     )
     derived_path = result_dir / "derived" / "safe-envelopes.json"
     derived = json.loads(derived_path.read_text(encoding="utf-8"))
@@ -902,7 +988,7 @@ def test_manual_review_pre_fingerprint_detects_tampering(tmp_path, monkeypatch):
     from evaluation_v5.resource import runner
     monkeypatch.setattr(runner, "_git_identity", lambda: {"git_revision": "4" * 40, "git_dirty": False})
     result_dir = tmp_path / "tampered-review"
-    run_calibration(result_dir=result_dir, run_id="tamper", adapter=FakeAdapter(), image=IMAGE, enforce_readiness=False)
+    run_calibration(result_dir=result_dir, run_id="tamper", adapter=make_authenticated_test_adapter(), image=IMAGE, enforce_readiness=False)
     source = result_dir / "derived" / "safe-envelopes.json"
     source.write_text(source.read_text() + "\n", encoding="utf-8")
     with pytest.raises(ValueError, match="fingerprint"):
@@ -913,7 +999,7 @@ def test_comparison_requires_sealed_approved_e4_and_checks_ratios(tmp_path, monk
     from evaluation_v5.resource import runner
     monkeypatch.setattr(runner, "_git_identity", lambda: {"git_revision": "5" * 40, "git_dirty": False})
     result_dir = tmp_path / "comparison-e4"
-    run_calibration(result_dir=result_dir, run_id="comparison", adapter=FakeAdapter(), image=IMAGE, enforce_readiness=False)
+    run_calibration(result_dir=result_dir, run_id="comparison", adapter=make_authenticated_test_adapter(), image=IMAGE, enforce_readiness=False)
     first = load_crosswalk()["entries"][0]
     allocation_path = tmp_path / "allocation.json"
     allocation_path.write_text(json.dumps({
@@ -955,7 +1041,7 @@ def test_comparison_reports_no_reference_for_rejected_or_no_safe_package(
     result_dir = tmp_path / f"no-reference-{decision.lower()}"
     run_calibration(
         result_dir=result_dir, run_id=f"no-reference-{decision.lower()}",
-        adapter=FakeAdapter(memory_threshold=memory_threshold), image=IMAGE,
+        adapter=make_authenticated_test_adapter(memory_threshold=memory_threshold), image=IMAGE,
         enforce_readiness=False,
     )
     record_manual_review(result_dir, reviewer_id="reviewer", decision=decision, reason="fixture only")

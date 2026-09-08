@@ -169,6 +169,8 @@ def classify_kubernetes_outcome(
 
 class KubernetesResourceEfficiencyAdapter(CalibrationKubernetesAdapter):
     adapter_version = ADAPTER_VERSION
+    _is_authenticated_real_kubernetes_collector: bool = True
+    collector_origin: str = "REAL_KUBERNETES_COLLECTOR"
 
     def read_only_preflight(self) -> Mapping[str, Any]:
         result = collect_read_only_preflight(image=self.image, policy=self.policy, image_state=self.image_state)
@@ -265,9 +267,11 @@ class KubernetesResourceEfficiencyAdapter(CalibrationKubernetesAdapter):
         cgroup_metrics: Mapping[str, Any] | None = None, infrastructure_invalid: bool = False,
         exclusion_reason: str | None = None, admission_reason: str | None = None,
         kubernetes: Mapping[str, Any] | None = None,
+        collector_origin: str = "REAL_KUBERNETES_COLLECTOR",
     ) -> dict[str, Any]:
         row = {
             "schema_version": TRIAL_SCHEMA_VERSION, **spec.to_dict(),
+            "collector_origin": collector_origin,
             "planned_resources": dict(planned), "observed_resources": None if observed is None else dict(observed),
             "pod_created": pod_created, "scheduled": scheduled, "pending_or_admission_failure": pending,
             "admission_or_scheduling_reason": admission_reason, "oom": oom, "timeout": timeout,
