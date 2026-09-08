@@ -8,6 +8,7 @@ import hashlib
 import json
 from typing import Any
 
+from evaluation_v5.gold_dataset import CONFIRMATORY_ELIGIBLE_CLASSIFICATIONS
 from .taxonomy import (
     EquivalenceStatus,
     HumanReviewStatus,
@@ -138,6 +139,24 @@ class RobustnessFamily:
     variants: tuple[RobustnessVariant, ...]
     label_review: Mapping[str, Any]
     source_provenance: Mapping[str, Any] | None = None
+    role: str = "development"
+    evidence_classification: str = "development_only"
+
+    @property
+    def is_confirmatory(self) -> bool:
+        """Return True if this family belongs to the sealed confirmatory split."""
+        if str(self.role).strip().lower() == "confirmatory":
+            return True
+        if self.evidence_classification in CONFIRMATORY_ELIGIBLE_CLASSIFICATIONS:
+            return True
+        if self.source_provenance is not None:
+            source_split = self.source_provenance.get("source_split") or self.source_provenance.get("role")
+            if source_split is not None and str(source_split).strip().lower() == "confirmatory":
+                return True
+            src_class = self.source_provenance.get("evidence_classification")
+            if src_class is not None and src_class in CONFIRMATORY_ELIGIBLE_CLASSIFICATIONS:
+                return True
+        return False
 
     @property
     def canonical_variant(self) -> RobustnessVariant:
@@ -212,10 +231,17 @@ class RobustnessFamily:
                 if self.source_provenance is not None
                 else None
             ),
+            "role": self.role,
+            "evidence_classification": self.evidence_classification,
         }
 
     @classmethod
-    def from_dict(cls, value: object) -> "RobustnessFamily":
+    def from_dict(
+        cls,
+        value: object,
+        *,
+        dataset_role: str | None = None,
+    ) -> "RobustnessFamily":
         if not isinstance(value, Mapping):
             raise ValueError("RobustnessFamily must be a mapping")
         payload = dict(value)
@@ -228,6 +254,24 @@ class RobustnessFamily:
                 {**dict(item), "family_id": payload["family_id"]}
             )
             for item in raw_variants
+        )
+
+        prov = payload.get("source_provenance")
+        prov_split = (
+            prov.get("source_split") or prov.get("role")
+            if isinstance(prov, Mapping)
+            else None
+        )
+        prov_class = (
+            prov.get("evidence_classification")
+            if isinstance(prov, Mapping)
+            else None
+        )
+        role = str(payload.get("role") or prov_split or dataset_role or "development")
+        classification = str(
+            payload.get("evidence_classification")
+            or prov_class
+            or ("human_reviewed_confirmatory" if role == "confirmatory" else "development_only")
         )
 
         return cls(
@@ -244,6 +288,8 @@ class RobustnessFamily:
             variants=variants,
             label_review=dict(payload.get("label_review", {"status": "approved"})),
             source_provenance=payload.get("source_provenance"),
+            role=role,
+            evidence_classification=classification,
         )
 
 
@@ -292,15 +338,19 @@ class RobustnessDataset:
         if not isinstance(value, Mapping):
             raise ValueError("RobustnessDataset must be a mapping")
         payload = dict(value)
+        role = str(payload.get("role", "development"))
         raw_families = payload.get("families", [])
         if not isinstance(raw_families, list):
             raise ValueError("RobustnessDataset families must be a list")
-        families = tuple(RobustnessFamily.from_dict(item) for item in raw_families)
+        families = tuple(
+            RobustnessFamily.from_dict(item, dataset_role=role)
+            for item in raw_families
+        )
         return cls(
             dataset_id=str(payload.get("dataset_id", "robustness-dataset")),
             families=families,
             protocol_version=str(payload.get("protocol_version", "5.0.0")),
-            role=str(payload.get("role", "development")),
+            role=role,
             metadata=payload.get("metadata"),
         )
 
@@ -369,6 +419,33 @@ def validate_robustness_family(family: RobustnessFamily) -> None:
             )
         seen_ids.add(variant.variant_id)
 
+    # Role and evidence classification integrity
+    if family.is_confirmatory:
+        if family.role != "confirmatory":
+            raise RobustnessValidationError(
+                f"Confirmatory family {family.family_id!r} has invalid role {family.role!r}"
+            )
+        if family.evidence_classification not in CONFIRMATORY_ELIGIBLE_CLASSIFICATIONS:
+            raise RobustnessValidationError(
+                f"Confirmatory family {family.family_id!r} has invalid evidence_classification {family.evidence_classification!r}"
+            )
+        if family.source_provenance is not None:
+            source_split = family.source_provenance.get("source_split") or family.source_provenance.get("role")
+            if source_split is not None and str(source_split).lower() != "confirmatory":
+                raise RobustnessValidationError(
+                    f"Confirmatory family {family.family_id!r} has conflicting source_split {source_split!r}"
+                )
+            src_class = family.source_provenance.get("evidence_classification")
+            if src_class is not None and src_class not in CONFIRMATORY_ELIGIBLE_CLASSIFICATIONS:
+                raise RobustnessValidationError(
+                    f"Confirmatory family {family.family_id!r} has non-confirmatory source evidence_classification {src_class!r}"
+                )
+    else:
+        if family.evidence_classification in CONFIRMATORY_ELIGIBLE_CLASSIFICATIONS:
+            raise RobustnessValidationError(
+                f"Development family {family.family_id!r} cannot have confirmatory evidence_classification {family.evidence_classification!r}"
+            )
+
     # Check canonical references
     canonical_refs = [
         v
@@ -409,6 +486,16 @@ def validate_robustness_dataset(dataset: RobustnessDataset) -> None:
                 f"Duplicate family ID {family.family_id!r} in dataset {dataset.dataset_id!r}"
             )
         seen_families.add(family.family_id)
+
+        if dataset.role == "confirmatory":
+            if not family.is_confirmatory or family.role != "confirmatory":
+                raise RobustnessValidationError(
+                    f"Confirmatory dataset {dataset.dataset_id!r} contains non-confirmatory family {family.family_id!r}"
+                )
+        elif family.is_confirmatory or family.role == "confirmatory":
+            raise RobustnessValidationError(
+                f"Development dataset {dataset.dataset_id!r} contains confirmatory family {family.family_id!r}"
+            )
 
         validate_robustness_family(family)
 

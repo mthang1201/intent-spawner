@@ -14,7 +14,11 @@ from referencing import Registry, Resource
 
 import evaluation_v5.gold_dataset as gold_dataset_module
 from evaluation_v5.gold_dataset import (
+    ALL_EVIDENCE_CLASSIFICATIONS,
     COMPILED_SPLIT_SCHEMA_VERSION,
+    CONFIRMATORY_ELIGIBLE_CLASSIFICATIONS,
+    EvidenceClassification,
+    FORBIDDEN_CONFIRMATORY_CLASSIFICATIONS,
     GOLD_DATASET_SCHEMA_VERSION,
     GoldDatasetReviewError,
     GoldDatasetValidationError,
@@ -186,7 +190,18 @@ def _infeasible_family() -> dict[str, object]:
     }
 
 
-def _document(*, lifecycle: str = "frozen", role: str = "development") -> dict[str, object]:
+def _document(
+    *,
+    lifecycle: str = "frozen",
+    role: str = "development",
+    evidence_classification: str | None = None,
+) -> dict[str, object]:
+    if evidence_classification is None:
+        evidence_classification = (
+            "human_reviewed_confirmatory"
+            if role == "confirmatory"
+            else "synthetic_test_fixture"
+        )
     return {
         "schema_version": GOLD_DATASET_SCHEMA_VERSION,
         "dataset_metadata": {
@@ -197,7 +212,7 @@ def _document(*, lifecycle: str = "frozen", role: str = "development") -> dict[s
             "created_at_utc": "2026-08-24T00:00:00Z",
             "created_by": "fixture-author",
             "git_revision": GIT_REVISION,
-            "evidence_classification": "synthetic_test_fixture",
+            "evidence_classification": evidence_classification,
             "freeze_metadata": (
                 {
                     "frozen_at_utc": "2026-08-24T02:00:00Z",
@@ -451,6 +466,7 @@ def test_v2_validation_rejects_source_role_drift():
     payload = compile_gold_dataset(validate_gold_dataset(_document())).to_dict()
     for case in payload["cases"]:
         case["source_provenance"]["source_split"] = "confirmatory"
+        case["source_provenance"]["evidence_classification"] = "human_reviewed_confirmatory"
     payload["split_manifest"]["checksum"] = split_bundle_checksum(payload)
 
     with pytest.raises(
@@ -497,6 +513,110 @@ def test_confirmatory_compile_requires_external_absolute_paths(
     loaded = load_gold_dataset(Path("relative-source.yaml"))
     with pytest.raises(GoldDatasetValidationError, match="absolute external paths"):
         compile_gold_dataset(loaded, output_path=tmp_path / "relative-output.yaml")
+
+
+def test_confirmatory_classification_isolation():
+    for classification in sorted(FORBIDDEN_CONFIRMATORY_CLASSIFICATIONS):
+        doc = _document(role="confirmatory", evidence_classification=classification)
+        with pytest.raises(
+            GoldDatasetValidationError,
+            match="incompatible with confirmatory role",
+        ):
+            validate_gold_dataset(doc)
+
+    for classification in sorted(CONFIRMATORY_ELIGIBLE_CLASSIFICATIONS):
+        dev_doc = _document(role="development", evidence_classification=classification)
+        with pytest.raises(
+            GoldDatasetValidationError,
+            match="incompatible with development role",
+        ):
+            validate_gold_dataset(dev_doc)
+
+    with pytest.raises(
+        GoldDatasetValidationError,
+        match="not a recognized Protocol-v5 evidence classification",
+    ):
+        validate_gold_dataset(
+            _document(role="development", evidence_classification="bogus_classification")
+        )
+
+    draft_conf = _document(
+        role="confirmatory",
+        lifecycle="draft",
+        evidence_classification=EvidenceClassification.HUMAN_REVIEWED_CONFIRMATORY.value,
+    )
+    with pytest.raises(
+        GoldDatasetValidationError,
+        match="draft lifecycle is incompatible with confirmatory gold",
+    ):
+        validate_gold_dataset(draft_conf)
+
+    frozen_draft_class = _document(
+        role="development",
+        lifecycle="frozen",
+        evidence_classification=EvidenceClassification.GENERATED_DRAFT.value,
+    )
+    with pytest.raises(
+        GoldDatasetValidationError,
+        match="generated_draft classification requires draft lifecycle",
+    ):
+        validate_gold_dataset(frozen_draft_class)
+
+
+def test_confirmatory_family_source_provenance_isolation():
+    doc = _document(role="confirmatory")
+    doc["families"][0]["source_provenance"] = {
+        "source_dataset_id": "upstream-dev",
+        "source_schema_version": "protocol-v5-gold-family-v1.0.0",
+        "source_family_id": "family-1",
+        "source_case_ids": ["case-1"],
+        "source_split": "confirmatory",
+        "source_file_sha256": "0" * 64,
+        "evidence_classification": EvidenceClassification.GENERATED_DRAFT.value,
+        "original_label_sha256": "1" * 64,
+    }
+    with pytest.raises(
+        GoldDatasetValidationError,
+        match="cannot be imported into confirmatory gold",
+    ):
+        validate_gold_dataset(doc)
+
+    doc["families"][0]["source_provenance"]["evidence_classification"] = (
+        EvidenceClassification.HUMAN_REVIEWED_CONFIRMATORY.value
+    )
+    doc["families"][0]["source_provenance"]["source_split"] = "development"
+    with pytest.raises(
+        GoldDatasetValidationError,
+        match="cannot be imported into confirmatory gold",
+    ):
+        validate_gold_dataset(doc)
+
+
+def test_split_bundle_enforces_evidence_classification_closed_model():
+    payload = compile_gold_dataset(validate_gold_dataset(_document())).to_dict()
+    payload["cases"][0]["source_provenance"]["evidence_classification"] = "unrecognized_class"
+    payload["split_manifest"]["checksum"] = split_bundle_checksum(payload)
+    with pytest.raises(
+        SplitBundleValidationError,
+        match="is not a recognized Protocol-v5 evidence classification",
+    ):
+        validate_split_bundle(payload)
+
+    conf_payload = compile_gold_dataset(
+        validate_gold_dataset(_document(role="confirmatory")),
+        source_path=Path("/tmp/private-confirmatory.yaml"),
+        output_path=Path("/tmp/compiled.yaml"),
+    ).to_dict()
+    conf_payload["cases"][0]["source_provenance"]["evidence_classification"] = (
+        EvidenceClassification.HISTORICAL_FORMATIVE_DEVELOPMENT_ONLY.value
+    )
+    conf_payload["split_manifest"]["checksum"] = split_bundle_checksum(conf_payload)
+    with pytest.raises(
+        SplitBundleValidationError,
+        match="incompatible with confirmatory split",
+    ):
+        validate_split_bundle(conf_payload)
+
 
 
 def test_extra_workload_manifests_are_supported_through_compilation(tmp_path: Path):

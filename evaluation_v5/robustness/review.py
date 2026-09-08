@@ -484,6 +484,8 @@ def apply_review_decisions(
                 variants=tuple(updated_variants),
                 label_review=family.label_review,
                 source_provenance=family.source_provenance,
+                role=family.role,
+                evidence_classification=family.evidence_classification,
             )
         )
 

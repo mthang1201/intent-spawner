@@ -61,6 +61,20 @@
         "frozen_by": {"$ref": "#/$defs/nonblank"}
       }
     },
+    "evidenceClassification": {
+      "type": "string",
+      "enum": [
+        "human_reviewed_confirmatory",
+        "human_reviewed_confirmatory_eligible",
+        "historical_formative_development_only",
+        "development_only",
+        "human_reviewed_development",
+        "human_reviewed_development_only",
+        "generated_draft",
+        "synthetic_test_fixture",
+        "synthetic_test_fixture_not_evidence"
+      ]
+    },
     "datasetMetadata": {
       "type": "object",
       "additionalProperties": false,
@@ -76,7 +90,7 @@
         "created_at_utc": {"$ref": "#/$defs/timestamp"},
         "created_by": {"$ref": "#/$defs/nonblank"},
         "git_revision": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
-        "evidence_classification": {"$ref": "#/$defs/safeId"},
+        "evidence_classification": {"$ref": "#/$defs/evidenceClassification"},
         "freeze_metadata": {
           "oneOf": [{"type": "null"}, {"$ref": "#/$defs/freezeMetadata"}]
         },
@@ -90,6 +104,34 @@
           "if": {"properties": {"lifecycle": {"const": "frozen"}}, "required": ["lifecycle"]},
           "then": {"properties": {"freeze_metadata": {"$ref": "#/$defs/freezeMetadata"}}},
           "else": {"properties": {"freeze_metadata": {"type": "null"}}}
+        },
+        {
+          "if": {"properties": {"role": {"const": "confirmatory"}}, "required": ["role"]},
+          "then": {
+            "properties": {
+              "evidence_classification": {
+                "enum": [
+                  "human_reviewed_confirmatory",
+                  "human_reviewed_confirmatory_eligible"
+                ]
+              },
+              "lifecycle": {
+                "enum": ["reviewed", "frozen"]
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "evidence_classification": {
+                "not": {
+                  "enum": [
+                    "human_reviewed_confirmatory",
+                    "human_reviewed_confirmatory_eligible"
+                  ]
+                }
+              }
+            }
+          }
         }
       ]
     },
@@ -226,7 +268,7 @@
         "source_case_ids": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "#/$defs/safeId"}},
         "source_split": {"$ref": "#/$defs/safeId"},
         "source_file_sha256": {"$ref": "#/$defs/sha256"},
-        "evidence_classification": {"$ref": "#/$defs/safeId"},
+        "evidence_classification": {"$ref": "#/$defs/evidenceClassification"},
         "original_label_sha256": {"$ref": "#/$defs/sha256"}
       }
     },

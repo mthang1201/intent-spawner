@@ -50,6 +50,11 @@ from evaluation_v5.robustness import (
     validate_robustness_dataset,
     validate_robustness_family,
 )
+from evaluation_v5.gold_dataset import (
+    CONFIRMATORY_ELIGIBLE_CLASSIFICATIONS,
+    EvidenceClassification,
+)
+
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -106,8 +111,15 @@ def _sample_family(
     preferred_candidate: str = "medium-scipy-data-science",
     acceptable_candidates: list[str] | None = None,
     role: str = "development",
+    evidence_classification: str | None = None,
 ) -> RobustnessFamily:
     acc = acceptable_candidates or ["medium-scipy-data-science", "large-scipy-data-science"]
+    if evidence_classification is None:
+        evidence_classification = (
+            "human_reviewed_confirmatory"
+            if role == "confirmatory"
+            else "development_only"
+        )
     vars_list = variants or [
         _sample_variant(f"{family_id}-canonical", family_id=family_id),
         _sample_variant(
@@ -180,7 +192,12 @@ def _sample_family(
         },
         variants=tuple(vars_list),
         label_review={"status": "approved", "reviewed_by": "evaluator-lead"},
-        source_provenance={"source_split": role},
+        source_provenance={
+            "source_split": role,
+            "evidence_classification": evidence_classification,
+        },
+        role=role,
+        evidence_classification=evidence_classification,
     )
 
 
@@ -1295,4 +1312,228 @@ def test_deterministic_evaluation_reordering_invariance():
     assert metrics_a.semantic_robustness_rate_micro == metrics_b.semantic_robustness_rate_micro
     assert metrics_a.semantic_robustness_rate_macro == metrics_b.semantic_robustness_rate_macro
     assert metrics_a.worst_case_family_robustness == metrics_b.worst_case_family_robustness
+
+
+def test_robustness_family_role_and_classification_integrity():
+    dev_fam = _sample_family("fam-dev", role="development")
+    assert dev_fam.role == "development"
+    assert dev_fam.evidence_classification == "development_only"
+    assert dev_fam.is_confirmatory is False
+
+    conf_fam = _sample_family("fam-conf", role="confirmatory")
+    assert conf_fam.role == "confirmatory"
+    assert conf_fam.evidence_classification == "human_reviewed_confirmatory"
+    assert conf_fam.is_confirmatory is True
+
+    # Check is_confirmatory triggered by classification alone
+    leak_class_fam = _sample_family(
+        "fam-leak",
+        role="development",
+        evidence_classification="human_reviewed_confirmatory",
+    )
+    assert leak_class_fam.is_confirmatory is True
+    with pytest.raises(RobustnessValidationError, match="invalid role"):
+        validate_robustness_family(leak_class_fam)
+
+    # Check is_confirmatory triggered by source_provenance
+    leak_prov_fam = _sample_family("fam-leak2", role="development")
+    leak_prov_fam = RobustnessFamily(
+        family_id=leak_prov_fam.family_id,
+        title=leak_prov_fam.title,
+        workload_stratum=leak_prov_fam.workload_stratum,
+        difficulty=leak_prov_fam.difficulty,
+        executable_workload_id=leak_prov_fam.executable_workload_id,
+        gold_structured_intent=leak_prov_fam.gold_structured_intent,
+        candidate_gold=leak_prov_fam.candidate_gold,
+        profile_gold=leak_prov_fam.profile_gold,
+        image_gold=leak_prov_fam.image_gold,
+        policy_gold=leak_prov_fam.policy_gold,
+        variants=leak_prov_fam.variants,
+        label_review=leak_prov_fam.label_review,
+        source_provenance={"source_split": "confirmatory"},
+        role="development",
+        evidence_classification="development_only",
+    )
+    assert leak_prov_fam.is_confirmatory is True
+    with pytest.raises(RobustnessValidationError, match="invalid role"):
+        validate_robustness_family(leak_prov_fam)
+
+
+def test_validate_robustness_dataset_role_isolation():
+    dev_fam = _sample_family("fam-dev", role="development")
+    conf_fam = _sample_family("fam-conf", role="confirmatory")
+
+    # Confirmatory family inside development dataset
+    bad_dev_ds = RobustnessDataset(
+        dataset_id="ds-dev-poisoned",
+        families=(dev_fam, conf_fam),
+        role="development",
+    )
+    with pytest.raises(
+        RobustnessValidationError, match="contains confirmatory family"
+    ):
+        validate_robustness_dataset(bad_dev_ds)
+
+    # Development family inside confirmatory dataset
+    bad_conf_ds = RobustnessDataset(
+        dataset_id="ds-conf-poisoned",
+        families=(conf_fam, dev_fam),
+        role="confirmatory",
+    )
+    with pytest.raises(
+        RobustnessValidationError, match="contains non-confirmatory family"
+    ):
+        validate_robustness_dataset(bad_conf_ds)
+
+
+def test_loader_propagates_role_and_classification():
+    dataset = load_robustness_dataset(DEV_SPLIT_PATH)
+    assert dataset.role == "development"
+    for fam in dataset.families:
+        assert fam.role == "development"
+        assert fam.evidence_classification == "historical_formative_development_only"
+        assert fam.is_confirmatory is False
+
+
+def test_generator_unconditionally_rejects_confirmatory_families():
+    conf_fam = _sample_family("fam-conf", role="confirmatory")
+    with pytest.raises(
+        PermissionError, match="strictly prohibited on confirmatory family"
+    ):
+        generate_draft_variant(conf_fam, PerturbationClass.TYPO_NOISE)
+
+    with pytest.raises(
+        PermissionError, match="strictly prohibited on confirmatory family"
+    ):
+        generate_family_drafts(conf_fam)
+
+
+def test_cli_draft_refuses_confirmatory_input(tmp_path: Path):
+    conf_fam = _sample_family("fam-conf", role="confirmatory")
+    conf_dataset = RobustnessDataset(
+        dataset_id="conf-dataset",
+        families=(conf_fam,),
+        role="confirmatory",
+    )
+    conf_file = tmp_path / "conf-input.yaml"
+    conf_file.write_text(yaml.safe_dump(conf_dataset.to_dict()), encoding="utf-8")
+
+    with pytest.raises(
+        PermissionError,
+        match="strictly prohibited on confirmatory",
+    ):
+        main(["draft", str(conf_file)])
+
+
+def test_cli_draft_fail_closed_existing_output(tmp_path: Path):
+    dev_dataset = RobustnessDataset(
+        dataset_id="dev-dataset",
+        families=(_sample_family("fam-1"),),
+        role="development",
+    )
+    input_file = tmp_path / "dev-input.yaml"
+    input_file.write_text(yaml.safe_dump(dev_dataset.to_dict()), encoding="utf-8")
+
+    existing_output = tmp_path / "already_exists.yaml"
+    existing_output.write_text("existing content", encoding="utf-8")
+
+    with pytest.raises(FileExistsError, match="already exists"):
+        main(["draft", str(input_file), "--output", str(existing_output)])
+
+    existing_review = tmp_path / "already_exists.md"
+    existing_review.write_text("existing review", encoding="utf-8")
+
+    output_ok = tmp_path / "not_yet.yaml"
+    with pytest.raises(FileExistsError, match="already exists"):
+        main(
+            [
+                "draft",
+                str(input_file),
+                "--output",
+                str(output_ok),
+                "--review-output",
+                str(existing_review),
+            ]
+        )
+    assert not output_ok.exists()
+
+
+def test_cli_draft_deterministic_and_provenance(tmp_path: Path, capsys: pytest.CaptureFixture[str]):
+    dev_dataset = RobustnessDataset(
+        dataset_id="dev-dataset",
+        families=(_sample_family("fam-1"),),
+        role="development",
+    )
+    input_file = tmp_path / "dev-input.yaml"
+    input_file.write_text(yaml.safe_dump(dev_dataset.to_dict()), encoding="utf-8")
+
+    output1 = tmp_path / "out1.yaml"
+    review1 = tmp_path / "rev1.md"
+
+    # Run draft CLI with seed 42
+    exit_code = main(
+        [
+            "draft",
+            str(input_file),
+            "--seed",
+            "42",
+            "--output",
+            str(output1),
+            "--review-output",
+            str(review1),
+        ]
+    )
+    assert exit_code == 0
+    captured = capsys.readouterr()
+    report = json.loads(captured.out)
+    assert report["status"] == "DRAFTS_GENERATED"
+    assert report["seed"] == 42
+    assert report["generated_drafts_count"] == 7
+
+    # Validate output artifact
+    loaded1 = load_robustness_dataset(output1)
+    assert loaded1.role == "development"
+    assert loaded1.metadata["generator_seed"] == 42
+    assert loaded1.metadata["evidence_classification"] == "generated_draft"
+    assert (
+        loaded1.metadata["generator_id"]
+        == "protocol-v5-robustness-draft-generator-v1.0.0"
+    )
+    assert len(loaded1.families[0].variants) == 5 + 7
+
+    # Validate review artifact
+    assert review1.exists()
+    rev_text = review1.read_text(encoding="utf-8")
+    assert "fam-1" in rev_text
+    assert "GENERATED_DRAFT" in rev_text or "generated_draft" in rev_text.lower()
+
+    # Run again with same seed to test determinism
+    output2 = tmp_path / "out2.yaml"
+    main(
+        [
+            "draft",
+            str(input_file),
+            "--seed",
+            "42",
+            "--output",
+            str(output2),
+        ]
+    )
+    loaded2 = load_robustness_dataset(output2)
+    assert loaded1.canonical_sha256 == loaded2.canonical_sha256
+
+    # Run with different seed to test sensitivity
+    output3 = tmp_path / "out3.yaml"
+    main(
+        [
+            "draft",
+            str(input_file),
+            "--seed",
+            "99",
+            "--output",
+            str(output3),
+        ]
+    )
+    loaded3 = load_robustness_dataset(output3)
+    assert loaded1.canonical_sha256 != loaded3.canonical_sha256
 

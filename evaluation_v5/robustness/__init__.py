@@ -8,6 +8,17 @@ from pathlib import Path
 import sys
 from typing import Sequence
 
+from evaluation_v5.gold_dataset import write_document_exclusive
+
+
+def _write_text_exclusive(path: Path, content: str) -> Path:
+    target = Path(path)
+    if not target.parent.is_dir():
+        raise FileNotFoundError(f"Directory not found: {target.parent}")
+    with open(target, "x", encoding="utf-8") as handle:
+        handle.write(content)
+    return target
+
 from .evaluator import (
     PAIR_LEVEL_SCHEMA_VERSION,
     PairComparisonRecord,
@@ -109,7 +120,18 @@ def _cli_parser() -> argparse.ArgumentParser:
         "--seed", type=int, default=42, help="Deterministic random seed"
     )
     draft_parser.add_argument(
-        "--output", type=Path, help="Optional output path for updated dataset"
+        "--output", type=Path, help="Optional output path for updated dataset or review artifact"
+    )
+    draft_parser.add_argument(
+        "--format",
+        choices=("yaml", "json", "markdown", "csv"),
+        default=None,
+        help="Export format for output file",
+    )
+    draft_parser.add_argument(
+        "--review-output",
+        type=Path,
+        help="Optional path to write review artifact (markdown, csv, or json)",
     )
 
     return parser
@@ -138,10 +160,126 @@ def main(argv: Sequence[str] | None = None) -> int:
         return 0
 
     if args.command == "draft":
+        if args.output is not None and args.output.exists():
+            raise FileExistsError(f"Output path already exists: {args.output}")
+        if args.review_output is not None and args.review_output.exists():
+            raise FileExistsError(f"Review output path already exists: {args.review_output}")
+
         dataset = load_robustness_dataset(args.dataset)
         if dataset.role == "confirmatory":
             raise PermissionError("Paraphrase generation is strictly prohibited on confirmatory datasets.")
-        print("Generated drafts for development dataset...")
+        for family in dataset.families:
+            if family.is_confirmatory or family.role == "confirmatory":
+                raise PermissionError(
+                    f"Paraphrase generation is strictly prohibited on confirmatory family {family.family_id!r}."
+                )
+
+        updated_families: list[RobustnessFamily] = []
+        total_drafts_generated = 0
+
+        for fam_idx, family in enumerate(dataset.families):
+            family_seed = args.seed + fam_idx * 100
+            drafts = generate_family_drafts(family, seed=family_seed)
+            total_drafts_generated += len(drafts)
+
+            existing_ids = {v.variant_id for v in family.variants}
+            combined_variants = list(family.variants)
+            for d in drafts:
+                if d.variant_id not in existing_ids:
+                    combined_variants.append(d)
+                    existing_ids.add(d.variant_id)
+
+            updated_fam = RobustnessFamily(
+                family_id=family.family_id,
+                title=family.title,
+                workload_stratum=family.workload_stratum,
+                difficulty=family.difficulty,
+                executable_workload_id=family.executable_workload_id,
+                gold_structured_intent=family.gold_structured_intent,
+                candidate_gold=family.candidate_gold,
+                profile_gold=family.profile_gold,
+                image_gold=family.image_gold,
+                policy_gold=family.policy_gold,
+                variants=tuple(combined_variants),
+                label_review=family.label_review,
+                source_provenance=family.source_provenance,
+                role="development",
+                evidence_classification="generated_draft",
+            )
+            updated_families.append(updated_fam)
+
+        dataset_metadata = {
+            **(dict(dataset.metadata) if dataset.metadata else {}),
+            "generator_id": "protocol-v5-robustness-draft-generator-v1.0.0",
+            "generator_seed": args.seed,
+            "source_dataset_id": dataset.dataset_id,
+            "source_canonical_sha256": dataset.canonical_sha256,
+            "evidence_classification": "generated_draft",
+            "generated_drafts_count": total_drafts_generated,
+        }
+
+        dataset_id = (
+            dataset.dataset_id
+            if dataset.dataset_id.endswith("-drafts")
+            else f"{dataset.dataset_id}-drafts"
+        )
+        updated_dataset = RobustnessDataset(
+            dataset_id=dataset_id,
+            families=tuple(updated_families),
+            protocol_version=dataset.protocol_version,
+            role="development",
+            metadata=dataset_metadata,
+        )
+
+        if args.output is not None:
+            fmt = args.format
+            if fmt is None:
+                suffix = args.output.suffix.lower()
+                if suffix in {".yaml", ".yml"}:
+                    fmt = "yaml"
+                elif suffix == ".json":
+                    fmt = "json"
+                elif suffix in {".md", ".markdown"}:
+                    fmt = "markdown"
+                elif suffix == ".csv":
+                    fmt = "csv"
+                else:
+                    fmt = "yaml"
+
+            if fmt in {"markdown", "csv"}:
+                content = export_equivalence_review(updated_dataset, format=fmt)
+                _write_text_exclusive(args.output, content)
+            elif fmt == "yaml":
+                write_document_exclusive(args.output, updated_dataset.to_dict())
+            elif fmt == "json":
+                write_document_exclusive(args.output, updated_dataset.to_dict())
+
+        if args.review_output is not None:
+            rev_suffix = args.review_output.suffix.lower()
+            if rev_suffix == ".csv":
+                rev_fmt = "csv"
+            elif rev_suffix == ".json":
+                rev_fmt = "json"
+            else:
+                rev_fmt = "markdown"
+            rev_content = export_equivalence_review(updated_dataset, format=rev_fmt)
+            _write_text_exclusive(args.review_output, rev_content)
+
+        report = {
+            "status": "DRAFTS_GENERATED",
+            "source_dataset_id": dataset.dataset_id,
+            "updated_dataset_id": updated_dataset.dataset_id,
+            "seed": args.seed,
+            "family_count": len(updated_dataset.families),
+            "total_variants": updated_dataset.total_variants,
+            "generated_drafts_count": total_drafts_generated,
+            "canonical_sha256": updated_dataset.canonical_sha256,
+            "output_path": str(args.output) if args.output else None,
+            "review_output_path": (
+                str(args.review_output) if args.review_output else None
+            ),
+        }
+        print(json.dumps(report, indent=2, sort_keys=True))
         return 0
 
     return 0
