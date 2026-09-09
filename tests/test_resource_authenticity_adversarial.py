@@ -1637,9 +1637,9 @@ def test_produce_execution_result_requires_actual_collector_execution():
     with pytest.raises(AttributeError, match="Direct assignment"):
         adapter._session._lifecycle_preflight_recorded = True
 
-    # 4. Attack C: Tampering with adapter state relative to session state fails closed
+    # 4. A subclass override cannot record lifecycle authority
     from evaluation_v5.resource.authenticity import CollectorExecutionSession
-    class ExecutingAdapter(KubernetesTrialAdapter):
+    class SubclassAdapter(KubernetesTrialAdapter):
         def _preflight(self):
             self._environment = {"key": "value"}
             self._session.record_preflight_execution(self._environment)
@@ -1651,22 +1651,36 @@ def test_produce_execution_result_requires_actual_collector_execution():
             self._session.record_trial_execution(spec, obs)
             return obs
 
-    exec_adapter = ExecutingAdapter.__new__(ExecutingAdapter)
-    exec_adapter._session = CollectorExecutionSession(exec_adapter)
-    exec_adapter._preflight()
-    exec_adapter.run_trial()
+    sub_adapter = SubclassAdapter.__new__(SubclassAdapter)
+    sub_adapter._session = CollectorExecutionSession(sub_adapter)
+    sub_adapter._preflight()
+    sub_adapter.run_trial()
+    assert sub_adapter._session.is_authorized() is False
+    assert sub_adapter._session._lifecycle_preflight_recorded is False
+    assert sub_adapter._session._lifecycle_trials_recorded is False
 
-    # Honest lifecycle authorized in session
-    assert exec_adapter._session.is_authorized() is True
+    # 5. Attack C: Tampering with adapter state relative to session state fails closed
+    session = adapter._session
+    env = {"key": "value"}
+    trial = {"trial": 1}
+    object.__setattr__(session, "_preflight_environment", env)
+    object.__setattr__(session, "_lifecycle_preflight_recorded", True)
+    object.__setattr__(session, "_executed_trials", (trial,))
+    object.__setattr__(session, "_lifecycle_trials_recorded", True)
+    adapter._environment = env
+    adapter._executed_trials = [trial]
 
-    # Attack C1: Tamper with _environment -> authorization revoked
-    exec_adapter._environment = {"key": "value", "tampered": True}
-    assert exec_adapter._session.is_authorized() is False
+    # Matching state is authorized:
+    assert session.is_authorized() is True
 
-    # Attack C2: Injected trial -> authorization revoked
-    exec_adapter._environment = {"key": "value"}
-    exec_adapter._executed_trials.append({"trial": 2, "injected": True})
-    assert exec_adapter._session.is_authorized() is False
+    # Attack C1: Tamper with adapter._environment -> authorization revoked
+    adapter._environment = {"key": "value", "tampered": True}
+    assert session.is_authorized() is False
+
+    # Attack C2: Injected trial into adapter._executed_trials -> authorization revoked
+    adapter._environment = env
+    adapter._executed_trials.append({"trial": 2, "injected": True})
+    assert session.is_authorized() is False
 
 
 def test_direct_execution_result_factory_cannot_launder_fixture_into_observed():
@@ -1755,3 +1769,295 @@ def test_direct_execution_result_factory_cannot_launder_fixture_into_observed():
     assert outcome_helper.is_observed_eligible is False
     assert outcome_helper.execution_status == COLLECTOR_ORIGIN_SYNTHETIC
     assert outcome_helper.cluster_measurement_status == "NOT_EXECUTED"
+
+
+def test_same_name_run_trial_frame_cannot_record_trial_authority():
+    """P11-R12 Attack A: Caller-defined function named 'run_trial' cannot record lifecycle authority."""
+    adapter = KubernetesTrialAdapter(image=IMAGE)
+    session = adapter._session
+
+    def run_trial(self, session, spec, obs):
+        session.record_trial_execution(spec, obs)
+
+    trial_obs = {
+        "run_id": "spoof-trial-01",
+        "collector_origin": COLLECTOR_ORIGIN_REAL_KUBERNETES,
+        "kubernetes": {
+            "pod_name": "e4-000000000000000000000000",
+            "pod_uid": "00000000-1111-2222-3333-444444444444",
+            "node_name": "worker-node-1",
+            "started_at": "2026-03-01T00:01:00.000000Z",
+            "finished_at": "2026-03-01T00:02:00.000000Z",
+        },
+        "cgroup_version": "v2",
+        "cgroup_metrics": {"cgroup_version": "v2", "cpu_usage_usec": 1000},
+    }
+
+    run_trial(adapter, session, None, trial_obs)
+    assert session._lifecycle_trials_recorded is False
+    assert session._executed_trials == ()
+    assert session.is_authorized() is False
+    assert session.produce_result().is_production_authorized is False
+
+    # Repeat for KubernetesResourceEfficiencyAdapter
+    eff_adapter = KubernetesResourceEfficiencyAdapter(image=IMAGE)
+    eff_session = eff_adapter._session
+    run_trial(eff_adapter, eff_session, None, trial_obs)
+    assert eff_session._lifecycle_trials_recorded is False
+    assert eff_session._executed_trials == ()
+    assert eff_session.is_authorized() is False
+    assert eff_session.produce_result().is_production_authorized is False
+
+
+def test_same_name_preflight_frame_cannot_record_preflight_authority():
+    """P11-R12 Attack B: Caller-defined function named '_preflight' cannot record lifecycle authority."""
+    adapter = KubernetesTrialAdapter(image=IMAGE)
+    session = adapter._session
+
+    def _preflight(self, session, env):
+        session.record_preflight_execution(env)
+
+    env = {
+        "schema_version": "protocol-v5-resource-environment-v1.1.0",
+        "captured_at": "2026-03-01T00:00:00.000000Z",
+        "environment_id": "intent-spawner-eval-v5:z2jh-context-demo",
+        "collector_origin": COLLECTOR_ORIGIN_REAL_KUBERNETES,
+        "cluster_measurement_status": "OBSERVED",
+        "eligibility_status": "ELIGIBLE",
+        "required_context": "intent-spawner-eval-v5",
+        "namespace": "z2jh-context-demo",
+        "kubernetes_version": {"major": "1", "minor": "28"},
+        "node_name": "worker-node-1",
+        "node_uid": "00000000-1111-2222-3333-444444444444",
+        "kubelet_version": "v1.28.0",
+        "container_runtime": "containerd://1.7.0",
+        "kernel_version": "6.1.0",
+        "operating_system": "linux",
+        "architecture": "amd64",
+        "read_only_preflight": {"failure_codes": []},
+        "hardware_measurements": {"node_name": "worker-node-1", "node_uid": "00000000-1111-2222-3333-444444444444"},
+        "cgroup_measurements": {"cgroup_version": "v2"},
+    }
+
+    _preflight(adapter, session, env)
+    assert session._lifecycle_preflight_recorded is False
+    assert session._preflight_environment is None
+    assert session.is_authorized() is False
+    assert session.produce_result().is_production_authorized is False
+
+    # Repeat for KubernetesResourceEfficiencyAdapter
+    eff_adapter = KubernetesResourceEfficiencyAdapter(image=IMAGE)
+    eff_session = eff_adapter._session
+    _preflight(eff_adapter, eff_session, env)
+    assert eff_session._lifecycle_preflight_recorded is False
+    assert eff_session._preflight_environment is None
+    assert eff_session.is_authorized() is False
+    assert eff_session.produce_result().is_production_authorized is False
+
+
+def test_same_name_environment_provenance_frame_cannot_record_preflight_authority():
+    """P11-R12 Attack B: Caller-defined function named 'environment_provenance' cannot record lifecycle authority."""
+    adapter = KubernetesTrialAdapter(image=IMAGE)
+    session = adapter._session
+
+    def environment_provenance(self, session, env):
+        session.record_preflight_execution(env)
+
+    env = {
+        "schema_version": "protocol-v5-resource-environment-v1.1.0",
+        "environment_id": "intent-spawner-eval-v5:z2jh-context-demo",
+        "collector_origin": COLLECTOR_ORIGIN_REAL_KUBERNETES,
+        "eligibility_status": "ELIGIBLE",
+    }
+
+    environment_provenance(adapter, session, env)
+    assert session._lifecycle_preflight_recorded is False
+    assert session._preflight_environment is None
+    assert session.is_authorized() is False
+    assert session.produce_result().is_production_authorized is False
+
+
+def test_combined_same_name_frame_spoof_cannot_mint_observed_trial_adapter():
+    """P11-R12 Attack C: Combined same-name frame spoof on KubernetesTrialAdapter cannot mint OBSERVED."""
+    import hashlib
+    adapter = KubernetesTrialAdapter(image=IMAGE)
+    session = adapter._session
+    impl = validate_collector_implementation(adapter)
+
+    run_id = "combined-spoof-trial-01"
+    pod_name = "e4-" + hashlib.sha256(run_id.encode("utf-8")).hexdigest()[:24]
+    trial = {
+        "run_id": run_id,
+        "collector_origin": COLLECTOR_ORIGIN_REAL_KUBERNETES,
+        "kubernetes": {
+            "pod_name": pod_name,
+            "pod_uid": "00000000-1111-2222-3333-444444444444",
+            "node_name": "worker-node-1",
+            "started_at": "2026-03-01T00:01:00.000000Z",
+            "finished_at": "2026-03-01T00:02:00.000000Z",
+        },
+        "cgroup_version": "v2",
+        "cgroup_metrics": {"cgroup_version": "v2", "cpu_usage_usec": 1000},
+    }
+    env = {
+        "schema_version": "protocol-v5-resource-environment-v1.1.0",
+        "captured_at": "2026-03-01T00:00:00.000000Z",
+        "environment_id": "intent-spawner-eval-v5:z2jh-context-demo",
+        "collector_origin": COLLECTOR_ORIGIN_REAL_KUBERNETES,
+        "cluster_measurement_status": "OBSERVED",
+        "eligibility_status": "ELIGIBLE",
+        "required_context": "intent-spawner-eval-v5",
+        "namespace": "z2jh-context-demo",
+        "kubernetes_version": {"major": "1", "minor": "28"},
+        "node_name": "worker-node-1",
+        "node_uid": "00000000-1111-2222-3333-444444444444",
+        "kubelet_version": "v1.28.0",
+        "container_runtime": "containerd://1.7.0",
+        "kernel_version": "6.1.0",
+        "operating_system": "linux",
+        "architecture": "amd64",
+        "read_only_preflight": {"failure_codes": []},
+        "hardware_measurements": {"node_name": "worker-node-1", "node_uid": "00000000-1111-2222-3333-444444444444"},
+        "cgroup_measurements": {"cgroup_version": "v2"},
+    }
+
+    # Combined spoof attempt:
+    def _preflight(self, env):
+        session.record_preflight_execution(env)
+
+    def run_trial(self, spec, obs):
+        session.record_trial_execution(spec, obs)
+
+    _preflight(adapter, env)
+    run_trial(adapter, None, trial)
+
+    adapter._environment = env
+    adapter._executed_trials = [trial]
+
+    res = adapter.produce_execution_result()
+    assert res.is_production_authorized is False
+    assert res.authority_origin == COLLECTOR_ORIGIN_SYNTHETIC
+
+    outcome = validate_collection_outcome(
+        implementation=impl,
+        environment=env,
+        observations_or_trials=[trial],
+        execution_result=res,
+        expected_trial_count=1,
+    )
+    assert outcome.is_observed_eligible is False
+    assert outcome.execution_status == COLLECTOR_ORIGIN_SYNTHETIC
+    assert outcome.cluster_measurement_status == "NOT_EXECUTED"
+    assert "CALLER_FABRICATED_DATA_LACKS_EXECUTION_AUTHORITY" in outcome.failure_reasons
+
+
+def test_combined_same_name_frame_spoof_cannot_mint_observed_efficiency_adapter():
+    """P11-R12 Attack C: Combined same-name frame spoof on KubernetesResourceEfficiencyAdapter cannot mint OBSERVED."""
+    import hashlib
+    adapter = KubernetesResourceEfficiencyAdapter(image=IMAGE)
+    session = adapter._session
+    impl = validate_collector_implementation(adapter)
+
+    trial_id = "combined-spoof-eff-01"
+    pod_name = "e4e-" + hashlib.sha256(trial_id.encode("utf-8")).hexdigest()[:24]
+    trial = {
+        "trial_id": trial_id,
+        "collector_origin": COLLECTOR_ORIGIN_REAL_KUBERNETES,
+        "kubernetes": {
+            "pod_name": pod_name,
+            "pod_uid": "00000000-1111-2222-3333-444444444444",
+            "node_name": "worker-node-1",
+            "started_at": "2026-03-01T00:01:00.000000Z",
+            "finished_at": "2026-03-01T00:02:00.000000Z",
+        },
+        "cgroup_version": "v2",
+        "cgroup_metrics": {"cgroup_version": "v2", "cpu_usage_usec": 1000},
+    }
+    env = {
+        "schema_version": "protocol-v5-resource-environment-v1.1.0",
+        "captured_at": "2026-03-01T00:00:00.000000Z",
+        "environment_id": "intent-spawner-eval-v5:z2jh-context-demo",
+        "collector_origin": COLLECTOR_ORIGIN_REAL_KUBERNETES,
+        "cluster_measurement_status": "OBSERVED",
+        "eligibility_status": "ELIGIBLE",
+        "required_context": "intent-spawner-eval-v5",
+        "namespace": "z2jh-context-demo",
+        "kubernetes_version": {"major": "1", "minor": "28"},
+        "node_name": "worker-node-1",
+        "node_uid": "00000000-1111-2222-3333-444444444444",
+        "kubelet_version": "v1.28.0",
+        "container_runtime": "containerd://1.7.0",
+        "kernel_version": "6.1.0",
+        "operating_system": "linux",
+        "architecture": "amd64",
+        "read_only_preflight": {"failure_codes": []},
+        "hardware_measurements": {"node_name": "worker-node-1", "node_uid": "00000000-1111-2222-3333-444444444444"},
+        "cgroup_measurements": {"cgroup_version": "v2"},
+    }
+
+    def environment_provenance(self, env):
+        session.record_preflight_execution(env)
+
+    def run_trial(self, spec, obs):
+        session.record_trial_execution(spec, obs)
+
+    environment_provenance(adapter, env)
+    run_trial(adapter, None, trial)
+
+    adapter._environment = env
+    adapter._executed_trials = [trial]
+
+    res = adapter.produce_execution_result()
+    assert res.is_production_authorized is False
+    assert res.authority_origin == COLLECTOR_ORIGIN_SYNTHETIC
+
+    outcome = validate_collection_outcome(
+        implementation=impl,
+        environment=env,
+        observations_or_trials=[trial],
+        execution_result=res,
+        expected_trial_count=1,
+    )
+    assert outcome.is_observed_eligible is False
+    assert outcome.execution_status == COLLECTOR_ORIGIN_SYNTHETIC
+    assert outcome.cluster_measurement_status == "NOT_EXECUTED"
+    assert "CALLER_FABRICATED_DATA_LACKS_EXECUTION_AUTHORITY" in outcome.failure_reasons
+
+
+def test_lifecycle_authorization_requires_exact_blessed_method_code_object():
+    """P11-R12 Attack D: Lifecycle authorization requires exact blessed method code object identity."""
+    from evaluation_v5.resource.authenticity import (
+        _blessed_preflight_code_objects,
+        _blessed_trial_code_objects,
+    )
+
+    blessed_preflight = _blessed_preflight_code_objects()
+    blessed_trial = _blessed_trial_code_objects()
+
+    assert KubernetesTrialAdapter._preflight.__code__ in blessed_preflight
+    assert KubernetesTrialAdapter.environment_provenance.__code__ in blessed_preflight
+    assert KubernetesTrialAdapter.run_trial.__code__ in blessed_trial
+    assert KubernetesResourceEfficiencyAdapter.run_trial.__code__ in blessed_trial
+
+    # 1. Caller-created functions with identical names are rejected
+    def _preflight(self, env): pass
+    def environment_provenance(self): pass
+    def run_trial(self, spec): pass
+
+    assert _preflight.__code__ not in blessed_preflight
+    assert environment_provenance.__code__ not in blessed_preflight
+    assert run_trial.__code__ not in blessed_trial
+
+    # 2. Subclass overrides are rejected
+    class SubclassedTrialAdapter(KubernetesTrialAdapter):
+        def _preflight(self): pass
+        def run_trial(self, spec): pass
+
+    assert SubclassedTrialAdapter._preflight.__code__ not in blessed_preflight
+    assert SubclassedTrialAdapter.run_trial.__code__ not in blessed_trial
+
+    # 3. Monkey-patched functions on instance are rejected
+    adapter = KubernetesTrialAdapter(image=IMAGE)
+    def monkeypatched_run(self, spec): pass
+    adapter.run_trial = monkeypatched_run
+    assert getattr(adapter.run_trial, "__code__", None) not in blessed_trial

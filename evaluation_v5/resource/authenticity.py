@@ -105,6 +105,25 @@ class CollectorImplementationAssessment:
 
 AdapterAuthenticity = CollectorImplementationAssessment
 
+def _blessed_preflight_code_objects() -> set[Any]:
+    from cluster_evaluation.resource_adapter_v5 import KubernetesTrialAdapter
+    codes = {
+        getattr(getattr(KubernetesTrialAdapter, "_preflight", None), "__code__", None),
+        getattr(getattr(KubernetesTrialAdapter, "environment_provenance", None), "__code__", None),
+    }
+    return {c for c in codes if c is not None}
+
+
+def _blessed_trial_code_objects() -> set[Any]:
+    from cluster_evaluation.resource_adapter_v5 import KubernetesTrialAdapter
+    from cluster_evaluation.resource_efficiency_adapter_v5 import KubernetesResourceEfficiencyAdapter
+    codes = {
+        getattr(getattr(KubernetesTrialAdapter, "run_trial", None), "__code__", None),
+        getattr(getattr(KubernetesResourceEfficiencyAdapter, "run_trial", None), "__code__", None),
+    }
+    return {c for c in codes if c is not None}
+
+
 class CollectorExecutionSession:
     """Collector-owned execution session binding execution lifecycle to production authority.
 
@@ -137,14 +156,9 @@ class CollectorExecutionSession:
         object.__setattr__(self, "_lifecycle_trials_recorded", False)
 
     def __setattr__(self, name: str, value: Any) -> None:
-        frame = inspect.currentframe().f_back
-        caller_name = frame.f_code.co_name if frame else None
-        if caller_name in ("record_preflight_execution", "record_trial_execution"):
-            object.__setattr__(self, name, value)
-        else:
-            raise AttributeError(
-                f"Direct assignment to '{name}' is forbidden; authority requires genuine collector execution."
-            )
+        raise AttributeError(
+            f"Direct assignment to '{name}' is forbidden; authority requires genuine collector execution."
+        )
 
     def record_preflight_execution(self, env: Mapping[str, Any]) -> None:
         """Record preflight execution from collector lifecycle."""
@@ -153,11 +167,11 @@ class CollectorExecutionSession:
             return
         frame = inspect.currentframe().f_back
         caller_self = frame.f_locals.get("self") if frame else None
-        caller_name = frame.f_code.co_name if frame else None
-        if caller_self is not collector or caller_name not in ("_preflight", "environment_provenance"):
+        caller_code = frame.f_code if frame else None
+        if caller_self is not collector or caller_code not in _blessed_preflight_code_objects():
             return
-        self._preflight_environment = dict(env)
-        self._lifecycle_preflight_recorded = True
+        object.__setattr__(self, "_preflight_environment", dict(env))
+        object.__setattr__(self, "_lifecycle_preflight_recorded", True)
 
     def record_trial_execution(self, spec: Any, obs: Any) -> None:
         """Record trial execution from collector run_trial lifecycle."""
@@ -166,11 +180,11 @@ class CollectorExecutionSession:
             return
         frame = inspect.currentframe().f_back
         caller_self = frame.f_locals.get("self") if frame else None
-        caller_name = frame.f_code.co_name if frame else None
-        if caller_self is not collector or caller_name != "run_trial":
+        caller_code = frame.f_code if frame else None
+        if caller_self is not collector or caller_code not in _blessed_trial_code_objects():
             return
-        self._executed_trials = (*self._executed_trials, obs)
-        self._lifecycle_trials_recorded = True
+        object.__setattr__(self, "_executed_trials", (*self._executed_trials, obs))
+        object.__setattr__(self, "_lifecycle_trials_recorded", True)
 
     def is_authorized(self) -> bool:
         collector = self._collector_ref()
