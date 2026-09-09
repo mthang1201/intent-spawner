@@ -126,7 +126,9 @@ Downstream E5 code can call
 `evaluation_v5.offline.verify_recommendation_run_provenance()` and retain the
 returned immutable `VerifiedRecommendationRunProvenance`. It exports the
 exact recommendation JSONL digest and record IDs together with source-bound
-extractor/prompt, index, retrieval, constraint/ranking, catalog, split, freeze,
-and Git identities. `reverify_recommendation_run_provenance()` reopens the
+structured-intent schema, extractor/prompt, index, retrieval,
+constraint/ranking, catalog, split, freeze, and Git identities. The v1.1 source
+capability adds the structured-intent schema identity required by E5 without
+changing recommendation execution. `reverify_recommendation_run_provenance()` reopens the
 complete package and fails if any upstream artifact has changed. There is no
 API that converts caller-retyped fields into this capability.

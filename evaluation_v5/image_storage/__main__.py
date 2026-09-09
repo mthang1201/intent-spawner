@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import argparse
 from datetime import datetime, timezone
-import hashlib
 import json
 import os
 from pathlib import Path
@@ -16,27 +15,29 @@ from typing import Any, Mapping
 import yaml
 
 from evaluation_v5.provenance import write_json_exclusive
-from evaluation_v5.schemas import (
-    CandidateCatalogIdentity,
-    DatasetIdentity,
-    EmbeddingIndexIdentity,
-    EvidenceStatus,
-    ExperimentId,
-    ExtractorIdentity,
-    ProtocolV5Manifest,
-    SplitIdentity,
-    SplitStage,
+from evaluation_v5.schemas import EvidenceStatus
+from evaluation_v5.offline.source_run import (
+    VerifiedRecommendationRunProvenance,
+    verify_recommendation_run_provenance,
 )
 
 from .contracts import (
     E5_RUN_SCHEMA_VERSION,
     FunctionalEvaluationRecord,
     ImageProbeManifest,
-    ImageProbeResult,
+    SecurityVerificationError,
     file_sha256,
 )
 from .manifest import build_image_probe_manifest
 from .metrics import compute_functional_metrics, evaluate_recommendation_functional
+from .functional_provenance import (
+    SOURCE_RECOMMENDATIONS_FILENAME,
+    SOURCE_RECOMMENDATION_PROVENANCE_FILENAME,
+    bind_recommendation_source,
+    canonical_identity_sha256,
+    selected_image_identity,
+    source_manifest_identities,
+)
 from .runner import (
     DockerProbeRunner,
     DryRunProbeRunner,
@@ -88,20 +89,12 @@ def _write_checksums(directory: Path) -> Path:
     return sums_file
 
 
-def _load_recommendations_file(path: Path) -> list[dict[str, Any]]:
-    rows: list[dict[str, Any]] = []
-    with open(path, "r", encoding="utf-8") as f:
-        for line in f:
-            line = line.strip()
-            if line:
-                rows.append(json.loads(line))
-    return rows
-
-
-def _extract_split_cases(split_path: Path) -> list[dict[str, Any]]:
-    with open(split_path, "r", encoding="utf-8") as f:
-        data = yaml.safe_load(f)
-    return data.get("cases", [])
+def _write_bytes_exclusive(path: Path, payload: bytes) -> None:
+    """Publish immutable raw bytes without permitting silent replacement."""
+    with path.open("xb") as handle:
+        handle.write(payload)
+        handle.flush()
+        os.fsync(handle.fileno())
 
 
 def _format_markdown_report(
@@ -112,7 +105,7 @@ def _format_markdown_report(
     execution_mode: str,
     execution_status: str,
     git_info: dict[str, Any],
-    recommendations_path: Path | None = None,
+    source_recommendation_run: Mapping[str, Any] | None = None,
 ) -> str:
     lines: list[str] = []
     lines.append(f"# Protocol-v5 E5 Functional Validation Report: `{run_id}`\n")
@@ -124,9 +117,12 @@ def _format_markdown_report(
     lines.append(f"- **Catalog Version**: `{manifest.catalog_version}` (SHA-256: `{manifest.catalog_sha256}`)")
     lines.append(f"- **Total Probe Specifications**: {sum(len(img.probes) for img in manifest.images)}")
     lines.append(f"- **Total Recommendations Evaluated**: {metrics_report.get('total_evaluations', 0)}")
-    if recommendations_path and recommendations_path.is_file():
-        rec_sha = file_sha256(recommendations_path)
-        lines.append(f"- **Recommendations Input**: `{recommendations_path}` (SHA-256: `{rec_sha}`)")
+    if source_recommendation_run:
+        lines.append(
+            "- **Source Recommendation Run**: "
+            f"`{source_recommendation_run['run_id']}` "
+            f"(recommendations SHA-256: `{source_recommendation_run['recommendation_run_sha256']}`)"
+        )
     lines.append("")
 
 
@@ -250,8 +246,7 @@ def _format_markdown_report(
 
 def run_e5_evaluation(
     catalog_path: Path = DEFAULT_CATALOG_PATH,
-    recommendations_path: Path | None = None,
-    split_path: Path = DEFAULT_SPLIT_PATH,
+    recommendation_run: VerifiedRecommendationRunProvenance | None = None,
     mode: str = "auto",
     dry_run_if_unavailable: bool = True,
     output_dir: Path | None = None,
@@ -262,12 +257,26 @@ def run_e5_evaluation(
     """Execute the full Protocol-v5 E5 image functional validation suite."""
     timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
     run_id = run_id or f"e5-image-validation-{timestamp}"
+    out_dir = output_dir or (DEFAULT_RESULTS_ROOT / run_id)
+    if out_dir.exists():
+        raise FileExistsError(f"E5 result directory already exists: {out_dir}")
+    if recommendation_run is None:
+        raise TypeError(
+            "E5 functional evaluation requires the verified originating "
+            "recommendation-run provenance capability"
+        )
 
     # 1. Load catalog
     if not catalog_path.is_file():
         raise FileNotFoundError(f"Image catalog not found at {catalog_path}")
+    catalog_file_sha256 = file_sha256(catalog_path)
     with open(catalog_path, "r", encoding="utf-8") as f:
         catalog = yaml.safe_load(f)
+
+    # Reverify Prompt 3's capability, exact record checksum, record IDs, and
+    # catalog identity before any container or pod can be created.
+    source = bind_recommendation_source(recommendation_run, catalog=catalog)
+    source_identities = source_manifest_identities(source)
 
     # 2. Build probe manifest
     probe_manifest = build_image_probe_manifest(
@@ -275,6 +284,13 @@ def run_e5_evaluation(
         catalog_path=catalog_path,
         timeout_seconds=timeout_seconds,
     )
+    if (
+        probe_manifest.catalog_sha256 != catalog_file_sha256
+        or file_sha256(catalog_path) != catalog_file_sha256
+    ):
+        raise SecurityVerificationError(
+            "image catalog changed while E5 established its execution boundary"
+        )
 
     # 3. Create runner
     runner = create_probe_runner(
@@ -291,21 +307,32 @@ def run_e5_evaluation(
     }
 
     # Determine execution mode and fail-closed status
-    if isinstance(runner, DryRunProbeRunner):
+    if type(runner) is DryRunProbeRunner:
         active_mode = "dry_run"
         execution_status = EvidenceStatus.DRY_RUN
-    elif isinstance(runner, SyntheticProbeRunner):
+    elif type(runner) is SyntheticProbeRunner:
         active_mode = "synthetic"
         execution_status = EvidenceStatus.INCOMPLETE
-    elif isinstance(runner, (DockerProbeRunner, KubernetesProbeRunner)):
-        active_mode = "docker" if isinstance(runner, DockerProbeRunner) else "kubernetes"
+    elif type(runner) in (DockerProbeRunner, KubernetesProbeRunner):
+        active_mode = "docker" if type(runner) is DockerProbeRunner else "kubernetes"
         # Fail-closed check: OBSERVED is reserved EXCLUSIVELY for runs where
         # 100% of the frozen catalog images and their probes were actually executed.
         all_executed = (
             len(probe_results) > 0
             and all(r.is_executed for r in probe_results)
         )
-        if all_executed:
+        expected_origin = "LIVE_DOCKER" if type(runner) is DockerProbeRunner else "LIVE_KUBERNETES"
+        all_runtime_bound = all(
+            r.execution_origin == expected_origin
+            and r.cleanup_succeeded is True
+            and bool(r.execution_identity)
+            and bool(r.resolved_image_digest)
+            and bool(r.resolved_image_platform)
+            and bool(r.runtime_image_id)
+            for r in probe_results
+        )
+        runner_is_live = getattr(runner, "execution_origin", None) == expected_origin
+        if all_executed and all_runtime_bound and runner_is_live:
             execution_status = EvidenceStatus.OBSERVED
         else:
             execution_status = EvidenceStatus.INCOMPLETE
@@ -315,118 +342,55 @@ def run_e5_evaluation(
 
     # 5. Gather recommendation items to evaluate
     evaluation_records: list[FunctionalEvaluationRecord] = []
-    split_cases = _extract_split_cases(split_path) if split_path.is_file() else []
-    split_cases_by_id = {c["case_id"]: c for c in split_cases}
+    candidates = {
+        item["candidate_id"]: item
+        for item in source.provenance["catalog_identity"]["candidates"]
+    }
+    for row in source.records:
+        case_id = row.get("case_id", "")
+        system_id = row.get("system_id", "UNKNOWN")
+        family_id = row.get("family_id", "")
+        variant_id = row.get("variant_id", "")
+        source_img = row.get("predicted_image_id")
+        source_candidate = row.get("predicted_candidate_id")
+        predicted_img = source_img
 
-    if recommendations_path and recommendations_path.is_file():
-        raw_recs = _load_recommendations_file(recommendations_path)
-        for row in raw_recs:
-            case_id = row.get("case_id", "")
-            system_id = row.get("system_id", "UNKNOWN")
-            family_id = row.get("family_id", "")
-            variant_id = row.get("variant_id", "")
-            source_img = row.get("predicted_image_id")
-            if source_img is None and "predicted_candidate_id" in row and row["predicted_candidate_id"] is not None:
-                source_cand = row["predicted_candidate_id"]
-                source_img = source_cand
-                parts = source_cand.split("-", 1)
-                predicted_img = parts[1] if len(parts) > 1 else source_cand
-            else:
-                predicted_img = source_img
+        gold = row.get("evaluation_gold", {})
+        req_caps = list(gold.get("required_image_capabilities", []))
+        pref_cand = gold.get("preferred_candidate_id")
+        pref = candidates.get(pref_cand) if pref_cand else None
+        pref_img = pref.get("image_id") if isinstance(pref, Mapping) else None
+        acc_cands = gold.get("acceptable_candidate_ids", [])
+        acc_imgs = [candidates[c]["image_id"] for c in acc_cands if c in candidates]
+        selected_digest, selected_platform = selected_image_identity(
+            image_id=predicted_img,
+            catalog=catalog,
+            probe_results=probe_results,
+        )
 
-            if source_img == "":
-                source_img = None
-                predicted_img = None
-
-            gold = row.get("evaluation_gold", {})
-            req_caps = list(gold.get("required_image_capabilities", []))
-            if not req_caps:
-                split_case = split_cases_by_id.get(case_id, {})
-                split_gold = split_case.get("gold", {})
-                req_caps = list(split_gold.get("required_image_capabilities", []))
-                if not req_caps:
-                    exp = split_gold.get("expected_extraction") or {}
-                    req_caps = list(exp.get("required_libraries", []))
-                if not req_caps:
-                    intent = row.get("structured_intent") or {}
-                    req_caps = list(intent.get("required_libraries", []))
-            pref_cand = gold.get("preferred_candidate_id")
-            # Extract image component from candidate ID (e.g. small-minimal-python -> minimal-python)
-            pref_img = None
-            if pref_cand:
-                parts = pref_cand.split("-", 1)
-                pref_img = parts[1] if len(parts) > 1 else pref_cand
-            acc_cands = gold.get("acceptable_candidate_ids", [])
-            acc_imgs: list[str] = []
-            for c in acc_cands:
-                parts = c.split("-", 1)
-                acc_imgs.append(parts[1] if len(parts) > 1 else c)
-
-            eval_rec = evaluate_recommendation_functional(
-                case_id=case_id,
-                family_id=family_id,
-                variant_id=variant_id,
-                system_id=system_id,
-                source_predicted_image_value=source_img,
-                predicted_image_id=predicted_img,
-                required_capabilities=req_caps,
-                gold_preferred_image_id=pref_img,
-                gold_acceptable_image_ids=acc_imgs,
-                catalog=catalog,
-                probe_results=probe_results_by_key,
-                execution_status=execution_status.value,
-            )
-            evaluation_records.append(eval_rec)
-    else:
-        # Evaluate against the development split
-        default_img = catalog.get("default_image", "minimal-python")
-        for case in split_cases:
-            case_id = case.get("case_id", "")
-            family_id = case.get("family_id", "")
-            variant_id = case.get("variant_id", "")
-            gold = case.get("gold", {})
-            req_caps = list(gold.get("required_image_capabilities", []))
-            if not req_caps:
-                exp = gold.get("expected_extraction") or {}
-                req_caps = list(exp.get("required_libraries", []))
-            pref_cand = gold.get("preferred_candidate_id")
-            pref_img = pref_cand.split("-", 1)[1] if pref_cand and "-" in pref_cand else pref_cand
-            acc_cands = gold.get("acceptable_candidate_ids", [])
-            acc_imgs = [c.split("-", 1)[1] if "-" in c else c for c in acc_cands]
-
-            # B0 baseline: default image
-            rec_b0 = evaluate_recommendation_functional(
-                case_id=case_id,
-                family_id=family_id,
-                variant_id=variant_id,
-                system_id="B0",
-                source_predicted_image_value=default_img,
-                predicted_image_id=default_img,
-                required_capabilities=req_caps,
-                gold_preferred_image_id=pref_img,
-                gold_acceptable_image_ids=acc_imgs,
-                catalog=catalog,
-                probe_results=probe_results_by_key,
-                execution_status=execution_status.value,
-            )
-            evaluation_records.append(rec_b0)
-
-            # P2 ideal baseline (for cases that have a valid preferred image)
-            rec_p2 = evaluate_recommendation_functional(
-                case_id=case_id,
-                family_id=family_id,
-                variant_id=variant_id,
-                system_id="P2",
-                source_predicted_image_value=pref_img,
-                predicted_image_id=pref_img,
-                required_capabilities=req_caps,
-                gold_preferred_image_id=pref_img,
-                gold_acceptable_image_ids=acc_imgs,
-                catalog=catalog,
-                probe_results=probe_results_by_key,
-                execution_status=execution_status.value,
-            )
-            evaluation_records.append(rec_p2)
+        eval_rec = evaluate_recommendation_functional(
+            case_id=case_id,
+            family_id=family_id,
+            variant_id=variant_id,
+            system_id=system_id,
+            source_predicted_image_value=source_img,
+            source_predicted_candidate_id=source_candidate,
+            source_run_sha256=source.recommendation_run_sha256,
+            source_recommendation_record_id=str(row["record_id"]),
+            source_configuration_identity_sha256=canonical_identity_sha256(
+                source.system_identity(system_id)
+            ),
+            selected_image_digest=selected_digest,
+            selected_image_platform=selected_platform,
+            predicted_image_id=predicted_img,
+            required_capabilities=req_caps,
+            gold_preferred_image_id=pref_img,
+            gold_acceptable_image_ids=acc_imgs,
+            catalog=catalog,
+            probe_results=probe_results_by_key,
+            execution_status=execution_status.value,
+        )
+        evaluation_records.append(eval_rec)
 
     # 6. Aggregate metrics
     metrics_report = compute_functional_metrics(
@@ -434,66 +398,35 @@ def run_e5_evaluation(
     )
 
     # 7. Write results directory
-    out_dir = output_dir or (DEFAULT_RESULTS_ROOT / run_id)
     raw_dir = out_dir / "raw"
     derived_dir = out_dir / "derived"
     report_dir = out_dir / "report"
 
-    out_dir.mkdir(parents=True, exist_ok=True)
-    raw_dir.mkdir(parents=True, exist_ok=True)
-    derived_dir.mkdir(parents=True, exist_ok=True)
-    report_dir.mkdir(parents=True, exist_ok=True)
+    out_dir.mkdir(parents=True, exist_ok=False)
+    raw_dir.mkdir()
+    derived_dir.mkdir()
+    report_dir.mkdir()
 
     git = _git_info()
 
     # Raw artifacts
     write_json_exclusive(raw_dir / "probe_manifest.json", probe_manifest.to_dict())
+    write_json_exclusive(
+        raw_dir / SOURCE_RECOMMENDATION_PROVENANCE_FILENAME,
+        dict(source.provenance),
+    )
+    _write_bytes_exclusive(
+        raw_dir / SOURCE_RECOMMENDATIONS_FILENAME,
+        source.records_bytes,
+    )
 
-    with open(raw_dir / "probe_results.jsonl", "w", encoding="utf-8") as f:
+    with open(raw_dir / "probe_results.jsonl", "x", encoding="utf-8") as f:
         for res in probe_results:
             f.write(json.dumps(res.to_dict()) + "\n")
 
-    with open(raw_dir / "functional_evaluations.jsonl", "w", encoding="utf-8") as f:
+    with open(raw_dir / "functional_evaluations.jsonl", "x", encoding="utf-8") as f:
         for rec in evaluation_records:
             f.write(json.dumps(rec.to_dict()) + "\n")
-
-    # Load freeze configuration
-    freeze_path = ROOT / "results_v5" / "protocol-v5.0.0" / "freezes" / "frozen-configuration.json"
-    freeze: dict[str, Any] = {}
-    if freeze_path.is_file():
-        try:
-            freeze = json.loads(freeze_path.read_text(encoding="utf-8"))
-        except Exception:
-            pass
-
-    frozen_cand = freeze.get("candidate_catalog", {})
-    frozen_indexes = freeze.get("indexes", {})
-    dense_idx = frozen_indexes.get("dense", {})
-    sparse_idx = frozen_indexes.get("sparse", {})
-    hybrid_idx = frozen_indexes.get("hybrid", {})
-
-    corpus_sha = frozen_cand.get("corpus_sha256")
-    if not corpus_sha and execution_status != EvidenceStatus.OBSERVED:
-        corpus_sha = None
-    elif not corpus_sha:
-        corpus_sha = "987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444"
-
-    frozen_cfg = freeze.get("configuration", {})
-    retrieval_cfg = frozen_cfg.get("P2", {
-        "retriever_version": "reciprocal-rank-fusion-hybrid-retriever-v1",
-        "top_k": 10,
-        "sparse_top_k": 10,
-        "dense_top_k": 10,
-        "rrf_k": 60.0,
-        "sparse_weight": 1.0,
-        "dense_weight": 1.0,
-    }) if execution_status == EvidenceStatus.OBSERVED else {}
-
-    constraints_cfg = frozen_cfg.get("constraints", {
-        "constraint_evaluator_version": "p2-deterministic-constraint-evaluator-v1.0.0",
-        "constraint_policy_version": "p2-constraint-policy-v1.0.0",
-        "ranker_version": "p2-deterministic-ranker-v1.0.0",
-    }) if execution_status == EvidenceStatus.OBSERVED else {}
 
     env_identity = {
         "environment_id": f"e5-{active_mode}-{platform.system().lower()}",
@@ -502,10 +435,9 @@ def run_e5_evaluation(
         "execution_mode": active_mode,
         "git_info": git,
         "runtime_detected": detect_runtime(),
+        "source_recommendation_run_id": source.provenance["run_id"],
+        "source_recommendation_run_sha256": source.recommendation_run_sha256,
     }
-    if recommendations_path and recommendations_path.is_file():
-        env_identity["recommendations_input_path"] = str(recommendations_path)
-        env_identity["recommendations_input_sha256"] = file_sha256(recommendations_path)
 
     write_json_exclusive(raw_dir / "environment.json", env_identity)
 
@@ -520,7 +452,7 @@ def run_e5_evaluation(
         execution_mode=active_mode,
         execution_status=execution_status.value,
         git_info=git,
-        recommendations_path=recommendations_path,
+        source_recommendation_run=source.provenance,
     )
     (report_dir / "E5_IMAGE_FUNCTIONAL_REPORT.md").write_text(report_md, encoding="utf-8")
 
@@ -544,48 +476,9 @@ def run_e5_evaluation(
         "run_id": run_id,
         "git_revision": git.get("git_revision"),
         "execution_timestamp_utc": _utc_now(),
-        "dataset_identity": {
-            "dataset_id": "protocol-v5-development-2026-08-22",
-            "dataset_sha256": file_sha256(split_path) if split_path.is_file() else None,
-        },
-        "split_identity": {
-            "split_id": "v5-development",
-            "stage": "development",
-        },
-        "backend_system_versions": {
-            "B0": "jupyterhub-default-selection",
-            "P1": "rule-based-v1",
-            "P2": "p2-pipeline-v1.0.0",
-        },
-        "candidate_catalog": {
-            "catalog_version": probe_manifest.catalog_version,
-            "catalog_sha256": probe_manifest.catalog_sha256,
-            "corpus_version": "environment-candidate-corpus-v1",
-            "corpus_sha256": corpus_sha,
-        },
-        "structured_intent_schema_version": "protocol-v5-structured-intent-v1.0.0" if execution_status == EvidenceStatus.OBSERVED else None,
-        "extractor": {
-            "extractor_name": "intent-spawner-local-feature-extractor" if execution_status == EvidenceStatus.OBSERVED else None,
-            "extractor_version": "feature-extractor-v1.0.0" if execution_status == EvidenceStatus.OBSERVED else None,
-            "extractor_model_id": "intent-spawner-local-rule-hash" if execution_status == EvidenceStatus.OBSERVED else None,
-            "extractor_prompt_version": "prompt-v1.0.0" if execution_status == EvidenceStatus.OBSERVED else None,
-            "extractor_prompt_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855" if execution_status == EvidenceStatus.OBSERVED else None,
-        },
-        "embedding_indexes": {
-            "embedding_model_id": dense_idx.get("model_id") if execution_status == EvidenceStatus.OBSERVED else None,
-            "embedding_model_revision": dense_idx.get("model_revision") if execution_status == EvidenceStatus.OBSERVED else None,
-            "dense_index_version": dense_idx.get("index_version") if execution_status == EvidenceStatus.OBSERVED else None,
-            "dense_index_sha256": dense_idx.get("index_checksum") if execution_status == EvidenceStatus.OBSERVED else None,
-            "sparse_index_version": sparse_idx.get("index_version") if execution_status == EvidenceStatus.OBSERVED else None,
-            "sparse_index_sha256": sparse_idx.get("index_checksum") if execution_status == EvidenceStatus.OBSERVED else None,
-            "hybrid_index_version": hybrid_idx.get("index_version") if execution_status == EvidenceStatus.OBSERVED else None,
-            "hybrid_index_sha256": hybrid_idx.get("index_checksum") if execution_status == EvidenceStatus.OBSERVED else None,
-        },
-        "retrieval_configuration": retrieval_cfg,
-        "constraint_ranking_configuration": constraints_cfg,
-        "p3_reranker_version": None,
+        **source_identities,
         "environment_identity": env_identity,
-        "random_seeds": [42],
+        "random_seeds": [],
         "execution_status": execution_status.value,
     }
     write_json_exclusive(out_dir / "manifest.json", manifest_data)
@@ -609,9 +502,14 @@ def main() -> None:
         help="Experiment to run: 'functional' (default), 'storage', or 'both'.",
     )
     parser.add_argument("--catalog", type=Path, default=DEFAULT_CATALOG_PATH, help="Path to image catalog YAML.")
-    parser.add_argument("--recommendations", type=Path, default=None, help="Path to recommendations JSONL.")
+    parser.add_argument(
+        "--recommendation-run",
+        type=Path,
+        default=None,
+        help="Originating validated offline recommendation evidence directory (required for functional E5).",
+    )
     parser.add_argument("--split", type=Path, default=DEFAULT_SPLIT_PATH, help="Path to development split YAML.")
-    parser.add_argument("--mode", choices=["auto", "docker", "kubernetes", "dry-run", "synthetic"], default="auto", help="Runner mode.")
+    parser.add_argument("--mode", choices=["auto", "docker", "kubernetes", "dry-run"], default="auto", help="Runner mode.")
     parser.add_argument("--no-dry-run-fallback", action="store_true", help="Fail if container runtime is unavailable.")
     parser.add_argument("--output-dir", type=Path, default=None, help="Results output directory.")
     parser.add_argument("--run-id", type=str, default=None, help="Custom run ID.")
@@ -647,10 +545,22 @@ def main() -> None:
     args = parser.parse_args()
 
     if args.experiment in ("functional", "both"):
+        if args.recommendation_run is None:
+            parser.error("--recommendation-run is required for functional E5")
+        confirmatory_split = None
+        if (args.dataset is None) != (args.freeze is None):
+            parser.error("functional confirmatory verification requires both --dataset and --freeze")
+        if args.dataset is not None and args.freeze is not None:
+            from evaluation_v5.isolation import load_confirmatory_split
+
+            confirmatory_split = load_confirmatory_split(args.dataset, args.freeze)
+        recommendation_capability = verify_recommendation_run_provenance(
+            args.recommendation_run,
+            confirmatory_split=confirmatory_split,
+        )
         out_func = run_e5_evaluation(
             catalog_path=args.catalog,
-            recommendations_path=args.recommendations,
-            split_path=args.split,
+            recommendation_run=recommendation_capability,
             mode=args.mode,
             dry_run_if_unavailable=not args.no_dry_run_fallback,
             output_dir=args.output_dir if args.experiment == "functional" else None,

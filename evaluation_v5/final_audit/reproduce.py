@@ -102,7 +102,7 @@ def regenerate_user_study(inputs: Inputs, package: dict) -> tuple[dict, list[dic
 def analyze(inputs: Inputs, audit: dict, output: Path) -> dict:
     output.mkdir(parents=True, exist_ok=False)
     result = {"schema_version": "protocol-v5-final-regeneration-v1.0.0", "packages": [],
-              "observed_functional": [], "comparisons": [], "observed_offline_counts": [],
+              "observed_functional": [], "legacy_functional": [], "comparisons": [], "observed_offline_counts": [],
               "volatile_manifest_fields": list(VOLATILE_MANIFEST_FIELDS), "claims": audit["claims"],
               "defense_sources": {"human": [], "resources": [], "offline": [], "functional": [],
                                   "storage": [audit["source_inventory"]]}}
@@ -157,6 +157,18 @@ def analyze(inputs: Inputs, audit: dict, output: Path) -> dict:
                              generated_analysis=str((destination / "analysis.json").relative_to(output)))
             elif package["kind"] == "image_functional":
                 entry.update(reason="Legacy or invalid functional package retained; not silently reinterpreted under current metric semantics.", status="UNVERIFIED")
+                validator = package.get("validator_result", {})
+                if package["validation"] == "PASS" and validator.get("validator_status") == "LEGACY_VALID":
+                    result["legacy_functional"].append(
+                        {
+                            "run": Path(relative).name,
+                            "source_package": relative,
+                            "recorded_status": package["status"],
+                            "validation_profile": validator.get("validation_profile"),
+                            "limitations": list(validator.get("limitations", [])),
+                            "claim_eligible": False,
+                        }
+                    )
             elif package["kind"] == "research_analysis":
                 entry.update(reason="Historical aggregate analysis preserved and reference checksums validated; current claim inventory is regenerated separately.", status="PRESERVED")
             elif package["kind"] == "resource_plan":

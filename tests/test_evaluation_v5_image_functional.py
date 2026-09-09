@@ -6,15 +6,19 @@ count denominators, security verification, and evidence package validation.
 
 from __future__ import annotations
 
+import hashlib
 import json
 from pathlib import Path
+import shutil
 import subprocess
+import sys
 from unittest.mock import MagicMock
 import pytest
 import yaml
 
 from evaluation_v5.image_storage import (
     BaseProbeRunner,
+    CapabilityProbeStatus,
     DimensionCStatus,
     DockerProbeRunner,
     DryRunProbeRunner,
@@ -26,6 +30,7 @@ from evaluation_v5.image_storage import (
     ImageProbeSpec,
     KubernetesProbeRunner,
     ProbeExecutionError,
+    ProbeExecutionOrigin,
     ProbeExecutionStatus,
     ProbeSpec,
     SecurityVerificationError,
@@ -43,18 +48,47 @@ from evaluation_v5.image_storage import (
     validate_e5_evidence,
 )
 from evaluation_v5.image_storage.__main__ import _format_markdown_report, run_e5_evaluation
+from evaluation_v5.image_storage.runner import RuntimeImageIdentity
+from evaluation_v5.offline.source_run import (
+    SourceRunProvenanceError,
+    VerifiedRecommendationRunProvenance,
+    verify_recommendation_run_provenance,
+)
 from evaluation_v5.schemas import EvidenceStatus, ProtocolV5Manifest
 
 
 ROOT = Path(__file__).resolve().parents[1]
 CATALOG_PATH = ROOT / "recommender" / "image-catalog.yaml"
 SPLIT_PATH = ROOT / "benchmarks_v5" / "v5-development.yaml"
+SOURCE_RUN_DIR = (
+    ROOT
+    / "results_v5"
+    / "protocol-v5.0.0"
+    / "E1"
+    / "20260825T-observed-p1-p2-development-v1"
+)
 
 
 @pytest.fixture
 def catalog_data() -> dict:
     with open(CATALOG_PATH, "r", encoding="utf-8") as f:
         return yaml.safe_load(f)
+
+
+@pytest.fixture(scope="session")
+def recommendation_run() -> VerifiedRecommendationRunProvenance:
+    return verify_recommendation_run_provenance(SOURCE_RUN_DIR)
+
+
+def _rewrite_checksums(package_dir: Path) -> None:
+    lines = []
+    for path in sorted(package_dir.rglob("*")):
+        if path.is_file() and path.name != "SHA256SUMS":
+            digest = hashlib.sha256(path.read_bytes()).hexdigest()
+            lines.append(f"{digest}  {path.relative_to(package_dir)}")
+    (package_dir / "SHA256SUMS").write_text(
+        "\n".join(lines) + "\n", encoding="utf-8"
+    )
 
 
 # =============================================================================
@@ -117,7 +151,15 @@ def test_e5_runtime_digest_mismatch_raises_security_error(catalog_data, monkeypa
             return subprocess.CompletedProcess(
                 args=cmd,
                 returncode=0,
-                stdout=json.dumps([tampered_ref]),
+                stdout=json.dumps(
+                    [
+                        {
+                            "RepoDigests": [tampered_ref],
+                            "Os": "linux",
+                            "Architecture": "amd64",
+                        }
+                    ]
+                ),
                 stderr="",
             )
         return subprocess.CompletedProcess(args=cmd, returncode=0, stdout="", stderr="")
@@ -126,6 +168,29 @@ def test_e5_runtime_digest_mismatch_raises_security_error(catalog_data, monkeypa
 
     with pytest.raises(SecurityVerificationError, match="Runtime image digest .* does not match expected"):
         runner.run_probe(image_spec, probe)
+
+
+def test_cuda_probe_without_site_packages_is_unavailable():
+    """Python -S cannot turn the CUDA probe into a false success."""
+    probe = create_capability_probe("tensorflow-deep-learning", "cuda-userspace")
+    result = subprocess.run(
+        [sys.executable, "-S", "-c", probe.script],
+        capture_output=True,
+        text=True,
+        timeout=10,
+        check=False,
+    )
+    assert result.returncode == 3
+    metadata = json.loads(
+        next(
+            line.removeprefix("PROBE_META:")
+            for line in result.stdout.splitlines()
+            if line.startswith("PROBE_META:")
+        )
+    )
+    assert metadata["cuda_probe_status"] == CapabilityProbeStatus.UNAVAILABLE.value
+    assert metadata["cuda_api"] == "none"
+    assert metadata["cuda_library"] == "none"
 
 
 # =============================================================================
@@ -143,6 +208,11 @@ def test_create_capability_probe():
     probe_pandas = create_capability_probe("scipy-data-science", "pandas")
     assert probe_pandas.capability == "pandas"
     assert "pd.DataFrame" in probe_pandas.script
+
+    from evaluation_v5.image_storage import CAPABILITY_PROBE_TEMPLATES
+
+    with pytest.raises(TypeError):
+        CAPABILITY_PROBE_TEMPLATES["python"]["script"] = "arbitrary"  # type: ignore[index]
 
 
 def test_e5_unknown_catalog_capability_fails_closed():
@@ -228,6 +298,25 @@ def test_synthetic_probe_runner(catalog_data):
     assert unavail.error_category == "IMAGE_NOT_PRESENT"
 
 
+def test_live_origin_requires_runtime_factory(catalog_data):
+    assert (
+        DockerProbeRunner(catalog_data).execution_origin
+        == ProbeExecutionOrigin.SYNTHETIC_TEST.value
+    )
+    assert (
+        KubernetesProbeRunner(catalog_data).execution_origin
+        == ProbeExecutionOrigin.SYNTHETIC_TEST.value
+    )
+    assert (
+        create_probe_runner(catalog_data, mode="docker").execution_origin
+        == ProbeExecutionOrigin.LIVE_DOCKER.value
+    )
+    assert (
+        create_probe_runner(catalog_data, mode="kubernetes").execution_origin
+        == ProbeExecutionOrigin.LIVE_KUBERNETES.value
+    )
+
+
 def test_e5_missing_local_image_pull_policy_never_no_catalog_mismatch(catalog_data, monkeypatch):
     """Regression Test 1: Missing local image under --pull-policy never yields IMAGE_NOT_PRESENT, not CATALOG_PROBE_MISMATCH."""
     manifest = build_image_probe_manifest(catalog_data, CATALOG_PATH)
@@ -290,7 +379,15 @@ def test_docker_probe_runner_mocked(catalog_data, monkeypatch):
             return subprocess.CompletedProcess(
                 args=cmd,
                 returncode=0,
-                stdout=json.dumps([image_spec.image_reference]),
+                stdout=json.dumps(
+                    [
+                        {
+                            "RepoDigests": [image_spec.image_reference],
+                            "Os": "linux",
+                            "Architecture": "amd64",
+                        }
+                    ]
+                ),
                 stderr="",
             )
         if "run" in cmd:
@@ -309,6 +406,8 @@ def test_docker_probe_runner_mocked(catalog_data, monkeypatch):
     assert res.is_executed is True
     assert res.import_version_metadata == {"python_version": "3.11.8"}
     assert res.execution_mode == "docker"
+    assert res.execution_origin == ProbeExecutionOrigin.SYNTHETIC_TEST.value
+    assert res.cleanup_succeeded is True
 
 
 def test_kubernetes_probe_runner_mocked(catalog_data, monkeypatch):
@@ -321,14 +420,40 @@ def test_kubernetes_probe_runner_mocked(catalog_data, monkeypatch):
     def mock_kubectl(args, timeout=30.0):
         if "run" in args:
             return subprocess.CompletedProcess(args=args, returncode=0, stdout="pod created", stderr="")
-        if "wait" in args:
-            return subprocess.CompletedProcess(args=args, returncode=0, stdout="condition met", stderr="")
         if "logs" in args:
             return subprocess.CompletedProcess(
                 args=args, returncode=0, stdout='PROBE_META:{"python_version": "3.11.8"}\n', stderr=""
             )
-        if "get" in args and "jsonpath={.status.phase}" in args:
-            return subprocess.CompletedProcess(args=args, returncode=0, stdout="Succeeded", stderr="")
+        if args[:2] == ["get", "node"]:
+            node = {
+                "metadata": {
+                    "labels": {
+                        "kubernetes.io/os": "linux",
+                        "kubernetes.io/arch": "amd64",
+                    }
+                }
+            }
+            return subprocess.CompletedProcess(
+                args=args, returncode=0, stdout=json.dumps(node), stderr=""
+            )
+        if args[0] == "get" and args[1].startswith("pod/"):
+            pod = {
+                "spec": {"nodeName": "worker-1"},
+                "status": {
+                    "phase": "Succeeded",
+                    "containerStatuses": [
+                        {
+                            "imageID": f"docker-pullable://approved@{image_spec.image_digest}",
+                            "state": {
+                                "terminated": {"exitCode": 0, "reason": "Completed"}
+                            },
+                        }
+                    ],
+                },
+            }
+            return subprocess.CompletedProcess(
+                args=args, returncode=0, stdout=json.dumps(pod), stderr=""
+            )
         if "delete" in args:
             return subprocess.CompletedProcess(args=args, returncode=0, stdout="deleted", stderr="")
         return subprocess.CompletedProcess(args=args, returncode=0, stdout="", stderr="")
@@ -340,6 +465,257 @@ def test_kubernetes_probe_runner_mocked(catalog_data, monkeypatch):
     assert res.is_executed is True
     assert res.execution_mode == "kubernetes"
     assert res.import_version_metadata == {"python_version": "3.11.8"}
+    assert res.execution_origin == ProbeExecutionOrigin.SYNTHETIC_TEST.value
+    assert res.cleanup_succeeded is True
+
+
+def test_probe_bounds_and_program_allowlist_fail_before_execution(
+    catalog_data, monkeypatch
+):
+    with pytest.raises(ProbeExecutionError, match="timeout"):
+        create_capability_probe("minimal-python", "python", timeout_seconds=121)
+    with pytest.raises(ProbeExecutionError, match="CPU"):
+        create_capability_probe(
+            "minimal-python", "python", cpu_limit="3000m"
+        )
+    with pytest.raises(ProbeExecutionError, match="memory"):
+        create_capability_probe(
+            "minimal-python", "python", memory_limit="3Gi"
+        )
+
+    image_spec = build_image_probe_manifest(catalog_data, CATALOG_PATH).images[0]
+    approved = image_spec.probes[0]
+    tampered = ProbeSpec(
+        probe_id=approved.probe_id,
+        capability=approved.capability,
+        description=approved.description,
+        script="print('arbitrary program')",
+        timeout_seconds=approved.timeout_seconds,
+        cpu_limit=approved.cpu_limit,
+        memory_limit=approved.memory_limit,
+        expected_metadata_keys=approved.expected_metadata_keys,
+    )
+    called = False
+
+    def forbidden(*args, **kwargs):
+        nonlocal called
+        called = True
+        raise AssertionError("runtime must not be invoked")
+
+    monkeypatch.setattr(subprocess, "run", forbidden)
+    with pytest.raises(ProbeExecutionError, match="approved manifest probe"):
+        DockerProbeRunner(catalog_data).run_probe(image_spec, tampered)
+    assert called is False
+
+
+def test_docker_timeout_and_interrupt_always_remove_exact_container(
+    catalog_data, monkeypatch
+):
+    image_spec = build_image_probe_manifest(catalog_data, CATALOG_PATH).images[0]
+    probe = image_spec.probes[0]
+    commands: list[list[str]] = []
+
+    def timeout_run(cmd, *args, **kwargs):
+        commands.append(cmd)
+        if cmd[:3] == ["docker", "image", "inspect"]:
+            payload = [
+                {
+                    "RepoDigests": [image_spec.image_reference],
+                    "Os": "linux",
+                    "Architecture": "amd64",
+                }
+            ]
+            return subprocess.CompletedProcess(
+                cmd, 0, stdout=json.dumps(payload), stderr=""
+            )
+        if cmd[:2] == ["docker", "run"]:
+            raise subprocess.TimeoutExpired(cmd, timeout=probe.timeout_seconds)
+        if cmd[:3] == ["docker", "container", "inspect"]:
+            return subprocess.CompletedProcess(
+                cmd, 0, stdout='"2026-09-09T00:00:00Z"\n', stderr=""
+            )
+        return subprocess.CompletedProcess(cmd, 0, stdout="", stderr="")
+
+    monkeypatch.setattr(subprocess, "run", timeout_run)
+    result = DockerProbeRunner(catalog_data).run_probe(image_spec, probe)
+    run_cmd = next(cmd for cmd in commands if cmd[:2] == ["docker", "run"])
+    name = run_cmd[run_cmd.index("--name") + 1]
+    assert result.execution_identity == name
+    assert result.error_category == "TIMEOUT"
+    assert ["docker", "stop", "--time=1", name] in commands
+    assert ["docker", "rm", "--force", name] in commands
+    assert "--rm" not in run_cmd
+    assert "--network=none" in run_cmd
+    assert "--read-only" in run_cmd
+    assert "--cap-drop=ALL" in run_cmd
+    assert any(item.startswith("--cpus=") for item in run_cmd)
+    assert any(item.startswith("--memory=") for item in run_cmd)
+    assert any(item.startswith("--pids-limit=") for item in run_cmd)
+
+    commands.clear()
+
+    def interrupt_run(cmd, *args, **kwargs):
+        commands.append(cmd)
+        if cmd[:3] == ["docker", "image", "inspect"]:
+            payload = [
+                {
+                    "RepoDigests": [image_spec.image_reference],
+                    "Os": "linux",
+                    "Architecture": "amd64",
+                }
+            ]
+            return subprocess.CompletedProcess(
+                cmd, 0, stdout=json.dumps(payload), stderr=""
+            )
+        if cmd[:2] == ["docker", "run"]:
+            raise KeyboardInterrupt
+        return subprocess.CompletedProcess(cmd, 0, stdout="", stderr="")
+
+    monkeypatch.setattr(subprocess, "run", interrupt_run)
+    with pytest.raises(KeyboardInterrupt):
+        DockerProbeRunner(catalog_data).run_probe(image_spec, probe)
+    run_cmd = next(cmd for cmd in commands if cmd[:2] == ["docker", "run"])
+    name = run_cmd[run_cmd.index("--name") + 1]
+    assert ["docker", "stop", "--time=1", name] in commands
+    assert ["docker", "rm", "--force", name] in commands
+
+
+def test_kubernetes_pending_timeout_and_interrupt_delete_exact_pod(
+    catalog_data, monkeypatch
+):
+    manifest = build_image_probe_manifest(
+        catalog_data, CATALOG_PATH, timeout_seconds=0.01
+    )
+    image_spec = manifest.images[0]
+    probe = image_spec.probes[0]
+    calls: list[list[str]] = []
+    runner = KubernetesProbeRunner(
+        catalog_data, namespace="test-ns", poll_interval_seconds=0
+    )
+
+    def pending(args, timeout=30.0):
+        calls.append(args)
+        if args[0] == "run":
+            return subprocess.CompletedProcess(args, 0, stdout="created", stderr="")
+        if args[0] == "get":
+            pod = {
+                "status": {
+                    "phase": "Pending",
+                    "conditions": [
+                        {
+                            "type": "Ready",
+                            "status": "False",
+                            "reason": "ContainersNotReady",
+                        }
+                    ],
+                    "containerStatuses": [
+                        {
+                            "state": {
+                                "waiting": {
+                                    "reason": "ImagePullBackOff",
+                                    "message": "pull refused",
+                                }
+                            }
+                        }
+                    ],
+                }
+            }
+            return subprocess.CompletedProcess(
+                args, 0, stdout=json.dumps(pod), stderr=""
+            )
+        return subprocess.CompletedProcess(args, 0, stdout="deleted", stderr="")
+
+    monkeypatch.setattr(runner, "_kubectl", pending)
+    result = runner.run_probe(image_spec, probe)
+    run_args = next(args for args in calls if args[0] == "run")
+    pod_name = run_args[1]
+    overrides = json.loads(
+        next(item.removeprefix("--overrides=") for item in run_args if item.startswith("--overrides="))
+    )
+    pod_spec = overrides["spec"]
+    container = pod_spec["containers"][0]
+    assert pod_spec["activeDeadlineSeconds"] == 1
+    assert pod_spec["automountServiceAccountToken"] is False
+    assert container["resources"]["requests"] == container["resources"]["limits"]
+    assert container["securityContext"]["readOnlyRootFilesystem"] is True
+    assert container["securityContext"]["allowPrivilegeEscalation"] is False
+    delete_args = next(args for args in calls if args[0] == "delete")
+    assert delete_args[1] == f"pod/{pod_name}"
+    assert result.execution_identity == pod_name
+    assert result.error_category == "TIMEOUT"
+    assert result.execution_status == ProbeExecutionStatus.CONTAINER_UNAVAILABLE.value
+
+    calls.clear()
+
+    def interrupted(args, timeout=30.0):
+        calls.append(args)
+        if args[0] == "run":
+            raise KeyboardInterrupt
+        return subprocess.CompletedProcess(args, 0, stdout="deleted", stderr="")
+
+    monkeypatch.setattr(runner, "_kubectl", interrupted)
+    with pytest.raises(KeyboardInterrupt):
+        runner.run_probe(image_spec, probe)
+    run_args = next(args for args in calls if args[0] == "run")
+    delete_args = next(args for args in calls if args[0] == "delete")
+    assert delete_args[1] == f"pod/{run_args[1]}"
+
+
+def test_kubernetes_terminal_failure_captures_termination_reason(
+    catalog_data, monkeypatch
+):
+    image_spec = build_image_probe_manifest(catalog_data, CATALOG_PATH).images[0]
+    probe = image_spec.probes[0]
+    runner = KubernetesProbeRunner(
+        catalog_data, namespace="test-ns", poll_interval_seconds=0
+    )
+
+    def failed(args, timeout=30.0):
+        if args[0] == "run":
+            return subprocess.CompletedProcess(args, 0, stdout="created", stderr="")
+        if args[:2] == ["get", "node"]:
+            node = {
+                "metadata": {
+                    "labels": {
+                        "kubernetes.io/os": "linux",
+                        "kubernetes.io/arch": "amd64",
+                    }
+                }
+            }
+            return subprocess.CompletedProcess(
+                args, 0, stdout=json.dumps(node), stderr=""
+            )
+        if args[0] == "get":
+            pod = {
+                "spec": {"nodeName": "worker-1"},
+                "status": {
+                    "phase": "Failed",
+                    "containerStatuses": [
+                        {
+                            "imageID": f"containerd://approved@{image_spec.image_digest}",
+                            "state": {
+                                "terminated": {
+                                    "exitCode": 1,
+                                    "reason": "Error",
+                                    "message": "probe assertion failed",
+                                }
+                            },
+                        }
+                    ],
+                },
+            }
+            return subprocess.CompletedProcess(
+                args, 0, stdout=json.dumps(pod), stderr=""
+            )
+        return subprocess.CompletedProcess(args, 0, stdout="", stderr="")
+
+    monkeypatch.setattr(runner, "_kubectl", failed)
+    result = runner.run_probe(image_spec, probe)
+    assert result.execution_status == ProbeExecutionStatus.EXECUTED.value
+    assert result.functional_status == CapabilityProbeStatus.FAILURE.value
+    assert result.error_category == "RUNTIME_ERROR"
+    assert "probe assertion failed" in result.error_message
+    assert result.cleanup_succeeded is True
 
 
 # =============================================================================
@@ -594,59 +970,22 @@ def test_e5_functional_success_among_executed_denominator(catalog_data):
 # =============================================================================
 
 
-def test_e5_partial_execution_marks_package_incomplete(tmp_path, monkeypatch):
+def test_e5_partial_execution_marks_package_incomplete(
+    tmp_path, monkeypatch, recommendation_run
+):
     """Regression Test 3: One unavailable image among four marks package as INCOMPLETE."""
     out_dir = tmp_path / "e5-test-incomplete"
 
-    # Mock runner creation to return a synthetic runner with one unavailable image
-    from evaluation_v5.image_storage import runner as runner_module
-
-    original_create = runner_module.create_probe_runner
-
     def mock_create(catalog, mode="auto", **kwargs):
-        # Return a DockerProbeRunner where inspect_image_identity fails for pytorch
-        runner = DockerProbeRunner(catalog, pull_policy="never")
-
-        def mock_inspect(ref):
-            if "pytorch" in ref:
-                return False, None, "Image not found locally"
-            # Return valid identity for all other images
-            return True, ref.split("@", 1)[1] if "@" in ref else None, None
-
-        runner.inspect_image_identity = mock_inspect
-        # Mock run_probe to return successful executed result for available images
-        original_run_probe = runner.run_probe
-
-        def mock_run_probe(img_spec, probe):
-            if "pytorch" in img_spec.image_id:
-                return original_run_probe(img_spec, probe)
-            return ImageProbeResult(
-                schema_version="protocol-v5-image-probe-record-v1.1.0",
-                probe_id=probe.probe_id,
-                image_id=img_spec.image_id,
-                image_reference=img_spec.image_reference,
-                image_digest=img_spec.image_digest,
-                capability=probe.capability,
-                success=True,
-                execution_status=ProbeExecutionStatus.EXECUTED.value,
-                resolved_image_digest=img_spec.image_digest,
-                import_version_metadata={f"{probe.capability}_version": "1.0.0"},
-                runtime_seconds=0.1,
-                error_category=None,
-                error_message=None,
-                stdout='PROBE_META:{"ok": true}',
-                execution_mode="docker",
-                timestamp_utc="2026-09-05T00:00:00Z",
-            )
-
-        runner.run_probe = mock_run_probe
-        return runner
+        return SyntheticProbeRunner(
+            catalog, unavailable_images=["pytorch-deep-learning"]
+        )
 
     monkeypatch.setattr("evaluation_v5.image_storage.__main__.create_probe_runner", mock_create)
 
     run_e5_evaluation(
         catalog_path=CATALOG_PATH,
-        split_path=SPLIT_PATH,
+        recommendation_run=recommendation_run,
         mode="docker",
         output_dir=out_dir,
         run_id="e5-test-incomplete",
@@ -665,67 +1004,48 @@ def test_e5_partial_execution_marks_package_incomplete(tmp_path, monkeypatch):
     assert res["probes_unavailable"] > 0
 
 
-def test_e5_full_execution_marks_package_observed(tmp_path, monkeypatch):
-    """Regression Test 4: All required catalog probes executed marks package as OBSERVED."""
+def test_e5_fake_full_execution_cannot_be_relabelled_observed(
+    tmp_path, monkeypatch, recommendation_run
+):
+    """Selecting Docker mode cannot relabel synthetic observations as OBSERVED."""
     out_dir = tmp_path / "e5-test-observed"
 
     def mock_create(catalog, mode="auto", **kwargs):
-        runner = DockerProbeRunner(catalog, pull_policy="never")
-        runner.inspect_image_identity = lambda ref: (True, ref.split("@", 1)[1] if "@" in ref else None, None)
-
-        def mock_run_probe(img_spec, probe):
-            return ImageProbeResult(
-                schema_version="protocol-v5-image-probe-record-v1.1.0",
-                probe_id=probe.probe_id,
-                image_id=img_spec.image_id,
-                image_reference=img_spec.image_reference,
-                image_digest=img_spec.image_digest,
-                capability=probe.capability,
-                success=True,
-                execution_status=ProbeExecutionStatus.EXECUTED.value,
-                resolved_image_digest=img_spec.image_digest,
-                import_version_metadata={f"{probe.capability}_version": "1.0.0"},
-                runtime_seconds=0.1,
-                error_category=None,
-                error_message=None,
-                stdout='PROBE_META:{"ok": true}',
-                execution_mode="docker",
-                timestamp_utc="2026-09-05T00:00:00Z",
-            )
-
-        runner.run_probe = mock_run_probe
-        return runner
+        return SyntheticProbeRunner(catalog)
 
     monkeypatch.setattr("evaluation_v5.image_storage.__main__.create_probe_runner", mock_create)
 
     run_e5_evaluation(
         catalog_path=CATALOG_PATH,
-        split_path=SPLIT_PATH,
+        recommendation_run=recommendation_run,
         mode="docker",
         output_dir=out_dir,
         run_id="e5-test-observed",
     )
 
     manifest_raw = json.loads((out_dir / "manifest.json").read_text(encoding="utf-8"))
-    assert manifest_raw["execution_status"] == EvidenceStatus.OBSERVED.value
+    assert manifest_raw["execution_status"] == EvidenceStatus.INCOMPLETE.value
 
     status_raw = json.loads((out_dir / "report" / "status.json").read_text(encoding="utf-8"))
-    assert status_raw["status"] == EvidenceStatus.OBSERVED.value
+    assert status_raw["status"] == EvidenceStatus.INCOMPLETE.value
 
-    # Package must validate as OBSERVED
+    # The package is valid but explicitly ineligible as current observed evidence.
     res = validate_e5_evidence(out_dir)
     assert res["status"] == "PASS"
-    assert res["execution_status"] == EvidenceStatus.OBSERVED.value
+    assert res["execution_status"] == EvidenceStatus.INCOMPLETE.value
     assert res["probes_unavailable"] == 0
     assert res["probes_executed"] == res["total_probes_configured"]
+    assert res["eligible_as_current_e5_evidence"] is False
 
 
-def test_e5_validate_evidence_recomputes_and_validates(tmp_path):
+def test_e5_validate_evidence_recomputes_and_validates(
+    tmp_path, recommendation_run
+):
     """Regression Test 11: validate_e5_evidence verifies SHA256SUMS and enforces semantic consistency."""
     out_dir = tmp_path / "e5-test-validation"
     run_e5_evaluation(
         catalog_path=CATALOG_PATH,
-        split_path=SPLIT_PATH,
+        recommendation_run=recommendation_run,
         mode="dry-run",
         output_dir=out_dir,
         run_id="e5-test-validation",
@@ -745,11 +1065,11 @@ def test_e5_validate_evidence_recomputes_and_validates(tmp_path):
         validate_e5_evidence(out_dir)
 
 
-def test_end_to_end_cli_dry_run(tmp_path):
+def test_end_to_end_cli_dry_run(tmp_path, recommendation_run):
     out_dir = tmp_path / "e5-test-dry-run"
     run_e5_evaluation(
         catalog_path=CATALOG_PATH,
-        split_path=SPLIT_PATH,
+        recommendation_run=recommendation_run,
         mode="dry-run",
         output_dir=out_dir,
         run_id="e5-test-dry-run",
@@ -765,14 +1085,12 @@ def test_end_to_end_cli_dry_run(tmp_path):
     assert manifest.execution_status.value == "DRY_RUN"
 
 
-def test_end_to_end_cli_with_recommendations_file(tmp_path):
-    rec_file = ROOT / "results_v5" / "protocol-v5.0.0" / "E1" / "20260825T-observed-p1-p2-development-v1" / "raw" / "recommendations.jsonl"
+def test_end_to_end_with_verified_recommendation_run(tmp_path, recommendation_run):
     out_dir = tmp_path / "e5-test-recs"
 
     run_e5_evaluation(
         catalog_path=CATALOG_PATH,
-        recommendations_path=rec_file,
-        split_path=SPLIT_PATH,
+        recommendation_run=recommendation_run,
         mode="synthetic",
         output_dir=out_dir,
         run_id="e5-test-recs",
@@ -782,6 +1100,132 @@ def test_end_to_end_cli_with_recommendations_file(tmp_path):
     assert metrics_raw["total_evaluations"] == 36
     assert "P1" in metrics_raw["systems"]
     assert "P2" in metrics_raw["systems"]
+
+    source_raw = (out_dir / "raw" / "source-recommendations.jsonl").read_bytes()
+    original_raw = (SOURCE_RUN_DIR / "raw" / "recommendations.jsonl").read_bytes()
+    assert source_raw == original_raw
+    evaluations = [
+        json.loads(line)
+        for line in (
+            out_dir / "raw" / "functional_evaluations.jsonl"
+        ).read_text(encoding="utf-8").splitlines()
+    ]
+    assert all(row["source_run_sha256"] for row in evaluations)
+    assert all(row["source_recommendation_record_id"] for row in evaluations)
+    assert all(row["source_configuration_identity_sha256"] for row in evaluations)
+
+
+def test_e5_rejects_wrong_or_stale_source_run_before_execution(
+    tmp_path, catalog_data, monkeypatch
+):
+    with pytest.raises(TypeError, match="VerifiedRecommendationRunProvenance"):
+        run_e5_evaluation(
+            catalog_path=CATALOG_PATH,
+            recommendation_run={"caller": "supplied"},  # type: ignore[arg-type]
+            mode="dry-run",
+            output_dir=tmp_path / "wrong-source",
+        )
+
+    copied_source = tmp_path / "source"
+    shutil.copytree(SOURCE_RUN_DIR, copied_source)
+    capability = verify_recommendation_run_provenance(copied_source)
+    records_path = copied_source / "raw" / "recommendations.jsonl"
+    records_path.write_bytes(records_path.read_bytes() + b" ")
+
+    called = False
+
+    def forbidden(*args, **kwargs):
+        nonlocal called
+        called = True
+        raise AssertionError("runtime must not be constructed")
+
+    monkeypatch.setattr(
+        "evaluation_v5.image_storage.__main__.create_probe_runner", forbidden
+    )
+    with pytest.raises(SourceRunProvenanceError):
+        run_e5_evaluation(
+            catalog_path=CATALOG_PATH,
+            recommendation_run=capability,
+            mode="dry-run",
+            output_dir=tmp_path / "stale-source",
+        )
+    assert called is False
+    assert not (tmp_path / "stale-source").exists()
+
+
+@pytest.mark.parametrize(
+    ("mutation", "error"),
+    [
+        ("source-record", "source recommendation snapshot checksum"),
+        ("source-image", "record/image mismatches"),
+        ("configuration", "does not derive from source recommendation provenance"),
+        ("record-id", "do not join one-to-one"),
+        ("selected-digest", "selected image digest mismatches"),
+    ],
+)
+def test_e5_validator_rejects_provenance_tampering(
+    tmp_path, recommendation_run, mutation, error
+):
+    package = tmp_path / mutation
+    run_e5_evaluation(
+        catalog_path=CATALOG_PATH,
+        recommendation_run=recommendation_run,
+        mode="dry-run",
+        output_dir=package,
+        run_id=f"tamper-{mutation}",
+    )
+
+    if mutation in {"source-record", "source-image"}:
+        path = package / "raw" / "source-recommendations.jsonl"
+        rows = path.read_text(encoding="utf-8").splitlines()
+        first = json.loads(rows[0])
+        first["predicted_image_id"] = "forged-image"
+        rows[0] = json.dumps(first)
+        path.write_text("\n".join(rows) + "\n", encoding="utf-8")
+        if mutation == "source-image":
+            digest = hashlib.sha256(path.read_bytes()).hexdigest()
+            provenance_path = package / "raw" / "source-recommendation-run.json"
+            provenance = json.loads(provenance_path.read_text(encoding="utf-8"))
+            provenance["recommendation_run_sha256"] = digest
+            provenance["source_artifacts"]["recommendations_sha256"] = digest
+            provenance_path.write_text(json.dumps(provenance), encoding="utf-8")
+    elif mutation == "configuration":
+        path = package / "manifest.json"
+        value = json.loads(path.read_text(encoding="utf-8"))
+        value["retrieval_configuration"]["dense_weight"] = 999
+        path.write_text(json.dumps(value), encoding="utf-8")
+    else:
+        path = package / "raw" / "functional_evaluations.jsonl"
+        rows = path.read_text(encoding="utf-8").splitlines()
+        first = json.loads(rows[0])
+        if mutation == "record-id":
+            first["source_recommendation_record_id"] = "forged-record"
+        else:
+            first["selected_image_digest"] = "sha256:" + "f" * 64
+        rows[0] = json.dumps(first)
+        path.write_text("\n".join(rows) + "\n", encoding="utf-8")
+    _rewrite_checksums(package)
+
+    with pytest.raises(EvidenceValidationError, match=error):
+        validate_e5_evidence(package)
+
+
+def test_archived_e5_cannot_be_forged_into_current_evidence(tmp_path):
+    source = Path(
+        "results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T040730Z"
+    )
+    if not source.is_dir():
+        pytest.skip("archived v1.3 E5 package not present")
+    package = tmp_path / "forged-current"
+    shutil.copytree(source, package)
+    probe_manifest = package / "raw" / "probe_manifest.json"
+    value = json.loads(probe_manifest.read_text(encoding="utf-8"))
+    value["schema_version"] = "protocol-v5-image-probe-manifest-v1.2.0"
+    probe_manifest.write_text(json.dumps(value), encoding="utf-8")
+    _rewrite_checksums(package)
+
+    with pytest.raises(EvidenceValidationError, match="missing source provenance"):
+        validate_e5_evidence(package)
 
 
 def test_e5_rapids_unsupported_workload_semantics(catalog_data):
@@ -1088,7 +1532,7 @@ def test_e5_dimension_a_appears_independently_in_report_and_metrics():
         execution_mode="docker",
         execution_status="OBSERVED",
         git_info={"git_revision": "test", "git_dirty": False},
-        recommendations_path=Path("results_v5/protocol-v5.0.0/E1/20260825T-observed-p1-p2-development-v1/raw/recommendations.jsonl"),
+        source_recommendation_run=None,
     )
     assert "### Dimension A: Gold-Label Benchmark Correctness" in md
     assert "Preferred Match" in md
@@ -1518,17 +1962,19 @@ def test_e5_deterministic_raw_to_derived_recomputation(catalog_data):
     assert rep1.to_dict() == rep2.to_dict()
 
 
-def test_e5_current_v13_package_is_current_valid_and_eligible():
-    """Regression Test 8: Current v1.3 package is explicitly CURRENT_VALID and eligible_as_current_e5_evidence == True."""
+def test_e5_archived_v13_package_is_valid_with_provenance_limitations():
+    """Archived v1.3 stays valid but cannot satisfy the sealed-source contract."""
     v13_dir = Path("results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T040730Z")
     if not v13_dir.is_dir():
         pytest.skip("v1.3 package 040730Z not present")
 
     res = validate_e5_evidence(v13_dir)
     assert res["status"] == "PASS"
-    assert res["validator_status"] == "CURRENT_VALID"
-    assert res["eligible_as_current_e5_evidence"] is True
-    assert res["validation_profile"] == "CURRENT_V1_3"
+    assert res["validator_status"] == "LEGACY_VALID"
+    assert res["eligible_as_current_e5_evidence"] is False
+    assert res["validation_profile"] == "LEGACY_SCHEMA_V1_3"
+    assert "UNSEALED_RECOMMENDATION_PROVENANCE" in res["limitations"]
+    assert "MISSING_RECOMMENDATION_RECORD_JOIN" in res["limitations"]
 
     eval_records = [
         json.loads(line)
@@ -1596,4 +2042,3 @@ def test_e5_r7_validator_detects_derived_metrics_disagreement(tmp_path):
     metrics_path.write_text(orig_content, encoding="utf-8")
     recompute_sha256sums()
     assert validate_e5_evidence(pkg_dir)["status"] == "PASS"
-
