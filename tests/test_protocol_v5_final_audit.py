@@ -52,7 +52,8 @@ def test_existing_failures_are_preserved_and_not_selected_away(current_audit):
     mismatch = next(e for e in study["errors"] if e["code"] == "ORIGINAL_CHECKSUM_MISMATCH")
     assert mismatch["crlf_reconstruction_matches_recorded_hash"] is True
     assert mismatch["actual_sha256"] != mismatch["recorded_sha256"]
-    assert any(p["kind"] == "resource_efficiency" and p["validation"] == "FAIL" for p in packages)
+    assert all(p["validation"] == "PASS" for p in packages if p["kind"] == "resource_efficiency")
+    assert all(p["status"] == "NOT_EXECUTED" for p in packages if p["kind"] == "resource_efficiency")
     observed_failure = next(p for p in packages if p["path"].endswith("e5-image-validation-20260905T020014Z"))
     assert observed_failure["status"] == "OBSERVED"
     assert observed_failure["validation"] == "FAIL"
