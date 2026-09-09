@@ -10,7 +10,13 @@ import json
 import re
 from typing import Any
 
-from .models import RobustnessDataset, RobustnessFamily, RobustnessVariant, compute_dataset_canonical_sha256
+from .models import (
+    RobustnessDataset,
+    RobustnessFamily,
+    RobustnessVariant,
+    compute_dataset_canonical_sha256,
+    validate_robustness_dataset,
+)
 from .taxonomy import (
     EquivalenceStatus,
     HumanReviewStatus,
@@ -484,16 +490,20 @@ def apply_review_decisions(
                 variants=tuple(updated_variants),
                 label_review=family.label_review,
                 source_provenance=family.source_provenance,
+                role=family.role,
+                evidence_classification=family.evidence_classification,
             )
         )
 
-    return RobustnessDataset(
+    result = RobustnessDataset(
         dataset_id=dataset.dataset_id,
         families=tuple(updated_families),
         protocol_version=dataset.protocol_version,
         role=dataset.role,
         metadata=dataset.metadata,
     )
+    validate_robustness_dataset(result)
+    return result
 
 
 __all__ = [

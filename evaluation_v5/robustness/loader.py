@@ -149,6 +149,11 @@ def load_robustness_families_from_gold(
                 variants=tuple(variants),
                 label_review=dict(family.label_review),
                 source_provenance=family.source_provenance,
+                role=role,
+                evidence_classification=str(
+                    (family.source_provenance or {}).get("evidence_classification")
+                    or meta.get("evidence_classification", "development_only")
+                ),
             )
         )
 
@@ -371,6 +376,11 @@ def load_robustness_families_from_split(
                 variants=tuple(variants),
                 label_review=label_review,
                 source_provenance=source_prov,
+                role=role,
+                evidence_classification=str(
+                    (first_case.source_provenance or {}).get("evidence_classification")
+                    or ("human_reviewed_confirmatory" if role == "confirmatory" else "development_only")
+                ),
             )
         )
 
@@ -413,6 +423,8 @@ def load_robustness_dataset(
             return load_robustness_families_from_split(
                 path, workload_manifests=workload_manifests
             )
+        if "families" in document:
+            return RobustnessDataset.from_dict(document)
         raise RobustnessLoaderError(f"Unrecognized schema_version {schema!r} in {path}")
 
     if isinstance(source, (GoldDataset, LoadedGoldDataset)):

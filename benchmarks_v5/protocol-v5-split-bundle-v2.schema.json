@@ -95,7 +95,7 @@
         "source_schema_version": {"$ref": "protocol-v5-gold-family-v1.schema.json#/$defs/safeId"},
         "source_case_id": {"$ref": "protocol-v5-gold-family-v1.schema.json#/$defs/safeId"},
         "source_split": {"enum": ["development", "confirmatory"]},
-        "evidence_classification": {"$ref": "protocol-v5-gold-family-v1.schema.json#/$defs/safeId"},
+        "evidence_classification": {"$ref": "protocol-v5-gold-family-v1.schema.json#/$defs/evidenceClassification"},
         "authoring_canonical_sha256": {"$ref": "protocol-v5-gold-family-v1.schema.json#/$defs/sha256"},
         "catalog_identity": {"$ref": "protocol-v5-gold-family-v1.schema.json#/$defs/catalogIdentity"},
         "label_review": {"$ref": "protocol-v5-gold-family-v1.schema.json#/$defs/labelReview"},
@@ -105,7 +105,22 @@
             {"$ref": "protocol-v5-gold-family-v1.schema.json#/$defs/sourceProvenance"}
           ]
         }
-      }
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"source_split": {"const": "confirmatory"}}, "required": ["source_split"]},
+          "then": {
+            "properties": {
+              "evidence_classification": {
+                "enum": [
+                  "human_reviewed_confirmatory",
+                  "human_reviewed_confirmatory_eligible"
+                ]
+              }
+            }
+          }
+        }
+      ]
     }
   }
 }
