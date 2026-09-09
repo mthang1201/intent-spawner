@@ -14,7 +14,9 @@ from typing import Any
 
 from .contracts import parse_image_digest, file_sha256
 
-STORAGE_SCHEMA_VERSION = "protocol-v5-image-storage-evidence-v1.0.0"
+LEGACY_STORAGE_SCHEMA_VERSION = "protocol-v5-image-storage-evidence-v1.0.0"
+STORAGE_SCHEMA_VERSION = "protocol-v5-image-storage-evidence-v1.1.0"
+STORAGE_COLLECTOR_SCHEMA_VERSION = "protocol-v5-storage-collector-v1.0.0"
 PROTOCOL_VERSION = "5.0.0"
 EXPERIMENT_ID = "E5"
 
@@ -31,6 +33,39 @@ class StorageExecutionStatus(str, Enum):
     OBSERVED = "OBSERVED"
     NOT_EXECUTED = "NOT_EXECUTED"
     INCOMPLETE = "INCOMPLETE"
+
+
+class StorageCollectorOrigin(str, Enum):
+    """Origin of storage bytes, retained at every E5 serialization boundary."""
+
+    REAL_REGISTRY = "REAL_REGISTRY"
+    CONTAINER_STORAGE_OBSERVATION = "CONTAINER_STORAGE_OBSERVATION"
+    SYNTHETIC_TEST = "SYNTHETIC_TEST"
+    DRY_RUN = "DRY_RUN"
+
+
+# Only origins with an implemented raw-observation verifier belong here.
+# Container-storage accounting remains reserved until its collector and raw
+# format are implemented and validated end to end.
+REAL_STORAGE_COLLECTOR_ORIGINS = frozenset(
+    {
+        StorageCollectorOrigin.REAL_REGISTRY,
+    }
+)
+
+
+def is_real_storage_collector_origin(value: str | StorageCollectorOrigin) -> bool:
+    """Return whether *value* denotes an origin eligible for real observation."""
+
+    try:
+        origin = (
+            value
+            if isinstance(value, StorageCollectorOrigin)
+            else StorageCollectorOrigin(value)
+        )
+    except (TypeError, ValueError):
+        return False
+    return origin in REAL_STORAGE_COLLECTOR_ORIGINS
 
 
 class SplitStage(str, Enum):
@@ -106,6 +141,11 @@ class ImageLayerMetadata:
     within_image_duplicate_bytes: int = 0
     unique_layer_count: int = 0
     unique_layer_bytes: int = 0
+    collector_origin: str = StorageCollectorOrigin.DRY_RUN.value
+    collector_name: str = ""
+    collector_version: str = ""
+    raw_observation_path: str = ""
+    raw_observation_sha256: str = ""
 
     def __post_init__(self) -> None:
         if not self.requested_reference:
@@ -166,6 +206,11 @@ class ImageLayerMetadata:
             "within_image_duplicate_bytes": self.within_image_duplicate_bytes,
             "unique_layer_count": self.unique_layer_count,
             "unique_layer_bytes": self.unique_layer_bytes,
+            "collector_origin": self.collector_origin,
+            "collector_name": self.collector_name,
+            "collector_version": self.collector_version,
+            "raw_observation_path": self.raw_observation_path,
+            "raw_observation_sha256": self.raw_observation_sha256,
             "layers": [layer.to_dict() for layer in self.layers],
             "total_bytes": self.total_bytes,
             "layer_count": len(self.layers),
@@ -213,6 +258,13 @@ class ImageLayerMetadata:
             within_image_duplicate_bytes=int(data.get("within_image_duplicate_bytes", 0)),
             unique_layer_count=int(data.get("unique_layer_count", 0)),
             unique_layer_bytes=int(data.get("unique_layer_bytes", 0)),
+            collector_origin=str(
+                data.get("collector_origin", StorageCollectorOrigin.DRY_RUN.value)
+            ),
+            collector_name=str(data.get("collector_name", "")),
+            collector_version=str(data.get("collector_version", "")),
+            raw_observation_path=str(data.get("raw_observation_path", "")),
+            raw_observation_sha256=str(data.get("raw_observation_sha256", "")),
         )
 
 
@@ -870,6 +922,7 @@ class StorageEvidenceRecord:
     measured_at_utc: str
     catalog: dict[str, Any]
     platform: dict[str, Any]
+    collector: dict[str, Any]
     measurement_method: str
     prefixes: tuple[PrefixStorageMeasurement, ...]
     provenance: dict[str, Any]
@@ -885,6 +938,7 @@ class StorageEvidenceRecord:
             "measured_at_utc": self.measured_at_utc,
             "catalog": dict(self.catalog),
             "platform": dict(self.platform),
+            "collector": dict(self.collector),
             "measurement_method": self.measurement_method,
             "prefixes": [p.to_dict() for p in self.prefixes],
             "provenance": dict(self.provenance),
@@ -902,6 +956,7 @@ class StorageEvidenceRecord:
             measured_at_utc=str(data["measured_at_utc"]),
             catalog=dict(data["catalog"]),
             platform=dict(data["platform"]),
+            collector=dict(data.get("collector", {})),
             measurement_method=str(data["measurement_method"]),
             prefixes=tuple(
                 PrefixStorageMeasurement.from_dict(p) for p in data.get("prefixes", ())
@@ -929,4 +984,3 @@ def get_ordered_catalog_images(
 
     ordered_items.sort(key=lambda x: (x[0], x[1]))
     return [(item[1], item[2], item[3]) for item in ordered_items]
-

@@ -8,6 +8,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 import tempfile
+from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 import pytest
 import yaml
@@ -18,6 +19,7 @@ from evaluation_v5.analysis.research_contracts import (
 )
 from evaluation_v5.image_storage.contracts import file_sha256, parse_image_digest
 from evaluation_v5.image_storage.recommendation_evaluator import (
+    CatalogScaleGoldError,
     evaluate_catalog_scale_recommendation,
 )
 from evaluation_v5.image_storage.storage_contracts import (
@@ -34,6 +36,7 @@ from evaluation_v5.image_storage.storage_contracts import (
     ScaleLevelEvaluationRecord,
     SizeDomainMismatchError,
     SplitStage,
+    StorageCollectorOrigin,
     StorageEvidenceRecord,
     StorageExecutionStatus,
     assert_size_domain_consistent,
@@ -56,6 +59,10 @@ from evaluation_v5.image_storage.validate_evidence import (
     EvidenceValidationError,
     validate_e5_storage_evidence,
 )
+from evaluation_v5.split_dataset import (
+    SPLIT_BUNDLE_SCHEMA_VERSION_V2,
+    SplitCase,
+)
 
 ROOT = Path(__file__).resolve().parents[1]
 CATALOG_PATH = ROOT / "recommender" / "image-catalog.yaml"
@@ -65,6 +72,17 @@ CATALOG_PATH = ROOT / "recommender" / "image-catalog.yaml"
 def catalog() -> dict:
     with open(CATALOG_PATH, "r", encoding="utf-8") as f:
         return yaml.safe_load(f)
+
+
+def _refresh_checksums(package: Path) -> None:
+    records = [
+        f"{file_sha256(path)}  {path.relative_to(package)}"
+        for path in sorted(package.rglob("*"))
+        if path.is_file() and path.name != "SHA256SUMS"
+    ]
+    (package / "SHA256SUMS").write_text(
+        "\n".join(records) + "\n", encoding="utf-8"
+    )
 
 
 # Case 1: Completely disjoint images: unique == logical, saving = 0
@@ -85,7 +103,8 @@ def test_completely_disjoint_images(catalog):
     }
     runner = SyntheticStorageRunner(catalog, injected_image_layers=injected)
     inspections, prefixes, status = runner.measure_all()
-    assert status == "OBSERVED"
+    assert status == "NOT_EXECUTED"
+    assert inspections[0].collector_origin == StorageCollectorOrigin.SYNTHETIC_TEST.value
     for p in prefixes:
         assert p.unique_layer_bytes == p.naive_logical_bytes
         assert p.savings_bytes == 0
@@ -280,6 +299,14 @@ def test_provenance_and_immutable_digest_pinning(catalog):
             assert l["resolved_digest"].startswith("sha256:")
             assert l["size_domain"] == SIZE_DOMAIN_COMPRESSED_OCI_BLOB
             assert l["total_bytes"] > 0
+            assert l["collector_origin"] == "SYNTHETIC_TEST"
+            restored = ImageLayerMetadata.from_dict(l)
+            assert restored.collector_origin == "SYNTHETIC_TEST"
+        evidence = json.loads(
+            (out_dir / "derived" / "storage_metrics.json").read_text()
+        )
+        restored_evidence = StorageEvidenceRecord.from_dict(evidence)
+        assert restored_evidence.collector["origin"] == "SYNTHETIC_TEST"
 
 
 # Case 18: Recommendation scale aggregation (accuracy, recall, latency)
@@ -343,7 +370,7 @@ def test_validator_rejection_of_fabricated_evidence(catalog):
             validate_e5_storage_evidence(out_dir)
 
 
-# Case 22: Claim eligibility when only four-image storage evidence exists
+# Case 22: Synthetic storage is never eligible, even with four-image calculations
 def test_claim_eligibility_partial_vs_full(catalog):
     with tempfile.TemporaryDirectory() as tmp:
         out_dir = run_storage_evaluation(
@@ -351,7 +378,6 @@ def test_claim_eligibility_partial_vs_full(catalog):
             mode="synthetic",
             output_dir=Path(tmp) / "out",
             stage="confirmatory",
-            claims_permitted=True,
             scales=(4, 8, 16),
         )
         val = validate_e5_storage_evidence(out_dir)
@@ -359,11 +385,13 @@ def test_claim_eligibility_partial_vs_full(catalog):
         assert val["storage_dedup_valid"] is True
         assert val["partial_scalability_valid"] is True
         assert val["complete_multiscale"] is False
-        assert val["claim_eligibility"] == "ELIGIBLE_4_IMAGE_CATALOG_STORAGE"
+        assert val["claim_eligibility"] == "INELIGIBLE_UNAUTHENTICATED_COLLECTOR_ORIGIN"
+        assert val["claims_permitted"] is False
+        assert val["collector_authentic"] is False
         assert val["full_scalability_claim_eligible"] is False
 
 
-# Case 23: Claim eligibility when full multi-scale storage exists
+# Case 23: Configuring only the available synthetic scale does not create evidence
 def test_claim_eligibility_when_full_multiscale_exists(catalog):
     with tempfile.TemporaryDirectory() as tmp:
         # If scale is restricted to the 4 approved images
@@ -372,14 +400,13 @@ def test_claim_eligibility_when_full_multiscale_exists(catalog):
             mode="synthetic",
             output_dir=Path(tmp) / "out",
             stage="confirmatory",
-            claims_permitted=True,
             scales=(4,),
         )
         val = validate_e5_storage_evidence(out_dir)
         assert val["status"] == "PASS"
-        assert val["complete_multiscale"] is True
-        assert val["claim_eligibility"] == "ELIGIBLE_FULL_MULTISCALE"
-        assert val["full_scalability_claim_eligible"] is True
+        assert val["complete_multiscale"] is False
+        assert val["claim_eligibility"] == "INELIGIBLE_UNAUTHENTICATED_COLLECTOR_ORIGIN"
+        assert val["full_scalability_claim_eligible"] is False
 
 
 # Case 24: Live Docker Manifest Inspection (integration test)
@@ -396,6 +423,10 @@ def test_docker_manifest_storage_runner_inspect(catalog):
     assert metadata.total_bytes > 100_000_000
     assert len(metadata.layers) > 5
     assert metadata.size_domain == SIZE_DOMAIN_COMPRESSED_OCI_BLOB
+    assert metadata.collector_origin == "REAL_REGISTRY"
+    assert metadata.raw_observation_path.startswith("registry_manifests/")
+    assert len(metadata.raw_observation_sha256) == 64
+    assert runner.raw_observations()[metadata.raw_observation_path]
 
 
 # Case 25: --stage development selects development split
@@ -450,7 +481,6 @@ def test_validator_rejects_confirmatory_rec_backed_by_dev_split(catalog):
             mode="synthetic",
             output_dir=Path(tmp) / "out",
             stage="confirmatory",
-            claims_permitted=True,
             scales=(4,),
         )
         scalability_path = out_dir / "derived" / "catalog_scalability.json"
@@ -599,7 +629,7 @@ def test_development_runs_may_inspect_mutable_inputs_with_warning():
     assert "Development catalog" in gate_res.details
 
 
-# Case 35: Report claim eligibility changes based on split validity
+# Case 35: Split validity cannot promote a synthetic storage collector
 def test_claim_eligibility_changes_based_on_split_validity(catalog):
     with tempfile.TemporaryDirectory() as tmp:
         out_dir = run_storage_evaluation(
@@ -607,11 +637,10 @@ def test_claim_eligibility_changes_based_on_split_validity(catalog):
             mode="synthetic",
             output_dir=Path(tmp) / "out",
             stage="confirmatory",
-            claims_permitted=True,
             scales=(4, 8, 16),
         )
         val = validate_e5_storage_evidence(out_dir)
-        assert val["claim_eligibility"] == "ELIGIBLE_4_IMAGE_CATALOG_STORAGE"
+        assert val["claim_eligibility"] == "INELIGIBLE_UNAUTHENTICATED_COLLECTOR_ORIGIN"
         assert val["recommendation_split_valid"] is True
 
 
@@ -623,7 +652,6 @@ def test_claim_eligibility_changes_based_on_immutable_input_validity(catalog):
             mode="synthetic",
             output_dir=Path(tmp) / "out",
             stage="confirmatory",
-            claims_permitted=True,
             scales=(4, 8, 16),
         )
         layers_path = out_dir / "raw" / "image_layers.json"
@@ -775,7 +803,6 @@ def test_not_executed_p2_record_cannot_contain_accuracy_metrics(catalog):
             mode="synthetic",
             output_dir=Path(tmp) / "out",
             stage="confirmatory",
-            claims_permitted=True,
             scales=(4, 8, 16),
         )
         scal_path = out_dir / "derived" / "catalog_scalability.json"
@@ -799,7 +826,6 @@ def test_not_executed_p2_record_cannot_contain_latency_metrics(catalog):
             mode="synthetic",
             output_dir=Path(tmp) / "out",
             stage="confirmatory",
-            claims_permitted=True,
             scales=(4, 8, 16),
         )
         scal_path = out_dir / "derived" / "catalog_scalability.json"
@@ -987,11 +1013,269 @@ def test_report_does_not_call_deterministic_storage_statistically_confirmed(cata
             mode="synthetic",
             output_dir=Path(tmp) / "out",
             stage="confirmatory",
-            claims_permitted=True,
             scales=(4, 8, 16),
         )
         report_text = (out_dir / "report" / "E5_IMAGE_STORAGE_REPORT.md").read_text(encoding="utf-8")
         assert "statistically confirmed" not in report_text.lower()
-        assert "empirically confirms" in report_text or "direct oci manifest inspection measured" in report_text.lower()
+        assert "empirically confirms" not in report_text.lower()
+        assert "non-observed / not executed" in report_text.lower()
         assert "compressed_oci_manifest_layer_bytes" in report_text
 
+
+def test_synthetic_confirmatory_cannot_be_promoted_by_caller_flags(catalog):
+    with tempfile.TemporaryDirectory() as tmp:
+        with pytest.raises(ValueError, match="cannot be overridden"):
+            run_storage_evaluation(
+                catalog_path=CATALOG_PATH,
+                mode="synthetic",
+                output_dir=Path(tmp) / "rejected",
+                stage="confirmatory",
+                claims_permitted=True,
+                eval_recommendation=False,
+                scales=(4,),
+            )
+
+        out_dir = run_storage_evaluation(
+            catalog_path=CATALOG_PATH,
+            mode="synthetic",
+            output_dir=Path(tmp) / "accepted",
+            stage="confirmatory",
+            eval_recommendation=False,
+            scales=(4,),
+        )
+        evidence = json.loads(
+            (out_dir / "derived" / "storage_metrics.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        assert evidence["execution_status"] == "NOT_EXECUTED"
+        assert evidence["claims_permitted"] is False
+        assert evidence["collector"]["origin"] == "SYNTHETIC_TEST"
+        validation = validate_e5_storage_evidence(out_dir)
+        assert validation["eligible_as_current_e5_evidence"] is False
+
+
+def test_validator_rejects_runtime_label_spoofing_collector_origin(catalog):
+    with tempfile.TemporaryDirectory() as tmp:
+        out_dir = run_storage_evaluation(
+            catalog_path=CATALOG_PATH,
+            mode="synthetic",
+            output_dir=Path(tmp) / "out",
+            stage="confirmatory",
+            eval_recommendation=False,
+            scales=(4,),
+        )
+        metrics_path = out_dir / "derived" / "storage_metrics.json"
+        metrics = json.loads(metrics_path.read_text(encoding="utf-8"))
+        metrics["platform"]["runtime"] = "docker"
+        metrics_path.write_text(json.dumps(metrics, indent=2), encoding="utf-8")
+        env_path = out_dir / "raw" / "environment.json"
+        environment = json.loads(env_path.read_text(encoding="utf-8"))
+        environment["runtime"] = "docker"
+        env_path.write_text(json.dumps(environment, indent=2), encoding="utf-8")
+        _refresh_checksums(out_dir)
+
+        with pytest.raises(EvidenceValidationError, match="runtime label disagrees"):
+            validate_e5_storage_evidence(out_dir)
+
+
+def test_validator_rejects_forged_real_origin_without_raw_registry_evidence(catalog):
+    with tempfile.TemporaryDirectory() as tmp:
+        out_dir = run_storage_evaluation(
+            catalog_path=CATALOG_PATH,
+            mode="synthetic",
+            output_dir=Path(tmp) / "out",
+            stage="confirmatory",
+            eval_recommendation=False,
+            scales=(4,),
+        )
+        metrics_path = out_dir / "derived" / "storage_metrics.json"
+        metrics = json.loads(metrics_path.read_text(encoding="utf-8"))
+        collector = metrics["collector"]
+        collector.update(
+            {
+                "origin": "REAL_REGISTRY",
+                "collector_name": "docker-manifest-inspect",
+                "evidence_classification": "REAL_OBSERVATION",
+                "raw_observation_count": 4,
+            }
+        )
+        metrics["execution_status"] = "OBSERVED"
+        metrics["claims_permitted"] = True
+        metrics["platform"]["runtime"] = "docker"
+        metrics["provenance"]["storage_collector_origin"] = "REAL_REGISTRY"
+        metrics_path.write_text(json.dumps(metrics, indent=2), encoding="utf-8")
+
+        env_path = out_dir / "raw" / "environment.json"
+        environment = json.loads(env_path.read_text(encoding="utf-8"))
+        environment["runtime"] = "docker"
+        environment["storage_collector"] = collector
+        env_path.write_text(json.dumps(environment, indent=2), encoding="utf-8")
+
+        layers_path = out_dir / "raw" / "image_layers.json"
+        layers = json.loads(layers_path.read_text(encoding="utf-8"))
+        for image in layers:
+            image["collector_origin"] = "REAL_REGISTRY"
+            image["collector_name"] = "docker-manifest-inspect"
+        layers_path.write_text(json.dumps(layers, indent=2), encoding="utf-8")
+
+        manifest_path = out_dir / "manifest.json"
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        manifest["execution_status"] = "OBSERVED"
+        manifest_path.write_text(json.dumps(manifest, indent=2), encoding="utf-8")
+        status_path = out_dir / "report" / "status.json"
+        status = json.loads(status_path.read_text(encoding="utf-8"))
+        status["status"] = "OBSERVED"
+        status_path.write_text(json.dumps(status, indent=2), encoding="utf-8")
+        _refresh_checksums(out_dir)
+
+        with pytest.raises(EvidenceValidationError, match="lacks raw_observation_path"):
+            validate_e5_storage_evidence(out_dir)
+
+
+def test_validator_rejects_fabricated_layer_digest_and_size(catalog):
+    with tempfile.TemporaryDirectory() as tmp:
+        out_dir = run_storage_evaluation(
+            catalog_path=CATALOG_PATH,
+            mode="synthetic",
+            output_dir=Path(tmp) / "out",
+            stage="development",
+            eval_recommendation=False,
+            scales=(4,),
+        )
+        layers_path = out_dir / "raw" / "image_layers.json"
+        layers = json.loads(layers_path.read_text(encoding="utf-8"))
+        fabricated_digest = "sha256:" + "f" * 64
+        layers[0]["layers"][0]["digest"] = fabricated_digest
+        layers[0]["ordered_layer_digests"][0] = fabricated_digest
+        layers[0]["layers"][0]["size"] += 123
+        layers[0]["layer_sizes"][0] += 123
+        layers[0]["total_bytes"] += 123
+        layers_path.write_text(json.dumps(layers, indent=2), encoding="utf-8")
+        _refresh_checksums(out_dir)
+
+        with pytest.raises(EvidenceValidationError, match="not recomputable from raw"):
+            validate_e5_storage_evidence(out_dir)
+
+
+def _canonical_v2_scipy_case(case_id: str, variant_id: str) -> SplitCase:
+    return SplitCase(
+        case_id=case_id,
+        family_id="canonical-v2-scipy-family",
+        variant_id=variant_id,
+        language="en",
+        prompt="Clean and transform a medium CSV using pandas.",
+        inputs={
+            "dataset_size_gb": 0.8,
+            "code_context_hints": ["import pandas as pd"],
+        },
+        gold={
+            "gold_structured_intent": {},
+            "candidate_gold": {
+                "acceptable_candidate_ids": ["medium-scipy-data-science"],
+                "preferred_candidate_ids": ["medium-scipy-data-science"],
+            },
+            "profile_gold": {
+                "acceptable_profile_ids": ["medium"],
+                "preferred_profile_ids": ["medium"],
+            },
+            "image_gold": {
+                "acceptable_image_ids": ["scipy-data-science"],
+                "preferred_image_ids": ["scipy-data-science"],
+                "required_capabilities": ["pandas"],
+            },
+            "policy_gold": {
+                "expected_feasibility": "feasible",
+                "required_constraints": [],
+                "explicitly_unsupported_requirements": [],
+            },
+        },
+        source_provenance={
+            "source_case_id": case_id,
+            "source_dataset_id": "canonical-v2-test-fixture",
+        },
+    )
+
+
+def _canonical_v2_split(*cases: SplitCase) -> SimpleNamespace:
+    return SimpleNamespace(
+        bundle=SimpleNamespace(
+            schema_version=SPLIT_BUNDLE_SCHEMA_VERSION_V2,
+            cases=cases,
+            split_manifest=SimpleNamespace(
+                dataset_id="canonical-v2-test-fixture",
+                role=SimpleNamespace(value="development"),
+            ),
+        ),
+        source_file_sha256="a" * 64,
+    )
+
+
+def test_catalog_scale_scores_canonical_v2_one_case_scipy_fixture(catalog):
+    case = _canonical_v2_scipy_case("canonical-v2-scipy", "canonical")
+    result = evaluate_catalog_scale_recommendation(
+        base_catalog=catalog,
+        scale_images=get_experimental_catalog_config(catalog).get_scale_images(4),
+        stage="development",
+        split_bundle=_canonical_v2_split(case),
+    )
+
+    assert result["status"] == "OBSERVED"
+    assert result["image_acceptable_accuracy"] == 1.0
+    assert result["image_preferred_accuracy"] == 1.0
+    assert result["retrieval_recall_at_k"] == 1.0
+    assert len(result["case_records"]) == 1
+    assert all(row["gold_schema"] == "canonical_v2" for row in result["case_records"])
+    assert len(result["family_estimates"]) == 1
+    assert result["family_estimates"][0]["variant_count"] == 1
+    summary = result["family_summary"]["metrics"]["image_acceptable"]
+    assert summary["aggregation_unit"] == "workload_family"
+    assert summary["effective_family_n"] == 1
+    assert "INSUFFICIENT_EFFECTIVE_FAMILY_N" in summary["warning_codes"]
+
+
+def test_catalog_scale_collapses_variants_to_workload_family(catalog):
+    cases = (
+        _canonical_v2_scipy_case("canonical-v2-scipy", "canonical"),
+        _canonical_v2_scipy_case("canonical-v2-scipy-paraphrase", "paraphrase"),
+    )
+    result = evaluate_catalog_scale_recommendation(
+        base_catalog=catalog,
+        scale_images=get_experimental_catalog_config(catalog).get_scale_images(4),
+        stage="development",
+        split_bundle=_canonical_v2_split(*cases),
+    )
+
+    assert len(result["case_records"]) == 2
+    assert len(result["family_estimates"]) == 1
+    assert result["family_estimates"][0]["variant_count"] == 2
+    assert result["family_summary"]["metrics"]["image_acceptable"][
+        "family_count"
+    ] == 1
+
+
+def test_catalog_scale_rejects_missing_canonical_v2_acceptable_gold(catalog):
+    case = _canonical_v2_scipy_case("canonical-v2-invalid", "canonical")
+    malformed_gold = dict(case.gold)
+    malformed_gold["image_gold"] = {
+        "preferred_image_ids": ["scipy-data-science"],
+        "required_capabilities": ["pandas"],
+    }
+    malformed = SplitCase(
+        case_id=case.case_id,
+        family_id=case.family_id,
+        variant_id=case.variant_id,
+        language=case.language,
+        prompt=case.prompt,
+        inputs=case.inputs,
+        gold=malformed_gold,
+        source_provenance=case.source_provenance,
+    )
+
+    with pytest.raises(CatalogScaleGoldError, match="acceptable_image_ids"):
+        evaluate_catalog_scale_recommendation(
+            base_catalog=catalog,
+            scale_images=get_experimental_catalog_config(catalog).get_scale_images(4),
+            stage="development",
+            split_bundle=_canonical_v2_split(malformed),
+        )

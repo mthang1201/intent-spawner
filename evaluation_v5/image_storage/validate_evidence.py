@@ -3,13 +3,23 @@
 from __future__ import annotations
 
 import argparse
+import base64
 from collections import Counter, defaultdict
+import hashlib
 import json
+import math
 from pathlib import Path
+import statistics
 from typing import Any, Mapping
 
 import yaml
 
+from evaluation_v5.analysis.statistics import (
+    DEFAULT_BOOTSTRAP_SEED,
+    derive_bootstrap_seed,
+    family_bootstrap_ci,
+    inference_eligibility,
+)
 from evaluation_v5.schemas import EvidenceStatus, ProtocolV5Manifest
 from evaluation_v5.validation import validate_manifest
 from evaluation_v5.offline.source_run import SourceRunProvenanceError
@@ -33,10 +43,32 @@ from evaluation_v5.image_storage.functional_provenance import (
     source_manifest_identities,
 )
 from evaluation_v5.image_storage.metrics import compute_functional_metrics, evaluate_recommendation_functional
+from evaluation_v5.image_storage.storage_contracts import (
+    ImageLayerMetadata,
+    LEGACY_STORAGE_SCHEMA_VERSION,
+    STORAGE_SCHEMA_VERSION,
+    StorageCollectorOrigin,
+    compute_marginal_storage,
+    compute_pairwise_layer_reuse,
+    is_real_storage_collector_origin,
+)
 
 
 class EvidenceValidationError(ValueError):
     """Raised when an evidence package violates Protocol-v5 E5 rules."""
+
+
+def _is_sha256_digest(value: object) -> bool:
+    if not isinstance(value, str) or not value.startswith("sha256:"):
+        return False
+    digest = value.removeprefix("sha256:")
+    return len(digest) == 64 and all(char in "0123456789abcdef" for char in digest)
+
+
+def _is_sha256_hex(value: object) -> bool:
+    return isinstance(value, str) and len(value) == 64 and all(
+        char in "0123456789abcdef" for char in value
+    )
 
 
 def _strict_json(raw: bytes, *, label: str) -> Any:
@@ -66,6 +98,44 @@ def _strict_json(raw: bytes, *, label: str) -> Any:
         raise
     except (UnicodeError, json.JSONDecodeError) as exc:
         raise EvidenceValidationError(f"{label} is not valid JSON") from exc
+
+
+def _registry_manifest_from_raw(
+    raw: bytes,
+    *,
+    image: Mapping[str, Any],
+) -> tuple[Mapping[str, Any], Mapping[str, Any]]:
+    """Select the platform manifest from one exact docker-manifest response."""
+
+    parsed = _strict_json(raw, label=f"raw registry response for {image.get('image_id')}")
+    entries = parsed if isinstance(parsed, list) else [parsed]
+    expected_platform = image.get("platform") or {}
+    for item in entries:
+        if not isinstance(item, Mapping):
+            continue
+        descriptor = item.get("Descriptor") or {}
+        platform_data = descriptor.get("platform") or {}
+        if (
+            platform_data.get("architecture") != expected_platform.get("architecture")
+            or platform_data.get("os") != expected_platform.get("os")
+        ):
+            continue
+        manifest = item.get("OCIManifest") or item.get("SchemaV2Manifest")
+        if manifest is None and item.get("Raw") is not None:
+            try:
+                manifest = _strict_json(
+                    base64.b64decode(item["Raw"]),
+                    label=f"embedded registry manifest for {image.get('image_id')}",
+                )
+            except Exception as exc:
+                raise EvidenceValidationError(
+                    f"Raw registry response for {image.get('image_id')} has invalid embedded manifest"
+                ) from exc
+        if isinstance(manifest, Mapping):
+            return descriptor, manifest
+    raise EvidenceValidationError(
+        f"Raw registry response for {image.get('image_id')} lacks the recorded platform manifest"
+    )
 
 
 def validate_e5_evidence(package_dir: Path | str) -> dict[str, Any]:
@@ -1010,6 +1080,7 @@ def validate_e5_storage_evidence(package_dir: Path | str) -> dict[str, Any]:
 
     layers_path = raw_dir / "image_layers.json"
     env_path = raw_dir / "environment.json"
+    recommendations_path = raw_dir / "catalog_scale_recommendations.json"
     storage_metrics_path = derived_dir / "storage_metrics.json"
     marginal_path = derived_dir / "marginal_storage.json"
     pairwise_path = derived_dir / "pairwise_layer_reuse.json"
@@ -1048,7 +1119,11 @@ def validate_e5_storage_evidence(package_dir: Path | str) -> dict[str, Any]:
     from evaluation_v5.analysis.research_contracts import validate_storage_evidence
 
     try:
-        storage_data = json.loads(storage_metrics_path.read_text(encoding="utf-8"))
+        storage_data = _strict_json(
+            storage_metrics_path.read_bytes(), label="storage_metrics.json"
+        )
+        if not isinstance(storage_data, Mapping):
+            raise EvidenceValidationError("storage_metrics.json must be an object")
         validate_storage_evidence(storage_data)
     except Exception as exc:
         raise EvidenceValidationError(f"Invalid storage metrics in {directory}: {exc}") from exc
@@ -1057,6 +1132,15 @@ def validate_e5_storage_evidence(package_dir: Path | str) -> dict[str, Any]:
     split_stage = storage_data["split_stage"]
     claims_permitted = storage_data["claims_permitted"]
     prefixes = storage_data.get("prefixes", [])
+    storage_schema_version = storage_data["schema_version"]
+    current_storage_schema = storage_schema_version == STORAGE_SCHEMA_VERSION
+    legacy_storage_schema = storage_schema_version == LEGACY_STORAGE_SCHEMA_VERSION
+    if not (current_storage_schema or legacy_storage_schema):
+        raise EvidenceValidationError("Unsupported storage evidence schema version")
+    if current_storage_schema and not recommendations_path.is_file():
+        raise EvidenceValidationError(
+            "Current storage package is missing raw/catalog_scale_recommendations.json"
+        )
 
     # Check non-expansion invariant
     for p in prefixes:
@@ -1068,7 +1152,9 @@ def validate_e5_storage_evidence(package_dir: Path | str) -> dict[str, Any]:
 
     # 4. Validate marginal_storage.json
     try:
-        marginal_data = json.loads(marginal_path.read_text(encoding="utf-8"))
+        marginal_data = _strict_json(
+            marginal_path.read_bytes(), label="marginal_storage.json"
+        )
     except Exception as exc:
         raise EvidenceValidationError(f"Malformed marginal_storage.json: {exc}") from exc
 
@@ -1087,10 +1173,14 @@ def validate_e5_storage_evidence(package_dir: Path | str) -> dict[str, Any]:
 
     # 5. Validate pairwise_layer_reuse.json
     try:
-        pairwise_data = json.loads(pairwise_path.read_text(encoding="utf-8"))
+        pairwise_data = _strict_json(
+            pairwise_path.read_bytes(), label="pairwise_layer_reuse.json"
+        )
     except Exception as exc:
         raise EvidenceValidationError(f"Malformed pairwise_layer_reuse.json: {exc}") from exc
 
+    if not isinstance(pairwise_data, Mapping):
+        raise EvidenceValidationError("pairwise_layer_reuse.json must be an object")
     c_mat = pairwise_data.get("shared_layer_count_matrix", [])
     b_mat = pairwise_data.get("shared_layer_byte_matrix", [])
     n_imgs = len(pairwise_data.get("image_ids", []))
@@ -1110,12 +1200,19 @@ def validate_e5_storage_evidence(package_dir: Path | str) -> dict[str, Any]:
 
     # 6. Validate catalog_scalability.json (rejection of fabricated scales)
     try:
-        scale_data = json.loads(scalability_path.read_text(encoding="utf-8"))
+        scale_data = _strict_json(
+            scalability_path.read_bytes(), label="catalog_scalability.json"
+        )
     except Exception as exc:
         raise EvidenceValidationError(f"Malformed catalog_scalability.json: {exc}") from exc
 
     if not isinstance(scale_data, list) or not scale_data:
         raise EvidenceValidationError("catalog_scalability.json must be a non-empty list of scale records")
+    configured_scale_sizes = [int(row["catalog_size"]) for row in scale_data]
+    if configured_scale_sizes != sorted(set(configured_scale_sizes)):
+        raise EvidenceValidationError(
+            "Catalog scale records must have unique increasing sizes"
+        )
 
     for s in scale_data:
         scale_sz = int(s["catalog_size"])
@@ -1131,14 +1228,68 @@ def validate_e5_storage_evidence(package_dir: Path | str) -> dict[str, Any]:
         if s.get("size_domain") not in ("compressed_oci_manifest_layer_bytes", "uncompressed_filesystem_layer_bytes"):
             raise EvidenceValidationError(f"Invalid size domain in scale record: {s.get('size_domain')}")
 
-    # 7. Validate raw image layers provenance and immutable catalog gate
-    try:
-        layers_data = json.loads(layers_path.read_text(encoding="utf-8"))
-    except Exception as exc:
-        raise EvidenceValidationError(f"Malformed image_layers.json: {exc}") from exc
+    # 7. Validate raw image layers, collector provenance, and immutable catalog gate
+    layers_data = _strict_json(layers_path.read_bytes(), label="image_layers.json")
+    env_data = _strict_json(env_path.read_bytes(), label="environment.json")
+    if not isinstance(layers_data, list) or not layers_data:
+        raise EvidenceValidationError("image_layers.json must be a non-empty list")
+    if not isinstance(env_data, Mapping):
+        raise EvidenceValidationError("environment.json must be an object")
+
+    collector_authentic = False
+    collector_origin = "LEGACY_UNRECORDED"
+    collector: Mapping[str, Any] = {}
+    if current_storage_schema:
+        collector = storage_data.get("collector") or {}
+        if not isinstance(collector, Mapping):
+            raise EvidenceValidationError("Current storage evidence collector must be an object")
+        try:
+            origin_enum = StorageCollectorOrigin(collector.get("origin"))
+        except (TypeError, ValueError) as exc:
+            raise EvidenceValidationError("Current storage evidence has invalid collector origin") from exc
+        collector_origin = origin_enum.value
+        expected_collector_names = {
+            StorageCollectorOrigin.REAL_REGISTRY: "docker-manifest-inspect",
+            StorageCollectorOrigin.CONTAINER_STORAGE_OBSERVATION: "container-storage-observation",
+            StorageCollectorOrigin.SYNTHETIC_TEST: "synthetic-storage-test-runner",
+            StorageCollectorOrigin.DRY_RUN: "dry-run-storage-runner",
+        }
+        if (
+            collector.get("collector_name") != expected_collector_names[origin_enum]
+            or collector.get("collector_version") != "storage-collector-v1.0.0"
+        ):
+            raise EvidenceValidationError(
+                "Storage collector identity is not a supported fixed implementation"
+            )
+        if storage_data.get("provenance", {}).get("storage_collector_origin") != collector_origin:
+            raise EvidenceValidationError("Storage provenance lost its collector origin")
+        if env_data.get("storage_collector") != collector:
+            raise EvidenceValidationError("Environment provenance disagrees with storage collector")
+        expected_runtime = {
+            StorageCollectorOrigin.REAL_REGISTRY: "docker",
+            StorageCollectorOrigin.CONTAINER_STORAGE_OBSERVATION: "container_storage",
+            StorageCollectorOrigin.SYNTHETIC_TEST: "synthetic_test",
+            StorageCollectorOrigin.DRY_RUN: "dry_run",
+        }[origin_enum]
+        if storage_data.get("platform", {}).get("runtime") != expected_runtime or env_data.get("runtime") != expected_runtime:
+            raise EvidenceValidationError(
+                "Caller runtime label disagrees with authenticated storage collector origin"
+            )
+        real_origin = is_real_storage_collector_origin(origin_enum)
+        if real_origin != (execution_status == "OBSERVED"):
+            raise EvidenceValidationError(
+                "Storage execution status is not derivable from collector origin"
+            )
+        if not real_origin and claims_permitted:
+            raise EvidenceValidationError(
+                "Synthetic or dry-run storage evidence cannot permit claims"
+            )
 
     immutable_catalog_valid = True
+    reconstructed_images: list[ImageLayerMetadata] = []
     for img in layers_data:
+        if not isinstance(img, Mapping):
+            raise EvidenceValidationError("image_layers.json rows must be objects")
         if not img.get("image_digest"):
             raise EvidenceValidationError(f"Image {img.get('image_id')} missing image_digest")
         if "is_digest_pinned" not in img:
@@ -1146,9 +1297,118 @@ def validate_e5_storage_evidence(package_dir: Path | str) -> dict[str, Any]:
         if not img.get("ordered_layer_digests") and img.get("layers"):
             raise EvidenceValidationError(f"Image {img.get('image_id')} missing ordered_layer_digests")
 
+        raw_layers = img.get("layers") or []
+        if not isinstance(raw_layers, list) or any(
+            not isinstance(item, Mapping) for item in raw_layers
+        ):
+            raise EvidenceValidationError(
+                f"Image {img.get('image_id')} layers must be a list of objects"
+            )
+        if img.get("ordered_layer_digests") != [item.get("digest") for item in raw_layers]:
+            raise EvidenceValidationError(
+                f"Image {img.get('image_id')} ordered layer digests disagree with raw descriptors"
+            )
+        if img.get("layer_sizes") != [item.get("size") for item in raw_layers]:
+            raise EvidenceValidationError(
+                f"Image {img.get('image_id')} layer sizes disagree with raw descriptors"
+            )
+        if any(
+            not _is_sha256_digest(item.get("digest"))
+            or isinstance(item.get("size"), bool)
+            or not isinstance(item.get("size"), int)
+            or item["size"] < 0
+            for item in raw_layers
+        ):
+            raise EvidenceValidationError(
+                f"Image {img.get('image_id')} contains an invalid layer digest or byte value"
+            )
+        if img.get("total_bytes") != sum(int(item["size"]) for item in raw_layers):
+            raise EvidenceValidationError(
+                f"Image {img.get('image_id')} total bytes disagree with layer descriptors"
+            )
+        try:
+            reconstructed_images.append(ImageLayerMetadata.from_dict(img))
+        except Exception as exc:
+            raise EvidenceValidationError(
+                f"Image {img.get('image_id')} cannot be reconstructed from raw descriptors"
+            ) from exc
+
+        if current_storage_schema:
+            for field in ("collector_origin", "collector_name", "collector_version"):
+                expected = {
+                    "collector_origin": collector_origin,
+                    "collector_name": collector.get("collector_name"),
+                    "collector_version": collector.get("collector_version"),
+                }[field]
+                if img.get(field) != expected:
+                    raise EvidenceValidationError(
+                        f"Image {img.get('image_id')} lost collector provenance field {field}"
+                    )
+
+            if is_real_storage_collector_origin(collector_origin):
+                for field in (
+                    "resolved_digest",
+                    "manifest_digest",
+                    "config_digest",
+                    "raw_observation_path",
+                    "raw_observation_sha256",
+                ):
+                    if not img.get(field):
+                        raise EvidenceValidationError(
+                            f"OBSERVED image {img.get('image_id')} lacks {field}"
+                        )
+                if not raw_layers or not img.get("platform"):
+                    raise EvidenceValidationError(
+                        f"OBSERVED image {img.get('image_id')} lacks platform or layers"
+                    )
+                for field in ("resolved_digest", "manifest_digest", "config_digest"):
+                    if not _is_sha256_digest(img.get(field)):
+                        raise EvidenceValidationError(
+                            f"OBSERVED image {img.get('image_id')} has invalid {field}"
+                        )
+                relative = Path(str(img["raw_observation_path"]))
+                if relative.is_absolute() or ".." in relative.parts:
+                    raise EvidenceValidationError("Raw storage observation path escapes package")
+                raw_path = raw_dir / relative
+                if not raw_path.is_file() or raw_path not in checked_files:
+                    raise EvidenceValidationError(
+                        f"OBSERVED image {img.get('image_id')} lacks sealed raw registry evidence"
+                    )
+                raw_bytes = raw_path.read_bytes()
+                if hashlib.sha256(raw_bytes).hexdigest() != img["raw_observation_sha256"]:
+                    raise EvidenceValidationError(
+                        f"OBSERVED image {img.get('image_id')} raw observation checksum mismatch"
+                    )
+                if collector_origin == StorageCollectorOrigin.REAL_REGISTRY.value:
+                    descriptor, raw_manifest = _registry_manifest_from_raw(
+                        raw_bytes, image=img
+                    )
+                    raw_config = raw_manifest.get("config") or {}
+                    raw_layers_selected = raw_manifest.get("layers") or []
+                    if (
+                        descriptor.get("digest", img["resolved_digest"])
+                        != img["manifest_digest"]
+                        or raw_config.get("digest") != img["config_digest"]
+                        or [item.get("digest") for item in raw_layers_selected]
+                        != img["ordered_layer_digests"]
+                        or [item.get("size") for item in raw_layers_selected]
+                        != img["layer_sizes"]
+                    ):
+                        raise EvidenceValidationError(
+                            f"OBSERVED image {img.get('image_id')} metadata is not derived from its raw registry response"
+                        )
+            elif img.get("raw_observation_path") or img.get("raw_observation_sha256"):
+                raise EvidenceValidationError(
+                    f"Non-observed image {img.get('image_id')} cannot claim raw registry evidence"
+                )
+
         # Check immutable requested reference gate
         req_ref = str(img.get("requested_reference") or img.get("image_reference", ""))
         pinned = bool(img.get("is_digest_pinned", "@sha256:" in req_ref))
+        if pinned and parse_image_digest(req_ref) != img.get("image_digest"):
+            raise EvidenceValidationError(
+                f"Image {img.get('image_id')} requested reference does not bind its recorded digest"
+            )
         if not pinned or "@sha256:" not in req_ref:
             if split_stage == "confirmatory":
                 raise EvidenceValidationError(
@@ -1156,6 +1416,143 @@ def validate_e5_storage_evidence(package_dir: Path | str) -> dict[str, Any]:
                     f"requested reference {req_ref!r} is not digest-pinned"
                 )
             immutable_catalog_valid = False
+
+    if current_storage_schema:
+        ordered_image_digests = [item.image_digest for item in reconstructed_images]
+        if ordered_image_digests != storage_data.get("catalog", {}).get(
+            "ordered_image_digests"
+        ):
+            raise EvidenceValidationError(
+                "Raw image order/digests disagree with storage catalog identity"
+            )
+        layer_sizes_by_digest: dict[str, int] = {}
+        cumulative_logical = 0
+        expected_prefixes: list[dict[str, Any]] = []
+        for index, image in enumerate(reconstructed_images, start=1):
+            cumulative_logical += image.total_bytes
+            for layer in image.layers:
+                prior_size = layer_sizes_by_digest.setdefault(layer.digest, layer.size)
+                if prior_size != layer.size:
+                    raise EvidenceValidationError(
+                        f"Layer {layer.digest} has inconsistent compressed bytes across images"
+                    )
+            expected_prefixes.append(
+                {
+                    "prefix_size": index,
+                    "image_digests": ordered_image_digests[:index],
+                    "naive_logical_bytes": cumulative_logical,
+                    "unique_layer_bytes": sum(layer_sizes_by_digest.values()),
+                }
+            )
+        if prefixes != expected_prefixes:
+            raise EvidenceValidationError(
+                "Derived storage prefixes are not recomputable from raw layer descriptors"
+            )
+
+        expected_marginal = [
+            row.to_dict() for row in compute_marginal_storage(reconstructed_images)
+        ]
+        if marginal_data != expected_marginal:
+            raise EvidenceValidationError(
+                "Derived marginal storage is not recomputable from raw layer descriptors"
+            )
+        expected_pairwise = compute_pairwise_layer_reuse(
+            reconstructed_images
+        ).to_dict()
+        if pairwise_data != expected_pairwise:
+            raise EvidenceValidationError(
+                "Derived pairwise reuse is not recomputable from raw layer descriptors"
+            )
+
+        for scale in scale_data:
+            size = int(scale["catalog_size"])
+            available = len(scale.get("ordered_requested_references") or []) >= size
+            selected_images = reconstructed_images[:size]
+            identity_fields = {
+                "ordered_immutable_image_references": [
+                    image.requested_reference for image in selected_images
+                ],
+                "ordered_requested_references": [
+                    image.requested_reference for image in selected_images
+                ],
+                "canonical_resolved_references": [
+                    image.canonical_resolved_reference for image in selected_images
+                ],
+                "all_references_digest_pinned": all(
+                    image.is_digest_pinned for image in selected_images
+                ),
+            }
+            if any(scale.get(field) != value for field, value in identity_fields.items()):
+                raise EvidenceValidationError(
+                    f"Scale {size} catalog identity is not the ordered raw image prefix"
+                )
+            if available and size <= len(expected_prefixes):
+                prefix = expected_prefixes[size - 1]
+                marginal = expected_marginal[size - 1]
+                saving_bytes = prefix["naive_logical_bytes"] - prefix["unique_layer_bytes"]
+                expected_values = {
+                    "storage_measurement_status": execution_status,
+                    "logical_image_bytes": prefix["naive_logical_bytes"],
+                    "unique_layer_bytes": prefix["unique_layer_bytes"],
+                    "dedup_saving_bytes": saving_bytes,
+                    "marginal_unique_bytes": marginal["marginal_unique_bytes"],
+                }
+                expected_ratio = (
+                    saving_bytes / prefix["naive_logical_bytes"]
+                    if prefix["naive_logical_bytes"]
+                    else 0.0
+                )
+            else:
+                expected_values = {
+                    "storage_measurement_status": "NOT_EXECUTED",
+                    "logical_image_bytes": None,
+                    "unique_layer_bytes": None,
+                    "dedup_saving_bytes": None,
+                    "marginal_unique_bytes": None,
+                }
+                expected_ratio = None
+            if any(scale.get(field) != value for field, value in expected_values.items()):
+                raise EvidenceValidationError(
+                    f"Scale {size} storage metrics are not derived from raw layer descriptors"
+                )
+            observed_ratio = scale.get("dedup_saving_ratio")
+            if (
+                (expected_ratio is None and observed_ratio is not None)
+                or (
+                    expected_ratio is not None
+                    and (
+                        observed_ratio is None
+                        or not math.isclose(
+                            float(observed_ratio),
+                            expected_ratio,
+                            rel_tol=0,
+                            abs_tol=1e-6,
+                        )
+                    )
+                )
+            ):
+                raise EvidenceValidationError(
+                    f"Scale {size} storage ratio is not derived from raw layer descriptors"
+                )
+
+    if current_storage_schema and is_real_storage_collector_origin(collector_origin):
+        if int(collector.get("raw_observation_count", -1)) != len(layers_data):
+            raise EvidenceValidationError(
+                "Collector raw observation count does not match inspected images"
+            )
+        collector_authentic = True
+
+    if current_storage_schema:
+        derived_claims_permitted = bool(
+            execution_status == "OBSERVED"
+            and split_stage == "confirmatory"
+            and collector_authentic
+            and immutable_catalog_valid
+        )
+        if claims_permitted is not derived_claims_permitted:
+            raise EvidenceValidationError(
+                "claims_permitted is not derived from validated storage evidence eligibility"
+            )
 
     # Check single-image prefix invariant and within-image duplicate descriptor accounting
     if prefixes and layers_data:
@@ -1243,6 +1640,423 @@ def validate_e5_storage_evidence(package_dir: Path | str) -> dict[str, Any]:
                         f"claims confirmatory recommendation but uses development dataset {ds_id} (SHA: {ds_sha})"
                     )
 
+    if current_storage_schema:
+        if recommendations_path not in checked_files:
+            raise EvidenceValidationError(
+                "Current raw catalog-scale recommendations are not sealed by SHA256SUMS"
+            )
+        recommendation_payload = _strict_json(
+            recommendations_path.read_bytes(),
+            label="catalog_scale_recommendations.json",
+        )
+        if (
+            not isinstance(recommendation_payload, Mapping)
+            or recommendation_payload.get("schema_version")
+            != "protocol-v5-catalog-scale-recommendations-v1.0.0"
+            or recommendation_payload.get("collector_origin") != collector_origin
+            or not isinstance(recommendation_payload.get("scale_evaluations"), list)
+        ):
+            raise EvidenceValidationError(
+                "catalog_scale_recommendations.json has an invalid collector-bound envelope"
+            )
+        recommendation_runs = recommendation_payload["scale_evaluations"]
+        by_size: dict[int, Mapping[str, Any]] = {}
+        for run in recommendation_runs:
+            if not isinstance(run, Mapping):
+                raise EvidenceValidationError(
+                    "catalog-scale recommendation runs must be objects"
+                )
+            try:
+                size = int(run["catalog_size"])
+            except (KeyError, TypeError, ValueError) as exc:
+                raise EvidenceValidationError(
+                    "catalog-scale recommendation run has invalid catalog_size"
+                ) from exc
+            if size in by_size:
+                raise EvidenceValidationError(
+                    f"Duplicate raw catalog-scale recommendation run for scale {size}"
+                )
+            by_size[size] = run
+        if set(by_size) != {int(row["catalog_size"]) for row in scale_data}:
+            raise EvidenceValidationError(
+                "Raw and derived catalog-scale recommendation runs disagree"
+            )
+
+        metric_pairs = {
+            "image_acceptable": "p2_image_acceptable_accuracy",
+            "image_preferred": "p2_image_preferred_accuracy",
+            "retrieval_recall_at_k": "p2_retrieval_recall_at_k",
+            "latency_seconds": "p2_latency_mean_seconds",
+        }
+        for scale in scale_data:
+            size = int(scale["catalog_size"])
+            run = by_size[size]
+            exact_fields = {
+                "catalog_id": scale.get("catalog_id"),
+                "status": scale.get("p2_evaluation_status"),
+                "split_stage": scale.get("split_stage"),
+                "split_role": scale.get("split_role"),
+                "dataset_id": scale.get("evaluation_dataset_identity"),
+                "dataset_sha256": scale.get("dataset_sha256"),
+            }
+            for field, expected in exact_fields.items():
+                if run.get(field) != expected:
+                    raise EvidenceValidationError(
+                        f"Scale {size} raw recommendation field {field} disagrees with derived metrics"
+                    )
+            if run.get("aggregation_unit") != "workload_family":
+                raise EvidenceValidationError(
+                    f"Scale {size} recommendation aggregation unit is not workload_family"
+                )
+            provenance = scale.get("provenance") or {}
+            records = run.get("case_records") or []
+            families = run.get("family_estimates") or []
+            if (
+                not isinstance(provenance, Mapping)
+                or provenance.get("storage_collector_origin") != collector_origin
+                or provenance.get("recommendation_aggregation_unit") != "workload_family"
+                or provenance.get("raw_recommendation_record_count") != len(records)
+            ):
+                raise EvidenceValidationError(
+                    f"Scale {size} recommendation provenance is incomplete or inconsistent"
+                )
+            if run.get("status") != "OBSERVED":
+                if records or families or run.get("family_summary"):
+                    raise EvidenceValidationError(
+                        f"NOT_EXECUTED scale {size} contains raw recommendation observations"
+                    )
+                continue
+            if not isinstance(records, list) or not records:
+                raise EvidenceValidationError(
+                    f"OBSERVED scale {size} lacks raw per-case recommendation records"
+                )
+            if not isinstance(families, list) or not families:
+                raise EvidenceValidationError(
+                    f"OBSERVED scale {size} lacks family-level recommendation estimates"
+                )
+            if len(records) != scale.get("evaluated_case_count"):
+                raise EvidenceValidationError(
+                    f"Scale {size} evaluated case count disagrees with raw records"
+                )
+
+            records_by_family: dict[str, list[Mapping[str, Any]]] = defaultdict(list)
+            seen_cases: set[str] = set()
+            feasible_cases = 0
+            source_corpus_identities: set[tuple[str, str, str, str]] = set()
+            for record in records:
+                if not isinstance(record, Mapping):
+                    raise EvidenceValidationError(
+                        f"Scale {size} recommendation record must be an object"
+                    )
+                case_id = record.get("case_id")
+                family_id = record.get("family_id")
+                variant_id = record.get("variant_id")
+                if (
+                    not isinstance(case_id, str)
+                    or not case_id
+                    or case_id in seen_cases
+                    or not isinstance(family_id, str)
+                    or not family_id
+                    or not isinstance(variant_id, str)
+                    or not variant_id
+                    or record.get("catalog_size") != size
+                ):
+                    raise EvidenceValidationError(
+                        f"Scale {size} has missing or duplicate case/family/variant identity"
+                    )
+                seen_cases.add(case_id)
+                records_by_family[family_id].append(record)
+                source_identity = record.get("source_identity") or {}
+                predicted_ids = (
+                    record.get("predicted_candidate_id"),
+                    record.get("predicted_profile_id"),
+                    record.get("predicted_image_id"),
+                )
+                if (
+                    record.get("schema_version")
+                    != "protocol-v5-catalog-scale-recommendation-record-v1.0.0"
+                    or not isinstance(source_identity, Mapping)
+                    or source_identity.get("dataset_id") != run.get("dataset_id")
+                    or source_identity.get("dataset_sha256") != run.get("dataset_sha256")
+                    or not source_identity.get("candidate_corpus_version")
+                    or not source_identity.get("candidate_corpus_sha256")
+                    or not source_identity.get("image_catalog_version")
+                    or not source_identity.get("p2_config_version")
+                    or source_identity.get("p2_config_version")
+                    != scale.get("p2_config_version")
+                    or any(
+                        not isinstance(value, str) or not value
+                        for value in predicted_ids
+                    )
+                    or not _is_sha256_hex(source_identity.get("dataset_sha256"))
+                    or not _is_sha256_hex(
+                        source_identity.get("source_provenance_sha256")
+                    )
+                    or not _is_sha256_hex(
+                        source_identity.get("candidate_corpus_sha256")
+                    )
+                ):
+                    raise EvidenceValidationError(
+                        f"Scale {size} case {case_id} has incomplete source identity"
+                    )
+                source_corpus_identities.add(
+                    (
+                        str(source_identity["candidate_corpus_version"]),
+                        str(source_identity["candidate_corpus_sha256"]),
+                        str(source_identity["image_catalog_version"]),
+                        str(source_identity["p2_config_version"]),
+                    )
+                )
+                if (
+                    run.get("split_schema_version")
+                    == "protocol-v5-split-bundle-v2.0.0"
+                    and record.get("gold_schema") != "canonical_v2"
+                ):
+                    raise EvidenceValidationError(
+                        f"Scale {size} case {case_id} did not use canonical-v2 gold"
+                    )
+                top_k = record.get("retrieval_top_k")
+                recall_k = record.get("recall_k")
+                if (
+                    not isinstance(top_k, list)
+                    or isinstance(recall_k, bool)
+                    or not isinstance(recall_k, int)
+                    or recall_k < 1
+                    or len(top_k) > recall_k
+                ):
+                    raise EvidenceValidationError(
+                        f"Scale {size} case {case_id} has invalid top-K retrieval evidence"
+                    )
+                for rank, hit in enumerate(top_k, start=1):
+                    if (
+                        not isinstance(hit, Mapping)
+                        or not hit.get("candidate_id")
+                        or hit.get("rank") not in (None, rank)
+                    ):
+                        raise EvidenceValidationError(
+                            f"Scale {size} case {case_id} has invalid ranked retrieval hit"
+                        )
+                expected = record.get("expected_feasibility")
+                if expected == "feasible":
+                    feasible_cases += 1
+                    for field in (
+                        "candidate_acceptable",
+                        "candidate_preferred",
+                        "profile_acceptable",
+                        "profile_preferred",
+                        "image_acceptable",
+                        "image_preferred",
+                    ):
+                        if not isinstance(record.get(field), bool):
+                            raise EvidenceValidationError(
+                                f"Scale {size} case {case_id} lacks boolean {field}"
+                            )
+                    recall = record.get("retrieval_recall_at_k")
+                    if (
+                        isinstance(recall, bool)
+                        or not isinstance(recall, (int, float))
+                        or not math.isfinite(float(recall))
+                        or not 0 <= float(recall) <= 1
+                    ):
+                        raise EvidenceValidationError(
+                            f"Scale {size} case {case_id} has invalid retrieval recall"
+                        )
+                elif expected in {"infeasible", "ambiguous"}:
+                    if any(
+                        record.get(field) is not None
+                        for field in (
+                            "candidate_acceptable",
+                            "candidate_preferred",
+                            "profile_acceptable",
+                            "profile_preferred",
+                            "image_acceptable",
+                            "image_preferred",
+                            "retrieval_recall_at_k",
+                        )
+                    ):
+                        raise EvidenceValidationError(
+                            f"Scale {size} non-feasible case {case_id} contains scored outcomes"
+                        )
+                else:
+                    raise EvidenceValidationError(
+                        f"Scale {size} case {case_id} has invalid feasibility label"
+                    )
+                latency = record.get("latency_seconds")
+                if (
+                    isinstance(latency, bool)
+                    or not isinstance(latency, (int, float))
+                    or not math.isfinite(float(latency))
+                    or latency < 0
+                ):
+                    raise EvidenceValidationError(
+                        f"Scale {size} case {case_id} has invalid latency"
+                    )
+            if feasible_cases != scale.get("feasible_case_count"):
+                raise EvidenceValidationError(
+                    f"Scale {size} feasible case count disagrees with raw records"
+                )
+            if len(source_corpus_identities) != 1:
+                raise EvidenceValidationError(
+                    f"Scale {size} recommendation cases disagree on frozen source identity"
+                )
+
+            family_by_id: dict[str, Mapping[str, Any]] = {}
+            for family in families:
+                if not isinstance(family, Mapping):
+                    raise EvidenceValidationError(
+                        f"Scale {size} family estimate must be an object"
+                    )
+                family_id = family.get("family_id")
+                if not isinstance(family_id, str) or not family_id or family_id in family_by_id:
+                    raise EvidenceValidationError(
+                        f"Scale {size} family IDs must be unique and non-blank"
+                    )
+                family_by_id[family_id] = family
+                source_records = records_by_family.get(family_id, [])
+                if (
+                    family.get("schema_version")
+                    != "protocol-v5-catalog-scale-family-estimate-v1.0.0"
+                    or family.get("catalog_size") != size
+                    or family.get("aggregation_unit") != "workload_family"
+                    or family.get("variant_count") != len(source_records)
+                    or sorted(family.get("case_ids") or [])
+                    != sorted(str(item["case_id"]) for item in source_records)
+                ):
+                    raise EvidenceValidationError(
+                        f"Scale {size} family {family_id} is not derived from its cases"
+                    )
+                values = family.get("values") or {}
+                denominators = family.get("endpoint_variant_denominators") or {}
+                for metric in metric_pairs:
+                    selected = [
+                        float(item[metric])
+                        for item in source_records
+                        if item.get(metric) is not None
+                    ]
+                    expected_value = statistics.fmean(selected) if selected else None
+                    if denominators.get(metric) != len(selected) or values.get(metric) != expected_value:
+                        raise EvidenceValidationError(
+                            f"Scale {size} family {family_id} {metric} is not an equal-weight variant mean"
+                        )
+            if set(family_by_id) != set(records_by_family):
+                raise EvidenceValidationError(
+                    f"Scale {size} family estimates do not cover every observed family"
+                )
+
+            family_summary = run.get("family_summary") or {}
+            summary_metrics = family_summary.get("metrics") or {}
+            if (
+                family_summary.get("aggregation_unit") != "workload_family"
+                or family_summary.get("within_family_aggregation")
+                != "equal_weight_variant_macro_mean"
+                or family_summary.get("cross_family_aggregation")
+                != "equal_weight_macro_mean"
+            ):
+                raise EvidenceValidationError(
+                    f"Scale {size} family summary has invalid aggregation semantics"
+                )
+            for metric, scale_field in metric_pairs.items():
+                estimates = [
+                    float(family["values"][metric])
+                    for family in families
+                    if family.get("values", {}).get(metric) is not None
+                ]
+                expected_macro = statistics.fmean(estimates) if estimates else None
+                summary = summary_metrics.get(metric) or {}
+                seed = derive_bootstrap_seed(
+                    DEFAULT_BOOTSTRAP_SEED,
+                    "e5_catalog_scale",
+                    run.get("dataset_sha256"),
+                    size,
+                    metric,
+                )
+                ci_low, ci_high = family_bootstrap_ci(
+                    [
+                        {
+                            "family_id": str(family["family_id"]),
+                            "value": family["values"][metric],
+                        }
+                        for family in families
+                        if family.get("values", {}).get(metric) is not None
+                    ],
+                    "value",
+                    seed=seed,
+                )
+                expected_inference = inference_eligibility(len(estimates))
+                if (
+                    summary.get("aggregation_unit") != "workload_family"
+                    or summary.get("family_count") != len(estimates)
+                    or summary.get("effective_family_n") != len(estimates)
+                    or summary.get("estimate") != expected_macro
+                    or summary.get("ci_low") != ci_low
+                    or summary.get("ci_high") != ci_high
+                    or summary.get("bootstrap_seed") != seed
+                    or any(
+                        summary.get(field) != value
+                        for field, value in expected_inference.items()
+                    )
+                    or (
+                        expected_macro is None
+                        and scale.get(scale_field) is not None
+                    )
+                    or (
+                        expected_macro is not None
+                        and (
+                            scale.get(scale_field) is None
+                            or not math.isclose(
+                                float(scale[scale_field]),
+                                expected_macro,
+                                rel_tol=0,
+                                abs_tol=1e-6,
+                            )
+                        )
+                    )
+                ):
+                    raise EvidenceValidationError(
+                        f"Scale {size} {metric} is not the validated family macro estimate"
+                    )
+
+            latencies = sorted(
+                float(record["latency_seconds"])
+                for record in records
+                if record.get("latency_seconds") is not None
+            )
+            latency_diagnostics = {
+                "p2_latency_median_seconds": (
+                    statistics.median(latencies) if latencies else None
+                ),
+                "p2_latency_p95_seconds": (
+                    latencies[int(math.ceil(0.95 * len(latencies))) - 1]
+                    if latencies
+                    else None
+                ),
+                "p2_latency_min_seconds": min(latencies) if latencies else None,
+                "p2_latency_max_seconds": max(latencies) if latencies else None,
+                "p2_latency_std_seconds": (
+                    statistics.stdev(latencies) if len(latencies) > 1 else 0.0
+                ),
+            }
+            for field, expected_value in latency_diagnostics.items():
+                observed_value = scale.get(field)
+                if (
+                    (expected_value is None and observed_value is not None)
+                    or (
+                        expected_value is not None
+                        and (
+                            observed_value is None
+                            or not math.isclose(
+                                float(observed_value),
+                                expected_value,
+                                rel_tol=0,
+                                abs_tol=1e-6,
+                            )
+                        )
+                    )
+                ):
+                    raise EvidenceValidationError(
+                        f"Scale {size} {field} is not derived from raw runtime observations"
+                    )
+
     # 9. Validate manifest.json
     try:
         manifest_raw = json.loads(manifest_path.read_text(encoding="utf-8"))
@@ -1256,13 +2070,68 @@ def validate_e5_storage_evidence(package_dir: Path | str) -> dict[str, Any]:
         raise EvidenceValidationError(
             f"Execution status mismatch: manifest has {manifest.execution_status.value} vs metrics {execution_status}"
         )
+    if current_storage_schema:
+        if manifest_raw.get("environment_identity") != env_data:
+            raise EvidenceValidationError(
+                "Manifest environment identity disagrees with raw storage environment"
+            )
+        if (
+            manifest_raw.get("dataset_identity", {}).get("dataset_sha256")
+            != storage_data.get("catalog", {}).get("file_sha256")
+            or manifest_raw.get("candidate_catalog", {}).get("catalog_sha256")
+            != storage_data.get("catalog", {}).get("file_sha256")
+        ):
+            raise EvidenceValidationError(
+                "Manifest catalog identity disagrees with storage evidence"
+            )
 
     # 10. Validate status.json
-    status_raw = json.loads(status_path.read_text(encoding="utf-8"))
+    status_raw = _strict_json(status_path.read_bytes(), label="status.json")
+    if not isinstance(status_raw, Mapping):
+        raise EvidenceValidationError("status.json must be an object")
     if status_raw.get("status") != execution_status:
         raise EvidenceValidationError(
             f"Status mismatch: status.json has {status_raw.get('status')} vs metrics {execution_status}"
         )
+    if current_storage_schema:
+        if (
+            status_raw.get("schema_version") != STORAGE_SCHEMA_VERSION
+            or status_raw.get("split_stage") != split_stage
+            or status_raw.get("claims_permitted") is not claims_permitted
+            or status_raw.get("storage_collector") != collector
+        ):
+            raise EvidenceValidationError(
+                "Status report disagrees with collector-bound storage evidence"
+            )
+        status_metrics = (
+            status_raw.get("final_naive_logical_bytes"),
+            status_raw.get("final_unique_layer_bytes"),
+            status_raw.get("final_storage_savings_bytes"),
+        )
+        if execution_status != "OBSERVED" and any(
+            value is not None for value in status_metrics
+        ):
+            raise EvidenceValidationError(
+                "Non-observed status report contains empirical storage metrics"
+            )
+        if execution_status == "OBSERVED" and prefixes:
+            expected_status_metrics = (
+                prefixes[-1]["naive_logical_bytes"],
+                prefixes[-1]["unique_layer_bytes"],
+                prefixes[-1]["naive_logical_bytes"]
+                - prefixes[-1]["unique_layer_bytes"],
+            )
+            if status_metrics != expected_status_metrics:
+                raise EvidenceValidationError(
+                    "Observed status report storage metrics disagree with validated prefixes"
+                )
+        report_text = report_md_path.read_text(encoding="utf-8").lower()
+        if (not claims_permitted or execution_status != "OBSERVED") and (
+            "empirically confirms" in report_text
+        ):
+            raise EvidenceValidationError(
+                "Ineligible storage report contains an empirical H7 confirmation"
+            )
 
     final_savings = (
         prefixes[-1]["naive_logical_bytes"] - prefixes[-1]["unique_layer_bytes"]
@@ -1274,7 +2143,9 @@ def validate_e5_storage_evidence(package_dir: Path | str) -> dict[str, Any]:
         s.get("storage_measurement_status") == "OBSERVED" for s in scale_data
     )
     eligible_4_image = (
-        execution_status == "OBSERVED"
+        current_storage_schema
+        and collector_authentic
+        and execution_status == "OBSERVED"
         and split_stage == "confirmatory"
         and claims_permitted
         and immutable_catalog_valid
@@ -1291,7 +2162,11 @@ def validate_e5_storage_evidence(package_dir: Path | str) -> dict[str, Any]:
         and scale_data[0].get("split_role") == "confirmatory"
     )
 
-    if not immutable_catalog_valid:
+    if legacy_storage_schema:
+        claim_eligibility = "LEGACY_INELIGIBLE_UNBOUND_COLLECTOR_ORIGIN"
+    elif not collector_authentic:
+        claim_eligibility = "INELIGIBLE_UNAUTHENTICATED_COLLECTOR_ORIGIN"
+    elif not immutable_catalog_valid:
         claim_eligibility = "INELIGIBLE_MUTABLE_CATALOG_INPUTS"
     elif not recommendation_split_valid:
         claim_eligibility = "INELIGIBLE_SPLIT_CONTAMINATION"
@@ -1308,7 +2183,7 @@ def validate_e5_storage_evidence(package_dir: Path | str) -> dict[str, Any]:
 
     return {
         "status": "PASS",
-        "validator_status": "CURRENT_VALID",
+        "validator_status": "CURRENT_VALID" if current_storage_schema else "LEGACY_VALID",
         "storage_structurally_valid": True,
         "storage_dedup_valid": True,
         "storage_metric_valid": True,
@@ -1320,16 +2195,24 @@ def validate_e5_storage_evidence(package_dir: Path | str) -> dict[str, Any]:
         "claim_eligibility": claim_eligibility,
         "eligible_as_current_e5_evidence": eligible_4_image,
         "full_scalability_claim_eligible": eligible_full,
-        "validation_profile": "STORAGE_SCALABILITY_V1_0",
+        "validation_profile": (
+            "STORAGE_SCALABILITY_V1_1_AUTHENTICATED"
+            if current_storage_schema
+            else "LEGACY_STORAGE_SCALABILITY_V1_0"
+        ),
         "evidence_dir": str(directory),
         "experiment_id": "E5",
         "requirement_id": "image_storage",
         "execution_status": execution_status,
         "split_stage": split_stage,
         "claims_permitted": claims_permitted,
+        "collector_origin": collector_origin,
+        "collector_authentic": collector_authentic,
         "total_prefixes": len(prefixes),
         "configured_scales": [s["catalog_size"] for s in scale_data],
-        "final_storage_savings_bytes": final_savings,
+        "final_storage_savings_bytes": (
+            final_savings if execution_status == "OBSERVED" else None
+        ),
         "files_checked": len(checked_files),
     }
 

@@ -44,6 +44,7 @@ from .runner import (
 )
 from .storage_contracts import (
     DEFAULT_CATALOG_SCALES,
+    LEGACY_STORAGE_SCHEMA_VERSION,
     SIZE_DOMAIN_COMPRESSED_OCI_BLOB,
     SIZE_DOMAIN_UNCOMPRESSED,
     CatalogImageEntry,
@@ -58,7 +59,10 @@ from .storage_contracts import (
     ScaleLevelEvaluationRecord,
     SplitStage,
     StorageEvidenceRecord,
+    StorageCollectorOrigin,
     StorageExecutionStatus,
+    STORAGE_COLLECTOR_SCHEMA_VERSION,
+    STORAGE_SCHEMA_VERSION,
     check_immutable_catalog_gate,
     compute_marginal_storage,
     compute_pairwise_layer_reuse,
@@ -66,6 +70,7 @@ from .storage_contracts import (
     get_ordered_catalog_images,
 )
 from .recommendation_evaluator import (
+    CatalogScaleGoldError,
     DEFAULT_RECALL_K,
     evaluate_catalog_scale_recommendation,
 )
@@ -92,6 +97,7 @@ __all__ = [
     "BaseStorageRunner",
     "CAPABILITY_PROBE_TEMPLATES",
     "CatalogImageEntry",
+    "CatalogScaleGoldError",
     "CapabilityProbeStatus",
     "DEFAULT_CATALOG_SCALES",
     "DEFAULT_RECALL_K",
@@ -117,6 +123,7 @@ __all__ = [
     "ImmutabilityGateResult",
     "KubernetesProbeRunner",
     "LayerInspection",
+    "LEGACY_STORAGE_SCHEMA_VERSION",
     "MarginalStorageRecord",
     "PairwiseReuseAnalysis",
     "PairwiseReuseRecord",
@@ -131,7 +138,10 @@ __all__ = [
     "SecurityVerificationError",
     "SplitStage",
     "StorageEvidenceRecord",
+    "StorageCollectorOrigin",
     "StorageExecutionStatus",
+    "STORAGE_COLLECTOR_SCHEMA_VERSION",
+    "STORAGE_SCHEMA_VERSION",
     "SyntheticProbeRunner",
     "SyntheticStorageRunner",
     "SystemFunctionalSummary",
@@ -157,4 +167,3 @@ __all__ = [
     "validate_e5_evidence",
     "validate_e5_storage_evidence",
 ]
-

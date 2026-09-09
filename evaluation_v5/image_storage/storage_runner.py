@@ -3,15 +3,14 @@
 from __future__ import annotations
 
 import base64
+import hashlib
 import json
 import logging
-from pathlib import Path
+import re
 import subprocess
-import time
 from typing import Any, Mapping, Sequence
 
 from .contracts import (
-    SecurityVerificationError,
     parse_image_digest,
     validate_approved_image_reference,
 )
@@ -20,15 +19,24 @@ from .storage_contracts import (
     LayerInspection,
     PrefixStorageMeasurement,
     SIZE_DOMAIN_COMPRESSED_OCI_BLOB,
+    STORAGE_COLLECTOR_SCHEMA_VERSION,
+    StorageCollectorOrigin,
     StorageExecutionStatus,
     get_ordered_catalog_images,
+    is_real_storage_collector_origin,
 )
 
 logger = logging.getLogger(__name__)
 
+_SHA256_DIGEST = re.compile(r"^sha256:[0-9a-f]{64}$")
+
 
 class BaseStorageRunner:
     """Abstract base class for inspecting catalog image layers and measuring prefix scaling."""
+
+    collector_origin = StorageCollectorOrigin.DRY_RUN
+    collector_name = "base-storage-runner"
+    collector_version = "storage-collector-v1.0.0"
 
     def __init__(
         self,
@@ -40,6 +48,38 @@ class BaseStorageRunner:
         self.catalog = catalog
         self.target_arch = target_arch
         self.target_os = target_os
+        self._raw_observations: dict[str, bytes] = {}
+
+    @property
+    def execution_status(self) -> str:
+        """Derive evidence status from the runner's fixed collector origin."""
+
+        return (
+            StorageExecutionStatus.OBSERVED.value
+            if is_real_storage_collector_origin(self.collector_origin)
+            else StorageExecutionStatus.NOT_EXECUTED.value
+        )
+
+    def collector_provenance(self) -> dict[str, Any]:
+        """Return origin metadata controlled by the concrete collector."""
+
+        return {
+            "schema_version": STORAGE_COLLECTOR_SCHEMA_VERSION,
+            "origin": self.collector_origin.value,
+            "collector_name": self.collector_name,
+            "collector_version": self.collector_version,
+            "evidence_classification": (
+                "REAL_OBSERVATION"
+                if is_real_storage_collector_origin(self.collector_origin)
+                else "NON_OBSERVED_TEST"
+            ),
+            "raw_observation_count": len(self._raw_observations),
+        }
+
+    def raw_observations(self) -> dict[str, bytes]:
+        """Return exact collector responses keyed by their package-relative raw path."""
+
+        return dict(self._raw_observations)
 
     def inspect_image_layers(
         self,
@@ -91,11 +131,20 @@ class BaseStorageRunner:
                 )
             )
 
-        return inspections, prefixes, StorageExecutionStatus.OBSERVED.value
+        expected_origin = self.collector_origin.value
+        if any(meta.collector_origin != expected_origin for meta in inspections):
+            raise RuntimeError(
+                "Storage inspection metadata lost or changed its collector origin"
+            )
+
+        return inspections, prefixes, self.execution_status
 
 
 class DryRunStorageRunner(BaseStorageRunner):
     """Dry-run runner that emits explicit NOT_EXECUTED status without inventing layer sizes."""
+
+    collector_origin = StorageCollectorOrigin.DRY_RUN
+    collector_name = "dry-run-storage-runner"
 
     def inspect_image_layers(
         self,
@@ -115,6 +164,9 @@ class DryRunStorageRunner(BaseStorageRunner):
             resolved_digest=digest,
             manifest_digest=digest,
             size_domain=SIZE_DOMAIN_COMPRESSED_OCI_BLOB,
+            collector_origin=self.collector_origin.value,
+            collector_name=self.collector_name,
+            collector_version=self.collector_version,
         )
 
     def measure_all(
@@ -147,6 +199,9 @@ class DryRunStorageRunner(BaseStorageRunner):
 
 class SyntheticStorageRunner(BaseStorageRunner):
     """Configurable synthetic runner for deterministic unit testing of prefix deduplication."""
+
+    collector_origin = StorageCollectorOrigin.SYNTHETIC_TEST
+    collector_name = "synthetic-storage-test-runner"
 
     def __init__(
         self,
@@ -205,11 +260,17 @@ class SyntheticStorageRunner(BaseStorageRunner):
             manifest_media_type="application/vnd.oci.image.manifest.v1+json",
             config_digest="sha256:c000000000000000000000000000000000000000000000000000000000000000",
             size_domain=SIZE_DOMAIN_COMPRESSED_OCI_BLOB,
+            collector_origin=self.collector_origin.value,
+            collector_name=self.collector_name,
+            collector_version=self.collector_version,
         )
 
 
 class DockerManifestStorageRunner(BaseStorageRunner):
     """Live measurement runner inspecting exact OCI/Docker layers via container CLI/registry."""
+
+    collector_origin = StorageCollectorOrigin.REAL_REGISTRY
+    collector_name = "docker-manifest-inspect"
 
     def __init__(
         self,
@@ -248,8 +309,9 @@ class DockerManifestStorageRunner(BaseStorageRunner):
                 f"docker manifest inspect failed for {image_reference} (exit {res.returncode}): {res.stderr.strip()}"
             )
 
+        raw_response = res.stdout.encode("utf-8")
         try:
-            raw_data = json.loads(res.stdout.strip())
+            raw_data = json.loads(raw_response)
         except json.JSONDecodeError as exc:
             raise RuntimeError(
                 f"Malformed JSON from docker manifest inspect for {image_reference}: {exc}"
@@ -299,6 +361,15 @@ class DockerManifestStorageRunner(BaseStorageRunner):
             )
         )
         config_digest = str(matched_manifest.get("config", {}).get("digest", ""))
+        for field, value in (
+            ("requested digest", digest),
+            ("manifest digest", manifest_digest),
+            ("config digest", config_digest),
+        ):
+            if not _SHA256_DIGEST.fullmatch(value):
+                raise RuntimeError(
+                    f"Manifest for {image_reference} lacks a valid {field}"
+                )
         pinned = "@sha256:" in image_reference
 
         layers: list[LayerInspection] = []
@@ -307,7 +378,11 @@ class DockerManifestStorageRunner(BaseStorageRunner):
                 raise RuntimeError(
                     f"Missing or negative layer size in manifest for {image_reference}"
                 )
-            layer_digest = str(l["digest"])
+            layer_digest = str(l.get("digest", ""))
+            if not _SHA256_DIGEST.fullmatch(layer_digest):
+                raise RuntimeError(
+                    f"Invalid layer digest in manifest for {image_reference}"
+                )
             layer_size = int(l["size"])
             media_type = str(l.get("mediaType", ""))
             layers.append(
@@ -315,6 +390,9 @@ class DockerManifestStorageRunner(BaseStorageRunner):
             )
 
         total_bytes = sum(layer.size for layer in layers)
+        raw_path = f"registry_manifests/{digest.removeprefix('sha256:')}.json"
+        raw_sha256 = hashlib.sha256(raw_response).hexdigest()
+        self._raw_observations[raw_path] = raw_response
         return ImageLayerMetadata(
             image_id=image_id,
             image_reference=image_reference,
@@ -328,6 +406,11 @@ class DockerManifestStorageRunner(BaseStorageRunner):
             manifest_media_type=manifest_media_type,
             config_digest=config_digest,
             size_domain=SIZE_DOMAIN_COMPRESSED_OCI_BLOB,
+            collector_origin=self.collector_origin.value,
+            collector_name=self.collector_name,
+            collector_version=self.collector_version,
+            raw_observation_path=raw_path,
+            raw_observation_sha256=raw_sha256,
         )
 
 
