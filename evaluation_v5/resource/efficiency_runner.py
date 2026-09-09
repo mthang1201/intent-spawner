@@ -12,7 +12,11 @@ from typing import Any, Mapping, Protocol
 
 from evaluation_v5.provenance import write_json_exclusive
 
-from .authenticity import authenticate_adapter
+from .authenticity import (
+    authenticate_adapter,
+    validate_collection_outcome,
+    validate_collector_implementation,
+)
 from .contracts import load_cluster_policy, load_image_state
 from .efficiency_analysis import analyze_trials, load_approved_oracle, summarize_dynamic_allocations
 from .efficiency_capacity import simulate_capacity
@@ -110,7 +114,7 @@ def execute_plan(
     resume: bool = False, enforce_readiness: bool = True,
 ) -> dict[str, Any]:
     validate_efficiency_plan(plan)
-    auth = authenticate_adapter(adapter)
+    auth = validate_collector_implementation(adapter)
     if not enforce_readiness and auth.is_authenticated_real_collector:
         raise ValueError("readiness gates cannot be disabled for the Kubernetes adapter")
     freeze = load_efficiency_freeze()
@@ -222,11 +226,18 @@ def execute_plan(
     else:
         completion = {"schema_version": "protocol-v5-resource-efficiency-completion-v1.0.0", "expected_primary_trials": PRIMARY_TRIAL_COUNT, "completed_primary_trials": len({row["primary_trial_id"] for row in final_rows}), "attempt_records": len(final_rows), "completed_at": _utc_now()}
         _write_json(completion_path, completion)
+    outcome = validate_collection_outcome(
+        implementation=auth,
+        environment=environment,
+        observations_or_trials=final_rows,
+        expected_trial_count=PRIMARY_TRIAL_COUNT,
+        is_efficiency=True,
+    )
     manifest = {
         **state,
-        "execution_status": auth.derived_execution_status,
-        "cluster_measurement_status": auth.derived_cluster_measurement_status,
-        "collector_origin": auth.collector_origin,
+        "execution_status": outcome.execution_status,
+        "cluster_measurement_status": outcome.cluster_measurement_status,
+        "collector_origin": outcome.collector_origin,
         "completed_at": completion["completed_at"],
         "primary_trial_count": PRIMARY_TRIAL_COUNT,
         "attempt_record_count": len(final_rows),

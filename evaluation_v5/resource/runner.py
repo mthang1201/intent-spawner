@@ -19,6 +19,8 @@ from .authenticity import (
     COLLECTOR_ORIGIN_DRY_RUN,
     COLLECTOR_ORIGIN_REAL_KUBERNETES,
     authenticate_adapter,
+    validate_collection_outcome,
+    validate_collector_implementation,
 )
 from .derive import (
     cell_acceptable, derive_safe_envelopes, reference_is_stable,
@@ -490,12 +492,12 @@ def run_calibration(
         adapter_version=adapter.adapter_version,
     )
     environment_snapshot: Mapping[str, Any] | None = None
-    auth = authenticate_adapter(adapter)
-    if not enforce_readiness and auth.is_authenticated_real_collector:
+    auth = validate_collector_implementation(adapter)
+    if not enforce_readiness and auth.is_production_implementation:
         raise ValueError("readiness gates cannot be disabled for the Kubernetes adapter")
     if enforce_readiness:
         blockers: list[str] = []
-        if not auth.is_authenticated_real_collector:
+        if not auth.is_production_implementation:
             blockers.append("AUTHENTICATED_REAL_KUBERNETES_COLLECTOR_REQUIRED")
         if provenance["git_dirty"]:
             blockers.append("DIRTY_GIT_TREE")
@@ -672,16 +674,21 @@ def run_calibration(
 
     observations = load_observations(records_path)
     derived = derive_safe_envelopes(manifest, observations)
-    if auth.is_authenticated_real_collector:
-        exec_status = "OBSERVED"
-        cluster_status = "OBSERVED"
-        origin = COLLECTOR_ORIGIN_REAL_KUBERNETES
+    env_payload = json.loads(environment_path.read_text(encoding="utf-8"))
+    outcome = validate_collection_outcome(
+        implementation=auth,
+        environment=env_payload,
+        observations_or_trials=observations,
+        is_efficiency=False,
+    )
+    exec_status = outcome.execution_status
+    cluster_status = outcome.cluster_measurement_status
+    origin = outcome.collector_origin
+
+    if outcome.is_observed_eligible:
         manual = "REQUIRED" if any(item["manual_review_status"] == "REQUIRED" for item in derived["envelopes"]) else "PENDING"
         status_label = "OBSERVED_PENDING_MANUAL_REVIEW"
     else:
-        exec_status = auth.derived_execution_status
-        cluster_status = auth.derived_cluster_measurement_status
-        origin = auth.collector_origin
         manual = "NOT_APPLICABLE"
         status_label = f"{exec_status}_COMPLETED"
 
@@ -711,7 +718,7 @@ def run_calibration(
         "image_state_sha256": provenance["frozen_contracts"]["image_state"]["sha256"],
         "freeze_contract_sha256": provenance["frozen_contracts"]["freeze_contract"]["sha256"],
         "container_image": image,
-        "environment_identity": dict(adapter.environment_provenance()).get("environment_id"),
+        "environment_identity": outcome.environment_identity or dict(adapter.environment_provenance()).get("environment_id"),
         "manual_review_status": manual,
     }
     write_json_exclusive(result_dir / "derived" / "safe-envelopes.json", derived)

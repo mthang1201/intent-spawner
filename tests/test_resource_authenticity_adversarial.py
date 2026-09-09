@@ -17,7 +17,11 @@ from evaluation_v5.resource.authenticity import (
     COLLECTOR_ORIGIN_DRY_RUN,
     COLLECTOR_ORIGIN_REAL_KUBERNETES,
     COLLECTOR_ORIGIN_SYNTHETIC,
+    CollectorImplementationAssessment,
+    ResourceCollectorOutcome,
     authenticate_adapter,
+    validate_collection_outcome,
+    validate_collector_implementation,
     validate_resource_authenticity,
 )
 from evaluation_v5.resource.efficiency_evidence import (
@@ -585,3 +589,301 @@ def test_all_20_e4_directories_in_repository_validate():
             assert res["status"] == "pass"
         else:
             pytest.fail(f"Unrecognized E4 package layout: {p.name}")
+
+
+def test_real_trial_adapter_constructor_is_not_observed_outcome():
+    """P11-R7: Instantiating real trial adapter establishes implementation eligibility only, never OBSERVED outcome."""
+    adapter = KubernetesTrialAdapter(image=IMAGE)
+    impl = validate_collector_implementation(adapter)
+    assert impl.is_production_implementation is True
+    assert impl.is_authenticated_real_collector is True
+    assert impl.declared_collector_origin == COLLECTOR_ORIGIN_REAL_KUBERNETES
+    # Implementation assessment alone must NOT derive or authorize OBSERVED
+    assert impl.derived_execution_status == "UNEXECUTED"
+    assert impl.derived_execution_status != "OBSERVED"
+    assert impl.derived_cluster_measurement_status == "NOT_EXECUTED"
+    assert impl.derived_cluster_measurement_status != "OBSERVED"
+
+    # Outcome evaluation with 0 trials yields NOT_EXECUTED, never OBSERVED
+    outcome = validate_collection_outcome(
+        implementation=impl,
+        environment=None,
+        observations_or_trials=[],
+    )
+    assert outcome.is_observed_eligible is False
+    assert outcome.execution_status == "NOT_EXECUTED"
+    assert outcome.cluster_measurement_status == "NOT_EXECUTED"
+
+
+def test_real_efficiency_adapter_constructor_is_not_observed_outcome():
+    """P11-R7: Instantiating real efficiency adapter establishes implementation eligibility only, never OBSERVED outcome."""
+    adapter = KubernetesResourceEfficiencyAdapter(image=IMAGE)
+    impl = validate_collector_implementation(adapter)
+    assert impl.is_production_implementation is True
+    assert impl.is_authenticated_real_collector is True
+    assert impl.declared_collector_origin == COLLECTOR_ORIGIN_REAL_KUBERNETES
+    assert impl.derived_execution_status == "UNEXECUTED"
+    assert impl.derived_execution_status != "OBSERVED"
+    assert impl.derived_cluster_measurement_status == "NOT_EXECUTED"
+    assert impl.derived_cluster_measurement_status != "OBSERVED"
+
+    outcome = validate_collection_outcome(
+        implementation=impl,
+        environment=None,
+        observations_or_trials=[],
+        is_efficiency=True,
+    )
+    assert outcome.is_observed_eligible is False
+    assert outcome.execution_status == "NOT_EXECUTED"
+    assert outcome.cluster_measurement_status == "NOT_EXECUTED"
+
+
+def test_environment_provenance_before_collection_cannot_authenticate_observation():
+    """P11-R7: Environment provenance captured before collection cannot authenticate observation."""
+    adapter = KubernetesTrialAdapter(image=IMAGE)
+    impl = validate_collector_implementation(adapter)
+    mock_env = {
+        "schema_version": "protocol-v5-resource-environment-v1.1.0",
+        "captured_at": "2026-03-01T00:00:00.000000Z",
+        "environment_id": "real-cluster-env-xyz",
+        "read_only_preflight": {
+            "failure_codes": [],
+            "kubernetes_cluster": "real-k8s-cluster",
+            "kubernetes_version": "v1.28.0",
+        },
+        "hardware_measurements": {
+            "node_name": "worker-node-1",
+            "node_uid": "00000000-1111-2222-3333-444444444444",
+        },
+        "cgroup_measurements": {
+            "cgroup_version": "v2",
+        },
+    }
+    # No trials have executed yet
+    outcome = validate_collection_outcome(
+        implementation=impl,
+        environment=mock_env,
+        observations_or_trials=[],
+    )
+    assert outcome.is_observed_eligible is False
+    assert outcome.execution_status == "NOT_EXECUTED"
+    assert outcome.cluster_measurement_status == "NOT_EXECUTED"
+    assert "NO_OBSERVATIONS_RECORDED" in outcome.failure_reasons
+
+
+def test_failed_real_collector_preflight_never_yields_observed():
+    """P11-R7: Failed collector preflight fails closed and never authorizes OBSERVED."""
+    adapter = KubernetesTrialAdapter(image=IMAGE)
+    impl = validate_collector_implementation(adapter)
+    failed_env = {
+        "schema_version": "protocol-v5-resource-environment-v1.1.0",
+        "captured_at": "2026-03-01T00:00:00.000000Z",
+        "environment_id": "failed-cluster-env",
+        "read_only_preflight": {
+            "failure_codes": ["CLUSTER_UNAVAILABLE", "PREFLIGHT_TIMEOUT"],
+        },
+    }
+    # Even if trial records are passed, failed preflight must reject OBSERVED
+    mock_trials = [{"run_id": "trial-1", "collector_origin": COLLECTOR_ORIGIN_REAL_KUBERNETES}]
+    outcome = validate_collection_outcome(
+        implementation=impl,
+        environment=failed_env,
+        observations_or_trials=mock_trials,
+    )
+    assert outcome.is_observed_eligible is False
+    assert outcome.execution_status != "OBSERVED"
+    assert outcome.execution_status == "FAILED"
+    assert any("PREFLIGHT" in r for r in outcome.failure_reasons)
+
+
+def test_real_collector_missing_runtime_identity_never_yields_observed():
+    """P11-R7: Real collector trials missing runtime identity (pod_uid, node_uid, cgroup_v2) never yield OBSERVED."""
+    import hashlib
+    adapter = KubernetesTrialAdapter(image=IMAGE)
+    impl = validate_collector_implementation(adapter)
+
+    valid_env = {
+        "schema_version": "protocol-v5-resource-environment-v1.1.0",
+        "captured_at": "2026-03-01T00:00:00.000000Z",
+        "environment_id": "intent-spawner-eval-v5:z2jh-context-demo",
+        "collector_origin": COLLECTOR_ORIGIN_REAL_KUBERNETES,
+        "cluster_measurement_status": "OBSERVED",
+        "eligibility_status": "ELIGIBLE",
+        "required_context": "intent-spawner-eval-v5",
+        "namespace": "z2jh-context-demo",
+        "kubernetes_version": {"major": "1", "minor": "28"},
+        "node_name": "worker-node-1",
+        "node_uid": "00000000-1111-2222-3333-444444444444",
+        "kubelet_version": "v1.28.0",
+        "container_runtime": "containerd://1.7.0",
+        "kernel_version": "6.1.0",
+        "operating_system": "linux",
+        "architecture": "amd64",
+        "read_only_preflight": {"failure_codes": []},
+        "hardware_measurements": {
+            "node_name": "worker-node-1",
+            "node_uid": "00000000-1111-2222-3333-444444444444",
+        },
+        "cgroup_measurements": {"cgroup_version": "v2"},
+    }
+
+    run_id = "run-001"
+    valid_pod_name = "e4-" + hashlib.sha256(run_id.encode("utf-8")).hexdigest()[:24]
+
+    def _make_trial(overrides=None):
+        t = {
+            "run_id": run_id,
+            "collector_origin": COLLECTOR_ORIGIN_REAL_KUBERNETES,
+            "kubernetes": {
+                "pod_name": valid_pod_name,
+                "pod_uid": "12345678-abcd-ef01-2345-6789abcdef01",
+                "node_name": "worker-node-1",
+                "started_at": "2026-03-01T00:01:00.000000Z",
+                "finished_at": "2026-03-01T00:02:00.000000Z",
+            },
+            "cgroup_version": "v2",
+            "cgroup_metrics": {"cgroup_version": "v2", "cpu_usage_usec": 1000},
+        }
+        if overrides:
+            for k, v in overrides.items():
+                if isinstance(v, dict) and isinstance(t.get(k), dict):
+                    t[k].update(v)
+                else:
+                    t[k] = v
+        return t
+
+    # 1. Missing pod_uid
+    t_no_pod_uid = _make_trial({"kubernetes": {"pod_uid": ""}})
+    out1 = validate_collection_outcome(implementation=impl, environment=valid_env, observations_or_trials=[t_no_pod_uid])
+    assert out1.is_observed_eligible is False
+    assert out1.execution_status != "OBSERVED"
+
+    # 2. Synthetic token in pod_uid
+    t_fake_pod_uid = _make_trial({"kubernetes": {"pod_uid": "12345678-abcd-fake-2345-6789abcdef01"}})
+    out2 = validate_collection_outcome(implementation=impl, environment=valid_env, observations_or_trials=[t_fake_pod_uid])
+    assert out2.is_observed_eligible is False
+    assert out2.execution_status != "OBSERVED"
+
+    # 3. Pod name mismatch (does not match deterministic hash)
+    t_bad_pod_name = _make_trial({"kubernetes": {"pod_name": "e4-mismatched-pod-name"}})
+    out3 = validate_collection_outcome(implementation=impl, environment=valid_env, observations_or_trials=[t_bad_pod_name])
+    assert out3.is_observed_eligible is False
+    assert out3.execution_status != "OBSERVED"
+
+    # 4. Node name mismatch
+    t_bad_node = _make_trial({"kubernetes": {"node_name": "other-node"}})
+    out4 = validate_collection_outcome(implementation=impl, environment=valid_env, observations_or_trials=[t_bad_node])
+    assert out4.is_observed_eligible is False
+    assert out4.execution_status != "OBSERVED"
+
+    # 5. Invalid cgroup version (v1)
+    t_cgroup_v1 = _make_trial({"cgroup_version": "v1"})
+    out5 = validate_collection_outcome(implementation=impl, environment=valid_env, observations_or_trials=[t_cgroup_v1])
+    assert out5.is_observed_eligible is False
+    assert out5.execution_status != "OBSERVED"
+
+
+def test_observed_status_derives_from_validated_collection_outcome_not_adapter_identity():
+    """P11-R7: OBSERVED status derives strictly from validated collection outcome, never adapter identity alone."""
+    import hashlib
+    adapter = KubernetesTrialAdapter(image=IMAGE)
+    impl = validate_collector_implementation(adapter)
+    # The adapter identity alone has NO authority to declare OBSERVED
+    assert impl.derived_execution_status != "OBSERVED"
+
+    valid_env = {
+        "schema_version": "protocol-v5-resource-environment-v1.1.0",
+        "captured_at": "2026-03-01T00:00:00.000000Z",
+        "environment_id": "intent-spawner-eval-v5:z2jh-context-demo",
+        "collector_origin": COLLECTOR_ORIGIN_REAL_KUBERNETES,
+        "cluster_measurement_status": "OBSERVED",
+        "eligibility_status": "ELIGIBLE",
+        "required_context": "intent-spawner-eval-v5",
+        "namespace": "z2jh-context-demo",
+        "kubernetes_version": {"major": "1", "minor": "28"},
+        "node_name": "worker-node-1",
+        "node_uid": "00000000-1111-2222-3333-444444444444",
+        "kubelet_version": "v1.28.0",
+        "container_runtime": "containerd://1.7.0",
+        "kernel_version": "6.1.0",
+        "operating_system": "linux",
+        "architecture": "amd64",
+        "read_only_preflight": {"failure_codes": []},
+        "hardware_measurements": {
+            "node_name": "worker-node-1",
+            "node_uid": "00000000-1111-2222-3333-444444444444",
+        },
+        "cgroup_measurements": {"cgroup_version": "v2"},
+    }
+
+    run_id = "run-cal-01"
+    valid_pod_name = "e4-" + hashlib.sha256(run_id.encode("utf-8")).hexdigest()[:24]
+    valid_trial = {
+        "run_id": run_id,
+        "collector_origin": COLLECTOR_ORIGIN_REAL_KUBERNETES,
+        "kubernetes": {
+            "pod_name": valid_pod_name,
+            "pod_uid": "12345678-abcd-ef01-2345-6789abcdef01",
+            "node_name": "worker-node-1",
+            "started_at": "2026-03-01T00:01:00.000000Z",
+            "finished_at": "2026-03-01T00:02:00.000000Z",
+        },
+        "cgroup_version": "v2",
+        "cgroup_metrics": {"cgroup_version": "v2", "cpu_usage_usec": 1000},
+    }
+
+    # When collection outcome is fully validated with real cluster runtime identity, OBSERVED is authorized
+    outcome = validate_collection_outcome(
+        implementation=impl,
+        environment=valid_env,
+        observations_or_trials=[valid_trial],
+        expected_trial_count=1,
+    )
+    assert outcome.is_observed_eligible is True
+    assert outcome.execution_status == "OBSERVED"
+    assert outcome.cluster_measurement_status == "OBSERVED"
+    assert outcome.environment_identity == "intent-spawner-eval-v5:z2jh-context-demo"
+    assert outcome.node_name == "worker-node-1"
+
+
+def test_test_fixture_can_validate_real_outcome_schema_without_becoming_observed():
+    """P11-R7: Test fixture / synthetic adapter validating real outcome schema can NEVER become OBSERVED."""
+    import hashlib
+    fake_adapter = FakeAdapter()
+    impl = validate_collector_implementation(fake_adapter)
+    assert impl.is_production_implementation is False
+    assert impl.declared_collector_origin == COLLECTOR_ORIGIN_SYNTHETIC
+
+    run_id = "fixture-run-01"
+    valid_pod_name = "e4-" + hashlib.sha256(run_id.encode("utf-8")).hexdigest()[:24]
+    trial = {
+        "run_id": run_id,
+        "collector_origin": COLLECTOR_ORIGIN_REAL_KUBERNETES,
+        "kubernetes": {
+            "pod_name": valid_pod_name,
+            "pod_uid": "12345678-abcd-ef01-2345-6789abcdef01",
+            "node_name": "worker-node-1",
+            "started_at": "2026-03-01T00:01:00.000000Z",
+            "finished_at": "2026-03-01T00:02:00.000000Z",
+        },
+        "cgroup_version": "v2",
+        "cgroup_metrics": {"cgroup_version": "v2", "cpu_usage_usec": 1000},
+    }
+    env = {
+        "schema_version": "protocol-v5-resource-environment-v1.1.0",
+        "environment_id": "cluster-env",
+        "read_only_preflight": {"failure_codes": []},
+        "hardware_measurements": {"node_name": "worker-node-1", "node_uid": "00000000-1111-2222-3333-444444444444"},
+        "cgroup_measurements": {"cgroup_version": "v2"},
+    }
+
+    outcome = validate_collection_outcome(
+        implementation=impl,
+        environment=env,
+        observations_or_trials=[trial],
+    )
+    # Synthetic implementation CANNOT be laundered into OBSERVED
+    assert outcome.is_observed_eligible is False
+    assert outcome.execution_status == COLLECTOR_ORIGIN_SYNTHETIC
+    assert outcome.execution_status != "OBSERVED"
+    assert outcome.cluster_measurement_status == "NOT_EXECUTED"
