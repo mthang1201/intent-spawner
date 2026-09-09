@@ -173,6 +173,8 @@ class KubernetesResourceEfficiencyAdapter(CalibrationKubernetesAdapter):
 
     def __init__(self, *, image: str, **kwargs: Any) -> None:
         super().__init__(image=image, **kwargs)
+        from evaluation_v5.resource.authenticity import CollectorExecutionSession
+        self._session = CollectorExecutionSession(self)
         self._executed_trials: list[dict[str, Any]] = []
         self._initialized = True
 
@@ -203,6 +205,8 @@ class KubernetesResourceEfficiencyAdapter(CalibrationKubernetesAdapter):
             admission = reason in {"QUOTA_REJECTED", "ADMISSION_FORBIDDEN", "UNSCHEDULABLE", "INSUFFICIENT_CPU", "INSUFFICIENT_MEMORY"}
             record = self._record(spec, planned=planned, pending=admission, runtime_error=False, infrastructure_invalid=not admission, exclusion_reason=None if admission else "POD_CREATE_INFRASTRUCTURE_FAILURE", admission_reason=reason)
             self._executed_trials.append(record)
+            if hasattr(self, "_session") and self._session is not None:
+                self._session.record_trial_execution(spec, record)
             return record
         deadline = time.monotonic() + spec.timeout_seconds + POD_LIFECYCLE_GRACE_SECONDS + ADAPTER_MONITOR_GRACE_SECONDS
         pod: dict[str, Any] | None = None
@@ -262,30 +266,26 @@ class KubernetesResourceEfficiencyAdapter(CalibrationKubernetesAdapter):
             kubernetes={"pod_name": pod_name, "pod_uid": ((pod or {}).get("metadata") or {}).get("uid"), "phase": phase, "reason": reason, "terminated_reason": terminated.get("reason"), "waiting_reason": waiting.get("reason"), "exit_code": exit_code, "started_at": terminated.get("startedAt"), "finished_at": terminated.get("finishedAt"), "restart_count": status.get("restartCount"), "node_name": ((pod or {}).get("spec") or {}).get("nodeName"), "image_reference": self.image, "image_id": status.get("imageID"), "events": event_rows, "cleanup_status": cleanup},
         )
         self._executed_trials.append(record)
+        if hasattr(self, "_session") and self._session is not None:
+            self._session.record_trial_execution(spec, record)
         return record
 
     def produce_execution_result(self) -> Any:
         from evaluation_v5.resource.authenticity import (
             CollectorExecutionResult,
-            _mint_production_execution_result,
+            CollectorExecutionSession,
         )
-        env = getattr(self, "_environment", None)
-        trials = getattr(self, "_executed_trials", None)
-        if env is None or not trials:
+        session = getattr(self, "_session", None)
+        if not isinstance(session, CollectorExecutionSession):
             return CollectorExecutionResult(
                 collector_implementation=f"{self.__class__.__module__}.{self.__class__.__qualname__}",
                 collector_version=getattr(self, "adapter_version", "unknown"),
-                environment=dict(env or {}),
-                trials=tuple(trials or ()),
+                environment=dict(getattr(self, "_environment", {}) or {}),
+                trials=tuple(getattr(self, "_executed_trials", []) or ()),
                 is_production_authorized=False,
                 authority_origin="SYNTHETIC",
             )
-        return _mint_production_execution_result(
-            collector_implementation=f"{self.__class__.__module__}.{self.__class__.__qualname__}",
-            collector_version=getattr(self, "adapter_version", "unknown"),
-            environment=env,
-            trials=trials,
-        )
+        return session.produce_result()
 
     @staticmethod
     def _record(

@@ -287,6 +287,8 @@ class KubernetesTrialAdapter:
         self.image = image
         self.policy = load_cluster_policy()
         self.image_state = load_image_state(image_state_path)
+        from evaluation_v5.resource.authenticity import CollectorExecutionSession
+        self._session = CollectorExecutionSession(self)
         self._environment: dict[str, Any] | None = None
         self._executed_trials: list[TrialObservation] = []
         self._initialized = True
@@ -327,7 +329,7 @@ class KubernetesTrialAdapter:
             raise RuntimeError("CLUSTER_INELIGIBLE: " + ",".join(sorted(set(probe_failures))))
         facts = read_only["facts"]
         node_info = facts.get("node_info") or {}
-        return {
+        env = {
             "schema_version": "protocol-v5-resource-environment-v1.1.0",
             "captured_at_utc": _utc_now(),
             "environment_id": f"{REQUIRED_CONTEXT}:{NAMESPACE}",
@@ -360,6 +362,9 @@ class KubernetesTrialAdapter:
             "adapter_monitor_grace_seconds": ADAPTER_MONITOR_GRACE_SECONDS,
             "single_active_workload": True,
         }
+        if hasattr(self, "_session") and hasattr(self._session, "record_preflight_execution"):
+            self._session.record_preflight_execution(env)
+        return env
 
     def _run_cgroup_probe(self) -> dict[str, Any]:
         name = "e4-cgroup-eligibility-probe"
@@ -507,30 +512,26 @@ class KubernetesTrialAdapter:
             },
         )
         self._executed_trials.append(obs)
+        if hasattr(self, "_session") and hasattr(self._session, "record_trial_execution"):
+            self._session.record_trial_execution(spec, obs)
         return obs
 
     def produce_execution_result(self) -> Any:
         from evaluation_v5.resource.authenticity import (
             CollectorExecutionResult,
-            _mint_production_execution_result,
+            CollectorExecutionSession,
         )
-        env = getattr(self, "_environment", None)
-        trials = getattr(self, "_executed_trials", None)
-        if env is None or not trials:
+        session = getattr(self, "_session", None)
+        if not isinstance(session, CollectorExecutionSession):
             return CollectorExecutionResult(
                 collector_implementation=f"{self.__class__.__module__}.{self.__class__.__qualname__}",
                 collector_version=getattr(self, "adapter_version", "unknown"),
-                environment=dict(env or {}),
-                trials=tuple(trials or ()),
+                environment=dict(getattr(self, "_environment", {}) or {}),
+                trials=tuple(getattr(self, "_executed_trials", []) or ()),
                 is_production_authorized=False,
                 authority_origin="SYNTHETIC",
             )
-        return _mint_production_execution_result(
-            collector_implementation=f"{self.__class__.__module__}.{self.__class__.__qualname__}",
-            collector_version=getattr(self, "adapter_version", "unknown"),
-            environment=env,
-            trials=trials,
-        )
+        return session.produce_result()
 
     def _observation(
         self,

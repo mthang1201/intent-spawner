@@ -9,9 +9,11 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import hashlib
+import inspect
 import json
 import re
 from typing import Any, Mapping, Sequence
+import weakref
 
 COLLECTOR_ORIGIN_REAL_KUBERNETES = "REAL_KUBERNETES_COLLECTOR"
 COLLECTOR_ORIGIN_SYNTHETIC = "SYNTHETIC"
@@ -103,17 +105,104 @@ class CollectorImplementationAssessment:
 
 AdapterAuthenticity = CollectorImplementationAssessment
 
-_PRODUCTION_AUTHORITY_TOKEN = object()
+class CollectorExecutionSession:
+    """Collector-owned execution session binding execution lifecycle to production authority.
+
+    Production execution authority cannot be minted through standalone validation/factory
+    APIs or by assigning ordinary mutable attributes on the adapter. It requires that
+    the bound collector instance executed its preflight and trial lifecycle.
+    """
+
+    __slots__ = (
+        "_collector_ref",
+        "_collector_class",
+        "_collector_version",
+        "_preflight_environment",
+        "_executed_trials",
+        "_lifecycle_preflight_recorded",
+        "_lifecycle_trials_recorded",
+    )
+
+    def __init__(self, collector: Any) -> None:
+        object.__setattr__(self, "_collector_ref", weakref.ref(collector))
+        object.__setattr__(
+            self,
+            "_collector_class",
+            f"{collector.__class__.__module__}.{collector.__class__.__qualname__}",
+        )
+        object.__setattr__(self, "_collector_version", getattr(collector, "adapter_version", "unknown"))
+        object.__setattr__(self, "_preflight_environment", None)
+        object.__setattr__(self, "_executed_trials", ())
+        object.__setattr__(self, "_lifecycle_preflight_recorded", False)
+        object.__setattr__(self, "_lifecycle_trials_recorded", False)
+
+    def __setattr__(self, name: str, value: Any) -> None:
+        frame = inspect.currentframe().f_back
+        caller_name = frame.f_code.co_name if frame else None
+        if caller_name in ("record_preflight_execution", "record_trial_execution"):
+            object.__setattr__(self, name, value)
+        else:
+            raise AttributeError(
+                f"Direct assignment to '{name}' is forbidden; authority requires genuine collector execution."
+            )
+
+    def record_preflight_execution(self, env: Mapping[str, Any]) -> None:
+        """Record preflight execution from collector lifecycle."""
+        collector = self._collector_ref()
+        if collector is None:
+            return
+        frame = inspect.currentframe().f_back
+        caller_self = frame.f_locals.get("self") if frame else None
+        caller_name = frame.f_code.co_name if frame else None
+        if caller_self is not collector or caller_name not in ("_preflight", "environment_provenance"):
+            return
+        self._preflight_environment = dict(env)
+        self._lifecycle_preflight_recorded = True
+
+    def record_trial_execution(self, spec: Any, obs: Any) -> None:
+        """Record trial execution from collector run_trial lifecycle."""
+        collector = self._collector_ref()
+        if collector is None:
+            return
+        frame = inspect.currentframe().f_back
+        caller_self = frame.f_locals.get("self") if frame else None
+        caller_name = frame.f_code.co_name if frame else None
+        if caller_self is not collector or caller_name != "run_trial":
+            return
+        self._executed_trials = (*self._executed_trials, obs)
+        self._lifecycle_trials_recorded = True
+
+    def is_authorized(self) -> bool:
+        collector = self._collector_ref()
+        if collector is None:
+            return False
+        if not self._lifecycle_preflight_recorded or self._preflight_environment is None:
+            return False
+        if not self._lifecycle_trials_recorded or not self._executed_trials:
+            return False
+        if getattr(collector, "_environment", None) != self._preflight_environment:
+            return False
+        if tuple(getattr(collector, "_executed_trials", ())) != tuple(self._executed_trials):
+            return False
+        return True
+
+    def produce_result(self) -> CollectorExecutionResult:
+        collector = self._collector_ref()
+        authorized = self.is_authorized()
+        return CollectorExecutionResult(
+            collector_implementation=self._collector_class,
+            collector_version=self._collector_version,
+            environment=dict(self._preflight_environment or {}),
+            trials=tuple(self._executed_trials),
+            is_production_authorized=authorized,
+            authority_origin=COLLECTOR_ORIGIN_REAL_KUBERNETES if authorized else COLLECTOR_ORIGIN_SYNTHETIC,
+            _authority_session=self if authorized else None,
+        )
 
 
 @dataclass(frozen=True, slots=True)
 class CollectorExecutionResult:
-    """Internal execution receipt minted exclusively by an executing collector.
-
-    Carries execution authority from an active Kubernetes session. A caller
-    constructing dictionaries or objects manually cannot mint an authorized
-    receipt without the internal production capability token.
-    """
+    """Internal execution receipt minted exclusively by an executing collector session."""
 
     collector_implementation: str
     collector_version: str
@@ -121,10 +210,11 @@ class CollectorExecutionResult:
     trials: tuple[Any, ...]
     is_production_authorized: bool = False
     authority_origin: str = COLLECTOR_ORIGIN_SYNTHETIC
+    _authority_session: Any = None
     _authority_token: Any = None
 
     def __post_init__(self) -> None:
-        if self._authority_token is not _PRODUCTION_AUTHORITY_TOKEN:
+        if not isinstance(self._authority_session, CollectorExecutionSession) or not self._authority_session.is_authorized():
             object.__setattr__(self, "is_production_authorized", False)
             if self.authority_origin == COLLECTOR_ORIGIN_REAL_KUBERNETES:
                 object.__setattr__(self, "authority_origin", COLLECTOR_ORIGIN_SYNTHETIC)
@@ -136,17 +226,17 @@ def _mint_production_execution_result(
     collector_version: str,
     environment: Mapping[str, Any],
     trials: Sequence[Any],
-    authority_token: Any = _PRODUCTION_AUTHORITY_TOKEN,
+    authority_token: Any = None,
 ) -> CollectorExecutionResult:
-    """Internal helper to mint an authorized CollectorExecutionResult."""
+    """Standalone/factory invocation cannot mint production execution authority from caller data."""
     return CollectorExecutionResult(
         collector_implementation=collector_implementation,
         collector_version=collector_version,
         environment=dict(environment or {}),
         trials=tuple(trials),
-        is_production_authorized=authority_token is _PRODUCTION_AUTHORITY_TOKEN,
-        authority_origin=COLLECTOR_ORIGIN_REAL_KUBERNETES if authority_token is _PRODUCTION_AUTHORITY_TOKEN else COLLECTOR_ORIGIN_SYNTHETIC,
-        _authority_token=authority_token,
+        is_production_authorized=False,
+        authority_origin=COLLECTOR_ORIGIN_SYNTHETIC,
+        _authority_session=None,
     )
 
 
@@ -740,8 +830,10 @@ __all__ = [
     "COLLECTOR_ORIGIN_TEST",
     "CollectorImplementationAssessment",
     "CollectorExecutionResult",
+    "CollectorExecutionSession",
     "ResourceCollectorOutcome",
     "VALID_COLLECTOR_ORIGINS",
+    "_mint_production_execution_result",
     "authenticate_adapter",
     "validate_collection_outcome",
     "validate_collector_implementation",
