@@ -143,9 +143,30 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     if args.command == "review":
         dataset = load_robustness_dataset(args.dataset)
-        content = export_equivalence_review(dataset, format=args.format)
+        fmt = args.format.lower().strip()
         if args.output is not None:
-            args.output.write_text(content, encoding="utf-8")
+            if args.output.exists():
+                raise FileExistsError(f"Output path already exists: {args.output}")
+            suffix = args.output.suffix.lower()
+            if fmt == "markdown" and suffix not in {".md", ".markdown"}:
+                raise ValueError(
+                    f"--format 'markdown' conflicts with output extension '{args.output.suffix}'"
+                )
+            if fmt == "csv" and suffix != ".csv":
+                raise ValueError(
+                    f"--format 'csv' conflicts with output extension '{args.output.suffix}'"
+                )
+            if fmt == "json" and suffix != ".json":
+                raise ValueError(
+                    f"--format 'json' conflicts with output extension '{args.output.suffix}'"
+                )
+            if suffix not in {".md", ".markdown", ".csv", ".json"}:
+                raise ValueError(
+                    f"Unsupported review output file extension: '{args.output.suffix}'. Must be .md, .markdown, .csv, or .json"
+                )
+        content = export_equivalence_review(dataset, format=fmt)
+        if args.output is not None:
+            _write_text_exclusive(args.output, content)
         else:
             print(content)
         return 0
@@ -208,12 +229,25 @@ def main(argv: Sequence[str] | None = None) -> int:
             )
             updated_families.append(updated_fam)
 
+        source_evidence_classification = (
+            dataset.families[0].evidence_classification
+            if dataset.families
+            else ("human_reviewed_confirmatory" if dataset.role == "confirmatory" else "development_only")
+        )
+        if dataset.metadata and "evidence_classification" in dataset.metadata:
+            source_evidence_classification = str(dataset.metadata["evidence_classification"])
+
         dataset_metadata = {
             **(dict(dataset.metadata) if dataset.metadata else {}),
             "generator_id": "protocol-v5-robustness-draft-generator-v1.0.0",
+            "generator_version": "1.0.0",
             "generator_seed": args.seed,
             "source_dataset_id": dataset.dataset_id,
             "source_canonical_sha256": dataset.canonical_sha256,
+            "source_role": dataset.role,
+            "source_evidence_classification": source_evidence_classification,
+            "output_role": "development",
+            "output_evidence_classification": "generated_draft",
             "evidence_classification": "generated_draft",
             "generated_drafts_count": total_drafts_generated,
         }
@@ -232,9 +266,34 @@ def main(argv: Sequence[str] | None = None) -> int:
         )
 
         if args.output is not None:
-            fmt = args.format
-            if fmt is None:
-                suffix = args.output.suffix.lower()
+            suffix = args.output.suffix.lower()
+            if args.format is not None:
+                fmt = args.format.lower().strip()
+                if fmt in {"yaml", "yml"}:
+                    if suffix not in {".yaml", ".yml"}:
+                        raise ValueError(
+                            f"--format '{args.format}' conflicts with output extension '{args.output.suffix}'"
+                        )
+                    fmt = "yaml"
+                elif fmt == "json":
+                    if suffix != ".json":
+                        raise ValueError(
+                            f"--format 'json' conflicts with output extension '{args.output.suffix}'"
+                        )
+                elif fmt in {"markdown", "md"}:
+                    if suffix not in {".md", ".markdown"}:
+                        raise ValueError(
+                            f"--format '{args.format}' conflicts with output extension '{args.output.suffix}'"
+                        )
+                    fmt = "markdown"
+                elif fmt == "csv":
+                    if suffix != ".csv":
+                        raise ValueError(
+                            f"--format 'csv' conflicts with output extension '{args.output.suffix}'"
+                        )
+                else:
+                    raise ValueError(f"Unsupported format: '{args.format}'")
+            else:
                 if suffix in {".yaml", ".yml"}:
                     fmt = "yaml"
                 elif suffix == ".json":
@@ -244,14 +303,14 @@ def main(argv: Sequence[str] | None = None) -> int:
                 elif suffix == ".csv":
                     fmt = "csv"
                 else:
-                    fmt = "yaml"
+                    raise ValueError(
+                        f"Unsupported output file extension: '{args.output.suffix}'. Must be .yaml, .yml, .json, .md, or .csv"
+                    )
 
             if fmt in {"markdown", "csv"}:
                 content = export_equivalence_review(updated_dataset, format=fmt)
                 _write_text_exclusive(args.output, content)
-            elif fmt == "yaml":
-                write_document_exclusive(args.output, updated_dataset.to_dict())
-            elif fmt == "json":
+            elif fmt in {"yaml", "json"}:
                 write_document_exclusive(args.output, updated_dataset.to_dict())
 
         if args.review_output is not None:
@@ -260,8 +319,12 @@ def main(argv: Sequence[str] | None = None) -> int:
                 rev_fmt = "csv"
             elif rev_suffix == ".json":
                 rev_fmt = "json"
-            else:
+            elif rev_suffix in {".md", ".markdown"}:
                 rev_fmt = "markdown"
+            else:
+                raise ValueError(
+                    f"Unsupported review output file extension: '{args.review_output.suffix}'. Must be .md, .markdown, .csv, or .json"
+                )
             rev_content = export_equivalence_review(updated_dataset, format=rev_fmt)
             _write_text_exclusive(args.review_output, rev_content)
 

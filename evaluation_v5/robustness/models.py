@@ -16,6 +16,7 @@ from .taxonomy import (
     VariantMetadata,
     VariantSource,
     compute_text_sha256,
+    to_gold_variant_class,
 )
 
 
@@ -235,6 +236,66 @@ class RobustnessFamily:
             "evidence_classification": self.evidence_classification,
         }
 
+    def to_gold_authoring_dict(
+        self,
+        *,
+        include_source_provenance: bool = True,
+    ) -> dict[str, Any]:
+        """Convert robustness family into a compliant Protocol-v5 gold authoring family dict."""
+        lr = dict(self.label_review) if self.label_review else {"status": "approved"}
+        status = lr.get("status", "approved")
+        if status == "approved":
+            lr.setdefault("status", "approved")
+            lr.setdefault("reviewed_by", "protocol-v5-robustness-reviewer")
+            lr.setdefault("reviewed_at_utc", "2026-08-22T00:00:00Z")
+            if not lr.get("notes"):
+                lr["notes"] = ["Approved robustness family label review"]
+        else:
+            lr.setdefault("status", "pending")
+            lr.setdefault("reviewed_by", None)
+            lr.setdefault("reviewed_at_utc", None)
+            lr.setdefault("notes", [])
+
+        source_prov = (
+            dict(self.source_provenance)
+            if include_source_provenance and self.source_provenance is not None
+            else None
+        )
+
+        return {
+            "family_id": self.family_id,
+            "title": self.title,
+            "workload_stratum": self.workload_stratum,
+            "difficulty": self.difficulty,
+            "executable_workload_id": self.executable_workload_id,
+            "gold_structured_intent": dict(self.gold_structured_intent),
+            "candidate_gold": dict(self.candidate_gold),
+            "profile_gold": dict(self.profile_gold),
+            "image_gold": dict(self.image_gold),
+            "policy_gold": dict(self.policy_gold),
+            "variants": [
+                {
+                    "variant_id": v.variant_id,
+                    "variant_class": (
+                        to_gold_variant_class(v.metadata.variant_type)
+                        if isinstance(v.metadata.variant_type, PerturbationClass)
+                        else str(v.metadata.variant_type)
+                    ),
+                    "language": v.metadata.language,
+                    "intent": v.intent,
+                    "code_context": list(v.code_context),
+                    "equivalence_status": (
+                        v.metadata.equivalence_status.value
+                        if isinstance(v.metadata.equivalence_status, EquivalenceStatus)
+                        else str(v.metadata.equivalence_status)
+                    ),
+                }
+                for v in self.variants
+            ],
+            "label_review": lr,
+            "source_provenance": source_prov,
+        }
+
     @classmethod
     def from_dict(
         cls,
@@ -354,9 +415,57 @@ class RobustnessDataset:
             metadata=payload.get("metadata"),
         )
 
+    def to_gold_authoring_dict(
+        self,
+        *,
+        catalog_identity: Mapping[str, Any],
+        review_policy: Mapping[str, Any],
+        lifecycle: str = "draft",
+        created_at_utc: str | None = None,
+        created_by: str = "robustness-author",
+        git_revision: str = "0" * 40,
+        evidence_classification: str | None = None,
+        freeze_metadata: Mapping[str, Any] | None = None,
+        source_datasets: Sequence[Mapping[str, Any]] | None = None,
+    ) -> dict[str, Any]:
+        """Convert robustness dataset into a compliant Protocol-v5 gold authoring document."""
+        classification = evidence_classification
+        if classification is None:
+            if self.metadata and "evidence_classification" in self.metadata:
+                classification = str(self.metadata["evidence_classification"])
+            elif self.role == "confirmatory":
+                classification = "human_reviewed_confirmatory"
+            else:
+                classification = "development_only"
+
+        timestamp = created_at_utc or "2026-08-25T00:00:00Z"
+        sources = [dict(s) for s in source_datasets] if source_datasets is not None else []
+
+        return {
+            "schema_version": "protocol-v5-gold-family-v1.0.0",
+            "dataset_metadata": {
+                "dataset_id": self.dataset_id,
+                "protocol_version": self.protocol_version,
+                "role": self.role,
+                "lifecycle": lifecycle,
+                "created_at_utc": timestamp,
+                "created_by": created_by,
+                "git_revision": git_revision,
+                "evidence_classification": classification,
+                "freeze_metadata": dict(freeze_metadata) if freeze_metadata is not None else None,
+                "source_datasets": sources,
+            },
+            "catalog_identity": dict(catalog_identity),
+            "review_policy": dict(review_policy),
+            "families": [
+                f.to_gold_authoring_dict(include_source_provenance=bool(sources))
+                for f in self.families
+            ],
+        }
+
 
 def compute_dataset_canonical_sha256(dataset: RobustnessDataset) -> str:
-    """Compute deterministic cryptographic SHA-256 fingerprint for complete dataset revision."""
+    """Compute deterministic cryptographic SHA-256 fingerprint binding trust and provenance state."""
     items = []
     for fam in sorted(dataset.families, key=lambda f: f.family_id):
         fam_dict = {
@@ -370,6 +479,12 @@ def compute_dataset_canonical_sha256(dataset: RobustnessDataset) -> str:
             "profile_gold": fam.profile_gold,
             "image_gold": fam.image_gold,
             "policy_gold": fam.policy_gold,
+            "role": fam.role,
+            "evidence_classification": fam.evidence_classification,
+            "source_provenance": (
+                dict(fam.source_provenance) if fam.source_provenance is not None else None
+            ),
+            "label_review": dict(fam.label_review) if fam.label_review is not None else {},
             "variants": [
                 {
                     "variant_id": v.variant_id,
@@ -386,16 +501,42 @@ def compute_dataset_canonical_sha256(dataset: RobustnessDataset) -> str:
                         if isinstance(v.metadata.equivalence_status, EquivalenceStatus)
                         else str(v.metadata.equivalence_status)
                     ),
+                    "human_review_status": (
+                        v.metadata.human_review_status.value
+                        if isinstance(v.metadata.human_review_status, HumanReviewStatus)
+                        else str(v.metadata.human_review_status)
+                    ),
+                    "source": (
+                        v.metadata.source.value
+                        if isinstance(v.metadata.source, VariantSource)
+                        else str(v.metadata.source)
+                    ),
                     "expected_semantic_differences": v.metadata.expected_semantic_differences,
                     "dataset_size_gb": v.dataset_size_gb,
+                    "notes": list(v.metadata.notes),
                 }
                 for v in sorted(fam.variants, key=lambda x: x.variant_id)
             ],
         }
         items.append(fam_dict)
 
+    metadata_payload = None
+    if dataset.metadata is not None:
+        metadata_payload = {
+            k: v for k, v in sorted(dataset.metadata.items())
+            if not k.startswith("_transient")
+        }
+
+    dataset_dict = {
+        "dataset_id": dataset.dataset_id,
+        "protocol_version": dataset.protocol_version,
+        "role": dataset.role,
+        "metadata": metadata_payload,
+        "families": items,
+    }
+
     payload = json.dumps(
-        {"dataset_id": dataset.dataset_id, "families": items},
+        dataset_dict,
         sort_keys=True,
         ensure_ascii=False,
         separators=(",", ":"),

@@ -599,13 +599,14 @@ def _validate_catalog_identity(
     return selected
 
 
-def _validate_source_dataset(value: object, label: str) -> dict[str, str]:
+def _validate_source_dataset(value: object, label: str) -> dict[str, Any]:
     payload = _exact_mapping(
         value,
         {"dataset_id", "schema_version", "source_file_sha256", "source_split"},
         label,
+        optional_fields={"evidence_classification"},
     )
-    return {
+    result: dict[str, Any] = {
         "dataset_id": _safe_id(payload["dataset_id"], f"{label}.dataset_id"),
         "schema_version": _safe_id(
             payload["schema_version"], f"{label}.schema_version"
@@ -617,6 +618,11 @@ def _validate_source_dataset(value: object, label: str) -> dict[str, str]:
             payload["source_split"], f"{label}.source_split"
         ),
     }
+    if "evidence_classification" in payload and payload["evidence_classification"] is not None:
+        result["evidence_classification"] = _evidence_classification(
+            payload["evidence_classification"], f"{label}.evidence_classification"
+        )
+    return result
 
 
 def _validate_metadata(value: object) -> dict[str, Any]:
@@ -714,6 +720,19 @@ def _validate_metadata(value: object) -> dict[str, Any]:
             raise GoldDatasetValidationError(
                 "confirmatory dataset requires reviewed or frozen lifecycle; draft lifecycle is incompatible with confirmatory gold"
             )
+        for index, item in enumerate(sources):
+            src_label = f"dataset_metadata.source_datasets[{index}]"
+            if item["source_split"] != "confirmatory":
+                raise GoldDatasetValidationError(
+                    f"{src_label}.source_split {item['source_split']!r} cannot be imported into confirmatory gold"
+                )
+            if (
+                "evidence_classification" in item
+                and item["evidence_classification"] not in CONFIRMATORY_ELIGIBLE_CLASSIFICATIONS
+            ):
+                raise GoldDatasetValidationError(
+                    f"{src_label}.evidence_classification {item['evidence_classification']!r} cannot be imported into confirmatory gold"
+                )
     elif role == "development":
         if classification in CONFIRMATORY_ELIGIBLE_CLASSIFICATIONS:
             raise GoldDatasetValidationError(
@@ -1357,6 +1376,53 @@ def validate_gold_dataset(
     variant_ids = [variant.variant_id for family in families for variant in family.variants]
     if len(variant_ids) != len(set(variant_ids)):
         raise GoldDatasetValidationError("variant IDs must be globally unique")
+
+    # Cross-validate dataset_metadata.source_datasets and family source_provenance
+    source_datasets = metadata.get("source_datasets", [])
+    if source_datasets:
+        source_dataset_map = {item["dataset_id"]: item for item in source_datasets}
+        referenced_source_dataset_ids: set[str] = set()
+        for family in families:
+            if family.source_provenance is None:
+                raise GoldDatasetValidationError(
+                    f"family {family.family_id!r} missing source_provenance despite dataset declaring source_datasets; cannot omit family source lineage"
+                )
+            src_id = family.source_provenance["source_dataset_id"]
+            if src_id not in source_dataset_map:
+                raise GoldDatasetValidationError(
+                    f"family {family.family_id!r} source_provenance references dataset_id {src_id!r} not declared in dataset_metadata.source_datasets"
+                )
+            referenced_source_dataset_ids.add(src_id)
+            decl = source_dataset_map[src_id]
+            if family.source_provenance["source_schema_version"] != decl["schema_version"]:
+                raise GoldDatasetValidationError(
+                    f"disagreement between dataset-level provenance and family {family.family_id!r} provenance on source_schema_version"
+                )
+            if family.source_provenance["source_split"] != decl["source_split"]:
+                raise GoldDatasetValidationError(
+                    f"disagreement between dataset-level provenance and family {family.family_id!r} provenance on source_split"
+                )
+            if family.source_provenance["source_file_sha256"] != decl["source_file_sha256"]:
+                raise GoldDatasetValidationError(
+                    f"disagreement between dataset-level provenance and family {family.family_id!r} provenance on source_file_sha256"
+                )
+            if "evidence_classification" in decl:
+                if family.source_provenance["evidence_classification"] != decl["evidence_classification"]:
+                    raise GoldDatasetValidationError(
+                        f"disagreement between dataset-level provenance and family {family.family_id!r} provenance on evidence_classification"
+                    )
+        unreferenced = sorted(set(source_dataset_map) - referenced_source_dataset_ids)
+        if unreferenced:
+            raise GoldDatasetValidationError(
+                f"dataset_metadata.source_datasets declares unreferenced datasets: {', '.join(unreferenced)}"
+            )
+    else:
+        for family in families:
+            if family.source_provenance is not None:
+                raise GoldDatasetValidationError(
+                    f"family {family.family_id!r} defines source_provenance but dataset_metadata.source_datasets is empty; provenance disagreement"
+                )
+
     return GoldDataset(
         dataset_metadata=metadata,
         catalog_identity=catalog_identity,
@@ -2277,12 +2343,29 @@ def compile_gold_dataset(
             raise GoldDatasetValidationError(
                 f"confirmatory compilation prohibited for classification {classification!r}"
             )
+        for index, src in enumerate(dataset.dataset_metadata.get("source_datasets", [])):
+            if src.get("source_split") != "confirmatory":
+                raise GoldDatasetValidationError(
+                    f"confirmatory compilation prohibited: source_dataset {src.get('dataset_id')!r} has non-confirmatory source_split {src.get('source_split')!r}"
+                )
+            if (
+                "evidence_classification" in src
+                and src["evidence_classification"] not in CONFIRMATORY_ELIGIBLE_CLASSIFICATIONS
+            ):
+                raise GoldDatasetValidationError(
+                    f"confirmatory compilation prohibited: source_dataset {src.get('dataset_id')!r} has non-confirmatory classification {src['evidence_classification']!r}"
+                )
         for family in dataset.families:
             if family.source_provenance is not None:
                 src_class = family.source_provenance.get("evidence_classification")
                 if src_class not in CONFIRMATORY_ELIGIBLE_CLASSIFICATIONS:
                     raise GoldDatasetValidationError(
                         f"confirmatory compilation prohibited: family {family.family_id!r} has non-confirmatory source classification {src_class!r}"
+                    )
+                src_split = family.source_provenance.get("source_split")
+                if src_split != "confirmatory":
+                    raise GoldDatasetValidationError(
+                        f"confirmatory compilation prohibited: family {family.family_id!r} has non-confirmatory source_split {src_split!r}"
                     )
         if effective_source is None or output_path is None:
             raise GoldDatasetValidationError(

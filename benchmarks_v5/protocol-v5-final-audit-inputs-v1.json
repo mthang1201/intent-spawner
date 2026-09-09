@@ -17,7 +17,7 @@
     "benchmarks_v5/protocol-v5-evidence-selection-template-v1.1.yaml": "263f4172c463aacf990b261d2699fa218244255e1033d02a6f6b712e6c970834",
     "benchmarks_v5/protocol-v5-evidence-selection-template-v1.yaml": "e59ac582398334d849c61ecb02f34fc3b5d65c50c27563241ee0793d6fd96c7a",
     "benchmarks_v5/protocol-v5-evidence-selection-v1.schema.json": "f231ddd38660866c3a51eedcf7702c3067555347858c7f9a821d66c5808981ef",
-    "benchmarks_v5/protocol-v5-gold-family-v1.schema.json": "084abb12b0ba752ff1d0fe1d0c2d454b76cc1223a3634c4e4d5263b84679ec9c",
+    "benchmarks_v5/protocol-v5-gold-family-v1.schema.json": "74b6bc4e13b79ac2e24fe8295132b3d857036be7bdf68642a5e28ae74a153593",
     "benchmarks_v5/protocol-v5-image-storage-evidence-v1.schema.json": "c6f7185c6a28f89369afa8f94d0a0153ddf674b5e8ecc48c519e1b6957b585b4",
     "benchmarks_v5/protocol-v5-p3-overhead-threshold-v1.schema.json": "17306f8a4a8eb571c4ce9e56d589bb02c2b8892af52f2c850965ac9364f0a65f",
     "benchmarks_v5/protocol-v5-resource-allocation-comparison-v1.schema.json": "0466fbf3742d3b48a249fd29726d9e698a421d3d3b421a06ec2377b74685d4f3",

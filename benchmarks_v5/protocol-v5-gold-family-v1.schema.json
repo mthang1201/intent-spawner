@@ -49,7 +49,8 @@
         "dataset_id": {"$ref": "#/$defs/safeId"},
         "schema_version": {"$ref": "#/$defs/safeId"},
         "source_file_sha256": {"$ref": "#/$defs/sha256"},
-        "source_split": {"$ref": "#/$defs/safeId"}
+        "source_split": {"$ref": "#/$defs/safeId"},
+        "evidence_classification": {"$ref": "#/$defs/evidenceClassification"}
       }
     },
     "freezeMetadata": {
@@ -117,6 +118,20 @@
               },
               "lifecycle": {
                 "enum": ["reviewed", "frozen"]
+              },
+              "source_datasets": {
+                "items": {
+                  "properties": {
+                    "source_split": {"const": "confirmatory"},
+                    "evidence_classification": {
+                      "enum": [
+                        "human_reviewed_confirmatory",
+                        "human_reviewed_confirmatory_eligible"
+                      ]
+                    }
+                  },
+                  "required": ["source_split"]
+                }
               }
             }
           },

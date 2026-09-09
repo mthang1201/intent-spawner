@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from copy import deepcopy
 import csv
 import json
 from pathlib import Path
@@ -53,6 +54,10 @@ from evaluation_v5.robustness import (
 from evaluation_v5.gold_dataset import (
     CONFIRMATORY_ELIGIBLE_CLASSIFICATIONS,
     EvidenceClassification,
+    GoldDatasetValidationError,
+    compile_gold_dataset,
+    current_catalog_identity,
+    validate_gold_dataset,
 )
 
 
@@ -1536,4 +1541,583 @@ def test_cli_draft_deterministic_and_provenance(tmp_path: Path, capsys: pytest.C
     )
     loaded3 = load_robustness_dataset(output3)
     assert loaded1.canonical_sha256 != loaded3.canonical_sha256
+
+
+def test_canonical_checksum_binds_trust_and_provenance_state():
+    base_ds = load_robustness_dataset(DEV_SPLIT_PATH)
+    base_sha = base_ds.canonical_sha256
+
+    # 1. Mutating ONLY dataset role changes checksum
+    ds_role = RobustnessDataset(
+        dataset_id=base_ds.dataset_id,
+        families=base_ds.families,
+        protocol_version=base_ds.protocol_version,
+        role="development_staging",
+        metadata=base_ds.metadata,
+    )
+    assert ds_role.canonical_sha256 != base_sha
+
+    # 2. Mutating ONLY family role changes checksum
+    fam0 = base_ds.families[0]
+    fam0_role = RobustnessFamily(
+        family_id=fam0.family_id,
+        title=fam0.title,
+        workload_stratum=fam0.workload_stratum,
+        difficulty=fam0.difficulty,
+        executable_workload_id=fam0.executable_workload_id,
+        gold_structured_intent=fam0.gold_structured_intent,
+        candidate_gold=fam0.candidate_gold,
+        profile_gold=fam0.profile_gold,
+        image_gold=fam0.image_gold,
+        policy_gold=fam0.policy_gold,
+        variants=fam0.variants,
+        label_review=fam0.label_review,
+        source_provenance=fam0.source_provenance,
+        role="development_staging",
+        evidence_classification=fam0.evidence_classification,
+    )
+    ds_fam_role = RobustnessDataset(
+        dataset_id=base_ds.dataset_id,
+        families=(fam0_role,) + base_ds.families[1:],
+        protocol_version=base_ds.protocol_version,
+        role=base_ds.role,
+        metadata=base_ds.metadata,
+    )
+    assert ds_fam_role.canonical_sha256 != base_sha
+
+    # 3. Mutating ONLY family evidence_classification changes checksum
+    fam0_class = RobustnessFamily(
+        family_id=fam0.family_id,
+        title=fam0.title,
+        workload_stratum=fam0.workload_stratum,
+        difficulty=fam0.difficulty,
+        executable_workload_id=fam0.executable_workload_id,
+        gold_structured_intent=fam0.gold_structured_intent,
+        candidate_gold=fam0.candidate_gold,
+        profile_gold=fam0.profile_gold,
+        image_gold=fam0.image_gold,
+        policy_gold=fam0.policy_gold,
+        variants=fam0.variants,
+        label_review=fam0.label_review,
+        source_provenance=fam0.source_provenance,
+        role=fam0.role,
+        evidence_classification="synthetic_test_fixture",
+    )
+    ds_fam_class = RobustnessDataset(
+        dataset_id=base_ds.dataset_id,
+        families=(fam0_class,) + base_ds.families[1:],
+        protocol_version=base_ds.protocol_version,
+        role=base_ds.role,
+        metadata=base_ds.metadata,
+    )
+    assert ds_fam_class.canonical_sha256 != base_sha
+
+    # 4. Mutating ONLY family source_provenance changes checksum
+    fam0_prov = RobustnessFamily(
+        family_id=fam0.family_id,
+        title=fam0.title,
+        workload_stratum=fam0.workload_stratum,
+        difficulty=fam0.difficulty,
+        executable_workload_id=fam0.executable_workload_id,
+        gold_structured_intent=fam0.gold_structured_intent,
+        candidate_gold=fam0.candidate_gold,
+        profile_gold=fam0.profile_gold,
+        image_gold=fam0.image_gold,
+        policy_gold=fam0.policy_gold,
+        variants=fam0.variants,
+        label_review=fam0.label_review,
+        source_provenance={"source_dataset_id": "mutated-source"},
+        role=fam0.role,
+        evidence_classification=fam0.evidence_classification,
+    )
+    ds_fam_prov = RobustnessDataset(
+        dataset_id=base_ds.dataset_id,
+        families=(fam0_prov,) + base_ds.families[1:],
+        protocol_version=base_ds.protocol_version,
+        role=base_ds.role,
+        metadata=base_ds.metadata,
+    )
+    assert ds_fam_prov.canonical_sha256 != base_sha
+
+    # 5. Mutating ONLY dataset metadata trust keys changes checksum
+    ds_meta = RobustnessDataset(
+        dataset_id=base_ds.dataset_id,
+        families=base_ds.families,
+        protocol_version=base_ds.protocol_version,
+        role=base_ds.role,
+        metadata={"generator_seed": 777},
+    )
+    assert ds_meta.canonical_sha256 != base_sha
+
+    # 6. Mutating ONLY variant source changes checksum
+    v0 = fam0.variants[0]
+    v0_meta = VariantMetadata(
+        variant_type=v0.metadata.variant_type,
+        language=v0.metadata.language,
+        source=VariantSource.GENERATED_DRAFT,
+        human_review_status=v0.metadata.human_review_status,
+        equivalence_status=v0.metadata.equivalence_status,
+        expected_semantic_differences=v0.metadata.expected_semantic_differences,
+        notes=v0.metadata.notes,
+    )
+    v0_mutated = RobustnessVariant(
+        variant_id=v0.variant_id,
+        family_id=v0.family_id,
+        intent=v0.intent,
+        code_context=v0.code_context,
+        metadata=v0_meta,
+        dataset_size_gb=v0.dataset_size_gb,
+    )
+    fam0_var_src = RobustnessFamily(
+        family_id=fam0.family_id,
+        title=fam0.title,
+        workload_stratum=fam0.workload_stratum,
+        difficulty=fam0.difficulty,
+        executable_workload_id=fam0.executable_workload_id,
+        gold_structured_intent=fam0.gold_structured_intent,
+        candidate_gold=fam0.candidate_gold,
+        profile_gold=fam0.profile_gold,
+        image_gold=fam0.image_gold,
+        policy_gold=fam0.policy_gold,
+        variants=(v0_mutated,) + fam0.variants[1:],
+        label_review=fam0.label_review,
+        source_provenance=fam0.source_provenance,
+        role=fam0.role,
+        evidence_classification=fam0.evidence_classification,
+    )
+    ds_var_src = RobustnessDataset(
+        dataset_id=base_ds.dataset_id,
+        families=(fam0_var_src,) + base_ds.families[1:],
+        protocol_version=base_ds.protocol_version,
+        role=base_ds.role,
+        metadata=base_ds.metadata,
+    )
+    assert ds_var_src.canonical_sha256 != base_sha
+
+    # 7. Mutating ONLY variant human_review_status changes checksum
+    v0_meta_rev = VariantMetadata(
+        variant_type=v0.metadata.variant_type,
+        language=v0.metadata.language,
+        source=v0.metadata.source,
+        human_review_status=HumanReviewStatus.REJECTED,
+        equivalence_status=v0.metadata.equivalence_status,
+        expected_semantic_differences=v0.metadata.expected_semantic_differences,
+        notes=v0.metadata.notes,
+    )
+    v0_mutated_rev = RobustnessVariant(
+        variant_id=v0.variant_id,
+        family_id=v0.family_id,
+        intent=v0.intent,
+        code_context=v0.code_context,
+        metadata=v0_meta_rev,
+        dataset_size_gb=v0.dataset_size_gb,
+    )
+    fam0_var_rev = RobustnessFamily(
+        family_id=fam0.family_id,
+        title=fam0.title,
+        workload_stratum=fam0.workload_stratum,
+        difficulty=fam0.difficulty,
+        executable_workload_id=fam0.executable_workload_id,
+        gold_structured_intent=fam0.gold_structured_intent,
+        candidate_gold=fam0.candidate_gold,
+        profile_gold=fam0.profile_gold,
+        image_gold=fam0.image_gold,
+        policy_gold=fam0.policy_gold,
+        variants=(v0_mutated_rev,) + fam0.variants[1:],
+        label_review=fam0.label_review,
+        source_provenance=fam0.source_provenance,
+        role=fam0.role,
+        evidence_classification=fam0.evidence_classification,
+    )
+    ds_var_rev = RobustnessDataset(
+        dataset_id=base_ds.dataset_id,
+        families=(fam0_var_rev,) + base_ds.families[1:],
+        protocol_version=base_ds.protocol_version,
+        role=base_ds.role,
+        metadata=base_ds.metadata,
+    )
+    assert ds_var_rev.canonical_sha256 != base_sha
+
+    # 8. Mutating ONLY variant equivalence_status changes checksum
+    v0_meta_equiv = VariantMetadata(
+        variant_type=v0.metadata.variant_type,
+        language=v0.metadata.language,
+        source=v0.metadata.source,
+        human_review_status=v0.metadata.human_review_status,
+        equivalence_status=EquivalenceStatus.NON_EQUIVALENT,
+        expected_semantic_differences=v0.metadata.expected_semantic_differences,
+        notes=v0.metadata.notes,
+    )
+    v0_mutated_equiv = RobustnessVariant(
+        variant_id=v0.variant_id,
+        family_id=v0.family_id,
+        intent=v0.intent,
+        code_context=v0.code_context,
+        metadata=v0_meta_equiv,
+        dataset_size_gb=v0.dataset_size_gb,
+    )
+    fam0_var_equiv = RobustnessFamily(
+        family_id=fam0.family_id,
+        title=fam0.title,
+        workload_stratum=fam0.workload_stratum,
+        difficulty=fam0.difficulty,
+        executable_workload_id=fam0.executable_workload_id,
+        gold_structured_intent=fam0.gold_structured_intent,
+        candidate_gold=fam0.candidate_gold,
+        profile_gold=fam0.profile_gold,
+        image_gold=fam0.image_gold,
+        policy_gold=fam0.policy_gold,
+        variants=(v0_mutated_equiv,) + fam0.variants[1:],
+        label_review=fam0.label_review,
+        source_provenance=fam0.source_provenance,
+        role=fam0.role,
+        evidence_classification=fam0.evidence_classification,
+    )
+    ds_var_equiv = RobustnessDataset(
+        dataset_id=base_ds.dataset_id,
+        families=(fam0_var_equiv,) + base_ds.families[1:],
+        protocol_version=base_ds.protocol_version,
+        role=base_ds.role,
+        metadata=base_ds.metadata,
+    )
+    assert ds_var_equiv.canonical_sha256 != base_sha
+
+
+def test_stale_review_attack_fails_closed_on_trust_mutation():
+    base_ds = load_robustness_dataset(DEV_SPLIT_PATH)
+    rows = extract_review_rows(base_ds)
+    target_row = rows[0]
+
+    # Valid review decision matching current canonical sha256
+    decision = {
+        "variant_id": target_row.variant_id,
+        "dataset_id": base_ds.dataset_id,
+        "dataset_canonical_sha256": base_ds.canonical_sha256,
+        "family_id": target_row.family_id,
+        "variant_text_sha256": target_row.variant_text_sha256,
+        "human_review_status": "approved",
+        "equivalence_status": "reviewed_equivalent",
+        "reviewed_by": "reviewer-alice",
+        "notes": "Validly reviewed on original revision",
+    }
+
+    # Verify decision applies cleanly to original dataset
+    approved_ds = apply_review_decisions(base_ds, [decision])
+    assert approved_ds is not None
+
+    # Mutate ONLY evidence_classification
+    fam0 = base_ds.families[0]
+    fam0_mutated = RobustnessFamily(
+        family_id=fam0.family_id,
+        title=fam0.title,
+        workload_stratum=fam0.workload_stratum,
+        difficulty=fam0.difficulty,
+        executable_workload_id=fam0.executable_workload_id,
+        gold_structured_intent=fam0.gold_structured_intent,
+        candidate_gold=fam0.candidate_gold,
+        profile_gold=fam0.profile_gold,
+        image_gold=fam0.image_gold,
+        policy_gold=fam0.policy_gold,
+        variants=fam0.variants,
+        label_review=fam0.label_review,
+        source_provenance=fam0.source_provenance,
+        role=fam0.role,
+        evidence_classification="generated_draft",
+    )
+    mutated_ds = RobustnessDataset(
+        dataset_id=base_ds.dataset_id,
+        families=(fam0_mutated,) + base_ds.families[1:],
+        protocol_version=base_ds.protocol_version,
+        role=base_ds.role,
+        metadata=base_ds.metadata,
+    )
+    with pytest.raises(StaleReviewError, match="dataset canonical checksum mismatch"):
+        apply_review_decisions(mutated_ds, [decision])
+
+    # Mutate ONLY source_provenance
+    fam0_prov = RobustnessFamily(
+        family_id=fam0.family_id,
+        title=fam0.title,
+        workload_stratum=fam0.workload_stratum,
+        difficulty=fam0.difficulty,
+        executable_workload_id=fam0.executable_workload_id,
+        gold_structured_intent=fam0.gold_structured_intent,
+        candidate_gold=fam0.candidate_gold,
+        profile_gold=fam0.profile_gold,
+        image_gold=fam0.image_gold,
+        policy_gold=fam0.policy_gold,
+        variants=fam0.variants,
+        label_review=fam0.label_review,
+        source_provenance={"source_dataset_id": "adversary_dataset"},
+        role=fam0.role,
+        evidence_classification=fam0.evidence_classification,
+    )
+    mutated_prov_ds = RobustnessDataset(
+        dataset_id=base_ds.dataset_id,
+        families=(fam0_prov,) + base_ds.families[1:],
+        protocol_version=base_ds.protocol_version,
+        role=base_ds.role,
+        metadata=base_ds.metadata,
+    )
+    with pytest.raises(StaleReviewError, match="dataset canonical checksum mismatch"):
+        apply_review_decisions(mutated_prov_ds, [decision])
+
+
+def test_cli_format_mismatch_and_authoritative_enforcement(tmp_path: Path):
+    ds = load_robustness_dataset(DEV_SPLIT_PATH)
+    input_file = tmp_path / "dev_input.yaml"
+    ds_dict = ds.to_dict()
+    input_file.write_text(yaml.safe_dump(ds_dict), encoding="utf-8")
+
+    # Mismatch --format json with .yaml output fails closed
+    with pytest.raises(ValueError, match="conflicts with output extension"):
+        main(
+            [
+                "draft",
+                str(input_file),
+                "--format",
+                "json",
+                "--output",
+                str(tmp_path / "drafts.yaml"),
+            ]
+        )
+
+    # Mismatch --format yaml with .json output fails closed
+    with pytest.raises(ValueError, match="conflicts with output extension"):
+        main(
+            [
+                "draft",
+                str(input_file),
+                "--format",
+                "yaml",
+                "--output",
+                str(tmp_path / "drafts.json"),
+            ]
+        )
+
+    # Unsupported output extension fails closed
+    with pytest.raises(ValueError, match="Unsupported output file extension"):
+        main(
+            [
+                "draft",
+                str(input_file),
+                "--output",
+                str(tmp_path / "drafts.txt"),
+            ]
+        )
+
+    # Unsupported review output extension fails closed
+    with pytest.raises(ValueError, match="Unsupported review output file extension"):
+        main(
+            [
+                "draft",
+                str(input_file),
+                "--output",
+                str(tmp_path / "drafts.yaml"),
+                "--review-output",
+                str(tmp_path / "review.txt"),
+            ]
+        )
+
+    # Review command format mismatch with output extension fails closed
+    with pytest.raises(ValueError, match="conflicts with output extension"):
+        main(
+            [
+                "review",
+                str(input_file),
+                "--format",
+                "csv",
+                "--output",
+                str(tmp_path / "review.md"),
+            ]
+        )
+
+    # Matching combinations succeed
+    out_yaml = tmp_path / "valid.yaml"
+    assert (
+        main(
+            [
+                "draft",
+                str(input_file),
+                "--format",
+                "yaml",
+                "--output",
+                str(out_yaml),
+            ]
+        )
+        == 0
+    )
+    assert out_yaml.exists()
+
+    out_json = tmp_path / "valid.json"
+    assert (
+        main(
+            [
+                "draft",
+                str(input_file),
+                "--format",
+                "json",
+                "--output",
+                str(out_json),
+            ]
+        )
+        == 0
+    )
+    assert out_json.exists()
+
+
+def test_end_to_end_review_to_development_compile_path(tmp_path: Path):
+    # 1. Begin with legitimate development authoring material
+    base_split = load_robustness_families_from_split(DEV_SPLIT_PATH)
+    fam = base_split.families[0]
+    dev_dataset = RobustnessDataset(
+        dataset_id="e2e-dev-lifecycle",
+        families=(fam,),
+        protocol_version="5.0.0",
+        role="development",
+        metadata={"creator": "test-author", "evidence_classification": "development_only"},
+    )
+
+    # 2. Generate deterministic robustness drafts
+    drafts = generate_family_drafts(fam, seed=42)
+    assert len(drafts) == 7
+    # 3. Prove generated variants remain generated_draft, pending review, non-confirmatory
+    for draft in drafts:
+        assert draft.metadata.source == VariantSource.GENERATED_DRAFT
+        assert draft.metadata.human_review_status in {
+            HumanReviewStatus.DRAFT,
+            HumanReviewStatus.PENDING,
+        }
+        assert draft.is_pending_review
+
+    source_provenance = {
+        "source_dataset_id": "e2e-dev-lifecycle",
+        "source_schema_version": "protocol-v5-gold-family-v1.0.0",
+        "source_family_id": fam.family_id,
+        "source_case_ids": [fam.variants[0].variant_id],
+        "source_split": "development",
+        "source_file_sha256": "0" * 64,
+        "evidence_classification": "development_only",
+        "original_label_sha256": "0" * 64,
+    }
+    updated_fam = RobustnessFamily(
+        family_id=fam.family_id,
+        title=fam.title,
+        workload_stratum=fam.workload_stratum,
+        difficulty=fam.difficulty,
+        executable_workload_id=fam.executable_workload_id,
+        gold_structured_intent=fam.gold_structured_intent,
+        candidate_gold=fam.candidate_gold,
+        profile_gold=fam.profile_gold,
+        image_gold=fam.image_gold,
+        policy_gold=fam.policy_gold,
+        variants=fam.variants + tuple(drafts),
+        label_review={
+            "status": "approved",
+            "reviewed_by": "expert-reviewer-1",
+            "reviewed_at_utc": "2026-08-25T00:00:00Z",
+            "notes": ["Approved for development benchmark"],
+        },
+        source_provenance=source_provenance,
+        role="development",
+        evidence_classification="generated_draft",
+    )
+    draft_dataset = RobustnessDataset(
+        dataset_id="e2e-dev-lifecycle-drafts",
+        families=(updated_fam,),
+        protocol_version="5.0.0",
+        role="development",
+        metadata={
+            "generator_id": "protocol-v5-robustness-draft-generator-v1.0.0",
+            "generator_version": "1.0.0",
+            "generator_seed": 42,
+            "evidence_classification": "generated_draft",
+            "source_dataset_id": "e2e-dev-lifecycle",
+            "source_canonical_sha256": dev_dataset.canonical_sha256,
+        },
+    )
+
+    # 4. Export checksum-bound review material
+    review_rows = extract_review_rows(draft_dataset)
+    assert len(review_rows) == len(updated_fam.variants)
+    assert all(r.dataset_canonical_sha256 == draft_dataset.canonical_sha256 for r in review_rows)
+
+    # 5. Apply valid human review decisions
+    decisions = []
+    for d in drafts:
+        decisions.append(
+            {
+                "variant_id": d.variant_id,
+                "dataset_id": draft_dataset.dataset_id,
+                "dataset_canonical_sha256": draft_dataset.canonical_sha256,
+                "family_id": updated_fam.family_id,
+                "variant_text_sha256": d.text_sha256,
+                "human_review_status": "approved",
+                "equivalence_status": "reviewed_equivalent",
+                "reviewed_by": "human-expert-1",
+                "notes": "Reviewed and confirmed semantically equivalent for development benchmarks",
+            }
+        )
+    reviewed_dataset = apply_review_decisions(draft_dataset, decisions)
+
+    # 6. Preserve generated origin/provenance
+    for v in reviewed_dataset.families[0].variants:
+        if v.variant_id in {d.variant_id for d in drafts}:
+            assert v.metadata.source == VariantSource.GENERATED_DRAFT
+            assert v.metadata.human_review_status == HumanReviewStatus.APPROVED
+            assert v.is_reviewed_equivalent
+            assert any("reviewed_by: human-expert-1" in n for n in v.metadata.notes)
+
+    # 7. Convert using existing authoritative gold-authoring path
+    catalog_identity = current_catalog_identity()
+    review_policy = {
+        "required_workload_strata": [fam.workload_stratum],
+        "max_preferred_profile_share": 1.0,
+        "max_preferred_image_share": 1.0,
+    }
+    source_datasets = [
+        {
+            "dataset_id": "e2e-dev-lifecycle",
+            "schema_version": "protocol-v5-gold-family-v1.0.0",
+            "source_file_sha256": "0" * 64,
+            "source_split": "development",
+            "evidence_classification": "development_only",
+        }
+    ]
+    gold_doc = reviewed_dataset.to_gold_authoring_dict(
+        catalog_identity=catalog_identity,
+        review_policy=review_policy,
+        lifecycle="draft",
+        evidence_classification="development_only",
+        source_datasets=source_datasets,
+    )
+    validated_gold = validate_gold_dataset(gold_doc)
+    assert validated_gold.dataset_metadata["role"] == "development"
+
+    # 8. Freeze only using existing legitimate lifecycle
+    frozen_doc = deepcopy(gold_doc)
+    frozen_doc["dataset_metadata"]["lifecycle"] = "frozen"
+    frozen_doc["dataset_metadata"]["freeze_metadata"] = {
+        "frozen_at_utc": "2026-08-25T14:00:00Z",
+        "frozen_by": "custodian-1",
+    }
+    validated_frozen = validate_gold_dataset(frozen_doc)
+
+    # 9. Compile as DEVELOPMENT
+    compiled_split = compile_gold_dataset(validated_frozen)
+    assert compiled_split.split_manifest.role == "development"
+    # 10. Prove compiled result preserves enough lineage to identify its origin
+    assert compiled_split.split_manifest.dataset_id == "e2e-dev-lifecycle-drafts"
+    assert len(compiled_split.cases) == len(updated_fam.variants)
+    assert any(
+        c.case_id == drafts[0].variant_id for c in compiled_split.cases
+    )
+
+    # 11. Attempt to use the same generated lineage as CONFIRMATORY -> fails closed
+    conf_doc = deepcopy(frozen_doc)
+    conf_doc["dataset_metadata"]["role"] = "confirmatory"
+    conf_doc["dataset_metadata"]["evidence_classification"] = "human_reviewed_confirmatory"
+    # Should fail before confirmatory compilation
+    with pytest.raises(GoldDatasetValidationError):
+        validate_gold_dataset(conf_doc)
 
