@@ -491,6 +491,8 @@ def run_calibration(
     )
     environment_snapshot: Mapping[str, Any] | None = None
     auth = authenticate_adapter(adapter)
+    if not enforce_readiness and auth.is_authenticated_real_collector:
+        raise ValueError("readiness gates cannot be disabled for the Kubernetes adapter")
     if enforce_readiness:
         blockers: list[str] = []
         if not auth.is_authenticated_real_collector:
@@ -741,6 +743,21 @@ def run_calibration(
     return validate_evidence_package(result_dir, allow_unsealed=True)
 
 
+def verify_review_input_fingerprint(result_dir: Path) -> str:
+    status_file = result_dir / "report" / "status.json"
+    if not status_file.is_file():
+        raise ValueError("manual review lacks pre-review fingerprint")
+    status = json.loads(status_file.read_text(encoding="utf-8"))
+    components = status.get("review_input_components")
+    expected_fingerprint = status.get("review_input_fingerprint")
+    if not isinstance(components, dict) or not isinstance(expected_fingerprint, str):
+        raise ValueError("manual review lacks pre-review fingerprint")
+    actual_components = {relative: file_sha256(result_dir / relative) for relative in components}
+    if actual_components != components or canonical_sha256(actual_components) != expected_fingerprint:
+        raise ValueError("manual review input fingerprint mismatch")
+    return expected_fingerprint
+
+
 def record_manual_review(result_dir: Path, *, reviewer_id: str, decision: str, reason: str) -> dict[str, Any]:
     if decision not in {"APPROVED", "REJECTED"}:
         raise ValueError("manual review decision must be APPROVED or REJECTED")
@@ -762,14 +779,9 @@ def record_manual_review(result_dir: Path, *, reviewer_id: str, decision: str, r
     source = result_dir / "derived" / "safe-envelopes.json"
     if not source.is_file():
         raise ValueError("manual review requires derived envelopes")
+    expected_fingerprint = verify_review_input_fingerprint(result_dir)
     status = json.loads((result_dir / "report" / "status.json").read_text(encoding="utf-8"))
     components = status.get("review_input_components")
-    expected_fingerprint = status.get("review_input_fingerprint")
-    if not isinstance(components, dict) or not isinstance(expected_fingerprint, str):
-        raise ValueError("manual review lacks pre-review fingerprint")
-    actual_components = {relative: file_sha256(result_dir / relative) for relative in components}
-    if actual_components != components or canonical_sha256(actual_components) != expected_fingerprint:
-        raise ValueError("manual review input fingerprint mismatch")
     attestation = {
         "schema_version": "protocol-v5-resource-manual-review-v1.1.0",
         "prior_state": root["manual_review_status"],

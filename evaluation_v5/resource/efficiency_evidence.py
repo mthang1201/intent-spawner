@@ -137,7 +137,8 @@ def validate_raw_package(root: Path, *, allow_unsealed: bool = False) -> dict[st
     from .authenticity import validate_resource_authenticity
     from .legacy_compatibility import is_bounded_legacy_package, verify_bounded_legacy_integrity
 
-    if is_bounded_legacy_package(root):
+    is_legacy = is_bounded_legacy_package(root)
+    if is_legacy:
         verify_bounded_legacy_integrity(root)
     if (root / "SHA256SUMS").exists():
         integrity = verify_integrity(root)
@@ -155,7 +156,7 @@ def validate_raw_package(root: Path, *, allow_unsealed: bool = False) -> dict[st
         raise ValueError("unsupported comparative raw package")
     plan = json.loads((root / "plan.json").read_text(encoding="utf-8"))
     from .efficiency_plan import validate_efficiency_plan
-    validate_efficiency_plan(plan)
+    validate_efficiency_plan(plan, allow_legacy=is_legacy)
     if plan.get("schema_version") != PLAN_SCHEMA_VERSION or plan.get("plan_sha256") != meta.get("plan_sha256"):
         raise ValueError("raw package plan binding mismatch")
     decisions_path = root / "raw" / "decisions.jsonl"

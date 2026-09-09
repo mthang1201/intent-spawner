@@ -169,8 +169,11 @@ def classify_kubernetes_outcome(
 
 class KubernetesResourceEfficiencyAdapter(CalibrationKubernetesAdapter):
     adapter_version = ADAPTER_VERSION
-    _is_authenticated_real_kubernetes_collector: bool = True
     collector_origin: str = "REAL_KUBERNETES_COLLECTOR"
+
+    def __init__(self, *, image: str, **kwargs: Any) -> None:
+        super().__init__(image=image, **kwargs)
+        self._initialized = True
 
     def read_only_preflight(self) -> Mapping[str, Any]:
         result = collect_read_only_preflight(image=self.image, policy=self.policy, image_state=self.image_state)

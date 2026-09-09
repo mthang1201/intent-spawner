@@ -218,7 +218,7 @@ def build_efficiency_plan(
     return plan
 
 
-def validate_efficiency_plan(plan: Mapping[str, Any]) -> None:
+def validate_efficiency_plan(plan: Mapping[str, Any], *, allow_legacy: bool = False) -> None:
     if plan.get("schema_version") != PLAN_SCHEMA_VERSION or plan.get("conditions") != list(CONDITIONS):
         raise ValueError("unsupported resource-efficiency plan")
     decisions = plan.get("decisions")
@@ -227,15 +227,22 @@ def validate_efficiency_plan(plan: Mapping[str, Any]) -> None:
         raise ValueError(
             f"resource-efficiency plan must contain {FAMILY_COUNT} decisions and {PRIMARY_TRIAL_COUNT} trials"
         )
+    if not allow_legacy:
+        if "independent_semantic_n" not in plan or plan.get("independent_semantic_n") != FAMILY_COUNT:
+            raise ValueError("resource-efficiency plan lacks required independent_semantic_n")
+        if "execution_order_algorithm" not in plan or plan.get("execution_order_algorithm") != EXECUTION_ORDER_ALGORITHM:
+            raise ValueError("resource-efficiency plan lacks required execution_order_algorithm")
+    else:
+        if plan.get("independent_semantic_n") is not None and plan.get("independent_semantic_n") != FAMILY_COUNT:
+            raise ValueError("resource-efficiency design-size invariant differs")
+        if plan.get("execution_order_algorithm") is not None and plan.get("execution_order_algorithm") != EXECUTION_ORDER_ALGORITHM:
+            raise ValueError("resource-efficiency execution-order invariant differs")
     if (
         plan.get("family_count") != FAMILY_COUNT
         or plan.get("repetitions") != REPETITIONS
         or plan.get("primary_trial_count") != PRIMARY_TRIAL_COUNT
-        or plan.get("independent_semantic_n", FAMILY_COUNT) != FAMILY_COUNT
     ):
         raise ValueError("resource-efficiency design-size invariant differs")
-    if plan.get("execution_order_algorithm") is not None and plan.get("execution_order_algorithm") != EXECUTION_ORDER_ALGORITHM:
-        raise ValueError("resource-efficiency execution-order invariant differs")
     if plan.get("decision_sha256") != canonical_sha256({"decisions": decisions}) or plan.get("trial_order_sha256") != canonical_sha256({"trials": trials}):
         raise ValueError("resource-efficiency decision or trial-order hash mismatch")
     expected_plan = canonical_sha256({key: value for key, value in plan.items() if key not in {"created_at", "plan_sha256"}})

@@ -8,6 +8,7 @@ explicitly rejected as proof of authenticity.
 from __future__ import annotations
 
 from dataclasses import dataclass
+import hashlib
 import json
 import re
 from typing import Any, Mapping, Sequence
@@ -46,9 +47,6 @@ FORBIDDEN_SYNTHETIC_TOKENS = (
     "fixture",
     "mock",
     "fake",
-    "dry_run",
-    "no-cluster-measurement",
-    "unknown",
 )
 
 UID_PATTERN = re.compile(r"^[0-9a-zA-Z-._]{8,64}$")
@@ -71,23 +69,68 @@ class AdapterAuthenticity:
 def authenticate_adapter(adapter: Any) -> AdapterAuthenticity:
     """Authenticate an adapter instance.
 
-    Caller-provided strings or duck-typed attributes are NOT sufficient to
-    establish authenticity. Only genuinely imported and validated adapter
+    Caller-provided strings, monkey-patched flags, __new__ without __init__,
+    subclasses outside blessed modules, or method overwrites are explicitly
+    rejected. Only genuine un-monkeypatched instances of real collector
     classes running real cluster collection obtain REAL_KUBERNETES_COLLECTOR.
     """
+    if adapter is None or isinstance(adapter, (str, int, float, bool, list, dict, set, tuple)):
+        return AdapterAuthenticity(
+            is_authenticated_real_collector=False,
+            collector_origin=COLLECTOR_ORIGIN_SYNTHETIC,
+            derived_execution_status="SYNTHETIC",
+            derived_cluster_measurement_status="NOT_EXECUTED",
+            claims_permitted=False,
+        )
+
     adapter_cls = type(adapter)
     module_name = getattr(adapter_cls, "__module__", "")
     class_name = getattr(adapter_cls, "__qualname__", "")
-    version = getattr(adapter, "adapter_version", "")
-    is_marker_set = getattr(
-        adapter, "_is_authenticated_real_kubernetes_collector", False
-    )
 
-    is_genuine = (
-        is_marker_set is True
+    # Lazy import to inspect class definitions without cyclic import
+    from cluster_evaluation.resource_adapter_v5 import KubernetesTrialAdapter
+    from cluster_evaluation.resource_efficiency_adapter_v5 import KubernetesResourceEfficiencyAdapter
+
+    allowed_classes = (KubernetesTrialAdapter, KubernetesResourceEfficiencyAdapter)
+
+    # 1. Exact class identity (reject subclasses and duck-typed classes)
+    is_exact_class = (
+        adapter_cls in allowed_classes
         and module_name in AUTHENTICATED_COLLECTOR_MODULES
         and class_name in AUTHENTICATED_COLLECTOR_CLASSES
-        and version in AUTHENTICATED_COLLECTOR_VERSIONS
+    )
+
+    # 2. Must be initialized via authentic __init__ (reject __new__ bypass)
+    is_initialized = getattr(adapter, "_initialized", False) is True
+
+    # 3. Method monkeypatching detection: execution methods must not be shadowed in instance __dict__
+    instance_dict = getattr(adapter, "__dict__", {})
+    critical_methods = ("run_trial", "environment_provenance", "_kubectl", "_preflight", "_json")
+    is_monkeypatched = any(m in instance_dict for m in critical_methods)
+
+    # 4. Method identity verification: bound method functions must match authentic class functions
+    method_identities_match = True
+    for m in critical_methods:
+        func = getattr(getattr(adapter, m, None), "__func__", None)
+        class_func = getattr(adapter_cls, m, None)
+        if class_func is not None and func is not class_func:
+            method_identities_match = False
+            break
+
+    # 5. Version check
+    version = getattr(adapter, "adapter_version", "")
+    version_ok = version in AUTHENTICATED_COLLECTOR_VERSIONS
+
+    # 6. Scan instance attributes for forbidden synthetic tokens
+    synthetic_findings = _scan_for_synthetic_tokens(instance_dict, path="adapter")
+
+    is_genuine = (
+        is_exact_class
+        and is_initialized
+        and not is_monkeypatched
+        and method_identities_match
+        and version_ok
+        and not synthetic_findings
     )
 
     if is_genuine:
@@ -100,13 +143,19 @@ def authenticate_adapter(adapter: Any) -> AdapterAuthenticity:
         )
 
     # Fake, synthetic, dry-run, or caller-injected adapter
-    version_lower = str(version).lower()
-    if "dry" in version_lower:
-        derived_status = "DRY_RUN"
-        origin = COLLECTOR_ORIGIN_DRY_RUN
+    existing_origin = getattr(adapter, "collector_origin", None)
+    if isinstance(existing_origin, str) and existing_origin in VALID_COLLECTOR_ORIGINS and existing_origin != COLLECTOR_ORIGIN_REAL_KUBERNETES:
+        origin = existing_origin
+        derived_status = "DRY_RUN" if existing_origin == COLLECTOR_ORIGIN_DRY_RUN else "SYNTHETIC"
     else:
-        derived_status = "SYNTHETIC"
-        origin = COLLECTOR_ORIGIN_SYNTHETIC
+        version_lower = str(version).lower()
+        origin_lower = str(existing_origin).lower()
+        if "dry" in version_lower or "dry" in origin_lower:
+            derived_status = "DRY_RUN"
+            origin = COLLECTOR_ORIGIN_DRY_RUN
+        else:
+            derived_status = "SYNTHETIC"
+            origin = COLLECTOR_ORIGIN_SYNTHETIC
 
     return AdapterAuthenticity(
         is_authenticated_real_collector=False,
@@ -121,13 +170,13 @@ def _scan_for_synthetic_tokens(value: Any, path: str = "") -> list[str]:
     findings: list[str] = []
     if isinstance(value, str):
         lowered = value.casefold()
-        for token in ("synthetic", "fixture", "mock"):
+        for token in FORBIDDEN_SYNTHETIC_TOKENS:
             if token in lowered:
                 findings.append(f"{path}: contains forbidden token '{token}'")
     elif isinstance(value, Mapping):
         for k, v in value.items():
             findings.extend(_scan_for_synthetic_tokens(v, f"{path}.{k}" if path else str(k)))
-    elif isinstance(value, (list, tuple)):
+    elif isinstance(value, (list, tuple, set)):
         for i, item in enumerate(value):
             findings.extend(_scan_for_synthetic_tokens(item, f"{path}[{i}]"))
     return findings
@@ -203,6 +252,9 @@ def validate_resource_authenticity(
             raise ValueError("OBSERVED environment lacks node_name runtime identity")
         if not node_uid or not isinstance(node_uid, str) or not UID_PATTERN.fullmatch(node_uid):
             raise ValueError("OBSERVED environment lacks valid node_uid runtime identity")
+        for token in FORBIDDEN_SYNTHETIC_TOKENS:
+            if token in node_uid.casefold():
+                raise ValueError(f"OBSERVED environment node_uid contains forbidden token '{token}'")
 
         node_info = environment.get("read_only_preflight", {}).get("facts", {}).get("node_info") or {}
         for req_field in ("kubelet_version", "container_runtime", "kernel_version", "operating_system", "architecture"):
@@ -256,6 +308,20 @@ def validate_resource_authenticity(
                     f"trial {row_dict.get('run_id') or row_dict.get('trial_id')} "
                     f"has invalid pod_name: {pod_name!r}"
                 )
+            run_id = row_dict.get("run_id")
+            trial_id = row_dict.get("trial_id")
+            if run_id is not None:
+                expected_pod_name = "e4-" + hashlib.sha256(str(run_id).encode("utf-8")).hexdigest()[:24]
+                if pod_name != expected_pod_name:
+                    raise ValueError(
+                        f"trial {run_id} pod_name {pod_name!r} does not match expected deterministic name {expected_pod_name!r}"
+                    )
+            elif trial_id is not None:
+                expected_pod_name = "e4e-" + hashlib.sha256(str(trial_id).encode("utf-8")).hexdigest()[:24]
+                if pod_name != expected_pod_name:
+                    raise ValueError(
+                        f"trial {trial_id} pod_name {pod_name!r} does not match expected deterministic name {expected_pod_name!r}"
+                    )
 
             pod_uid = k8s_data.get("pod_uid")
             if not pod_uid or not isinstance(pod_uid, str) or not UID_PATTERN.fullmatch(pod_uid):
@@ -263,6 +329,12 @@ def validate_resource_authenticity(
                     f"trial {row_dict.get('run_id') or row_dict.get('trial_id')} "
                     f"lacks valid pod_uid runtime identity: {pod_uid!r}"
                 )
+            for token in FORBIDDEN_SYNTHETIC_TOKENS:
+                if token in pod_uid.casefold():
+                    raise ValueError(
+                        f"trial {row_dict.get('run_id') or row_dict.get('trial_id')} "
+                        f"pod_uid contains forbidden token '{token}'"
+                    )
 
             row_node = k8s_data.get("node_name")
             if row_node and row_node != node_name:
@@ -284,11 +356,13 @@ def validate_resource_authenticity(
             if row_dict.get("cgroup_version") not in (None, "v2") or cgroup.get("cgroup_version") not in (None, "v2"):
                 raise ValueError("cgroup_version must be v2 for real Kubernetes execution")
 
-    elif execution_status in (COLLECTOR_ORIGIN_SYNTHETIC, "TEST_ONLY"):
+    elif execution_status in (COLLECTOR_ORIGIN_SYNTHETIC, "TEST_ONLY", COLLECTOR_ORIGIN_DRY_RUN, "NOT_EXECUTED"):
         if manifest.get("measurement_claims_permitted") is True:
             raise ValueError(f"{execution_status} evidence cannot permit measurement claims")
         if manifest.get("manual_review_status") == "APPROVED":
             raise ValueError(f"{execution_status} evidence cannot have an APPROVED manual review")
+        if manifest.get("eligible_for_comparison") is True:
+            raise ValueError(f"{execution_status} evidence cannot be eligible for comparison")
 
 
 __all__ = [

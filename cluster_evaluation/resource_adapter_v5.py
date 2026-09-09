@@ -280,7 +280,6 @@ def build_pod_spec(spec: TrialSpec, image: str) -> dict[str, Any]:
 class KubernetesTrialAdapter:
     adapter_version = "protocol-v5-kubernetes-trial-adapter-v1.2.0"
     collector_origin = "REAL_KUBERNETES_COLLECTOR"
-    _is_authenticated_real_kubernetes_collector = True
 
     def __init__(self, *, image: str, image_state_path: Path = IMAGE_STATE_PATH) -> None:
         if not IMAGE_RE.fullmatch(image):
@@ -289,6 +288,7 @@ class KubernetesTrialAdapter:
         self.policy = load_cluster_policy()
         self.image_state = load_image_state(image_state_path)
         self._environment: dict[str, Any] | None = None
+        self._initialized = True
 
     def _kubectl(self, args: list[str], *, input_text: str | None = None, timeout: float = 30) -> subprocess.CompletedProcess[str]:
         return subprocess.run(
