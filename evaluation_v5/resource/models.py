@@ -59,6 +59,7 @@ class TrialObservation:
     kubernetes: Mapping[str, Any]
     replacement_of: str | None
     recorded_at_utc: str
+    collector_origin: str = "SYNTHETIC"
 
     @property
     def workload_success(self) -> bool:
@@ -77,7 +78,9 @@ class TrialObservation:
 
     @classmethod
     def from_dict(cls, payload: Mapping[str, Any]) -> "TrialObservation":
-        return cls(**dict(payload))
+        data = dict(payload)
+        data.setdefault("collector_origin", "SYNTHETIC")
+        return cls(**data)
 
 
 class TrialAdapter(Protocol):

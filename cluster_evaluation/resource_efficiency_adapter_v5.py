@@ -169,6 +169,14 @@ def classify_kubernetes_outcome(
 
 class KubernetesResourceEfficiencyAdapter(CalibrationKubernetesAdapter):
     adapter_version = ADAPTER_VERSION
+    collector_origin: str = "REAL_KUBERNETES_COLLECTOR"
+
+    def __init__(self, *, image: str, **kwargs: Any) -> None:
+        super().__init__(image=image, **kwargs)
+        from evaluation_v5.resource.authenticity import CollectorExecutionSession
+        self._session = CollectorExecutionSession(self)
+        self._executed_trials: list[dict[str, Any]] = []
+        self._initialized = True
 
     def read_only_preflight(self) -> Mapping[str, Any]:
         result = collect_read_only_preflight(image=self.image, policy=self.policy, image_state=self.image_state)
@@ -195,7 +203,11 @@ class KubernetesResourceEfficiencyAdapter(CalibrationKubernetesAdapter):
         if created.returncode != 0:
             reason = _sanitize_reason(created.stderr)
             admission = reason in {"QUOTA_REJECTED", "ADMISSION_FORBIDDEN", "UNSCHEDULABLE", "INSUFFICIENT_CPU", "INSUFFICIENT_MEMORY"}
-            return self._record(spec, planned=planned, pending=admission, runtime_error=False, infrastructure_invalid=not admission, exclusion_reason=None if admission else "POD_CREATE_INFRASTRUCTURE_FAILURE", admission_reason=reason)
+            record = self._record(spec, planned=planned, pending=admission, runtime_error=False, infrastructure_invalid=not admission, exclusion_reason=None if admission else "POD_CREATE_INFRASTRUCTURE_FAILURE", admission_reason=reason)
+            self._executed_trials.append(record)
+            if hasattr(self, "_session") and self._session is not None:
+                self._session.record_trial_execution(spec, record)
+            return record
         deadline = time.monotonic() + spec.timeout_seconds + POD_LIFECYCLE_GRACE_SECONDS + ADAPTER_MONITOR_GRACE_SECONDS
         pod: dict[str, Any] | None = None
         while time.monotonic() < deadline:
@@ -241,7 +253,7 @@ class KubernetesResourceEfficiencyAdapter(CalibrationKubernetesAdapter):
         correctness = None if not output_exists else bool(marker == spec.expected_marker_sha256 and (payload or {}).get("correctness_invariants_ok"))
         exit_code = terminated.get("exitCode")
         success = bool(not infrastructure_reason and not pending and not oom and not timeout and exit_code == 0 and correctness is True)
-        return self._record(
+        record = self._record(
             spec, planned=planned, observed=observed, pod_created=True, scheduled=bool(((pod or {}).get("spec") or {}).get("nodeName")),
             pending=pending, oom=oom, timeout=timeout, correctness=correctness,
             runtime_error=not infrastructure_reason and not success and not pending and not oom and not timeout and correctness is not False,
@@ -253,6 +265,27 @@ class KubernetesResourceEfficiencyAdapter(CalibrationKubernetesAdapter):
             admission_reason=classification["admission_or_scheduling_reason"],
             kubernetes={"pod_name": pod_name, "pod_uid": ((pod or {}).get("metadata") or {}).get("uid"), "phase": phase, "reason": reason, "terminated_reason": terminated.get("reason"), "waiting_reason": waiting.get("reason"), "exit_code": exit_code, "started_at": terminated.get("startedAt"), "finished_at": terminated.get("finishedAt"), "restart_count": status.get("restartCount"), "node_name": ((pod or {}).get("spec") or {}).get("nodeName"), "image_reference": self.image, "image_id": status.get("imageID"), "events": event_rows, "cleanup_status": cleanup},
         )
+        self._executed_trials.append(record)
+        if hasattr(self, "_session") and self._session is not None:
+            self._session.record_trial_execution(spec, record)
+        return record
+
+    def produce_execution_result(self) -> Any:
+        from evaluation_v5.resource.authenticity import (
+            CollectorExecutionResult,
+            CollectorExecutionSession,
+        )
+        session = getattr(self, "_session", None)
+        if not isinstance(session, CollectorExecutionSession):
+            return CollectorExecutionResult(
+                collector_implementation=f"{self.__class__.__module__}.{self.__class__.__qualname__}",
+                collector_version=getattr(self, "adapter_version", "unknown"),
+                environment=dict(getattr(self, "_environment", {}) or {}),
+                trials=tuple(getattr(self, "_executed_trials", []) or ()),
+                is_production_authorized=False,
+                authority_origin="SYNTHETIC",
+            )
+        return session.produce_result()
 
     @staticmethod
     def _record(
@@ -265,9 +298,11 @@ class KubernetesResourceEfficiencyAdapter(CalibrationKubernetesAdapter):
         cgroup_metrics: Mapping[str, Any] | None = None, infrastructure_invalid: bool = False,
         exclusion_reason: str | None = None, admission_reason: str | None = None,
         kubernetes: Mapping[str, Any] | None = None,
+        collector_origin: str = "REAL_KUBERNETES_COLLECTOR",
     ) -> dict[str, Any]:
         row = {
             "schema_version": TRIAL_SCHEMA_VERSION, **spec.to_dict(),
+            "collector_origin": collector_origin,
             "planned_resources": dict(planned), "observed_resources": None if observed is None else dict(observed),
             "pod_created": pod_created, "scheduled": scheduled, "pending_or_admission_failure": pending,
             "admission_or_scheduling_reason": admission_reason, "oom": oom, "timeout": timeout,

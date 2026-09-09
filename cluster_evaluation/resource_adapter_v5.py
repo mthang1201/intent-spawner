@@ -279,6 +279,7 @@ def build_pod_spec(spec: TrialSpec, image: str) -> dict[str, Any]:
 
 class KubernetesTrialAdapter:
     adapter_version = "protocol-v5-kubernetes-trial-adapter-v1.2.0"
+    collector_origin = "REAL_KUBERNETES_COLLECTOR"
 
     def __init__(self, *, image: str, image_state_path: Path = IMAGE_STATE_PATH) -> None:
         if not IMAGE_RE.fullmatch(image):
@@ -286,7 +287,11 @@ class KubernetesTrialAdapter:
         self.image = image
         self.policy = load_cluster_policy()
         self.image_state = load_image_state(image_state_path)
+        from evaluation_v5.resource.authenticity import CollectorExecutionSession
+        self._session = CollectorExecutionSession(self)
         self._environment: dict[str, Any] | None = None
+        self._executed_trials: list[TrialObservation] = []
+        self._initialized = True
 
     def _kubectl(self, args: list[str], *, input_text: str | None = None, timeout: float = 30) -> subprocess.CompletedProcess[str]:
         return subprocess.run(
@@ -324,10 +329,14 @@ class KubernetesTrialAdapter:
             raise RuntimeError("CLUSTER_INELIGIBLE: " + ",".join(sorted(set(probe_failures))))
         facts = read_only["facts"]
         node_info = facts.get("node_info") or {}
-        return {
+        env = {
             "schema_version": "protocol-v5-resource-environment-v1.1.0",
             "captured_at_utc": _utc_now(),
             "environment_id": f"{REQUIRED_CONTEXT}:{NAMESPACE}",
+            "collector_origin": "REAL_KUBERNETES_COLLECTOR",
+            "collector_implementation": f"{self.__class__.__module__}.{self.__class__.__qualname__}",
+            "collector_version": self.adapter_version,
+            "cluster_measurement_status": "OBSERVED",
             "eligibility_status": "ELIGIBLE",
             "eligibility_policy_version": self.policy["schema_version"],
             "read_only_preflight": read_only,
@@ -336,6 +345,8 @@ class KubernetesTrialAdapter:
             "namespace": NAMESPACE,
             "namespace_safety_label": f"{SAFETY_LABEL}=true",
             "container_image": self.image,
+            "node_name": facts.get("node_name"),
+            "node_uid": facts.get("node_uid"),
             "node_capacity": facts.get("node_capacity"),
             "node_allocatable": facts.get("node_allocatable"),
             "kubernetes_version": facts.get("kubernetes_version"),
@@ -351,6 +362,9 @@ class KubernetesTrialAdapter:
             "adapter_monitor_grace_seconds": ADAPTER_MONITOR_GRACE_SECONDS,
             "single_active_workload": True,
         }
+        if hasattr(self, "_session") and hasattr(self._session, "record_preflight_execution"):
+            self._session.record_preflight_execution(env)
+        return env
 
     def _run_cgroup_probe(self) -> dict[str, Any]:
         name = "e4-cgroup-eligibility-probe"
@@ -466,7 +480,7 @@ class KubernetesTrialAdapter:
         )
         if oom or timeout:
             infrastructure_reason = None
-        return self._observation(
+        obs = self._observation(
             spec,
             observed_marker=(payload or {}).get("observed_marker_sha256"),
             exit_code=exit_code,
@@ -481,6 +495,11 @@ class KubernetesTrialAdapter:
             exclusion_reason=infrastructure_reason,
             kubernetes={
                 "pod_name": pod_name,
+                "pod_uid": ((pod or {}).get("metadata") or {}).get("uid"),
+                "node_name": ((pod or {}).get("spec") or {}).get("nodeName"),
+                "image_id": status.get("imageID"),
+                "image_reference": self.image,
+                "collector_origin": "REAL_KUBERNETES_COLLECTOR",
                 "phase": (pod or {}).get("status", {}).get("phase"),
                 "started_at": terminated.get("startedAt"),
                 "finished_at": terminated.get("finishedAt"),
@@ -492,6 +511,27 @@ class KubernetesTrialAdapter:
                 "adapter_monitor_grace_seconds": ADAPTER_MONITOR_GRACE_SECONDS,
             },
         )
+        self._executed_trials.append(obs)
+        if hasattr(self, "_session") and hasattr(self._session, "record_trial_execution"):
+            self._session.record_trial_execution(spec, obs)
+        return obs
+
+    def produce_execution_result(self) -> Any:
+        from evaluation_v5.resource.authenticity import (
+            CollectorExecutionResult,
+            CollectorExecutionSession,
+        )
+        session = getattr(self, "_session", None)
+        if not isinstance(session, CollectorExecutionSession):
+            return CollectorExecutionResult(
+                collector_implementation=f"{self.__class__.__module__}.{self.__class__.__qualname__}",
+                collector_version=getattr(self, "adapter_version", "unknown"),
+                environment=dict(getattr(self, "_environment", {}) or {}),
+                trials=tuple(getattr(self, "_executed_trials", []) or ()),
+                is_production_authorized=False,
+                authority_origin="SYNTHETIC",
+            )
+        return session.produce_result()
 
     def _observation(
         self,
@@ -509,6 +549,7 @@ class KubernetesTrialAdapter:
         infrastructure_invalid: bool = False,
         exclusion_reason: str | None = None,
         kubernetes: Mapping[str, Any] | None = None,
+        collector_origin: str = "REAL_KUBERNETES_COLLECTOR",
     ) -> TrialObservation:
         metrics = dict(metrics or {})
         memory_events = metrics.get("memory_events_delta")
@@ -547,6 +588,7 @@ class KubernetesTrialAdapter:
             cgroup_version=metrics.get("cgroup_version"), cgroup_metrics=metrics,
             kubernetes=dict(kubernetes or {}), replacement_of=spec.replacement_of,
             recorded_at_utc=_utc_now(),
+            collector_origin=collector_origin,
         )
 
 

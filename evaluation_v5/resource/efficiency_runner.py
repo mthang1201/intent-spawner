@@ -12,6 +12,11 @@ from typing import Any, Mapping, Protocol
 
 from evaluation_v5.provenance import write_json_exclusive
 
+from .authenticity import (
+    authenticate_adapter,
+    validate_collection_outcome,
+    validate_collector_implementation,
+)
 from .contracts import load_cluster_policy, load_image_state
 from .efficiency_analysis import analyze_trials, load_approved_oracle, summarize_dynamic_allocations
 from .efficiency_capacity import simulate_capacity
@@ -109,7 +114,8 @@ def execute_plan(
     resume: bool = False, enforce_readiness: bool = True,
 ) -> dict[str, Any]:
     validate_efficiency_plan(plan)
-    if not enforce_readiness and adapter.adapter_version == "protocol-v5-resource-efficiency-kubernetes-adapter-v1.0.0":
+    auth = validate_collector_implementation(adapter)
+    if not enforce_readiness and auth.is_production_implementation:
         raise ValueError("readiness gates cannot be disabled for the Kubernetes adapter")
     freeze = load_efficiency_freeze()
     capacity = load_capacity_contract()
@@ -117,6 +123,8 @@ def execute_plan(
     if enforce_readiness and not git_is_clean():
         blockers.append("GIT_TREE_NOT_CLEAN")
     if enforce_readiness:
+        if not auth.is_production_implementation:
+            blockers.append("AUTHENTICATED_REAL_KUBERNETES_COLLECTOR_REQUIRED")
         if plan.get("condition_input_sha256") != freeze["experiment"]["workload_input_sha256"] or plan.get("freeze_contract_sha256") != file_sha256(Path(__file__).resolve().parents[2] / "benchmarks_v5" / "resource-efficiency-freeze-contract-v1.yaml"):
             blockers.append("PLAN_CONTRACT_BINDING_MISMATCH")
         if plan.get("git_revision") != _git_revision():
@@ -138,6 +146,7 @@ def execute_plan(
     state = {
         "schema_version": RAW_MANIFEST_VERSION, "protocol_version": "5.0.0", "run_id": run_id,
         "execution_status": "IN_PROGRESS", "cluster_measurement_status": "IN_PROGRESS",
+        "collector_origin": auth.collector_origin,
         "plan_sha256": plan["plan_sha256"], "provenance_sha256": provenance_hash,
         "adapter_version": adapter.adapter_version, "started_at": _utc_now(),
     }
@@ -217,7 +226,24 @@ def execute_plan(
     else:
         completion = {"schema_version": "protocol-v5-resource-efficiency-completion-v1.0.0", "expected_primary_trials": PRIMARY_TRIAL_COUNT, "completed_primary_trials": len({row["primary_trial_id"] for row in final_rows}), "attempt_records": len(final_rows), "completed_at": _utc_now()}
         _write_json(completion_path, completion)
-    manifest = {**state, "execution_status": "OBSERVED", "cluster_measurement_status": "OBSERVED", "completed_at": completion["completed_at"], "primary_trial_count": PRIMARY_TRIAL_COUNT, "attempt_record_count": len(final_rows)}
+    execution_result = getattr(adapter, "produce_execution_result", lambda: None)()
+    outcome = validate_collection_outcome(
+        implementation=auth,
+        environment=environment,
+        observations_or_trials=final_rows,
+        expected_trial_count=PRIMARY_TRIAL_COUNT,
+        is_efficiency=True,
+        execution_result=execution_result,
+    )
+    manifest = {
+        **state,
+        "execution_status": outcome.execution_status,
+        "cluster_measurement_status": outcome.cluster_measurement_status,
+        "collector_origin": outcome.collector_origin,
+        "completed_at": completion["completed_at"],
+        "primary_trial_count": PRIMARY_TRIAL_COUNT,
+        "attempt_record_count": len(final_rows),
+    }
     _write_json(root / "manifest.json", manifest)
     os.unlink(root / "run-state.json")
     seal_package(root)
@@ -246,6 +272,7 @@ def write_not_executed(*, root: Path, run_id: str, image: str, reason: str) -> d
     manifest = {
         "schema_version": RAW_MANIFEST_VERSION, "protocol_version": "5.0.0", "run_id": run_id,
         "execution_status": "NOT_EXECUTED", "cluster_measurement_status": "NOT_EXECUTED",
+        "collector_origin": "NOT_EXECUTED",
         "plan_sha256": plan["plan_sha256"], "created_at": _utc_now(), "image": image,
         "reason": reason, "blocker_codes": sorted(set(blockers)), "kubernetes_mutations": [],
     }

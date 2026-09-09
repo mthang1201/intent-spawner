@@ -1,5 +1,6 @@
 """Regression guard for the immutable Protocol-v4 historical evidence."""
 
+import os
 from pathlib import Path
 
 import pytest
@@ -8,7 +9,9 @@ from evaluation_v4.dataset import file_sha256
 
 
 ROOT = Path(__file__).resolve().parents[1]
-HISTORICAL = ROOT / "results" / "v4-live-20260810"
+HISTORICAL = Path(os.environ.get("V4_HISTORICAL_EVIDENCE_DIR", ROOT / "results" / "v4-live-20260810"))
+if not HISTORICAL.is_dir() and (ROOT.parent / "intent-spawner" / "results" / "v4-live-20260810").is_dir():
+    HISTORICAL = ROOT.parent / "intent-spawner" / "results" / "v4-live-20260810"
 
 
 def test_v4_live_20260810_evidence_is_byte_for_byte_immutable():

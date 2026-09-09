@@ -45,29 +45,18 @@ def _joint(cpu_status: str, memory_status: str) -> str:
     return "INDETERMINATE_ON_AT_LEAST_ONE_AXIS"
 
 
-def compare_allocations(
+def evaluate_allocation_comparison(
     *,
-    e4_package: Path,
-    allocation_evidence: Path,
-    crosswalk_path: Path = CROSSWALK_PATH,
-) -> dict[str, Any]:
-    package = validate_evidence_package(e4_package)
-    if package["execution_status"] != "OBSERVED" or not package["sealed"]:
-        raise ValueError("comparison requires sealed observed E4 evidence")
-    package_approved = package["eligible_for_comparison"]
-    derived_path = e4_package / "derived" / "safe-envelopes.json"
-    derived = json.loads(derived_path.read_text(encoding="utf-8"))
-    envelopes = {item["family_id"]: item for item in derived["envelopes"]}
-
-    allocation = json.loads(allocation_evidence.read_text(encoding="utf-8"))
-    schema = json.loads(ALLOCATION_SCHEMA.read_text(encoding="utf-8"))
-    Draft202012Validator(schema).validate(allocation)
-    crosswalk = load_crosswalk(crosswalk_path)
-    links = {item["allocation_case_id"]: item for item in crosswalk["entries"]}
-
+    envelopes: Mapping[str, Any],
+    allocation: Mapping[str, Any],
+    crosswalk: Mapping[str, Any],
+    package_approved: bool = True,
+) -> list[dict[str, Any]]:
+    """Compute axis classification and comparison metrics given envelopes, allocation, and crosswalk."""
+    links = {item["allocation_case_id"]: item for item in crosswalk.get("entries", [])}
     results: list[dict[str, Any]] = []
     seen: set[str] = set()
-    for case in allocation["cases"]:
+    for case in allocation.get("cases", []):
         case_id = case["allocation_case_id"]
         if case_id in seen:
             raise ValueError(f"duplicate allocation case {case_id}")
@@ -116,6 +105,34 @@ def compare_allocations(
             "cpu_percentage_excess": None if selected_cpu is None else (case["cpu_m"] - selected_cpu) / selected_cpu * 100,
             "memory_percentage_excess": None if selected_memory is None else (case["memory_mib"] - selected_memory) / selected_memory * 100,
         })
+    return results
+
+
+def compare_allocations(
+    *,
+    e4_package: Path,
+    allocation_evidence: Path,
+    crosswalk_path: Path = CROSSWALK_PATH,
+) -> dict[str, Any]:
+    package = validate_evidence_package(e4_package)
+    if package["execution_status"] != "OBSERVED" or not package["sealed"]:
+        raise ValueError("comparison requires sealed observed E4 evidence")
+    package_approved = package["eligible_for_comparison"]
+    derived_path = e4_package / "derived" / "safe-envelopes.json"
+    derived = json.loads(derived_path.read_text(encoding="utf-8"))
+    envelopes = {item["family_id"]: item for item in derived["envelopes"]}
+
+    allocation = json.loads(allocation_evidence.read_text(encoding="utf-8"))
+    schema = json.loads(ALLOCATION_SCHEMA.read_text(encoding="utf-8"))
+    Draft202012Validator(schema).validate(allocation)
+    crosswalk = load_crosswalk(crosswalk_path)
+
+    results = evaluate_allocation_comparison(
+        envelopes=envelopes,
+        allocation=allocation,
+        crosswalk=crosswalk,
+        package_approved=package_approved,
+    )
     report = {
         "schema_version": COMPARISON_VERSION,
         "protocol_version": "5.0.0",
@@ -135,4 +152,4 @@ def compare_allocations(
     return report
 
 
-__all__ = ["COMPARISON_VERSION", "classify_axis", "compare_allocations"]
+__all__ = ["COMPARISON_VERSION", "classify_axis", "compare_allocations", "evaluate_allocation_comparison"]
