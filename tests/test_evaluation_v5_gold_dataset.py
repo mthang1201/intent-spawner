@@ -1786,3 +1786,69 @@ def test_legitimate_original_and_derived_confirmatory_datasets_succeed(tmp_path:
     loaded = load_gold_dataset(src_path)
     compiled = compile_gold_dataset(loaded, output_path=out_path)
     assert compiled.split_manifest.role == "confirmatory"
+
+
+def test_many_families_single_upstream_source_dataset_succeeds():
+    doc = _document(role="development", lifecycle="draft")
+    # Add a third family so there are 3 distinct families
+    fam3 = deepcopy(doc["families"][0])
+    fam3["family_id"] = "fam-three"
+    for idx, v in enumerate(fam3["variants"]):
+        v["variant_id"] = f"fam3-var-{idx}"
+    doc["families"].append(fam3)
+    assert len(doc["families"]) == 3
+
+    # Declare exactly 1 upstream source dataset
+    doc["dataset_metadata"]["source_datasets"] = [
+        {
+            "dataset_id": "upstream-common-corpus",
+            "schema_version": "protocol-v5-gold-family-v1.0.0",
+            "source_file_sha256": "0" * 64,
+            "source_split": "development",
+            "evidence_classification": "development_only",
+        }
+    ]
+
+    # All 3 families legitimately originate from the same single upstream source dataset
+    for fam in doc["families"]:
+        fam["source_provenance"] = {
+            "source_dataset_id": "upstream-common-corpus",
+            "source_schema_version": "protocol-v5-gold-family-v1.0.0",
+            "source_family_id": fam["family_id"],
+            "source_case_ids": [v["variant_id"] for v in fam["variants"]],
+            "source_split": "development",
+            "source_file_sha256": "0" * 64,
+            "evidence_classification": "development_only",
+            "original_label_sha256": "0" * 64,
+        }
+
+    # Proves many-families -> one-declared-source-dataset is valid
+    ds = validate_gold_dataset(doc)
+    assert len(ds.families) == 3
+    assert len(ds.dataset_metadata["source_datasets"]) == 1
+
+    # But if an unreferenced second dataset is declared, it fails closed
+    doc_unref = deepcopy(doc)
+    doc_unref["dataset_metadata"]["source_datasets"].append(
+        {
+            "dataset_id": "upstream-unreferenced",
+            "schema_version": "protocol-v5-gold-family-v1.0.0",
+            "source_file_sha256": "1" * 64,
+            "source_split": "development",
+            "evidence_classification": "development_only",
+        }
+    )
+    with pytest.raises(
+        GoldDatasetValidationError,
+        match="declares unreferenced datasets: upstream-unreferenced",
+    ):
+        validate_gold_dataset(doc_unref)
+
+    # And if any one family omits source_provenance, it fails closed
+    doc_omitted = deepcopy(doc)
+    doc_omitted["families"][1]["source_provenance"] = None
+    with pytest.raises(
+        GoldDatasetValidationError,
+        match="cannot omit family source lineage",
+    ):
+        validate_gold_dataset(doc_omitted)

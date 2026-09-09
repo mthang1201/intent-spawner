@@ -1862,6 +1862,82 @@ def test_stale_review_attack_fails_closed_on_trust_mutation():
     with pytest.raises(StaleReviewError, match="dataset canonical checksum mismatch"):
         apply_review_decisions(mutated_prov_ds, [decision])
 
+    # Mutate ONLY dataset role
+    mutated_role_ds = RobustnessDataset(
+        dataset_id=base_ds.dataset_id,
+        families=base_ds.families,
+        protocol_version=base_ds.protocol_version,
+        role="development_staging",
+        metadata=base_ds.metadata,
+    )
+    with pytest.raises(StaleReviewError, match="dataset canonical checksum mismatch"):
+        apply_review_decisions(mutated_role_ds, [decision])
+
+    # Mutate ONLY dataset metadata trust keys
+    mutated_meta_ds = RobustnessDataset(
+        dataset_id=base_ds.dataset_id,
+        families=base_ds.families,
+        protocol_version=base_ds.protocol_version,
+        role=base_ds.role,
+        metadata={"source_dataset_id": "forged_source"},
+    )
+    with pytest.raises(StaleReviewError, match="dataset canonical checksum mismatch"):
+        apply_review_decisions(mutated_meta_ds, [decision])
+
+
+def test_multi_decision_batch_against_single_source_snapshot():
+    base_ds = load_robustness_dataset(DEV_SPLIT_PATH)
+    rows = extract_review_rows(base_ds)
+    assert len(rows) >= 2
+    row0, row1 = rows[0], rows[1]
+
+    # Pre-review source snapshot checksum
+    pre_review_sha = base_ds.canonical_sha256
+
+    # Multiple decisions prepared against the same source snapshot
+    decisions = [
+        {
+            "variant_id": row0.variant_id,
+            "dataset_id": base_ds.dataset_id,
+            "dataset_canonical_sha256": pre_review_sha,
+            "family_id": row0.family_id,
+            "variant_text_sha256": row0.variant_text_sha256,
+            "human_review_status": "approved",
+            "equivalence_status": "reviewed_equivalent",
+            "reviewed_by": "reviewer-alice",
+            "notes": "Decision 1 on pre-review snapshot",
+        },
+        {
+            "variant_id": row1.variant_id,
+            "dataset_id": base_ds.dataset_id,
+            "dataset_canonical_sha256": pre_review_sha,
+            "family_id": row1.family_id,
+            "variant_text_sha256": row1.variant_text_sha256,
+            "human_review_status": "approved",
+            "equivalence_status": "reviewed_equivalent",
+            "reviewed_by": "reviewer-bob",
+            "notes": "Decision 2 on pre-review snapshot",
+        },
+    ]
+
+    # Applying the batch against the pre-review snapshot must succeed
+    # (Decision 1 must NOT cause Decision 2 to be rejected as stale)
+    reviewed_ds = apply_review_decisions(base_ds, decisions)
+    assert reviewed_ds is not None
+
+    # Verify both variants were updated
+    var_map = {v.variant_id: v for fam in reviewed_ds.families for v in fam.variants}
+    assert var_map[row0.variant_id].metadata.human_review_status == HumanReviewStatus.APPROVED
+    assert var_map[row1.variant_id].metadata.human_review_status == HumanReviewStatus.APPROVED
+
+    # Post-review dataset has a new canonical checksum reflecting the review state
+    post_review_sha = reviewed_ds.canonical_sha256
+    assert post_review_sha != pre_review_sha
+
+    # Attempting to replay an old pre-review decision against the post-review dataset fails closed
+    with pytest.raises(StaleReviewError, match="dataset canonical checksum mismatch"):
+        apply_review_decisions(reviewed_ds, [decisions[0]])
+
 
 def test_cli_format_mismatch_and_authoritative_enforcement(tmp_path: Path):
     ds = load_robustness_dataset(DEV_SPLIT_PATH)
