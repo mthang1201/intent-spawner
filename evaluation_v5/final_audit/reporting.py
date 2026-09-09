@@ -41,7 +41,7 @@ def defense_rows(analysis: dict, format_source=None) -> list[list]:
     return [
         ["satisfaction", "E3", "SEQ ease; SUS usability", "NOT EXECUTED", refs("human")],
         ["time saving", "E3", "Paired decision time", "NOT EXECUTED", refs("human")],
-        ["correct image", "E5 functional", "Gold image match; required functional probes", images + "; development only; provenance limitations apply", refs("functional")],
+        ["correct image", "E5 functional", "Gold image match; required functional probes", images + "; current observations only; no confirmatory inference", refs("functional")],
         ["image storage reuse", "E5 storage", "LogicalImageBytes; UniqueLayerBytes; marginal reuse", "NOT EXECUTED", refs("storage")],
         ["additional/fine-grained profiles", "E4", "Dynamic CPU/memory oracle error; allocation coverage", "NOT EXECUTED", refs("resources")],
         ["resource saving", "E4", "CPU/memory request cost per successful workload; reliability", "NOT EXECUTED", refs("resources")],
@@ -113,10 +113,18 @@ def render_report(inputs: Inputs, audit: dict, analysis: dict, figures: dict, ta
                         f"{r['functional_passes']}/{r['eligible_functional_cases']}", r["undefined_required_probe_cases"]]
                        for r in rows], ["Run", "System", "Image-label matches", "Functional passes / eligible cases", "Cases with undefined required probe"]))
     if not rows:
-        lines += ["Current v1.4 functional observations: **NOT EXECUTED**. Archived packages remain available with these explicit limitations:", "",
-                  table([[item["run"], item["recorded_status"], item["validation_profile"], ", ".join(item["limitations"])]
-                         for item in analysis.get("legacy_functional", [])],
-                        ["Archived run", "Recorded status", "Validation profile", "Limitations"]), ""]
+        lines += ["Current v1.4 functional observations: **NOT EXECUTED**.", ""]
+        current_non_observed = analysis.get("current_functional", [])
+        if current_non_observed:
+            lines += ["Current non-observed packages were reproducible but remain non-claimable:", "",
+                      table([[item["run"], item["execution_status"], item["provenance_boundary"], item["claim_eligible"]]
+                             for item in current_non_observed],
+                            ["Current run", "Execution status", "Provenance", "Claim eligible"]), ""]
+        if analysis.get("legacy_functional"):
+            lines += ["Archived packages remain available with these explicit limitations:", "",
+                      table([[item["run"], item["recorded_status"], item["validation_profile"], ", ".join(item["limitations"])]
+                             for item in analysis["legacy_functional"]],
+                            ["Archived run", "Recorded status", "Validation profile", "Limitations"]), ""]
     for run in analysis["observed_functional"]:
         probe = run["metrics"]["probe_summary"]
         lines += [f"`{run['run']}`: {probe['probes_passed']}/{probe['total_probes_configured']} configured probes passed, "
@@ -127,8 +135,11 @@ def render_report(inputs: Inputs, audit: dict, analysis: dict, figures: dict, ta
                       f"(recorded rate {m['conservative_functional_success_rate']}); catalog-underclaim cases {m['catalog_underclaim_count']}; "
                       f"label-fail/functional-pass cases {m['label_fail_functional_pass_count']}. "
                       + source({**run["metric_source"], "locator": "/systems/" + system}), ""]
-    lines += ["The image-label match counts do not show an advantage for P2 in these runs. This is a bounded descriptive observation, not a family-level hypothesis test. The extractor provenance mismatch blocks claims that the complete pipeline matched a final freeze.", "",
-        "### Confidence intervals and effect sizes", "",
+    if rows:
+        lines += ["The image-label match counts do not show an advantage for P2 in these runs. This is a bounded descriptive observation, not a family-level hypothesis test. Current v1.4 rows use verified sealed source provenance; final-freeze and confirmatory-custody requirements remain separate claim boundaries.", ""]
+    else:
+        lines += ["No current v1.4 functional observation is available for performance interpretation. Any reproducible DRY_RUN or synthetic package above remains non-empirical and non-claimable.", ""]
+    lines += ["### Confidence intervals and effect sizes", "",
         "Protocol-v5 inferential confidence intervals, p-values and standardized effect sizes: **N/A — NOT EXECUTED**. Complete offline gold is unavailable; human, resource and storage experiments were not executed. No interval is inferred from repetitions or recycled probes.", "",
         "### Failure analysis and P3 decision", "",
         "The E3 participant-flow CSV no longer matches its recorded checksum. In-memory LF→CRLF reconstruction matches the historical digest, consistent with the repository CSV newline policy. Original bytes and checksums are preserved; regeneration creates a separate corrected artifact. Older E4 contracts fail current validators and remain historical development packages. Archived E5 packages lack sealed recommendation-run provenance; v1.3 also lacks exact recommendation-record joins and selected-image platform binding. Their bytes and recorded statuses remain preserved, but they are legacy-valid and not claim-eligible. These are audit limitations and failures, not inferred performance effects.", "",
@@ -147,7 +158,7 @@ def render_report(inputs: Inputs, audit: dict, analysis: dict, figures: dict, ta
         "Package names above are unambiguous entries in the reviewed input inventory; every constituent file has a SHA-256. No timestamp ordering promotes archived functional runs: every legacy or invalid package remains listed, and no current v1.4 E5 observation is inferred.", "",
         "## Threats to validity and evidence boundaries", "",
         "Construct validity: image gold agreement, catalog capability descriptions, functional probes, user satisfaction and workload success measure different things. Undefined probes and label/operational discrepancies are retained.", "",
-        "Internal validity: no final freeze/custody record establishes confirmatory isolation or frozen execution revisions. Several E5 extractor fields disagree with the recommendation source. Integrity failures cannot be repaired by accepting a new inventory checksum.", "",
+        "Internal validity: no final freeze/custody record establishes confirmatory isolation or frozen execution revisions. Archived E5 packages retain their recorded extractor/source mismatches; current v1.4 packages are assessed from their sealed source artifacts. Integrity failures cannot be repaired by accepting a new inventory checksum.", "",
         "External validity: ten visible development families, a small administrator catalog, developer-machine container probes and repeated use of the same image digests do not establish general performance. There is no participant population or measured eligible Kubernetes environment to generalize from.", "",
         "Statistical validity: cases/variants/repeats are not independent families; probes are reused. No new p-values, intervals, effect sizes or causal improvements are claimed. Failure to execute a hypothesis test is neither support nor contradiction.", "",
         "Custody/privacy: repository/archive scanning detects visible contamination patterns, not undisclosed external access or semantic overlap. Private confirmatory data was not opened. Human-study files are empty of participant observations. Future real human/cluster/storage collection requires a separately authorized, preregistered execution package.", "",
@@ -210,7 +221,7 @@ def figures(inputs: Inputs, analysis: dict, analysis_root: Path, output: Path) -
             axis.set_ylim(0, 1)
             axis.set_ylabel("Image-label agreement (descriptive proportion)")
             axis.set_title("Development observations — separate runs, no pooled inference")
-            figure.text(.5, .01, "Extractor provenance mismatch unresolved; no confirmatory claim or confidence interval.", ha="center", fontsize=9)
+            figure.text(.5, .01, "Development-only evidence; no confirmatory claim or confidence interval.", ha="center", fontsize=9)
             figure.tight_layout(rect=(0, .07, 1, 1))
             figure.savefig(output / "functional-development.svg", metadata={"Date": None})
             figure.savefig(output / "functional-development.png", dpi=160,

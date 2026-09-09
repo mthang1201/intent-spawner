@@ -12,13 +12,13 @@ import sys
 import pytest
 
 from evaluation_v5.final_audit.common import (
-    Inputs, LOCK, ROOT, file_sha256, read_json, safe_path, seal, verify_seal, write_bytes, write_json,
+    Inputs, LOCK, REGISTRY, ROOT, file_sha256, read_json, safe_path, seal, verify_seal, write_bytes, write_json,
 )
 from evaluation_v5.final_audit.checks import (
     CHECKS, b0_ranking_findings, cluster_findings, execution_findings, inference_findings,
     inspect, p3_findings, placeholder_findings, storage_identity_findings,
 )
-from evaluation_v5.final_audit.reproduce import analyze, compare_json
+from evaluation_v5.final_audit.reproduce import analyze, compare_json, regenerate_functional
 from evaluation_v5.final_audit.reporting import figures, render_report
 
 
@@ -192,6 +192,204 @@ def test_regeneration_compares_real_values_not_just_provenance():
     assert compare_json({"status": "NOT_EXECUTED", "git_revision": "old"},
                         {"status": "NOT_EXECUTED", "git_revision": "new"},
                         ignored_fields=("git_revision",))["status"] == "PASS"
+
+
+@pytest.fixture(scope="module")
+def current_v14_e5_package(tmp_path_factory):
+    """Create current evidence without launching Docker or Kubernetes."""
+    from evaluation_v5.image_storage.__main__ import run_e5_evaluation
+    from evaluation_v5.offline.source_run import verify_recommendation_run_provenance
+
+    package = tmp_path_factory.mktemp("final-audit-e5-v14") / "package"
+    recommendation_run = verify_recommendation_run_provenance(
+        ROOT
+        / "results_v5/protocol-v5.0.0/E1"
+        / "20260825T-observed-p1-p2-development-v1"
+    )
+    run_e5_evaluation(
+        catalog_path=ROOT / "recommender/image-catalog.yaml",
+        recommendation_run=recommendation_run,
+        mode="dry-run",
+        output_dir=package,
+        run_id="current-v14-final-audit-fixture",
+    )
+    return package
+
+
+def _rewrite_e5_checksums(package: Path) -> None:
+    lines = [
+        f"{file_sha256(path)}  {path.relative_to(package)}"
+        for path in sorted(package.rglob("*"))
+        if path.is_file() and path.name != "SHA256SUMS"
+    ]
+    (package / "SHA256SUMS").write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+
+def _current_e5_inputs(tmp_path: Path, source_package: Path) -> tuple[Inputs, str, Path]:
+    relative = "results_v5/protocol-v5.0.0/E5/current-v14-final-audit-fixture"
+    package = tmp_path / relative
+    package.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copytree(source_package, package)
+    for required in (REGISTRY, "docs/evaluation/P3_INCREMENTAL_EVALUATION_V1.md"):
+        target = tmp_path / required
+        target.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(ROOT / required, target)
+    files = {
+        str(path.relative_to(tmp_path)): file_sha256(path)
+        for path in tmp_path.rglob("*")
+        if path.is_file()
+    }
+    write_json(
+        tmp_path / LOCK,
+        {
+            "schema_version": "protocol-v5-final-audit-inputs-v1.0.0",
+            "created_at_utc": "2026-09-09T00:00:00Z",
+            "source_git_revision": "synthetic-current-v1.4-fixture",
+            "files": files,
+            "packages": [relative],
+            "protected_files": [],
+            "legacy_reference_map": {},
+        },
+    )
+    return Inputs(tmp_path), relative, package
+
+
+def _refresh_current_e5_inputs(root: Path, relative: str, package: Path) -> Inputs:
+    _rewrite_e5_checksums(package)
+    lock = read_json(root / LOCK)
+    lock["files"] = {
+        str(path.relative_to(root)): file_sha256(path)
+        for path in root.rglob("*")
+        if path.is_file() and path != root / LOCK
+    }
+    (root / LOCK).unlink()
+    write_json(root / LOCK, lock)
+    return Inputs(root)
+
+
+def test_current_v14_round_trip_reaches_final_audit_without_becoming_observed(
+    tmp_path, current_v14_e5_package
+):
+    inputs, relative, _ = _current_e5_inputs(tmp_path, current_v14_e5_package)
+    audit = inspect(inputs, isolation=False, historical=False)
+    package = audit["packages"][0]
+    assert package["validation"] == "PASS"
+    assert package["validator_result"]["validator_status"] == "CURRENT_VALID"
+
+    result = analyze(inputs, audit, tmp_path / "analysis")
+    assert result["packages"][0]["status"] == "REGENERATED"
+    assert all(item["status"] == "PASS" for item in result["comparisons"])
+    assert result["observed_functional"] == []
+    assert len(result["current_functional"]) == 1
+    current = result["current_functional"][0]
+    assert current["execution_status"] == "DRY_RUN"
+    assert current["claim_eligible"] is False
+    assert current["confirmatory_eligible"] is False
+    assert current["provenance_boundary"] == "SEALED_SOURCE_PROVENANCE_VERIFIED"
+    lineage = {item["path"] for item in current["sources"]}
+    assert relative + "/raw/source-recommendation-run.json" in lineage
+    assert relative + "/raw/source-recommendations.jsonl" in lineage
+    assert not any("environment.json" in item for item in lineage)
+
+    figure_result = figures(inputs, result, tmp_path / "analysis", tmp_path / "figures")
+    report = render_report(inputs, audit, result, figure_result, tmp_path / "REPORT.md")
+    assert "SEALED_SOURCE_PROVENANCE_VERIFIED" in report
+    assert "Recorded extractor identity differs" not in report
+    assert "Extractor provenance mismatch unresolved" not in report
+
+
+@pytest.mark.parametrize(
+    "mutation",
+    [
+        "source-jsonl-bytes",
+        "source-run-checksum",
+        "record-id",
+        "selected-digest",
+        "selected-platform",
+        "source-configuration",
+        "missing-source-artifact",
+    ],
+)
+def test_current_v14_tampering_fails_closed_at_final_audit_boundary(
+    tmp_path, current_v14_e5_package, mutation
+):
+    inputs, relative, package = _current_e5_inputs(tmp_path, current_v14_e5_package)
+    del inputs
+    if mutation == "source-jsonl-bytes":
+        path = package / "raw/source-recommendations.jsonl"
+        path.write_bytes(path.read_bytes() + b" ")
+    elif mutation in {"source-run-checksum", "source-configuration"}:
+        path = package / "raw/source-recommendation-run.json"
+        value = read_json(path)
+        if mutation == "source-run-checksum":
+            value["recommendation_run_sha256"] = "0" * 64
+        else:
+            value["system_identities"]["P2"]["retrieval_configuration"]["dense_top_k"] += 1
+        path.write_text(json.dumps(value, sort_keys=True) + "\n", encoding="utf-8")
+    elif mutation in {"record-id", "selected-digest", "selected-platform"}:
+        path = package / "raw/functional_evaluations.jsonl"
+        rows = path.read_text(encoding="utf-8").splitlines()
+        value = json.loads(rows[0])
+        if mutation == "record-id":
+            value["source_recommendation_record_id"] = "forged-record-id"
+        elif mutation == "selected-digest":
+            value["selected_image_digest"] = "sha256:" + "f" * 64
+        else:
+            value["selected_image_platform"] = "linux/forged"
+        rows[0] = json.dumps(value, sort_keys=True)
+        path.write_text("\n".join(rows) + "\n", encoding="utf-8")
+    else:
+        (package / "raw/source-recommendation-run.json").unlink()
+
+    inputs = _refresh_current_e5_inputs(tmp_path, relative, package)
+    with pytest.raises(ValueError):
+        regenerate_functional(
+            inputs,
+            {
+                "path": relative,
+                "status": "DRY_RUN",
+                "validator_result": {"validator_status": "CURRENT_VALID"},
+            },
+        )
+
+    audit = inspect(inputs, isolation=False, historical=False)
+    assert audit["packages"][0]["validation"] == "FAIL"
+    result = analyze(inputs, audit, tmp_path / "analysis")
+    assert result["current_functional"] == []
+    assert result["observed_functional"] == []
+    assert result["packages"][0]["status"] == "UNVERIFIED"
+
+
+def test_legacy_e5_forged_as_current_fails_closed_in_final_audit(tmp_path):
+    archived = (
+        ROOT
+        / "results_v5/protocol-v5.0.0/E5"
+        / "e5-image-validation-20260905T040730Z"
+    )
+    if not archived.is_dir():
+        pytest.skip("archived E5 v1.3 fixture is unavailable")
+    inputs, relative, package = _current_e5_inputs(tmp_path, archived)
+    del inputs
+    probe_manifest = package / "raw/probe_manifest.json"
+    value = read_json(probe_manifest)
+    value["schema_version"] = "protocol-v5-image-probe-manifest-v1.2.0"
+    probe_manifest.write_text(json.dumps(value, sort_keys=True) + "\n", encoding="utf-8")
+    inputs = _refresh_current_e5_inputs(tmp_path, relative, package)
+
+    with pytest.raises(ValueError):
+        regenerate_functional(
+            inputs,
+            {
+                "path": relative,
+                "status": "OBSERVED",
+                "validator_result": {"validator_status": "CURRENT_VALID"},
+            },
+        )
+    audit = inspect(inputs, isolation=False, historical=False)
+    assert audit["packages"][0]["validation"] == "FAIL"
+    result = analyze(inputs, audit, tmp_path / "analysis")
+    assert result["current_functional"] == []
+    assert result["observed_functional"] == []
 
 
 def test_current_raw_analysis_and_figures_reproduce_without_collectors(tmp_path, current_audit, monkeypatch):

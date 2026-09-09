@@ -11,6 +11,7 @@ from typing import Any, Mapping, Sequence
 from evaluation_v5.offline.recommenders import candidate_catalog_snapshot
 from evaluation_v5.offline.runner import RAW_DIRECTORY_NAME, RECORDS_FILENAME
 from evaluation_v5.offline.source_run import (
+    SOURCE_RUN_PROVENANCE_SCHEMA_VERSION,
     SourceRunProvenanceError,
     VerifiedRecommendationRunProvenance,
     reverify_recommendation_run_provenance,
@@ -73,6 +74,37 @@ class BoundRecommendationSource:
         )
 
 
+def _strict_json(raw: bytes, *, label: str) -> Mapping[str, Any]:
+    def pairs(items: list[tuple[str, Any]]) -> dict[str, Any]:
+        value: dict[str, Any] = {}
+        for key, item in items:
+            if key in value:
+                raise SourceRunProvenanceError(
+                    f"{label} contains duplicate JSON field {key!r}"
+                )
+            value[key] = item
+        return value
+
+    def constant(value: str) -> Any:
+        raise SourceRunProvenanceError(
+            f"{label} contains non-finite number {value}"
+        )
+
+    try:
+        value = json.loads(
+            raw.decode("utf-8"),
+            object_pairs_hook=pairs,
+            parse_constant=constant,
+        )
+    except SourceRunProvenanceError:
+        raise
+    except (UnicodeError, json.JSONDecodeError) as exc:
+        raise SourceRunProvenanceError(f"{label} is not valid JSON") from exc
+    if not isinstance(value, Mapping):
+        raise SourceRunProvenanceError(f"{label} must be an object")
+    return dict(value)
+
+
 def _strict_records(raw: bytes) -> tuple[Mapping[str, Any], ...]:
     if not raw or not raw.endswith(b"\n"):
         raise SourceRunProvenanceError(
@@ -80,18 +112,142 @@ def _strict_records(raw: bytes) -> tuple[Mapping[str, Any], ...]:
         )
     records: list[Mapping[str, Any]] = []
     for index, line in enumerate(raw.splitlines(), start=1):
-        try:
-            record = json.loads(line)
-        except (UnicodeError, json.JSONDecodeError) as exc:
-            raise SourceRunProvenanceError(
-                f"source recommendation row {index} is not valid JSON"
-            ) from exc
-        if not isinstance(record, Mapping):
-            raise SourceRunProvenanceError(
-                f"source recommendation row {index} must be an object"
-            )
-        records.append(dict(record))
+        records.append(
+            _strict_json(line, label=f"source recommendation row {index}")
+        )
     return tuple(records)
+
+
+def verify_copied_recommendation_source(
+    *,
+    provenance_bytes: bytes,
+    records_bytes: bytes,
+) -> BoundRecommendationSource:
+    """Verify the self-contained recommendation snapshot copied into E5.
+
+    Unlike ``bind_recommendation_source``, this read-only adapter does not
+    reopen an upstream recommendation directory. It is for downstream
+    consumers of an immutable E5 package and accepts only the exact copied
+    provenance document and JSONL bytes that the package seal protects.
+    """
+    provenance = _strict_json(
+        provenance_bytes,
+        label="source recommendation provenance",
+    )
+    if provenance.get("schema_version") != SOURCE_RUN_PROVENANCE_SCHEMA_VERSION:
+        raise SourceRunProvenanceError(
+            "current E5 requires Prompt 3 source provenance "
+            f"{SOURCE_RUN_PROVENANCE_SCHEMA_VERSION}"
+        )
+
+    records_sha256 = hashlib.sha256(records_bytes).hexdigest()
+    source_artifacts = provenance.get("source_artifacts")
+    if (
+        provenance.get("recommendation_run_sha256") != records_sha256
+        or not isinstance(source_artifacts, Mapping)
+        or source_artifacts.get("recommendations_sha256") != records_sha256
+        or provenance.get("claims_permitted") is not False
+    ):
+        raise SourceRunProvenanceError(
+            "copied recommendation JSONL is not checksum-bound to source provenance"
+        )
+
+    records = _strict_records(records_bytes)
+    record_ids = tuple(record.get("record_id") for record in records)
+    provenance_ids = provenance.get("record_ids")
+    if (
+        any(not isinstance(record_id, str) or not record_id for record_id in record_ids)
+        or len(set(record_ids)) != len(record_ids)
+        or not isinstance(provenance_ids, list)
+        or any(not isinstance(record_id, str) or not record_id for record_id in provenance_ids)
+        or len(set(provenance_ids)) != len(provenance_ids)
+        or sorted(record_ids) != sorted(provenance_ids)
+    ):
+        raise SourceRunProvenanceError(
+            "copied recommendation record IDs do not match source provenance"
+        )
+
+    catalog_identity = provenance.get("catalog_identity")
+    raw_candidates = (
+        catalog_identity.get("candidates")
+        if isinstance(catalog_identity, Mapping)
+        else None
+    )
+    if not isinstance(raw_candidates, list):
+        raise SourceRunProvenanceError(
+            "source recommendation catalog identity is malformed"
+        )
+    candidates: dict[str, Mapping[str, Any]] = {}
+    for candidate in raw_candidates:
+        if not isinstance(candidate, Mapping):
+            raise SourceRunProvenanceError(
+                "source recommendation catalog candidate is malformed"
+            )
+        candidate_id = candidate.get("candidate_id")
+        image_id = candidate.get("image_id")
+        if (
+            not isinstance(candidate_id, str)
+            or not candidate_id
+            or candidate_id in candidates
+            or not isinstance(image_id, str)
+            or not image_id
+        ):
+            raise SourceRunProvenanceError(
+                "source recommendation catalog candidate identity is invalid"
+            )
+        candidates[candidate_id] = candidate
+
+    systems = provenance.get("systems")
+    identities = provenance.get("system_identities")
+    if (
+        not isinstance(systems, list)
+        or any(not isinstance(system, str) or not system for system in systems)
+        or len(set(systems)) != len(systems)
+        or not isinstance(identities, Mapping)
+        or set(identities) != set(systems)
+    ):
+        raise SourceRunProvenanceError(
+            "source recommendation system identities are malformed"
+        )
+
+    for record in records:
+        if (
+            record.get("run_id") != provenance.get("run_id")
+            or record.get("provenance_fingerprint")
+            != provenance.get("provenance_fingerprint")
+            or record.get("system_id") not in systems
+        ):
+            raise SourceRunProvenanceError(
+                "copied recommendation record identity mismatches source provenance"
+            )
+        candidate_id = record.get("predicted_candidate_id")
+        image_id = record.get("predicted_image_id")
+        if candidate_id is None:
+            if image_id is not None:
+                raise SourceRunProvenanceError(
+                    "source recommendation image exists without a selected candidate"
+                )
+        else:
+            candidate = candidates.get(candidate_id)
+            if not isinstance(candidate, Mapping) or candidate.get("image_id") != image_id:
+                raise SourceRunProvenanceError(
+                    "copied recommendation record/image mismatches its sealed catalog candidate"
+                )
+
+    source = BoundRecommendationSource(
+        provenance=provenance,
+        records=records,
+        records_bytes=records_bytes,
+    )
+    # This establishes the complete Prompt 3 fields required by E5, including
+    # indexes, retrieval, constraint/ranking, split, catalog, and P2 identity.
+    try:
+        source_manifest_identities(source)
+    except (KeyError, TypeError) as exc:
+        raise SourceRunProvenanceError(
+            "source recommendation provenance is incomplete or malformed"
+        ) from exc
+    return source
 
 
 def bind_recommendation_source(
@@ -304,4 +460,5 @@ __all__ = [
     "canonical_identity_sha256",
     "selected_image_identity",
     "source_manifest_identities",
+    "verify_copied_recommendation_source",
 ]

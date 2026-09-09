@@ -48,6 +48,16 @@ mismatches. Synthetic runners retain `SYNTHETIC_TEST` origin and current
 `OBSERVED` evidence requires live runner construction, complete execution
 receipts, runtime image/platform identity, and successful deterministic cleanup.
 
+The final-audit regeneration adapter is schema-aware. For current v1.4
+packages it revalidates the complete inventory-locked package, then reads
+`raw/source-recommendation-run.json` and the exact copied bytes in
+`raw/source-recommendations.jsonl`. It derives the source checksum, record
+joins, system/configuration hashes, catalog mapping, selected digest, and
+selected platform from those sealed artifacts and the persisted probe
+manifest/results. It does not use `raw/environment.json` as recommendation
+lineage and does not reopen an external catalog or split. The environment
+file remains execution-environment metadata only.
+
 ## Version and evidence boundary
 
 The current schemas are probe manifest/record v1.2 and functional
@@ -56,6 +66,11 @@ byte-for-byte and continue to validate through read-only compatibility paths.
 The archived v1.3 packages are now classified `LEGACY_VALID`, not current or
 claim-eligible, because they do not bind the Prompt 3 recommendation capability,
 an exact recommendation-record join, or selected-image platform provenance.
+
+The downstream legacy adapter retains its historical checksum-bound
+environment/catalog/split references only for read-only compatibility. A
+legacy package is never dispatched through the current adapter, upgraded to
+`CURRENT_VALID`, or made claim-eligible.
 
 A newly collected live v1.4 package may become current E5 evidence only when
 all approved probes execute through a genuine Docker or Kubernetes runner and

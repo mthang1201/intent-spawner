@@ -7,7 +7,7 @@ from typing import Any
 
 import yaml
 
-from .common import Inputs, file_sha256, read_json, read_rows, write_json, write_bytes
+from .common import Inputs, file_sha256, read_json, read_rows, safe_path, write_json, write_bytes
 
 # These fields describe the new execution, not an empirical estimate. Nothing
 # else (including seed, endpoints, missingness, units, or estimates) is removed.
@@ -22,8 +22,178 @@ def compare_json(expected: Any, actual: Any, *, ignored_fields: tuple[str, ...] 
             "ignored_top_level_fields": list(ignored_fields)}
 
 
-def regenerate_functional(inputs: Inputs, package: dict) -> tuple[dict, list[dict], list[dict]]:
-    """Rebuild the raw-labelled evaluation rows from the original prediction join."""
+def _regenerate_current_functional(
+    inputs: Inputs,
+    package: dict,
+) -> tuple[dict, list[dict], list[dict]]:
+    """Rebuild current E5 rows from its sealed Prompt 3 source snapshot."""
+    relative = package["path"]
+    package_root = safe_path(inputs.root, relative)
+    actual_files = {
+        str(path.relative_to(inputs.root))
+        for path in package_root.rglob("*")
+        if path.is_file()
+    }
+    registered_files = {
+        name for name in inputs.files if name.startswith(relative + "/")
+    }
+    if actual_files != registered_files:
+        raise ValueError(
+            "current E5 package files do not exactly match the reviewed input inventory"
+        )
+    for name in sorted(actual_files):
+        inputs.path(name)
+
+    from evaluation_v5.image_storage.contracts import (
+        IMAGE_PROBE_MANIFEST_SCHEMA_VERSION,
+        ImageProbeResult,
+    )
+    from evaluation_v5.image_storage.functional_provenance import (
+        SOURCE_RECOMMENDATIONS_FILENAME,
+        SOURCE_RECOMMENDATION_PROVENANCE_FILENAME,
+        canonical_identity_sha256,
+        selected_image_identity,
+        source_manifest_identities,
+        verify_copied_recommendation_source,
+    )
+    from evaluation_v5.image_storage.metrics import (
+        compute_functional_metrics,
+        evaluate_recommendation_functional,
+    )
+    from evaluation_v5.image_storage.validate_evidence import validate_e5_evidence
+
+    validation = validate_e5_evidence(package_root)
+    if (
+        validation.get("validator_status") != "CURRENT_VALID"
+        or validation.get("validation_profile")
+        != "CURRENT_V1_4_SEALED_RECOMMENDATION_PROVENANCE"
+    ):
+        raise ValueError("current E5 regeneration requires a CURRENT_VALID v1.4 package")
+
+    manifest = inputs.json(relative + "/manifest.json")
+    if package.get("status", manifest.get("execution_status")) != manifest.get(
+        "execution_status"
+    ):
+        raise ValueError("final-audit package status disagrees with the E5 manifest")
+    # Confirmatory custody is intentionally outside this repository audit.
+    if manifest["split_identity"]["stage"] != "development":
+        raise ValueError("external confirmatory reanalysis is not part of this audit")
+
+    source_provenance_relative = (
+        relative + "/raw/" + SOURCE_RECOMMENDATION_PROVENANCE_FILENAME
+    )
+    source_records_relative = relative + "/raw/" + SOURCE_RECOMMENDATIONS_FILENAME
+    source_provenance_path = inputs.path(source_provenance_relative)
+    source_records_path = inputs.path(source_records_relative)
+    source = verify_copied_recommendation_source(
+        provenance_bytes=source_provenance_path.read_bytes(),
+        records_bytes=source_records_path.read_bytes(),
+    )
+    expected_manifest_identities = source_manifest_identities(source)
+    for field, expected in expected_manifest_identities.items():
+        if manifest.get(field) != expected:
+            raise ValueError(
+                f"current E5 manifest {field} does not derive from sealed source provenance"
+            )
+
+    probe_manifest_relative = relative + "/raw/probe_manifest.json"
+    probe_manifest = inputs.json(probe_manifest_relative)
+    if probe_manifest.get("schema_version") != IMAGE_PROBE_MANIFEST_SCHEMA_VERSION:
+        raise ValueError("current E5 regeneration requires the current probe manifest")
+    images = probe_manifest.get("images")
+    if not isinstance(images, list):
+        raise ValueError("current E5 probe manifest images are malformed")
+    catalog_images: dict[str, dict[str, Any]] = {}
+    for image in images:
+        if not isinstance(image, dict):
+            raise ValueError("current E5 probe manifest image is malformed")
+        image_id = image.get("image_id")
+        if not isinstance(image_id, str) or not image_id or image_id in catalog_images:
+            raise ValueError("current E5 probe manifest image identity is invalid")
+        catalog_images[image_id] = {
+            "reference": image.get("image_reference"),
+            "capabilities": list(image.get("documented_capabilities", [])),
+        }
+    source_candidates = {
+        item["candidate_id"]: item
+        for item in source.provenance["catalog_identity"]["candidates"]
+    }
+    if (
+        {item["image_id"] for item in source_candidates.values()}
+        != set(catalog_images)
+        or source.provenance["catalog_identity"]["catalog_version"]
+        != probe_manifest.get("catalog_version")
+    ):
+        raise ValueError(
+            "current E5 probe manifest does not match the sealed source catalog identity"
+        )
+    catalog = {
+        "catalog_version": probe_manifest["catalog_version"],
+        "images": catalog_images,
+    }
+
+    probes_path = inputs.path(relative + "/raw/probe_results.jsonl")
+    probes = [ImageProbeResult.from_dict(row) for row in read_rows(probes_path)]
+    by_probe = {(r.image_id, r.capability): r for r in probes}
+    evaluations = []
+    for row in source.records:
+        image = row.get("predicted_image_id")
+        candidate_id = row.get("predicted_candidate_id")
+        gold = row.get("evaluation_gold", {})
+        preferred_candidate = source_candidates.get(gold.get("preferred_candidate_id"))
+        preferred_image = (
+            preferred_candidate.get("image_id")
+            if isinstance(preferred_candidate, dict)
+            else None
+        )
+        acceptable_images = [
+            source_candidates[item]["image_id"]
+            for item in gold.get("acceptable_candidate_ids", [])
+            if item in source_candidates
+        ]
+        selected_digest, selected_platform = selected_image_identity(
+            image_id=image,
+            catalog=catalog,
+            probe_results=probes,
+        )
+        evaluations.append(evaluate_recommendation_functional(
+            case_id=row["case_id"], family_id=row.get("family_id", ""), variant_id=row.get("variant_id", ""),
+            system_id=row["system_id"], source_predicted_image_value=image,
+            source_predicted_candidate_id=candidate_id,
+            source_run_sha256=source.recommendation_run_sha256,
+            source_recommendation_record_id=str(row["record_id"]),
+            source_configuration_identity_sha256=canonical_identity_sha256(
+                source.system_identity(row["system_id"])
+            ),
+            selected_image_digest=selected_digest,
+            selected_image_platform=selected_platform,
+            predicted_image_id=image,
+            required_capabilities=list(gold.get("required_image_capabilities", [])),
+            gold_preferred_image_id=preferred_image,
+            gold_acceptable_image_ids=acceptable_images,
+            catalog=catalog, probe_results=by_probe, execution_status=manifest["execution_status"]))
+    metrics = compute_functional_metrics(evaluations, catalog, probe_results=probes).to_dict()
+    comparisons = [
+        {"artifact": relative + "/raw/functional_evaluations.jsonl",
+         **compare_json(read_rows(inputs.path(relative + "/raw/functional_evaluations.jsonl")), [e.to_dict() for e in evaluations])},
+        {"artifact": relative + "/derived/functional_metrics.json",
+         **compare_json(inputs.json(relative + "/derived/functional_metrics.json"), metrics)},
+    ]
+    lineage = [
+        inputs.ref(relative + "/manifest.json"),
+        inputs.ref(source_provenance_relative),
+        inputs.ref(source_records_relative),
+        inputs.ref(probe_manifest_relative),
+        inputs.ref(relative + "/raw/probe_results.jsonl"),
+    ]
+    return metrics, comparisons, lineage
+
+
+def _regenerate_legacy_functional(
+    inputs: Inputs,
+    package: dict,
+) -> tuple[dict, list[dict], list[dict]]:
+    """Read-only adapter for the reviewed legacy development packages."""
     relative = package["path"]
     manifest = inputs.json(relative + "/manifest.json")
     environment = inputs.json(relative + "/raw/environment.json")
@@ -31,7 +201,6 @@ def regenerate_functional(inputs: Inputs, package: dict) -> tuple[dict, list[dic
     catalog_ref = inputs.json(relative + "/raw/probe_manifest.json")
     catalog_path = inputs.resolve(catalog_ref["catalog_path"], catalog_ref["catalog_sha256"])
     catalog = yaml.safe_load(catalog_path.read_text())
-    # This adapter intentionally only supports the reviewed visible development bundle.
     if manifest["split_identity"]["stage"] != "development":
         raise ValueError("external confirmatory reanalysis is not part of this audit")
     split_path = inputs.resolve("benchmarks_v5/v5-development.yaml", manifest["dataset_identity"]["dataset_sha256"])
@@ -46,13 +215,13 @@ def regenerate_functional(inputs: Inputs, package: dict) -> tuple[dict, list[dic
         return candidate.split("-", 1)[-1] if candidate else None
     records = read_rows(predictions)
     for row in records:
-        source = row.get("predicted_image_id")
-        image = source
-        if source is None and row.get("predicted_candidate_id") is not None:
-            source = row["predicted_candidate_id"]
-            image = image_component(source)
-        if source == "":
-            source = image = None
+        source_value = row.get("predicted_image_id")
+        image = source_value
+        if source_value is None and row.get("predicted_candidate_id") is not None:
+            source_value = row["predicted_candidate_id"]
+            image = image_component(source_value)
+        if source_value == "":
+            source_value = image = None
         gold = row.get("evaluation_gold", {})
         split_gold = cases[row["case_id"]].get("gold", {})
         capabilities = (gold.get("required_image_capabilities") or split_gold.get("required_image_capabilities")
@@ -60,7 +229,7 @@ def regenerate_functional(inputs: Inputs, package: dict) -> tuple[dict, list[dic
                         or (row.get("structured_intent") or {}).get("required_libraries") or [])
         evaluations.append(evaluate_recommendation_functional(
             case_id=row["case_id"], family_id=row.get("family_id", ""), variant_id=row.get("variant_id", ""),
-            system_id=row["system_id"], source_predicted_image_value=source, predicted_image_id=image,
+            system_id=row["system_id"], source_predicted_image_value=source_value, predicted_image_id=image,
             required_capabilities=capabilities,
             gold_preferred_image_id=image_component(gold.get("preferred_candidate_id")),
             gold_acceptable_image_ids=[image_component(c) for c in gold.get("acceptable_candidate_ids", [])],
@@ -74,6 +243,19 @@ def regenerate_functional(inputs: Inputs, package: dict) -> tuple[dict, list[dic
     ]
     lineage = [inputs.ref(str(p.relative_to(inputs.root))) for p in (predictions, catalog_path, split_path, probes_path)]
     return metrics, comparisons, lineage
+
+
+def regenerate_functional(inputs: Inputs, package: dict) -> tuple[dict, list[dict], list[dict]]:
+    """Regenerate E5 through the schema-appropriate read-only adapter."""
+    from evaluation_v5.image_storage.contracts import IMAGE_PROBE_MANIFEST_SCHEMA_VERSION
+
+    probe_schema = inputs.json(package["path"] + "/raw/probe_manifest.json").get(
+        "schema_version"
+    )
+    validator_status = package.get("validator_result", {}).get("validator_status")
+    if validator_status == "CURRENT_VALID" or probe_schema == IMAGE_PROBE_MANIFEST_SCHEMA_VERSION:
+        return _regenerate_current_functional(inputs, package)
+    return _regenerate_legacy_functional(inputs, package)
 
 
 def regenerate_user_study(inputs: Inputs, package: dict) -> tuple[dict, list[dict]]:
@@ -102,7 +284,8 @@ def regenerate_user_study(inputs: Inputs, package: dict) -> tuple[dict, list[dic
 def analyze(inputs: Inputs, audit: dict, output: Path) -> dict:
     output.mkdir(parents=True, exist_ok=False)
     result = {"schema_version": "protocol-v5-final-regeneration-v1.0.0", "packages": [],
-              "observed_functional": [], "legacy_functional": [], "comparisons": [], "observed_offline_counts": [],
+              "current_functional": [], "observed_functional": [], "legacy_functional": [],
+              "comparisons": [], "observed_offline_counts": [],
               "volatile_manifest_fields": list(VOLATILE_MANIFEST_FIELDS), "claims": audit["claims"],
               "defense_sources": {"human": [], "resources": [], "offline": [], "functional": [],
                                   "storage": [audit["source_inventory"]]}}
@@ -115,13 +298,32 @@ def analyze(inputs: Inputs, audit: dict, output: Path) -> dict:
             if package["kind"] == "image_functional" and package["validation"] == "PASS" and package.get("validator_result", {}).get("validator_status") == "CURRENT_VALID":
                 metrics, comparisons, sources = regenerate_functional(inputs, package)
                 write_json(destination / "functional_metrics.json", metrics)
-                entry.update(status="REGENERATED", reason="Source predictions, visible gold and container probe records joined; no new probes.", comparisons=comparisons)
+                entry.update(
+                    status="REGENERATED",
+                    reason=(
+                        "Sealed Prompt 3 recommendation snapshot, source-bound gold, and "
+                        "persisted probe records regenerated exactly; no recommender or probe ran."
+                    ),
+                    comparisons=comparisons,
+                )
                 result["comparisons"].extend(comparisons)
-                result["observed_functional"].append({"run": Path(relative).name, "source_package": relative,
+                validator = package["validator_result"]
+                claim_eligible = bool(
+                    validator.get("eligible_as_current_e5_evidence")
+                    and package["status"] == "OBSERVED"
+                    and package["stage"] == "confirmatory"
+                    and audit.get("confirmatory_status") == "OBSERVED"
+                )
+                current = {"run": Path(relative).name, "source_package": relative,
                     "execution_status": package["status"], "stage": package["stage"], "metrics": metrics,
                     "sources": sources, "metric_source": inputs.ref(relative + "/derived/functional_metrics.json"),
-                    "confirmatory_eligible": False, "provenance_boundary": "Recorded extractor identity differs from the recommendation source snapshot."})
-                result["defense_sources"]["functional"].append(inputs.ref(relative + "/derived/functional_metrics.json", "/systems"))
+                    "claim_eligible": claim_eligible,
+                    "confirmatory_eligible": claim_eligible,
+                    "provenance_boundary": "SEALED_SOURCE_PROVENANCE_VERIFIED"}
+                result["current_functional"].append(current)
+                if package["status"] == "OBSERVED":
+                    result["observed_functional"].append(current)
+                    result["defense_sources"]["functional"].append(inputs.ref(relative + "/derived/functional_metrics.json", "/systems"))
             elif package["kind"] == "offline" and package["validation"] == "PASS":
                 rows = read_rows(inputs.path(relative + "/raw/recommendations.jsonl"))
                 counts = {"run": Path(relative).name, "records": len(rows), "cases": len({r["case_id"] for r in rows}),
