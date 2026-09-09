@@ -1,6 +1,7 @@
 """E5 image correctness and storage evaluation namespace (measurements required)."""
 
 from .contracts import (
+    CapabilityProbeStatus,
     DimensionCStatus,
     E5_RUN_SCHEMA_VERSION,
     FUNCTIONAL_EVALUATION_SCHEMA_VERSION,
@@ -12,11 +13,13 @@ from .contracts import (
     ImageProbeResult,
     ImageProbeSpec,
     ProbeExecutionError,
+    ProbeExecutionOrigin,
     ProbeExecutionStatus,
     ProbeSpec,
     SecurityVerificationError,
     parse_image_digest,
     validate_approved_image_reference,
+    validate_approved_image_spec,
 )
 from .manifest import (
     CAPABILITY_PROBE_TEMPLATES,
@@ -89,6 +92,7 @@ __all__ = [
     "BaseStorageRunner",
     "CAPABILITY_PROBE_TEMPLATES",
     "CatalogImageEntry",
+    "CapabilityProbeStatus",
     "DEFAULT_CATALOG_SCALES",
     "DEFAULT_RECALL_K",
     "DEFAULT_STORAGE_RESULTS_ROOT",
@@ -118,6 +122,7 @@ __all__ = [
     "PairwiseReuseRecord",
     "PrefixStorageMeasurement",
     "ProbeExecutionError",
+    "ProbeExecutionOrigin",
     "ProbeExecutionStatus",
     "ProbeSpec",
     "SIZE_DOMAIN_COMPRESSED_OCI_BLOB",
@@ -148,8 +153,8 @@ __all__ = [
     "parse_image_digest",
     "run_storage_evaluation",
     "validate_approved_image_reference",
+    "validate_approved_image_spec",
     "validate_e5_evidence",
     "validate_e5_storage_evidence",
 ]
-
 

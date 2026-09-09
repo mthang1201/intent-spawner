@@ -95,6 +95,12 @@ compressed/content-store sizes, layer sharing, retained image count, and node
 storage consumption under a declared runtime. Never substitute catalog text or
 registry estimates for measurements, and never invent image sizes.
 
+The executable functional-image boundary is specified in
+[PROTOCOL_V5_IMAGE_FUNCTIONAL.md](PROTOCOL_V5_IMAGE_FUNCTIONAL.md). Current E5
+records must derive recommendation and configuration identities from a verified
+offline source-run capability; archived packages are not rewritten to meet the
+new contract.
+
 ### Optional E6 — P2 versus P3 incremental reranking value
 
 E6 is permitted only after a development-only gate retains P3. P3 must consume

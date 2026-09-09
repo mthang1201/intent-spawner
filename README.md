@@ -30,7 +30,7 @@ observations, checksums, unresolved findings, and the defense-summary table.
 | E2 natural-language robustness | Formal robustness analysis is **NOT EXECUTED**. |
 | E3 human outcomes | **NOT EXECUTED**; zero participant sessions. |
 | E4 resource efficiency | **NOT EXECUTED**; planning/readiness evidence only. |
-| E5 image functionality | Development observations; two packages pass current validation, with unresolved pipeline provenance. Runs are reported separately. |
+| E5 image functionality | Archived development observations remain valid legacy evidence with explicit recommendation-provenance limitations; no current v1.4 observation has been collected. |
 | E5 image storage | **NOT EXECUTED**. |
 | Protocol-v5 confirmation | **NOT EXECUTED**; no authoritative final freeze or supplied confirmatory evidence. |
 

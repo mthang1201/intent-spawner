@@ -12,18 +12,60 @@ import yaml
 
 from evaluation_v5.schemas import EvidenceStatus, ProtocolV5Manifest
 from evaluation_v5.validation import validate_manifest
+from evaluation_v5.offline.source_run import SourceRunProvenanceError
 
 from evaluation_v5.image_storage.contracts import (
+    CapabilityProbeStatus,
     DimensionCStatus,
+    FUNCTIONAL_EVALUATION_SCHEMA_VERSION,
+    FUNCTIONAL_METRICS_SCHEMA_VERSION,
+    IMAGE_PROBE_MANIFEST_SCHEMA_VERSION,
+    IMAGE_PROBE_RECORD_SCHEMA_VERSION,
+    ProbeExecutionOrigin,
     ProbeExecutionStatus,
     file_sha256,
     parse_image_digest,
+)
+from evaluation_v5.image_storage.functional_provenance import (
+    SOURCE_RECOMMENDATIONS_FILENAME,
+    SOURCE_RECOMMENDATION_PROVENANCE_FILENAME,
+    canonical_identity_sha256,
+    source_manifest_identities,
 )
 from evaluation_v5.image_storage.metrics import compute_functional_metrics, evaluate_recommendation_functional
 
 
 class EvidenceValidationError(ValueError):
     """Raised when an evidence package violates Protocol-v5 E5 rules."""
+
+
+def _strict_json(raw: bytes, *, label: str) -> Any:
+    """Reject duplicate fields and non-finite values at current trust boundaries."""
+    def pairs(items: list[tuple[str, Any]]) -> dict[str, Any]:
+        value: dict[str, Any] = {}
+        for key, item in items:
+            if key in value:
+                raise EvidenceValidationError(
+                    f"{label} contains duplicate field {key!r}"
+                )
+            value[key] = item
+        return value
+
+    def constant(value: str) -> Any:
+        raise EvidenceValidationError(
+            f"{label} contains non-finite number {value}"
+        )
+
+    try:
+        return json.loads(
+            raw.decode("utf-8"),
+            object_pairs_hook=pairs,
+            parse_constant=constant,
+        )
+    except EvidenceValidationError:
+        raise
+    except (UnicodeError, json.JSONDecodeError) as exc:
+        raise EvidenceValidationError(f"{label} is not valid JSON") from exc
 
 
 def validate_e5_evidence(package_dir: Path | str) -> dict[str, Any]:
@@ -72,6 +114,8 @@ def validate_e5_evidence(package_dir: Path | str) -> dict[str, Any]:
     metrics_path = derived_dir / "functional_metrics.json"
     report_md_path = report_dir / "E5_IMAGE_FUNCTIONAL_REPORT.md"
     status_path = report_dir / "status.json"
+    source_provenance_path = raw_dir / SOURCE_RECOMMENDATION_PROVENANCE_FILENAME
+    source_recommendations_path = raw_dir / SOURCE_RECOMMENDATIONS_FILENAME
 
     for req_file in (
         manifest_path,
@@ -99,6 +143,16 @@ def validate_e5_evidence(package_dir: Path | str) -> dict[str, Any]:
 
     # 4. Validate probe manifest
     probe_manifest_raw = json.loads(probe_manifest_path.read_text(encoding="utf-8"))
+    current_v14 = (
+        probe_manifest_raw.get("schema_version")
+        == IMAGE_PROBE_MANIFEST_SCHEMA_VERSION
+    )
+    if current_v14:
+        for source_file in (source_provenance_path, source_recommendations_path):
+            if not source_file.is_file():
+                raise EvidenceValidationError(
+                    f"Current E5 package is missing source provenance: {source_file.relative_to(directory)}"
+                )
     cat_images = {img["image_id"]: img for img in probe_manifest_raw.get("images", [])}
     manifest_probe_ids: set[str] = set()
 
@@ -121,8 +175,10 @@ def validate_e5_evidence(package_dir: Path | str) -> dict[str, Any]:
         json.loads(line) for line in probe_results_path.read_text(encoding="utf-8").splitlines() if line.strip()
     ]
     seen_result_probe_ids: set[str] = set()
+    seen_execution_identities: set[str] = set()
     executed_probe_count = 0
     unavailable_probe_count = 0
+    functional_unavailable_probe_count = 0
 
     for res in probe_results_raw:
         pid = res["probe_id"]
@@ -142,10 +198,89 @@ def validate_e5_evidence(package_dir: Path | str) -> dict[str, Any]:
             raise EvidenceValidationError(
                 f"Result image reference {res['image_reference']!r} does not match manifest {expected_ref!r}"
             )
+        if current_v14 and res.get("image_digest") != cat_images[img_id].get("image_digest"):
+            raise EvidenceValidationError(
+                f"Probe {pid} selected digest does not match the approved probe manifest"
+            )
 
         status = res.get("execution_status")
         success = res.get("success")
         err_cat = res.get("error_category")
+
+        if current_v14:
+            if res.get("schema_version") != IMAGE_PROBE_RECORD_SCHEMA_VERSION:
+                raise EvidenceValidationError(
+                    f"Probe {pid} does not use the current execution-bound record schema"
+                )
+            try:
+                functional_status = CapabilityProbeStatus(res.get("functional_status"))
+                origin = ProbeExecutionOrigin(res.get("execution_origin"))
+            except (TypeError, ValueError) as exc:
+                raise EvidenceValidationError(
+                    f"Probe {pid} has invalid functional status or execution origin"
+                ) from exc
+            if not isinstance(success, bool) or success != (
+                functional_status is CapabilityProbeStatus.SUCCESS
+            ):
+                raise EvidenceValidationError(
+                    f"Probe {pid} success flag disagrees with functional_status"
+                )
+            if origin is ProbeExecutionOrigin.SYNTHETIC_TEST and execution_status == EvidenceStatus.OBSERVED:
+                raise EvidenceValidationError(
+                    f"Synthetic probe {pid} cannot appear in OBSERVED evidence"
+                )
+            expected_origins = {
+                "docker": ProbeExecutionOrigin.LIVE_DOCKER,
+                "kubernetes": ProbeExecutionOrigin.LIVE_KUBERNETES,
+                "synthetic": ProbeExecutionOrigin.SYNTHETIC_TEST,
+                "dry_run": ProbeExecutionOrigin.DRY_RUN,
+            }
+            if (
+                origin is not ProbeExecutionOrigin.SYNTHETIC_TEST
+                and expected_origins.get(res.get("execution_mode")) is not origin
+            ):
+                raise EvidenceValidationError(
+                    f"Probe {pid} execution origin disagrees with execution mode"
+                )
+            if (
+                res.get("capability") == "cuda-userspace"
+                and status == ProbeExecutionStatus.EXECUTED.value
+            ):
+                metadata = res.get("import_version_metadata", {})
+                if metadata.get("cuda_probe_status") != functional_status.value:
+                    raise EvidenceValidationError(
+                        f"CUDA probe {pid} metadata does not match its functional status"
+                    )
+                if functional_status is CapabilityProbeStatus.SUCCESS and (
+                    not metadata.get("cuda_api")
+                    or metadata.get("cuda_api") == "none"
+                    or not metadata.get("cuda_library")
+                    or metadata.get("cuda_library") == "none"
+                ):
+                    raise EvidenceValidationError(
+                        f"CUDA probe {pid} claims success without a supported library/API observation"
+                    )
+            resolved_digest = res.get("resolved_image_digest")
+            if (
+                resolved_digest is not None
+                and resolved_digest != res.get("image_digest")
+            ):
+                raise EvidenceValidationError(
+                    f"Probe {pid} runtime digest disagrees with its approved image digest"
+                )
+            execution_identity = res.get("execution_identity")
+            if execution_identity is not None:
+                if (
+                    not isinstance(execution_identity, str)
+                    or not execution_identity
+                    or execution_identity in seen_execution_identities
+                ):
+                    raise EvidenceValidationError(
+                        f"Probe {pid} has a missing or duplicate execution identity"
+                    )
+                seen_execution_identities.add(execution_identity)
+            if functional_status is CapabilityProbeStatus.UNAVAILABLE:
+                functional_unavailable_probe_count += 1
 
         if status == ProbeExecutionStatus.EXECUTED.value:
             executed_probe_count += 1
@@ -168,6 +303,33 @@ def validate_e5_evidence(package_dir: Path | str) -> dict[str, Any]:
                 f"Package marked OBSERVED has {unavailable_probe_count} unavailable/unexecuted probes. "
                 f"Must be marked INCOMPLETE."
             )
+        if current_v14:
+            for res in probe_results_raw:
+                if res.get("execution_origin") not in {
+                    ProbeExecutionOrigin.LIVE_DOCKER.value,
+                    ProbeExecutionOrigin.LIVE_KUBERNETES.value,
+                }:
+                    raise EvidenceValidationError(
+                        "OBSERVED E5 requires live runtime probe origins"
+                    )
+                for field in (
+                    "execution_identity",
+                    "resolved_image_digest",
+                    "resolved_image_platform",
+                    "runtime_image_id",
+                ):
+                    if not res.get(field):
+                        raise EvidenceValidationError(
+                            f"OBSERVED probe {res['probe_id']} lacks {field}"
+                        )
+                if res.get("cleanup_succeeded") is not True:
+                    raise EvidenceValidationError(
+                        f"OBSERVED probe {res['probe_id']} lacks deterministic cleanup"
+                    )
+                if res["resolved_image_digest"] not in res["runtime_image_id"]:
+                    raise EvidenceValidationError(
+                        f"OBSERVED probe {res['probe_id']} runtime image ID does not bind its digest"
+                    )
 
     # 6. Validate evaluations (Dimensions A, B, C and Mismatches)
     eval_records_raw = [
@@ -175,6 +337,124 @@ def validate_e5_evidence(package_dir: Path | str) -> dict[str, Any]:
     ]
     probe_results_map = {(res["image_id"], res["capability"]): res for res in probe_results_raw}
     cat_images_caps = {img_id: set(img_data.get("documented_capabilities", [])) for img_id, img_data in cat_images.items()}
+
+    source_provenance: Mapping[str, Any] | None = None
+    source_records_by_id: dict[str, Mapping[str, Any]] = {}
+    if current_v14:
+        source_provenance_raw = _strict_json(
+            source_provenance_path.read_bytes(),
+            label="source recommendation provenance",
+        )
+        if not isinstance(source_provenance_raw, Mapping):
+            raise EvidenceValidationError("source recommendation provenance must be an object")
+        source_provenance = source_provenance_raw
+        if source_provenance.get("schema_version") != "protocol-v5-source-run-provenance-v1.1.0":
+            raise EvidenceValidationError("current E5 requires Prompt 3 source provenance v1.1.0")
+        source_sha = file_sha256(source_recommendations_path)
+        if source_sha != source_provenance.get("recommendation_run_sha256"):
+            raise EvidenceValidationError(
+                "source recommendation snapshot checksum does not match source provenance"
+            )
+        source_bytes = source_recommendations_path.read_bytes()
+        if not source_bytes or not source_bytes.endswith(b"\n"):
+            raise EvidenceValidationError(
+                "source recommendation snapshot must be non-empty and newline terminated"
+            )
+        source_rows = [
+            _strict_json(line, label=f"source recommendation row {index}")
+            for index, line in enumerate(source_bytes.splitlines(), start=1)
+        ]
+        source_artifacts = source_provenance.get("source_artifacts", {})
+        if (
+            not isinstance(source_artifacts, Mapping)
+            or source_artifacts.get("recommendations_sha256") != source_sha
+            or source_provenance.get("claims_permitted") is not False
+        ):
+            raise EvidenceValidationError(
+                "source recommendation provenance does not bind its recommendation artifact"
+            )
+        source_candidates = {
+            item.get("candidate_id"): item
+            for item in source_provenance.get("catalog_identity", {}).get("candidates", [])
+            if isinstance(item, Mapping)
+        }
+        source_image_ids = {
+            item.get("image_id") for item in source_candidates.values()
+        }
+        if source_image_ids != set(cat_images) or source_provenance.get(
+            "catalog_identity", {}
+        ).get("catalog_version") != probe_manifest_raw.get("catalog_version"):
+            raise EvidenceValidationError(
+                "source recommendation catalog identity does not match the E5 probe manifest"
+            )
+        for source_row in source_rows:
+            if not isinstance(source_row, Mapping):
+                raise EvidenceValidationError(
+                    "source recommendation rows must be objects"
+                )
+            record_id = source_row.get("record_id")
+            if not isinstance(record_id, str) or not record_id or record_id in source_records_by_id:
+                raise EvidenceValidationError("source recommendation record IDs must be unique and non-blank")
+            source_records_by_id[record_id] = source_row
+            if (
+                source_row.get("run_id") != source_provenance.get("run_id")
+                or source_row.get("provenance_fingerprint")
+                != source_provenance.get("provenance_fingerprint")
+                or source_row.get("system_id")
+                not in source_provenance.get("systems", [])
+            ):
+                raise EvidenceValidationError(
+                    "source recommendation record identity mismatches source provenance"
+                )
+            candidate_id = source_row.get("predicted_candidate_id")
+            image_id = source_row.get("predicted_image_id")
+            candidate = source_candidates.get(candidate_id)
+            if candidate_id is None:
+                if image_id is not None:
+                    raise EvidenceValidationError(
+                        "source recommendation image exists without a selected candidate"
+                    )
+            elif (
+                not isinstance(candidate, Mapping)
+                or candidate.get("image_id") != image_id
+            ):
+                raise EvidenceValidationError(
+                    "source recommendation record/image mismatches its sealed catalog candidate"
+                )
+        if sorted(source_records_by_id) != sorted(source_provenance.get("record_ids", [])):
+            raise EvidenceValidationError(
+                "source recommendation record IDs do not match source provenance"
+            )
+        try:
+            expected_manifest = source_manifest_identities(source_provenance)
+        except (KeyError, TypeError, SourceRunProvenanceError) as exc:
+            raise EvidenceValidationError(
+                "source recommendation provenance is incomplete or malformed"
+            ) from exc
+        for field, expected in expected_manifest.items():
+            if manifest_raw.get(field) != expected:
+                raise EvidenceValidationError(
+                    f"E5 manifest {field} does not derive from source recommendation provenance"
+                )
+
+        evaluation_ids = [
+            rec.get("source_recommendation_record_id") for rec in eval_records_raw
+        ]
+        if (
+            any(not isinstance(item, str) or not item for item in evaluation_ids)
+            or len(set(evaluation_ids)) != len(evaluation_ids)
+            or sorted(evaluation_ids) != sorted(source_records_by_id)
+        ):
+            raise EvidenceValidationError(
+                "functional evaluations do not join one-to-one to source recommendation records"
+            )
+    elif any(
+        rec.get("schema_version") == FUNCTIONAL_EVALUATION_SCHEMA_VERSION
+        for rec in eval_records_raw
+    ):
+        raise EvidenceValidationError(
+            "current functional records require the current source-bound probe manifest"
+        )
 
     for rec in eval_records_raw:
         case_id = rec["case_id"]
@@ -186,14 +466,108 @@ def validate_e5_evidence(package_dir: Path | str) -> dict[str, Any]:
         mismatches = rec.get("mismatch_types", [])
         is_v13 = rec.get("schema_version") == "protocol-v5-image-functional-evaluation-v1.3.0"
         is_v12 = rec.get("schema_version") == "protocol-v5-image-functional-evaluation-v1.2.0"
+        is_v14 = rec.get("schema_version") == FUNCTIONAL_EVALUATION_SCHEMA_VERSION
+
+        if current_v14:
+            if not is_v14 or source_provenance is None:
+                raise EvidenceValidationError(
+                    f"Case {case_id}: current probe evidence requires current functional records"
+                )
+            record_id = rec.get("source_recommendation_record_id")
+            source_row = source_records_by_id[record_id]
+            system_id = rec.get("system_id")
+            system_identity = source_provenance["system_identities"].get(system_id)
+            if not isinstance(system_identity, Mapping):
+                raise EvidenceValidationError(
+                    f"Case {case_id}: source system identity is missing"
+                )
+            exact_pairs = {
+                "case_id": source_row.get("case_id"),
+                "family_id": source_row.get("family_id"),
+                "variant_id": source_row.get("variant_id"),
+                "system_id": source_row.get("system_id"),
+                "source_predicted_image_value": source_row.get("predicted_image_id"),
+                "source_predicted_candidate_id": source_row.get("predicted_candidate_id"),
+                "source_run_sha256": source_provenance["recommendation_run_sha256"],
+                "source_configuration_identity_sha256": canonical_identity_sha256(system_identity),
+            }
+            for field, expected in exact_pairs.items():
+                if rec.get(field) != expected:
+                    raise EvidenceValidationError(
+                        f"Case {case_id}: functional {field} mismatches source recommendation record"
+                    )
+            if pimg != source_row.get("predicted_image_id"):
+                raise EvidenceValidationError(
+                    f"Case {case_id}: functional image mismatches source recommendation image"
+                )
+            gold = source_row.get("evaluation_gold", {})
+            required = tuple(
+                sorted(
+                    {
+                        str(item).strip().lower()
+                        for item in gold.get("required_image_capabilities", [])
+                        if str(item).strip()
+                    }
+                )
+            )
+            if tuple(rec.get("required_capabilities", [])) != required:
+                raise EvidenceValidationError(
+                    f"Case {case_id}: required capabilities mismatch source recommendation gold"
+                )
+            preferred_candidate = gold.get("preferred_candidate_id")
+            preferred = source_candidates.get(preferred_candidate)
+            expected_preferred_image = (
+                preferred.get("image_id") if isinstance(preferred, Mapping) else None
+            )
+            acceptable_images = sorted(
+                {
+                    source_candidates[candidate_id]["image_id"]
+                    for candidate_id in gold.get("acceptable_candidate_ids", [])
+                    if candidate_id in source_candidates
+                }
+            )
+            if rec.get("gold_preferred_image_id") != expected_preferred_image or rec.get(
+                "gold_acceptable_image_ids"
+            ) != acceptable_images:
+                raise EvidenceValidationError(
+                    f"Case {case_id}: functional gold image mapping mismatches source recommendation record"
+                )
+            if pimg:
+                selected = cat_images.get(pimg)
+                if not isinstance(selected, Mapping):
+                    raise EvidenceValidationError(
+                        f"Case {case_id}: selected image is absent from the probe manifest"
+                    )
+                if rec.get("selected_image_digest") != selected.get("image_digest"):
+                    raise EvidenceValidationError(
+                        f"Case {case_id}: selected image digest mismatches the probe manifest"
+                    )
+                platforms = {
+                    result.get("resolved_image_platform")
+                    for result in probe_results_raw
+                    if result.get("image_id") == pimg and result.get("resolved_image_platform")
+                }
+                expected_platform = next(iter(platforms), None) if len(platforms) <= 1 else None
+                if len(platforms) > 1 or rec.get("selected_image_platform") != expected_platform:
+                    raise EvidenceValidationError(
+                        f"Case {case_id}: selected image platform mismatches probe observations"
+                    )
+                if execution_status == EvidenceStatus.OBSERVED and not expected_platform:
+                    raise EvidenceValidationError(
+                        f"Case {case_id}: OBSERVED recommendation lacks selected image platform"
+                    )
+            elif rec.get("selected_image_digest") is not None or rec.get("selected_image_platform") is not None:
+                raise EvidenceValidationError(
+                    f"Case {case_id}: no-image recommendation cannot carry image identity"
+                )
 
         # Invariant: If predicted_image_id is None
         if not pimg:
-            if (is_v12 or is_v13) and "NO_IMAGE_RECOMMENDATION" not in mismatches:
+            if (is_v12 or is_v13 or is_v14) and "NO_IMAGE_RECOMMENDATION" not in mismatches:
                 raise EvidenceValidationError(
                     f"Case {case_id}: missing image recommendation must emit NO_IMAGE_RECOMMENDATION"
                 )
-            if (is_v12 or is_v13) and "EXECUTION_UNAVAILABLE" in mismatches:
+            if (is_v12 or is_v13 or is_v14) and "EXECUTION_UNAVAILABLE" in mismatches:
                 raise EvidenceValidationError(
                     f"Case {case_id}: missing image recommendation must NOT emit EXECUTION_UNAVAILABLE"
                 )
@@ -203,7 +577,7 @@ def validate_e5_evidence(package_dir: Path | str) -> dict[str, Any]:
                 )
 
         # Invariant: Dimension B strictly recomputable from catalog capabilities
-        if is_v13 and pimg:
+        if (is_v13 or is_v14) and pimg:
             declared_caps = cat_images_caps.get(pimg, set())
             req_caps = set(rec.get("required_capabilities", []))
             expected_b_sat = req_caps.issubset(declared_caps)
@@ -239,7 +613,7 @@ def validate_e5_evidence(package_dir: Path | str) -> dict[str, Any]:
                 )
 
         # Invariant: LABEL_FAIL_FUNCTIONAL_PASS requires dim_b_satisfied is True and dim_c_status is PASS
-        if "LABEL_FAIL_FUNCTIONAL_PASS" in mismatches and (is_v12 or is_v13):
+        if "LABEL_FAIL_FUNCTIONAL_PASS" in mismatches and (is_v12 or is_v13 or is_v14):
             if not dim_b_sat:
                 raise EvidenceValidationError(
                     f"Case {case_id}: LABEL_FAIL_FUNCTIONAL_PASS cannot be asserted when Dimension B is unsatisfied"
@@ -250,7 +624,7 @@ def validate_e5_evidence(package_dir: Path | str) -> dict[str, Any]:
                 )
 
         # Invariants for v1.3 Dimension C decoupling and discrepancy taxonomy
-        if is_v13 and pimg:
+        if (is_v13 or is_v14) and pimg:
             req_caps = rec.get("required_capabilities", [])
             caps_to_check = set(req_caps) if req_caps else {"python"}
 
@@ -265,7 +639,10 @@ def validate_e5_evidence(package_dir: Path | str) -> dict[str, Any]:
                 if res is None:
                     all_probes_executed_and_passed = False
                     missing_probe_defs.append(cap)
-                elif res.get("execution_status") != ProbeExecutionStatus.EXECUTED.value:
+                elif (
+                    res.get("execution_status") != ProbeExecutionStatus.EXECUTED.value
+                    or res.get("functional_status") == CapabilityProbeStatus.UNAVAILABLE.value
+                ):
                     all_probes_executed_and_passed = False
                     any_probe_unavailable = True
                 elif not res.get("success"):
@@ -363,8 +740,13 @@ def validate_e5_evidence(package_dir: Path | str) -> dict[str, Any]:
     # 7. Validate derived functional metrics against recomputation
     derived_metrics_raw = json.loads(metrics_path.read_text(encoding="utf-8"))
     systems = derived_metrics_raw.get("systems", {})
+    is_metrics_v14 = derived_metrics_raw.get("schema_version") == FUNCTIONAL_METRICS_SCHEMA_VERSION
     is_metrics_v13 = derived_metrics_raw.get("schema_version") == "protocol-v5-image-functional-metrics-v1.3.0"
     is_metrics_v12 = derived_metrics_raw.get("schema_version") == "protocol-v5-image-functional-metrics-v1.2.0"
+    if is_metrics_v14 is not current_v14:
+        raise EvidenceValidationError(
+            "current functional metrics and source-bound probe manifest must use the same schema generation"
+        )
 
     by_system_recs = defaultdict(list)
     for rec in eval_records_raw:
@@ -431,7 +813,7 @@ def validate_e5_evidence(package_dir: Path | str) -> dict[str, Any]:
             if summary.get("gold_acceptable_count") != expected_acc:
                 raise EvidenceValidationError(f"System {sys_id}: gold_acceptable_count mismatch")
 
-        elif is_metrics_v13:
+        elif is_metrics_v13 or is_metrics_v14:
             expected_with_img = sum(1 for r in sys_records if r.get("predicted_image_id") is not None)
             expected_no_img = n - expected_with_img
             expected_b_sat = sum(1 for r in sys_records if r.get("dimension_b_catalog_satisfied"))
@@ -530,26 +912,42 @@ def validate_e5_evidence(package_dir: Path | str) -> dict[str, Any]:
     metrics_schema = derived_metrics_raw.get("schema_version", "")
     eval_schema = eval_records_raw[0].get("schema_version", "") if eval_records_raw else ""
 
-    if "v1.3.0" in metrics_schema or "v1.3.0" in eval_schema:
-        validation_profile = "CURRENT_V1_3"
+    limitations: list[str] = []
+    if "v1.4.0" in metrics_schema or "v1.4.0" in eval_schema:
+        validation_profile = "CURRENT_V1_4_SEALED_RECOMMENDATION_PROVENANCE"
         validator_status = "CURRENT_VALID"
         eligible_as_current_e5_evidence = (execution_status == EvidenceStatus.OBSERVED)
+    elif "v1.3.0" in metrics_schema or "v1.3.0" in eval_schema:
+        validation_profile = "LEGACY_SCHEMA_V1_3"
+        validator_status = "LEGACY_VALID"
+        eligible_as_current_e5_evidence = False
+        limitations.extend(
+            [
+                "UNSEALED_RECOMMENDATION_PROVENANCE",
+                "MISSING_RECOMMENDATION_RECORD_JOIN",
+                "MISSING_SELECTED_IMAGE_PLATFORM_BINDING",
+            ]
+        )
     elif "v1.2.0" in metrics_schema or "v1.2.0" in eval_schema:
         validation_profile = "LEGACY_SCHEMA_V1_2"
         validator_status = "LEGACY_VALID"
         eligible_as_current_e5_evidence = False
+        limitations.append("UNSEALED_RECOMMENDATION_PROVENANCE")
     elif "v1.1.0" in metrics_schema or "v1.1.0" in eval_schema:
         validation_profile = "LEGACY_SCHEMA_V1_1"
         validator_status = "LEGACY_VALID"
         eligible_as_current_e5_evidence = False
+        limitations.append("UNSEALED_RECOMMENDATION_PROVENANCE")
     elif "v1.0.0" in metrics_schema or "v1.0.0" in eval_schema:
         validation_profile = "LEGACY_SCHEMA_V1_0"
         validator_status = "LEGACY_VALID"
         eligible_as_current_e5_evidence = False
+        limitations.append("UNSEALED_RECOMMENDATION_PROVENANCE")
     else:
         validation_profile = "UNKNOWN"
         validator_status = "LEGACY_VALID"
         eligible_as_current_e5_evidence = False
+        limitations.append("UNSEALED_RECOMMENDATION_PROVENANCE")
 
     return {
         "status": "PASS",
@@ -562,8 +960,10 @@ def validate_e5_evidence(package_dir: Path | str) -> dict[str, Any]:
         "total_probes_configured": len(manifest_probe_ids),
         "probes_executed": executed_probe_count,
         "probes_unavailable": unavailable_probe_count,
+        "probes_functionally_unavailable": functional_unavailable_probe_count,
         "recommendations_evaluated": len(eval_records_raw),
         "files_checked": len(checked_files),
+        "limitations": limitations,
     }
 
 

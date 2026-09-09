@@ -32,7 +32,7 @@ from .validate_evidence import (
 
 
 SOURCE_RUN_PROVENANCE_SCHEMA_VERSION = (
-    "protocol-v5-source-run-provenance-v1.0.0"
+    "protocol-v5-source-run-provenance-v1.1.0"
 )
 
 
@@ -149,6 +149,9 @@ def _read(path: Path, *, label: str) -> bytes:
 
 def _p2_identity(provenance: Mapping[str, Any]) -> dict[str, Any]:
     return {
+        "structured_intent_schema_version": provenance[
+            "structured_intent_schema_version"
+        ],
         "extractor_prompt": {
             "extractor_name": provenance["extractor_name"],
             "extractor_version": provenance["extractor_version"],

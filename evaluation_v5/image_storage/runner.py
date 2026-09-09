@@ -2,29 +2,44 @@
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from datetime import datetime, timezone
 import json
-import os
-from pathlib import Path
+import math
 import re
 import subprocess
 import time
 from typing import Any, Mapping, Sequence
+import uuid
 
 from .contracts import (
+    CapabilityProbeStatus,
     IMAGE_PROBE_RECORD_SCHEMA_VERSION,
     ImageProbeManifest,
     ImageProbeResult,
     ImageProbeSpec,
     ProbeExecutionError,
+    ProbeExecutionOrigin,
     ProbeExecutionStatus,
     ProbeSpec,
     SecurityVerificationError,
-    validate_approved_image_reference,
+    validate_approved_image_spec,
 )
+from .manifest import validate_approved_probe_spec
 
 
 PROBE_META_PREFIX = "PROBE_META:"
+_RUNTIME_DIGEST = re.compile(r"sha256:[a-f0-9]{64}")
+_LIVE_RUNNER_CONSTRUCTION_KEY = object()
+
+
+@dataclass(frozen=True, slots=True)
+class RuntimeImageIdentity:
+    present: bool
+    digest: str | None
+    platform: str | None
+    runtime_image_id: str | None
+    error: str | None
 
 
 def _utc_now() -> str:
@@ -53,6 +68,10 @@ def _categorize_error(
     """Categorize execution errors based on exit code and error messages."""
     if timed_out:
         return "TIMEOUT"
+    if returncode == 3:
+        return "CAPABILITY_UNAVAILABLE"
+    if returncode == 4:
+        return "CUDA_API_FAILURE"
     if returncode == 137 or "Killed" in stderr or "OOM" in stderr:
         return "OOM"
     stderr_lower = stderr.lower()
@@ -67,6 +86,87 @@ def _categorize_error(
     if "permission denied" in stderr_lower:
         return "CONTAINER_LAUNCH_FAILED"
     return "RUNTIME_ERROR"
+
+
+def _bounded_python_script(script: str, timeout_seconds: float) -> str:
+    """Add an in-container deadline; the client timeout remains a second guard."""
+    alarm_seconds = max(1, int(math.ceil(timeout_seconds)))
+    return (
+        "import signal\n"
+        "def _probe_deadline(_signum, _frame):\n"
+        "    raise TimeoutError('approved probe exceeded runtime deadline')\n"
+        f"signal.signal(signal.SIGALRM, _probe_deadline)\n"
+        f"signal.alarm({alarm_seconds})\n"
+        f"exec(compile({script!r}, '<approved-capability-probe>', 'exec'))\n"
+    )
+
+
+def _classify_probe_output(
+    probe: ProbeSpec,
+    *,
+    returncode: int | None,
+    stdout: str,
+    stderr: str,
+    timed_out: bool,
+) -> tuple[str, bool, dict[str, str], str | None, str | None]:
+    """Classify an executed probe without treating process exit as sufficient proof."""
+    metadata = _extract_probe_metadata(stdout)
+    if timed_out:
+        return (
+            CapabilityProbeStatus.FAILURE.value,
+            False,
+            metadata,
+            "TIMEOUT",
+            stderr.strip() or "Probe execution timed out",
+        )
+
+    if probe.capability == "cuda-userspace":
+        cuda_status = metadata.get("cuda_probe_status")
+        if cuda_status not in {item.value for item in CapabilityProbeStatus}:
+            return (
+                CapabilityProbeStatus.FAILURE.value,
+                False,
+                metadata,
+                "PROBE_OUTPUT_INVALID",
+                "CUDA probe did not emit a valid cuda_probe_status",
+            )
+        if cuda_status == CapabilityProbeStatus.SUCCESS.value:
+            required = {"cuda_probe_status", "cuda_api", "cuda_library"}
+            if returncode != 0 or not required.issubset(metadata):
+                return (
+                    CapabilityProbeStatus.FAILURE.value,
+                    False,
+                    metadata,
+                    "PROBE_OUTPUT_INVALID",
+                    "CUDA success lacked a supported library/API observation",
+                )
+            return cuda_status, True, metadata, None, None
+        category = (
+            "CAPABILITY_UNAVAILABLE"
+            if cuda_status == CapabilityProbeStatus.UNAVAILABLE.value
+            else "CUDA_API_FAILURE"
+        )
+        return cuda_status, False, metadata, category, stderr.strip() or category
+
+    missing_metadata = set(probe.expected_metadata_keys) - set(metadata)
+    if returncode == 0 and not missing_metadata:
+        return CapabilityProbeStatus.SUCCESS.value, True, metadata, None, None
+    if returncode == 0:
+        return (
+            CapabilityProbeStatus.FAILURE.value,
+            False,
+            metadata,
+            "PROBE_OUTPUT_INVALID",
+            f"Probe output omitted required metadata keys: {sorted(missing_metadata)}",
+        )
+    category = _categorize_error(returncode, stderr, False)
+    return (
+        CapabilityProbeStatus.FAILURE.value,
+        False,
+        metadata,
+        category,
+        stderr.strip() or "Probe execution failed",
+    )
 
 
 class BaseProbeRunner:
@@ -86,6 +186,13 @@ class BaseProbeRunner:
         self,
         manifest: ImageProbeManifest,
     ) -> list[ImageProbeResult]:
+        # Validate the complete caller-supplied manifest before starting even
+        # one workload, so an arbitrary trailing program cannot create a
+        # partially executed package.
+        for image_spec in manifest.images:
+            validate_approved_image_spec(image_spec, self.catalog)
+            for probe in image_spec.probes:
+                validate_approved_probe_spec(image_spec, probe)
         results: list[ImageProbeResult] = []
         for image_spec in manifest.images:
             for probe in image_spec.probes:
@@ -110,7 +217,8 @@ class DryRunProbeRunner(BaseProbeRunner):
         image_spec: ImageProbeSpec,
         probe: ProbeSpec,
     ) -> ImageProbeResult:
-        digest = validate_approved_image_reference(image_spec.image_reference, self.catalog)
+        digest = validate_approved_image_spec(image_spec, self.catalog)
+        validate_approved_probe_spec(image_spec, probe)
 
         return ImageProbeResult(
             schema_version=IMAGE_PROBE_RECORD_SCHEMA_VERSION,
@@ -120,7 +228,9 @@ class DryRunProbeRunner(BaseProbeRunner):
             image_digest=digest,
             capability=probe.capability,
             success=False,
+            functional_status=CapabilityProbeStatus.UNAVAILABLE.value,
             execution_status=self.simulated_status,
+            execution_origin=ProbeExecutionOrigin.DRY_RUN.value,
             resolved_image_digest=None,
             import_version_metadata={},
             runtime_seconds=0.0,
@@ -155,7 +265,8 @@ class SyntheticProbeRunner(BaseProbeRunner):
         image_spec: ImageProbeSpec,
         probe: ProbeSpec,
     ) -> ImageProbeResult:
-        digest = validate_approved_image_reference(image_spec.image_reference, self.catalog)
+        digest = validate_approved_image_spec(image_spec, self.catalog)
+        validate_approved_probe_spec(image_spec, probe)
 
         # 1. Simulate image unavailable / not present
         if image_spec.image_id in self.unavailable_images:
@@ -167,7 +278,9 @@ class SyntheticProbeRunner(BaseProbeRunner):
                 image_digest=digest,
                 capability=probe.capability,
                 success=False,
+                functional_status=CapabilityProbeStatus.UNAVAILABLE.value,
                 execution_status=ProbeExecutionStatus.IMAGE_NOT_PRESENT.value,
+                execution_origin=ProbeExecutionOrigin.SYNTHETIC_TEST.value,
                 resolved_image_digest=None,
                 import_version_metadata={},
                 runtime_seconds=0.0,
@@ -183,7 +296,24 @@ class SyntheticProbeRunner(BaseProbeRunner):
         is_fail = probe.capability in failing
         metadata = dict(self.injected_metadata.get(f"{image_spec.image_id}:{probe.capability}", {}))
         if not metadata and not is_fail:
-            metadata[f"{probe.capability}_version"] = "1.0.0-synthetic"
+            if probe.capability == "cuda-userspace":
+                metadata.update(
+                    {
+                        "cuda_probe_status": CapabilityProbeStatus.SUCCESS.value,
+                        "cuda_api": "synthetic.test",
+                        "cuda_library": "synthetic",
+                    }
+                )
+            else:
+                metadata[f"{probe.capability}_version"] = "1.0.0-synthetic"
+        elif not metadata and probe.capability == "cuda-userspace":
+            metadata.update(
+                {
+                    "cuda_probe_status": CapabilityProbeStatus.FAILURE.value,
+                    "cuda_api": "synthetic.test",
+                    "cuda_library": "synthetic",
+                }
+            )
 
         return ImageProbeResult(
             schema_version=IMAGE_PROBE_RECORD_SCHEMA_VERSION,
@@ -193,8 +323,18 @@ class SyntheticProbeRunner(BaseProbeRunner):
             image_digest=digest,
             capability=probe.capability,
             success=not is_fail,
+            functional_status=(
+                CapabilityProbeStatus.FAILURE.value
+                if is_fail
+                else CapabilityProbeStatus.SUCCESS.value
+            ),
             execution_status=ProbeExecutionStatus.EXECUTED.value,
+            execution_origin=ProbeExecutionOrigin.SYNTHETIC_TEST.value,
+            execution_identity=f"synthetic:{image_spec.image_id}:{probe.capability}",
             resolved_image_digest=digest,
+            resolved_image_platform="synthetic/test",
+            runtime_image_id=f"synthetic@{digest}",
+            cleanup_succeeded=None,
             import_version_metadata=metadata,
             runtime_seconds=0.015,
             error_category="IMPORT_ERROR" if is_fail else None,
@@ -216,92 +356,231 @@ class DockerProbeRunner(BaseProbeRunner):
         default_memory_limit: str = "1g",
         pids_limit: int = 100,
         pull_policy: str = "never",
+        image_setup_timeout_seconds: float = 120.0,
+        _construction_key: object | None = None,
     ) -> None:
         super().__init__(catalog)
         self.default_cpu_limit = default_cpu_limit
         self.default_memory_limit = default_memory_limit
+        if not 1 <= pids_limit <= 256:
+            raise ProbeExecutionError("Docker pids_limit must be between 1 and 256")
+        if pull_policy not in {"never", "missing"}:
+            raise ProbeExecutionError("Docker pull policy must be 'never' or 'missing'")
+        if not 0 < image_setup_timeout_seconds <= 300:
+            raise ProbeExecutionError("Docker image setup timeout must be in (0, 300] seconds")
         self.pids_limit = pids_limit
         self.pull_policy = pull_policy
+        self.image_setup_timeout_seconds = image_setup_timeout_seconds
+        self._execution_origin = (
+            ProbeExecutionOrigin.LIVE_DOCKER.value
+            if _construction_key is _LIVE_RUNNER_CONSTRUCTION_KEY
+            else ProbeExecutionOrigin.SYNTHETIC_TEST.value
+        )
 
-    def inspect_image_identity(self, image_reference: str) -> tuple[bool, str | None, str | None]:
-        """Inspect image in local Docker store to verify image presence and RepoDigests.
+    @property
+    def execution_origin(self) -> str:
+        return self._execution_origin
 
-        Returns (is_present, resolved_digest, error_message).
-        """
+    def inspect_image_identity(self, image_reference: str) -> RuntimeImageIdentity:
+        """Resolve immutable digest and platform from the local Docker store."""
         try:
             inspect_proc = subprocess.run(
-                ["docker", "image", "inspect", image_reference, "--format", "{{json .RepoDigests}}"],
+                ["docker", "image", "inspect", image_reference],
+                capture_output=True,
+                text=True,
+                timeout=min(15.0, self.image_setup_timeout_seconds),
+                check=False,
+            )
+            if inspect_proc.returncode != 0:
+                return RuntimeImageIdentity(
+                    False, None, None, None, inspect_proc.stderr.strip()
+                )
+
+            payload = json.loads(inspect_proc.stdout)
+            if not isinstance(payload, list) or len(payload) != 1 or not isinstance(payload[0], Mapping):
+                raise ValueError("docker image inspect returned an unexpected document")
+            image = payload[0]
+            repo_digests = image.get("RepoDigests")
+            if not isinstance(repo_digests, list):
+                repo_digests = []
+            runtime_image_id: str | None = None
+            resolved_digest: str | None = None
+            fallback: tuple[str, str] | None = None
+            for item in repo_digests:
+                if isinstance(item, str):
+                    match = _RUNTIME_DIGEST.search(item)
+                    if match:
+                        candidate = match.group(0)
+                        fallback = fallback or (item, candidate)
+                        expected = _RUNTIME_DIGEST.search(image_reference)
+                        if expected and candidate == expected.group(0):
+                            runtime_image_id = item
+                            resolved_digest = candidate
+                            break
+            if resolved_digest is None and fallback is not None:
+                runtime_image_id, resolved_digest = fallback
+            os_name = image.get("Os")
+            architecture = image.get("Architecture")
+            variant = image.get("Variant")
+            platform_name = None
+            if isinstance(os_name, str) and os_name and isinstance(architecture, str) and architecture:
+                platform_name = f"{os_name}/{architecture}"
+                if isinstance(variant, str) and variant:
+                    platform_name += f"/{variant}"
+            if resolved_digest is None or platform_name is None:
+                return RuntimeImageIdentity(
+                    True,
+                    resolved_digest,
+                    platform_name,
+                    runtime_image_id,
+                    "Docker image identity lacks RepoDigest or platform",
+                )
+            return RuntimeImageIdentity(
+                True, resolved_digest, platform_name, runtime_image_id, None
+            )
+        except Exception as exc:
+            return RuntimeImageIdentity(False, None, None, None, str(exc))
+
+    def _ensure_image_identity(
+        self, image_reference: str, expected_digest: str
+    ) -> RuntimeImageIdentity:
+        identity = self.inspect_image_identity(image_reference)
+        if not identity.present and self.pull_policy == "missing":
+            try:
+                pull = subprocess.run(
+                    ["docker", "pull", image_reference],
+                    capture_output=True,
+                    text=True,
+                    timeout=self.image_setup_timeout_seconds,
+                    check=False,
+                )
+            except subprocess.TimeoutExpired as exc:
+                return RuntimeImageIdentity(
+                    False, None, None, None, f"approved image pull timed out: {exc}"
+                )
+            if pull.returncode != 0:
+                return RuntimeImageIdentity(
+                    False, None, None, None, pull.stderr.strip() or "approved image pull failed"
+                )
+            identity = self.inspect_image_identity(image_reference)
+        if identity.present and identity.digest != expected_digest:
+            raise SecurityVerificationError(
+                f"Runtime image digest {identity.digest!r} does not match expected pinned digest {expected_digest!r}"
+            )
+        return identity
+
+    @staticmethod
+    def _container_started(container_name: str) -> bool:
+        try:
+            result = subprocess.run(
+                [
+                    "docker",
+                    "container",
+                    "inspect",
+                    container_name,
+                    "--format",
+                    "{{json .State.StartedAt}}",
+                ],
+                capture_output=True,
+                text=True,
+                timeout=5.0,
+                check=False,
+            )
+        except Exception:
+            return False
+        started_at = result.stdout.strip().strip('"')
+        return result.returncode == 0 and bool(started_at) and not started_at.startswith("0001-")
+
+    @staticmethod
+    def _cleanup_container(container_name: str) -> bool:
+        """Stop then force-remove the exact durable container identity."""
+        try:
+            subprocess.run(
+                ["docker", "stop", "--time=1", container_name],
+                capture_output=True,
+                text=True,
+                timeout=5.0,
+                check=False,
+            )
+        except BaseException:
+            # Removal is still attempted; KeyboardInterrupt is re-raised by the
+            # caller only after this finally path completes.
+            pass
+        try:
+            removed = subprocess.run(
+                ["docker", "rm", "--force", container_name],
                 capture_output=True,
                 text=True,
                 timeout=10.0,
                 check=False,
             )
-            if inspect_proc.returncode != 0:
-                return False, None, inspect_proc.stderr.strip()
-
-            raw_digests = json.loads(inspect_proc.stdout.strip() or "[]")
-            for rd in raw_digests:
-                if "@" in rd:
-                    return True, rd.split("@", 1)[1], None
-            return True, None, None
-        except Exception as exc:
-            return False, None, str(exc)
+        except BaseException:
+            return False
+        message = (removed.stderr or "").lower()
+        return removed.returncode == 0 or "no such container" in message
 
     def run_probe(
         self,
         image_spec: ImageProbeSpec,
         probe: ProbeSpec,
     ) -> ImageProbeResult:
-        digest = validate_approved_image_reference(image_spec.image_reference, self.catalog)
+        digest = validate_approved_image_spec(image_spec, self.catalog)
+        validate_approved_probe_spec(image_spec, probe)
+        identity = self._ensure_image_identity(image_spec.image_reference, digest)
+        if not identity.present or identity.digest is None or identity.platform is None:
+            return ImageProbeResult(
+                schema_version=IMAGE_PROBE_RECORD_SCHEMA_VERSION,
+                probe_id=probe.probe_id,
+                image_id=image_spec.image_id,
+                image_reference=image_spec.image_reference,
+                image_digest=digest,
+                capability=probe.capability,
+                success=False,
+                functional_status=CapabilityProbeStatus.UNAVAILABLE.value,
+                execution_status=ProbeExecutionStatus.IMAGE_NOT_PRESENT.value,
+                execution_origin=self.execution_origin,
+                resolved_image_digest=identity.digest,
+                resolved_image_platform=identity.platform,
+                runtime_image_id=identity.runtime_image_id,
+                cleanup_succeeded=None,
+                import_version_metadata={},
+                runtime_seconds=0.0,
+                error_category="IMAGE_NOT_PRESENT",
+                error_message=(
+                    f"Approved image {image_spec.image_reference} is unavailable or lacks "
+                    f"verifiable runtime identity: {identity.error}"
+                ),
+                stdout=None,
+                execution_mode="docker",
+                timestamp_utc=_utc_now(),
+            )
 
-        # Pre-check image presence if pull_policy is never
-        if self.pull_policy == "never":
-            present, resolved, err = self.inspect_image_identity(image_spec.image_reference)
-            if not present:
-                return ImageProbeResult(
-                    schema_version=IMAGE_PROBE_RECORD_SCHEMA_VERSION,
-                    probe_id=probe.probe_id,
-                    image_id=image_spec.image_id,
-                    image_reference=image_spec.image_reference,
-                    image_digest=digest,
-                    capability=probe.capability,
-                    success=False,
-                    execution_status=ProbeExecutionStatus.IMAGE_NOT_PRESENT.value,
-                    resolved_image_digest=None,
-                    import_version_metadata={},
-                    runtime_seconds=0.0,
-                    error_category="IMAGE_NOT_PRESENT",
-                    error_message=f"Image {image_spec.image_reference} is not present in local Docker store: {err}",
-                    stdout=None,
-                    execution_mode="docker",
-                    timestamp_utc=_utc_now(),
-                )
-            if resolved and resolved != digest:
-                raise SecurityVerificationError(
-                    f"Runtime image digest {resolved!r} does not match expected pinned digest {digest!r}"
-                )
-
-        cpu_val = "1.0"
-        if probe.cpu_limit.endswith("m"):
-            try:
-                cpu_val = str(float(probe.cpu_limit[:-1]) / 1000.0)
-            except ValueError:
-                cpu_val = self.default_cpu_limit
+        cpu_val = str(float(probe.cpu_limit[:-1]) / 1000.0)
         mem_val = probe.memory_limit.lower().replace("i", "")
+        container_name = (
+            f"intent-spawner-e5-{image_spec.image_id[:18]}-{uuid.uuid4().hex[:12]}"
+        )
 
         cmd = [
             "docker",
             "run",
-            "--rm",
+            "--name",
+            container_name,
             f"--pull={self.pull_policy}",
             "--network=none",
+            "--stop-timeout=1",
             f"--cpus={cpu_val}",
             f"--memory={mem_val}",
+            f"--memory-swap={mem_val}",
             f"--pids-limit={self.pids_limit}",
+            "--read-only",
+            "--tmpfs=/tmp:rw,noexec,nosuid,size=64m",
+            "--cap-drop=ALL",
+            "--security-opt=no-new-privileges",
             image_spec.image_reference,
             "python3",
             "-c",
-            probe.script,
+            _bounded_python_script(probe.script, probe.timeout_seconds),
         ]
 
         started = time.perf_counter()
@@ -309,45 +588,62 @@ class DockerProbeRunner(BaseProbeRunner):
         returncode: int | None = None
         stdout = ""
         stderr = ""
+        container_started = False
+        cleanup_succeeded = False
 
         try:
             proc = subprocess.run(
                 cmd,
                 capture_output=True,
                 text=True,
-                timeout=probe.timeout_seconds,
+                timeout=probe.timeout_seconds + 3.0,
                 check=False,
             )
             returncode = proc.returncode
             stdout = proc.stdout
             stderr = proc.stderr
+            container_started = returncode != 125
         except subprocess.TimeoutExpired as exc:
             timed_out = True
             returncode = -1
             stdout = exc.stdout.decode() if isinstance(exc.stdout, bytes) else (exc.stdout or "")
             stderr = exc.stderr.decode() if isinstance(exc.stderr, bytes) else (exc.stderr or "")
+            container_started = self._container_started(container_name)
         except Exception as exc:
             returncode = -1
             stderr = str(exc)
+            container_started = self._container_started(container_name)
+        finally:
+            cleanup_succeeded = self._cleanup_container(container_name)
 
         elapsed = time.perf_counter() - started
-        success = (returncode == 0) and not timed_out
-        metadata: dict[str, str] = {}
-        error_category: str | None = None
-        error_message: str | None = None
-        execution_status = ProbeExecutionStatus.EXECUTED.value
-
-        if success:
-            metadata = _extract_probe_metadata(stdout)
+        execution_status = (
+            ProbeExecutionStatus.EXECUTED.value
+            if container_started
+            else ProbeExecutionStatus.CONTAINER_UNAVAILABLE.value
+        )
+        if execution_status == ProbeExecutionStatus.EXECUTED.value:
+            functional_status, success, metadata, error_category, error_message = (
+                _classify_probe_output(
+                    probe,
+                    returncode=returncode,
+                    stdout=stdout,
+                    stderr=stderr,
+                    timed_out=timed_out,
+                )
+            )
         else:
-            error_category = _categorize_error(returncode, stderr, timed_out)
-            error_message = stderr.strip() or ("Timed out" if timed_out else "Execution failed")
-            if error_category == "IMAGE_NOT_PRESENT":
-                execution_status = ProbeExecutionStatus.IMAGE_NOT_PRESENT.value
-                elapsed = 0.0
-            elif error_category == "CONTAINER_LAUNCH_FAILED":
-                execution_status = ProbeExecutionStatus.CONTAINER_UNAVAILABLE.value
-                elapsed = 0.0
+            functional_status = CapabilityProbeStatus.UNAVAILABLE.value
+            success = False
+            metadata = _extract_probe_metadata(stdout)
+            error_category = "CONTAINER_LAUNCH_FAILED"
+            error_message = stderr.strip() or "Docker container did not start"
+            elapsed = 0.0
+        if not cleanup_succeeded:
+            functional_status = CapabilityProbeStatus.FAILURE.value
+            success = False
+            error_category = "CLEANUP_FAILED"
+            error_message = f"Failed to remove Docker container {container_name}"
 
         return ImageProbeResult(
             schema_version=IMAGE_PROBE_RECORD_SCHEMA_VERSION,
@@ -357,8 +653,14 @@ class DockerProbeRunner(BaseProbeRunner):
             image_digest=digest,
             capability=probe.capability,
             success=success,
+            functional_status=functional_status,
             execution_status=execution_status,
-            resolved_image_digest=digest if execution_status == ProbeExecutionStatus.EXECUTED.value else None,
+            execution_origin=self.execution_origin,
+            execution_identity=container_name,
+            resolved_image_digest=identity.digest,
+            resolved_image_platform=identity.platform,
+            runtime_image_id=identity.runtime_image_id,
+            cleanup_succeeded=cleanup_succeeded,
             import_version_metadata=metadata,
             runtime_seconds=elapsed,
             error_category=error_category,
@@ -378,10 +680,24 @@ class KubernetesProbeRunner(BaseProbeRunner):
         *,
         namespace: str = "default",
         context: str | None = None,
+        poll_interval_seconds: float = 0.25,
+        _construction_key: object | None = None,
     ) -> None:
         super().__init__(catalog)
+        if not 0 <= poll_interval_seconds <= 5:
+            raise ProbeExecutionError("Kubernetes poll interval must be between 0 and 5 seconds")
         self.namespace = namespace
         self.context = context
+        self.poll_interval_seconds = poll_interval_seconds
+        self._execution_origin = (
+            ProbeExecutionOrigin.LIVE_KUBERNETES.value
+            if _construction_key is _LIVE_RUNNER_CONSTRUCTION_KEY
+            else ProbeExecutionOrigin.SYNTHETIC_TEST.value
+        )
+
+    @property
+    def execution_origin(self) -> str:
+        return self._execution_origin
 
     def _kubectl(self, args: Sequence[str], timeout: float = 30.0) -> subprocess.CompletedProcess[str]:
         base_cmd = ["kubectl"]
@@ -397,36 +713,158 @@ class KubernetesProbeRunner(BaseProbeRunner):
             check=False,
         )
 
+    def _node_platform(self, node_name: str, timeout: float) -> str | None:
+        result = self._kubectl(
+            ["get", "node", node_name, "-o", "json"], timeout=timeout
+        )
+        if result.returncode != 0:
+            return None
+        try:
+            node = json.loads(result.stdout)
+        except json.JSONDecodeError:
+            return None
+        labels = node.get("metadata", {}).get("labels", {})
+        os_name = labels.get("kubernetes.io/os")
+        architecture = labels.get("kubernetes.io/arch")
+        if not os_name or not architecture:
+            node_info = node.get("status", {}).get("nodeInfo", {})
+            os_name = os_name or node_info.get("operatingSystem")
+            architecture = architecture or node_info.get("architecture")
+        if isinstance(os_name, str) and os_name and isinstance(architecture, str) and architecture:
+            return f"{os_name}/{architecture}"
+        return None
+
+    def _cleanup_pod(self, pod_name: str) -> bool:
+        try:
+            deleted = self._kubectl(
+                [
+                    "delete",
+                    f"pod/{pod_name}",
+                    "--ignore-not-found=true",
+                    "--grace-period=0",
+                    "--force",
+                    "--wait=true",
+                    "--timeout=10s",
+                ],
+                timeout=15.0,
+            )
+        except BaseException:
+            return False
+        return deleted.returncode == 0
+
+    @staticmethod
+    def _termination_details(pod: Mapping[str, Any]) -> tuple[bool, int | None, str, str | None]:
+        statuses = pod.get("status", {}).get("containerStatuses", [])
+        if not isinstance(statuses, list) or not statuses:
+            return False, None, "", None
+        status = statuses[0] if isinstance(statuses[0], Mapping) else {}
+        state = status.get("state", {}) if isinstance(status, Mapping) else {}
+        terminated = state.get("terminated") if isinstance(state, Mapping) else None
+        running = state.get("running") if isinstance(state, Mapping) else None
+        started = isinstance(running, Mapping) or isinstance(terminated, Mapping)
+        if not isinstance(terminated, Mapping):
+            return started, None, "", status.get("imageID") if isinstance(status, Mapping) else None
+        exit_code = terminated.get("exitCode")
+        reason = str(terminated.get("reason") or "")
+        message = str(terminated.get("message") or "")
+        detail = ": ".join(item for item in (reason, message) if item)
+        return started, int(exit_code) if isinstance(exit_code, int) else None, detail, status.get("imageID")
+
+    @staticmethod
+    def _pending_reason(pod: Mapping[str, Any]) -> str:
+        statuses = pod.get("status", {}).get("containerStatuses", [])
+        if isinstance(statuses, list) and statuses and isinstance(statuses[0], Mapping):
+            waiting = statuses[0].get("state", {}).get("waiting", {})
+            if isinstance(waiting, Mapping):
+                detail = ": ".join(
+                    str(waiting.get(key))
+                    for key in ("reason", "message")
+                    if waiting.get(key)
+                )
+                if detail:
+                    return detail
+        conditions = pod.get("status", {}).get("conditions", [])
+        if isinstance(conditions, list):
+            for condition in conditions:
+                if isinstance(condition, Mapping) and condition.get("status") == "False":
+                    detail = ": ".join(
+                        str(condition.get(key))
+                        for key in ("reason", "message")
+                        if condition.get(key)
+                    )
+                    if detail:
+                        return detail
+        return str(pod.get("status", {}).get("phase") or "pod did not reach a terminal phase")
+
     def run_probe(
         self,
         image_spec: ImageProbeSpec,
         probe: ProbeSpec,
     ) -> ImageProbeResult:
-        digest = validate_approved_image_reference(image_spec.image_reference, self.catalog)
-        pod_name = f"probe-{image_spec.image_id[:12]}-{probe.capability[:8]}-{int(time.time())}"
+        digest = validate_approved_image_spec(image_spec, self.catalog)
+        validate_approved_probe_spec(image_spec, probe)
+        pod_name = (
+            f"intent-spawner-e5-{image_spec.image_id[:16]}-{uuid.uuid4().hex[:10]}"
+        )
 
         started = time.perf_counter()
+        deadline = time.monotonic() + probe.timeout_seconds
         timed_out = False
         returncode: int | None = None
         stdout = ""
         stderr = ""
-        launch_failed = False
+        container_started = False
+        runtime_image_id: str | None = None
+        resolved_digest: str | None = None
+        resolved_platform: str | None = None
+        cleanup_succeeded = False
+        terminal_phase: str | None = None
+        last_pod: Mapping[str, Any] = {}
 
         try:
             overrides = {
                 "spec": {
                     "restartPolicy": "Never",
+                    "activeDeadlineSeconds": max(1, int(math.ceil(probe.timeout_seconds))),
+                    "terminationGracePeriodSeconds": 1,
+                    "automountServiceAccountToken": False,
                     "containers": [
                         {
                             "name": "probe",
                             "image": image_spec.image_reference,
-                            "command": ["python3", "-c", probe.script],
+                            "imagePullPolicy": "IfNotPresent",
+                            "command": [
+                                "python3",
+                                "-c",
+                                _bounded_python_script(
+                                    probe.script, probe.timeout_seconds
+                                ),
+                            ],
                             "resources": {
+                                "requests": {
+                                    "cpu": probe.cpu_limit,
+                                    "memory": probe.memory_limit,
+                                },
                                 "limits": {
                                     "cpu": probe.cpu_limit,
                                     "memory": probe.memory_limit,
                                 }
                             },
+                            "securityContext": {
+                                "allowPrivilegeEscalation": False,
+                                "capabilities": {"drop": ["ALL"]},
+                                "readOnlyRootFilesystem": True,
+                                "seccompProfile": {"type": "RuntimeDefault"},
+                            },
+                            "volumeMounts": [
+                                {"name": "probe-tmp", "mountPath": "/tmp"}
+                            ],
+                        }
+                    ],
+                    "volumes": [
+                        {
+                            "name": "probe-tmp",
+                            "emptyDir": {"sizeLimit": "64Mi"},
                         }
                     ],
                 }
@@ -440,48 +878,125 @@ class KubernetesProbeRunner(BaseProbeRunner):
             ]
             launch = self._kubectl(run_cmd, timeout=15.0)
             if launch.returncode != 0:
-                launch_failed = True
                 returncode = launch.returncode
                 stderr = launch.stderr
             else:
-                wait_cmd = ["wait", f"pod/{pod_name}", "--for=condition=Ready=false", f"--timeout={int(probe.timeout_seconds)}s"]
-                self._kubectl(wait_cmd, timeout=probe.timeout_seconds + 5.0)
+                while True:
+                    remaining = deadline - time.monotonic()
+                    if remaining <= 0:
+                        timed_out = True
+                        stderr = self._pending_reason(last_pod)
+                        break
+                    status_res = self._kubectl(
+                        ["get", f"pod/{pod_name}", "-o", "json"],
+                        timeout=min(5.0, max(0.1, remaining)),
+                    )
+                    if status_res.returncode != 0:
+                        stderr = status_res.stderr.strip() or "could not observe pod status"
+                        break
+                    try:
+                        parsed = json.loads(status_res.stdout)
+                    except json.JSONDecodeError:
+                        stderr = "kubectl returned invalid pod status JSON"
+                        break
+                    if not isinstance(parsed, Mapping):
+                        stderr = "kubectl returned a non-object pod status"
+                        break
+                    last_pod = parsed
+                    terminal_phase = str(parsed.get("status", {}).get("phase") or "")
+                    (
+                        container_started,
+                        terminated_exit,
+                        termination_detail,
+                        runtime_image_id,
+                    ) = self._termination_details(parsed)
+                    if terminal_phase in {"Succeeded", "Failed"}:
+                        if terminated_exit is None:
+                            stderr = termination_detail or "terminal pod lacks container termination status"
+                            returncode = -1
+                        else:
+                            returncode = terminated_exit
+                            stderr = termination_detail if terminated_exit != 0 else ""
+                        break
+                    if self.poll_interval_seconds:
+                        time.sleep(min(self.poll_interval_seconds, max(0.0, remaining)))
 
-                log_res = self._kubectl(["logs", pod_name], timeout=10.0)
-                stdout = log_res.stdout
-                stderr = log_res.stderr
-
-                status_res = self._kubectl(["get", f"pod/{pod_name}", "-o", "jsonpath={.status.phase}"], timeout=5.0)
-                phase = status_res.stdout.strip()
-                returncode = 0 if phase == "Succeeded" else 1
-        except subprocess.TimeoutExpired:
+                if last_pod:
+                    (
+                        container_started,
+                        terminated_exit,
+                        termination_detail,
+                        runtime_image_id,
+                    ) = self._termination_details(last_pod)
+                    if returncode is None and terminated_exit is not None:
+                        returncode = terminated_exit
+                    if not stderr and termination_detail and returncode not in (None, 0):
+                        stderr = termination_detail
+                    match = _RUNTIME_DIGEST.search(runtime_image_id or "")
+                    resolved_digest = match.group(0) if match else None
+                    if resolved_digest and resolved_digest != digest:
+                        raise SecurityVerificationError(
+                            f"Kubernetes runtime image digest {resolved_digest!r} "
+                            f"does not match expected pinned digest {digest!r}"
+                        )
+                    node_name = last_pod.get("spec", {}).get("nodeName")
+                    if isinstance(node_name, str) and node_name:
+                        resolved_platform = self._node_platform(node_name, timeout=5.0)
+                if terminal_phase in {"Succeeded", "Failed"}:
+                    log_res = self._kubectl(["logs", pod_name], timeout=10.0)
+                    stdout = log_res.stdout
+                    if log_res.returncode != 0 and not stderr:
+                        stderr = log_res.stderr.strip()
+        except SecurityVerificationError:
+            raise
+        except subprocess.TimeoutExpired as exc:
             timed_out = True
             returncode = -1
-            stderr = "Pod execution timed out"
+            stderr = f"Kubernetes API call timed out: {exc}"
         except Exception as exc:
             returncode = -1
             stderr = str(exc)
         finally:
-            try:
-                self._kubectl(["delete", f"pod/{pod_name}", "--ignore-not-found", "--now"], timeout=10.0)
-            except Exception:
-                pass
+            cleanup_succeeded = self._cleanup_pod(pod_name)
 
         elapsed = time.perf_counter() - started
-        success = (returncode == 0) and not timed_out
-        metadata: dict[str, str] = {}
-        error_category: str | None = None
-        error_message: str | None = None
-        execution_status = ProbeExecutionStatus.EXECUTED.value
-
-        if success:
-            metadata = _extract_probe_metadata(stdout)
+        execution_status = (
+            ProbeExecutionStatus.EXECUTED.value
+            if container_started
+            else ProbeExecutionStatus.CONTAINER_UNAVAILABLE.value
+        )
+        if execution_status == ProbeExecutionStatus.EXECUTED.value:
+            functional_status, success, metadata, error_category, error_message = (
+                _classify_probe_output(
+                    probe,
+                    returncode=returncode,
+                    stdout=stdout,
+                    stderr=stderr,
+                    timed_out=timed_out,
+                )
+            )
         else:
-            error_category = _categorize_error(returncode, stderr, timed_out)
-            error_message = stderr.strip() or ("Timed out" if timed_out else "Kubernetes probe failed")
-            if launch_failed:
-                execution_status = ProbeExecutionStatus.CONTAINER_UNAVAILABLE.value
-                elapsed = 0.0
+            functional_status = CapabilityProbeStatus.UNAVAILABLE.value
+            success = False
+            metadata = _extract_probe_metadata(stdout)
+            error_category = "TIMEOUT" if timed_out else "CONTAINER_LAUNCH_FAILED"
+            error_message = stderr.strip() or "Kubernetes probe container did not start"
+            elapsed = 0.0
+        if terminal_phase in {"Succeeded", "Failed"} and not runtime_image_id:
+            functional_status = CapabilityProbeStatus.FAILURE.value
+            success = False
+            error_category = "RUNTIME_IDENTITY_UNAVAILABLE"
+            error_message = "Terminal pod lacks a verifiable container image ID"
+        if terminal_phase in {"Succeeded", "Failed"} and not resolved_platform:
+            functional_status = CapabilityProbeStatus.FAILURE.value
+            success = False
+            error_category = "RUNTIME_IDENTITY_UNAVAILABLE"
+            error_message = "Terminal pod node platform could not be resolved"
+        if not cleanup_succeeded:
+            functional_status = CapabilityProbeStatus.FAILURE.value
+            success = False
+            error_category = "CLEANUP_FAILED"
+            error_message = f"Failed to delete Kubernetes pod {pod_name}"
 
         return ImageProbeResult(
             schema_version=IMAGE_PROBE_RECORD_SCHEMA_VERSION,
@@ -491,8 +1006,14 @@ class KubernetesProbeRunner(BaseProbeRunner):
             image_digest=digest,
             capability=probe.capability,
             success=success,
+            functional_status=functional_status,
             execution_status=execution_status,
-            resolved_image_digest=digest if execution_status == ProbeExecutionStatus.EXECUTED.value else None,
+            execution_origin=self.execution_origin,
+            execution_identity=pod_name,
+            resolved_image_digest=resolved_digest,
+            resolved_image_platform=resolved_platform,
+            runtime_image_id=runtime_image_id,
+            cleanup_succeeded=cleanup_succeeded,
             import_version_metadata=metadata,
             runtime_seconds=elapsed,
             error_category=error_category,
@@ -551,18 +1072,36 @@ def create_probe_runner(
     if selected_mode == "auto":
         detected = detect_runtime()
         if detected == "docker":
-            return DockerProbeRunner(catalog, pull_policy=pull_policy)
+            return DockerProbeRunner(
+                catalog,
+                pull_policy=pull_policy,
+                _construction_key=_LIVE_RUNNER_CONSTRUCTION_KEY,
+            )
         elif detected == "kubernetes":
-            return KubernetesProbeRunner(catalog, namespace=k8s_namespace, context=k8s_context)
+            return KubernetesProbeRunner(
+                catalog,
+                namespace=k8s_namespace,
+                context=k8s_context,
+                _construction_key=_LIVE_RUNNER_CONSTRUCTION_KEY,
+            )
         elif dry_run_if_unavailable:
             return DryRunProbeRunner(catalog)
         else:
             raise ProbeExecutionError("No container runtime or cluster detected and dry-run fallback disabled.")
 
     if selected_mode == "docker":
-        return DockerProbeRunner(catalog, pull_policy=pull_policy)
+        return DockerProbeRunner(
+            catalog,
+            pull_policy=pull_policy,
+            _construction_key=_LIVE_RUNNER_CONSTRUCTION_KEY,
+        )
     if selected_mode == "kubernetes":
-        return KubernetesProbeRunner(catalog, namespace=k8s_namespace, context=k8s_context)
+        return KubernetesProbeRunner(
+            catalog,
+            namespace=k8s_namespace,
+            context=k8s_context,
+            _construction_key=_LIVE_RUNNER_CONSTRUCTION_KEY,
+        )
     if selected_mode in ("dry-run", "dry_run"):
         return DryRunProbeRunner(catalog)
     if selected_mode == "synthetic":
