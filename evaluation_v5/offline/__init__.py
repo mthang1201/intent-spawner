@@ -33,6 +33,16 @@ _VALIDATOR_EXPORTS = frozenset(
         "validate_offline_evidence",
     }
 )
+_SOURCE_RUN_EXPORTS = frozenset(
+    {
+        "SOURCE_RUN_PROVENANCE_SCHEMA_VERSION",
+        "SourceRunProvenanceError",
+        "VerifiedRecommendationRunProvenance",
+        "load_recommendation_run_provenance",
+        "reverify_recommendation_run_provenance",
+        "verify_recommendation_run_provenance",
+    }
+)
 
 
 def __getattr__(name: str):
@@ -46,6 +56,10 @@ def __getattr__(name: str):
         from . import validate_evidence
 
         return getattr(validate_evidence, name)
+    if name in _SOURCE_RUN_EXPORTS:
+        from . import source_run
+
+        return getattr(source_run, name)
     raise AttributeError(name)
 
 
@@ -62,9 +76,15 @@ __all__ = [
     "P2FrozenAdapter",
     "P3FrozenAdapter",
     "ProvenanceMismatchError",
+    "SOURCE_RUN_PROVENANCE_SCHEMA_VERSION",
+    "SourceRunProvenanceError",
+    "VerifiedRecommendationRunProvenance",
     "build_execution_matrix",
     "default_adapters",
+    "load_recommendation_run_provenance",
+    "reverify_recommendation_run_provenance",
     "run_offline_recommendations",
     "validate_raw_record",
     "validate_offline_evidence",
+    "verify_recommendation_run_provenance",
 ]

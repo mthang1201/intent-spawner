@@ -47,7 +47,10 @@ from evaluation_v5.isolation import (
 )
 from evaluation_v5.isolation_audit import IsolationAuditError, audit_repository
 from evaluation_v5.offline.run import main as offline_main, run_preflight
-from evaluation_v5.offline.runner import run_offline_recommendations
+from evaluation_v5.offline.runner import (
+    ProvenanceMismatchError,
+    run_offline_recommendations,
+)
 from evaluation_v5.split_dataset import (
     DEFAULT_DEVELOPMENT_DATASET,
     LoadedSplit,
@@ -151,6 +154,68 @@ def _write_bundle(path: Path, document: dict[str, object] | None = None) -> Path
     return path
 
 
+def _verified_gate_snapshot(status: str = "not_retained") -> dict[str, object]:
+    development = load_development_split()
+    artifact = lambda name: {"path": name, "sha256": "d" * 64}
+    analysis = lambda name: {
+        "path": name,
+        "manifest_sha256": "c" * 64,
+        "outputs": {"fixture": artifact("fixture.json")},
+    }
+    return {
+        "snapshot_version": "protocol-v5-p3-gate-snapshot-v2.0.0",
+        "status": status,
+        "p3_active": status == "retained",
+        "verification_status": "VERIFIED",
+        "decision_schema_version": (
+            "protocol-v5-p3-development-decision-v1.0.0"
+        ),
+        "decision_artifact_path": "benchmarks_v5/synthetic-p3-decision.json",
+        "decision_artifact_sha256": "b" * 64,
+        "development_split": {
+            "dataset_id": development.manifest.dataset_id,
+            "split_id": development.manifest.split_id,
+            "role": "development",
+            "bundle_checksum": development.manifest.checksum,
+            "dataset_sha256": development.source_file_sha256,
+            "case_count": development.manifest.case_count,
+            "family_count": development.manifest.family_count,
+        },
+        "raw_evidence": {
+            "path": "results_v5/synthetic-raw",
+            "run_id": "synthetic-test-run",
+            "provenance_fingerprint": "a" * 64,
+            "provenance_sha256": "b" * 64,
+            "recommendations_sha256": "c" * 64,
+            "completion_sha256": "d" * 64,
+            "record_count": 1,
+        },
+        "component_evidence": analysis("results_v5/synthetic-component"),
+        "statistical_evidence": analysis("results_v5/synthetic-statistical"),
+        "predicate_version": "protocol-v5-p3-headroom-predicate-v1.0.0",
+        "computation_version": "protocol-v5-p3-gate-computation-v1.0.0",
+    }
+
+
+def _install_verified_gate(
+    monkeypatch: pytest.MonkeyPatch,
+    *,
+    status: str = "not_retained",
+) -> None:
+    snapshot = _verified_gate_snapshot(status)
+
+    def verified_snapshot(*, p3_gate_status: str, p3_gate_evidence: Path):
+        del p3_gate_evidence
+        assert p3_gate_status == status
+        return copy.deepcopy(snapshot)
+
+    monkeypatch.setattr(
+        freeze_module,
+        "_verified_p3_gate_snapshot",
+        verified_snapshot,
+    )
+
+
 def _production_freeze(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
@@ -163,6 +228,7 @@ def _production_freeze(
     freeze_root = tmp_path / "freezes"
     monkeypatch.setattr(freeze_module, "DEFAULT_FREEZE_ROOT", freeze_root)
     monkeypatch.setattr(freeze_module, "FREEZE_CUSTODY_ROOT", tmp_path)
+    _install_verified_gate(monkeypatch, status=p3_gate_status)
     return create_freeze_artifact(
         freeze_id=freeze_id,
         p3_gate_status=p3_gate_status,
@@ -406,6 +472,7 @@ def test_planted_confirmatory_file_is_not_discovered_by_development_or_indexes(
 
     monkeypatch.setattr(Path, "open", guarded_path_open)
     monkeypatch.setattr(split_dataset_module.os, "open", guarded_os_open)
+    _install_verified_gate(monkeypatch)
 
     before = build_configuration_snapshot(
         p3_gate_status="not_retained",
@@ -1013,14 +1080,50 @@ def test_verified_confirmatory_preparation_and_runner_reverification_succeed(
     result = run_offline_recommendations(
         capability,
         result_dir=tmp_path / "verified-confirmatory-dry-run",
-        system_ids=("P1",),
+        system_ids=("P1", "P2"),
         frozen_configuration=capability.freeze_manifest[
             "configuration_snapshot"
         ],
         dry_run=True,
     )
     assert result.dry_run is True
-    assert result.planned_records == capability.split.manifest.case_count
+    assert result.planned_records == capability.split.manifest.case_count * 2
+
+
+def test_confirmatory_runner_rejects_adapter_injection_and_configuration_copy_drift(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+):
+    artifact = _production_freeze(
+        tmp_path,
+        monkeypatch,
+        freeze_id="runner-adapter-binding",
+    )
+    capability = load_confirmatory_split(
+        _write_bundle(tmp_path / "sealed-confirmatory.yaml"),
+        artifact,
+    )
+    with pytest.raises(PermissionError, match="prohibits adapter injection"):
+        run_offline_recommendations(
+            capability,
+            result_dir=tmp_path / "injected-adapter",
+            system_ids=("P1",),
+            adapters={"P1": object()},
+            dry_run=True,
+        )
+
+    mismatched = copy.deepcopy(
+        capability.freeze_manifest["configuration_snapshot"]
+    )
+    mismatched["systems"]["P1"]["backend_version"] = "forged-p1"
+    with pytest.raises(ProvenanceMismatchError, match="frozen configuration"):
+        run_offline_recommendations(
+            capability,
+            result_dir=tmp_path / "configuration-drift",
+            system_ids=("P1",),
+            frozen_configuration=mismatched,
+            dry_run=True,
+        )
 
 
 @pytest.mark.parametrize(
@@ -1137,6 +1240,7 @@ def test_freeze_never_opens_external_file_backed_provider_configuration(
         return original_open(path, *args, **kwargs)
 
     monkeypatch.setattr(Path, "open", guarded_open)
+    _install_verified_gate(monkeypatch)
     with pytest.raises(FreezeValidationError, match="inside the repository"):
         build_configuration_snapshot(
             p3_gate_status="not_retained",
@@ -1258,7 +1362,7 @@ def test_freeze_verification_never_hashes_external_gate_evidence(
     manifest = json.loads(artifact.read_text(encoding="utf-8"))
     external_gate = tmp_path / "external-gate-with-sealed-sentinel.md"
     external_gate.write_text("sealed sentinel must not be read", encoding="utf-8")
-    manifest["configuration_snapshot"]["p3_gate"]["evidence_path"] = str(
+    manifest["configuration_snapshot"]["p3_gate"]["decision_artifact_path"] = str(
         external_gate
     )
     tampered_directory = artifact.parent.parent / "tampered-freeze"
@@ -1274,7 +1378,7 @@ def test_freeze_verification_never_hashes_external_gate_evidence(
         return original_open(path, *args, **kwargs)
 
     monkeypatch.setattr(Path, "open", guarded_open)
-    with pytest.raises(FreezeValidationError, match="inside the repository"):
+    with pytest.raises(FreezeValidationError, match="p3_gate"):
         verify_freeze_artifact(tampered)
 
 
@@ -1409,6 +1513,7 @@ def test_dry_run_and_stale_or_wrong_development_checksum_freezes_are_rejected(
     freeze_root = tmp_path / "freezes"
     monkeypatch.setattr(freeze_module, "DEFAULT_FREEZE_ROOT", freeze_root)
     monkeypatch.setattr(freeze_module, "FREEZE_CUSTODY_ROOT", tmp_path)
+    _install_verified_gate(monkeypatch)
     dry = build_freeze_manifest(
         freeze_id="dry-freeze",
         p3_gate_status="not_retained",

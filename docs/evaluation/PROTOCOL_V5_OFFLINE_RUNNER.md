@@ -4,10 +4,11 @@ Status: harness implemented; no confirmatory recommendation evidence executed
 
 The offline runner generates raw E1 evidence for frozen P1 and P2. P1 is the
 existing rule-based recommender. P2 is StructuredIntent extraction, hybrid
-retrieval, deterministic constraints, and deterministic ranking. P3 is
-available only with the explicit `--enable-p3` gate and belongs to optional
-E6. B0 is excluded because it is a manual human-selection baseline and does
-not produce an offline ranking.
+retrieval, deterministic constraints, and deterministic ranking. P3 belongs
+to optional E6 and is available only when `--enable-p3` is paired with an
+authenticated, recomputed `retained` development decision. B0 is excluded
+because it is a manual human-selection baseline and does not produce an
+offline ranking.
 
 ## Execution
 
@@ -40,8 +41,12 @@ production freeze at the execution boundary. An ordinary/relabelled
 `frozen-configuration.json` design snapshot cannot authorize confirmation.
 Confirmatory provenance and configuration are derived from the reverified
 artifacts, and any caller-provided configuration must match that production
-freeze. Development smoke evidence under `/tmp` is not confirmatory evidence
-and must not be moved into a final evidence namespace.
+freeze. Confirmatory adapter injection is prohibited: the runner constructs
+the production adapters and compares their backend, pipeline, prompt/model,
+index, retrieval, constraint/ranking, catalog, and corpus identities with the
+freeze before building the matrix. Development smoke evidence under `/tmp` is
+not confirmatory evidence and must not be moved into a final evidence
+namespace.
 
 ## Repeats and P3
 
@@ -52,9 +57,21 @@ the requested repetitions. The provenance records `requested_repeats`, each
 system's `effective_repeats`, and the repeat-policy partition. Repeated outputs
 remain executions of the same workload family.
 
-Selecting P3 without `--enable-p3` fails before evidence is created. Explicit
-enablement only opens the runner gate; it does not establish that the P3
-development gate has been passed or authorize confirmatory evaluation.
+Selecting P3 without `--enable-p3` fails before evidence is created. For a
+development run, `--p3-gate <decision.json>` is also required. Verification
+reopens the canonical development split, raw recommendation package,
+component package, statistical package, and gold; checks their recorded
+digests and joins; recomputes component scoring and the fixed family-level
+headroom predicate; and rejects a supplied decision that differs from that
+result. For confirmation, the decision path and digest come only from the
+verified production freeze. A `not_retained` gate always refuses P3 execution.
+
+The decision schema is
+`benchmarks_v5/protocol-v5-p3-development-decision-v1.schema.json`. The
+currently tracked v1 development split does not supply the full v2 component
+gold needed to produce a real decision package, so no real gate is created by
+this repair; that evidence remains `NOT_EXECUTED` until the registered inputs
+are available.
 
 ## Evidence layout and resume
 
@@ -104,3 +121,12 @@ validator invokes the same isolation loader and re-verifies its capability at
 the validation boundary. Freeze provenance is derived from that artifact, not
 accepted as a caller-authored mapping. A confirmatory package is never
 implicitly validated against the visible development split.
+
+Downstream E5 code can call
+`evaluation_v5.offline.verify_recommendation_run_provenance()` and retain the
+returned immutable `VerifiedRecommendationRunProvenance`. It exports the
+exact recommendation JSONL digest and record IDs together with source-bound
+extractor/prompt, index, retrieval, constraint/ranking, catalog, split, freeze,
+and Git identities. `reverify_recommendation_run_provenance()` reopens the
+complete package and fails if any upstream artifact has changed. There is no
+API that converts caller-retyped fields into this capability.

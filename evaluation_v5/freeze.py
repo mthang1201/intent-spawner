@@ -78,14 +78,15 @@ FREEZE_SCHEMA_VERSION = "protocol-v5-freeze-v1.0.0"
 PRODUCTION_FREEZE_SCHEMA_VERSION = FREEZE_SCHEMA_VERSION
 FREEZE_STATUS = "FROZEN"
 DRY_RUN_STATUS = "DRY_RUN"
-P3_GATE_SNAPSHOT_VERSION = "protocol-v5-p3-gate-snapshot-v1.0.0"
 DEFAULT_FREEZE_ROOT = ROOT / "results_v5" / "protocol-v5.0.0" / "freezes"
 DEFAULT_DESIGN_SNAPSHOT = DEFAULT_FREEZE_ROOT / "frozen-configuration.json"
 PRODUCTION_FREEZE_SCHEMA_PATH = (
     ROOT / "benchmarks_v5" / "protocol-v5-production-freeze-v1.schema.json"
 )
 FREEZE_CUSTODY_ROOT = ROOT
-DEFAULT_P3_GATE_EVIDENCE = ROOT / "docs/evaluation/P3_INCREMENTAL_EVALUATION_V1.md"
+DEFAULT_P3_GATE_EVIDENCE = (
+    ROOT / "benchmarks_v5" / "protocol-v5-p3-development-decision.json"
+)
 CONFIRMATORY_DATASET_ENV_VAR = "PROTOCOL_V5_CONFIRMATORY_DATASET"
 FREEZE_ARTIFACT_BASENAME = "freeze-manifest.json"
 
@@ -306,8 +307,20 @@ def _validate_against_schema(
         )
 
 
-def _validate_snapshot_semantics(snapshot: Mapping[str, Any]) -> None:
+def _validate_snapshot_semantics(
+    snapshot: Mapping[str, Any],
+    *,
+    require_verified_p3_gate: bool = False,
+) -> None:
     gate = _mapping(snapshot.get("p3_gate"), "configuration_snapshot.p3_gate")
+    if require_verified_p3_gate and (
+        gate.get("snapshot_version")
+        != "protocol-v5-p3-gate-snapshot-v2.0.0"
+        or gate.get("verification_status") != "VERIFIED"
+    ):
+        raise FreezeValidationError(
+            "production freeze requires a verified P3 development gate"
+        )
     systems = _mapping(snapshot.get("systems"), "configuration_snapshot.systems")
     p3 = _mapping(systems.get("P3"), "configuration_snapshot.systems.P3")
     gate_active = gate.get("status") == "retained"
@@ -361,7 +374,7 @@ def parse_design_snapshot(document: object) -> DesignSnapshot:
 
     payload = _mapping(document, "design snapshot")
     _validate_against_schema(payload, design_snapshot=True)
-    _validate_snapshot_semantics(payload)
+    _validate_snapshot_semantics(payload, require_verified_p3_gate=False)
     return DesignSnapshot(payload)
 
 
@@ -397,7 +410,10 @@ def parse_production_freeze(
         )
     if require_production and not payload["source_control"]["git_worktree_clean"]:
         raise FreezeValidationError("production freeze must record a clean worktree")
-    _validate_snapshot_semantics(payload["configuration_snapshot"])
+    _validate_snapshot_semantics(
+        payload["configuration_snapshot"],
+        require_verified_p3_gate=require_production,
+    )
     return ProductionFreezeManifest(payload)
 
 
@@ -593,6 +609,29 @@ def _require_repository_gate_evidence(path: Path) -> Path:
     return _require_repository_file(path, label="P3 gate evidence")
 
 
+def _verified_p3_gate_snapshot(
+    *,
+    p3_gate_status: str,
+    p3_gate_evidence: Path,
+) -> dict[str, Any]:
+    """Verify and recompute the recorded development gate before freezing it."""
+
+    gate_evidence = _require_repository_gate_evidence(p3_gate_evidence)
+    from .p3_gate import P3GateValidationError, verify_p3_development_decision
+
+    try:
+        gate = verify_p3_development_decision(gate_evidence)
+    except (P3GateValidationError, OSError, ValueError) as exc:
+        raise FreezeValidationError(
+            "P3 gate evidence failed strict source verification"
+        ) from exc
+    if gate.decision != p3_gate_status:
+        raise FreezeValidationError(
+            "caller-supplied P3 gate status disagrees with the verified decision"
+        )
+    return gate.freeze_snapshot()
+
+
 def _configured_external_model_id() -> str | None:
     """Return the exact non-secret model identity used by provider-backed stages."""
 
@@ -653,7 +692,10 @@ def build_configuration_snapshot(
         raise FreezeValidationError(
             "p3_gate_status must be retained or not_retained"
         )
-    gate_evidence = _require_repository_gate_evidence(p3_gate_evidence)
+    gate_snapshot = _verified_p3_gate_snapshot(
+        p3_gate_status=p3_gate_status,
+        p3_gate_evidence=p3_gate_evidence,
+    )
 
     development = load_development_split()
     catalog_path = Path(DEFAULT_CATALOG_PATH).resolve()
@@ -729,13 +771,7 @@ def build_configuration_snapshot(
         }
 
     return {
-        "p3_gate": {
-            "snapshot_version": P3_GATE_SNAPSHOT_VERSION,
-            "status": p3_gate_status,
-            "evidence_path": _relative_or_absolute(gate_evidence),
-            "evidence_sha256": file_sha256(gate_evidence),
-            "p3_active": p3_gate_status == "retained",
-        },
+        "p3_gate": gate_snapshot,
         "systems": {
             "P1": {"backend_version": P1_BACKEND_VERSION},
             "P2": {
@@ -914,7 +950,8 @@ def verify_production_freeze(path: Path) -> VerifiedProductionFreeze:
     recorded = manifest["configuration_snapshot"]
     gate = _mapping(recorded["p3_gate"], "configuration_snapshot.p3_gate")
     evidence = _resolve_recorded_path(
-        gate.get("evidence_path"), "configuration_snapshot.p3_gate.evidence_path"
+        gate.get("decision_artifact_path"),
+        "configuration_snapshot.p3_gate.decision_artifact_path",
     )
     current = build_configuration_snapshot(
         p3_gate_status=str(gate.get("status")),

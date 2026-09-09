@@ -25,7 +25,10 @@ from pathlib import Path
 import platform
 import statistics as std_statistics
 import subprocess
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from evaluation_v5.p3_gate import VerifiedP3DevelopmentDecision
 
 from evaluation_v4.dataset import file_sha256
 from evaluation_v5.analysis.component_scoring import (
@@ -1063,93 +1066,139 @@ def compute_p3_development_decision(
     component_result: AnalysisResult,
     gold: GoldSource,
     *,
-    p3_development_decision: Path | Mapping[str, Any] | None = None,
+    p3_development_decision: Path | VerifiedP3DevelopmentDecision | None = None,
 ) -> dict[str, Any]:
-    """Evaluate or load the predefined P3 development gate decision.
+    """Render the predefined P3 gate without trusting serialized status fields.
 
-    The decision is ALWAYS determined by frozen development evidence. Confirmatory
-    evidence must NEVER be inspected or used to decide P3 enablement.
+    A development report may show an advisory recomputation from its in-memory
+    component result. Any artifact or confirmatory report crosses the strict
+    source-verification boundary and reopens every recorded development source.
     """
-    if p3_development_decision is not None:
-        if isinstance(p3_development_decision, (str, Path)):
-            p = Path(p3_development_decision)
-            if not p.is_file():
-                raise ReportingError(f"frozen P3 development decision file not found: {p}")
-            try:
-                dec_data = json.loads(p.read_text(encoding="utf-8"))
-            except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
-                raise ReportingError(f"frozen P3 development decision file is unreadable: {p}") from exc
-        elif isinstance(p3_development_decision, Mapping):
-            dec_data = dict(p3_development_decision)
-        else:
-            raise ReportingError("p3_development_decision must be a Path or Mapping")
+    from evaluation_v5.p3_gate import (
+        P3GateValidationError,
+        VerifiedP3DevelopmentDecision,
+        reverify_p3_development_decision,
+        verify_p3_development_decision,
+    )
 
-        gate_status = dec_data.get("gate_status")
-        if gate_status not in {"RETAINED", "NOT_RETAINED", "retained", "not_retained", "not_applicable"}:
-            raise ReportingError(f"invalid gate_status in frozen P3 development decision: {gate_status}")
-        norm_gate_status = "RETAINED" if str(gate_status).upper() == "RETAINED" else "NOT_RETAINED"
+    verified_decision = None
+    if p3_development_decision is not None:
+        try:
+            if isinstance(p3_development_decision, (str, Path)):
+                verified_decision = verify_p3_development_decision(
+                    Path(p3_development_decision)
+                )
+            elif type(p3_development_decision) is VerifiedP3DevelopmentDecision:
+                verified_decision = reverify_p3_development_decision(
+                    p3_development_decision
+                )
+            else:
+                raise ReportingError(
+                    "caller-supplied P3 decision mappings are prohibited; "
+                    "provide a source-verified decision artifact"
+                )
+        except P3GateValidationError as exc:
+            raise ReportingError(
+                "P3 development decision failed source verification"
+            ) from exc
+
+    if gold.role == "confirmatory":
+        if gold.confirmatory_capability is None:
+            raise ReportingError(
+                "confirmatory P3 reporting requires an isolation-verified split "
+                "and production freeze"
+            )
+        from evaluation_v5.isolation import verify_confirmatory_split
+
+        capability = verify_confirmatory_split(gold.confirmatory_capability)
+        frozen_gate = capability.freeze_manifest["configuration_snapshot"][
+            "p3_gate"
+        ]
+        recorded_path = frozen_gate.get("decision_artifact_path")
+        if not isinstance(recorded_path, str) or not recorded_path.strip():
+            raise ReportingError(
+                "confirmatory production freeze lacks a reverifiable P3 gate"
+            )
+        gate_path = Path(recorded_path)
+        if not gate_path.is_absolute():
+            gate_path = Path(__file__).resolve().parents[2] / gate_path
+        try:
+            frozen_decision = verify_p3_development_decision(gate_path)
+        except P3GateValidationError as exc:
+            raise ReportingError(
+                "confirmatory production-freeze P3 gate failed verification"
+            ) from exc
+        if frozen_decision.freeze_snapshot() != dict(frozen_gate):
+            raise ReportingError(
+                "confirmatory production-freeze P3 gate does not match its sources"
+            )
+        if (
+            verified_decision is not None
+            and verified_decision.to_dict() != frozen_decision.to_dict()
+        ):
+            raise ReportingError(
+                "supplied P3 decision does not match the confirmatory production freeze"
+            )
+        verified_decision = frozen_decision
+
+    if verified_decision is not None:
+        dec_data = verified_decision.to_dict()
+        norm_gate_status = (
+            "RETAINED"
+            if verified_decision.decision == "retained"
+            else "NOT_RETAINED"
+        )
         return {
             "schema_version": REPORTING_SCHEMA_VERSION,
             "gate_status": norm_gate_status,
             "decision": norm_gate_status,
             "source_split_role": "development",
-            "source_type": "frozen_development_decision_artifact",
-            "confirmatory_inspection": "PROHIBITED",
-            "claims_permitted": False,
-            "headroom_gate_definition": dec_data.get("headroom_gate_definition", {
-                "rule": "P3 is retained only if development evidence exhibits sufficient ranking headroom.",
-                "min_ranking_error_families": 3,
-                "min_ranking_error_fraction": 0.05,
-            }),
-            "observed_development_evidence": dec_data.get("observed_development_evidence", {}),
-            "rationale": dec_data.get("rationale", f"Frozen development gate decision loaded from artifact with status '{norm_gate_status}'."),
-        }
-
-    if gold.role == "confirmatory":
-        if gold.p3_gate_identity is not None:
-            gate_status_raw = gold.p3_gate_identity.get("status")
-            norm_status = "RETAINED" if str(gate_status_raw).lower() == "retained" else "NOT_RETAINED"
-            return {
-                "schema_version": REPORTING_SCHEMA_VERSION,
-                "gate_status": norm_status,
-                "decision": norm_status,
-                "source_split_role": "development",
-                "source_type": "confirmatory_freeze_manifest_snapshot",
-                "p3_gate_identity": dict(gold.p3_gate_identity),
-                "confirmatory_inspection": "PROHIBITED",
-                "claims_permitted": False,
-                "headroom_gate_definition": {
-                    "rule": "P3 is retained only if development evidence exhibits sufficient ranking headroom.",
-                    "min_ranking_error_families": 3,
-                    "min_ranking_error_fraction": 0.05,
-                },
-                "observed_development_evidence": {},
-                "rationale": f"Frozen development gate loaded from authoritative freeze manifest snapshot (status: '{norm_status}'). Confirmatory observations did not influence this gate.",
-            }
-        return {
-            "schema_version": REPORTING_SCHEMA_VERSION,
-            "gate_status": "NOT_AVAILABLE",
-            "decision": "UNAVAILABLE_NO_FROZEN_DEVELOPMENT_GATE",
-            "source_split_role": "development",
-            "source_type": "none_provided",
+            "source_type": "verified_development_decision_artifact",
+            "p3_gate_identity": verified_decision.freeze_snapshot(),
             "confirmatory_inspection": "PROHIBITED",
             "claims_permitted": False,
             "headroom_gate_definition": {
-                "rule": "P3 is retained only if development evidence exhibits sufficient ranking headroom.",
-                "min_ranking_error_families": 3,
-                "min_ranking_error_fraction": 0.05,
+                "rule": dec_data["predicate"]["criterion"],
+                "min_ranking_error_families": dec_data["predicate"][
+                    "minimum_absolute_ranking_errors"
+                ],
+                "min_ranking_error_fraction": dec_data["predicate"][
+                    "minimum_ranking_error_fraction"
+                ],
+                "predicate_version": dec_data["predicate"]["version"],
+                "computation_version": dec_data["computation_version"],
             },
-            "observed_development_evidence": {},
-            "rationale": "Confirmatory evidence was not accompanied by a frozen development gate artifact. Confirmatory evidence must NEVER be inspected to decide P3 enablement.",
+            "observed_development_evidence": dict(dec_data["evaluated_inputs"]),
+            "rationale": dec_data["rationale"],
         }
 
     # Development split
     headroom = component_result.p3_headroom
     p2_aggregates = component_result.aggregates.get("P2", {})
     ranking_errors = p2_aggregates.get("primary_categories", {}).get("RANKING_ERROR", 0)
-
-    gate_status = headroom.get("gate_status", "NOT_RETAINED")
-    decision = "RETAINED" if str(gate_status).upper() == "RETAINED" else "NOT_RETAINED"
+    eligible = headroom.get(
+        "eligible_family_count", headroom.get("eligible_families", 0)
+    )
+    ranking = headroom.get(
+        "ranking_error_family_count", headroom.get("ranking_error_families", 0)
+    )
+    if (
+        isinstance(eligible, bool)
+        or not isinstance(eligible, int)
+        or eligible < 0
+        or isinstance(ranking, bool)
+        or not isinstance(ranking, int)
+        or ranking < 0
+        or ranking > eligible
+    ):
+        raise ReportingError("development P3 headroom inputs are invalid")
+    ranking_rate = (ranking / eligible) if eligible else 0.0
+    required = max(3, math.ceil(0.05 * eligible) if eligible else 3)
+    decision = (
+        "RETAINED"
+        if eligible and ranking >= required and ranking_rate >= 0.05
+        else "NOT_RETAINED"
+    )
 
     return {
         "schema_version": REPORTING_SCHEMA_VERSION,
@@ -1161,19 +1210,19 @@ def compute_p3_development_decision(
         "claims_permitted": False,
         "headroom_gate_definition": {
             "rule": "P3 is retained only if development evidence exhibits sufficient ranking headroom.",
-            "min_ranking_error_families": headroom.get("threshold_ranking_families", 3),
-            "min_ranking_error_fraction": headroom.get("threshold_ranking_rate", 0.05),
+            "min_ranking_error_families": 3,
+            "min_ranking_error_fraction": 0.05,
         },
         "observed_development_evidence": {
-            "eligible_families": headroom.get("eligible_families", 0),
-            "ranking_error_families": headroom.get("ranking_error_families", 0),
-            "ranking_error_rate": headroom.get("ranking_error_rate", 0.0),
+            "eligible_families": eligible,
+            "ranking_error_families": ranking,
+            "ranking_error_rate": ranking_rate,
             "total_ranking_error_recommendations": ranking_errors,
         },
         "rationale": (
-            f"Predefined development gate evaluated {headroom.get('eligible_families', 0)} eligible families. "
-            f"Observed {headroom.get('ranking_error_families', 0)} ranking-error families "
-            f"({_fmt_val(headroom.get('ranking_error_rate', 0.0), pct=True)} of eligible families). "
+            f"Predefined development gate evaluated {eligible} eligible families. "
+            f"Observed {ranking} ranking-error families "
+            f"({_fmt_val(ranking_rate, pct=True)} of eligible families). "
             f"Gate decision is '{decision}'."
         ),
     }
@@ -1434,7 +1483,7 @@ def generate_offline_report(
     role: str = "development",
     freeze_path: Path | None = None,
     split_id: str | None = None,
-    p3_development_decision: Path | Mapping[str, Any] | None = None,
+    p3_development_decision: Path | VerifiedP3DevelopmentDecision | None = None,
     missing_evidence: Sequence[str] | None = None,
     retrieval_ks: Sequence[int] = DEFAULT_RETRIEVAL_KS,
     bootstrap_replicates: int = DEFAULT_BOOTSTRAP_REPLICATES,

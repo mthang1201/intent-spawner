@@ -96,6 +96,19 @@ _FREEZE_EXPORTS = frozenset(
         "verify_production_freeze",
     }
 )
+_P3_GATE_EXPORTS = frozenset(
+    {
+        "P3DevelopmentDecision",
+        "P3GateValidationError",
+        "VerifiedP3DevelopmentDecision",
+        "build_p3_development_decision",
+        "parse_p3_development_decision",
+        "require_retained_p3_gate",
+        "reverify_p3_development_decision",
+        "verify_p3_development_decision",
+        "write_p3_development_decision",
+    }
+)
 
 
 def __getattr__(name: str):
@@ -109,6 +122,10 @@ def __getattr__(name: str):
         from . import freeze
 
         return getattr(freeze, name)
+    if name in _P3_GATE_EXPORTS:
+        from . import p3_gate
+
+        return getattr(p3_gate, name)
     raise AttributeError(name)
 
 __all__ = [
@@ -143,6 +160,8 @@ __all__ = [
     "ManifestValidationError",
     "PROTOCOL_DIRECTORY",
     "PROTOCOL_VERSION",
+    "P3DevelopmentDecision",
+    "P3GateValidationError",
     "ProtocolV5Manifest",
     "ProductionFreezeManifest",
     "ResultPaths",
@@ -163,8 +182,10 @@ __all__ = [
     "SUPPORTED_SPLIT_BUNDLE_SCHEMA_VERSIONS",
     "Variant",
     "VerifiedProductionFreeze",
+    "VerifiedP3DevelopmentDecision",
     "WorkloadFamily",
     "adapt_operational_provenance",
+    "build_p3_development_decision",
     "check_contamination",
     "compile_gold_dataset",
     "create_result_directory",
@@ -177,7 +198,10 @@ __all__ = [
     "load_development_split",
     "normalize_prompt",
     "parse_design_snapshot",
+    "parse_p3_development_decision",
     "parse_production_freeze",
+    "require_retained_p3_gate",
+    "reverify_p3_development_decision",
     "reverify_production_freeze",
     "result_paths",
     "review_gold_dataset",
@@ -187,10 +211,12 @@ __all__ = [
     "verify_file_checksum",
     "verify_confirmatory_split",
     "verify_manifest_checksums",
+    "verify_p3_development_decision",
     "verify_production_freeze",
     "write_manifest",
     "write_json_exclusive",
     "write_provenance_json",
+    "write_p3_development_decision",
     "split_bundle_checksum",
     "validate_split_bundle",
 ]

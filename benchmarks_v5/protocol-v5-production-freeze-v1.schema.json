@@ -81,6 +81,104 @@
         "corpus_checksum": {"$ref": "#/$defs/sha256"}
       }
     },
+    "analysisArtifactIdentity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256"],
+      "properties": {
+        "path": {"$ref": "#/$defs/nonblank"},
+        "sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "developmentSplitIdentity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "dataset_id", "split_id", "role", "bundle_checksum",
+        "dataset_sha256", "case_count", "family_count"
+      ],
+      "properties": {
+        "dataset_id": {"$ref": "#/$defs/nonblank"},
+        "split_id": {"const": "v5-development"},
+        "role": {"const": "development"},
+        "bundle_checksum": {"$ref": "#/$defs/sha256"},
+        "dataset_sha256": {"$ref": "#/$defs/sha256"},
+        "case_count": {"type": "integer", "minimum": 1},
+        "family_count": {"type": "integer", "minimum": 1}
+      }
+    },
+    "p3RawEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path", "run_id", "provenance_fingerprint", "provenance_sha256",
+        "recommendations_sha256", "completion_sha256", "record_count"
+      ],
+      "properties": {
+        "path": {"$ref": "#/$defs/nonblank"},
+        "run_id": {"$ref": "#/$defs/nonblank"},
+        "provenance_fingerprint": {"$ref": "#/$defs/sha256"},
+        "provenance_sha256": {"$ref": "#/$defs/sha256"},
+        "recommendations_sha256": {"$ref": "#/$defs/sha256"},
+        "completion_sha256": {"$ref": "#/$defs/sha256"},
+        "record_count": {"type": "integer", "minimum": 1}
+      }
+    },
+    "p3AnalysisEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "manifest_sha256", "outputs"],
+      "properties": {
+        "path": {"$ref": "#/$defs/nonblank"},
+        "manifest_sha256": {"$ref": "#/$defs/sha256"},
+        "outputs": {
+          "type": "object",
+          "minProperties": 1,
+          "additionalProperties": {"$ref": "#/$defs/analysisArtifactIdentity"}
+        }
+      }
+    },
+    "legacyP3GateSnapshot": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "snapshot_version", "status", "evidence_path", "evidence_sha256",
+        "p3_active"
+      ],
+      "properties": {
+        "snapshot_version": {"const": "protocol-v5-p3-gate-snapshot-v1.0.0"},
+        "status": {"enum": ["retained", "not_retained"]},
+        "evidence_path": {"$ref": "#/$defs/nonblank"},
+        "evidence_sha256": {"$ref": "#/$defs/sha256"},
+        "p3_active": {"type": "boolean"}
+      }
+    },
+    "verifiedP3GateSnapshot": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "snapshot_version", "status", "p3_active", "verification_status",
+        "decision_schema_version", "decision_artifact_path",
+        "decision_artifact_sha256", "development_split", "raw_evidence",
+        "component_evidence", "statistical_evidence", "predicate_version",
+        "computation_version"
+      ],
+      "properties": {
+        "snapshot_version": {"const": "protocol-v5-p3-gate-snapshot-v2.0.0"},
+        "status": {"enum": ["retained", "not_retained"]},
+        "p3_active": {"type": "boolean"},
+        "verification_status": {"const": "VERIFIED"},
+        "decision_schema_version": {"const": "protocol-v5-p3-development-decision-v1.0.0"},
+        "decision_artifact_path": {"$ref": "#/$defs/nonblank"},
+        "decision_artifact_sha256": {"$ref": "#/$defs/sha256"},
+        "development_split": {"$ref": "#/$defs/developmentSplitIdentity"},
+        "raw_evidence": {"$ref": "#/$defs/p3RawEvidence"},
+        "component_evidence": {"$ref": "#/$defs/p3AnalysisEvidence"},
+        "statistical_evidence": {"$ref": "#/$defs/p3AnalysisEvidence"},
+        "predicate_version": {"const": "protocol-v5-p3-headroom-predicate-v1.0.0"},
+        "computation_version": {"const": "protocol-v5-p3-gate-computation-v1.0.0"}
+      }
+    },
     "configurationSnapshot": {
       "type": "object",
       "additionalProperties": false,
@@ -97,22 +195,10 @@
       ],
       "properties": {
         "p3_gate": {
-          "type": "object",
-          "additionalProperties": false,
-          "required": [
-            "snapshot_version",
-            "status",
-            "evidence_path",
-            "evidence_sha256",
-            "p3_active"
-          ],
-          "properties": {
-            "snapshot_version": {"const": "protocol-v5-p3-gate-snapshot-v1.0.0"},
-            "status": {"enum": ["retained", "not_retained"]},
-            "evidence_path": {"$ref": "#/$defs/nonblank"},
-            "evidence_sha256": {"$ref": "#/$defs/sha256"},
-            "p3_active": {"type": "boolean"}
-          }
+          "oneOf": [
+            {"$ref": "#/$defs/legacyP3GateSnapshot"},
+            {"$ref": "#/$defs/verifiedP3GateSnapshot"}
+          ]
         },
         "systems": {
           "type": "object",

@@ -267,12 +267,27 @@ legacy-compatible design snapshot. It is intentionally not a production
 envelope and cannot satisfy `verify_production_freeze()` or confirmatory
 loading.
 
+Once complete development raw, component, and statistical packages exist, the
+gate artifact is created by recomputation (the optional assertion cannot set
+the result):
+
+```bash
+python -m evaluation_v5.p3_gate create \
+  --evidence-dir <development-offline-run> \
+  --gold-dataset <compiled-development-v2.json> \
+  --component-analysis <component-package> \
+  --statistical-analysis <statistical-package> \
+  --assert-decision not_retained \
+  --output benchmarks_v5/protocol-v5-p3-development-decision.json
+```
+
 Create a rehearsal snapshot without writing an artifact:
 
 ```bash
 python -m evaluation_v5.freeze \
   --freeze-id v5-freeze-rehearsal \
   --p3-gate-status not_retained \
+  --p3-gate-evidence benchmarks_v5/protocol-v5-p3-development-decision.json \
   --dry-run
 ```
 
@@ -286,15 +301,21 @@ create the production freeze:
 unset PROTOCOL_V5_CONFIRMATORY_DATASET PROTOCOL_V5_FREEZE_ARTIFACT
 python -m evaluation_v5.freeze \
   --freeze-id v5-final-<UTC-or-preregistered-id> \
-  --p3-gate-status not_retained
+  --p3-gate-status not_retained \
+  --p3-gate-evidence benchmarks_v5/protocol-v5-p3-development-decision.json
 ```
 
-For a retained P3, use `--p3-gate-status retained`. The default gate-evidence
-document is `docs/evaluation/P3_INCREMENTAL_EVALUATION_V1.md`; an explicit
-pre-existing repository record may be selected with `--p3-gate-evidence PATH`.
-Gate evidence must be a tracked regular file lexically and physically inside
-the repository; an untracked/private file, external path, or repository symlink
-that resolves outside is rejected before its contents are read.
+For a retained P3, use `--p3-gate-status retained`. The gate evidence must use
+the strict `protocol-v5-p3-development-decision-v1.0.0` schema and must already
+be committed. Freeze creation reopens its canonical development split, raw,
+gold, component, and statistical sources and recomputes the registered
+predicate; the status CLI value is only a consistency assertion. Gate evidence
+must also be a tracked regular file lexically and physically inside the
+repository; an untracked/private file, external path, Markdown narrative, or
+repository symlink that resolves outside is rejected. The tracked v1
+development split does not currently provide the complete v2 component inputs,
+so these commands remain unavailable until a real development decision package
+exists; no decision is fabricated by the harness.
 When P2 uses its LLM extractor or retained P3 uses LLM reranking, the effective
 provider environment must also be valid at freeze time; credentials are
 required by the backend validator but are never serialized.
