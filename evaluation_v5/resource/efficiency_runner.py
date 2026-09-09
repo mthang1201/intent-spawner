@@ -115,7 +115,7 @@ def execute_plan(
 ) -> dict[str, Any]:
     validate_efficiency_plan(plan)
     auth = validate_collector_implementation(adapter)
-    if not enforce_readiness and auth.is_authenticated_real_collector:
+    if not enforce_readiness and auth.is_production_implementation:
         raise ValueError("readiness gates cannot be disabled for the Kubernetes adapter")
     freeze = load_efficiency_freeze()
     capacity = load_capacity_contract()
@@ -123,7 +123,7 @@ def execute_plan(
     if enforce_readiness and not git_is_clean():
         blockers.append("GIT_TREE_NOT_CLEAN")
     if enforce_readiness:
-        if not auth.is_authenticated_real_collector:
+        if not auth.is_production_implementation:
             blockers.append("AUTHENTICATED_REAL_KUBERNETES_COLLECTOR_REQUIRED")
         if plan.get("condition_input_sha256") != freeze["experiment"]["workload_input_sha256"] or plan.get("freeze_contract_sha256") != file_sha256(Path(__file__).resolve().parents[2] / "benchmarks_v5" / "resource-efficiency-freeze-contract-v1.yaml"):
             blockers.append("PLAN_CONTRACT_BINDING_MISMATCH")
@@ -226,12 +226,14 @@ def execute_plan(
     else:
         completion = {"schema_version": "protocol-v5-resource-efficiency-completion-v1.0.0", "expected_primary_trials": PRIMARY_TRIAL_COUNT, "completed_primary_trials": len({row["primary_trial_id"] for row in final_rows}), "attempt_records": len(final_rows), "completed_at": _utc_now()}
         _write_json(completion_path, completion)
+    execution_result = getattr(adapter, "produce_execution_result", lambda: None)()
     outcome = validate_collection_outcome(
         implementation=auth,
         environment=environment,
         observations_or_trials=final_rows,
         expected_trial_count=PRIMARY_TRIAL_COUNT,
         is_efficiency=True,
+        execution_result=execution_result,
     )
     manifest = {
         **state,

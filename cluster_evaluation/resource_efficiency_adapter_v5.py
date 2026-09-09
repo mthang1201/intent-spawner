@@ -173,6 +173,7 @@ class KubernetesResourceEfficiencyAdapter(CalibrationKubernetesAdapter):
 
     def __init__(self, *, image: str, **kwargs: Any) -> None:
         super().__init__(image=image, **kwargs)
+        self._executed_trials: list[dict[str, Any]] = []
         self._initialized = True
 
     def read_only_preflight(self) -> Mapping[str, Any]:
@@ -200,7 +201,9 @@ class KubernetesResourceEfficiencyAdapter(CalibrationKubernetesAdapter):
         if created.returncode != 0:
             reason = _sanitize_reason(created.stderr)
             admission = reason in {"QUOTA_REJECTED", "ADMISSION_FORBIDDEN", "UNSCHEDULABLE", "INSUFFICIENT_CPU", "INSUFFICIENT_MEMORY"}
-            return self._record(spec, planned=planned, pending=admission, runtime_error=False, infrastructure_invalid=not admission, exclusion_reason=None if admission else "POD_CREATE_INFRASTRUCTURE_FAILURE", admission_reason=reason)
+            record = self._record(spec, planned=planned, pending=admission, runtime_error=False, infrastructure_invalid=not admission, exclusion_reason=None if admission else "POD_CREATE_INFRASTRUCTURE_FAILURE", admission_reason=reason)
+            self._executed_trials.append(record)
+            return record
         deadline = time.monotonic() + spec.timeout_seconds + POD_LIFECYCLE_GRACE_SECONDS + ADAPTER_MONITOR_GRACE_SECONDS
         pod: dict[str, Any] | None = None
         while time.monotonic() < deadline:
@@ -246,7 +249,7 @@ class KubernetesResourceEfficiencyAdapter(CalibrationKubernetesAdapter):
         correctness = None if not output_exists else bool(marker == spec.expected_marker_sha256 and (payload or {}).get("correctness_invariants_ok"))
         exit_code = terminated.get("exitCode")
         success = bool(not infrastructure_reason and not pending and not oom and not timeout and exit_code == 0 and correctness is True)
-        return self._record(
+        record = self._record(
             spec, planned=planned, observed=observed, pod_created=True, scheduled=bool(((pod or {}).get("spec") or {}).get("nodeName")),
             pending=pending, oom=oom, timeout=timeout, correctness=correctness,
             runtime_error=not infrastructure_reason and not success and not pending and not oom and not timeout and correctness is not False,
@@ -257,6 +260,31 @@ class KubernetesResourceEfficiencyAdapter(CalibrationKubernetesAdapter):
             cgroup_metrics=metrics, infrastructure_invalid=infrastructure_reason is not None, exclusion_reason=infrastructure_reason,
             admission_reason=classification["admission_or_scheduling_reason"],
             kubernetes={"pod_name": pod_name, "pod_uid": ((pod or {}).get("metadata") or {}).get("uid"), "phase": phase, "reason": reason, "terminated_reason": terminated.get("reason"), "waiting_reason": waiting.get("reason"), "exit_code": exit_code, "started_at": terminated.get("startedAt"), "finished_at": terminated.get("finishedAt"), "restart_count": status.get("restartCount"), "node_name": ((pod or {}).get("spec") or {}).get("nodeName"), "image_reference": self.image, "image_id": status.get("imageID"), "events": event_rows, "cleanup_status": cleanup},
+        )
+        self._executed_trials.append(record)
+        return record
+
+    def produce_execution_result(self) -> Any:
+        from evaluation_v5.resource.authenticity import (
+            CollectorExecutionResult,
+            _mint_production_execution_result,
+        )
+        env = getattr(self, "_environment", None)
+        trials = getattr(self, "_executed_trials", None)
+        if env is None or not trials:
+            return CollectorExecutionResult(
+                collector_implementation=f"{self.__class__.__module__}.{self.__class__.__qualname__}",
+                collector_version=getattr(self, "adapter_version", "unknown"),
+                environment=dict(env or {}),
+                trials=tuple(trials or ()),
+                is_production_authorized=False,
+                authority_origin="SYNTHETIC",
+            )
+        return _mint_production_execution_result(
+            collector_implementation=f"{self.__class__.__module__}.{self.__class__.__qualname__}",
+            collector_version=getattr(self, "adapter_version", "unknown"),
+            environment=env,
+            trials=trials,
         )
 
     @staticmethod

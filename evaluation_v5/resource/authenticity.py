@@ -72,7 +72,11 @@ class CollectorImplementationAssessment:
 
     @property
     def is_authenticated_real_collector(self) -> bool:
-        """Structural check: is this the genuine production collector implementation?"""
+        """DEPRECATED / STRUCTURAL ONLY: structural collector implementation eligibility.
+
+        Does NOT establish observation authenticity or execution authority.
+        MUST NOT be used to decide OBSERVED status or claim eligibility.
+        """
         return self.is_production_implementation
 
     @property
@@ -98,6 +102,52 @@ class CollectorImplementationAssessment:
 
 
 AdapterAuthenticity = CollectorImplementationAssessment
+
+_PRODUCTION_AUTHORITY_TOKEN = object()
+
+
+@dataclass(frozen=True, slots=True)
+class CollectorExecutionResult:
+    """Internal execution receipt minted exclusively by an executing collector.
+
+    Carries execution authority from an active Kubernetes session. A caller
+    constructing dictionaries or objects manually cannot mint an authorized
+    receipt without the internal production capability token.
+    """
+
+    collector_implementation: str
+    collector_version: str
+    environment: Mapping[str, Any]
+    trials: tuple[Any, ...]
+    is_production_authorized: bool = False
+    authority_origin: str = COLLECTOR_ORIGIN_SYNTHETIC
+    _authority_token: Any = None
+
+    def __post_init__(self) -> None:
+        if self._authority_token is not _PRODUCTION_AUTHORITY_TOKEN:
+            object.__setattr__(self, "is_production_authorized", False)
+            if self.authority_origin == COLLECTOR_ORIGIN_REAL_KUBERNETES:
+                object.__setattr__(self, "authority_origin", COLLECTOR_ORIGIN_SYNTHETIC)
+
+
+def _mint_production_execution_result(
+    *,
+    collector_implementation: str,
+    collector_version: str,
+    environment: Mapping[str, Any],
+    trials: Sequence[Any],
+    authority_token: Any = _PRODUCTION_AUTHORITY_TOKEN,
+) -> CollectorExecutionResult:
+    """Internal helper to mint an authorized CollectorExecutionResult."""
+    return CollectorExecutionResult(
+        collector_implementation=collector_implementation,
+        collector_version=collector_version,
+        environment=dict(environment or {}),
+        trials=tuple(trials),
+        is_production_authorized=authority_token is _PRODUCTION_AUTHORITY_TOKEN,
+        authority_origin=COLLECTOR_ORIGIN_REAL_KUBERNETES if authority_token is _PRODUCTION_AUTHORITY_TOKEN else COLLECTOR_ORIGIN_SYNTHETIC,
+        _authority_token=authority_token,
+    )
 
 
 @dataclass(frozen=True, slots=True)
@@ -258,6 +308,7 @@ def validate_collection_outcome(
     implementation: CollectorImplementationAssessment,
     environment: Mapping[str, Any] | None,
     observations_or_trials: Sequence[Any],
+    execution_result: CollectorExecutionResult | None = None,
     expected_trial_count: int | None = None,
     is_efficiency: bool = False,
 ) -> ResourceCollectorOutcome:
@@ -266,14 +317,15 @@ def validate_collection_outcome(
     Authenticity belongs to the EXECUTION OUTCOME, not to the adapter object.
     OBSERVED is authorized ONLY when:
     1. implementation is a valid production collector (is_production_implementation is True).
-    2. environment contains complete, authentic Kubernetes cluster and node identity.
-    3. observations_or_trials contains non-empty, complete trial records matching expected count.
-    4. each trial record contains genuine Kubernetes runtime identity (deterministic pod name,
+    2. an authorized CollectorExecutionResult was minted by an executing production collector session.
+    3. environment contains complete, authentic Kubernetes cluster and node identity.
+    4. observations_or_trials contains non-empty, complete trial records matching expected count.
+    5. each trial record contains genuine Kubernetes runtime identity (deterministic pod name,
        valid pod UID without synthetic tokens, node name matching environment, cgroup v2 metrics).
-    5. no synthetic tokens or mock attributes exist in environment or observations.
+    6. no synthetic tokens or mock attributes exist in environment or observations.
 
-    Missing required identity, failed preflight, or synthetic collectors produce
-    NOT_EXECUTED, INCOMPLETE, FAILED, or SYNTHETIC. Never OBSERVED.
+    Missing required identity, failed preflight, unauthorized execution results,
+    or synthetic collectors produce NOT_EXECUTED, INCOMPLETE, FAILED, or SYNTHETIC. Never OBSERVED.
     """
     env_dict = dict(environment or {}) if isinstance(environment, Mapping) else {}
     env_id = env_dict.get("environment_id")
@@ -333,6 +385,19 @@ def validate_collection_outcome(
             node_name=None,
             node_uid=None,
         )
+
+    # 0. Execution authority verification: caller-supplied data without an
+    # authorized execution receipt minted by an executing collector cannot
+    # enter the candidate path for OBSERVED evidence.
+    if execution_result is None or not execution_result.is_production_authorized:
+        reasons.append("CALLER_FABRICATED_DATA_LACKS_EXECUTION_AUTHORITY")
+    else:
+        if execution_result.collector_implementation != implementation.implementation_class:
+            reasons.append("EXECUTION_RESULT_IMPLEMENTATION_MISMATCH")
+        if execution_result.collector_version != implementation.implementation_version:
+            reasons.append("EXECUTION_RESULT_VERSION_MISMATCH")
+        if len(execution_result.trials) != len(observations_or_trials):
+            reasons.append(f"EXECUTION_RESULT_TRIAL_COUNT_MISMATCH_{len(execution_result.trials)}_VS_{len(observations_or_trials)}")
 
     # 1. Environment preflight & authenticity
     preflight_failures = (env_dict.get("read_only_preflight") or {}).get("failure_codes") or []
@@ -442,17 +507,29 @@ def validate_collection_outcome(
 
     if reasons:
         is_incomplete = any("INCOMPLETE" in r for r in reasons)
-        status = "INCOMPLETE" if is_incomplete else "FAILED"
+        is_unauthorized = any("CALLER_FABRICATED_DATA_LACKS_EXECUTION_AUTHORITY" in r for r in reasons)
+        if any(r.startswith("PREFLIGHT_FAILURE_") for r in reasons):
+            status = "FAILED"
+            origin = COLLECTOR_ORIGIN_REAL_KUBERNETES
+        elif is_unauthorized:
+            status = COLLECTOR_ORIGIN_SYNTHETIC
+            origin = COLLECTOR_ORIGIN_SYNTHETIC
+        elif is_incomplete:
+            status = "INCOMPLETE"
+            origin = COLLECTOR_ORIGIN_REAL_KUBERNETES
+        else:
+            status = "FAILED"
+            origin = COLLECTOR_ORIGIN_REAL_KUBERNETES
         return ResourceCollectorOutcome(
             execution_status=status,
-            collector_origin=COLLECTOR_ORIGIN_REAL_KUBERNETES,
+            collector_origin=origin,
             cluster_measurement_status="NOT_EXECUTED",
             is_observed_eligible=False,
             failure_reasons=tuple(reasons),
             trial_count=len(observations_or_trials),
             environment_identity=env_id,
-            node_name=node_name,
-            node_uid=node_uid,
+            node_name=node_name if not is_unauthorized else None,
+            node_uid=node_uid if not is_unauthorized else None,
         )
 
     return ResourceCollectorOutcome(
@@ -662,6 +739,7 @@ __all__ = [
     "COLLECTOR_ORIGIN_SYNTHETIC",
     "COLLECTOR_ORIGIN_TEST",
     "CollectorImplementationAssessment",
+    "CollectorExecutionResult",
     "ResourceCollectorOutcome",
     "VALID_COLLECTOR_ORIGINS",
     "authenticate_adapter",

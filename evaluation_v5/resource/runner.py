@@ -675,10 +675,12 @@ def run_calibration(
     observations = load_observations(records_path)
     derived = derive_safe_envelopes(manifest, observations)
     env_payload = json.loads(environment_path.read_text(encoding="utf-8"))
+    execution_result = getattr(adapter, "produce_execution_result", lambda: None)()
     outcome = validate_collection_outcome(
         implementation=auth,
         environment=env_payload,
         observations_or_trials=observations,
+        execution_result=execution_result,
         is_efficiency=False,
     )
     exec_status = outcome.execution_status

@@ -17,8 +17,10 @@ from evaluation_v5.resource.authenticity import (
     COLLECTOR_ORIGIN_DRY_RUN,
     COLLECTOR_ORIGIN_REAL_KUBERNETES,
     COLLECTOR_ORIGIN_SYNTHETIC,
+    CollectorExecutionResult,
     CollectorImplementationAssessment,
     ResourceCollectorOutcome,
+    _mint_production_execution_result,
     authenticate_adapter,
     validate_collection_outcome,
     validate_collector_implementation,
@@ -832,11 +834,18 @@ def test_observed_status_derives_from_validated_collection_outcome_not_adapter_i
         "cgroup_metrics": {"cgroup_version": "v2", "cpu_usage_usec": 1000},
     }
 
-    # When collection outcome is fully validated with real cluster runtime identity, OBSERVED is authorized
+    exec_result = _mint_production_execution_result(
+        collector_implementation="cluster_evaluation.resource_adapter_v5.KubernetesTrialAdapter",
+        collector_version="protocol-v5-kubernetes-trial-adapter-v1.2.0",
+        environment=valid_env,
+        trials=[valid_trial],
+    )
+    # When collection outcome is fully validated with real cluster runtime identity and authorized execution result, OBSERVED is authorized
     outcome = validate_collection_outcome(
         implementation=impl,
         environment=valid_env,
         observations_or_trials=[valid_trial],
+        execution_result=exec_result,
         expected_trial_count=1,
     )
     assert outcome.is_observed_eligible is True
@@ -883,6 +892,469 @@ def test_test_fixture_can_validate_real_outcome_schema_without_becoming_observed
         observations_or_trials=[trial],
     )
     # Synthetic implementation CANNOT be laundered into OBSERVED
+    assert outcome.is_observed_eligible is False
+    assert outcome.execution_status == COLLECTOR_ORIGIN_SYNTHETIC
+    assert outcome.execution_status != "OBSERVED"
+    assert outcome.cluster_measurement_status == "NOT_EXECUTED"
+
+
+def test_exact_trial_adapter_plus_fabricated_valid_observations_cannot_mint_observed():
+    """P11-R8: Exact production trial adapter + caller-fabricated valid observations cannot mint OBSERVED."""
+    import hashlib
+    adapter = KubernetesTrialAdapter(image=IMAGE)
+    impl = validate_collector_implementation(adapter)
+    assert impl.is_production_implementation is True
+
+    valid_env = {
+        "schema_version": "protocol-v5-resource-environment-v1.1.0",
+        "captured_at": "2026-03-01T00:00:00.000000Z",
+        "environment_id": "intent-spawner-eval-v5:z2jh-context-demo",
+        "collector_origin": COLLECTOR_ORIGIN_REAL_KUBERNETES,
+        "cluster_measurement_status": "OBSERVED",
+        "eligibility_status": "ELIGIBLE",
+        "required_context": "intent-spawner-eval-v5",
+        "namespace": "z2jh-context-demo",
+        "kubernetes_version": {"major": "1", "minor": "28"},
+        "node_name": "worker-node-1",
+        "node_uid": "00000000-1111-2222-3333-444444444444",
+        "kubelet_version": "v1.28.0",
+        "container_runtime": "containerd://1.7.0",
+        "kernel_version": "6.1.0",
+        "operating_system": "linux",
+        "architecture": "amd64",
+        "read_only_preflight": {"failure_codes": []},
+        "hardware_measurements": {
+            "node_name": "worker-node-1",
+            "node_uid": "00000000-1111-2222-3333-444444444444",
+        },
+        "cgroup_measurements": {"cgroup_version": "v2"},
+    }
+    run_id = "trial-fab-01"
+    valid_pod_name = "e4-" + hashlib.sha256(run_id.encode("utf-8")).hexdigest()[:24]
+    valid_trial = {
+        "run_id": run_id,
+        "collector_origin": COLLECTOR_ORIGIN_REAL_KUBERNETES,
+        "kubernetes": {
+            "pod_name": valid_pod_name,
+            "pod_uid": "12345678-abcd-ef01-2345-6789abcdef01",
+            "node_name": "worker-node-1",
+            "started_at": "2026-03-01T00:01:00.000000Z",
+            "finished_at": "2026-03-01T00:02:00.000000Z",
+        },
+        "cgroup_version": "v2",
+        "cgroup_metrics": {"cgroup_version": "v2", "cpu_usage_usec": 1000},
+    }
+
+    # Case A: adapter.produce_execution_result() without actual trial execution
+    adapter_result = adapter.produce_execution_result()
+    assert adapter_result.is_production_authorized is False
+
+    outcome_a = validate_collection_outcome(
+        implementation=impl,
+        environment=valid_env,
+        observations_or_trials=[valid_trial],
+        execution_result=adapter_result,
+        expected_trial_count=1,
+    )
+    assert outcome_a.is_observed_eligible is False
+    assert outcome_a.execution_status == "SYNTHETIC"
+    assert outcome_a.cluster_measurement_status == "NOT_EXECUTED"
+    assert "CALLER_FABRICATED_DATA_LACKS_EXECUTION_AUTHORITY" in outcome_a.failure_reasons
+
+    # Case B: Calling validate_collection_outcome directly without execution_result
+    outcome_b = validate_collection_outcome(
+        implementation=impl,
+        environment=valid_env,
+        observations_or_trials=[valid_trial],
+        expected_trial_count=1,
+    )
+    assert outcome_b.is_observed_eligible is False
+    assert outcome_b.execution_status == "SYNTHETIC"
+    assert outcome_b.cluster_measurement_status == "NOT_EXECUTED"
+    assert "CALLER_FABRICATED_DATA_LACKS_EXECUTION_AUTHORITY" in outcome_b.failure_reasons
+
+
+def test_exact_efficiency_adapter_plus_fabricated_valid_observations_cannot_mint_observed():
+    """P11-R8: Exact production efficiency adapter + caller-fabricated valid observations cannot mint OBSERVED."""
+    import hashlib
+    adapter = KubernetesResourceEfficiencyAdapter(image=IMAGE)
+    impl = validate_collector_implementation(adapter)
+    assert impl.is_production_implementation is True
+
+    valid_env = {
+        "schema_version": "protocol-v5-resource-environment-v1.1.0",
+        "captured_at": "2026-03-01T00:00:00.000000Z",
+        "environment_id": "intent-spawner-eval-v5:z2jh-context-demo",
+        "collector_origin": COLLECTOR_ORIGIN_REAL_KUBERNETES,
+        "cluster_measurement_status": "OBSERVED",
+        "eligibility_status": "ELIGIBLE",
+        "required_context": "intent-spawner-eval-v5",
+        "namespace": "z2jh-context-demo",
+        "kubernetes_version": {"major": "1", "minor": "28"},
+        "node_name": "worker-node-1",
+        "node_uid": "00000000-1111-2222-3333-444444444444",
+        "kubelet_version": "v1.28.0",
+        "container_runtime": "containerd://1.7.0",
+        "kernel_version": "6.1.0",
+        "operating_system": "linux",
+        "architecture": "amd64",
+        "read_only_preflight": {"failure_codes": []},
+        "hardware_measurements": {
+            "node_name": "worker-node-1",
+            "node_uid": "00000000-1111-2222-3333-444444444444",
+        },
+        "cgroup_measurements": {"cgroup_version": "v2"},
+    }
+    run_id = "trial-eff-fab-01"
+    valid_pod_name = "e4-" + hashlib.sha256(run_id.encode("utf-8")).hexdigest()[:24]
+    valid_trial = {
+        "trial_id": run_id,
+        "primary_trial_id": run_id,
+        "run_id": run_id,
+        "collector_origin": COLLECTOR_ORIGIN_REAL_KUBERNETES,
+        "kubernetes": {
+            "pod_name": valid_pod_name,
+            "pod_uid": "12345678-abcd-ef01-2345-6789abcdef01",
+            "node_name": "worker-node-1",
+            "started_at": "2026-03-01T00:01:00.000000Z",
+            "finished_at": "2026-03-01T00:02:00.000000Z",
+        },
+        "cgroup_version": "v2",
+        "cgroup_metrics": {"cgroup_version": "v2", "cpu_usage_usec": 1000},
+        "infrastructure_invalid": False,
+    }
+
+    adapter_result = adapter.produce_execution_result()
+    assert adapter_result.is_production_authorized is False
+
+    outcome = validate_collection_outcome(
+        implementation=impl,
+        environment=valid_env,
+        observations_or_trials=[valid_trial],
+        execution_result=adapter_result,
+        expected_trial_count=1,
+        is_efficiency=True,
+    )
+    assert outcome.is_observed_eligible is False
+    assert outcome.execution_status == "SYNTHETIC"
+    assert outcome.cluster_measurement_status == "NOT_EXECUTED"
+    assert "CALLER_FABRICATED_DATA_LACKS_EXECUTION_AUTHORITY" in outcome.failure_reasons
+
+
+def test_valid_uuids_and_pod_names_are_not_execution_authority():
+    """P11-R8: Valid UUIDs and pod names conform to schema but do NOT confer execution authority."""
+    import uuid
+    import hashlib
+    run_id = "uuid-test-01"
+    real_uuid = str(uuid.uuid4())
+    node_uuid = str(uuid.uuid4())
+    pod_name = "e4-" + hashlib.sha256(run_id.encode("utf-8")).hexdigest()[:24]
+
+    env = {
+        "schema_version": "protocol-v5-resource-environment-v1.1.0",
+        "environment_id": "intent-spawner-eval-v5:z2jh-context-demo",
+        "collector_origin": COLLECTOR_ORIGIN_REAL_KUBERNETES,
+        "cluster_measurement_status": "OBSERVED",
+        "eligibility_status": "ELIGIBLE",
+        "kubernetes_version": {"major": "1", "minor": "28"},
+        "node_name": "worker-node-1",
+        "node_uid": node_uuid,
+        "kubelet_version": "v1.28.0",
+        "container_runtime": "containerd://1.7.0",
+        "kernel_version": "6.1.0",
+        "operating_system": "linux",
+        "architecture": "amd64",
+        "read_only_preflight": {"failure_codes": []},
+        "hardware_measurements": {"node_name": "worker-node-1", "node_uid": node_uuid},
+        "cgroup_measurements": {"cgroup_version": "v2"},
+    }
+    trial = {
+        "run_id": run_id,
+        "collector_origin": COLLECTOR_ORIGIN_REAL_KUBERNETES,
+        "kubernetes": {
+            "pod_name": pod_name,
+            "pod_uid": real_uuid,
+            "node_name": "worker-node-1",
+            "started_at": "2026-03-01T00:01:00.000000Z",
+            "finished_at": "2026-03-01T00:02:00.000000Z",
+        },
+        "cgroup_version": "v2",
+        "cgroup_metrics": {"cgroup_version": "v2", "cpu_usage_usec": 1000},
+    }
+
+    adapter = KubernetesTrialAdapter(image=IMAGE)
+    impl = validate_collector_implementation(adapter)
+
+    # Direct instantiation of CollectorExecutionResult without internal authority token fails closed
+    forged_result = CollectorExecutionResult(
+        collector_implementation="cluster_evaluation.resource_adapter_v5.KubernetesTrialAdapter",
+        collector_version="protocol-v5-kubernetes-trial-adapter-v1.2.0",
+        environment=env,
+        trials=(trial,),
+        is_production_authorized=True,
+        authority_origin=COLLECTOR_ORIGIN_REAL_KUBERNETES,
+    )
+    # The __post_init__ guard revokes is_production_authorized because _authority_token was not provided
+    assert forged_result.is_production_authorized is False
+    assert forged_result.authority_origin == COLLECTOR_ORIGIN_SYNTHETIC
+
+    outcome = validate_collection_outcome(
+        implementation=impl,
+        environment=env,
+        observations_or_trials=[trial],
+        execution_result=forged_result,
+        expected_trial_count=1,
+    )
+    assert outcome.is_observed_eligible is False
+    assert outcome.execution_status == "SYNTHETIC"
+
+
+def test_valid_environment_dict_is_not_execution_authority():
+    """P11-R8: A valid environment dictionary does not confer execution authority."""
+    valid_env = {
+        "schema_version": "protocol-v5-resource-environment-v1.1.0",
+        "captured_at": "2026-03-01T00:00:00.000000Z",
+        "environment_id": "intent-spawner-eval-v5:z2jh-context-demo",
+        "collector_origin": COLLECTOR_ORIGIN_REAL_KUBERNETES,
+        "cluster_measurement_status": "OBSERVED",
+        "eligibility_status": "ELIGIBLE",
+        "required_context": "intent-spawner-eval-v5",
+        "namespace": "z2jh-context-demo",
+        "kubernetes_version": {"major": "1", "minor": "28"},
+        "node_name": "worker-node-1",
+        "node_uid": "00000000-1111-2222-3333-444444444444",
+        "kubelet_version": "v1.28.0",
+        "container_runtime": "containerd://1.7.0",
+        "kernel_version": "6.1.0",
+        "operating_system": "linux",
+        "architecture": "amd64",
+        "read_only_preflight": {"failure_codes": []},
+        "hardware_measurements": {
+            "node_name": "worker-node-1",
+            "node_uid": "00000000-1111-2222-3333-444444444444",
+        },
+        "cgroup_measurements": {"cgroup_version": "v2"},
+    }
+    adapter = KubernetesTrialAdapter(image=IMAGE)
+    impl = validate_collector_implementation(adapter)
+
+    # Presenting valid_env without authorized execution fails closed
+    outcome = validate_collection_outcome(
+        implementation=impl,
+        environment=valid_env,
+        observations_or_trials=[],
+        execution_result=None,
+    )
+    assert outcome.is_observed_eligible is False
+    assert outcome.execution_status == "NOT_EXECUTED"
+
+
+def test_direct_validate_collection_outcome_call_cannot_launder_fixture_into_observed():
+    """P11-R8: Direct invocation of validate_collection_outcome cannot launder fixtures into OBSERVED."""
+    import hashlib
+    adapter = KubernetesTrialAdapter(image=IMAGE)
+    impl = validate_collector_implementation(adapter)
+
+    run_id = "direct-call-01"
+    valid_pod_name = "e4-" + hashlib.sha256(run_id.encode("utf-8")).hexdigest()[:24]
+    trial = {
+        "run_id": run_id,
+        "collector_origin": COLLECTOR_ORIGIN_REAL_KUBERNETES,
+        "kubernetes": {
+            "pod_name": valid_pod_name,
+            "pod_uid": "12345678-abcd-ef01-2345-6789abcdef01",
+            "node_name": "worker-node-1",
+            "started_at": "2026-03-01T00:01:00.000000Z",
+            "finished_at": "2026-03-01T00:02:00.000000Z",
+        },
+        "cgroup_version": "v2",
+        "cgroup_metrics": {"cgroup_version": "v2", "cpu_usage_usec": 1000},
+    }
+    env = {
+        "schema_version": "protocol-v5-resource-environment-v1.1.0",
+        "environment_id": "intent-spawner-eval-v5:z2jh-context-demo",
+        "collector_origin": COLLECTOR_ORIGIN_REAL_KUBERNETES,
+        "cluster_measurement_status": "OBSERVED",
+        "eligibility_status": "ELIGIBLE",
+        "required_context": "intent-spawner-eval-v5",
+        "namespace": "z2jh-context-demo",
+        "read_only_preflight": {"failure_codes": []},
+        "hardware_measurements": {"node_name": "worker-node-1", "node_uid": "00000000-1111-2222-3333-444444444444"},
+        "cgroup_measurements": {"cgroup_version": "v2"},
+        "kubernetes_version": {"major": "1", "minor": "28"},
+        "node_name": "worker-node-1",
+        "node_uid": "00000000-1111-2222-3333-444444444444",
+    }
+
+    # Direct call with no execution_result
+    outcome1 = validate_collection_outcome(
+        implementation=impl,
+        environment=env,
+        observations_or_trials=[trial],
+        execution_result=None,
+    )
+    assert outcome1.is_observed_eligible is False
+    assert outcome1.execution_status == "SYNTHETIC"
+
+    # Direct call with execution_result having unverified token
+    outcome2 = validate_collection_outcome(
+        implementation=impl,
+        environment=env,
+        observations_or_trials=[trial],
+        execution_result=CollectorExecutionResult(
+            collector_implementation="cluster_evaluation.resource_adapter_v5.KubernetesTrialAdapter",
+            collector_version="protocol-v5-kubernetes-trial-adapter-v1.2.0",
+            environment=env,
+            trials=(trial,),
+            is_production_authorized=True,
+            authority_origin="REAL_KUBERNETES_COLLECTOR",
+            _authority_token="forged-token",
+        ),
+    )
+    assert outcome2.is_observed_eligible is False
+    assert outcome2.execution_status == "SYNTHETIC"
+
+
+def test_only_collector_execution_result_can_enter_observed_candidate_path():
+    """P11-R8: Only an authenticated CollectorExecutionResult with production authority can enter OBSERVED candidate path."""
+    import hashlib
+    adapter = KubernetesTrialAdapter(image=IMAGE)
+    impl = validate_collector_implementation(adapter)
+
+    run_id = "candidate-path-01"
+    valid_pod_name = "e4-" + hashlib.sha256(run_id.encode("utf-8")).hexdigest()[:24]
+    trial = {
+        "run_id": run_id,
+        "collector_origin": COLLECTOR_ORIGIN_REAL_KUBERNETES,
+        "kubernetes": {
+            "pod_name": valid_pod_name,
+            "pod_uid": "12345678-abcd-ef01-2345-6789abcdef01",
+            "node_name": "worker-node-1",
+            "started_at": "2026-03-01T00:01:00.000000Z",
+            "finished_at": "2026-03-01T00:02:00.000000Z",
+        },
+        "cgroup_version": "v2",
+        "cgroup_metrics": {"cgroup_version": "v2", "cpu_usage_usec": 1000},
+    }
+    env = {
+        "schema_version": "protocol-v5-resource-environment-v1.1.0",
+        "captured_at": "2026-03-01T00:00:00.000000Z",
+        "environment_id": "intent-spawner-eval-v5:z2jh-context-demo",
+        "collector_origin": COLLECTOR_ORIGIN_REAL_KUBERNETES,
+        "cluster_measurement_status": "OBSERVED",
+        "eligibility_status": "ELIGIBLE",
+        "required_context": "intent-spawner-eval-v5",
+        "namespace": "z2jh-context-demo",
+        "kubernetes_version": {"major": "1", "minor": "28"},
+        "node_name": "worker-node-1",
+        "node_uid": "00000000-1111-2222-3333-444444444444",
+        "kubelet_version": "v1.28.0",
+        "container_runtime": "containerd://1.7.0",
+        "kernel_version": "6.1.0",
+        "operating_system": "linux",
+        "architecture": "amd64",
+        "read_only_preflight": {"failure_codes": []},
+        "hardware_measurements": {
+            "node_name": "worker-node-1",
+            "node_uid": "00000000-1111-2222-3333-444444444444",
+        },
+        "cgroup_measurements": {"cgroup_version": "v2"},
+    }
+
+    # 1. Unauthenticated execution result -> rejected
+    unauth_result = CollectorExecutionResult(
+        collector_implementation="cluster_evaluation.resource_adapter_v5.KubernetesTrialAdapter",
+        collector_version="protocol-v5-kubernetes-trial-adapter-v1.2.0",
+        environment=env,
+        trials=(trial,),
+        is_production_authorized=False,
+        authority_origin=COLLECTOR_ORIGIN_SYNTHETIC,
+    )
+    outcome_rejected = validate_collection_outcome(
+        implementation=impl,
+        environment=env,
+        observations_or_trials=[trial],
+        execution_result=unauth_result,
+        expected_trial_count=1,
+    )
+    assert outcome_rejected.is_observed_eligible is False
+    assert outcome_rejected.execution_status == "SYNTHETIC"
+
+    # 2. Authenticated execution result -> enters candidate path and succeeds
+    auth_result = _mint_production_execution_result(
+        collector_implementation="cluster_evaluation.resource_adapter_v5.KubernetesTrialAdapter",
+        collector_version="protocol-v5-kubernetes-trial-adapter-v1.2.0",
+        environment=env,
+        trials=[trial],
+    )
+    assert auth_result.is_production_authorized is True
+    outcome_admitted = validate_collection_outcome(
+        implementation=impl,
+        environment=env,
+        observations_or_trials=[trial],
+        execution_result=auth_result,
+        expected_trial_count=1,
+    )
+    assert outcome_admitted.is_observed_eligible is True
+    assert outcome_admitted.execution_status == "OBSERVED"
+    assert outcome_admitted.cluster_measurement_status == "OBSERVED"
+
+
+def test_test_fixture_with_complete_real_schema_remains_test_only():
+    """P11-R8: A test fixture conforming completely to the real production schema remains TEST_ONLY/SYNTHETIC."""
+    import hashlib
+    fake_adapter = FakeAdapter()
+    impl = validate_collector_implementation(fake_adapter)
+    assert impl.is_production_implementation is False
+
+    run_id = "fixture-complete-01"
+    pod_name = "e4-" + hashlib.sha256(run_id.encode("utf-8")).hexdigest()[:24]
+    trial = {
+        "run_id": run_id,
+        "collector_origin": COLLECTOR_ORIGIN_REAL_KUBERNETES,
+        "kubernetes": {
+            "pod_name": pod_name,
+            "pod_uid": "12345678-abcd-ef01-2345-6789abcdef01",
+            "node_name": "worker-node-1",
+            "started_at": "2026-03-01T00:01:00.000000Z",
+            "finished_at": "2026-03-01T00:02:00.000000Z",
+        },
+        "cgroup_version": "v2",
+        "cgroup_metrics": {"cgroup_version": "v2", "cpu_usage_usec": 1000},
+    }
+    env = {
+        "schema_version": "protocol-v5-resource-environment-v1.1.0",
+        "environment_id": "intent-spawner-eval-v5:z2jh-context-demo",
+        "collector_origin": COLLECTOR_ORIGIN_REAL_KUBERNETES,
+        "cluster_measurement_status": "OBSERVED",
+        "eligibility_status": "ELIGIBLE",
+        "kubernetes_version": {"major": "1", "minor": "28"},
+        "node_name": "worker-node-1",
+        "node_uid": "00000000-1111-2222-3333-444444444444",
+        "kubelet_version": "v1.28.0",
+        "container_runtime": "containerd://1.7.0",
+        "kernel_version": "6.1.0",
+        "operating_system": "linux",
+        "architecture": "amd64",
+        "read_only_preflight": {"failure_codes": []},
+        "hardware_measurements": {"node_name": "worker-node-1", "node_uid": "00000000-1111-2222-3333-444444444444"},
+        "cgroup_measurements": {"cgroup_version": "v2"},
+    }
+
+    # Even if paired with an authorized execution result, non-production implementation fails closed
+    auth_result = _mint_production_execution_result(
+        collector_implementation="tests.test_resource_envelope_v5.FakeAdapter",
+        collector_version="fake-adapter-v1",
+        environment=env,
+        trials=[trial],
+    )
+    outcome = validate_collection_outcome(
+        implementation=impl,
+        environment=env,
+        observations_or_trials=[trial],
+        execution_result=auth_result,
+        expected_trial_count=1,
+    )
     assert outcome.is_observed_eligible is False
     assert outcome.execution_status == COLLECTOR_ORIGIN_SYNTHETIC
     assert outcome.execution_status != "OBSERVED"

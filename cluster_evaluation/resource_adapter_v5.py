@@ -288,6 +288,7 @@ class KubernetesTrialAdapter:
         self.policy = load_cluster_policy()
         self.image_state = load_image_state(image_state_path)
         self._environment: dict[str, Any] | None = None
+        self._executed_trials: list[TrialObservation] = []
         self._initialized = True
 
     def _kubectl(self, args: list[str], *, input_text: str | None = None, timeout: float = 30) -> subprocess.CompletedProcess[str]:
@@ -474,7 +475,7 @@ class KubernetesTrialAdapter:
         )
         if oom or timeout:
             infrastructure_reason = None
-        return self._observation(
+        obs = self._observation(
             spec,
             observed_marker=(payload or {}).get("observed_marker_sha256"),
             exit_code=exit_code,
@@ -504,6 +505,31 @@ class KubernetesTrialAdapter:
                 "pod_active_deadline_seconds": spec.timeout_seconds + POD_LIFECYCLE_GRACE_SECONDS,
                 "adapter_monitor_grace_seconds": ADAPTER_MONITOR_GRACE_SECONDS,
             },
+        )
+        self._executed_trials.append(obs)
+        return obs
+
+    def produce_execution_result(self) -> Any:
+        from evaluation_v5.resource.authenticity import (
+            CollectorExecutionResult,
+            _mint_production_execution_result,
+        )
+        env = getattr(self, "_environment", None)
+        trials = getattr(self, "_executed_trials", None)
+        if env is None or not trials:
+            return CollectorExecutionResult(
+                collector_implementation=f"{self.__class__.__module__}.{self.__class__.__qualname__}",
+                collector_version=getattr(self, "adapter_version", "unknown"),
+                environment=dict(env or {}),
+                trials=tuple(trials or ()),
+                is_production_authorized=False,
+                authority_origin="SYNTHETIC",
+            )
+        return _mint_production_execution_result(
+            collector_implementation=f"{self.__class__.__module__}.{self.__class__.__qualname__}",
+            collector_version=getattr(self, "adapter_version", "unknown"),
+            environment=env,
+            trials=trials,
         )
 
     def _observation(
