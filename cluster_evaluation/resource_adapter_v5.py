@@ -279,6 +279,8 @@ def build_pod_spec(spec: TrialSpec, image: str) -> dict[str, Any]:
 
 class KubernetesTrialAdapter:
     adapter_version = "protocol-v5-kubernetes-trial-adapter-v1.2.0"
+    collector_origin = "REAL_KUBERNETES_COLLECTOR"
+    _is_authenticated_real_kubernetes_collector = True
 
     def __init__(self, *, image: str, image_state_path: Path = IMAGE_STATE_PATH) -> None:
         if not IMAGE_RE.fullmatch(image):
@@ -328,6 +330,10 @@ class KubernetesTrialAdapter:
             "schema_version": "protocol-v5-resource-environment-v1.1.0",
             "captured_at_utc": _utc_now(),
             "environment_id": f"{REQUIRED_CONTEXT}:{NAMESPACE}",
+            "collector_origin": "REAL_KUBERNETES_COLLECTOR",
+            "collector_implementation": f"{self.__class__.__module__}.{self.__class__.__qualname__}",
+            "collector_version": self.adapter_version,
+            "cluster_measurement_status": "OBSERVED",
             "eligibility_status": "ELIGIBLE",
             "eligibility_policy_version": self.policy["schema_version"],
             "read_only_preflight": read_only,
@@ -336,6 +342,8 @@ class KubernetesTrialAdapter:
             "namespace": NAMESPACE,
             "namespace_safety_label": f"{SAFETY_LABEL}=true",
             "container_image": self.image,
+            "node_name": facts.get("node_name"),
+            "node_uid": facts.get("node_uid"),
             "node_capacity": facts.get("node_capacity"),
             "node_allocatable": facts.get("node_allocatable"),
             "kubernetes_version": facts.get("kubernetes_version"),
@@ -481,6 +489,11 @@ class KubernetesTrialAdapter:
             exclusion_reason=infrastructure_reason,
             kubernetes={
                 "pod_name": pod_name,
+                "pod_uid": ((pod or {}).get("metadata") or {}).get("uid"),
+                "node_name": ((pod or {}).get("spec") or {}).get("nodeName"),
+                "image_id": status.get("imageID"),
+                "image_reference": self.image,
+                "collector_origin": "REAL_KUBERNETES_COLLECTOR",
                 "phase": (pod or {}).get("status", {}).get("phase"),
                 "started_at": terminated.get("startedAt"),
                 "finished_at": terminated.get("finishedAt"),
@@ -509,6 +522,7 @@ class KubernetesTrialAdapter:
         infrastructure_invalid: bool = False,
         exclusion_reason: str | None = None,
         kubernetes: Mapping[str, Any] | None = None,
+        collector_origin: str = "REAL_KUBERNETES_COLLECTOR",
     ) -> TrialObservation:
         metrics = dict(metrics or {})
         memory_events = metrics.get("memory_events_delta")
@@ -547,6 +561,7 @@ class KubernetesTrialAdapter:
             cgroup_version=metrics.get("cgroup_version"), cgroup_metrics=metrics,
             kubernetes=dict(kubernetes or {}), replacement_of=spec.replacement_of,
             recorded_at_utc=_utc_now(),
+            collector_origin=collector_origin,
         )
 
 

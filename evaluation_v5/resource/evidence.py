@@ -12,7 +12,16 @@ from typing import Any, Iterable, Mapping
 
 from evaluation_v5.provenance import write_json_exclusive
 
+from .authenticity import (
+    COLLECTOR_ORIGIN_REAL_KUBERNETES,
+    validate_resource_authenticity,
+)
 from .derive import DERIVATION_SCHEMA_VERSION
+from .legacy_compatibility import (
+    get_bounded_legacy_metadata,
+    is_bounded_legacy_package,
+    verify_bounded_legacy_integrity,
+)
 from .models import TRIAL_SCHEMA_VERSION, TrialObservation, TrialSpec
 
 
@@ -191,10 +200,18 @@ def validate_evidence_package(root: Path, *, allow_unsealed: bool = False) -> di
     if not manifest_path.is_file():
         raise ValueError("resource evidence package lacks manifest.json")
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-    if manifest.get("schema_version") != "protocol-v5-resource-calibration-run-v1.1.0":
-        raise ValueError("unsupported resource run manifest")
-    if manifest.get("trial_observation_schema_version") != OBSERVATION_SCHEMA_VERSION:
-        raise ValueError("resource run manifest has an incompatible trial observation schema")
+    if is_bounded_legacy_package(root):
+        verify_bounded_legacy_integrity(root)
+        legacy_meta = get_bounded_legacy_metadata(root)
+        if manifest.get("schema_version") != legacy_meta.get("schema_version"):
+            raise ValueError(f"bounded legacy package schema mismatch: expected {legacy_meta.get('schema_version')}")
+        if manifest.get("measurement_claims_permitted") is True:
+            raise ValueError("bounded legacy package cannot permit measurement claims")
+    else:
+        if manifest.get("schema_version") != "protocol-v5-resource-calibration-run-v1.1.0":
+            raise ValueError("unsupported resource run manifest")
+        if manifest.get("trial_observation_schema_version") != OBSERVATION_SCHEMA_VERSION:
+            raise ValueError("resource run manifest has an incompatible trial observation schema")
     integrity = None
     if (root / "SHA256SUMS").exists():
         integrity = verify_integrity(root)
@@ -234,6 +251,18 @@ def validate_evidence_package(root: Path, *, allow_unsealed: bool = False) -> di
         derived = json.loads(derived_path.read_text(encoding="utf-8"))
         if derived.get("schema_version") != DERIVATION_SCHEMA_VERSION:
             raise ValueError("observed resource package has an incompatible derivation schema")
+        environment = json.loads((root / "raw" / "environment.json").read_text(encoding="utf-8"))
+        validate_resource_authenticity(manifest, environment, observations, is_efficiency=False)
+    elif status in ("SYNTHETIC", "TEST_ONLY"):
+        if not observations or not decisions:
+            raise ValueError("synthetic resource package lacks trials or adaptive decisions")
+        derived_path = root / "derived" / "safe-envelopes.json"
+        if derived_path.is_file():
+            derived = json.loads(derived_path.read_text(encoding="utf-8"))
+            if derived.get("schema_version") != DERIVATION_SCHEMA_VERSION:
+                raise ValueError("synthetic resource package has an incompatible derivation schema")
+        environment = json.loads((root / "raw" / "environment.json").read_text(encoding="utf-8"))
+        validate_resource_authenticity(manifest, environment, observations, is_efficiency=False)
     review_status = "NOT_APPLICABLE" if status == "DRY_RUN" else manifest.get("manual_review_status")
     eligible = False
     review_path = root / "report" / "manual-review.json"
@@ -242,6 +271,9 @@ def validate_evidence_package(root: Path, *, allow_unsealed: bool = False) -> di
         review_status = review.get("decision", review.get("status"))
         eligible = review.get("decision") == "APPROVED" and review.get("eligible_for_comparison") is True
         if review.get("decision") in {"APPROVED", "REJECTED"}:
+            if review.get("decision") == "APPROVED":
+                if status != "OBSERVED" or manifest.get("collector_origin") != COLLECTOR_ORIGIN_REAL_KUBERNETES:
+                    raise ValueError("APPROVED manual review cannot be granted to non-OBSERVED or synthetic packages")
             source = root / "derived" / "safe-envelopes.json"
             if not source.is_file() or review.get("safe_envelopes_sha256") != file_sha256(source):
                 raise ValueError("manual review is not bound to the derived envelopes")

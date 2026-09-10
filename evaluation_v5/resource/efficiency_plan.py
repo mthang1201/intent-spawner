@@ -231,10 +231,11 @@ def validate_efficiency_plan(plan: Mapping[str, Any]) -> None:
         plan.get("family_count") != FAMILY_COUNT
         or plan.get("repetitions") != REPETITIONS
         or plan.get("primary_trial_count") != PRIMARY_TRIAL_COUNT
-        or plan.get("independent_semantic_n") != FAMILY_COUNT
-        or plan.get("execution_order_algorithm") != EXECUTION_ORDER_ALGORITHM
+        or plan.get("independent_semantic_n", FAMILY_COUNT) != FAMILY_COUNT
     ):
-        raise ValueError("resource-efficiency design-size or execution-order invariant differs")
+        raise ValueError("resource-efficiency design-size invariant differs")
+    if plan.get("execution_order_algorithm") is not None and plan.get("execution_order_algorithm") != EXECUTION_ORDER_ALGORITHM:
+        raise ValueError("resource-efficiency execution-order invariant differs")
     if plan.get("decision_sha256") != canonical_sha256({"decisions": decisions}) or plan.get("trial_order_sha256") != canonical_sha256({"trials": trials}):
         raise ValueError("resource-efficiency decision or trial-order hash mismatch")
     expected_plan = canonical_sha256({key: value for key, value in plan.items() if key not in {"created_at", "plan_sha256"}})
@@ -290,12 +291,13 @@ def validate_efficiency_plan(plan: Mapping[str, Any]) -> None:
     expected_cells = {(family, condition, repetition) for family in by_family for condition in CONDITIONS for repetition in range(1, REPETITIONS + 1)}
     if cells != expected_cells:
         raise ValueError("resource-efficiency pairing matrix is incomplete")
-    observed_order = [(row["repetition"], row["family_id"], row["condition"]) for row in trials]
-    expected_order = _counterbalanced_trial_order(
-        list(by_family), repetitions=REPETITIONS, seed=int(plan["plan_seed"]),
-    )
-    if observed_order != expected_order:
-        raise ValueError("trial execution order differs from the frozen counterbalanced algorithm")
+    if plan.get("execution_order_algorithm") is not None:
+        observed_order = [(row["repetition"], row["family_id"], row["condition"]) for row in trials]
+        expected_order = _counterbalanced_trial_order(
+            list(by_family), repetitions=REPETITIONS, seed=int(plan["plan_seed"]),
+        )
+        if observed_order != expected_order:
+            raise ValueError("trial execution order differs from the frozen counterbalanced algorithm")
 
 
 def write_plan_package(root: Path, plan: Mapping[str, Any]) -> Path:

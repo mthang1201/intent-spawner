@@ -15,6 +15,11 @@ from typing import Any, Mapping, Sequence
 
 from evaluation_v5.provenance import write_json_exclusive
 
+from .authenticity import (
+    COLLECTOR_ORIGIN_DRY_RUN,
+    COLLECTOR_ORIGIN_REAL_KUBERNETES,
+    authenticate_adapter,
+)
 from .derive import (
     cell_acceptable, derive_safe_envelopes, reference_is_stable,
     trial_basic_success,
@@ -281,6 +286,7 @@ def create_dry_run_package(
         "run_id": run_id,
         "execution_timestamp_utc": _utc_now(),
         "execution_status": "DRY_RUN",
+        "collector_origin": COLLECTOR_ORIGIN_DRY_RUN,
         "cluster_measurement_status": "NOT_EXECUTED",
         "measurement_claims_permitted": False,
         "git_revision": provenance["git_revision"],
@@ -484,8 +490,11 @@ def run_calibration(
         adapter_version=adapter.adapter_version,
     )
     environment_snapshot: Mapping[str, Any] | None = None
+    auth = authenticate_adapter(adapter)
     if enforce_readiness:
         blockers: list[str] = []
+        if not auth.is_authenticated_real_collector:
+            blockers.append("AUTHENTICATED_REAL_KUBERNETES_COLLECTOR_REQUIRED")
         if provenance["git_dirty"]:
             blockers.append("DIRTY_GIT_TREE")
         if not freeze_is_confirmatory(load_freeze_contract()):
@@ -661,15 +670,28 @@ def run_calibration(
 
     observations = load_observations(records_path)
     derived = derive_safe_envelopes(manifest, observations)
-    manual = "REQUIRED" if any(item["manual_review_status"] == "REQUIRED" for item in derived["envelopes"]) else "PENDING"
+    if auth.is_authenticated_real_collector:
+        exec_status = "OBSERVED"
+        cluster_status = "OBSERVED"
+        origin = COLLECTOR_ORIGIN_REAL_KUBERNETES
+        manual = "REQUIRED" if any(item["manual_review_status"] == "REQUIRED" for item in derived["envelopes"]) else "PENDING"
+        status_label = "OBSERVED_PENDING_MANUAL_REVIEW"
+    else:
+        exec_status = auth.derived_execution_status
+        cluster_status = auth.derived_cluster_measurement_status
+        origin = auth.collector_origin
+        manual = "NOT_APPLICABLE"
+        status_label = f"{exec_status}_COMPLETED"
+
     root_manifest = {
         "schema_version": RUN_SCHEMA_VERSION,
         "protocol_version": "5.0.0",
         "experiment_id": "E4",
         "run_id": run_id,
         "execution_timestamp_utc": _utc_now(),
-        "execution_status": "OBSERVED",
-        "cluster_measurement_status": "OBSERVED",
+        "execution_status": exec_status,
+        "collector_origin": origin,
+        "cluster_measurement_status": cluster_status,
         "measurement_claims_permitted": False,
         "git_revision": provenance["git_revision"],
         "git_dirty": False,
@@ -700,8 +722,10 @@ def run_calibration(
     }
     review_input_fingerprint = canonical_sha256(review_components)
     write_json_exclusive(result_dir / "report" / "status.json", {
-        "status": "OBSERVED_PENDING_MANUAL_REVIEW",
-        "cluster_measurement_status": "OBSERVED",
+        "status": status_label,
+        "execution_status": exec_status,
+        "collector_origin": origin,
+        "cluster_measurement_status": cluster_status,
         "executed_trials": len(observations),
         "manual_review_status": manual,
         "eligible_for_comparison": False,
@@ -729,9 +753,12 @@ def record_manual_review(result_dir: Path, *, reviewer_id: str, decision: str, r
     existing_review = result_dir / "report" / "manual-review.json"
     if existing_review.exists():
         raise FileExistsError("manual-review attestation already exists")
+    validate_evidence_package(result_dir, allow_unsealed=True)
     root = json.loads((result_dir / "manifest.json").read_text(encoding="utf-8"))
     if root.get("execution_status") != "OBSERVED" or root.get("manual_review_status") not in {"PENDING", "REQUIRED"}:
         raise ValueError("illegal manual-review state transition")
+    if root.get("collector_origin") != COLLECTOR_ORIGIN_REAL_KUBERNETES:
+        raise ValueError("manual review requires authenticated real Kubernetes collector evidence")
     source = result_dir / "derived" / "safe-envelopes.json"
     if not source.is_file():
         raise ValueError("manual review requires derived envelopes")
