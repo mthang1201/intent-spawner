@@ -171,6 +171,26 @@ def render_report(inputs: Inputs, audit: dict, analysis: dict, figures: dict, ta
     scan = audit.get("synthetic_origin_scan") or {}
     lines += ["### Synthetic-origin scan", "",
         f"Collector-origin scan: **{scan.get('status', 'UNSUPPORTED')}** across {scan.get('candidate_count', 0)} discovered candidates; synthetic candidates={scan.get('synthetic_candidate_count', 0)}, promoted synthetic candidates={scan.get('promoted_synthetic_count', 0)}, unauthenticated exposed candidates={scan.get('unauthenticated_exposed_count', 0)}. The scan uses collector provenance and claim eligibility, not filenames.", "",
+        "### Isolation parser diagnostic", ""]
+    isolation = audit.get("isolation_diagnostic") or {}
+    finding = isolation.get("finding") or {}
+    repair = isolation.get("repair") or {}
+    if isolation.get("source"):
+        lines += [
+            f"Prior failure classification: **{finding.get('classification', 'UNCLASSIFIED')}**; repair status: **{repair.get('status', 'UNVERIFIED')}**. "
+            f"Artifact `{finding.get('artifact_relative_path', 'unknown')}` at observed SHA-256 `{finding.get('artifact_sha256', 'unknown')}` "
+            f"was a `{finding.get('artifact_role', 'unknown')}` / `{finding.get('artifact_type', 'unknown')}`. "
+            f"Parser `{finding.get('parser', 'unknown')}` encountered schema signature `{finding.get('schema_signature', 'unknown')}` "
+            f"and produced `{finding.get('failure_category', 'unknown')}`. Historical={str(finding.get('historical')).lower()}, "
+            f"immutable-preserved-evidence={str(finding.get('immutable_preserved_evidence')).lower()}, "
+            f"confirmatory-eligible={str(finding.get('eligible_for_confirmatory_execution')).lower()}, "
+            f"thesis-claim-eligible={str(finding.get('eligible_to_support_thesis_claim')).lower()}. "
+            + source(isolation["source"]),
+            "",
+        ]
+    else:
+        lines += ["Isolation diagnostic: **UNAVAILABLE**.", ""]
+    lines += [
         "### P3 state", "",
         "Authenticated P3 state: **" + audit.get("p3_state", "UNSUPPORTED") + "**. Historical P3 material remains formative unless the selected claim package contains a validated retained-gate confirmatory decision. " + source(inputs.ref("docs/evaluation/P3_INCREMENTAL_EVALUATION_V1.md")), "",
         "## Defense-summary table", "", table(defense_rows(analysis, source), ["Professor criterion", "Experiment", "Metric", "Observed result", "Evidence reference"]),

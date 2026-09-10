@@ -17,10 +17,15 @@ from evaluation_v5.final_audit.common import (
 )
 from evaluation_v5.final_audit.checks import (
     CHECKS, b0_ranking_findings, cluster_findings, execution_findings, inference_findings,
-    inspect, p3_findings, placeholder_findings, storage_identity_findings,
+    inspect, load_isolation_diagnostic, p3_findings, placeholder_findings,
+    storage_identity_findings,
 )
 from evaluation_v5.final_audit.claims import load_claim_evidence, synthetic_origin_scan
-from evaluation_v5.final_audit.completion import _remaining_execution_requirements
+from evaluation_v5.final_audit import completion as completion_module
+from evaluation_v5.final_audit.completion import (
+    _load_evidence_records, _remaining_execution_requirements, _validate_command_outcomes,
+)
+from evaluation_v5.final_audit.evidence import capture, junit_details, verify_command_evidence
 from evaluation_v5.final_audit.reproduce import analyze, compare_json
 from evaluation_v5.final_audit.reporting import figures, render_report
 
@@ -46,6 +51,92 @@ def test_snapshot_is_not_a_production_freeze():
     snapshot = Inputs().json("results_v5/protocol-v5.0.0/freezes/frozen-configuration.json")
     with pytest.raises(FreezeValidationError):
         validate_freeze_manifest(snapshot)
+
+
+def test_isolation_failure_is_exactly_classified_and_repaired():
+    inputs = Inputs()
+    diagnostic = load_isolation_diagnostic(inputs)
+    finding = diagnostic["finding"]
+    assert diagnostic["source_blob_verified"] is True
+    assert finding | {
+        "artifact_relative_path": "tests/test_evaluation_v5_gold_dataset.py",
+        "artifact_sha256": "3e978556fa831877c959ee1dc3824315f9933d2f8d12d993cc78019842acc918",
+        "artifact_role": "synthetic_adversarial_test_source",
+        "artifact_type": "python_source",
+        "parser": "evaluation_v5.isolation_audit._contains_embedded_confirmatory_bundle",
+        "schema_signature": "protocol-v5-gold-family-v1.0.0",
+        "failure_category": "SOURCE_LITERAL_FRAGMENT_FALSE_POSITIVE",
+        "original_error_category": "UNPARSEABLE_EMBEDDED_CONFIRMATORY_BUNDLE",
+        "classification": "REMAINING_IMPLEMENTATION_DEFECT",
+        "historical": False,
+        "immutable_preserved_evidence": False,
+        "eligible_for_confirmatory_execution": False,
+        "eligible_to_support_thesis_claim": False,
+    } == finding
+    audit = inspect(inputs, isolation=True, historical=False)
+    isolation_check = audit["checks"][2]
+    assert isolation_check["verdict"] == "UNVERIFIED"
+    assert isolation_check["details"][0]["repository_scan"] == "PASS"
+    assert isolation_check["details"][1]["prior_failure_diagnostic"]["repair"]["status"] == "REPAIRED"
+
+
+def test_command_evidence_captures_revision_command_exit_and_hashes(tmp_path):
+    output = tmp_path / "command-evidence"
+    exit_code = capture(
+        root=ROOT,
+        output=output,
+        evidence_id="unit_capture",
+        kind="validator",
+        classifications=["PASS"],
+        command=[sys.executable, "-c", "print('validated')"],
+        junit=None,
+    )
+    record = verify_command_evidence(output)
+    assert exit_code == record["exit_code"] == 0
+    assert len(record["git_revision"]) == 40
+    assert record["argv"] == [sys.executable, "-c", "print('validated')"]
+    assert record["classifications"] == ["PASS"]
+    assert record["stdout"]["sha256"] == file_sha256(output / "stdout.txt")
+
+
+def test_junit_counts_are_recomputed_from_cases(tmp_path):
+    junit = tmp_path / "junit.xml"
+    write_bytes(
+        junit,
+        b'<testsuite><testcase classname="tests.test_sample" name="pass"/>'
+        b'<testcase classname="tests.test_sample" name="fail"><failure/></testcase>'
+        b'<testcase classname="tests.test_sample" name="error"><error/></testcase>'
+        b'<testcase classname="tests.test_sample" name="skip"><skipped/></testcase></testsuite>',
+    )
+    details = junit_details(junit)
+    assert {key: value for key, value in details.items() if key != "cases"} == {
+        "total": 4, "passed": 1, "failed": 1, "errors": 1, "skipped": 1,
+    }
+
+
+def test_completion_rejects_command_evidence_from_another_revision(tmp_path, monkeypatch):
+    package = tmp_path / "evidence"
+    package.mkdir()
+    monkeypatch.setattr(
+        completion_module,
+        "verify_command_evidence",
+        lambda _path: {
+            "evidence_id": "only", "kind": "validator", "git_revision": "0" * 40,
+            "git_dirty_before": False,
+        },
+    )
+    with pytest.raises(ValueError, match="revision differs"):
+        _load_evidence_records(
+            [package], kind="validator", required_ids={"only"}, expected_revision="1" * 40,
+        )
+
+
+def test_scientific_nonzero_is_not_misclassified_as_implementation_defect():
+    records = [{
+        "evidence_id": "audit", "exit_code": 2,
+        "classifications": ["SCIENTIFICALLY_CORRECT_FAIL_CLOSED_STATE"],
+    }]
+    assert _validate_command_outcomes(records) == []
 
 
 def test_existing_failures_are_preserved_and_not_selected_away(current_audit):

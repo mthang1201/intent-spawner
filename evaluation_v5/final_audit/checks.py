@@ -38,6 +38,78 @@ CHECKS = {
     17: "Missing experiments and placeholder values",
 }
 
+ISOLATION_CLASSIFICATIONS = {
+    "REMAINING_IMPLEMENTATION_DEFECT",
+    "IMMUTABLE_HISTORICAL_COMPATIBILITY_BOUNDARY",
+    "UNAVAILABLE_REAL_EVIDENCE / UNAVAILABLE_CUSTODY",
+}
+
+
+def load_isolation_diagnostic(inputs: Inputs) -> dict[str, Any]:
+    relative = inputs.lock.get("isolation_diagnostic")
+    if not isinstance(relative, str):
+        raise ValueError("final-audit inventory lacks isolation_diagnostic")
+    diagnostic = inputs.json(relative)
+    if diagnostic.get("schema_version") != "protocol-v5-isolation-diagnostic-v1.0.0":
+        raise ValueError("unsupported isolation diagnostic schema")
+    finding = diagnostic.get("finding") or {}
+    repair = diagnostic.get("repair") or {}
+    boundary = diagnostic.get("evidence_boundary") or {}
+    if finding.get("classification") not in ISOLATION_CLASSIFICATIONS:
+        raise ValueError("invalid isolation diagnostic classification")
+    if repair.get("status") != "REPAIRED":
+        raise ValueError("isolation implementation defect is not repaired")
+    if any(
+        boundary.get(key) is not False
+        for key in (
+            "is_experiment_evidence",
+            "claims_permitted",
+            "contains_real_confirmatory_cases",
+            "contains_real_participant_or_cluster_observations",
+        )
+    ):
+        raise ValueError("isolation diagnostic exposes experiment or claim evidence")
+    if any(
+        finding.get(key) is not False
+        for key in (
+            "historical",
+            "immutable_preserved_evidence",
+            "eligible_for_confirmatory_execution",
+            "eligible_to_support_thesis_claim",
+        )
+    ):
+        raise ValueError("isolation false-positive artifact is incorrectly eligible")
+    artifact = finding.get("artifact_relative_path")
+    artifact_sha = finding.get("artifact_sha256")
+    revision = diagnostic.get("observed_at_git_revision")
+    if not all(isinstance(value, str) for value in (artifact, artifact_sha, revision)):
+        raise ValueError("isolation diagnostic identity is incomplete")
+    blob = subprocess.run(
+        ["git", "show", f"{revision}:{artifact}"],
+        cwd=inputs.root,
+        capture_output=True,
+        check=False,
+    )
+    current_path = safe_path(inputs.root, artifact)
+    historical_verified = (
+        blob.returncode == 0 and hashlib.sha256(blob.stdout).hexdigest() == artifact_sha
+    )
+    current_verified = current_path.is_file() and file_sha256(current_path) == artifact_sha
+    if not historical_verified and not current_verified:
+        raise ValueError("isolation diagnostic source blob identity does not verify")
+    return {
+        **diagnostic,
+        "source": inputs.ref(relative),
+        "finding": {
+            **finding,
+            "current_artifact_sha256": file_sha256(current_path) if current_path.is_file() else None,
+        },
+        "source_blob_verified": True,
+        "source_blob_verification_method": (
+            "historical_git_blob" if historical_verified else "current_checkout_exact_hash"
+        ),
+    }
+
 
 def walk(value: Any, pointer: str = ""):
     yield pointer, value
@@ -311,6 +383,7 @@ def inspect(inputs: Inputs, *, isolation: bool = True, historical: bool = True) 
                 "input_integrity_blocked": True,
                 "source_inventory": {"path": inputs.lock_path, "sha256": file_sha256(inputs.root / inputs.lock_path)}}
     packages = [validate_package(inputs, p) for p in inputs.lock["packages"]]
+    isolation_diagnostic = load_isolation_diagnostic(inputs)
     claim_evidence = None
     claim_evidence_error = None
     try:
@@ -353,12 +426,14 @@ def inspect(inputs: Inputs, *, isolation: bool = True, historical: bool = True) 
         try:
             report = audit_repository(inputs.root)
             set_check(3, "FAIL" if not report.clean else "UNVERIFIED",
-                      "Repository/archive isolation scan completed. External custody and semantic independence cannot be proven without custodian evidence.",
+                      "Repository/archive isolation scan completed. The prior source-literal parser false positive is classified and repaired; external custody remains unavailable and is not inferred from this scan.",
                       [{"repository_scan": "PASS" if report.clean else "FAIL",
                         "documents": report.repository_documents_scanned, "archives": report.archives_scanned,
-                        "findings": [{"location": f.location, "category": f.category} for f in report.findings]}])
+                        "findings": [{"location": f.location, "category": f.category} for f in report.findings]},
+                       {"prior_failure_diagnostic": isolation_diagnostic}])
         except Exception as exc:
-            set_check(3, "FAIL", _safe_error(exc, inputs.root))
+            set_check(3, "FAIL", _safe_error(exc, inputs.root),
+                      [{"prior_failure_diagnostic": isolation_diagnostic}])
 
     snapshot_rel = RESULTS + "/freezes/frozen-configuration.json"
     snapshot = inputs.json(snapshot_rel) if snapshot_rel in inputs.files else {}
@@ -536,6 +611,7 @@ def inspect(inputs: Inputs, *, isolation: bool = True, historical: bool = True) 
             "experiment_states": experiment_states, "claim_counts": claim_counts,
             "claim_evidence_sources": claim_sources, "p3_state": p3_state,
             "synthetic_origin_scan": synthetic_scan,
+            "isolation_diagnostic": isolation_diagnostic,
             "source_inventory": inputs.ref(inputs.lock_path) if inputs.lock_path in inputs.files else
             {"path": inputs.lock_path, "sha256": file_sha256(inputs.root / inputs.lock_path)},
             "audit_status": "FAIL" if any(c["verdict"] == "FAIL" for c in checks.values()) else "INCOMPLETE"}

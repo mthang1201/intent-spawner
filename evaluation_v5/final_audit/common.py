@@ -14,7 +14,7 @@ from typing import Any
 from evaluation_v4.dataset import file_sha256
 
 ROOT = Path(__file__).resolve().parents[2]
-LOCK = "benchmarks_v5/protocol-v5-final-audit-inputs-v2.json"
+LOCK = "benchmarks_v5/protocol-v5-final-audit-inputs-v3.json"
 RESULTS = "results_v5/protocol-v5.0.0"
 REGISTRY = "benchmarks_v5/protocol-v5-claim-registry-v1.1.yaml"
 
@@ -67,6 +67,7 @@ class Inputs:
         if self.lock.get("schema_version") not in {
             "protocol-v5-final-audit-inputs-v1.0.0",
             "protocol-v5-final-audit-inputs-v1.1.0",
+            "protocol-v5-final-audit-inputs-v1.2.0",
         }:
             raise ValueError("unsupported final-audit input inventory")
         self.files = self.lock["files"]
