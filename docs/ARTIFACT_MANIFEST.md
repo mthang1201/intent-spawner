@@ -33,7 +33,7 @@ decisions remain **NOT_EXECUTED**.
 | Document or artifact | Purpose and evidence boundary |
 | --- | --- |
 | [Current evidence-driven final report](../results_v5/protocol-v5.0.0/final-audit/final-audit-20260910-final2/report/PROTOCOL_V5_FINAL_REPORT.md) | Authenticated claim decisions, counts, experiment states, audit failures, and defense table. |
-| [16-prompt completion audit](../results_v5/protocol-v5.0.0/final-audit/completion-audit-20260910-final2/COMPLETION_AUDIT.md) and [machine-readable form](../results_v5/protocol-v5.0.0/final-audit/completion-audit-20260910-final2/completion-audit.json) | Exact issue dispositions, regression test identities, Make exits, and scientific gates; not experiment evidence. |
+| [16-prompt completion audit](../results_v5/protocol-v5.0.0/final-audit/completion-audit-20260910-final3/COMPLETION_AUDIT.md) and [machine-readable form](../results_v5/protocol-v5.0.0/final-audit/completion-audit-20260910-final3/completion-audit.json) | Exact issue dispositions, regression test identities, Make exits, and scientific gates; not experiment evidence. |
 | [Historical final report](evaluation/PROTOCOL_V5_FINAL_REPORT.md) | Preserved report for the earlier reviewed snapshot. |
 | [Historical final-audit verification](evaluation/PROTOCOL_V5_FINAL_AUDIT_VERIFICATION.md) | Recorded software/reproduction checks and reviewed output identity for that snapshot. |
 | [Evidence packaging](../results_v5/README.md) | Portable allowlist, immutable outputs, and offline workflow. |
