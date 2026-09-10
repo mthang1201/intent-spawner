@@ -14,7 +14,7 @@ from typing import Any
 from evaluation_v4.dataset import file_sha256
 
 ROOT = Path(__file__).resolve().parents[2]
-LOCK = "benchmarks_v5/protocol-v5-final-audit-inputs-v1.json"
+LOCK = "benchmarks_v5/protocol-v5-final-audit-inputs-v2.json"
 RESULTS = "results_v5/protocol-v5.0.0"
 REGISTRY = "benchmarks_v5/protocol-v5-claim-registry-v1.1.yaml"
 
@@ -64,7 +64,10 @@ class Inputs:
         self.root = root.resolve()
         self.lock_path = lock_path
         self.lock = read_json(safe_path(self.root, lock_path))
-        if self.lock.get("schema_version") != "protocol-v5-final-audit-inputs-v1.0.0":
+        if self.lock.get("schema_version") not in {
+            "protocol-v5-final-audit-inputs-v1.0.0",
+            "protocol-v5-final-audit-inputs-v1.1.0",
+        }:
             raise ValueError("unsupported final-audit input inventory")
         self.files = self.lock["files"]
         self.relocations = self.lock.get("legacy_reference_map", {})
@@ -84,11 +87,18 @@ class Inputs:
 
     def resolve(self, reference: str, expected: str) -> Path:
         if Path(reference).is_absolute():
-            # The key itself is hashed to avoid publishing developer home paths.
-            key = hashlib.sha256(reference.encode()).hexdigest()
-            relative = self.relocations.get(key)
-            if relative is None:
-                raise ValueError("legacy reference has no explicit relocation")
+            candidate = Path(reference).resolve()
+            try:
+                # A newly produced package may bind inputs in this exact checkout.
+                # Relocated historical paths still require an explicit hash-keyed
+                # mapping and never fall back to basename or path inference.
+                relative = str(candidate.relative_to(self.root))
+            except ValueError:
+                # The key itself is hashed to avoid publishing developer home paths.
+                key = hashlib.sha256(reference.encode()).hexdigest()
+                relative = self.relocations.get(key)
+                if relative is None:
+                    raise ValueError("legacy reference has no explicit relocation")
         else:
             relative = reference
         path = self.path(relative)

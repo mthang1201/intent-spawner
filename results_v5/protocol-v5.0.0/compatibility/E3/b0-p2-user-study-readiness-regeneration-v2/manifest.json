@@ -1,0 +1,40 @@
+{
+  "schema_version": "protocol-v5-e3-readiness-regeneration-v1.0.0",
+  "protocol_version": "5.0.0",
+  "package_id": "b0-p2-user-study-readiness-regeneration-v2",
+  "created_at_utc": "2026-09-10T08:28:29Z",
+  "git_revision": "53b614dba72a22cde3f4099b6fa7bccacadef926",
+  "artifact_role": "historical_newline_compatibility",
+  "execution_status": "NOT_EXECUTED",
+  "claims_permitted": false,
+  "observed_participant_count": 0,
+  "newline_policy": "LF",
+  "source": {
+    "path": "results_v5/protocol-v5.0.0/E3/b0-p2-user-study-readiness/report/tables/participant-flow.csv",
+    "preserved_file_sha256": "bee024512c5b6f407a9f1d273d2abbdfe2be640322b05d06f9a641404e8dd73c",
+    "historical_manifest_sha256": "a142b8c930e1f84d123aca8c39fe564efd52027ab62b637f236db1bc8fa5686b",
+    "historical_bytes_modified": false,
+    "regenerated_pre_normalization_sha256": "9d76ebf517d544a7913cfd744f67ca478620a4d5c93605baf2746c5873520416",
+    "newline_policy_transform": "CRLF_TO_LF"
+  },
+  "output_checksums": {
+    "report/tables/participant-flow.csv": "9a624a9bf3d29c57f6452bc40dce9fbcebd91d87932c4ab3fe93f16c78207877"
+  },
+  "provenance": {
+    "source_experiment": "E3",
+    "source_run_id": "b0-p2-user-study-readiness",
+    "source_code_revision": "ad6243af254edbf2d3469ec438ebddeb86b9b909",
+    "task_set_file_sha256": "234ab087d7b2b2d488ceb73fe98b50f3ee4dcc7560a3c1411b883b7be47431e4",
+    "assignment_manifest_file_sha256": "716acaa758da3800925d3a9fce437d23ea127a7fe7bd97058b7099ba33dc55d9",
+    "catalog_version": "2026-08-06.1",
+    "catalog_sha256": "bd2211d5fd769b5addec3c41e8cbd48bb0d9cd1c958aa554ada9bf88c29509f3",
+    "corpus_version": "environment-candidate-corpus-v1",
+    "environment_id": "protocol-v5-e3-study-environment",
+    "environment_mode": "development_unfrozen",
+    "finalizer_version": "protocol-v5-user-study-finalizer-v1.3.0"
+  },
+  "limitations": [
+    "This package is a compatibility regeneration, not participant evidence.",
+    "The source study remains NOT_EXECUTED and cannot support a thesis claim."
+  ]
+}

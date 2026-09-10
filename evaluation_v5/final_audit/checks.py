@@ -11,12 +11,12 @@ import subprocess
 import sys
 from typing import Any
 
-from evaluation_v5.analysis.research_contracts import load_claim_registry
 from evaluation_v5.freeze import validate_freeze_manifest
 from evaluation_v5.isolation_audit import audit_repository
 
 from . import SCHEMA_VERSION
-from .common import Inputs, REGISTRY, RESULTS, file_sha256, read_json, read_rows, safe_path
+from .common import Inputs, RESULTS, file_sha256, read_json, read_rows, safe_path
+from .claims import load_claim_evidence
 
 CHECKS = {
     1: "Authoritative final experiment freeze",
@@ -311,6 +311,16 @@ def inspect(inputs: Inputs, *, isolation: bool = True, historical: bool = True) 
                 "input_integrity_blocked": True,
                 "source_inventory": {"path": inputs.lock_path, "sha256": file_sha256(inputs.root / inputs.lock_path)}}
     packages = [validate_package(inputs, p) for p in inputs.lock["packages"]]
+    claim_evidence = None
+    claim_evidence_error = None
+    try:
+        claim_evidence = load_claim_evidence(inputs)
+    except Exception as exc:
+        claim_evidence_error = {
+            "path": inputs.lock.get("claim_analysis_package"),
+            "reason": "CLAIM_EVIDENCE_AUTHENTICATION_FAILED",
+            "detail": _safe_error(exc, inputs.root),
+        }
     unregistered = []
     for section in ("E1", "E2", "E3", "E4", "E5", "E6", "analysis", "freezes"):
         base = inputs.root / RESULTS / section
@@ -320,6 +330,8 @@ def inspect(inputs: Inputs, *, isolation: bool = True, historical: bool = True) 
     failures = input_failures + [{"path": p["path"], "errors": p["errors"]}
                                  for p in packages if p["validation"] != "PASS"]
     failures.extend({"path": p, "reason": "UNREGISTERED_EVIDENCE"} for p in sorted(unregistered))
+    if claim_evidence_error:
+        failures.append(claim_evidence_error)
     set_check(6, "FAIL" if failures else "PASS", "Original seals and reviewed input bytes checked; failed packages remain preserved.", failures)
 
     freezes = [p for p in inputs.files if p.startswith(RESULTS + "/freezes/") and p.endswith("/freeze-manifest.json")]
@@ -460,8 +472,27 @@ def inspect(inputs: Inputs, *, isolation: bool = True, historical: bool = True) 
               "No observed Kubernetes trials exist; readiness identities are not hardware measurements.", cluster_errors)
     set_check(12, "FAIL" if storage_errors else "NOT_APPLICABLE",
               "No storage measurements exist. Functional-probe host metadata does not establish an image platform or storage reuse.", storage_errors)
-    set_check(13, "FAIL" if execution_errors else "PASS",
-              "Available records checked for missing observations and synthetic/mock origins; v1.0 probes use the existing legacy error-category adapter. This is artifact consistency, not independent attestation of collection.", execution_errors)
+    synthetic_scan = (
+        claim_evidence["synthetic_origin_scan"]
+        if claim_evidence is not None
+        else {
+            "schema_version": "protocol-v5-final-synthetic-origin-scan-v1.0.0",
+            "candidate_count": 0,
+            "synthetic_candidate_count": 0,
+            "promoted_synthetic_count": 0,
+            "status": "UNSUPPORTED",
+            "findings": [],
+        }
+    )
+    if synthetic_scan["status"] == "FAIL":
+        execution_errors.extend(
+            {"code": "CLAIM_CANDIDATE_ORIGIN_OR_AUTHENTICATION_FAILED", **finding}
+            for finding in synthetic_scan["findings"]
+            if finding["disposition"].startswith("FAIL_")
+        )
+    set_check(13, "FAIL" if execution_errors or claim_evidence_error else "PASS",
+              "Raw records and every discovered claim candidate were checked for collector origin and claim eligibility; path names do not establish authenticity.",
+              [*execution_errors, {"claim_candidate_scan": synthetic_scan}])
     set_check(14, "FAIL" if stats_errors else "PASS",
               "No available v5 inferential p-value was found using repetitions as semantic samples. Family/participant contracts are also checked by the existing claim-registry validator.", stats_errors)
     set_check(15, "FAIL" if b0_errors else "PASS", "Result-bearing JSON, JSONL and CSV artifacts checked for B0 ranking metrics.", b0_errors)
@@ -472,22 +503,39 @@ def inspect(inputs: Inputs, *, isolation: bool = True, historical: bool = True) 
             inputs.resolve(gate_source, gate["evidence_sha256"])
     except Exception:
         p3_errors.append({"code": "GATE_EVIDENCE_CHECKSUM_MISMATCH"})
-    set_check(16, "FAIL" if p3_errors else "PASS",
-              "P2 remains primary; recorded P3 development decision is not_retained. No v5 confirmatory P3 conclusion is authorized.", p3_errors,
+    p3_state = claim_evidence["p3_state"] if claim_evidence is not None else "UNSUPPORTED"
+    set_check(16, "FAIL" if p3_errors or claim_evidence_error else "PASS",
+              "P3 state is derived from the authenticated evaluated-claim package: " + p3_state + ".", p3_errors,
               [inputs.ref(gate_source)] if gate_source else [])
     set_check(17, "FAIL" if placeholder_errors else "PASS",
               "Unavailable experiments remain NOT_EXECUTED with null estimates; planned counts and fixture image identifiers are design only.", placeholder_errors)
-    registry = load_claim_registry(inputs.path(REGISTRY))
-    # This work package closes the current evidence snapshot; it never admits newly supplied confirmation.
-    from evaluation_v5.analysis.research_analysis import evaluate_claims
-    evaluated = evaluate_claims(registry=registry, selected={}, selection_report={"requirements": []})
-    decisions = {c["claim_id"]: c for c in evaluated}
-    claims = [{"id": c["id"], "research_question": c["research_question"], "hypothesis": c["hypothesis"],
-               "claim_status": decisions[c["id"]]["claim_status"], "estimate": None, "confidence_interval": None,
-               "effect_size": None, "reason": "No complete authenticated confirmatory evidence in the reviewed snapshot.",
-               "source": inputs.ref(REGISTRY, "/claims/" + str(i))} for i, c in enumerate(registry["claims"])]
+    if claim_evidence is None:
+        claims = []
+        evaluated = []
+        research_questions = []
+        confirmatory_status = "UNSUPPORTED"
+        experiment_states = []
+        claim_counts = {"SUPPORTED": 0, "NOT_SUPPORTED": 0, "NOT_EXECUTED": 0}
+        claim_sources = {"error": claim_evidence_error}
+    else:
+        claims = claim_evidence["claims"]
+        evaluated = claim_evidence["evaluated_claims"]
+        research_questions = claim_evidence["research_questions"]
+        confirmatory_status = claim_evidence["confirmatory_status"]
+        experiment_states = claim_evidence["requirement_states"]
+        claim_counts = claim_evidence["claim_counts"]
+        claim_sources = {
+            "package": claim_evidence["source"],
+            "selection": claim_evidence["selection_source"],
+            "evaluated_claims": claim_evidence["evaluated_claims_source"],
+            "registry": claim_evidence["registry_source"],
+        }
     return {"schema_version": SCHEMA_VERSION, "protocol_version": "5.0.0", "checks": list(checks.values()),
-            "packages": packages, "claims": claims, "evaluated_claims": evaluated, "research_questions": registry["research_questions"],
-            "primary_system": "P2", "confirmatory_status": "NOT_EXECUTED", "source_inventory": inputs.ref(inputs.lock_path) if inputs.lock_path in inputs.files else
+            "packages": packages, "claims": claims, "evaluated_claims": evaluated, "research_questions": research_questions,
+            "primary_system": "P2", "confirmatory_status": confirmatory_status,
+            "experiment_states": experiment_states, "claim_counts": claim_counts,
+            "claim_evidence_sources": claim_sources, "p3_state": p3_state,
+            "synthetic_origin_scan": synthetic_scan,
+            "source_inventory": inputs.ref(inputs.lock_path) if inputs.lock_path in inputs.files else
             {"path": inputs.lock_path, "sha256": file_sha256(inputs.root / inputs.lock_path)},
             "audit_status": "FAIL" if any(c["verdict"] == "FAIL" for c in checks.values()) else "INCOMPLETE"}

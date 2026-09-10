@@ -4,6 +4,7 @@ from __future__ import annotations
 import hashlib
 import json
 from pathlib import Path
+import copy
 import shutil
 import socket
 import subprocess
@@ -18,6 +19,7 @@ from evaluation_v5.final_audit.checks import (
     CHECKS, b0_ranking_findings, cluster_findings, execution_findings, inference_findings,
     inspect, p3_findings, placeholder_findings, storage_identity_findings,
 )
+from evaluation_v5.final_audit.claims import load_claim_evidence, synthetic_origin_scan
 from evaluation_v5.final_audit.reproduce import analyze, compare_json
 from evaluation_v5.final_audit.reporting import figures, render_report
 
@@ -58,6 +60,123 @@ def test_existing_failures_are_preserved_and_not_selected_away(current_audit):
     assert observed_failure["status"] == "OBSERVED"
     assert observed_failure["validation"] == "FAIL"
     assert current_audit["checks"][12]["verdict"] == "PASS"
+
+
+def test_final_audit_consumes_explicit_authenticated_claim_package(current_audit):
+    inputs = Inputs()
+    bundle = load_claim_evidence(inputs)
+    configured = inputs.lock["claim_analysis_package"]
+    persisted = inputs.json(configured + "/derived/evaluated-claim-registry.json")["claims"]
+    assert bundle["evaluated_claims"] == persisted == current_audit["evaluated_claims"]
+    assert current_audit["claim_evidence_sources"]["selection"] == inputs.ref(
+        configured + "/derived/evidence-selection.json"
+    )
+    assert current_audit["claim_counts"] == {
+        "SUPPORTED": 0,
+        "NOT_SUPPORTED": 0,
+        "NOT_EXECUTED": 9,
+    }
+    source = (ROOT / "evaluation_v5/final_audit/checks.py").read_text()
+    assert "selected={}" not in source
+    assert 'confirmatory_status": "NOT_EXECUTED"' not in source
+
+
+def test_report_renders_changed_validated_claim_state_instead_of_snapshot_prose(
+    current_audit, tmp_path
+):
+    audit = copy.deepcopy(current_audit)
+    audit["audit_status"] = "INCOMPLETE"
+    audit["confirmatory_status"] = "EXECUTED_INCOMPLETE"
+    audit["claim_counts"] = {"SUPPORTED": 1, "NOT_SUPPORTED": 1, "NOT_EXECUTED": 7}
+    audit["claims"][0].update(
+        claim_status="SUPPORTED",
+        normalized_metrics={"effect": 0.25, "ci_low": 0.10, "ci_high": 0.40, "family_n": 12},
+        confidence_intervals={"primary": {"low": 0.10, "high": 0.40}},
+        counts={"family_n": 12},
+        effect_sizes={},
+        reason_codes=[],
+    )
+    audit["claims"][1].update(
+        claim_status="NOT_SUPPORTED",
+        normalized_metrics={"effect": -0.05, "ci_low": -0.15, "ci_high": 0.02},
+        confidence_intervals={"primary": {"low": -0.15, "high": 0.02}},
+        counts={},
+        effect_sizes={},
+        reason_codes=[],
+    )
+    analysis = {
+        "claims": audit["claims"],
+        "observed_functional": [],
+        "legacy_functional": [],
+        "observed_offline_counts": [],
+        "defense_sources": {key: [] for key in ("human", "resources", "offline", "functional", "storage")},
+    }
+    report = render_report(Inputs(), audit, analysis, {}, tmp_path / "REPORT.md")
+    assert "Confirmatory evidence: EXECUTED_INCOMPLETE" in report
+    assert "SUPPORTED=1, NOT_SUPPORTED=1, NOT_EXECUTED=7" in report
+    assert "**H1 — SUPPORTED**" in report and '"effect":0.25' in report
+    assert "**H2 — NOT_SUPPORTED**" in report and '"effect":-0.05' in report
+    assert "None has sufficient authenticated confirmatory evidence" not in report
+
+
+def test_collector_origin_scan_rejects_synthetic_observed_fixture_outside_repository(tmp_path):
+    package = tmp_path / "normal-layout" / "results_v5" / "protocol-v5.0.0" / "E4" / "observed-run"
+    selected = {
+        "schema_version": "protocol-v5-evidence-selection-result-v1.0.0",
+        "requirements": [{
+            "requirement_id": "resource_efficiency",
+            "selected_package": str(package),
+            "selected_manifest_sha256": "a" * 64,
+        }],
+        "global_errors": [],
+    }
+    inventory = {
+        "candidates": [{
+            "requirement_id": "resource_efficiency",
+            "package_path": str(package),
+            "execution_status": "OBSERVED",
+            "stage": "confirmatory",
+            "validation_status": "PASS",
+            "claims_permitted": True,
+            "claim_eligibility": "ELIGIBLE_CONFIRMATORY",
+            "authentication": {
+                "collector_origin": "SYNTHETIC",
+                "collector_authentic": False,
+                "source_checksums_verified": True,
+            },
+            "reason_codes": ["SYNTHETIC_RESOURCE_EVIDENCE"],
+        }]
+    }
+    result = synthetic_origin_scan(selected, inventory)
+    assert result["status"] == "FAIL"
+    assert result["promoted_synthetic_count"] == 1
+    assert result["findings"][0]["disposition"] == "FAIL_PROMOTED"
+    selected["requirements"][0]["selected_package"] = None
+    inventory["candidates"][0].update(claims_permitted=False, claim_eligibility="INELIGIBLE")
+    bounded = synthetic_origin_scan(selected, inventory)
+    assert bounded["status"] == "PASS"
+    assert bounded["findings"][0]["disposition"] == "NON_CLAIMABLE"
+
+
+def test_e3_lf_regeneration_is_versioned_and_preserves_historical_identity():
+    inputs = Inputs()
+    historical = "results_v5/protocol-v5.0.0/E3/b0-p2-user-study-readiness"
+    regenerated = inputs.lock["e3_readiness_regeneration_package"]
+    historical_bytes = inputs.path(historical + "/report/tables/participant-flow.csv").read_bytes()
+    manifest = inputs.json(regenerated + "/manifest.json")
+    regenerated_bytes = inputs.path(regenerated + "/report/tables/participant-flow.csv").read_bytes()
+    assert b"\r\n" not in historical_bytes and b"\r\n" not in regenerated_bytes
+    assert regenerated_bytes != historical_bytes
+    assert file_sha256(inputs.path(historical + "/report/tables/participant-flow.csv")) == "bee024512c5b6f407a9f1d273d2abbdfe2be640322b05d06f9a641404e8dd73c"
+    assert manifest["source"]["historical_manifest_sha256"] == "a142b8c930e1f84d123aca8c39fe564efd52027ab62b637f236db1bc8fa5686b"
+    assert manifest["source"]["historical_bytes_modified"] is False
+    assert manifest["source"]["regenerated_pre_normalization_sha256"] == "9d76ebf517d544a7913cfd744f67ca478620a4d5c93605baf2746c5873520416"
+    assert manifest["source"]["newline_policy_transform"] == "CRLF_TO_LF"
+    assert manifest["output_checksums"]["report/tables/participant-flow.csv"] == file_sha256(
+        inputs.path(regenerated + "/report/tables/participant-flow.csv")
+    )
+    assert manifest["execution_status"] == "NOT_EXECUTED"
+    assert manifest["claims_permitted"] is False
 
 
 def test_legacy_v1_probes_are_not_misclassified_as_unexecuted():
@@ -216,7 +335,14 @@ def test_current_raw_analysis_and_figures_reproduce_without_collectors(tmp_path,
     first = figures(inputs, a, tmp_path / "analysis", tmp_path / "figures1")
     figures(inputs, a, tmp_path / "analysis", tmp_path / "figures2")
     failures = [c for c in first["comparisons"] if c["status"] == "FAIL"]
-    assert len(failures) == 1 and failures[0]["artifact"].endswith("participant-flow.csv")
+    assert failures == [] and first["status"] == "PASS"
+    participant_flow = next(
+        row for row in first["comparisons"] if row["artifact"].endswith("participant-flow.csv")
+    )
+    assert participant_flow["baseline_artifact"].startswith(
+        inputs.lock["e3_readiness_regeneration_package"]
+    )
+    assert participant_flow["preserved_original_sha256"] == "bee024512c5b6f407a9f1d273d2abbdfe2be640322b05d06f9a641404e8dd73c"
     assert not (tmp_path / "figures1/functional-development.svg").exists()
     assert file_sha256(tmp_path / "figures1/tables/functional-results.json") == file_sha256(tmp_path / "figures2/tables/functional-results.json")
     assert all(file_sha256(inputs.root / p) == digest for p, digest in before.items())
