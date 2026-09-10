@@ -25,6 +25,7 @@ from typing import Any, Mapping, Sequence
 
 import yaml
 
+from evaluation_v5 import freeze as freeze_api
 from evaluation_v5.analysis.statistics import (
     derive_bootstrap_seed,
     holm_adjust,
@@ -40,7 +41,6 @@ from .research_contracts import (
     canonical_json_sha256,
     evaluate_conditions,
     file_sha256,
-    json_pointer_get,
     load_claim_registry,
     load_p3_threshold,
     load_selection,
@@ -104,6 +104,7 @@ class EvidenceCandidate:
     tests: dict[str, Any] = field(default_factory=dict)
     semantic_provenance: dict[str, Any] = field(default_factory=dict)
     provenance: dict[str, Any] = field(default_factory=dict)
+    authentication: dict[str, Any] = field(default_factory=dict)
     metadata: dict[str, Any] = field(default_factory=dict)
     artifacts: list[dict[str, Any]] = field(default_factory=list)
     metric_lineage: dict[str, dict[str, list[dict[str, Any]]]] = field(default_factory=dict)
@@ -113,6 +114,20 @@ class EvidenceCandidate:
     @property
     def eligible(self) -> bool:
         return self.claim_eligibility == "ELIGIBLE_CONFIRMATORY"
+
+    def canonical_source_identity(self, key: str) -> Any:
+        """Read shared source identity from its validated provenance object."""
+
+        dataset = self.provenance.get("dataset")
+        if isinstance(dataset, Mapping):
+            source_keys = {
+                "benchmark.dataset_sha256": "dataset_sha256",
+                "benchmark.split_id": "split_id",
+            }
+            source_key = source_keys.get(key)
+            if source_key is not None:
+                return dataset.get(source_key)
+        return self.semantic_provenance.get(key)
 
     def to_dict(self, *, root: Path | None = None) -> dict[str, Any]:
         return {
@@ -132,6 +147,7 @@ class EvidenceCandidate:
             "tests": self.tests,
             "semantic_provenance": self.semantic_provenance,
             "provenance": self.provenance,
+            "authentication": self.authentication,
             "metadata": self.metadata,
             "artifacts": self.artifacts,
             "metric_lineage": self.metric_lineage,
@@ -435,6 +451,7 @@ def _adapt_offline_package(
     threshold_path: Path | None = None,
 ) -> list[EvidenceCandidate]:
     provenance_path = package / "raw" / "offline-run-provenance.json"
+    recommendations_path = package / "raw" / "recommendations.jsonl"
     completion_path = package / "report" / "offline-run-completion.json"
     statistics_root = package / "derived" / "statistical_analysis"
     statistics_manifest_path = statistics_root / "analysis-manifest.json"
@@ -456,15 +473,58 @@ def _adapt_offline_package(
         or _nested(provenance, "split", "role")
         or "unknown"
     ).lower()
+    raw_package_verified = False
     if stage == "development":
         try:
             validate_offline_evidence(package)
+            raw_package_verified = True
         except Exception as exc:
             validation_errors.append(f"offline package: {exc}")
-    if completion.get("recommendations_jsonl_sha256") != file_sha256(
-        package / "raw" / "recommendations.jsonl"
+    source = statistics_manifest.get("source") or {}
+    source_checksum_bindings = {
+        "offline_provenance_sha256": provenance_path,
+        "offline_recommendations_sha256": recommendations_path,
+        "offline_completion_sha256": completion_path,
+    }
+    source_checksums_verified = True
+    for field_name, source_path in source_checksum_bindings.items():
+        if (
+            not source_path.is_file()
+            or source.get(field_name) != file_sha256(source_path)
+        ):
+            validation_errors.append(
+                f"statistical source checksum mismatch: {field_name}"
+            )
+            source_checksums_verified = False
+    if source.get("offline_split_identity") != provenance.get("split"):
+        validation_errors.append("statistical source split identity mismatch")
+        source_checksums_verified = False
+    if source.get("freeze_identity") != provenance.get("freeze_identity"):
+        validation_errors.append("statistical source freeze identity mismatch")
+        source_checksums_verified = False
+    if (
+        not recommendations_path.is_file()
+        or completion.get("recommendations_jsonl_sha256")
+        != file_sha256(recommendations_path)
     ):
         validation_errors.append("offline completion/recommendations checksum mismatch")
+        source_checksums_verified = False
+    evidence_validation = statistics_manifest.get("evidence_validation") or {}
+    split_custody_verified = raw_package_verified or bool(
+        stage == "confirmatory"
+        and evidence_validation.get(
+            "raw_completion_verified_before_external_gold_load"
+        )
+        is True
+        and evidence_validation.get("full_split_bound_offline_validation")
+        == "PASS"
+        and evidence_validation.get("analysis_reads_gold_downstream_only") is True
+        and isinstance(source.get("freeze_identity"), Mapping)
+    )
+    if stage == "confirmatory" and not split_custody_verified:
+        validation_errors.append(
+            "confirmatory statistical source lacks verified split custody"
+        )
     validation_status = VALIDATION_FAIL if validation_errors else VALIDATION_PASS
     execution_status = str(statistics_manifest.get("status") or completion.get("status") or "UNKNOWN")
     # Raw completion deliberately never permits claims.  Claim permission is
@@ -540,6 +600,11 @@ def _adapt_offline_package(
             "statistical_package": stat_validation,
             "testing_policy": statistics_manifest.get("testing_policy") or {},
         },
+        "authentication": {
+            "package_validator": "validate_statistical_package+source_checksum_binding",
+            "source_checksums_verified": source_checksums_verified,
+            "split_custody_verified": split_custody_verified,
+        },
         "semantic_provenance": _offline_semantics(statistics_manifest, provenance),
         "provenance": {
             "git_revision": statistics_manifest.get("git_revision") or provenance.get("git_revision"),
@@ -558,6 +623,7 @@ def _adapt_offline_package(
         "artifacts": [
             _artifact(statistics_manifest_path, package),
             _artifact(provenance_path, package),
+            _artifact(recommendations_path, package),
             _artifact(completion_path, package),
             *([_artifact(family_path, package)] if family_path.is_file() else []),
             *([_artifact(paired_path, package)] if paired_path.is_file() else []),
@@ -615,7 +681,12 @@ def _adapt_offline_package(
                 freeze_path,
                 requirement_id="p2_p3",
                 evidence_schema_version=statistics_manifest.get("schema_version"),
-                json_pointers=["/p3_gate/status", "/p3_gate/p3_active", "/systems/P3", "/prompts/P3_reranker"],
+                json_pointers=[
+                    "/configuration_snapshot/p3_gate/status",
+                    "/configuration_snapshot/p3_gate/p3_active",
+                    "/configuration_snapshot/systems/P3",
+                    "/configuration_snapshot/prompts/P3_reranker",
+                ],
                 transformation="Require the separately frozen P3 gate to be retained and active.",
             ))
         if threshold_path is not None and threshold_path.is_file():
@@ -892,6 +963,12 @@ def _adapt_user_study_package(package: Path) -> EvidenceCandidate:
             "runtime": manifest.get("runtime"),
             "study_identity": manifest.get("study_identity"),
             "contracts": manifest.get("contracts"),
+        },
+        authentication={
+            "package_validator": "user_study_output_checksum_and_contract_validation",
+            "source_checksums_verified": validation_status == VALIDATION_PASS,
+            "privacy_verified": privacy.get("status") == "PASS",
+            "study_contract_verified": validation_status == VALIDATION_PASS,
         },
         metadata={
             "participant_target": status.get("participant_target"),
@@ -1205,6 +1282,11 @@ def _adapt_resource_analysis(package: Path) -> EvidenceCandidate:
     if stage == "confirmatory" and raw_manifest.get("execution_status") == "OBSERVED" and oracle_independence_verified is not True:
         validation_errors.append("E4 oracle/calibration independence provenance did not verify")
     validation_status = VALIDATION_FAIL if validation_errors else VALIDATION_PASS
+    collector_origin = (
+        raw_manifest.get("collector_origin")
+        or environment.get("collector_origin")
+        or "UNRECORDED"
+    )
     execution_status = (
         "DERIVED_EVIDENCE_COMPLETE"
         if raw_manifest.get("execution_status") == "OBSERVED" and validation_status == VALIDATION_PASS
@@ -1217,6 +1299,10 @@ def _adapt_resource_analysis(package: Path) -> EvidenceCandidate:
         claims_permitted=claims_permitted,
         validation_status=validation_status,
     )
+    if collector_origin != "REAL_KUBERNETES_COLLECTOR":
+        reasons.append("UNAUTHENTICATED_RESOURCE_COLLECTOR_ORIGIN")
+        if collector_origin in {"SYNTHETIC", "TEST", "FAKE", "DRY_RUN"}:
+            reasons.append("SYNTHETIC_RESOURCE_EVIDENCE")
     h6 = _h6_metrics(trials)
     h6["oracle_independence_verified"] = oracle_independence_verified
     h5_sources: list[dict[str, Any]] = []
@@ -1367,6 +1453,7 @@ def _adapt_resource_analysis(package: Path) -> EvidenceCandidate:
         provenance={
             "analysis_manifest": manifest,
             "raw_manifest": raw_manifest,
+            "collector_origin": collector_origin,
             "git_revision": plan.get("git_revision"),
             "environment": environment,
             "raw_package_path": str(raw_root.resolve()) if raw_root else None,
@@ -1380,6 +1467,13 @@ def _adapt_resource_analysis(package: Path) -> EvidenceCandidate:
             "success_noninferiority_margin": None,
             "success_noninferiority_margin_declared": "success_noninferiority_margin" in pareto,
             "oracle_independence_verified": oracle_independence_verified,
+            "collector_origin": collector_origin,
+        },
+        authentication={
+            "package_validator": "validate_analysis_package+validate_raw_package",
+            "collector_origin": collector_origin,
+            "collector_authentic": collector_origin == "REAL_KUBERNETES_COLLECTOR",
+            "source_checksums_verified": validation_status == VALIDATION_PASS,
         },
         artifacts=[
             _artifact(manifest_path, package),
@@ -1410,6 +1504,7 @@ def _adapt_resource_raw(package: Path) -> EvidenceCandidate:
     plan = _read_json(plan_path) if plan_path.is_file() else {}
     validation_status = VALIDATION_FAIL if validation_errors else VALIDATION_PASS
     stage = "development"
+    collector_origin = str(manifest.get("collector_origin") or "UNRECORDED")
     eligibility, reasons = _eligible_state(
         stage=stage,
         execution_status=str(manifest.get("execution_status") or "UNKNOWN"),
@@ -1417,6 +1512,10 @@ def _adapt_resource_raw(package: Path) -> EvidenceCandidate:
         validation_status=validation_status,
     )
     reasons.append("DERIVED_ANALYSIS_PACKAGE_REQUIRED")
+    if collector_origin != "REAL_KUBERNETES_COLLECTOR":
+        reasons.append("UNAUTHENTICATED_RESOURCE_COLLECTOR_ORIGIN")
+        if collector_origin in {"SYNTHETIC", "TEST", "FAKE", "DRY_RUN"}:
+            reasons.append("SYNTHETIC_RESOURCE_EVIDENCE")
     return EvidenceCandidate(
         requirement_id="resource_efficiency",
         evidence_class="E4",
@@ -1431,8 +1530,21 @@ def _adapt_resource_raw(package: Path) -> EvidenceCandidate:
         claims_permitted=False,
         claim_eligibility=eligibility,
         semantic_provenance=_resource_semantics(plan),
-        provenance={"manifest": manifest, "git_revision": plan.get("git_revision")},
-        metadata={"blocker_codes": manifest.get("blocker_codes") or []},
+        provenance={
+            "manifest": manifest,
+            "collector_origin": collector_origin,
+            "git_revision": plan.get("git_revision"),
+        },
+        authentication={
+            "package_validator": "validate_raw_package",
+            "collector_origin": collector_origin,
+            "collector_authentic": collector_origin == "REAL_KUBERNETES_COLLECTOR",
+            "source_checksums_verified": validation_status == VALIDATION_PASS,
+        },
+        metadata={
+            "blocker_codes": manifest.get("blocker_codes") or [],
+            "collector_origin": collector_origin,
+        },
         artifacts=[
             _artifact(manifest_path, package),
             *([_artifact(plan_path, package)] if plan_path.is_file() else []),
@@ -1455,15 +1567,34 @@ def _adapt_image_functional(package: Path) -> EvidenceCandidate:
         validation_errors.append(str(exc))
     metrics_path = package / "derived" / "functional_metrics.json"
     probe_manifest_path = package / "raw" / "probe_manifest.json"
+    probe_results_path = package / "raw" / "probe_results.jsonl"
     status_path = package / "report" / "status.json"
     metrics = _read_json(metrics_path) if metrics_path.is_file() else {}
     probe_manifest = _read_json(probe_manifest_path) if probe_manifest_path.is_file() else {}
+    probe_results = _read_jsonl(probe_results_path) if probe_results_path.is_file() else []
     status = _read_json(status_path) if status_path.is_file() else {}
     stage = str(_nested(manifest, "split_identity", "stage") or "unknown").lower()
     execution_status = str(manifest.get("execution_status") or status.get("status") or "UNKNOWN")
     current_schema = validation.get("validator_status") == "CURRENT_VALID"
-    claims_permitted = bool(stage == "confirmatory" and execution_status == "OBSERVED" and current_schema)
     validation_status = VALIDATION_FAIL if validation_errors else VALIDATION_PASS
+    collector_origins = sorted(
+        {
+            str(row.get("execution_origin"))
+            for row in probe_results
+            if row.get("execution_origin") is not None
+        }
+    )
+    live_collector_origins = {"LIVE_DOCKER", "LIVE_KUBERNETES"}
+    collector_authentic = bool(collector_origins) and set(collector_origins).issubset(
+        live_collector_origins
+    )
+    claims_permitted = bool(
+        stage == "confirmatory"
+        and execution_status == "OBSERVED"
+        and current_schema
+        and validation_status == VALIDATION_PASS
+        and collector_authentic
+    )
     eligibility, reasons = _eligible_state(
         stage=stage,
         execution_status=execution_status,
@@ -1473,6 +1604,10 @@ def _adapt_image_functional(package: Path) -> EvidenceCandidate:
     if validation and not current_schema:
         eligibility = "INELIGIBLE"
         reasons.append("LEGACY_E5_SCHEMA")
+    if not collector_authentic:
+        reasons.append("UNAUTHENTICATED_IMAGE_COLLECTOR_ORIGIN")
+        if set(collector_origins) & {"SYNTHETIC_TEST", "DRY_RUN"}:
+            reasons.append("SYNTHETIC_IMAGE_EVIDENCE")
     p2 = _nested(metrics, "systems", "P2") or {}
     images = probe_manifest.get("images") or []
     all_digests_immutable = bool(images) and all(
@@ -1559,6 +1694,7 @@ def _adapt_image_functional(package: Path) -> EvidenceCandidate:
         },
         provenance={
             "git_revision": manifest.get("git_revision"),
+            "collector_origins": collector_origins,
             "environment": manifest.get("environment_identity"),
             "dataset": manifest.get("dataset_identity"),
             "random_seeds": manifest.get("random_seeds"),
@@ -1569,11 +1705,22 @@ def _adapt_image_functional(package: Path) -> EvidenceCandidate:
             "probe_count": status.get("total_probes"),
             "catalog_underclaim_count": p2.get("catalog_underclaim_count"),
             "required_probe_not_defined_count": p2.get("required_probe_not_defined_count"),
+            "collector_origins": collector_origins,
+        },
+        authentication={
+            "package_validator": "validate_e5_evidence",
+            "validator_status": validation.get("validator_status"),
+            "collector_origins": collector_origins,
+            "collector_authentic": collector_authentic,
+            "recommendation_provenance_verified": current_schema
+            and validation_status == VALIDATION_PASS,
+            "source_checksums_verified": validation_status == VALIDATION_PASS,
         },
         artifacts=[
             _artifact(manifest_path, package),
             *([_artifact(metrics_path, package)] if metrics_path.is_file() else []),
             *([_artifact(probe_manifest_path, package)] if probe_manifest_path.is_file() else []),
+            *([_artifact(probe_results_path, package)] if probe_results_path.is_file() else []),
             *([_artifact(status_path, package)] if status_path.is_file() else []),
         ],
         reason_codes=reasons,
@@ -1604,22 +1751,57 @@ def _verify_sha256s(package: Path) -> None:
 def _adapt_image_storage(package: Path, evidence_path: Path) -> EvidenceCandidate:
     validation_errors: list[str] = []
     evidence: dict[str, Any] = {}
+    validation: dict[str, Any] = {}
     try:
         evidence = _read_json(evidence_path)
         validate_storage_evidence(evidence)
-        _verify_sha256s(package)
+        from evaluation_v5.image_storage.validate_evidence import (
+            validate_e5_storage_evidence,
+        )
+
+        validation = validate_e5_storage_evidence(package)
     except Exception as exc:
         validation_errors.append(str(exc))
     stage = str(evidence.get("split_stage") or "unknown").lower()
-    execution_status = str(evidence.get("execution_status") or "UNKNOWN")
-    claims_permitted = bool(evidence.get("claims_permitted"))
+    execution_status = str(
+        validation.get("execution_status")
+        or evidence.get("execution_status")
+        or "UNKNOWN"
+    )
     validation_status = VALIDATION_FAIL if validation_errors else VALIDATION_PASS
+    collector_origin = str(
+        validation.get("collector_origin")
+        or _nested(evidence, "collector", "origin")
+        or _nested(evidence, "provenance", "storage_collector_origin")
+        or "UNRECORDED"
+    )
+    collector_authentic = bool(validation.get("collector_authentic"))
+    current_schema = validation.get("validator_status") == "CURRENT_VALID"
+    recommendation_provenance_verified = bool(
+        validation.get("recommendation_split_valid")
+    )
+    claims_permitted = bool(
+        evidence.get("claims_permitted")
+        and validation_status == VALIDATION_PASS
+        and current_schema
+        and collector_authentic
+        and recommendation_provenance_verified
+        and validation.get("eligible_as_current_e5_evidence")
+    )
     eligibility, reasons = _eligible_state(
         stage=stage,
         execution_status=execution_status,
         claims_permitted=claims_permitted,
         validation_status=validation_status,
     )
+    if not current_schema:
+        reasons.append("LEGACY_STORAGE_SCHEMA_NOT_CLAIM_ELIGIBLE")
+    if not collector_authentic:
+        reasons.append("UNAUTHENTICATED_STORAGE_COLLECTOR_ORIGIN")
+        if collector_origin in {"SYNTHETIC_TEST", "DRY_RUN"}:
+            reasons.append("SYNTHETIC_STORAGE_EVIDENCE")
+    if current_schema and not recommendation_provenance_verified:
+        reasons.append("STORAGE_RECOMMENDATION_PROVENANCE_INVALID")
     prefixes = evidence.get("prefixes") or []
     all_nonexpanding = bool(prefixes) and all(
         isinstance(row.get("unique_layer_bytes"), int)
@@ -1714,17 +1896,32 @@ def _adapt_image_storage(package: Path, evidence_path: Path) -> EvidenceCandidat
                 h7_source,
             ) if h7_source else {}
         },
-        tests={"criterion": "EXACT_ORDERED_PREFIX_STORAGE"},
+        tests={
+            "criterion": "EXACT_ORDERED_PREFIX_STORAGE",
+            "package_validator": validation,
+        },
         semantic_provenance={
             "catalog.version": catalog.get("version"),
             "catalog.file_sha256": catalog.get("file_sha256"),
             "p2.pipeline_version": systems.get("P2"),
         },
-        provenance=evidence.get("provenance") or {},
+        provenance={
+            **dict(evidence.get("provenance") or {}),
+            "collector_origin": collector_origin,
+        },
+        authentication={
+            "package_validator": "validate_e5_storage_evidence",
+            "validator_status": validation.get("validator_status"),
+            "collector_origin": collector_origin,
+            "collector_authentic": collector_authentic,
+            "recommendation_provenance_verified": recommendation_provenance_verified,
+            "source_checksums_verified": validation_status == VALIDATION_PASS,
+        },
         metadata={
             "environment": evidence.get("platform") or {},
             "measurement_method": evidence.get("measurement_method"),
             "catalog_prefix_count": len(prefixes),
+            "collector_origin": collector_origin,
         },
         artifacts=[_artifact(evidence_path, package)],
         reason_codes=reasons,
@@ -1867,6 +2064,7 @@ def _candidate_decision_signature(candidate: EvidenceCandidate) -> str:
             "metrics": candidate.metrics,
             "tests": candidate.tests,
             "semantic_provenance": candidate.semantic_provenance,
+            "authentication": candidate.authentication,
         }
     )
 
@@ -2037,6 +2235,10 @@ def select_evidence(
                     "execution_status": candidate.execution_status,
                     "validation_status": candidate.validation_status,
                     "claim_eligibility": candidate.claim_eligibility,
+                    "authentication": candidate.authentication,
+                    "semantic_provenance": candidate.semantic_provenance,
+                    "source_provenance": candidate.provenance,
+                    "reason_codes": sorted(set(candidate.reason_codes)),
                     "integrity_errors": integrity[id(candidate)],
                     "disposition": disposition,
                     "duplicate_reference_of": duplicate_of,
@@ -2070,21 +2272,59 @@ def select_evidence(
 def check_provenance(
     selected: Mapping[str, EvidenceCandidate],
     registry: Mapping[str, Any],
-    freeze: Mapping[str, Any],
+    freeze: freeze_api.VerifiedProductionFreeze,
 ) -> tuple[dict[str, Any], set[str]]:
     """Check semantic identities against the freeze and disclose environments."""
+
+    if not isinstance(freeze, freeze_api.VerifiedProductionFreeze):
+        raise TypeError(
+            "claim provenance requires a VerifiedProductionFreeze capability"
+        )
+    freeze = freeze_api.reverify_production_freeze(freeze)
 
     requirements = {row["id"]: row for row in registry["evidence_requirements"]}
     comparisons: list[dict[str, Any]] = []
     blocked: set[str] = set()
     for requirement_id, candidate in selected.items():
+        if requirement_id in {
+            "offline_recommendation",
+            "natural_language_robustness",
+            "p2_p3",
+        }:
+            expected_freeze_identity = freeze.identity
+            observed_freeze_identity = candidate.provenance.get(
+                "freeze_identity"
+            )
+            freeze_identity_status = (
+                "MATCH"
+                if observed_freeze_identity == expected_freeze_identity
+                else "MISSING"
+                if observed_freeze_identity is None
+                else "MISMATCH"
+            )
+            if freeze_identity_status != "MATCH":
+                blocked.add(requirement_id)
+            comparisons.append(
+                {
+                    "scope": "PRODUCTION_FREEZE_IDENTITY",
+                    "requirement_id": requirement_id,
+                    "semantic_key": "freeze.identity",
+                    "digest_namespace": "production_freeze_manifest_bytes",
+                    "freeze_digest_namespace": "production_freeze_manifest_bytes",
+                    "freeze_pointer": None,
+                    "expected": expected_freeze_identity,
+                    "observed": observed_freeze_identity,
+                    "status": freeze_identity_status,
+                    "source_manifest": str(candidate.manifest_path.resolve()),
+                }
+            )
         for field in requirements[requirement_id]["semantic_provenance"]:
             key = field["key"]
             observed = candidate.semantic_provenance.get(key)
             observed_namespace = SEMANTIC_DIGEST_KEYS.get(key)
             expected_namespace = FREEZE_POINTER_DIGEST_NAMESPACES.get(field["freeze_pointer"])
             try:
-                expected = json_pointer_get(freeze, field["freeze_pointer"])
+                expected = freeze.configuration_value(field["freeze_pointer"])
             except KeyError:
                 expected = None
             if (
@@ -2123,7 +2363,26 @@ def check_provenance(
             key = str(field["key"])
             group = str(field["comparison_group"])
             namespace = str(field["namespace"])
-            observed = candidate.semantic_provenance.get(key)
+            declared = candidate.semantic_provenance.get(key)
+            observed = candidate.canonical_source_identity(key)
+            if declared is not None and observed is not None and declared != observed:
+                blocked.add(requirement_id)
+                comparisons.append(
+                    {
+                        "scope": "SOURCE_PROVENANCE_BINDING",
+                        "requirement_id": requirement_id,
+                        "semantic_key": key,
+                        "comparison_group": group,
+                        "digest_namespace": namespace,
+                        "freeze_digest_namespace": None,
+                        "freeze_pointer": None,
+                        "expected": observed,
+                        "observed": declared,
+                        "status": "MISMATCH",
+                        "source_manifest": str(candidate.manifest_path.resolve()),
+                    }
+                )
+                continue
             if observed is None:
                 blocked.add(requirement_id)
                 comparisons.append(
@@ -2227,11 +2486,174 @@ def check_provenance(
         )
     return {
         "schema_version": PROVENANCE_SCHEMA_VERSION,
+        "production_freeze": freeze.identity,
         "semantic_comparisons": comparisons,
         "disclosures": disclosures,
         "blocked_requirements": sorted(blocked),
         "semantic_status": "PASS" if not blocked else "FAIL",
     }, blocked
+
+
+def _claim_authentication_errors(candidate: EvidenceCandidate) -> list[str]:
+    """Recheck origin-sensitive adapter results at the claim boundary."""
+
+    authentication = candidate.authentication
+    errors: list[str] = []
+    if candidate.requirement_id == "resource_efficiency":
+        resource_origin = authentication.get("collector_origin")
+        if (
+            resource_origin != "REAL_KUBERNETES_COLLECTOR"
+            or authentication.get("collector_authentic") is not True
+        ):
+            errors.append("UNAUTHENTICATED_RESOURCE_COLLECTOR_ORIGIN")
+        if resource_origin in {"SYNTHETIC", "TEST", "FAKE", "DRY_RUN"}:
+            errors.append("SYNTHETIC_RESOURCE_EVIDENCE")
+    elif candidate.requirement_id == "image_functional":
+        origins = set(authentication.get("collector_origins") or [])
+        if (
+            authentication.get("validator_status") != "CURRENT_VALID"
+            or authentication.get("collector_authentic") is not True
+            or not origins
+            or not origins.issubset({"LIVE_DOCKER", "LIVE_KUBERNETES"})
+        ):
+            errors.append("UNAUTHENTICATED_IMAGE_COLLECTOR_ORIGIN")
+        if origins & {"SYNTHETIC_TEST", "DRY_RUN"}:
+            errors.append("SYNTHETIC_IMAGE_EVIDENCE")
+        if authentication.get("recommendation_provenance_verified") is not True:
+            errors.append("IMAGE_RECOMMENDATION_PROVENANCE_INVALID")
+    elif candidate.requirement_id == "image_storage":
+        storage_origin = authentication.get("collector_origin")
+        if candidate.schema_version != "protocol-v5-image-storage-evidence-v1.1.0":
+            errors.append("LEGACY_STORAGE_SCHEMA_NOT_CLAIM_ELIGIBLE")
+        if (
+            authentication.get("validator_status") != "CURRENT_VALID"
+            or storage_origin != "REAL_REGISTRY"
+            or authentication.get("collector_authentic") is not True
+        ):
+            errors.append("UNAUTHENTICATED_STORAGE_COLLECTOR_ORIGIN")
+        if storage_origin in {"SYNTHETIC_TEST", "DRY_RUN"}:
+            errors.append("SYNTHETIC_STORAGE_EVIDENCE")
+        if authentication.get("recommendation_provenance_verified") is not True:
+            errors.append("STORAGE_RECOMMENDATION_PROVENANCE_INVALID")
+    if authentication.get("source_checksums_verified") is not True:
+        errors.append("SOURCE_CHECKSUMS_NOT_VERIFIED")
+    if candidate.requirement_id in {
+        "offline_recommendation",
+        "natural_language_robustness",
+        "p2_p3",
+    } and authentication.get("split_custody_verified") is not True:
+        errors.append("CONFIRMATORY_SPLIT_CUSTODY_NOT_VERIFIED")
+    return sorted(set(errors))
+
+
+def select_authenticated_evidence(
+    candidates: Sequence[EvidenceCandidate],
+    registry: Mapping[str, Any],
+    *,
+    freeze: freeze_api.VerifiedProductionFreeze | None,
+    freeze_error: str | None = None,
+    selection: Mapping[str, Any] | None = None,
+    repository_root: Path | None = None,
+) -> tuple[
+    dict[str, EvidenceCandidate],
+    dict[str, Any],
+    set[str],
+    dict[str, Any],
+    set[str],
+]:
+    """Select only packages authenticated through validators and the freeze.
+
+    This is the sole production path from discovered evidence to claim
+    evaluation. Directory presence and caller-supplied manifest labels are
+    intentionally insufficient.
+    """
+
+    selected, report, fatal = select_evidence(
+        candidates,
+        registry,
+        selection=selection,
+        repository_root=repository_root,
+    )
+    rows = {
+        row["requirement_id"]: row for row in report.get("requirements") or []
+    }
+    all_requirements = {row["id"] for row in registry["evidence_requirements"]}
+    if not isinstance(freeze, freeze_api.VerifiedProductionFreeze):
+        code = "PRODUCTION_FREEZE_AUTHENTICATION_FAILED"
+        detail = f":{freeze_error}" if freeze_error else ""
+        report["global_errors"].append(code + detail)
+        fatal.update(all_requirements)
+        for requirement_id, row in rows.items():
+            row["reason_codes"] = sorted(
+                set(row.get("reason_codes") or []) | {code}
+            )
+            if requirement_id in selected:
+                row["selected_package"] = None
+                row["selected_manifest_sha256"] = None
+                row["selection_mode"] = "REJECTED_AUTHENTICATION"
+        selected.clear()
+        return selected, report, fatal, {
+            "schema_version": PROVENANCE_SCHEMA_VERSION,
+            "production_freeze": None,
+            "semantic_comparisons": [],
+            "disclosures": [],
+            "blocked_requirements": sorted(all_requirements),
+            "semantic_status": "FAIL",
+        }, set(all_requirements)
+
+    for requirement_id, candidate in list(selected.items()):
+        errors = _candidate_integrity_errors(candidate)
+        errors.extend(_claim_authentication_errors(candidate))
+        if not errors:
+            continue
+        unique_errors = sorted(set(errors))
+        candidate.reason_codes.extend(unique_errors)
+        row = rows[requirement_id]
+        row["reason_codes"] = sorted(
+            set(row.get("reason_codes") or []) | set(unique_errors)
+        )
+        row["selected_package"] = None
+        row["selected_manifest_sha256"] = None
+        row["selection_mode"] = "REJECTED_AUTHENTICATION"
+        report["global_errors"].append(
+            f"EVIDENCE_AUTHENTICATION_FAILED:{requirement_id}:"
+            + "|".join(unique_errors)
+        )
+        fatal.add(requirement_id)
+        selected.pop(requirement_id, None)
+
+    try:
+        provenance_report, provenance_blocked = check_provenance(
+            selected, registry, freeze
+        )
+    except Exception as exc:
+        report["global_errors"].append(
+            f"PRODUCTION_FREEZE_REVERIFICATION_FAILED:{exc}"
+        )
+        fatal.update(all_requirements)
+        selected.clear()
+        return selected, report, fatal, {
+            "schema_version": PROVENANCE_SCHEMA_VERSION,
+            "production_freeze": None,
+            "semantic_comparisons": [],
+            "disclosures": [],
+            "blocked_requirements": sorted(all_requirements),
+            "semantic_status": "FAIL",
+        }, set(all_requirements)
+
+    for requirement_id in sorted(provenance_blocked):
+        row = rows[requirement_id]
+        row["reason_codes"] = sorted(
+            set(row.get("reason_codes") or [])
+            | {"SOURCE_PROVENANCE_MISMATCH"}
+        )
+        row["selected_package"] = None
+        row["selected_manifest_sha256"] = None
+        row["selection_mode"] = "REJECTED_AUTHENTICATION"
+        fatal.add(requirement_id)
+        selected.pop(requirement_id, None)
+    report["production_freeze"] = freeze.identity
+    return selected, report, fatal, provenance_report, provenance_blocked
 
 
 def _claims_for_requirement(registry: Mapping[str, Any]) -> dict[str, list[str]]:
@@ -2591,6 +3013,9 @@ def evaluate_claims(
                     "package_path": str(candidate.package_path.resolve()),
                     "manifest_path": str(candidate.manifest_path.resolve()),
                     "manifest_sha256": candidate.manifest_sha256,
+                    "semantic_provenance": candidate.semantic_provenance,
+                    "source_provenance": candidate.provenance,
+                    "authentication": candidate.authentication,
                     "artifacts": candidate.artifacts,
                 }
             )
@@ -3005,13 +3430,14 @@ def run_research_analysis(
 
     registry = load_claim_registry(registry_path)
     bootstrap_errors: list[str] = []
+    verified_freeze: freeze_api.VerifiedProductionFreeze | None = None
+    freeze_error: str | None = None
     try:
-        freeze = _read_json(freeze_path)
-        if freeze.get("p3_gate") is None or freeze.get("systems") is None:
-            raise ResearchAnalysisError("freeze lacks system or P3-gate identities")
+        verified_freeze = freeze_api.verify_production_freeze(freeze_path)
+        freeze = verified_freeze.configuration_snapshot
     except Exception as exc:
         freeze = {}
-        bootstrap_errors.append(f"FREEZE_INVALID:{exc}")
+        freeze_error = str(exc)
     threshold: Mapping[str, Any] | None = None
     if p3_threshold_path is not None:
         try:
@@ -3032,24 +3458,23 @@ def run_research_analysis(
         freeze_path=freeze_path,
         p3_threshold_path=p3_threshold_path,
     )
-    selected, selection_report, fatal_requirements = select_evidence(
+    (
+        selected,
+        selection_report,
+        fatal_requirements,
+        provenance_report,
+        provenance_blocked,
+    ) = select_authenticated_evidence(
         candidates,
         registry,
+        freeze=verified_freeze,
+        freeze_error=freeze_error,
         selection=selection,
         repository_root=registry_path.resolve().parents[1],
     )
-    for requirement_id, candidate in list(selected.items()):
-        integrity_errors = _candidate_integrity_errors(candidate)
-        if integrity_errors:
-            selection_report["global_errors"].append(
-                f"SELECTED_EVIDENCE_MUTATED:{requirement_id}:{'|'.join(integrity_errors)}"
-            )
-            fatal_requirements.add(requirement_id)
-            selected.pop(requirement_id, None)
     if bootstrap_errors:
         selection_report["global_errors"].extend(bootstrap_errors)
         fatal_requirements.update(row["id"] for row in registry["evidence_requirements"])
-    provenance_report, provenance_blocked = check_provenance(selected, registry, freeze)
     threats = generate_threats(
         registry=registry,
         candidates=candidates,
@@ -3338,7 +3763,8 @@ def _parser() -> argparse.ArgumentParser:
         command.add_argument(
             "--freeze",
             type=Path,
-            default=Path("results_v5/protocol-v5.0.0/freezes/frozen-configuration.json"),
+            required=True,
+            help="Authoritative freezes/<freeze-id>/freeze-manifest.json artifact.",
         )
         command.add_argument("--p3-threshold", type=Path)
     discover.add_argument("--selection", type=Path)
@@ -3357,9 +3783,16 @@ def main(argv: Sequence[str] | None = None) -> int:
             print(_json_text(result), end="")
             return EXIT_SUCCESS
         registry = load_claim_registry(args.registry)
-        freeze = _read_json(args.freeze)
         threshold = load_p3_threshold(args.p3_threshold) if args.p3_threshold else None
         if args.command == "discover":
+            verified_freeze: freeze_api.VerifiedProductionFreeze | None = None
+            freeze_error: str | None = None
+            try:
+                verified_freeze = freeze_api.verify_production_freeze(args.freeze)
+                freeze = verified_freeze.configuration_snapshot
+            except Exception as exc:
+                freeze = {}
+                freeze_error = str(exc)
             candidates = discover_evidence(
                 args.results_root,
                 registry=registry,
@@ -3369,9 +3802,11 @@ def main(argv: Sequence[str] | None = None) -> int:
                 p3_threshold_path=args.p3_threshold,
             )
             selection = load_selection(args.selection, registry_path=args.registry) if args.selection else None
-            selected, report, fatal = select_evidence(
+            selected, report, fatal, provenance, blocked = select_authenticated_evidence(
                 candidates,
                 registry,
+                freeze=verified_freeze,
+                freeze_error=freeze_error,
                 selection=selection,
                 repository_root=args.registry.resolve().parents[1],
             )
@@ -3381,8 +3816,9 @@ def main(argv: Sequence[str] | None = None) -> int:
                         "schema_version": EVIDENCE_INVENTORY_SCHEMA_VERSION,
                         "candidates": [row.to_dict() for row in candidates],
                         "selection": report,
+                        "provenance": provenance,
                         "selected_requirements": sorted(selected),
-                        "fatal_requirements": sorted(fatal),
+                        "fatal_requirements": sorted(fatal | blocked),
                     }
                 ),
                 end="",
@@ -3421,6 +3857,7 @@ __all__ = [
     "generate_threats",
     "main",
     "run_research_analysis",
+    "select_authenticated_evidence",
     "select_evidence",
     "validate_research_analysis_package",
 ]

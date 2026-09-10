@@ -50,6 +50,9 @@
           "package_path": {"type": "string"},
           "manifest_path": {"type": "string"},
           "manifest_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+          "semantic_provenance": {"type": "object"},
+          "source_provenance": {"type": "object"},
+          "authentication": {"type": "object"},
           "artifacts": {"type": "array", "items": {"type": "object"}}
         }
       }

@@ -207,6 +207,29 @@ class VerifiedProductionFreeze(MappingABC[str, Any]):
             "source": "confirmatory_freeze_manifest",
         }
 
+    @property
+    def configuration_snapshot(self) -> DesignSnapshot:
+        """Return the schema-validated nested configuration as typed state."""
+
+        return DesignSnapshot(self._manifest["configuration_snapshot"])
+
+    def configuration_value(self, pointer: str) -> Any:
+        """Read one canonical configuration value through a JSON pointer.
+
+        Confirmatory consumers use this accessor instead of accepting a second,
+        caller-supplied flat snapshot or reimplementing the freeze schema.
+        """
+
+        if not isinstance(pointer, str) or not pointer.startswith("/"):
+            raise KeyError(pointer)
+        current: Any = self.configuration_snapshot.to_dict()
+        for encoded in pointer[1:].split("/"):
+            key = encoded.replace("~1", "/").replace("~0", "~")
+            if not isinstance(current, Mapping) or key not in current:
+                raise KeyError(pointer)
+            current = current[key]
+        return current
+
     def __getitem__(self, key: str) -> Any:
         return self._manifest[key]
 

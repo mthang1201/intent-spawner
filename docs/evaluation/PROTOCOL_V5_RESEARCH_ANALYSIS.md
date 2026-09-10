@@ -2,10 +2,10 @@
 
 > For complete evidence auditing and portable reproduction, run `make v5-audit`
 > and read [PROTOCOL_V5_FINAL_REPORT.md](PROTOCOL_V5_FINAL_REPORT.md).
-> The `frozen-configuration.json` used in the historical examples below is a
-> configuration snapshot, not an authoritative production freeze. The final
-> audit checks that distinction separately and preserves legacy validation
-> failures instead of treating discovery success as a complete audit pass.
+> `frozen-configuration.json` is a design snapshot, not an authoritative
+> production freeze. Claim analysis rejects it. Confirmatory analysis requires
+> the canonical `freezes/<freeze-id>/freeze-manifest.json` artifact produced and
+> source-reverified by `evaluation_v5.freeze`.
 
 ## Purpose and claim boundary
 
@@ -41,7 +41,7 @@ Discover and validate candidates without writing an analysis package:
 ```bash
 PYTHONPATH=. .venv/bin/python -m evaluation_v5.analysis.research_analysis discover \
   --results-root results_v5/protocol-v5.0.0 \
-  --freeze results_v5/protocol-v5.0.0/freezes/frozen-configuration.json
+  --freeze results_v5/protocol-v5.0.0/freezes/<freeze-id>/freeze-manifest.json
 ```
 
 Generate an immutable package:
@@ -49,7 +49,7 @@ Generate an immutable package:
 ```bash
 PYTHONPATH=. .venv/bin/python -m evaluation_v5.analysis.research_analysis analyze \
   --results-root results_v5/protocol-v5.0.0 \
-  --freeze results_v5/protocol-v5.0.0/freezes/frozen-configuration.json \
+  --freeze results_v5/protocol-v5.0.0/freezes/<freeze-id>/freeze-manifest.json \
   --output-root results_v5/protocol-v5.0.0/analysis \
   --run-id research-analysis-YYYYMMDDTHHMMSSZ
 ```
@@ -90,23 +90,29 @@ H8 is optional while P3 is not retained and does not by itself cause exit 3.
 
 ## Evidence selection and provenance
 
-Discovery is schema-first. Zero eligible packages records missing evidence;
-one is selected automatically; more than one requires a checksum-bound
-selection. Every discovered package, including ineligible development and
-dry-run packages, remains visible in `derived/evidence-inventory.json`.
+Discovery is schema-first. One authenticated selection path revalidates the
+authoritative production freeze, experiment package, execution and split
+status, collector origin, recommendation provenance, and source checksums
+before a candidate reaches claim evaluation. Zero eligible packages records
+missing evidence; one is selected automatically; more than one requires a
+checksum-bound selection. Every discovered package, including ineligible
+development, synthetic, and dry-run packages, remains visible in
+`derived/evidence-inventory.json`.
 
-Semantic identities are compared against the declared freeze and across
-selected experiments. The comparison includes the applicable P1/P2/P3
+Semantic identities are read from the verified freeze's typed nested
+configuration accessor and compared against each validated evidence source.
+The comparison includes the applicable P1/P2/P3
 pipeline identities, candidate corpus, indexes, prompt identities,
 configuration, deterministic constraints, and ranker. A missing or changed
 semantic identity blocks affected claims. Digest types are named explicitly,
 so a catalog-file digest is never compared with a canonicalized catalog-object
 digest.
 
-E1 and E2 additionally require the same declared offline benchmark dataset and
-split identities. Cross-experiment fields are compared only inside their
-declared comparison group and namespace; unrelated E3, E4, and E5 dataset
-digests are never equated.
+E1 and E2 additionally require the same offline benchmark dataset and split
+identities from their validated source-provenance objects. Duplicate flattened
+strings cannot override those canonical identities. Cross-experiment fields
+are compared only inside their declared comparison group and namespace;
+unrelated E3, E4, and E5 dataset digests are never equated.
 
 Git revisions, dirty-tree state, runtime, platform, and cluster identities are
 recorded and differences are disclosed as limitations. They cannot override a
@@ -150,7 +156,8 @@ dependence.
 
 The available Protocol-v5 tree contains development E1/E2 evidence, no
 executed E3 study, dry-run E4 packages, development E5 functional evidence, no
-E5 storage measurements, and an unretained P3 gate. Therefore a current-tree
-analysis is expected to exit 3 with every claim `NOT_EXECUTED`. This is an
-evidence result, not a software failure, and must not be rewritten as a zero
-effect or a negative confirmatory finding.
+authenticated E5 storage measurements, and no tracked authoritative production
+freeze. Running against the design snapshot therefore exits 2 with a failed,
+non-claimable audit package. After an authorized production freeze exists, the
+same missing experiment evidence remains `NOT_EXECUTED`; it is never rewritten
+as a zero effect or a negative confirmatory finding.

@@ -193,6 +193,16 @@ def load_claim_registry(path: Path = REGISTRY_PATH) -> dict[str, Any]:
             if len(decision_paths) != len(set(decision_paths)):
                 raise ResearchContractError(f"{claim['id']}: decision paths must be unique")
     if registry["schema_version"] == CLAIM_REGISTRY_SCHEMA_VERSION:
+        requirements_by_id = {
+            requirement["id"]: requirement
+            for requirement in registry["evidence_requirements"]
+        }
+        if requirements_by_id["image_storage"]["accepted_schema_versions"] != [
+            STORAGE_SCHEMA_VERSION
+        ]:
+            raise ResearchContractError(
+                "image_storage claims require the authenticated storage evidence schema"
+            )
         for requirement in registry["evidence_requirements"]:
             for field in requirement["semantic_provenance"]:
                 key_namespace = DIGEST_NAMESPACE_BY_KEY.get(field["key"])
@@ -248,6 +258,23 @@ def validate_storage_evidence(value: Mapping[str, Any]) -> None:
     else:
         raise ResearchContractError("storage evidence schema_version is unsupported")
     _validate_schema(value, schema_path)
+    if schema_version == STORAGE_SCHEMA_VERSION:
+        collector = value["collector"]
+        collector_origin = collector["origin"]
+        provenance_origin = value["provenance"]["storage_collector_origin"]
+        if collector_origin != provenance_origin:
+            raise ResearchContractError(
+                "storage evidence provenance lost its collector origin"
+            )
+        real_observation = (
+            collector_origin == "REAL_REGISTRY"
+            and collector["evidence_classification"] == "REAL_OBSERVATION"
+            and collector["raw_observation_count"] > 0
+        )
+        if (value["execution_status"] == "OBSERVED") is not real_observation:
+            raise ResearchContractError(
+                "storage execution status is not authenticated by collector origin"
+            )
     catalog_digests = value["catalog"]["ordered_image_digests"]
     prefixes = value["prefixes"]
     if len(prefixes) != len(catalog_digests):
