@@ -20,6 +20,7 @@ from evaluation_v5.final_audit.checks import (
     inspect, p3_findings, placeholder_findings, storage_identity_findings,
 )
 from evaluation_v5.final_audit.claims import load_claim_evidence, synthetic_origin_scan
+from evaluation_v5.final_audit.completion import _remaining_execution_requirements
 from evaluation_v5.final_audit.reproduce import analyze, compare_json
 from evaluation_v5.final_audit.reporting import figures, render_report
 
@@ -177,6 +178,23 @@ def test_e3_lf_regeneration_is_versioned_and_preserves_historical_identity():
     )
     assert manifest["execution_status"] == "NOT_EXECUTED"
     assert manifest["claims_permitted"] is False
+
+
+def test_completion_audit_makes_p3_confirmatory_execution_conditional():
+    remaining = _remaining_execution_requirements(
+        {
+            "p3_state": "NOT_RETAINED_OR_NOT_PRESENT",
+            "experiment_states": [
+                {"experiment": "E1", "status": "NOT_EXECUTED"},
+                {"experiment": "E6", "status": "NOT_EXECUTED"},
+            ],
+        },
+        [{"id": 1, "verdict": "UNVERIFIED"}],
+    )
+    assert remaining[0].startswith("authoritative freeze")
+    assert "E1: authenticated real evidence (NOT_EXECUTED)" in remaining
+    assert any("E6: no confirmatory execution is authorized unless" in row for row in remaining)
+    assert not any("E6: authenticated real evidence" in row for row in remaining)
 
 
 def test_legacy_v1_probes_are_not_misclassified_as_unexecuted():

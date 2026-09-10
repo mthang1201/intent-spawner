@@ -163,6 +163,29 @@ def _display_path(path: Path, root: Path) -> str:
         return str(path.resolve())
 
 
+def _remaining_execution_requirements(
+    final_audit: dict[str, Any], blocking_checks: list[dict[str, Any]]
+) -> list[str]:
+    state_by_experiment: dict[str, list[str]] = {}
+    for row in final_audit.get("experiment_states") or []:
+        if row.get("status") in {"NOT_EXECUTED", "DEVELOPMENT_ONLY", "UNRESOLVED", "UNSUPPORTED"}:
+            state_by_experiment.setdefault(str(row.get("experiment")), []).append(str(row.get("status")))
+    remaining = []
+    for experiment, states in sorted(state_by_experiment.items()):
+        if experiment == "E6" and not str(final_audit.get("p3_state") or "").startswith("RETAINED_"):
+            remaining.append(
+                "E6: no confirmatory execution is authorized unless a frozen authenticated development gate retains P3 "
+                f"(current state {final_audit.get('p3_state', 'UNSUPPORTED')})"
+            )
+        else:
+            remaining.append(
+                f"{experiment}: authenticated real evidence ({'/'.join(sorted(set(states)))})"
+            )
+    if blocking_checks:
+        remaining.insert(0, "authoritative freeze, sealed split/custody, and isolation gates must pass")
+    return remaining
+
+
 def _markdown(audit: dict[str, Any]) -> str:
     lines = [
         "# Protocol-v5 16-prompt Completion Audit",
@@ -258,16 +281,7 @@ def build_completion_audit(
         row for row in final_audit.get("checks") or []
         if row.get("id") in {1, 2, 3, 4, 5} and row.get("verdict") != "PASS"
     ]
-    state_by_experiment: dict[str, list[str]] = {}
-    for row in final_audit.get("experiment_states") or []:
-        if row.get("status") in {"NOT_EXECUTED", "DEVELOPMENT_ONLY", "UNRESOLVED", "UNSUPPORTED"}:
-            state_by_experiment.setdefault(str(row.get("experiment")), []).append(str(row.get("status")))
-    remaining = [
-        f"{experiment}: authenticated real evidence ({'/'.join(sorted(set(states)))})"
-        for experiment, states in sorted(state_by_experiment.items())
-    ]
-    if blocking_checks:
-        remaining.insert(0, "authoritative freeze, sealed split/custody, and isolation gates must pass")
+    remaining = _remaining_execution_requirements(final_audit, blocking_checks)
     critical_synthetic = {"P11-1", "P14-1", "P16-1"}
     synthetic_closed = all(
         issue["status"] == "SATISFIED" for issue in issues if issue["id"] in critical_synthetic
