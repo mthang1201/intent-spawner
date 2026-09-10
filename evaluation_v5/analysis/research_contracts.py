@@ -19,7 +19,8 @@ LEGACY_REGISTRY_SCHEMA_PATH = ROOT / "benchmarks_v5" / "protocol-v5-claim-regist
 EVALUATED_CLAIM_SCHEMA_PATH = ROOT / "benchmarks_v5" / "protocol-v5-evaluated-claim-v1.1.schema.json"
 LEGACY_EVALUATED_CLAIM_SCHEMA_PATH = ROOT / "benchmarks_v5" / "protocol-v5-evaluated-claim-v1.schema.json"
 SELECTION_SCHEMA_PATH = ROOT / "benchmarks_v5" / "protocol-v5-evidence-selection-v1.schema.json"
-STORAGE_SCHEMA_PATH = ROOT / "benchmarks_v5" / "protocol-v5-image-storage-evidence-v1.schema.json"
+LEGACY_STORAGE_SCHEMA_PATH = ROOT / "benchmarks_v5" / "protocol-v5-image-storage-evidence-v1.schema.json"
+STORAGE_SCHEMA_PATH = ROOT / "benchmarks_v5" / "protocol-v5-image-storage-evidence-v1.1.schema.json"
 P3_THRESHOLD_SCHEMA_PATH = ROOT / "benchmarks_v5" / "protocol-v5-p3-overhead-threshold-v1.schema.json"
 
 CLAIM_REGISTRY_SCHEMA_VERSION = "protocol-v5-claim-registry-v1.1.0"
@@ -27,7 +28,8 @@ LEGACY_CLAIM_REGISTRY_SCHEMA_VERSION = "protocol-v5-claim-registry-v1.0.0"
 EVALUATED_CLAIM_SCHEMA_VERSION = "protocol-v5-evaluated-claim-v1.1.0"
 LEGACY_EVALUATED_CLAIM_SCHEMA_VERSION = "protocol-v5-evaluated-claim-v1.0.0"
 SELECTION_SCHEMA_VERSION = "protocol-v5-evidence-selection-v1.0.0"
-STORAGE_SCHEMA_VERSION = "protocol-v5-image-storage-evidence-v1.0.0"
+LEGACY_STORAGE_SCHEMA_VERSION = "protocol-v5-image-storage-evidence-v1.0.0"
+STORAGE_SCHEMA_VERSION = "protocol-v5-image-storage-evidence-v1.1.0"
 P3_THRESHOLD_SCHEMA_VERSION = "protocol-v5-p3-overhead-threshold-v1.0.0"
 CLAIM_STATUSES = ("SUPPORTED", "NOT_SUPPORTED", "NOT_EXECUTED")
 EXPECTED_CLAIMS = frozenset({"H1", "H2", "H3", "H4", "H5", "H6", "H7", "H7F", "H8"})
@@ -238,7 +240,14 @@ def load_selection(path: Path, *, registry_path: Path = REGISTRY_PATH) -> dict[s
 
 
 def validate_storage_evidence(value: Mapping[str, Any]) -> None:
-    _validate_schema(value, STORAGE_SCHEMA_PATH)
+    schema_version = value.get("schema_version")
+    if schema_version == STORAGE_SCHEMA_VERSION:
+        schema_path = STORAGE_SCHEMA_PATH
+    elif schema_version == LEGACY_STORAGE_SCHEMA_VERSION:
+        schema_path = LEGACY_STORAGE_SCHEMA_PATH
+    else:
+        raise ResearchContractError("storage evidence schema_version is unsupported")
+    _validate_schema(value, schema_path)
     catalog_digests = value["catalog"]["ordered_image_digests"]
     prefixes = value["prefixes"]
     if len(prefixes) != len(catalog_digests):

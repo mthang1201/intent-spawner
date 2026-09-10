@@ -34,6 +34,7 @@ from .storage_contracts import (
     PrefixStorageMeasurement,
     ScaleLevelEvaluationRecord,
     SplitStage,
+    StorageCollectorOrigin,
     StorageEvidenceRecord,
     StorageExecutionStatus,
     check_immutable_catalog_gate,
@@ -41,9 +42,10 @@ from .storage_contracts import (
     compute_pairwise_layer_reuse,
     get_experimental_catalog_config,
     get_ordered_catalog_images,
+    is_real_storage_collector_origin,
 )
 from .storage_figures import generate_all_figures
-from .storage_runner import BaseStorageRunner, create_storage_runner
+from .storage_runner import create_storage_runner
 from .validate_evidence import validate_e5_storage_evidence
 
 logger = logging.getLogger(__name__)
@@ -85,6 +87,17 @@ def _write_checksums(directory: Path) -> Path:
     return sums_file
 
 
+def _write_bytes_exclusive(path: Path, payload: bytes) -> Path:
+    """Create one immutable raw collector response without overwriting evidence."""
+
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("xb") as handle:
+        handle.write(payload)
+        handle.flush()
+        os.fsync(handle.fileno())
+    return path
+
+
 def _format_storage_markdown_report(
     *,
     run_id: str,
@@ -93,6 +106,7 @@ def _format_storage_markdown_report(
     execution_status: str,
     split_stage: str,
     claims_permitted: bool,
+    collector: Mapping[str, Any],
     measurement_method: str,
     target_arch: str,
     target_os: str,
@@ -113,6 +127,11 @@ def _format_storage_markdown_report(
     lines.append(f"- **Execution Status**: `{execution_status}`")
     lines.append(f"- **Split Stage**: `{split_stage}`")
     lines.append(f"- **Claims Permitted**: `{claims_permitted}`")
+    lines.append(f"- **Collector Origin**: `{collector.get('origin')}`")
+    lines.append(
+        f"- **Collector**: `{collector.get('collector_name')}` "
+        f"(`{collector.get('collector_version')}`)"
+    )
     lines.append(f"- **Size Domain**: `{SIZE_DOMAIN_COMPRESSED_OCI_BLOB}` (compressed OCI manifest layer blobs)")
     lines.append(f"- **Measurement Method**: `{measurement_method}`")
     lines.append(f"- **Target Platform**: `{target_os}/{target_arch}`")
@@ -153,16 +172,15 @@ def _format_storage_markdown_report(
         "**Storage Accounting Semantics**:\n"
         "- `LogicalImageBytes`: Sum of every ordered manifest layer descriptor occurrence in the prefix.\n"
         "- `UniqueLayerBytes`: Cumulative byte volume of unique content-addressed layer digests in the prefix.\n"
-        "- `Deduplication Savings`: `LogicalImageBytes - UniqueLayerBytes`.\n\n"
-        "> [!NOTE]\n"
-        "> **Within-Image Duplicate Layer Descriptors (Prefix 1 Audit)**:\n"
-        "> For prefix 1 (`minimal-python`), `LogicalImageBytes = 575,161,576 B` and `UniqueLayerBytes = 575,161,288 B`, "
-        "yielding a 288-byte difference. This difference is fully and deterministically explained by raw OCI manifest analysis: "
-        "the 32-byte empty tar layer digest `sha256:4f4fb700ef54461cfa02571ae0db9a0dc1e0cdb5577484a6d75e68dc38e8acc1` "
-        "appears 10 times in `minimal-python`'s ordered layer descriptors (from Dockerfile metadata instructions). "
-        "Counting repeated descriptors once produces $(10 - 1) \\times 32\\text{ B} = 288\\text{ B}$ of within-image deduplication. "
-        "Zero unexplained residual bytes exist.\n"
+        "- `Deduplication Savings`: `LogicalImageBytes - UniqueLayerBytes`.\n"
     )
+    if prefixes and prefixes[0].within_image_duplicate_bytes:
+        lines.append(
+            "> [!NOTE]\n"
+            "> Prefix 1 contains repeated layer descriptors. Its logical-versus-unique "
+            f"difference is exactly {prefixes[0].within_image_duplicate_bytes:,} B, "
+            "derived from the raw ordered descriptors in this package.\n"
+        )
     lines.append("| Prefix | Introduced Image | Naive Logical Bytes | Unique Layer Bytes | Deduplication Savings | Savings Ratio | Within-Image Dups |")
     lines.append("| :---: | :--- | :---: | :---: | :---: | :---: | :---: |")
 
@@ -196,9 +214,7 @@ def _format_storage_markdown_report(
         "Layer matching uses exact content digest equality (`layer.digest == other.digest`).\n"
         "Pairwise shared layer count and byte metrics operate on **unique content-addressed layer digests**, "
         "not on ordered descriptor occurrences. Diagonal entries reflect the self unique layer digest count and "
-        "self unique layer byte volume of each image.\n\n"
-        "*Example*: `minimal-python ∩ scipy-data-science`: 23 shared unique content digests, 575,161,288 shared unique layer bytes "
-        "(100% of minimal-python's unique layer digests are present in scipy-data-science).\n"
+        "self unique layer byte volume of each image.\n"
     )
     lines.append("### 6.1 Pairwise Shared Layer Storage (Bytes - Unique Digest Semantics)\n")
     short_names = [img.replace("-deep-learning", "").replace("-data-science", "") for img in pairwise_analysis.image_ids]
@@ -270,6 +286,8 @@ def _format_storage_markdown_report(
     lines.append("## 10. Honest Scientific Claim Boundary\n")
     support_h7 = (
         execution_status == StorageExecutionStatus.OBSERVED.value
+        and claims_permitted
+        and is_real_storage_collector_origin(str(collector.get("origin", "")))
         and all_nonexpanding
         and final_savings > 0
     )
@@ -317,8 +335,9 @@ def _format_storage_markdown_report(
     elif execution_status == StorageExecutionStatus.NOT_EXECUTED.value:
         lines.append(
             "> [!NOTE]\n"
-            "> **Dry-Run / Not Executed Notice**: Live layer inspection was not performed. "
-            "Evidence status is sealed as `NOT_EXECUTED`. No empirical storage claims are asserted.\n"
+            "> **Non-Observed / Not Executed Notice**: A real registry or container-storage "
+            "observation was not performed. Test calculations, if present, are sealed as "
+            "`NOT_EXECUTED`. No empirical storage claims are asserted.\n"
         )
 
     return "\n".join(lines)
@@ -365,24 +384,77 @@ def run_storage_evaluation(
         injected_image_layers=injected_image_layers,
     )
 
-    # Execute layer measurement across available catalog images
-    inspections, prefixes, execution_status = runner.measure_all()
+    # Execute layer measurement across available catalog images. The caller's
+    # mode string selects a collector but never supplies evidence status.
+    inspections, prefixes, reported_status = runner.measure_all()
+    execution_status = runner.execution_status
+    if reported_status != execution_status:
+        raise ValueError("Storage runner status disagrees with its fixed collector origin")
+    collector = runner.collector_provenance()
+    raw_observations = runner.raw_observations()
 
-    # Determine stage and claims_permitted
+    # Determine stage before deriving the non-overridable claim boundary.
     norm_stage = stage.lower().strip()
     if norm_stage not in (SplitStage.CONFIRMATORY.value, SplitStage.DEVELOPMENT.value):
         raise ValueError(f"Invalid split stage: {stage!r}. Must be 'confirmatory' or 'development'.")
 
-    if claims_permitted is None:
-        claims_permitted = (
-            norm_stage == SplitStage.CONFIRMATORY.value
-            and execution_status == StorageExecutionStatus.OBSERVED.value
+    confirmatory_capability = None
+    if norm_stage == SplitStage.CONFIRMATORY.value and eval_recommendation:
+        from evaluation_v5.isolation import (
+            CONFIRMATORY_DATASET_ENV_VAR,
+            FREEZE_ARTIFACT_ENV_VAR,
+            load_confirmatory_split,
+            resolve_confirmatory_sources,
         )
-    elif claims_permitted:
-        if norm_stage != SplitStage.CONFIRMATORY.value:
-            raise ValueError("Development storage evidence cannot permit claims (claims_permitted must be False).")
+
+        source_requested = bool(
+            dataset_path is not None
+            or freeze_path is not None
+            or CONFIRMATORY_DATASET_ENV_VAR in os.environ
+            or FREEZE_ARTIFACT_ENV_VAR in os.environ
+        )
+        if source_requested:
+            try:
+                dataset_source, freeze_source = resolve_confirmatory_sources(
+                    dataset_path=Path(dataset_path) if dataset_path is not None else None,
+                    freeze_path=Path(freeze_path) if freeze_path is not None else None,
+                )
+                confirmatory_capability = load_confirmatory_split(
+                    dataset_source, freeze_source
+                )
+            except Exception as exc:
+                logger.warning(
+                    "Failed to prepare confirmatory recommendation split: %s", exc
+                )
+
+    origin = str(collector.get("origin", ""))
+    real_origin = is_real_storage_collector_origin(origin)
+    if real_origin:
         if execution_status != StorageExecutionStatus.OBSERVED.value:
-            raise ValueError("NOT_EXECUTED storage evidence cannot permit claims (claims_permitted must be False).")
+            raise ValueError("Real storage collector did not produce OBSERVED status")
+        if len(raw_observations) != len(inspections):
+            raise ValueError("OBSERVED storage requires one raw collector response per image")
+        for metadata in inspections:
+            required = {
+                "resolved_digest": metadata.resolved_digest,
+                "manifest_digest": metadata.manifest_digest,
+                "config_digest": metadata.config_digest,
+                "raw_observation_path": metadata.raw_observation_path,
+                "raw_observation_sha256": metadata.raw_observation_sha256,
+            }
+            missing = sorted(name for name, value in required.items() if not value)
+            if missing or not metadata.layers or not metadata.platform:
+                raise ValueError(
+                    f"OBSERVED storage metadata for {metadata.image_id} is incomplete: "
+                    + ", ".join(missing or ["layers/platform"])
+                )
+            payload = raw_observations.get(metadata.raw_observation_path)
+            if payload is None or hashlib.sha256(payload).hexdigest() != metadata.raw_observation_sha256:
+                raise ValueError(
+                    f"OBSERVED storage metadata for {metadata.image_id} lacks its checksum-bound raw response"
+                )
+    elif execution_status == StorageExecutionStatus.OBSERVED.value:
+        raise ValueError("Non-real storage collector cannot produce OBSERVED evidence")
 
     # Construct experimental catalog configuration
     exp_catalog = get_experimental_catalog_config(catalog, scales=scales)
@@ -409,8 +481,22 @@ def run_storage_evaluation(
     timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
     run_id = run_id or f"e5-storage-scalability-{timestamp}"
 
-    # Audit immutable catalog gate
+    # Audit immutable catalog gate and derive claims; callers cannot promote a run.
     immutability_result = check_immutable_catalog_gate(inspections, stage=norm_stage)
+    derived_claims_permitted = bool(
+        norm_stage == SplitStage.CONFIRMATORY.value
+        and execution_status == StorageExecutionStatus.OBSERVED.value
+        and real_origin
+        and immutability_result.is_immutable
+    )
+    if claims_permitted is not None:
+        if not isinstance(claims_permitted, bool):
+            raise ValueError("claims_permitted must be boolean when supplied")
+        if claims_permitted != derived_claims_permitted:
+            raise ValueError(
+                "claims_permitted is derived from authenticated collector origin and cannot be overridden"
+            )
+    claims_permitted = derived_claims_permitted
 
     # Prepare directories
     out_dir = output_dir or (DEFAULT_STORAGE_RESULTS_ROOT / run_id)
@@ -419,14 +505,21 @@ def run_storage_evaluation(
     figures_dir = out_dir / "figures"
     report_dir = out_dir / "report"
 
-    out_dir.mkdir(parents=True, exist_ok=True)
-    raw_dir.mkdir(parents=True, exist_ok=True)
-    derived_dir.mkdir(parents=True, exist_ok=True)
-    figures_dir.mkdir(parents=True, exist_ok=True)
-    report_dir.mkdir(parents=True, exist_ok=True)
+    out_dir.mkdir(parents=True, exist_ok=False)
+    raw_dir.mkdir()
+    derived_dir.mkdir()
+    figures_dir.mkdir()
+    report_dir.mkdir()
+
+    for relative_path, payload in sorted(raw_observations.items()):
+        relative = Path(relative_path)
+        if relative.is_absolute() or ".." in relative.parts:
+            raise ValueError("Raw storage observation path escapes the evidence package")
+        _write_bytes_exclusive(raw_dir / relative, payload)
 
     # Evaluate each configured scale
     scale_records: list[ScaleLevelEvaluationRecord] = []
+    raw_scale_evaluations: list[dict[str, Any]] = []
     for scale in exp_catalog.catalog_scales:
         scale_status, reason = exp_catalog.get_scale_status(scale)
         scale_imgs = exp_catalog.get_scale_images(scale)
@@ -438,7 +531,10 @@ def run_storage_evaluation(
             st_status = execution_status
 
             # Recommendation evaluation
-            if eval_recommendation and execution_status == StorageExecutionStatus.OBSERVED.value:
+            # Recommendation evaluation is an independently provenance-bound
+            # observation. A synthetic storage collector may still exercise a
+            # development split, but cannot promote the storage package itself.
+            if eval_recommendation:
                 rec_dataset_path = (
                     dataset_path
                     if norm_stage == "confirmatory"
@@ -450,6 +546,7 @@ def run_storage_evaluation(
                     stage=norm_stage,
                     dataset_path=rec_dataset_path,
                     freeze_path=freeze_path,
+                    split_bundle=confirmatory_capability,
                     k=recall_k,
                 )
             else:
@@ -471,6 +568,28 @@ def run_storage_evaluation(
                     "p2_config_version": "none",
                     "p2_version": "p2-hybrid-v1.0.0",
                 }
+
+            raw_scale_evaluations.append(
+                {
+                    "schema_version": "protocol-v5-catalog-scale-recommendation-run-v1.0.0",
+                    "catalog_size": scale,
+                    "catalog_id": f"frozen-catalog-scale-{scale}",
+                    "status": rec_res.get("status", "NOT_EXECUTED"),
+                    "reason": rec_res.get("reason", ""),
+                    "split_stage": norm_stage,
+                    "split_role": rec_res.get("split_role", "none"),
+                    "dataset_id": rec_res.get("dataset_id", "none"),
+                    "dataset_sha256": rec_res.get("dataset_sha256", "0" * 64),
+                    "split_schema_version": rec_res.get("split_schema_version", "none"),
+                    "aggregation_unit": rec_res.get("aggregation_unit", "workload_family"),
+                    "case_records": rec_res.get("case_records", []),
+                    "family_estimates": rec_res.get("family_estimates", []),
+                    "family_summary": rec_res.get("family_summary", {}),
+                    "confirmatory_provenance": rec_res.get(
+                        "confirmatory_provenance"
+                    ),
+                }
+            )
 
             lat_info = rec_res.get("latency", {})
             scale_records.append(
@@ -502,7 +621,19 @@ def run_storage_evaluation(
                     evaluated_case_count=rec_res.get("evaluated_cases", 0),
                     feasible_case_count=rec_res.get("feasible_cases", 0),
                     p2_config_version=rec_res.get("p2_config_version", "none"),
-                    provenance={"git_revision": git.get("git_revision")},
+                    provenance={
+                        "git_revision": git.get("git_revision"),
+                        "storage_collector_origin": origin,
+                        "raw_recommendation_record_count": len(
+                            rec_res.get("case_records", [])
+                        ),
+                        "recommendation_aggregation_unit": rec_res.get(
+                            "aggregation_unit", "workload_family"
+                        ),
+                        "confirmatory_recommendation": rec_res.get(
+                            "confirmatory_provenance"
+                        ),
+                    },
                     status_reason=rec_res.get("reason", ""),
                     split_stage=norm_stage,
                     split_role=rec_res.get("split_role", "none"),
@@ -515,6 +646,25 @@ def run_storage_evaluation(
             )
         else:
             # Scale has insufficient approved images -> Mark NOT_EXECUTED honestly
+            raw_scale_evaluations.append(
+                {
+                    "schema_version": "protocol-v5-catalog-scale-recommendation-run-v1.0.0",
+                    "catalog_size": scale,
+                    "catalog_id": f"frozen-catalog-scale-{scale}",
+                    "status": "NOT_EXECUTED",
+                    "reason": reason,
+                    "split_stage": norm_stage,
+                    "split_role": "none",
+                    "dataset_id": "none",
+                    "dataset_sha256": "0" * 64,
+                    "split_schema_version": "none",
+                    "aggregation_unit": "workload_family",
+                    "case_records": [],
+                    "family_estimates": [],
+                    "family_summary": {},
+                    "confirmatory_provenance": None,
+                }
+            )
             scale_records.append(
                 ScaleLevelEvaluationRecord(
                     catalog_size=scale,
@@ -544,7 +694,12 @@ def run_storage_evaluation(
                     evaluated_case_count=0,
                     feasible_case_count=0,
                     p2_config_version="none",
-                    provenance={"git_revision": git.get("git_revision")},
+                    provenance={
+                        "git_revision": git.get("git_revision"),
+                        "storage_collector_origin": origin,
+                        "raw_recommendation_record_count": 0,
+                        "recommendation_aggregation_unit": "workload_family",
+                    },
                     status_reason=reason,
                     split_stage=norm_stage,
                     split_role="none",
@@ -559,15 +714,33 @@ def run_storage_evaluation(
     # 1. Raw layer inspections & environment
     raw_layers_data = [img.to_dict() for img in inspections]
     write_json_exclusive(raw_dir / "image_layers.json", raw_layers_data)
-
-    measurement_method = (
-        f"docker manifest inspect OCI layer digest accounting (platform: {target_os}/{target_arch})"
-        if execution_status == StorageExecutionStatus.OBSERVED.value
-        else "dry_run inspection"
+    write_json_exclusive(
+        raw_dir / "catalog_scale_recommendations.json",
+        {
+            "schema_version": "protocol-v5-catalog-scale-recommendations-v1.0.0",
+            "collector_origin": origin,
+            "scale_evaluations": raw_scale_evaluations,
+        },
     )
+
+    if origin == StorageCollectorOrigin.REAL_REGISTRY.value:
+        runtime = "docker"
+        measurement_method = (
+            "docker manifest inspect OCI layer digest accounting "
+            f"(platform: {target_os}/{target_arch})"
+        )
+    elif origin == StorageCollectorOrigin.CONTAINER_STORAGE_OBSERVATION.value:
+        runtime = "container_storage"
+        measurement_method = "container storage observation"
+    elif origin == StorageCollectorOrigin.SYNTHETIC_TEST.value:
+        runtime = "synthetic_test"
+        measurement_method = "synthetic test calculation (non-observed)"
+    else:
+        runtime = "dry_run"
+        measurement_method = "dry-run inspection (non-observed)"
     env_data = {
         "environment_id": f"e5-storage-{platform.system().lower()}-{target_arch}",
-        "runtime": "docker" if execution_status == StorageExecutionStatus.OBSERVED.value else "dry_run",
+        "runtime": runtime,
         "operating_system": target_os,
         "architecture": target_arch,
         "platform_details": platform.platform(),
@@ -575,6 +748,7 @@ def run_storage_evaluation(
         "git_info": git,
         "measurement_method": measurement_method,
         "size_domain": SIZE_DOMAIN_COMPRESSED_OCI_BLOB,
+        "storage_collector": collector,
     }
     write_json_exclusive(raw_dir / "environment.json", env_data)
 
@@ -599,12 +773,14 @@ def run_storage_evaluation(
             "operating_system": env_data["operating_system"],
             "architecture": env_data["architecture"],
         },
+        collector=collector,
         measurement_method=measurement_method,
         prefixes=tuple(prefixes),
         provenance={
             "git_revision": git.get("git_revision", "unknown"),
             "dataset_sha256": cat_sha,
             "backend_system_versions": backend_systems,
+            "storage_collector_origin": origin,
         },
     )
     write_json_exclusive(derived_dir / "storage_metrics.json", storage_evidence.to_dict())
@@ -627,11 +803,14 @@ def run_storage_evaluation(
         [s.to_dict() for s in scale_records],
     )
 
-    # 6. Generate Figures A-E
+    # 6. Generate Figures A-E. Non-observed test bytes are not plotted as evidence.
+    plot_observed = execution_status == StorageExecutionStatus.OBSERVED.value
     figures_generated = generate_all_figures(
-        prefixes=prefixes,
-        marginal_records=marginal_records,
-        pairwise_analysis=pairwise_analysis,
+        prefixes=prefixes if plot_observed else (),
+        marginal_records=marginal_records if plot_observed else (),
+        pairwise_analysis=(
+            pairwise_analysis if plot_observed else compute_pairwise_layer_reuse(())
+        ),
         scale_records=scale_records,
         output_dir=figures_dir,
     )
@@ -650,6 +829,7 @@ def run_storage_evaluation(
         ),
         "split_stage": norm_stage,
         "claims_permitted": claims_permitted,
+        "storage_collector": collector,
         "total_images": len(inspections),
         "total_prefixes": len(prefixes),
         "configured_scales": list(exp_catalog.catalog_scales),
@@ -661,9 +841,13 @@ def run_storage_evaluation(
         "catalog_4_status": scale_records[0].storage_measurement_status if scale_records else "UNKNOWN",
         "catalog_8_status": scale_records[1].storage_measurement_status if len(scale_records) > 1 else "UNKNOWN",
         "catalog_16_status": scale_records[2].storage_measurement_status if len(scale_records) > 2 else "UNKNOWN",
-        "final_naive_logical_bytes": prefixes[-1].naive_logical_bytes if prefixes else 0,
-        "final_unique_layer_bytes": prefixes[-1].unique_layer_bytes if prefixes else 0,
-        "final_storage_savings_bytes": final_savings,
+        "final_naive_logical_bytes": (
+            prefixes[-1].naive_logical_bytes if prefixes and plot_observed else None
+        ),
+        "final_unique_layer_bytes": (
+            prefixes[-1].unique_layer_bytes if prefixes and plot_observed else None
+        ),
+        "final_storage_savings_bytes": final_savings if plot_observed else None,
         "timestamp_utc": _utc_now(),
     }
     write_json_exclusive(report_dir / "status.json", status_data)
@@ -675,14 +859,17 @@ def run_storage_evaluation(
         execution_status=execution_status,
         split_stage=norm_stage,
         claims_permitted=claims_permitted,
+        collector=collector,
         measurement_method=measurement_method,
         target_arch=target_arch,
         target_os=target_os,
         git_info=git,
         inspections=inspections,
-        prefixes=prefixes,
-        marginal_records=marginal_records,
-        pairwise_analysis=pairwise_analysis,
+        prefixes=prefixes if plot_observed else (),
+        marginal_records=marginal_records if plot_observed else (),
+        pairwise_analysis=(
+            pairwise_analysis if plot_observed else compute_pairwise_layer_reuse(())
+        ),
         scale_records=scale_records,
         figures=figures_generated,
     )
@@ -703,26 +890,29 @@ def run_storage_evaluation(
 
     corpus_sha = frozen_cand.get("corpus_sha256")
     if not corpus_sha and execution_status == StorageExecutionStatus.OBSERVED.value:
-        corpus_sha = "987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444"
+        raise ValueError(
+            "OBSERVED storage evidence requires a frozen candidate corpus checksum"
+        )
     elif execution_status != StorageExecutionStatus.OBSERVED.value:
         corpus_sha = None
 
     frozen_cfg = freeze_data.get("configuration", {})
-    retrieval_cfg = frozen_cfg.get("P2", {
-        "retriever_version": "reciprocal-rank-fusion-hybrid-retriever-v1",
-        "top_k": 10,
-        "sparse_top_k": 10,
-        "dense_top_k": 10,
-        "rrf_k": 60.0,
-        "sparse_weight": 1.0,
-        "dense_weight": 1.0,
-    }) if execution_status == StorageExecutionStatus.OBSERVED.value else {}
-
-    constraints_cfg = frozen_cfg.get("constraints", {
-        "constraint_evaluator_version": "p2-deterministic-constraint-evaluator-v1.0.0",
-        "policy_version": "p2-constraint-policy-v1.0.0",
-        "ranker_version": "p2-deterministic-ranker-v1.0.0",
-    }) if execution_status == StorageExecutionStatus.OBSERVED.value else {}
+    retrieval_cfg = (
+        frozen_cfg.get("P2", {})
+        if execution_status == StorageExecutionStatus.OBSERVED.value
+        else {}
+    )
+    constraints_cfg = (
+        frozen_cfg.get("constraints", {})
+        if execution_status == StorageExecutionStatus.OBSERVED.value
+        else {}
+    )
+    if execution_status == StorageExecutionStatus.OBSERVED.value and (
+        not retrieval_cfg or not constraints_cfg
+    ):
+        raise ValueError(
+            "OBSERVED storage evidence requires frozen retrieval and constraint provenance"
+        )
 
     # 8. Manifest.json (cross-experiment ProtocolV5Manifest compatibility)
     is_obs = (execution_status == StorageExecutionStatus.OBSERVED.value)
@@ -783,6 +973,8 @@ def run_storage_evaluation(
     _write_checksums(out_dir)
 
     # 10. Fail-closed validation of produced package
-    validate_e5_storage_evidence(out_dir)
+    validate_e5_storage_evidence(
+        out_dir, confirmatory_split=confirmatory_capability
+    )
 
     return out_dir

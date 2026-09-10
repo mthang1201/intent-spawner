@@ -26,6 +26,9 @@ ROOT = Path(__file__).resolve().parents[1]
 CONFIRMATORY_DATASET_ENV_VAR = "PROTOCOL_V5_CONFIRMATORY_DATASET"
 FREEZE_ARTIFACT_ENV_VAR = "PROTOCOL_V5_FREEZE_ARTIFACT"
 DEFAULT_SIMILARITY_THRESHOLD = 0.90
+CONFIRMATORY_SPLIT_PROVENANCE_SCHEMA_VERSION = (
+    "protocol-v5-confirmatory-split-provenance-v1.0.0"
+)
 
 
 class SplitIsolationError(RuntimeError):
@@ -196,6 +199,32 @@ class VerifiedConfirmatorySplit:
             "frozen_at_utc": manifest["created_at_utc"],
             "frozen_by": "authoritative_protocol_v5_freeze",
             "source": "confirmatory_freeze_manifest",
+        }
+
+    @property
+    def provenance_identity(self) -> Mapping[str, Any]:
+        """Return stable JSON provenance derived from this verified capability."""
+
+        split = self._split
+        return {
+            "schema_version": CONFIRMATORY_SPLIT_PROVENANCE_SCHEMA_VERSION,
+            "protocol_version": "5.0.0",
+            "authority": {
+                "capability_type": "VerifiedConfirmatorySplit",
+                "loader": "evaluation_v5.isolation.load_confirmatory_split",
+                "verifier": "evaluation_v5.isolation.verify_confirmatory_split",
+            },
+            "split": {
+                "schema_version": split.bundle.schema_version,
+                "dataset_id": split.manifest.dataset_id,
+                "split_id": split.manifest.split_id,
+                "role": split.manifest.role.value,
+                "bundle_checksum": split.manifest.checksum,
+                "source_file_sha256": split.source_file_sha256,
+                "case_count": split.manifest.case_count,
+                "family_count": split.manifest.family_count,
+            },
+            "freeze_identity": dict(self.freeze_identity),
         }
 
 
@@ -550,6 +579,7 @@ def verify_confirmatory_split(
 
 
 __all__ = [
+    "CONFIRMATORY_SPLIT_PROVENANCE_SCHEMA_VERSION",
     "CONFIRMATORY_DATASET_ENV_VAR",
     "DEFAULT_SIMILARITY_THRESHOLD",
     "FREEZE_ARTIFACT_ENV_VAR",
