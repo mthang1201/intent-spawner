@@ -90,7 +90,7 @@ evidence_requirements:
   - id: image_storage
     evidence_class: E5
     experiment: Frozen-catalog image storage scalability measurement
-    accepted_schema_versions: [protocol-v5-image-storage-evidence-v1.0.0]
+    accepted_schema_versions: [protocol-v5-image-storage-evidence-v1.1.0]
     semantic_provenance:
       - {key: catalog.version, freeze_pointer: /candidate_catalog/version}
       - {key: catalog.file_sha256, freeze_pointer: /candidate_catalog/file_sha256}
