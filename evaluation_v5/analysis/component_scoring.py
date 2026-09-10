@@ -387,10 +387,7 @@ def load_component_gold(
         )
         gate = loaded.freeze_manifest["configuration_snapshot"]["p3_gate"]
         p3_gate_identity = {
-            "status": gate["status"],
-            "p3_active": gate["p3_active"],
-            "snapshot_version": gate["snapshot_version"],
-            "evidence_sha256": gate["evidence_sha256"],
+            **dict(gate),
             "source": "authoritative_protocol_v5_freeze",
         }
         return _gold_cases_from_split(

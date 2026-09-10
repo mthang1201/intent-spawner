@@ -3,13 +3,17 @@
 from __future__ import annotations
 
 import json
+import math
 from pathlib import Path
-from typing import Any, Callable, Mapping, Sequence
+import re
+from types import MappingProxyType
+from typing import Any, Mapping, Sequence
 
 from .contracts import (
     IMAGE_PROBE_MANIFEST_SCHEMA_VERSION,
     ImageProbeManifest,
     ImageProbeSpec,
+    ProbeExecutionError,
     ProbeSpec,
     file_sha256,
     parse_image_digest,
@@ -19,7 +23,7 @@ from .contracts import (
 # Each entry produces a Python code string that tests the capability within resource/time bounds.
 # Successful execution prints a single JSON line starting with 'PROBE_META:' for metadata extraction.
 
-CAPABILITY_PROBE_TEMPLATES: dict[str, dict[str, Any]] = {
+_CAPABILITY_PROBE_TEMPLATES: dict[str, dict[str, Any]] = {
     "python": {
         "description": "Python startup, standard library, and basic calculation",
         "expected_metadata_keys": ("python_version",),
@@ -142,22 +146,48 @@ CAPABILITY_PROBE_TEMPLATES: dict[str, dict[str, Any]] = {
         ),
     },
     "cuda-userspace": {
-        "description": "CUDA user-space libraries query on CPU without crashing",
-        "expected_metadata_keys": ("cuda_userspace_accessible",),
+        "description": "Concrete CUDA userspace API observation through a supported framework",
+        "expected_metadata_keys": ("cuda_probe_status", "cuda_api", "cuda_library"),
         "script": (
-            "import json\n"
-            "details = {'cuda_userspace_accessible': 'true'}\n"
+            "import json, sys\n"
+            "details = {'cuda_probe_status': 'UNAVAILABLE', 'cuda_api': 'none', 'cuda_library': 'none'}\n"
+            "api_failures = []\n"
+            "supported_library_observed = False\n"
             "try:\n"
             "    import torch\n"
-            "    details['torch_cuda_available'] = str(torch.cuda.is_available())\n"
+            "    supported_library_observed = True\n"
+            "    details['torch_version'] = str(torch.__version__)\n"
+            "    details['torch_cuda_version'] = str(torch.version.cuda or '')\n"
+            "    if torch.version.cuda:\n"
+            "        try:\n"
+            "            details['torch_cuda_device_count'] = str(int(torch.cuda.device_count()))\n"
+            "            details.update(cuda_probe_status='SUCCESS', cuda_api='torch.cuda.device_count', cuda_library='torch')\n"
+            "        except Exception as exc:\n"
+            "            api_failures.append('torch:' + type(exc).__name__)\n"
             "except ImportError:\n"
             "    pass\n"
-            "try:\n"
+            "if details['cuda_probe_status'] != 'SUCCESS':\n"
+            "  try:\n"
             "    import tensorflow as tf\n"
-            "    details['tf_cuda_built'] = str(tf.test.is_built_with_cuda())\n"
-            "except (ImportError, AttributeError):\n"
+            "    supported_library_observed = True\n"
+            "    details['tensorflow_version'] = str(tf.__version__)\n"
+            "    if bool(tf.test.is_built_with_cuda()):\n"
+            "        try:\n"
+            "            details['tensorflow_gpu_devices'] = str(len(tf.config.list_physical_devices('GPU')))\n"
+            "            details.update(cuda_probe_status='SUCCESS', cuda_api='tf.config.list_physical_devices', cuda_library='tensorflow')\n"
+            "        except Exception as exc:\n"
+            "            api_failures.append('tensorflow:' + type(exc).__name__)\n"
+            "  except (ImportError, AttributeError):\n"
             "    pass\n"
+            "if details['cuda_probe_status'] != 'SUCCESS' and api_failures:\n"
+            "    details['cuda_probe_status'] = 'FAILURE'\n"
+            "    details['cuda_api_failures'] = ','.join(api_failures)\n"
+            "elif details['cuda_probe_status'] != 'SUCCESS' and supported_library_observed:\n"
+            "    details['unavailable_reason'] = 'supported_libraries_have_no_cuda_userspace_build'\n"
+            "elif details['cuda_probe_status'] != 'SUCCESS':\n"
+            "    details['unavailable_reason'] = 'no_supported_cuda_library_importable'\n"
             "print('PROBE_META:' + json.dumps(details))\n"
+            "sys.exit(0 if details['cuda_probe_status'] == 'SUCCESS' else (4 if details['cuda_probe_status'] == 'FAILURE' else 3))\n"
         ),
     },
     "data-science": {
@@ -172,6 +202,63 @@ CAPABILITY_PROBE_TEMPLATES: dict[str, dict[str, Any]] = {
         ),
     },
 }
+CAPABILITY_PROBE_TEMPLATES: Mapping[str, Mapping[str, Any]] = MappingProxyType(
+    {
+        capability: MappingProxyType(dict(template))
+        for capability, template in _CAPABILITY_PROBE_TEMPLATES.items()
+    }
+)
+del _CAPABILITY_PROBE_TEMPLATES
+
+
+MAX_PROBE_TIMEOUT_SECONDS = 120.0
+MAX_PROBE_CPU_MILLICORES = 2000
+MAX_PROBE_MEMORY_BYTES = 2 * 1024 * 1024 * 1024
+_CPU_LIMIT = re.compile(r"^([1-9][0-9]*)m$")
+_MEMORY_LIMIT = re.compile(r"^([1-9][0-9]*)(Ki|Mi|Gi)$")
+_MEMORY_MULTIPLIERS = {"Ki": 1024, "Mi": 1024**2, "Gi": 1024**3}
+
+
+def validate_probe_bounds(probe: ProbeSpec) -> None:
+    """Reject unbounded or excessive execution settings before a runtime call."""
+    if (
+        not math.isfinite(probe.timeout_seconds)
+        or probe.timeout_seconds <= 0
+        or probe.timeout_seconds > MAX_PROBE_TIMEOUT_SECONDS
+    ):
+        raise ProbeExecutionError(
+            f"probe timeout must be in (0, {MAX_PROBE_TIMEOUT_SECONDS}] seconds"
+        )
+    cpu_match = _CPU_LIMIT.fullmatch(probe.cpu_limit)
+    if not cpu_match or int(cpu_match.group(1)) > MAX_PROBE_CPU_MILLICORES:
+        raise ProbeExecutionError(
+            f"probe CPU limit must be 1-{MAX_PROBE_CPU_MILLICORES}m"
+        )
+    memory_match = _MEMORY_LIMIT.fullmatch(probe.memory_limit)
+    memory_bytes = (
+        int(memory_match.group(1)) * _MEMORY_MULTIPLIERS[memory_match.group(2)]
+        if memory_match
+        else 0
+    )
+    if not memory_match or memory_bytes > MAX_PROBE_MEMORY_BYTES:
+        raise ProbeExecutionError("probe memory limit must be positive and at most 2Gi")
+
+
+def validate_approved_probe_spec(image_spec: ImageProbeSpec, probe: ProbeSpec) -> None:
+    """Require the exact registered probe program and bounded settings."""
+    validate_probe_bounds(probe)
+    expected = create_capability_probe(
+        image_spec.image_id,
+        probe.capability,
+        timeout_seconds=probe.timeout_seconds,
+        cpu_limit=probe.cpu_limit,
+        memory_limit=probe.memory_limit,
+    )
+    if probe != expected or probe not in image_spec.probes:
+        raise ProbeExecutionError(
+            f"probe {probe.probe_id!r} is not the approved manifest probe for "
+            f"image {image_spec.image_id!r}"
+        )
 
 
 def create_capability_probe(
@@ -195,7 +282,7 @@ def create_capability_probe(
     expected_keys = template["expected_metadata_keys"]
 
     probe_id = f"probe:{image_id}:{norm_cap}"
-    return ProbeSpec(
+    probe = ProbeSpec(
         probe_id=probe_id,
         capability=norm_cap,
         description=description,
@@ -205,6 +292,8 @@ def create_capability_probe(
         memory_limit=memory_limit,
         expected_metadata_keys=tuple(expected_keys),
     )
+    validate_probe_bounds(probe)
+    return probe
 
 
 def build_image_probes(

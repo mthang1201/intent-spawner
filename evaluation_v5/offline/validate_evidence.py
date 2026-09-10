@@ -410,6 +410,20 @@ def _validate_provenance(
         elif system == "P2":
             _validate_p2_provenance(selected, "P2 frozen provenance")
         elif system == "P3":
+            for field in (
+                "backend_name",
+                "backend_version",
+                "pipeline_version",
+            ):
+                _require(
+                    isinstance(selected.get(field), str)
+                    and bool(selected[field]),
+                    f"P3 provenance lacks {field}",
+                )
+            _require(
+                isinstance(selected.get("config"), Mapping),
+                "P3 provenance lacks config",
+            )
             frozen_p2 = selected.get("frozen_p2_provenance")
             _validate_p2_provenance(frozen_p2, "P3 frozen P2 provenance")
             assert isinstance(frozen_p2, Mapping)
@@ -424,6 +438,26 @@ def _validate_provenance(
                 and bool(selected["reranker_version"]),
                 "P3 provenance lacks the reranker identity",
             )
+            for field in (
+                "reranker_model_id",
+                "reranker_prompt_version",
+                "reranker_prompt_sha256",
+            ):
+                _require(
+                    field in selected,
+                    f"P3 provenance lacks {field}",
+                )
+            reranker_mode = selected["config"].get("reranker_mode")
+            if reranker_mode == "llm":
+                _require(
+                    isinstance(selected["reranker_model_id"], str)
+                    and bool(selected["reranker_model_id"])
+                    and isinstance(selected["reranker_prompt_version"], str)
+                    and bool(selected["reranker_prompt_version"])
+                    and isinstance(selected["reranker_prompt_sha256"], str)
+                    and bool(_SHA256.fullmatch(selected["reranker_prompt_sha256"])),
+                    "LLM P3 provenance lacks model/prompt identity",
+                )
 
     requested = provenance["requested_repeats"]
     _require(
@@ -526,6 +560,38 @@ def _validate_provenance(
         isinstance(provenance["frozen_configuration"], Mapping),
         "frozen_configuration must be an object",
     )
+    if p3_enabled:
+        from evaluation_v5.p3_gate import (
+            P3GateValidationError,
+            require_retained_p3_gate,
+            verify_p3_development_decision,
+        )
+
+        frozen_gate = provenance["frozen_configuration"].get("p3_gate")
+        _require(
+            isinstance(frozen_gate, Mapping),
+            "P3 evidence lacks a verified frozen development gate",
+        )
+        decision_path = frozen_gate.get("decision_artifact_path")
+        _require(
+            isinstance(decision_path, str) and bool(decision_path.strip()),
+            "P3 evidence gate lacks a reverifiable decision artifact",
+        )
+        path = Path(decision_path)
+        if not path.is_absolute():
+            path = Path(__file__).resolve().parents[2] / path
+        try:
+            verified_gate = require_retained_p3_gate(
+                verify_p3_development_decision(path)
+            )
+        except (P3GateValidationError, PermissionError, OSError) as exc:
+            raise OfflineEvidenceValidationError(
+                "P3 evidence gate failed source verification"
+            ) from exc
+        _require(
+            verified_gate.freeze_snapshot() == dict(frozen_gate),
+            "P3 evidence gate does not match its verified sources",
+        )
     return provenance
 
 

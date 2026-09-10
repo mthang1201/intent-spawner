@@ -10,11 +10,11 @@ import re
 from typing import Any, Mapping, Sequence
 
 
-IMAGE_PROBE_MANIFEST_SCHEMA_VERSION = "protocol-v5-image-probe-manifest-v1.1.0"
-IMAGE_PROBE_RECORD_SCHEMA_VERSION = "protocol-v5-image-probe-record-v1.1.0"
-FUNCTIONAL_EVALUATION_SCHEMA_VERSION = "protocol-v5-image-functional-evaluation-v1.3.0"
-FUNCTIONAL_METRICS_SCHEMA_VERSION = "protocol-v5-image-functional-metrics-v1.3.0"
-E5_RUN_SCHEMA_VERSION = "protocol-v5-image-validation-run-v1.3.0"
+IMAGE_PROBE_MANIFEST_SCHEMA_VERSION = "protocol-v5-image-probe-manifest-v1.2.0"
+IMAGE_PROBE_RECORD_SCHEMA_VERSION = "protocol-v5-image-probe-record-v1.2.0"
+FUNCTIONAL_EVALUATION_SCHEMA_VERSION = "protocol-v5-image-functional-evaluation-v1.4.0"
+FUNCTIONAL_METRICS_SCHEMA_VERSION = "protocol-v5-image-functional-metrics-v1.4.0"
+E5_RUN_SCHEMA_VERSION = "protocol-v5-image-validation-run-v1.4.0"
 
 DIGEST_PATTERN = re.compile(r"@sha256:([a-f0-9]{64})$")
 
@@ -34,6 +34,23 @@ class ProbeExecutionStatus(str, Enum):
     IMAGE_NOT_PRESENT = "IMAGE_NOT_PRESENT"
     CONTAINER_UNAVAILABLE = "CONTAINER_UNAVAILABLE"
     NOT_EXECUTED_DRY_RUN = "NOT_EXECUTED_DRY_RUN"
+
+
+class CapabilityProbeStatus(str, Enum):
+    """Observed capability outcome, separate from container lifecycle state."""
+
+    SUCCESS = "SUCCESS"
+    UNAVAILABLE = "UNAVAILABLE"
+    FAILURE = "FAILURE"
+
+
+class ProbeExecutionOrigin(str, Enum):
+    """Unforgeable-by-default origin classification retained in raw records."""
+
+    LIVE_DOCKER = "LIVE_DOCKER"
+    LIVE_KUBERNETES = "LIVE_KUBERNETES"
+    SYNTHETIC_TEST = "SYNTHETIC_TEST"
+    DRY_RUN = "DRY_RUN"
 
 
 class DimensionCStatus(str, Enum):
@@ -154,8 +171,14 @@ class ImageProbeResult:
     image_digest: str
     capability: str
     success: bool
+    functional_status: str | None = None
     execution_status: str = ProbeExecutionStatus.NOT_EXECUTED_DRY_RUN.value
+    execution_origin: str = ProbeExecutionOrigin.DRY_RUN.value
+    execution_identity: str | None = None
     resolved_image_digest: str | None = None
+    resolved_image_platform: str | None = None
+    runtime_image_id: str | None = None
+    cleanup_succeeded: bool | None = None
     import_version_metadata: dict[str, str] = field(default_factory=dict)
     runtime_seconds: float = 0.0
     error_category: str | None = None
@@ -171,9 +194,32 @@ class ImageProbeResult:
         return self.execution_status == ProbeExecutionStatus.EXECUTED.value
 
     @property
+    def effective_functional_status(self) -> str:
+        """Return explicit v1.2 status or infer it for in-memory legacy callers."""
+        if self.functional_status is not None:
+            return self.functional_status
+        if self.success:
+            return CapabilityProbeStatus.SUCCESS.value
+        if self.is_executed:
+            return CapabilityProbeStatus.FAILURE.value
+        return CapabilityProbeStatus.UNAVAILABLE.value
+
+    @property
     def is_genuine_probe_failure(self) -> bool:
         """True only if the container ran and the functional probe failed."""
-        return self.is_executed and not self.success
+        return (
+            self.is_executed
+            and self.effective_functional_status
+            == CapabilityProbeStatus.FAILURE.value
+        )
+
+    @property
+    def is_functionally_unavailable(self) -> bool:
+        """True when no supported capability implementation could be observed."""
+        return (
+            self.effective_functional_status
+            == CapabilityProbeStatus.UNAVAILABLE.value
+        )
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -184,8 +230,14 @@ class ImageProbeResult:
             "image_digest": self.image_digest,
             "capability": self.capability,
             "success": self.success,
+            "functional_status": self.effective_functional_status,
             "execution_status": self.execution_status,
+            "execution_origin": self.execution_origin,
+            "execution_identity": self.execution_identity,
             "resolved_image_digest": self.resolved_image_digest,
+            "resolved_image_platform": self.resolved_image_platform,
+            "runtime_image_id": self.runtime_image_id,
+            "cleanup_succeeded": self.cleanup_succeeded,
             "import_version_metadata": dict(self.import_version_metadata),
             "runtime_seconds": round(self.runtime_seconds, 6),
             "error_category": self.error_category,
@@ -208,6 +260,15 @@ class ImageProbeResult:
             else:
                 status = ProbeExecutionStatus.EXECUTED.value
 
+        functional_status = data.get("functional_status")
+        if functional_status is None:
+            if bool(data.get("success")):
+                functional_status = CapabilityProbeStatus.SUCCESS.value
+            elif status == ProbeExecutionStatus.EXECUTED.value:
+                functional_status = CapabilityProbeStatus.FAILURE.value
+            else:
+                functional_status = CapabilityProbeStatus.UNAVAILABLE.value
+
         return cls(
             schema_version=str(data.get("schema_version", IMAGE_PROBE_RECORD_SCHEMA_VERSION)),
             probe_id=str(data["probe_id"]),
@@ -216,8 +277,14 @@ class ImageProbeResult:
             image_digest=str(data["image_digest"]),
             capability=str(data["capability"]),
             success=bool(data["success"]),
+            functional_status=str(functional_status),
             execution_status=str(status),
+            execution_origin=str(data.get("execution_origin", ProbeExecutionOrigin.DRY_RUN.value)),
+            execution_identity=data.get("execution_identity"),
             resolved_image_digest=data.get("resolved_image_digest"),
+            resolved_image_platform=data.get("resolved_image_platform"),
+            runtime_image_id=data.get("runtime_image_id"),
+            cleanup_succeeded=data.get("cleanup_succeeded"),
             import_version_metadata=dict(data.get("import_version_metadata", {})),
             runtime_seconds=float(data.get("runtime_seconds", 0.0)),
             error_category=data.get("error_category"),
@@ -254,6 +321,12 @@ class FunctionalEvaluationRecord:
     mismatch_types: tuple[str, ...] = ()
     execution_status: str = "COMPLETED"
     source_predicted_image_value: str | None = None
+    source_predicted_candidate_id: str | None = None
+    source_run_sha256: str | None = None
+    source_recommendation_record_id: str | None = None
+    source_configuration_identity_sha256: str | None = None
+    selected_image_digest: str | None = None
+    selected_image_platform: str | None = None
     schema_version: str = FUNCTIONAL_EVALUATION_SCHEMA_VERSION
 
     def to_dict(self) -> dict[str, Any]:
@@ -268,6 +341,12 @@ class FunctionalEvaluationRecord:
                 if self.source_predicted_image_value is not None
                 else self.predicted_image_id
             ),
+            "source_predicted_candidate_id": self.source_predicted_candidate_id,
+            "source_run_sha256": self.source_run_sha256,
+            "source_recommendation_record_id": self.source_recommendation_record_id,
+            "source_configuration_identity_sha256": self.source_configuration_identity_sha256,
+            "selected_image_digest": self.selected_image_digest,
+            "selected_image_platform": self.selected_image_platform,
             "predicted_image_id": self.predicted_image_id,
             "required_capabilities": list(self.required_capabilities),
             "gold_preferred_image_id": self.gold_preferred_image_id,
@@ -313,6 +392,12 @@ class FunctionalEvaluationRecord:
             variant_id=str(data.get("variant_id", "")),
             system_id=str(data["system_id"]),
             source_predicted_image_value=data.get("source_predicted_image_value", data.get("predicted_image_id")),
+            source_predicted_candidate_id=data.get("source_predicted_candidate_id"),
+            source_run_sha256=data.get("source_run_sha256"),
+            source_recommendation_record_id=data.get("source_recommendation_record_id"),
+            source_configuration_identity_sha256=data.get("source_configuration_identity_sha256"),
+            selected_image_digest=data.get("selected_image_digest"),
+            selected_image_platform=data.get("selected_image_platform"),
             predicted_image_id=data.get("predicted_image_id"),
             required_capabilities=tuple(data.get("required_capabilities", ())),
             gold_preferred_image_id=data.get("gold_preferred_image_id"),
@@ -365,6 +450,35 @@ def validate_approved_image_reference(
     if image_reference not in approved_refs:
         raise SecurityVerificationError(
             f"Image reference {image_reference!r} is not an administrator-approved image in the catalog."
+        )
+    return digest
+
+
+def validate_approved_image_spec(
+    image_spec: ImageProbeSpec,
+    catalog: Mapping[str, Any],
+) -> str:
+    """Bind an image probe specification to its exact catalog identity."""
+    images = catalog.get("images", {})
+    entry = images.get(image_spec.image_id) if isinstance(images, Mapping) else None
+    if not isinstance(entry, Mapping):
+        raise SecurityVerificationError(
+            f"Image ID {image_spec.image_id!r} is not an administrator-approved image."
+        )
+    expected_reference = entry.get("reference")
+    if image_spec.image_reference != expected_reference:
+        raise SecurityVerificationError(
+            f"Image {image_spec.image_id!r} reference does not match the administrator catalog."
+        )
+    digest = validate_approved_image_reference(image_spec.image_reference, catalog)
+    if image_spec.image_digest != digest:
+        raise SecurityVerificationError(
+            f"Image {image_spec.image_id!r} digest does not match its approved reference."
+        )
+    documented = tuple(entry.get("capabilities", ()))
+    if image_spec.documented_capabilities != documented:
+        raise SecurityVerificationError(
+            f"Image {image_spec.image_id!r} capability declaration differs from the administrator catalog."
         )
     return digest
 

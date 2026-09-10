@@ -1,0 +1,186 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://intent-spawner.local/schemas/protocol-v5-p3-development-decision-v1.schema.json",
+  "title": "Protocol-v5 authenticated P3 development decision",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "protocol_version",
+    "created_at_utc",
+    "computation_version",
+    "predicate",
+    "source",
+    "evaluated_inputs",
+    "decision",
+    "rationale",
+    "integrity"
+  ],
+  "properties": {
+    "schema_version": {"const": "protocol-v5-p3-development-decision-v1.0.0"},
+    "protocol_version": {"const": "5.0.0"},
+    "created_at_utc": {"$ref": "#/$defs/utcTimestamp"},
+    "computation_version": {"const": "protocol-v5-p3-gate-computation-v1.0.0"},
+    "predicate": {"$ref": "#/$defs/predicate"},
+    "source": {"$ref": "#/$defs/source"},
+    "evaluated_inputs": {"$ref": "#/$defs/evaluatedInputs"},
+    "decision": {"enum": ["retained", "not_retained"]},
+    "rationale": {"$ref": "#/$defs/nonblank"},
+    "integrity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_evidence_revalidated",
+        "predicate_recomputed",
+        "confirmatory_data_used",
+        "claim_eligible"
+      ],
+      "properties": {
+        "source_evidence_revalidated": {"const": true},
+        "predicate_recomputed": {"const": true},
+        "confirmatory_data_used": {"const": false},
+        "claim_eligible": {"const": false}
+      }
+    }
+  },
+  "$defs": {
+    "nonblank": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": ".*\\S.*"
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "utcTimestamp": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(?:\\.[0-9]+)?Z$"
+    },
+    "artifactIdentity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256"],
+      "properties": {
+        "path": {"$ref": "#/$defs/nonblank"},
+        "sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "splitIdentity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "dataset_id",
+        "split_id",
+        "role",
+        "bundle_checksum",
+        "dataset_sha256",
+        "case_count",
+        "family_count"
+      ],
+      "properties": {
+        "dataset_id": {"$ref": "#/$defs/nonblank"},
+        "split_id": {"const": "v5-development"},
+        "role": {"const": "development"},
+        "bundle_checksum": {"$ref": "#/$defs/sha256"},
+        "dataset_sha256": {"$ref": "#/$defs/sha256"},
+        "case_count": {"type": "integer", "minimum": 1},
+        "family_count": {"type": "integer", "minimum": 1}
+      }
+    },
+    "rawEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "run_id",
+        "provenance_fingerprint",
+        "provenance_sha256",
+        "recommendations_sha256",
+        "completion_sha256",
+        "record_count"
+      ],
+      "properties": {
+        "path": {"$ref": "#/$defs/nonblank"},
+        "run_id": {"$ref": "#/$defs/nonblank"},
+        "provenance_fingerprint": {"$ref": "#/$defs/sha256"},
+        "provenance_sha256": {"$ref": "#/$defs/sha256"},
+        "recommendations_sha256": {"$ref": "#/$defs/sha256"},
+        "completion_sha256": {"$ref": "#/$defs/sha256"},
+        "record_count": {"type": "integer", "minimum": 1}
+      }
+    },
+    "analysisEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "manifest_sha256", "outputs"],
+      "properties": {
+        "path": {"$ref": "#/$defs/nonblank"},
+        "manifest_sha256": {"$ref": "#/$defs/sha256"},
+        "outputs": {
+          "type": "object",
+          "minProperties": 1,
+          "additionalProperties": {"$ref": "#/$defs/artifactIdentity"}
+        }
+      }
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "development_split",
+        "gold_dataset",
+        "raw_evidence",
+        "component_evidence",
+        "statistical_evidence"
+      ],
+      "properties": {
+        "development_split": {"$ref": "#/$defs/splitIdentity"},
+        "gold_dataset": {"$ref": "#/$defs/artifactIdentity"},
+        "raw_evidence": {"$ref": "#/$defs/rawEvidence"},
+        "component_evidence": {"$ref": "#/$defs/analysisEvidence"},
+        "statistical_evidence": {"$ref": "#/$defs/analysisEvidence"}
+      }
+    },
+    "predicate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "version",
+        "unit",
+        "minimum_absolute_ranking_errors",
+        "minimum_ranking_error_fraction",
+        "criterion"
+      ],
+      "properties": {
+        "version": {"const": "protocol-v5-p3-headroom-predicate-v1.0.0"},
+        "unit": {"const": "workload_family"},
+        "minimum_absolute_ranking_errors": {"const": 3},
+        "minimum_ranking_error_fraction": {"const": 0.05},
+        "criterion": {"$ref": "#/$defs/nonblank"}
+      }
+    },
+    "evaluatedInputs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "eligible_family_count",
+        "ranking_error_family_count",
+        "ranking_error_fraction_of_eligible_families",
+        "required_ranking_error_count",
+        "criterion_met"
+      ],
+      "properties": {
+        "eligible_family_count": {"type": "integer", "minimum": 1},
+        "ranking_error_family_count": {"type": "integer", "minimum": 0},
+        "ranking_error_fraction_of_eligible_families": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "required_ranking_error_count": {"type": "integer", "minimum": 1},
+        "criterion_met": {"type": "boolean"}
+      }
+    }
+  }
+}

@@ -21,7 +21,10 @@ import platform
 import subprocess
 import sys
 import time
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from evaluation_v5.p3_gate import VerifiedP3DevelopmentDecision
 
 from evaluation_v4.dataset import file_sha256
 from evaluation_v5.isolation import VerifiedConfirmatorySplit
@@ -37,6 +40,9 @@ from .recommenders import (
     OfflineAdapterResult,
     OfflineCaseInput,
     OfflineSystemAdapter,
+    P1FrozenAdapter,
+    P2FrozenAdapter,
+    P3FrozenAdapter,
     SYSTEM_IDS,
     default_adapters,
 )
@@ -417,6 +423,272 @@ def _candidate_catalog_provenance(
             "selected systems do not share one frozen candidate catalog/corpus identity"
         )
     return first
+
+
+def _require_equal_identity(
+    actual: object,
+    expected: object,
+    *,
+    label: str,
+) -> None:
+    if actual != expected:
+        raise ProvenanceMismatchError(
+            f"confirmatory adapter identity does not match production freeze: {label}"
+        )
+
+
+def _bind_catalog_to_freeze(
+    provenance: Mapping[str, Any],
+    snapshot: Mapping[str, Any],
+    *,
+    system_id: str,
+) -> None:
+    actual = provenance.get("candidate_catalog")
+    expected = snapshot.get("candidate_catalog")
+    if not isinstance(actual, Mapping) or not isinstance(expected, Mapping):
+        raise ProvenanceMismatchError(
+            f"{system_id} or production freeze lacks candidate catalog identity"
+        )
+    candidates = actual.get("candidates")
+    if not isinstance(candidates, list):
+        raise ProvenanceMismatchError(
+            f"{system_id} candidate catalog lacks its immutable candidate list"
+        )
+    comparisons = {
+        "catalog version": (actual.get("catalog_version"), expected.get("version")),
+        "corpus version": (actual.get("corpus_version"), expected.get("corpus_version")),
+        "corpus checksum": (actual.get("corpus_sha256"), expected.get("corpus_sha256")),
+        "candidate count": (len(candidates), expected.get("candidate_count")),
+    }
+    for name, (observed, frozen) in comparisons.items():
+        _require_equal_identity(
+            observed,
+            frozen,
+            label=f"{system_id} {name}",
+        )
+
+
+def _bind_p2_to_freeze(
+    provenance: Mapping[str, Any],
+    snapshot: Mapping[str, Any],
+    *,
+    label: str,
+) -> None:
+    systems = snapshot.get("systems")
+    indexes = snapshot.get("indexes")
+    prompts = snapshot.get("prompts")
+    configuration = snapshot.get("configuration")
+    if not all(
+        isinstance(item, Mapping)
+        for item in (systems, indexes, prompts, configuration)
+    ):
+        raise ProvenanceMismatchError(
+            "production freeze lacks structured P2 adapter identities"
+        )
+    p2_system = systems.get("P2")
+    extractor = prompts.get("P2_extractor")
+    p2_configuration = configuration.get("P2")
+    constraints = configuration.get("constraints")
+    if not all(
+        isinstance(item, Mapping)
+        for item in (p2_system, extractor, p2_configuration, constraints)
+    ):
+        raise ProvenanceMismatchError(
+            "production freeze lacks complete P2 configuration identities"
+        )
+    _require_equal_identity(
+        provenance.get("backend_version"),
+        p2_system.get("backend_version"),
+        label=f"{label} backend version",
+    )
+    _require_equal_identity(
+        provenance.get("pipeline_version"),
+        p2_system.get("pipeline_version"),
+        label=f"{label} pipeline version",
+    )
+    _require_equal_identity(
+        provenance.get("config"),
+        dict(p2_configuration),
+        label=f"{label} effective configuration",
+    )
+    extractor_pairs = {
+        "name": "extractor_name",
+        "version": "extractor_version",
+        "model_id": "extractor_model_id",
+        "prompt_version": "extractor_prompt_version",
+        "prompt_sha256": "extractor_prompt_sha256",
+    }
+    for frozen_key, provenance_key in extractor_pairs.items():
+        _require_equal_identity(
+            provenance.get(provenance_key),
+            extractor.get(frozen_key),
+            label=f"{label} extractor {frozen_key}",
+        )
+    dense = indexes.get("dense")
+    sparse = indexes.get("sparse")
+    hybrid = indexes.get("hybrid")
+    if not all(isinstance(item, Mapping) for item in (dense, sparse, hybrid)):
+        raise ProvenanceMismatchError(
+            "production freeze lacks complete retrieval index identities"
+        )
+    index_pairs = (
+        ("dense_index_version", dense.get("index_version"), "dense index version"),
+        ("dense_index_sha256", dense.get("index_checksum"), "dense index checksum"),
+        ("sparse_index_version", sparse.get("index_version"), "sparse index version"),
+        ("sparse_index_sha256", sparse.get("index_checksum"), "sparse index checksum"),
+        ("hybrid_index_version", hybrid.get("index_version"), "hybrid index version"),
+        ("hybrid_index_sha256", hybrid.get("index_checksum"), "hybrid index checksum"),
+        ("embedding_model_id", dense.get("model_id"), "embedding model"),
+        (
+            "embedding_model_revision",
+            dense.get("model_revision"),
+            "embedding model revision",
+        ),
+    )
+    for provenance_key, frozen, name in index_pairs:
+        _require_equal_identity(
+            provenance.get(provenance_key),
+            frozen,
+            label=f"{label} {name}",
+        )
+    retrieval = provenance.get("retrieval_configuration")
+    if not isinstance(retrieval, Mapping):
+        raise ProvenanceMismatchError(f"{label} lacks retrieval configuration")
+    for key in (
+        "retriever_version",
+        "top_k",
+        "sparse_top_k",
+        "dense_top_k",
+        "rrf_k",
+        "sparse_weight",
+        "dense_weight",
+    ):
+        _require_equal_identity(
+            retrieval.get(key),
+            hybrid.get(key),
+            label=f"{label} retrieval {key}",
+        )
+    actual_constraints = provenance.get("constraint_ranking_configuration")
+    if not isinstance(actual_constraints, Mapping):
+        raise ProvenanceMismatchError(
+            f"{label} lacks constraint/ranking configuration"
+        )
+    constraint_pairs = {
+        "constraint_evaluator_version": "evaluator_version",
+        "constraint_policy_version": "policy_version",
+        "ranker_version": "ranker_version",
+        "retrieval_rank_weight": "retrieval_rank_weight",
+        "soft_preference_weight": "soft_preference_weight",
+    }
+    for actual_key, frozen_key in constraint_pairs.items():
+        _require_equal_identity(
+            actual_constraints.get(actual_key),
+            constraints.get(frozen_key),
+            label=f"{label} constraints {actual_key}",
+        )
+
+
+def _bind_production_adapters(
+    *,
+    system_ids: Sequence[str],
+    adapters: Mapping[str, OfflineSystemAdapter],
+    frozen_configuration: Mapping[str, Any],
+) -> None:
+    """Bind exact production adapter construction to the verified freeze."""
+
+    expected_types = {
+        "P1": P1FrozenAdapter,
+        "P2": P2FrozenAdapter,
+        "P3": P3FrozenAdapter,
+    }
+    systems = frozen_configuration.get("systems")
+    prompts = frozen_configuration.get("prompts")
+    configuration = frozen_configuration.get("configuration")
+    if not all(isinstance(item, Mapping) for item in (systems, prompts, configuration)):
+        raise ProvenanceMismatchError(
+            "verified production freeze lacks adapter binding configuration"
+        )
+    for system_id in system_ids:
+        adapter = adapters[system_id]
+        if type(adapter) is not expected_types[system_id]:
+            raise PermissionError(
+                "confirmatory execution requires runner-constructed production adapters"
+            )
+        provenance = adapter.frozen_provenance()
+        if not isinstance(provenance, Mapping):
+            raise ProvenanceMismatchError(
+                f"{system_id} production adapter lacks frozen provenance"
+            )
+        _bind_catalog_to_freeze(
+            provenance,
+            frozen_configuration,
+            system_id=system_id,
+        )
+        if system_id == "P1":
+            p1 = systems.get("P1")
+            if not isinstance(p1, Mapping):
+                raise ProvenanceMismatchError(
+                    "production freeze lacks P1 system identity"
+                )
+            _require_equal_identity(
+                provenance.get("backend_version"),
+                p1.get("backend_version"),
+                label="P1 backend version",
+            )
+        elif system_id == "P2":
+            _bind_p2_to_freeze(provenance, frozen_configuration, label="P2")
+        else:
+            p3 = systems.get("P3")
+            p3_config = configuration.get("P3")
+            reranker_prompt = prompts.get("P3_reranker")
+            frozen_p2 = provenance.get("frozen_p2_provenance")
+            if not all(
+                isinstance(item, Mapping)
+                for item in (p3, p3_config, reranker_prompt, frozen_p2)
+            ):
+                raise ProvenanceMismatchError(
+                    "production freeze or P3 adapter lacks complete P3 identity"
+                )
+            _require_equal_identity(
+                provenance.get("backend_version"),
+                p3.get("backend_version"),
+                label="P3 backend version",
+            )
+            _require_equal_identity(
+                provenance.get("pipeline_version"),
+                p3.get("pipeline_version"),
+                label="P3 pipeline version",
+            )
+            _require_equal_identity(
+                provenance.get("config"),
+                dict(p3_config),
+                label="P3 effective configuration",
+            )
+            _require_equal_identity(
+                provenance.get("reranker_version"),
+                p3.get("reranker_version"),
+                label="P3 reranker version",
+            )
+            _require_equal_identity(
+                provenance.get("reranker_model_id"),
+                p3.get("reranker_model_id"),
+                label="P3 reranker model",
+            )
+            _require_equal_identity(
+                provenance.get("reranker_prompt_version"),
+                reranker_prompt.get("prompt_version"),
+                label="P3 reranker prompt version",
+            )
+            _require_equal_identity(
+                provenance.get("reranker_prompt_sha256"),
+                reranker_prompt.get("prompt_sha256"),
+                label="P3 reranker prompt checksum",
+            )
+            _bind_p2_to_freeze(
+                frozen_p2,
+                frozen_configuration,
+                label="P3 frozen P2",
+            )
 
 
 def _freeze_identity(split: LoadedSplit) -> dict[str, Any]:
@@ -1036,6 +1308,7 @@ def run_offline_recommendations(
     repeats: int = 1,
     seed: int = 20260824,
     enable_p3: bool = False,
+    p3_gate: Path | VerifiedP3DevelopmentDecision | None = None,
     resume: bool = False,
     dry_run: bool = False,
     include_benchmark_prompts: bool = False,
@@ -1056,7 +1329,8 @@ def run_offline_recommendations(
         )
     from evaluation_v5.isolation import verify_confirmatory_split
 
-    if isinstance(split, VerifiedConfirmatorySplit):
+    confirmatory = isinstance(split, VerifiedConfirmatorySplit)
+    if confirmatory:
         verified = verify_confirmatory_split(split)
         selected_split = verified.split
         selected_freeze_identity = verified.freeze_identity
@@ -1072,6 +1346,16 @@ def run_offline_recommendations(
                 "production freeze"
             )
         frozen_configuration = frozen_from_capability
+        if adapters is not None:
+            raise PermissionError(
+                "confirmatory execution prohibits adapter injection; production "
+                "adapters are constructed and bound to the verified freeze"
+            )
+        if p3_gate is not None:
+            raise ValueError(
+                "confirmatory P3 gate overrides are prohibited; the gate is "
+                "derived from the verified production freeze"
+            )
     elif isinstance(split, LoadedSplit):
         if split.manifest.role is SplitRole.CONFIRMATORY:
             raise PermissionError(
@@ -1102,10 +1386,85 @@ def run_offline_recommendations(
             "VerifiedConfirmatorySplit"
         )
     split = selected_split
-    selected_adapters = dict(adapters) if adapters is not None else default_adapters(enable_p3=enable_p3)
+    frozen = dict(frozen_configuration or {})
+    if enable_p3:
+        from evaluation_v5.p3_gate import (
+            P3GateValidationError,
+            VerifiedP3DevelopmentDecision,
+            require_retained_p3_gate,
+            verify_p3_development_decision,
+        )
+
+        if confirmatory:
+            frozen_gate = frozen.get("p3_gate")
+            if not isinstance(frozen_gate, Mapping):
+                raise PermissionError(
+                    "P3 execution requires a verified gate in the production freeze"
+                )
+            recorded_path = frozen_gate.get("decision_artifact_path")
+            if not isinstance(recorded_path, str) or not recorded_path.strip():
+                raise PermissionError(
+                    "P3 execution requires a reverifiable development gate artifact"
+                )
+            gate_path = Path(recorded_path)
+            if not gate_path.is_absolute():
+                gate_path = Path(__file__).resolve().parents[2] / gate_path
+            try:
+                verified_gate = require_retained_p3_gate(
+                    verify_p3_development_decision(gate_path)
+                )
+            except P3GateValidationError as exc:
+                raise OfflineRunnerError(
+                    "production-freeze P3 gate failed source verification"
+                ) from exc
+            if verified_gate.freeze_snapshot() != dict(frozen_gate):
+                raise ProvenanceMismatchError(
+                    "verified P3 gate does not match the production freeze"
+                )
+        else:
+            if isinstance(p3_gate, (str, Path)):
+                try:
+                    verified_gate = verify_p3_development_decision(Path(p3_gate))
+                except P3GateValidationError as exc:
+                    raise OfflineRunnerError(
+                        "development P3 gate failed source verification"
+                    ) from exc
+            elif type(p3_gate) is VerifiedP3DevelopmentDecision:
+                verified_gate = p3_gate
+            else:
+                raise PermissionError(
+                    "development P3 execution requires a verified RETAINED gate artifact"
+                )
+            try:
+                verified_gate = require_retained_p3_gate(verified_gate)
+            except P3GateValidationError as exc:
+                raise OfflineRunnerError(
+                    "development P3 gate failed source reverification"
+                ) from exc
+            gate_snapshot = verified_gate.freeze_snapshot()
+            existing_gate = frozen.get("p3_gate")
+            if existing_gate is not None and existing_gate != gate_snapshot:
+                raise ProvenanceMismatchError(
+                    "frozen configuration P3 gate does not match the verified gate"
+                )
+            frozen["p3_gate"] = gate_snapshot
+    elif p3_gate is not None:
+        raise ValueError("p3_gate is accepted only when enable_p3=True")
+
+    selected_adapters = (
+        dict(adapters)
+        if adapters is not None
+        else default_adapters(enable_p3=enable_p3)
+    )
     selected_systems = _validate_system_ids(
         system_ids, selected_adapters, enable_p3=enable_p3
     )
+    if confirmatory:
+        _bind_production_adapters(
+            system_ids=selected_systems,
+            adapters=selected_adapters,
+            frozen_configuration=frozen,
+        )
     matrix = build_execution_matrix(
         split,
         system_ids=selected_systems,
@@ -1114,7 +1473,6 @@ def run_offline_recommendations(
         seed=seed,
         enable_p3=enable_p3,
     )
-    frozen = dict(frozen_configuration or {})
     provenance = _build_provenance(
         split,
         system_ids=selected_systems,
@@ -1323,6 +1681,14 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--result-dir", type=Path, required=True)
     parser.add_argument("--systems", default="P1,P2", help="Comma-separated P1/P2 IDs; P3 also needs --enable-p3.")
     parser.add_argument("--enable-p3", action="store_true", help="Explicitly permit P3 evaluation.")
+    parser.add_argument(
+        "--p3-gate",
+        type=Path,
+        help=(
+            "Verified development-decision artifact required for development "
+            "P3 runs; confirmatory runs derive it from the production freeze."
+        ),
+    )
     parser.add_argument("--repeats", type=int, default=1)
     parser.add_argument("--seed", type=int, default=20260824)
     parser.add_argument("--resume", action="store_true")
@@ -1353,6 +1719,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             repeats=args.repeats,
             seed=args.seed,
             enable_p3=args.enable_p3,
+            p3_gate=args.p3_gate,
             resume=args.resume,
             dry_run=args.dry_run,
             include_benchmark_prompts=args.include_benchmark_prompts,

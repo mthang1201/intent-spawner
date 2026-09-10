@@ -672,11 +672,8 @@ def test_p3_development_gate_isolation_confirmatory(synthetic_benchmark):
         p3_headroom={"gate_status": "RETAINED", "eligible_families": 12, "ranking_error_families": 4},
     )
 
-    decision = compute_p3_development_decision(component_res, confirmatory_gold)
-    assert decision["gate_status"] == "NOT_AVAILABLE"
-    assert decision["decision"] == "UNAVAILABLE_NO_FROZEN_DEVELOPMENT_GATE"
-    assert decision["confirmatory_inspection"] == "PROHIBITED"
-    assert decision["claims_permitted"] is False
+    with pytest.raises(ReportingError, match="isolation-verified"):
+        compute_p3_development_decision(component_res, confirmatory_gold)
 
 
 def test_p3_development_gate_with_freeze_identity(synthetic_benchmark):
@@ -711,11 +708,8 @@ def test_p3_development_gate_with_freeze_identity(synthetic_benchmark):
         p3_headroom={"gate_status": "NOT_RETAINED", "eligible_families": 12, "ranking_error_families": 0},
     )
 
-    decision = compute_p3_development_decision(component_res, confirmatory_gold)
-    assert decision["gate_status"] == "RETAINED"
-    assert decision["decision"] == "RETAINED"
-    assert decision["source_type"] == "confirmatory_freeze_manifest_snapshot"
-    assert decision["confirmatory_inspection"] == "PROHIBITED"
+    with pytest.raises(ReportingError, match="isolation-verified"):
+        compute_p3_development_decision(component_res, confirmatory_gold)
 
 
 def test_p3_mandatory_adversarial_isolation(tmp_path, synthetic_benchmark):
@@ -729,13 +723,19 @@ def test_p3_mandatory_adversarial_isolation(tmp_path, synthetic_benchmark):
         "rationale": "Insufficient ranking headroom on development set.",
     }
 
-    # Case A: Confirmatory P3 observations look extremely favorable (100% accuracy)
+    # A caller-authored mapping cannot become development authority regardless
+    # of what the confirmatory observations appear to show.
     comp_a = SimpleNamespace(
         aggregates={"P2": {}, "P3": {"joint_accept_at_1": 1.0}},
         p3_headroom={"gate_status": "RETAINED", "eligible_families": 20, "ranking_error_families": 10},
     )
     conf_gold_a = _make_gold_source(cases, role="confirmatory")
-    dec_a = compute_p3_development_decision(comp_a, conf_gold_a, p3_development_decision=frozen_dev_decision)
+    with pytest.raises(ReportingError, match="mappings are prohibited"):
+        compute_p3_development_decision(
+            comp_a,
+            conf_gold_a,
+            p3_development_decision=frozen_dev_decision,
+        )
 
     # Case B: Confirmatory P3 observations look extremely unfavorable (0% accuracy)
     comp_b = SimpleNamespace(
@@ -743,13 +743,12 @@ def test_p3_mandatory_adversarial_isolation(tmp_path, synthetic_benchmark):
         p3_headroom={"gate_status": "NOT_RETAINED", "eligible_families": 20, "ranking_error_families": 0},
     )
     conf_gold_b = _make_gold_source(cases, role="confirmatory")
-    dec_b = compute_p3_development_decision(comp_b, conf_gold_b, p3_development_decision=frozen_dev_decision)
-
-    # Gate decision in A and B must be IDENTICAL and equal to NOT_RETAINED
-    assert dec_a["decision"] == dec_b["decision"] == "NOT_RETAINED"
-    assert dec_a["gate_status"] == dec_b["gate_status"] == "NOT_RETAINED"
-    assert dec_a["confirmatory_inspection"] == dec_b["confirmatory_inspection"] == "PROHIBITED"
-    assert dec_a == dec_b
+    with pytest.raises(ReportingError, match="mappings are prohibited"):
+        compute_p3_development_decision(
+            comp_b,
+            conf_gold_b,
+            p3_development_decision=frozen_dev_decision,
+        )
 
 
 def test_p3_development_gate_decisions(synthetic_benchmark):
@@ -1210,5 +1209,4 @@ def test_main_cli_end_to_end(tmp_path, synthetic_benchmark, monkeypatch):
     assert manifest["status"] == "REPORT_COMPLETE"
     assert manifest["claims_permitted"] is False  # development split does not permit final confirmatory claims
     assert (output_dir / SYNTHESIS_REPORT_FILENAME).is_file()
-
 

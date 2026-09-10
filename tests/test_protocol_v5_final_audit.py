@@ -207,18 +207,22 @@ def test_current_raw_analysis_and_figures_reproduce_without_collectors(tmp_path,
     before = {p: file_sha256(inputs.root / p) for p in inputs.files}
     a = analyze(inputs, current_audit, tmp_path / "analysis")
     assert a["status"] == "PASS_WITH_UNAVAILABLE_ANALYSES"
-    assert len(a["observed_functional"]) == 2
+    assert a["observed_functional"] == []
+    assert len(a["legacy_functional"]) == 9
+    assert all(not row["claim_eligible"] for row in a["legacy_functional"])
     assert a["observed_offline_counts"][0]["families"] == 10
     assert all(c["status"] == "PASS" for c in a["comparisons"])
     first = figures(inputs, a, tmp_path / "analysis", tmp_path / "figures1")
     figures(inputs, a, tmp_path / "analysis", tmp_path / "figures2")
     failures = [c for c in first["comparisons"] if c["status"] == "FAIL"]
     assert len(failures) == 1 and failures[0]["artifact"].endswith("participant-flow.csv")
-    assert file_sha256(tmp_path / "figures1/functional-development.svg") == file_sha256(tmp_path / "figures2/functional-development.svg")
+    assert not (tmp_path / "figures1/functional-development.svg").exists()
+    assert file_sha256(tmp_path / "figures1/tables/functional-results.json") == file_sha256(tmp_path / "figures2/tables/functional-results.json")
     assert all(file_sha256(inputs.root / p) == digest for p, digest in before.items())
     report = render_report(inputs, current_audit, a, first, tmp_path / "REPORT.md")
     assert "NOT EXECUTED" in report and "Threats to validity" in report
-    assert "13/18" in report and "SHA-256" in report
+    assert "Current v1.4 functional observations" in report and "SHA-256" in report
+    assert "MISSING_RECOMMENDATION_RECORD_JOIN" in report
     assert "participant-flow CSV" in report
 
 

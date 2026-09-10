@@ -14,6 +14,10 @@ import math
 from typing import Any, Protocol, runtime_checkable
 
 from recommender.candidate_corpus import CandidateCorpus, build_candidate_corpus
+from recommender.constraint_evaluator import (
+    RETRIEVAL_RANK_WEIGHT,
+    SOFT_PREFERENCE_WEIGHT,
+)
 from recommender.models import STRUCTURED_INTENT_SCHEMA_VERSION, RecommendationRequest
 from recommender.p2_backend import P2DetailedResult, P2Recommender
 from recommender.p3_backend import P3DetailedResult, P3Recommender
@@ -123,6 +127,8 @@ def _p2_frozen_provenance(backend: P2Recommender) -> dict[str, Any]:
             "constraint_evaluator_version": backend.evaluator.evaluator_version,
             "constraint_policy_version": backend.evaluator.constraint_policy_version,
             "ranker_version": backend.evaluator.ranker_version,
+            "retrieval_rank_weight": RETRIEVAL_RANK_WEIGHT,
+            "soft_preference_weight": SOFT_PREFERENCE_WEIGHT,
         },
         "config": _json_value(backend.config),
         "generation": _json_value(backend.generation),
@@ -382,6 +388,11 @@ class P3FrozenAdapter:
             "candidate_catalog": candidate_catalog_snapshot(self.backend.corpus),
             "reranker_name": getattr(reranker, "reranker_name", None),
             "reranker_version": getattr(reranker, "reranker_version", None),
+            "reranker_model_id": getattr(
+                getattr(reranker, "config", None), "model", None
+            ),
+            "reranker_prompt_version": getattr(reranker, "prompt_version", None),
+            "reranker_prompt_sha256": getattr(reranker, "prompt_sha256", None),
         }
 
     def recommend(self, case: OfflineCaseInput, *, seed: int) -> OfflineAdapterResult:

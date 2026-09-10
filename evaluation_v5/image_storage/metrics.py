@@ -3,17 +3,16 @@
 from __future__ import annotations
 
 from collections import defaultdict
-from dataclasses import asdict, dataclass, field
-import json
+from dataclasses import dataclass, field
 from typing import Any, Mapping, Sequence
 
 from .contracts import (
+    CapabilityProbeStatus,
     DimensionCStatus,
     FUNCTIONAL_EVALUATION_SCHEMA_VERSION,
     FUNCTIONAL_METRICS_SCHEMA_VERSION,
     FunctionalEvaluationRecord,
     ImageProbeResult,
-    ProbeExecutionStatus,
 )
 
 
@@ -140,6 +139,12 @@ def evaluate_recommendation_functional(
     probe_results: Mapping[tuple[str, str], ImageProbeResult],
     execution_status: str = "COMPLETED",
     source_predicted_image_value: Any = _UNSET,
+    source_predicted_candidate_id: str | None = None,
+    source_run_sha256: str | None = None,
+    source_recommendation_record_id: str | None = None,
+    source_configuration_identity_sha256: str | None = None,
+    selected_image_digest: str | None = None,
+    selected_image_platform: str | None = None,
 ) -> FunctionalEvaluationRecord:
     """Evaluate one recommendation row across Dimensions A, B, and C with independent empirical logic."""
     if source_predicted_image_value is _UNSET:
@@ -193,9 +198,13 @@ def evaluate_recommendation_functional(
             result = probe_results.get(key)
             if result is None:
                 undefined_probes_list.append(f"probe:{predicted_image_id}:{cap}(REQUIRED_PROBE_NOT_DEFINED)")
-            elif not result.is_executed:
+            elif not result.is_executed or result.is_functionally_unavailable:
                 unavailable_probes_list.append(f"probe:{predicted_image_id}:{cap}({result.execution_status})")
-            elif not result.success:
+            elif (
+                not result.success
+                or result.effective_functional_status
+                != CapabilityProbeStatus.SUCCESS.value
+            ):
                 failed_probes_list.append(f"probe:{predicted_image_id}:{cap}({result.error_category or 'failed'})")
 
         dim_c_eligible = (len(undefined_probes_list) == 0)
@@ -269,6 +278,12 @@ def evaluate_recommendation_functional(
         undefined_probes=undefined_probes,
         mismatch_types=tuple(mismatches),
         execution_status=execution_status,
+        source_predicted_candidate_id=source_predicted_candidate_id,
+        source_run_sha256=source_run_sha256,
+        source_recommendation_record_id=source_recommendation_record_id,
+        source_configuration_identity_sha256=source_configuration_identity_sha256,
+        selected_image_digest=selected_image_digest,
+        selected_image_platform=selected_image_platform,
     )
 
 
@@ -295,7 +310,10 @@ def compute_functional_metrics(
         "probes_executed": sum(1 for p in probes_list if p.is_executed),
         "probes_passed": sum(1 for p in probes_list if p.is_executed and p.success),
         "probes_failed": sum(1 for p in probes_list if p.is_genuine_probe_failure),
-        "probes_unavailable": sum(1 for p in probes_list if not p.is_executed),
+        "probes_unavailable": sum(
+            1 for p in probes_list if p.is_functionally_unavailable
+        ),
+        "probes_not_executed": sum(1 for p in probes_list if not p.is_executed),
     }
 
     for sys_id, records in sorted(by_system.items()):

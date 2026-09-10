@@ -24,8 +24,9 @@ identities of the repository snapshots they audited.
 ## Protocol-v5 Evidence and Contracts
 
 **Current audit: FAIL. Confirmatory experiments: NOT EXECUTED.** E1 development
-outputs and E5 development functional observations exist; two E5 packages pass
-current validation with unresolved pipeline provenance. Human, resource, and
+outputs and archived E5 development functional observations exist; the E5
+packages remain legacy-valid with explicit source-provenance limitations. No
+current v1.4 E5 observation exists. Human, resource, and
 image-storage outcomes remain **NOT EXECUTED**. Consult the final report rather
 than inferring execution from a package name or a design document.
 
@@ -41,6 +42,7 @@ than inferring execution from a package name or a design document.
 | [Data isolation](evaluation/PROTOCOL_V5_DATA_ISOLATION.md) | Development/confirmatory split, custody, loader, and freeze boundaries. |
 | [Isolation verification](evaluation/PROTOCOL_V5_ISOLATION_VERIFICATION.md) | Adversarial software checks; no proof of external custody. |
 | [Offline runner](evaluation/PROTOCOL_V5_OFFLINE_RUNNER.md) | E1 raw execution, provenance, and validation interface. |
+| [E5 image functional contract](evaluation/PROTOCOL_V5_IMAGE_FUNCTIONAL.md) | Bounded runtime semantics, cleanup, source-run provenance binding, and legacy evidence classification. |
 | [Component scoring](evaluation/PROTOCOL_V5_COMPONENT_SCORING.md) | Component metric definitions and required gold inputs. |
 | [Statistical analysis](evaluation/PROTOCOL_V5_STATISTICAL_ANALYSIS.md) | Family aggregation, estimands, pairing, and inferential gates. |
 | [Research analysis](evaluation/PROTOCOL_V5_RESEARCH_ANALYSIS.md) | Claim-aware analysis interface; use the final audit for current evidence selection. |
