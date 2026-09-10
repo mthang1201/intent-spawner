@@ -1,0 +1,101 @@
+{
+  "comparisons": [
+    {
+      "artifact": "results_v5/protocol-v5.0.0/E3/b0-p2-user-study-readiness/report/figures/accuracy.svg",
+      "baseline_artifact": "results_v5/protocol-v5.0.0/E3/b0-p2-user-study-readiness/report/figures/accuracy.svg",
+      "comparison": "exact_bytes",
+      "original_sha256": "fd41efe56098dfb382ef91506249fc4b55c314c96e007eaf46445ccf7a47b470",
+      "preserved_original_sha256": null,
+      "reason": "New derivative retained separately; original never changed.",
+      "regenerated_sha256": "fd41efe56098dfb382ef91506249fc4b55c314c96e007eaf46445ccf7a47b470",
+      "status": "PASS"
+    },
+    {
+      "artifact": "results_v5/protocol-v5.0.0/E3/b0-p2-user-study-readiness/report/figures/decision-time.svg",
+      "baseline_artifact": "results_v5/protocol-v5.0.0/E3/b0-p2-user-study-readiness/report/figures/decision-time.svg",
+      "comparison": "exact_bytes",
+      "original_sha256": "3cf950005c60b1fd8bd802a47856b641a1772e88942b788378179c14b06139ba",
+      "preserved_original_sha256": null,
+      "reason": "New derivative retained separately; original never changed.",
+      "regenerated_sha256": "3cf950005c60b1fd8bd802a47856b641a1772e88942b788378179c14b06139ba",
+      "status": "PASS"
+    },
+    {
+      "artifact": "results_v5/protocol-v5.0.0/E3/b0-p2-user-study-readiness/report/figures/interaction-effort.svg",
+      "baseline_artifact": "results_v5/protocol-v5.0.0/E3/b0-p2-user-study-readiness/report/figures/interaction-effort.svg",
+      "comparison": "exact_bytes",
+      "original_sha256": "44d6bf5cd32e015e51a1d51b83ab6351c450e772d6e448e910cf45f589e08fe3",
+      "preserved_original_sha256": null,
+      "reason": "New derivative retained separately; original never changed.",
+      "regenerated_sha256": "44d6bf5cd32e015e51a1d51b83ab6351c450e772d6e448e910cf45f589e08fe3",
+      "status": "PASS"
+    },
+    {
+      "artifact": "results_v5/protocol-v5.0.0/E3/b0-p2-user-study-readiness/report/figures/preference.svg",
+      "baseline_artifact": "results_v5/protocol-v5.0.0/E3/b0-p2-user-study-readiness/report/figures/preference.svg",
+      "comparison": "exact_bytes",
+      "original_sha256": "6c988d1df642703d24cbcbed27066174cd81f8d1010bde1f53b421e976c99350",
+      "preserved_original_sha256": null,
+      "reason": "New derivative retained separately; original never changed.",
+      "regenerated_sha256": "6c988d1df642703d24cbcbed27066174cd81f8d1010bde1f53b421e976c99350",
+      "status": "PASS"
+    },
+    {
+      "artifact": "results_v5/protocol-v5.0.0/E3/b0-p2-user-study-readiness/report/figures/sus-seq-custom.svg",
+      "baseline_artifact": "results_v5/protocol-v5.0.0/E3/b0-p2-user-study-readiness/report/figures/sus-seq-custom.svg",
+      "comparison": "exact_bytes",
+      "original_sha256": "3d1363dcfa80d4687c4df2e2b998441a98391f2efe3a798298a7b8ac89c77f7e",
+      "preserved_original_sha256": null,
+      "reason": "New derivative retained separately; original never changed.",
+      "regenerated_sha256": "3d1363dcfa80d4687c4df2e2b998441a98391f2efe3a798298a7b8ac89c77f7e",
+      "status": "PASS"
+    },
+    {
+      "artifact": "results_v5/protocol-v5.0.0/E3/b0-p2-user-study-readiness/report/tables/condition-summary.csv",
+      "baseline_artifact": "results_v5/protocol-v5.0.0/E3/b0-p2-user-study-readiness/report/tables/condition-summary.csv",
+      "comparison": "exact_bytes",
+      "original_sha256": "2ba7a5b4941ab5470b786e06e8692af576c890dca6b67a9826fbb08a4c0232a6",
+      "preserved_original_sha256": null,
+      "reason": "New derivative retained separately; original never changed.",
+      "regenerated_sha256": "2ba7a5b4941ab5470b786e06e8692af576c890dca6b67a9826fbb08a4c0232a6",
+      "status": "PASS"
+    },
+    {
+      "artifact": "results_v5/protocol-v5.0.0/E3/b0-p2-user-study-readiness/report/tables/missingness.csv",
+      "baseline_artifact": "results_v5/protocol-v5.0.0/E3/b0-p2-user-study-readiness/report/tables/missingness.csv",
+      "comparison": "exact_bytes",
+      "original_sha256": "2ba7a5b4941ab5470b786e06e8692af576c890dca6b67a9826fbb08a4c0232a6",
+      "preserved_original_sha256": null,
+      "reason": "New derivative retained separately; original never changed.",
+      "regenerated_sha256": "2ba7a5b4941ab5470b786e06e8692af576c890dca6b67a9826fbb08a4c0232a6",
+      "status": "PASS"
+    },
+    {
+      "artifact": "results_v5/protocol-v5.0.0/E3/b0-p2-user-study-readiness/report/tables/participant-flow.csv",
+      "baseline_artifact": "results_v5/protocol-v5.0.0/compatibility/E3/b0-p2-user-study-readiness-regeneration-v2/report/tables/participant-flow.csv",
+      "comparison": "exact_bytes",
+      "original_sha256": "9a624a9bf3d29c57f6452bc40dce9fbcebd91d87932c4ab3fe93f16c78207877",
+      "preserved_original_sha256": "bee024512c5b6f407a9f1d273d2abbdfe2be640322b05d06f9a641404e8dd73c",
+      "reason": "Current regeneration is normalized to LF and compared with the versioned compatibility artifact; the historical artifact and identity remain unchanged.",
+      "regenerated_sha256": "9a624a9bf3d29c57f6452bc40dce9fbcebd91d87932c4ab3fe93f16c78207877",
+      "status": "PASS"
+    },
+    {
+      "artifact": "results_v5/protocol-v5.0.0/E3/b0-p2-user-study-readiness/report/tables/preference.csv",
+      "baseline_artifact": "results_v5/protocol-v5.0.0/E3/b0-p2-user-study-readiness/report/tables/preference.csv",
+      "comparison": "exact_bytes",
+      "original_sha256": "2ba7a5b4941ab5470b786e06e8692af576c890dca6b67a9826fbb08a4c0232a6",
+      "preserved_original_sha256": null,
+      "reason": "New derivative retained separately; original never changed.",
+      "regenerated_sha256": "2ba7a5b4941ab5470b786e06e8692af576c890dca6b67a9826fbb08a4c0232a6",
+      "status": "PASS"
+    }
+  ],
+  "generated_tables": [
+    "functional-results.json",
+    "defense-summary.json"
+  ],
+  "schema_version": "protocol-v5-final-figures-v1.0.0",
+  "source": "Authenticated regenerated derived artifacts; no raw observation or collector access by renderers.",
+  "status": "PASS"
+}
