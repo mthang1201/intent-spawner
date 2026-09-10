@@ -19,6 +19,10 @@ from evaluation_v5.analysis.statistics import (
     family_bootstrap_ci,
     inference_eligibility,
 )
+from evaluation_v5.isolation import (
+    VerifiedConfirmatorySplit,
+    verify_confirmatory_split,
+)
 from evaluation_v5.split_dataset import (
     SPLIT_BUNDLE_SCHEMA_VERSION,
     SPLIT_BUNDLE_SCHEMA_VERSION_V2,
@@ -342,7 +346,7 @@ def evaluate_catalog_scale_recommendation(
     stage: str = "confirmatory",
     dataset_path: Path | str | None = None,
     freeze_path: Path | str | None = None,
-    split_bundle: LoadedSplit | None = None,
+    split_bundle: LoadedSplit | VerifiedConfirmatorySplit | None = None,
     k: int = DEFAULT_RECALL_K,
 ) -> dict[str, Any]:
     """Evaluate P2 recommendation quality, Recall@K, and latency on an approved catalog subset.
@@ -380,24 +384,70 @@ def evaluate_catalog_scale_recommendation(
         }
 
     dataset_path_str = str(dataset_path) if dataset_path else ""
+    confirmatory_provenance: dict[str, Any] | None = None
 
     # Check explicit split bundle passed in
     if split_bundle is not None:
-        bundle_role = (
-            split_bundle.bundle.split_manifest.role.value
-            if hasattr(split_bundle.bundle.split_manifest.role, "value")
-            else str(split_bundle.bundle.split_manifest.role)
-        )
-        if stage == "confirmatory" and bundle_role != "confirmatory":
-            logger.warning(
-                "Confirmatory stage received non-confirmatory split bundle with role: %s",
-                bundle_role,
-            )
+        if stage == "confirmatory":
+            if type(split_bundle) is not VerifiedConfirmatorySplit:
+                logger.warning(
+                    "Confirmatory catalog-scale evaluation rejected a generic split bundle"
+                )
+                return {
+                    "status": "NOT_EXECUTED",
+                    "reason": (
+                        "confirmatory_split_capability_required: use "
+                        "load_confirmatory_split()"
+                    ),
+                    "stage": "confirmatory",
+                    "split_role": "none",
+                    "image_acceptable_accuracy": None,
+                    "image_preferred_accuracy": None,
+                    "retrieval_recall_at_k": None,
+                    "recall_k": k,
+                    "latency": {},
+                    "evaluated_cases": 0,
+                    "feasible_cases": 0,
+                    "dataset_id": "none",
+                    "dataset_path": "",
+                    "dataset_sha256": "0" * 64,
+                    "p2_config_version": "none",
+                    "p2_version": "p2-hybrid-v1.0.0",
+                    "confirmatory_provenance": None,
+                }
+            try:
+                verified = verify_confirmatory_split(split_bundle)
+            except Exception as exc:
+                logger.warning("Failed to reverify confirmatory split: %s", exc)
+                return {
+                    "status": "NOT_EXECUTED",
+                    "reason": f"confirmatory_split_reverification_failed: {exc}",
+                    "stage": "confirmatory",
+                    "split_role": "none",
+                    "image_acceptable_accuracy": None,
+                    "image_preferred_accuracy": None,
+                    "retrieval_recall_at_k": None,
+                    "recall_k": k,
+                    "latency": {},
+                    "evaluated_cases": 0,
+                    "feasible_cases": 0,
+                    "dataset_id": "none",
+                    "dataset_path": "",
+                    "dataset_sha256": "0" * 64,
+                    "p2_config_version": "none",
+                    "p2_version": "p2-hybrid-v1.0.0",
+                    "confirmatory_provenance": None,
+                }
+            split_bundle = verified.split
+            split_role = "confirmatory"
+            dataset_path_str = str(verified.dataset_path)
+            confirmatory_provenance = dict(verified.provenance_identity)
+        elif isinstance(split_bundle, VerifiedConfirmatorySplit):
             return {
                 "status": "NOT_EXECUTED",
-                "reason": f"confirmatory_stage_received_non_confirmatory_bundle: role={bundle_role}",
+                "reason": "development_stage_received_confirmatory_capability",
                 "stage": stage,
-                "split_role": bundle_role,
+                "split_role": "none",
                 "image_acceptable_accuracy": None,
                 "image_preferred_accuracy": None,
                 "retrieval_recall_at_k": None,
@@ -405,13 +455,20 @@ def evaluate_catalog_scale_recommendation(
                 "latency": {},
                 "evaluated_cases": 0,
                 "feasible_cases": 0,
-                "dataset_id": split_bundle.bundle.split_manifest.dataset_id,
-                "dataset_path": dataset_path_str,
-                "dataset_sha256": split_bundle.source_file_sha256,
+                "dataset_id": "none",
+                "dataset_path": "",
+                "dataset_sha256": "0" * 64,
                 "p2_config_version": "none",
                 "p2_version": "p2-hybrid-v1.0.0",
+                "confirmatory_provenance": None,
             }
-        split_role = bundle_role
+        else:
+            bundle_role = (
+                split_bundle.bundle.split_manifest.role.value
+                if hasattr(split_bundle.bundle.split_manifest.role, "value")
+                else str(split_bundle.bundle.split_manifest.role)
+            )
+            split_role = bundle_role
     else:
         # Load stage-appropriate split bundle
         if stage == "development":
@@ -479,9 +536,11 @@ def evaluate_catalog_scale_recommendation(
                     dataset_path=ds_p, freeze_path=fr_p
                 )
                 loaded_conf = load_confirmatory_split(ds_src, fr_src)
-                split_bundle = loaded_conf.split
+                verified = verify_confirmatory_split(loaded_conf)
+                split_bundle = verified.split
                 split_role = "confirmatory"
-                dataset_path_str = str(ds_src)
+                dataset_path_str = str(verified.dataset_path)
+                confirmatory_provenance = dict(verified.provenance_identity)
             except Exception as exc:
                 logger.warning("Failed to load confirmatory split: %s", exc)
                 return {
@@ -509,6 +568,19 @@ def evaluate_catalog_scale_recommendation(
     dataset_sha256 = split_bundle.source_file_sha256
     cases = split_bundle.bundle.cases
     split_schema_version = str(split_bundle.bundle.schema_version)
+    confirmatory_provenance_sha256 = (
+        hashlib.sha256(
+            json.dumps(
+                confirmatory_provenance,
+                allow_nan=False,
+                ensure_ascii=False,
+                separators=(",", ":"),
+                sort_keys=True,
+            ).encode("utf-8")
+        ).hexdigest()
+        if confirmatory_provenance is not None
+        else None
+    )
 
     # Construct scale-specific catalog containing only scale_images
     subset_images = {}
@@ -656,6 +728,13 @@ def evaluate_catalog_scale_recommendation(
                     "candidate_corpus_sha256": p2.corpus.corpus_checksum,
                     "image_catalog_version": p2.corpus.source_image_catalog_version,
                     "p2_config_version": p2.config.config_version,
+                    **(
+                        {
+                            "confirmatory_provenance_sha256": confirmatory_provenance_sha256
+                        }
+                        if confirmatory_provenance_sha256 is not None
+                        else {}
+                    ),
                 },
             }
         )
@@ -708,4 +787,5 @@ def evaluate_catalog_scale_recommendation(
         "case_records": case_records,
         "family_estimates": family_estimates,
         "family_summary": family_summary,
+        "confirmatory_provenance": confirmatory_provenance,
     }

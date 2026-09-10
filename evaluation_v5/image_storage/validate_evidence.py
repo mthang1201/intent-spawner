@@ -20,6 +20,7 @@ from evaluation_v5.analysis.statistics import (
     family_bootstrap_ci,
     inference_eligibility,
 )
+from evaluation_v5.isolation import VerifiedConfirmatorySplit
 from evaluation_v5.schemas import EvidenceStatus, ProtocolV5Manifest
 from evaluation_v5.validation import validate_manifest
 from evaluation_v5.offline.source_run import SourceRunProvenanceError
@@ -1037,8 +1038,33 @@ def validate_e5_evidence(package_dir: Path | str) -> dict[str, Any]:
     }
 
 
-def validate_e5_storage_evidence(package_dir: Path | str) -> dict[str, Any]:
+def validate_e5_storage_evidence(
+    package_dir: Path | str,
+    *,
+    confirmatory_split: VerifiedConfirmatorySplit | None = None,
+) -> dict[str, Any]:
     """Validate a sealed Protocol-v5 E5 image storage scalability evidence package fail-closed."""
+    authoritative_confirmatory_provenance: dict[str, Any] | None = None
+    authoritative_confirmatory_loaded = None
+    if confirmatory_split is not None:
+        if type(confirmatory_split) is not VerifiedConfirmatorySplit:
+            raise EvidenceValidationError(
+                "confirmatory recommendation validation requires a "
+                "VerifiedConfirmatorySplit"
+            )
+        from evaluation_v5.isolation import verify_confirmatory_split
+
+        try:
+            verified_confirmatory = verify_confirmatory_split(confirmatory_split)
+        except Exception as exc:
+            raise EvidenceValidationError(
+                "confirmatory split capability failed authoritative reverification"
+            ) from exc
+        authoritative_confirmatory_provenance = dict(
+            verified_confirmatory.provenance_identity
+        )
+        authoritative_confirmatory_loaded = verified_confirmatory.split
+
     directory = Path(package_dir).resolve()
     if not directory.is_dir():
         raise FileNotFoundError(f"Evidence directory not found: {directory}")
@@ -1633,11 +1659,24 @@ def validate_e5_storage_evidence(package_dir: Path | str) -> dict[str, Any]:
 
         if p2_status == "OBSERVED":
             if split_stage == "confirmatory" or rec_stage == "confirmatory":
-                if rec_role == "development" or ds_id in DEV_DATASET_IDENTITIES or ds_sha in DEV_DATASET_SHAS:
+                if ds_id in DEV_DATASET_IDENTITIES or ds_sha in DEV_DATASET_SHAS:
                     recommendation_split_valid = False
                     raise EvidenceValidationError(
                         f"CONFIRMATORY_RECOMMENDATION_USES_DEVELOPMENT_SPLIT: Scale {s.get('catalog_size')} "
                         f"claims confirmatory recommendation but uses development dataset {ds_id} (SHA: {ds_sha})"
+                    )
+                if rec_role != "confirmatory":
+                    recommendation_split_valid = False
+                    raise EvidenceValidationError(
+                        f"CONFIRMATORY_RECOMMENDATION_LACKS_AUTHORITATIVE_ROLE: Scale {s.get('catalog_size')} "
+                        f"has split role {rec_role!r}"
+                    )
+                if authoritative_confirmatory_provenance is None:
+                    recommendation_split_valid = False
+                    raise EvidenceValidationError(
+                        "CONFIRMATORY_RECOMMENDATION_REQUIRES_VERIFIED_SPLIT: "
+                        "positive validation requires a VerifiedConfirmatorySplit "
+                        "from load_confirmatory_split()"
                     )
 
     if current_storage_schema:
@@ -1720,6 +1759,58 @@ def validate_e5_storage_evidence(package_dir: Path | str) -> dict[str, Any]:
                 raise EvidenceValidationError(
                     f"Scale {size} recommendation provenance is incomplete or inconsistent"
                 )
+            observed_confirmatory = bool(
+                run.get("status") == "OBSERVED"
+                and (
+                    split_stage == "confirmatory"
+                    or run.get("split_stage") == "confirmatory"
+                )
+            )
+            run_confirmatory_provenance = run.get("confirmatory_provenance")
+            scale_confirmatory_provenance = provenance.get(
+                "confirmatory_recommendation"
+            )
+            if observed_confirmatory:
+                expected_confirmatory_provenance = (
+                    authoritative_confirmatory_provenance
+                )
+                if expected_confirmatory_provenance is None:
+                    raise EvidenceValidationError(
+                        "CONFIRMATORY_RECOMMENDATION_REQUIRES_VERIFIED_SPLIT: "
+                        "serialized metadata cannot authorize validation"
+                    )
+                if (
+                    run_confirmatory_provenance
+                    != expected_confirmatory_provenance
+                    or scale_confirmatory_provenance
+                    != expected_confirmatory_provenance
+                ):
+                    raise EvidenceValidationError(
+                        f"Scale {size} confirmatory recommendation provenance does not "
+                        "match the authoritative split/freeze capability"
+                    )
+                expected_split_identity = expected_confirmatory_provenance["split"]
+                if (
+                    run.get("dataset_id")
+                    != expected_split_identity["dataset_id"]
+                    or run.get("dataset_sha256")
+                    != expected_split_identity["source_file_sha256"]
+                    or run.get("split_role") != expected_split_identity["role"]
+                    or run.get("split_schema_version")
+                    != expected_split_identity["schema_version"]
+                ):
+                    raise EvidenceValidationError(
+                        f"Scale {size} recommendation dataset identity does not match "
+                        "the authoritative confirmatory source"
+                    )
+            elif (
+                run_confirmatory_provenance is not None
+                or scale_confirmatory_provenance is not None
+            ):
+                raise EvidenceValidationError(
+                    f"Scale {size} non-confirmatory recommendation carries "
+                    "confirmatory authority metadata"
+                )
             if run.get("status") != "OBSERVED":
                 if records or families or run.get("family_summary"):
                     raise EvidenceValidationError(
@@ -1743,6 +1834,15 @@ def validate_e5_storage_evidence(package_dir: Path | str) -> dict[str, Any]:
             seen_cases: set[str] = set()
             feasible_cases = 0
             source_corpus_identities: set[tuple[str, str, str, str]] = set()
+            authoritative_cases = (
+                {
+                    case.case_id: case
+                    for case in authoritative_confirmatory_loaded.bundle.cases
+                }
+                if observed_confirmatory
+                and authoritative_confirmatory_loaded is not None
+                else {}
+            )
             for record in records:
                 if not isinstance(record, Mapping):
                     raise EvidenceValidationError(
@@ -1799,6 +1899,39 @@ def validate_e5_storage_evidence(package_dir: Path | str) -> dict[str, Any]:
                     raise EvidenceValidationError(
                         f"Scale {size} case {case_id} has incomplete source identity"
                     )
+                if observed_confirmatory and source_identity.get(
+                    "confirmatory_provenance_sha256"
+                ) != canonical_identity_sha256(
+                    authoritative_confirmatory_provenance or {}
+                ):
+                    raise EvidenceValidationError(
+                        f"Scale {size} case {case_id} is not bound to the "
+                        "authenticated confirmatory provenance"
+                    )
+                if observed_confirmatory:
+                    authoritative_case = authoritative_cases.get(case_id)
+                    if authoritative_case is None:
+                        raise EvidenceValidationError(
+                            f"Scale {size} case {case_id} is absent from the "
+                            "authoritative confirmatory split"
+                        )
+                    authoritative_source = dict(
+                        authoritative_case.source_provenance or {}
+                    )
+                    if (
+                        family_id != authoritative_case.family_id
+                        or variant_id != authoritative_case.variant_id
+                        or source_identity.get("source_case_id")
+                        != authoritative_source.get("source_case_id")
+                        or source_identity.get("source_dataset_id")
+                        != authoritative_source.get("source_dataset_id")
+                        or source_identity.get("source_provenance_sha256")
+                        != canonical_identity_sha256(authoritative_source)
+                    ):
+                        raise EvidenceValidationError(
+                            f"Scale {size} case {case_id} source identity does not "
+                            "match the authoritative confirmatory split"
+                        )
                 source_corpus_identities.add(
                     (
                         str(source_identity["candidate_corpus_version"]),
@@ -1894,6 +2027,11 @@ def validate_e5_storage_evidence(package_dir: Path | str) -> dict[str, Any]:
             if feasible_cases != scale.get("feasible_case_count"):
                 raise EvidenceValidationError(
                     f"Scale {size} feasible case count disagrees with raw records"
+                )
+            if observed_confirmatory and seen_cases != set(authoritative_cases):
+                raise EvidenceValidationError(
+                    f"Scale {size} recommendation cases do not exactly cover the "
+                    "authoritative confirmatory split"
                 )
             if len(source_corpus_identities) != 1:
                 raise EvidenceValidationError(
@@ -2226,6 +2364,20 @@ def main() -> None:
         default="auto",
         help="Evidence package type to validate (default: auto-detect).",
     )
+    parser.add_argument(
+        "--dataset",
+        type=Path,
+        help="External sealed confirmatory dataset for positive storage-evidence validation.",
+    )
+    parser.add_argument(
+        "--freeze",
+        type=Path,
+        help="Authoritative production freeze for positive storage-evidence validation.",
+    )
+    parser.add_argument(
+        "--split-id",
+        help="Expected confirmatory split ID (default: v5-confirmatory).",
+    )
     args = parser.parse_args()
 
     try:
@@ -2237,7 +2389,22 @@ def main() -> None:
                 pkg_type = "functional"
 
         if pkg_type == "storage":
-            res = validate_e5_storage_evidence(args.dir)
+            confirmatory_split = None
+            if args.dataset is not None or args.freeze is not None:
+                if args.dataset is None or args.freeze is None:
+                    raise EvidenceValidationError(
+                        "confirmatory storage validation requires both --dataset and --freeze"
+                    )
+                from evaluation_v5.isolation import load_confirmatory_split
+
+                confirmatory_split = load_confirmatory_split(
+                    args.dataset,
+                    args.freeze,
+                    expected_split_id=args.split_id or "v5-confirmatory",
+                )
+            res = validate_e5_storage_evidence(
+                args.dir, confirmatory_split=confirmatory_split
+            )
         else:
             res = validate_e5_evidence(args.dir)
 

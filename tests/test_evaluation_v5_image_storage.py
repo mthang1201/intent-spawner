@@ -5,6 +5,8 @@ Covers all 23+ required experimental contracts, invariants, and edge cases.
 
 from __future__ import annotations
 
+import copy
+from dataclasses import replace
 import json
 from pathlib import Path
 import tempfile
@@ -13,9 +15,16 @@ from unittest.mock import MagicMock, patch
 import pytest
 import yaml
 
+from evaluation_v5 import freeze as freeze_module
 from evaluation_v5.analysis.research_contracts import (
     ResearchContractError,
     validate_storage_evidence,
+)
+from evaluation_v5.freeze import create_freeze_artifact
+from evaluation_v5.isolation import (
+    CONFIRMATORY_SPLIT_PROVENANCE_SCHEMA_VERSION,
+    VerifiedConfirmatorySplit,
+    load_confirmatory_split,
 )
 from evaluation_v5.image_storage.contracts import file_sha256, parse_image_digest
 from evaluation_v5.image_storage.recommendation_evaluator import (
@@ -60,12 +69,19 @@ from evaluation_v5.image_storage.validate_evidence import (
     validate_e5_storage_evidence,
 )
 from evaluation_v5.split_dataset import (
+    SPLIT_BUNDLE_SCHEMA_VERSION,
+    LoadedSplit,
     SPLIT_BUNDLE_SCHEMA_VERSION_V2,
     SplitCase,
+    SplitRole,
+    load_development_split,
+    split_bundle_checksum,
+    validate_split_bundle,
 )
 
 ROOT = Path(__file__).resolve().parents[1]
 CATALOG_PATH = ROOT / "recommender" / "image-catalog.yaml"
+FIXED_REVISION = "a" * 40
 
 
 @pytest.fixture
@@ -82,6 +98,141 @@ def _refresh_checksums(package: Path) -> None:
     ]
     (package / "SHA256SUMS").write_text(
         "\n".join(records) + "\n", encoding="utf-8"
+    )
+
+
+def _confirmatory_case() -> dict[str, object]:
+    return {
+        "case_id": "storage-sealed-case-001",
+        "family_id": "storage-sealed-family-001",
+        "variant_id": "canonical",
+        "language": "en",
+        "prompt": "Prepare a novel isolated Python workspace for a small text file.",
+        "inputs": {"dataset_size_gb": 0.01, "code_context_hints": []},
+        "gold": {
+            "request_feasible": True,
+            "preferred_candidate_id": "small-minimal-python",
+            "acceptable_candidate_ids": ["small-minimal-python"],
+            "required_image_capabilities": ["python"],
+            "allowed_profiles": ["small", "medium", "large"],
+            "gpu_allowed": False,
+            "expected_extraction": None,
+        },
+        "source_provenance": {
+            "source_dataset_id": "synthetic-storage-confirmatory-fixture",
+            "source_schema_version": "synthetic-test-v1",
+            "source_case_id": "storage-sealed-case-001",
+            "source_split": "confirmatory",
+            "evidence_classification": "synthetic_test_fixture_not_evidence",
+        },
+    }
+
+
+def _confirmatory_document(
+    *, dataset_id: str = "synthetic-storage-confirmatory-v1"
+) -> dict[str, object]:
+    case = _confirmatory_case()
+    document: dict[str, object] = {
+        "schema_version": SPLIT_BUNDLE_SCHEMA_VERSION,
+        "split_manifest": {
+            "dataset_id": dataset_id,
+            "split_id": "v5-confirmatory",
+            "role": "confirmatory",
+            "family_ids": [case["family_id"]],
+            "case_count": 1,
+            "family_count": 1,
+            "checksum": "0" * 64,
+            "creation_metadata": {
+                "created_at_utc": "2026-08-22T01:00:00Z",
+                "created_by": "synthetic-test",
+            },
+            "freeze_metadata": {
+                "frozen_at_utc": "2026-08-22T01:01:00Z",
+                "frozen_by": "synthetic-test",
+            },
+        },
+        "cases": [case],
+    }
+    document["split_manifest"]["checksum"] = split_bundle_checksum(document)  # type: ignore[index]
+    return document
+
+
+def _verified_gate_snapshot() -> dict[str, object]:
+    development = load_development_split()
+
+    def artifact(name: str) -> dict[str, str]:
+        return {"path": name, "sha256": "d" * 64}
+
+    def analysis(name: str) -> dict[str, object]:
+        return {
+            "path": name,
+            "manifest_sha256": "c" * 64,
+            "outputs": {"fixture": artifact("fixture.json")},
+        }
+
+    return {
+        "snapshot_version": "protocol-v5-p3-gate-snapshot-v2.0.0",
+        "status": "not_retained",
+        "p3_active": False,
+        "verification_status": "VERIFIED",
+        "decision_schema_version": "protocol-v5-p3-development-decision-v1.0.0",
+        "decision_artifact_path": "benchmarks_v5/synthetic-p3-decision.json",
+        "decision_artifact_sha256": "b" * 64,
+        "development_split": {
+            "dataset_id": development.manifest.dataset_id,
+            "split_id": development.manifest.split_id,
+            "role": "development",
+            "bundle_checksum": development.manifest.checksum,
+            "dataset_sha256": development.source_file_sha256,
+            "case_count": development.manifest.case_count,
+            "family_count": development.manifest.family_count,
+        },
+        "raw_evidence": {
+            "path": "results_v5/synthetic-raw",
+            "run_id": "synthetic-test-run",
+            "provenance_fingerprint": "a" * 64,
+            "provenance_sha256": "b" * 64,
+            "recommendations_sha256": "c" * 64,
+            "completion_sha256": "d" * 64,
+            "record_count": 1,
+        },
+        "component_evidence": analysis("results_v5/synthetic-component"),
+        "statistical_evidence": analysis("results_v5/synthetic-statistical"),
+        "predicate_version": "protocol-v5-p3-headroom-predicate-v1.0.0",
+        "computation_version": "protocol-v5-p3-gate-computation-v1.0.0",
+    }
+
+
+def _authoritative_confirmatory_split(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> tuple[VerifiedConfirmatorySplit, Path, Path]:
+    monkeypatch.delenv("PROTOCOL_V5_CONFIRMATORY_DATASET", raising=False)
+    monkeypatch.setattr(freeze_module, "_git_state", lambda: (FIXED_REVISION, True))
+    freeze_root = tmp_path / "freezes"
+    monkeypatch.setattr(freeze_module, "DEFAULT_FREEZE_ROOT", freeze_root)
+    monkeypatch.setattr(freeze_module, "FREEZE_CUSTODY_ROOT", tmp_path)
+    snapshot = _verified_gate_snapshot()
+    monkeypatch.setattr(
+        freeze_module,
+        "_verified_p3_gate_snapshot",
+        lambda **_kwargs: copy.deepcopy(snapshot),
+    )
+    freeze_path = create_freeze_artifact(
+        freeze_id="storage-confirmatory-fixture",
+        p3_gate_status="not_retained",
+        output_root=freeze_root,
+    )
+    dataset_path = tmp_path / "sealed-storage-confirmatory.yaml"
+    dataset_path.write_text(
+        yaml.safe_dump(
+            _confirmatory_document(), sort_keys=False, allow_unicode=True
+        ),
+        encoding="utf-8",
+    )
+    return (
+        load_confirmatory_split(dataset_path, freeze_path),
+        dataset_path,
+        freeze_path,
     )
 
 
@@ -471,6 +622,208 @@ def test_confirmatory_cannot_silently_fallback(catalog):
     )
     assert res["dataset_id"] != "protocol-v5-development-2026-08-22"
     assert res["status"] == "NOT_EXECUTED"
+
+
+def test_constructed_loaded_split_cannot_authorize_confirmatory_catalog_scale(catalog):
+    development = load_development_split()
+    relabeled_manifest = replace(
+        development.manifest,
+        role=SplitRole.CONFIRMATORY,
+    )
+    constructed = LoadedSplit(
+        bundle=replace(development.bundle, split_manifest=relabeled_manifest),
+        source_file_sha256="f" * 64,
+    )
+
+    result = evaluate_catalog_scale_recommendation(
+        base_catalog=catalog,
+        scale_images=get_experimental_catalog_config(catalog).get_scale_images(4),
+        stage="confirmatory",
+        split_bundle=constructed,
+    )
+
+    assert result["status"] == "NOT_EXECUTED"
+    assert result["image_acceptable_accuracy"] is None
+    assert result["evaluated_cases"] == 0
+
+
+def test_generic_confirmatory_loaded_split_cannot_authorize_catalog_scale(catalog):
+    constructed = LoadedSplit(
+        bundle=validate_split_bundle(_confirmatory_document()),
+        source_file_sha256="a" * 64,
+    )
+
+    result = evaluate_catalog_scale_recommendation(
+        base_catalog=catalog,
+        scale_images=get_experimental_catalog_config(catalog).get_scale_images(4),
+        stage="confirmatory",
+        split_bundle=constructed,
+    )
+
+    assert result["status"] == "NOT_EXECUTED"
+    assert result["confirmatory_provenance"] is None
+
+
+def test_fake_confirmatory_dataset_id_and_sha_cannot_authorize_catalog_scale(catalog):
+    bundle = validate_split_bundle(_confirmatory_document())
+    fake_manifest = replace(bundle.split_manifest, dataset_id="fake-confirmatory")
+    constructed = LoadedSplit(
+        bundle=replace(bundle, split_manifest=fake_manifest),
+        source_file_sha256="e" * 64,
+    )
+
+    result = evaluate_catalog_scale_recommendation(
+        base_catalog=catalog,
+        scale_images=get_experimental_catalog_config(catalog).get_scale_images(4),
+        stage="confirmatory",
+        split_bundle=constructed,
+    )
+
+    assert result["status"] == "NOT_EXECUTED"
+    assert result["dataset_id"] == "none"
+
+
+def test_copied_confirmatory_metadata_without_capability_is_rejected(
+    catalog, tmp_path, monkeypatch
+):
+    capability, _, _ = _authoritative_confirmatory_split(tmp_path, monkeypatch)
+    copied = LoadedSplit(
+        bundle=capability.split.bundle,
+        source_file_sha256=capability.split.source_file_sha256,
+    )
+
+    result = evaluate_catalog_scale_recommendation(
+        base_catalog=catalog,
+        scale_images=get_experimental_catalog_config(catalog).get_scale_images(4),
+        stage="confirmatory",
+        split_bundle=copied,
+    )
+
+    assert result["status"] == "NOT_EXECUTED"
+    assert "capability_required" in result["reason"]
+
+
+def test_mismatched_confirmatory_source_sha_fails_reverification(
+    catalog, tmp_path, monkeypatch
+):
+    capability, _, _ = _authoritative_confirmatory_split(tmp_path, monkeypatch)
+    object.__setattr__(
+        capability,
+        "_split",
+        LoadedSplit(
+            bundle=capability.split.bundle,
+            source_file_sha256="d" * 64,
+        ),
+    )
+
+    result = evaluate_catalog_scale_recommendation(
+        base_catalog=catalog,
+        scale_images=get_experimental_catalog_config(catalog).get_scale_images(4),
+        stage="confirmatory",
+        split_bundle=capability,
+    )
+
+    assert result["status"] == "NOT_EXECUTED"
+    assert "reverification_failed" in result["reason"]
+
+
+def test_stale_freeze_manifest_fails_catalog_scale_reverification(
+    catalog, tmp_path, monkeypatch
+):
+    capability, _, freeze_path = _authoritative_confirmatory_split(
+        tmp_path, monkeypatch
+    )
+    freeze_document = json.loads(freeze_path.read_text(encoding="utf-8"))
+    freeze_document["freeze_id"] = "incorrect-freeze-id"
+    freeze_path.write_text(json.dumps(freeze_document), encoding="utf-8")
+
+    result = evaluate_catalog_scale_recommendation(
+        base_catalog=catalog,
+        scale_images=get_experimental_catalog_config(catalog).get_scale_images(4),
+        stage="confirmatory",
+        split_bundle=capability,
+    )
+
+    assert result["status"] == "NOT_EXECUTED"
+    assert "reverification_failed" in result["reason"]
+
+
+def test_authoritative_confirmatory_loader_path_succeeds(
+    catalog, tmp_path, monkeypatch
+):
+    capability, dataset_path, freeze_path = _authoritative_confirmatory_split(
+        tmp_path, monkeypatch
+    )
+
+    result = evaluate_catalog_scale_recommendation(
+        base_catalog=catalog,
+        scale_images=get_experimental_catalog_config(catalog).get_scale_images(4),
+        stage="confirmatory",
+        dataset_path=dataset_path,
+        freeze_path=freeze_path,
+    )
+
+    assert result["status"] == "OBSERVED"
+    assert result["split_role"] == "confirmatory"
+    assert result["dataset_sha256"] == capability.split.source_file_sha256
+    provenance = result["confirmatory_provenance"]
+    assert provenance["schema_version"] == (
+        CONFIRMATORY_SPLIT_PROVENANCE_SCHEMA_VERSION
+    )
+    assert provenance == capability.provenance_identity
+    assert provenance["freeze_identity"]["freeze_manifest_sha256"]
+    assert all(
+        record["source_identity"]["confirmatory_provenance_sha256"]
+        for record in result["case_records"]
+    )
+
+
+def test_validator_requires_live_capability_for_observed_confirmatory_recommendation(
+    catalog, tmp_path, monkeypatch
+):
+    capability, dataset_path, freeze_path = _authoritative_confirmatory_split(
+        tmp_path, monkeypatch
+    )
+    output = run_storage_evaluation(
+        catalog_path=CATALOG_PATH,
+        mode="synthetic",
+        output_dir=tmp_path / "storage-output",
+        stage="confirmatory",
+        scales=(4,),
+        dataset_path=dataset_path,
+        freeze_path=freeze_path,
+    )
+
+    validated = validate_e5_storage_evidence(
+        output, confirmatory_split=capability
+    )
+    assert validated["status"] == "PASS"
+    with pytest.raises(
+        EvidenceValidationError,
+        match="CONFIRMATORY_RECOMMENDATION_REQUIRES_VERIFIED_SPLIT",
+    ):
+        validate_e5_storage_evidence(output)
+
+    raw_path = output / "raw" / "catalog_scale_recommendations.json"
+    raw = json.loads(raw_path.read_text(encoding="utf-8"))
+    forged = copy.deepcopy(
+        raw["scale_evaluations"][0]["confirmatory_provenance"]
+    )
+    forged["freeze_identity"]["freeze_manifest_sha256"] = "f" * 64
+    raw["scale_evaluations"][0]["confirmatory_provenance"] = forged
+    raw_path.write_text(json.dumps(raw, indent=2), encoding="utf-8")
+
+    derived_path = output / "derived" / "catalog_scalability.json"
+    derived = json.loads(derived_path.read_text(encoding="utf-8"))
+    derived[0]["provenance"]["confirmatory_recommendation"] = forged
+    derived_path.write_text(json.dumps(derived, indent=2), encoding="utf-8")
+    _refresh_checksums(output)
+
+    with pytest.raises(
+        EvidenceValidationError,
+        match="does not match the authoritative split/freeze capability",
+    ):
+        validate_e5_storage_evidence(output, confirmatory_split=capability)
 
 
 # Case 28: Validator rejects confirmatory recommendation backed by development split

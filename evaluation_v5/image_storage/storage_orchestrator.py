@@ -398,6 +398,35 @@ def run_storage_evaluation(
     if norm_stage not in (SplitStage.CONFIRMATORY.value, SplitStage.DEVELOPMENT.value):
         raise ValueError(f"Invalid split stage: {stage!r}. Must be 'confirmatory' or 'development'.")
 
+    confirmatory_capability = None
+    if norm_stage == SplitStage.CONFIRMATORY.value and eval_recommendation:
+        from evaluation_v5.isolation import (
+            CONFIRMATORY_DATASET_ENV_VAR,
+            FREEZE_ARTIFACT_ENV_VAR,
+            load_confirmatory_split,
+            resolve_confirmatory_sources,
+        )
+
+        source_requested = bool(
+            dataset_path is not None
+            or freeze_path is not None
+            or CONFIRMATORY_DATASET_ENV_VAR in os.environ
+            or FREEZE_ARTIFACT_ENV_VAR in os.environ
+        )
+        if source_requested:
+            try:
+                dataset_source, freeze_source = resolve_confirmatory_sources(
+                    dataset_path=Path(dataset_path) if dataset_path is not None else None,
+                    freeze_path=Path(freeze_path) if freeze_path is not None else None,
+                )
+                confirmatory_capability = load_confirmatory_split(
+                    dataset_source, freeze_source
+                )
+            except Exception as exc:
+                logger.warning(
+                    "Failed to prepare confirmatory recommendation split: %s", exc
+                )
+
     origin = str(collector.get("origin", ""))
     real_origin = is_real_storage_collector_origin(origin)
     if real_origin:
@@ -517,6 +546,7 @@ def run_storage_evaluation(
                     stage=norm_stage,
                     dataset_path=rec_dataset_path,
                     freeze_path=freeze_path,
+                    split_bundle=confirmatory_capability,
                     k=recall_k,
                 )
             else:
@@ -555,6 +585,9 @@ def run_storage_evaluation(
                     "case_records": rec_res.get("case_records", []),
                     "family_estimates": rec_res.get("family_estimates", []),
                     "family_summary": rec_res.get("family_summary", {}),
+                    "confirmatory_provenance": rec_res.get(
+                        "confirmatory_provenance"
+                    ),
                 }
             )
 
@@ -597,6 +630,9 @@ def run_storage_evaluation(
                         "recommendation_aggregation_unit": rec_res.get(
                             "aggregation_unit", "workload_family"
                         ),
+                        "confirmatory_recommendation": rec_res.get(
+                            "confirmatory_provenance"
+                        ),
                     },
                     status_reason=rec_res.get("reason", ""),
                     split_stage=norm_stage,
@@ -626,6 +662,7 @@ def run_storage_evaluation(
                     "case_records": [],
                     "family_estimates": [],
                     "family_summary": {},
+                    "confirmatory_provenance": None,
                 }
             )
             scale_records.append(
@@ -936,6 +973,8 @@ def run_storage_evaluation(
     _write_checksums(out_dir)
 
     # 10. Fail-closed validation of produced package
-    validate_e5_storage_evidence(out_dir)
+    validate_e5_storage_evidence(
+        out_dir, confirmatory_split=confirmatory_capability
+    )
 
     return out_dir
