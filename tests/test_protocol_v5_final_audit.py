@@ -24,8 +24,10 @@ from evaluation_v5.final_audit.claims import load_claim_evidence, synthetic_orig
 from evaluation_v5.final_audit import completion as completion_module
 from evaluation_v5.final_audit.completion import (
     _load_evidence_records, _remaining_execution_requirements, _validate_command_outcomes,
+    claim_flow_attestation,
 )
 from evaluation_v5.final_audit.evidence import capture, junit_details, verify_command_evidence
+from evaluation_v5.final_audit.publication import build_attestation, verify_attestation
 from evaluation_v5.final_audit.reproduce import analyze, compare_json
 from evaluation_v5.final_audit.reporting import figures, render_report
 
@@ -88,6 +90,7 @@ def test_command_evidence_captures_revision_command_exit_and_hashes(tmp_path):
         evidence_id="unit_capture",
         kind="validator",
         classifications=["PASS"],
+        nonzero_reasons=None,
         command=[sys.executable, "-c", "print('validated')"],
         junit=None,
     )
@@ -97,6 +100,28 @@ def test_command_evidence_captures_revision_command_exit_and_hashes(tmp_path):
     assert record["argv"] == [sys.executable, "-c", "print('validated')"]
     assert record["classifications"] == ["PASS"]
     assert record["stdout"]["sha256"] == file_sha256(output / "stdout.txt")
+
+
+def test_nonzero_command_evidence_requires_exact_reason_category_pairs(tmp_path):
+    output = tmp_path / "scientific-nonzero"
+    reason = {
+        "code": "AUTHORITATIVE_FINAL_FREEZE_UNAVAILABLE",
+        "category": "INTENTIONALLY_UNAVAILABLE_REAL_EXPERIMENT_EVIDENCE",
+    }
+    exit_code = capture(
+        root=ROOT,
+        output=output,
+        evidence_id="scientific_nonzero",
+        kind="workflow",
+        classifications=[reason["category"]],
+        nonzero_reasons=[reason],
+        command=[sys.executable, "-c", "raise SystemExit(2)"],
+        junit=None,
+    )
+    record = verify_command_evidence(output)
+    assert exit_code == 2
+    assert record["nonzero_reasons"] == [reason]
+    assert record["environment"]["python_version"]
 
 
 def test_junit_counts_are_recomputed_from_cases(tmp_path):
@@ -134,9 +159,72 @@ def test_completion_rejects_command_evidence_from_another_revision(tmp_path, mon
 def test_scientific_nonzero_is_not_misclassified_as_implementation_defect():
     records = [{
         "evidence_id": "audit", "exit_code": 2,
-        "classifications": ["SCIENTIFICALLY_CORRECT_FAIL_CLOSED_STATE"],
+        "classifications": ["INTENTIONALLY_UNAVAILABLE_REAL_EXPERIMENT_EVIDENCE"],
+        "nonzero_reasons": [{
+            "code": "AUTHORITATIVE_FINAL_FREEZE_UNAVAILABLE",
+            "category": "INTENTIONALLY_UNAVAILABLE_REAL_EXPERIMENT_EVIDENCE",
+        }],
     }]
     assert _validate_command_outcomes(records) == []
+
+
+def test_previous_tested_to_publication_delta_is_fully_classified_and_nonsemantic():
+    attestation = build_attestation(
+        ROOT,
+        "007542fdd384174be9e0e54999d20ad000383568",
+        "7ce1e9ccdecb43f6ac337609479ea067dee9735d",
+    )
+    assert attestation["tested_code_revision"] != attestation["publication_revision"]
+    assert attestation["verdict"] == "PASS"
+    assert attestation["changed_path_count"] == len(attestation["changed_paths"]) > 0
+    assert attestation["disallowed_paths"] == []
+    assert attestation["executable_or_validation_semantics_changed"] is False
+    assert {row["path_class"] for row in attestation["changed_paths"]} == {
+        "DOCUMENTATION_INDEX", "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+    }
+    verify_attestation(ROOT, attestation)
+
+
+def test_post_publication_delta_verifier_rejects_disallowed_path_class(tmp_path):
+    repository = tmp_path / "publication-repository"
+    repository.mkdir()
+    subprocess.run(["git", "init", "-q"], cwd=repository, check=True)
+    subprocess.run(
+        ["git", "config", "user.name", "Audit Test"], cwd=repository, check=True
+    )
+    subprocess.run(
+        ["git", "config", "user.email", "audit@example.invalid"], cwd=repository, check=True
+    )
+    (repository / "README.md").write_text("tested\n", encoding="utf-8")
+    subprocess.run(["git", "add", "README.md"], cwd=repository, check=True)
+    subprocess.run(["git", "commit", "-qm", "tested"], cwd=repository, check=True)
+    tested = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=repository, text=True).strip()
+
+    allowed = repository / "results_v5/protocol-v5.0.0/final-audit/final-audit-fixture/report/audit.json"
+    allowed.parent.mkdir(parents=True)
+    allowed.write_text("{}\n", encoding="utf-8")
+    subprocess.run(["git", "add", str(allowed.relative_to(repository))], cwd=repository, check=True)
+    subprocess.run(["git", "commit", "-qm", "publish report"], cwd=repository, check=True)
+    publication = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=repository, text=True).strip()
+    assert build_attestation(repository, tested, publication)["verdict"] == "PASS"
+
+    executable = repository / "evaluation_v5/claim_validator.py"
+    executable.parent.mkdir()
+    executable.write_text("raise SystemExit(0)\n", encoding="utf-8")
+    subprocess.run(["git", "add", str(executable.relative_to(repository))], cwd=repository, check=True)
+    subprocess.run(["git", "commit", "-qm", "disallowed semantic change"], cwd=repository, check=True)
+    disallowed = build_attestation(repository, tested, "HEAD")
+    assert disallowed["verdict"] == "FAIL"
+    assert disallowed["executable_or_validation_semantics_changed"] is True
+    assert disallowed["disallowed_paths"] == [{
+        "path": "evaluation_v5/claim_validator.py",
+        "reasons": [
+            "DISALLOWED_PATH_CLASS",
+            "EXECUTABLE_VALIDATOR_SCHEMA_WORKFLOW_TEST_OR_CONFIG_PATH",
+        ],
+    }]
+    with pytest.raises(ValueError, match="disallowed path class"):
+        verify_attestation(repository, disallowed)
 
 
 def test_existing_failures_are_preserved_and_not_selected_away(current_audit):
@@ -171,6 +259,42 @@ def test_final_audit_consumes_explicit_authenticated_claim_package(current_audit
     source = (ROOT / "evaluation_v5/final_audit/checks.py").read_text()
     assert "selected={}" not in source
     assert 'confirmatory_status": "NOT_EXECUTED"' not in source
+
+
+def test_p16_case_a_no_authenticated_real_evidence_has_no_fabricated_results(
+    current_audit, tmp_path
+):
+    assert current_audit["confirmatory_status"] == "NOT_EXECUTED"
+    for claim in current_audit["claims"]:
+        assert claim["claim_status"] == "NOT_EXECUTED"
+        assert claim["claimable"] is False
+        assert claim["estimate"] is None
+        assert claim["confidence_interval"] is None
+        assert claim["counts"] == {}
+        assert claim["effect_sizes"] == {}
+        assert claim["normalized_metrics"] == {}
+        assert claim["reason_codes"]
+    report = render_report(
+        Inputs(),
+        current_audit,
+        {
+            "claims": current_audit["claims"],
+            "observed_offline_counts": [],
+            "observed_functional": [],
+            "legacy_functional": [],
+            "packages": [],
+        },
+        {},
+        tmp_path / "REPORT.md",
+    )
+    h1 = next(row for row in current_audit["claims"] if row["id"] == "H1")
+    assert "**H1 — NOT_EXECUTED**" in report
+    assert "; ".join(h1["reason_codes"]) in report
+    assert "**H1 — SUPPORTED**" not in report
+    propagation = claim_flow_attestation(current_audit)
+    assert propagation["status"] == "PASS"
+    assert propagation["genuinely_empty_authenticated_selection"] is True
+    assert propagation["selection_was_silently_discarded"] is False
 
 
 def test_report_renders_changed_validated_claim_state_instead_of_snapshot_prose(

@@ -3,13 +3,15 @@ from __future__ import annotations
 
 import argparse
 from datetime import datetime, timezone
+import hashlib
 import json
 from pathlib import Path
 import subprocess
-from typing import Any, Sequence
+from typing import Any, Mapping, Sequence
 
 from .common import file_sha256, read_json, verify_seal, write_bytes, write_json
 from .evidence import junit_details, verify_command_evidence
+from .publication import verify_attestation
 
 
 ISSUES = (
@@ -50,7 +52,10 @@ ISSUES = (
     },
     {
         "id": "P14-1", "severity": "CRITICAL", "title": "Synthetic storage to H7",
-        "tests": ("tests/test_protocol_v5_research_analysis.py::test_controlled_synthetic_storage_reproduction_never_supports_h7",),
+        "tests": (
+            "tests/test_protocol_v5_research_analysis.py::test_controlled_synthetic_storage_reproduction_never_supports_h7",
+            "tests/test_protocol_v5_research_analysis.py::test_external_normal_layout_synthetic_storage_is_discovered_but_never_selected",
+        ),
         "code": ("evaluation_v5/analysis/research_analysis.py", "evaluation_v5/image_storage/validate_evidence.py"),
         "closed_outcome": "Synthetic storage remains non-observed, non-claimable, and cannot support H7 after caller flag forgery.",
     },
@@ -102,9 +107,11 @@ ISSUES = (
     {
         "id": "P16-1", "severity": "HIGH", "title": "Hardcoded final report",
         "tests": (
-            "tests/test_protocol_v5_final_audit.py::test_final_audit_consumes_explicit_authenticated_claim_package",
-            "tests/test_protocol_v5_final_audit.py::test_report_renders_changed_validated_claim_state_instead_of_snapshot_prose",
-            "tests/test_protocol_v5_final_audit.py::test_collector_origin_scan_rejects_synthetic_observed_fixture_outside_repository",
+            "tests/test_protocol_v5_final_audit.py::test_p16_case_a_no_authenticated_real_evidence_has_no_fabricated_results",
+            "tests/test_protocol_v5_research_analysis.py::test_p16_case_b_observed_fixture_drives_status_metrics_and_report",
+            "tests/test_protocol_v5_research_analysis.py::test_p16_case_c_incomplete_evidence_never_becomes_positive",
+            "tests/test_protocol_v5_research_analysis.py::test_contradictory_claimable_evidence_writes_failed_audit_and_exits_two",
+            "tests/test_protocol_v5_research_analysis.py::test_p16_case_d_nonempty_authenticated_selection_reaches_completion",
         ),
         "code": ("evaluation_v5/final_audit/claims.py", "evaluation_v5/final_audit/checks.py", "evaluation_v5/final_audit/reporting.py"),
         "closed_outcome": "The final audit consumes authenticated selected claims and renders statuses, values, counts, P3/E3/E4/E5 states, and prose from them.",
@@ -129,6 +136,121 @@ ISSUES = (
     },
 )
 
+TRACE_METADATA = {
+    "P1-1": {
+        "original_exploit": "A development override could overwrite or downgrade an existing OBSERVED or claim-sensitive artifact.",
+        "fixture_or_artifact": "Temporary OBSERVED manifest and claim-sensitive payloads exercised through the development writer.",
+        "artifact_types": ["SYNTHETIC_TEST"],
+        "expected_behavior": "Reject overwrite before any protected byte changes.",
+        "closure_behavior": "FAIL_CLOSED",
+    },
+    "P2-1": {
+        "original_exploit": "Caller-created split/freeze identities or fragmented source literals could authorize or confuse confirmatory isolation.",
+        "fixture_or_artifact": "Forged temporary split/freeze envelopes and complete/fragmented Python literal bundle fixtures.",
+        "artifact_types": ["SYNTHETIC_TEST"],
+        "expected_behavior": "Reject arbitrary authority and detect complete embedded bundles without joining unrelated fragments.",
+        "closure_behavior": "FAIL_CLOSED",
+    },
+    "P8-1": {
+        "original_exploit": "A forged persisted P3 retained flag could bypass the authenticated development gate computation.",
+        "fixture_or_artifact": "Temporary forged retained decision with checksum-bound development gate inputs.",
+        "artifact_types": ["SYNTHETIC_TEST"],
+        "expected_behavior": "Recompute the gate and reject the forged retained state.",
+        "closure_behavior": "FAIL_CLOSED",
+    },
+    "P11-1": {
+        "original_exploit": "A fake resource adapter or an on-disk status edit could be relabelled OBSERVED.",
+        "fixture_or_artifact": "Synthetic adapter run plus an on-disk forced-OBSERVED tamper fixture.",
+        "artifact_types": ["SYNTHETIC_TEST"],
+        "expected_behavior": "Keep the adapter synthetic and reject the forged observation at validation.",
+        "closure_behavior": "NON_OBSERVED_NON_CLAIMABLE",
+    },
+    "P14-1": {
+        "original_exploit": "Synthetic image-storage data could be promoted through a normal-looking package to support H7.",
+        "fixture_or_artifact": "Controlled synthetic storage packages in temporary external normal-layout evidence roots, including forged eligibility flags.",
+        "artifact_types": ["SYNTHETIC_TEST"],
+        "expected_behavior": "Discovery must retain SYNTHETIC_TEST origin; selection must reject it and H7 must remain NOT_EXECUTED.",
+        "closure_behavior": "NON_OBSERVED_NON_CLAIMABLE",
+    },
+    "P3-1": {
+        "original_exploit": "A caller could label development gold as confirmatory.",
+        "fixture_or_artifact": "Temporary development gold source wrapped in a forged confirmatory classification.",
+        "artifact_types": ["SYNTHETIC_TEST"],
+        "expected_behavior": "Recompute source classification and reject the wrapper.",
+        "closure_behavior": "FAIL_CLOSED",
+    },
+    "P4-1": {
+        "original_exploit": "The robustness generator could create variants for confirmatory families.",
+        "fixture_or_artifact": "Temporary confirmatory-family generation request.",
+        "artifact_types": ["SYNTHETIC_TEST"],
+        "expected_behavior": "Unconditionally refuse confirmatory generation.",
+        "closure_behavior": "FAIL_CLOSED",
+    },
+    "P13-1": {
+        "original_exploit": "A CUDA probe could report success without the required site-packages contract.",
+        "fixture_or_artifact": "Synthetic CUDA process response with site-packages deliberately absent.",
+        "artifact_types": ["SYNTHETIC_TEST"],
+        "expected_behavior": "Classify the probe unavailable, never successful.",
+        "closure_behavior": "FAIL_CLOSED",
+    },
+    "P13-2": {
+        "original_exploit": "Timeout or interrupt paths could leak the exact Docker container or Kubernetes pod and obscure lifecycle failure.",
+        "fixture_or_artifact": "Fake Docker/Kubernetes clients exercising timeout and interrupt lifecycle branches.",
+        "artifact_types": ["SYNTHETIC_TEST"],
+        "expected_behavior": "Remove the exact object and preserve the failure state on every branch.",
+        "closure_behavior": "FAIL_CLOSED",
+    },
+    "P13-3": {
+        "original_exploit": "Caller-supplied wrong or stale recommendation provenance could reach E5 execution.",
+        "fixture_or_artifact": "Temporary wrong/stale recommendation source-run fixture.",
+        "artifact_types": ["SYNTHETIC_TEST"],
+        "expected_behavior": "Reject provenance before any image execution.",
+        "closure_behavior": "FAIL_CLOSED",
+    },
+    "P14-2": {
+        "original_exploit": "A v1-shaped storage record could be scored as though canonical v2 acceptable-gold were present.",
+        "fixture_or_artifact": "Temporary v1-shaped catalog-scale storage metric record lacking canonical v2 acceptable gold.",
+        "artifact_types": ["SYNTHETIC_TEST"],
+        "expected_behavior": "Reject catalog-scale scoring rather than infer missing gold.",
+        "closure_behavior": "FAIL_CLOSED",
+    },
+    "P15-1": {
+        "original_exploit": "Duplicated caller provenance could override a canonical source identity or production-freeze mismatch.",
+        "fixture_or_artifact": "Verified test freeze plus deliberately mismatched canonical/caller dataset identities.",
+        "artifact_types": ["SYNTHETIC_TEST"],
+        "expected_behavior": "Reject the selected evidence and block the affected requirement.",
+        "closure_behavior": "FAIL_CLOSED",
+    },
+    "P16-1": {
+        "original_exploit": "The final report could discard selected evidence or hardcode the current all-NOT_EXECUTED snapshot.",
+        "fixture_or_artifact": "Authenticated current package plus isolated empty, observed-path, incomplete, and non-empty-selection propagation fixtures.",
+        "artifact_types": ["HISTORICAL", "SYNTHETIC_TEST"],
+        "expected_behavior": "Derive status, metrics, intervals, counts, reasons, prose, and completion propagation from evaluated evidence.",
+        "closure_behavior": "FAIL_CLOSED",
+    },
+    "P4-2": {
+        "original_exploit": "The public robustness draft CLI could accept confirmatory input even if the internal generator refused it.",
+        "fixture_or_artifact": "Temporary confirmatory input passed through the public draft CLI.",
+        "artifact_types": ["SYNTHETIC_TEST"],
+        "expected_behavior": "Exit nonzero before producing a draft.",
+        "closure_behavior": "FAIL_CLOSED",
+    },
+    "P11-2": {
+        "original_exploit": "Legacy E4 directories could either evade validation or be promoted under current semantics.",
+        "fixture_or_artifact": "All 20 preserved repository E4 legacy directories.",
+        "artifact_types": ["HISTORICAL"],
+        "expected_behavior": "Validate under bounded compatibility rules without OBSERVED or claim-eligible promotion.",
+        "closure_behavior": "NON_OBSERVED_NON_CLAIMABLE",
+    },
+    "P10-1": {
+        "original_exploit": "Newline normalization could silently replace the preserved E3 participant-flow identity.",
+        "fixture_or_artifact": "Preserved E3 participant-flow.csv and its versioned LF/current-policy derivative manifest.",
+        "artifact_types": ["HISTORICAL", "COMPATIBILITY_DERIVATIVE"],
+        "expected_behavior": "Preserve both identities and bind the derivative explicitly to the historical source.",
+        "closure_behavior": "NON_OBSERVED_NON_CLAIMABLE",
+    },
+}
+
 REQUIRED_TEST_EVIDENCE = {"adversarial", "focused", "full"}
 REQUIRED_VALIDATOR_EVIDENCE = {
     "protocol_v4",
@@ -139,6 +261,7 @@ REQUIRED_VALIDATOR_EVIDENCE = {
     "resource_efficiency",
     "e5",
     "claim_registry",
+    "publication_delta",
 }
 REQUIRED_WORKFLOW_EVIDENCE = {
     "v5_validate": "v5-validate",
@@ -146,6 +269,7 @@ REQUIRED_WORKFLOW_EVIDENCE = {
     "v5_figures": "v5-figures",
     "v5_audit": "v5-audit",
 }
+REQUIRED_REPRODUCIBILITY_EVIDENCE = {"canonical_reproducibility"}
 
 
 def _utc_now() -> str:
@@ -259,6 +383,154 @@ def _verify_final_audit_run(
             "sha256": file_sha256(final_audit_path),
         },
         "payload": read_json(final_audit_path),
+    }
+
+
+def _verify_canonical_reproducibility(
+    root: Path, record: dict[str, Any], *, expected_revision: str
+) -> dict[str, Any]:
+    argv = record.get("argv") or []
+    if argv[:2] != ["make", "v5-audit"]:
+        raise ValueError("canonical reproducibility evidence did not execute make v5-audit")
+    run_arguments = [arg for arg in argv[2:] if str(arg).startswith("V5_RUN_ID=")]
+    if len(run_arguments) != 1:
+        raise ValueError("canonical reproducibility evidence lacks one explicit run ID")
+    run_id = str(run_arguments[0]).split("=", 1)[1]
+    run_root = root / "results_v5/protocol-v5.0.0/final-audit" / run_id
+    run = read_json(run_root / "run.json")
+    if run.get("audit_git_revision") != expected_revision or run.get("audit_git_dirty") is not False:
+        raise ValueError("canonical reproducibility run is not bound to the tested implementation")
+    stages = []
+    for stage in ("validation", "analysis", "figures", "report"):
+        manifest = verify_seal(run_root / stage)
+        if manifest.get("audit_git_revision") != expected_revision or manifest.get("run_id") != run_id:
+            raise ValueError("canonical reproducibility stage provenance differs: " + stage)
+        stages.append(
+            {
+                "stage": stage,
+                "manifest_path": _display_path(run_root / stage / "manifest.json", root),
+                "manifest_sha256": file_sha256(run_root / stage / "manifest.json"),
+            }
+        )
+    makefile = root / "Makefile"
+    documentation = root / "docs/evaluation/PROTOCOL_V5_FINAL_REPORT.md"
+    make_text = makefile.read_text(encoding="utf-8")
+    docs_text = documentation.read_text(encoding="utf-8")
+    recipe = "v5-audit:\n\t$(V5_PYTHON) -m evaluation_v5.final_audit audit $(V5_AUDIT_ARGS)"
+    if recipe not in make_text:
+        raise ValueError("Makefile does not define v5-audit as the final audit orchestrator")
+    if "make v5-audit" not in docs_text or "`make v5-audit` runs every stage" not in docs_text:
+        raise ValueError("repository documentation does not identify make v5-audit as canonical")
+    return {
+        "status": "PASS",
+        "canonical_command": "make v5-audit",
+        "argv": argv,
+        "run_id": run_id,
+        "git_revision": expected_revision,
+        "exit_code": record.get("exit_code"),
+        "classifications": record.get("classifications") or [],
+        "nonzero_reasons": record.get("nonzero_reasons") or [],
+        "environment": record.get("environment") or {},
+        "stdout": record.get("stdout"),
+        "stderr": record.get("stderr"),
+        "configuration_proof": {
+            "makefile": {"path": "Makefile", "sha256": file_sha256(makefile)},
+            "documentation": {
+                "path": "docs/evaluation/PROTOCOL_V5_FINAL_REPORT.md",
+                "sha256": file_sha256(documentation),
+            },
+            "target": "v5-audit",
+            "recipe": "$(V5_PYTHON) -m evaluation_v5.final_audit audit $(V5_AUDIT_ARGS)",
+            "orchestrated_stages": ["validation", "analysis", "figures", "report"],
+        },
+        "stages": stages,
+    }
+
+
+def claim_flow_attestation(final_audit: Mapping[str, Any]) -> dict[str, Any]:
+    """Prove selection-derived evaluated claims survive into completion input."""
+
+    claims = final_audit.get("claims") or []
+    evaluated = final_audit.get("evaluated_claims") or []
+    summary_by_id = {str(row.get("id")): row for row in claims}
+    evaluated_by_id = {str(row.get("claim_id")): row for row in evaluated}
+    if set(summary_by_id) != set(evaluated_by_id):
+        raise ValueError("final-audit claim summaries differ from evaluated registry IDs")
+    propagation = []
+    selected_requirements = set()
+    for claim_id, raw in sorted(evaluated_by_id.items()):
+        summary = summary_by_id[claim_id]
+        metrics = (raw.get("result") or {}).get("normalized_metrics") or {}
+        if (
+            summary.get("claim_status") != raw.get("claim_status")
+            or summary.get("normalized_metrics") != metrics
+            or summary.get("reason_codes") != list(raw.get("reason_codes") or [])
+        ):
+            raise ValueError(claim_id + ": final-audit projection discarded evaluated claim state")
+        for evidence in raw.get("evidence") or []:
+            selected_requirements.add(str(evidence.get("requirement_id")))
+        propagation.append(
+            {
+                "claim_id": claim_id,
+                "status": raw.get("claim_status"),
+                "metrics_sha256": hashlib.sha256(
+                    json.dumps(metrics, sort_keys=True, separators=(",", ":"), allow_nan=False).encode()
+                ).hexdigest(),
+                "reason_codes": list(raw.get("reason_codes") or []),
+                "evidence_requirement_count": len(raw.get("evidence") or []),
+            }
+        )
+    return {
+        "schema_version": "protocol-v5-claim-flow-attestation-v1.0.0",
+        "status": "PASS",
+        "authenticated_selection_source": (final_audit.get("claim_evidence_sources") or {}).get("selection"),
+        "evaluated_claim_source": (final_audit.get("claim_evidence_sources") or {}).get("evaluated_claims"),
+        "selected_requirement_count": len(selected_requirements),
+        "genuinely_empty_authenticated_selection": not selected_requirements,
+        "selection_was_silently_discarded": False,
+        "claim_propagation": propagation,
+    }
+
+
+def _e3_preservation(root: Path, final_audit: Mapping[str, Any]) -> dict[str, Any]:
+    historical = Path(
+        "results_v5/protocol-v5.0.0/E3/b0-p2-user-study-readiness/report/tables/participant-flow.csv"
+    )
+    derivative_root = Path(
+        "results_v5/protocol-v5.0.0/compatibility/E3/b0-p2-user-study-readiness-regeneration-v2"
+    )
+    derivative = derivative_root / "report/tables/participant-flow.csv"
+    derivative_manifest = read_json(root / derivative_root / "manifest.json")
+    inventory = read_json(root / str((final_audit.get("source_inventory") or {})["path"]))
+    actual_historical = file_sha256(root / historical)
+    actual_derivative = file_sha256(root / derivative)
+    relationship = derivative_manifest.get("source") or {}
+    if inventory.get("files", {}).get(str(historical)) != actual_historical:
+        raise ValueError("historical E3 bytes differ from the audit-start inventory")
+    if derivative_manifest.get("output_checksums", {}).get("report/tables/participant-flow.csv") != actual_derivative:
+        raise ValueError("E3 derivative checksum differs from its manifest")
+    if relationship.get("historical_bytes_modified") is not False or actual_historical == actual_derivative:
+        raise ValueError("E3 historical/derivative identities are not explicitly distinct")
+    return {
+        "status": "PASS",
+        "historical": {
+            "path": str(historical),
+            "sha256": actual_historical,
+            "recorded_historical_manifest_identity_sha256": relationship.get("historical_manifest_sha256"),
+            "byte_preserved_against_audit_inventory": True,
+        },
+        "current_policy_derivative": {
+            "path": str(derivative),
+            "sha256": actual_derivative,
+            "manifest_path": str(derivative_root / "manifest.json"),
+            "manifest_sha256": file_sha256(root / derivative_root / "manifest.json"),
+        },
+        "relationship": {
+            "type": "VERSIONED_CRLF_TO_LF_COMPATIBILITY_DERIVATIVE",
+            "newline_policy_transform": relationship.get("newline_policy_transform"),
+            "historical_bytes_modified": relationship.get("historical_bytes_modified"),
+            "identities_are_substitutable": False,
+        },
     }
 
 
@@ -410,6 +682,23 @@ def _markdown(audit: dict[str, Any]) -> str:
             f"| {row['evidence_id']} | `{row['git_revision']}` | {row['exit_code']} | "
             f"{'; '.join(row['classifications'])} | `{row['command']}` |"
         )
+    reproduction = audit["canonical_reproducibility_workflow"]
+    lines.extend(
+        [
+            "",
+            "## Canonical final reproducibility workflow",
+            "",
+            f"`{' '.join(reproduction['argv'])}` ran at `{reproduction['git_revision']}` and exited "
+            f"{reproduction['exit_code']}. Configuration proof: Makefile "
+            f"`{reproduction['configuration_proof']['makefile']['sha256']}` and documentation "
+            f"`{reproduction['configuration_proof']['documentation']['sha256']}`. Nonzero reasons: "
+            + ("; ".join(
+                row["code"] + "=" + row["category"]
+                for row in reproduction.get("nonzero_reasons") or []
+            ) or "none"),
+            "",
+        ]
+    )
     chain = audit["provenance_chain"]
     isolation = audit["isolation_failure_disposition"]["finding"]
     lines.extend(
@@ -450,6 +739,35 @@ def _markdown(audit: dict[str, Any]) -> str:
     return "\n".join(lines)
 
 
+def _traceability_markdown(audit: dict[str, Any]) -> str:
+    lines = [
+        "# Protocol-v5 Adversarial Regression Traceability",
+        "",
+        "Every row is bound to the adversarial JUnit command record. Test fixtures are not experiment evidence.",
+        "",
+    ]
+    for issue in audit["issues"]:
+        lines.extend(
+            [
+                f"## {issue['id']} — {issue['severity']} — {issue['final_disposition']}",
+                "",
+                f"- Original exploit: {issue['original_exploit']}",
+                f"- Regression node IDs: `{'; '.join(issue['regression_test_node_ids'])}`",
+                f"- Fixture/artifact: {issue['fixture_or_artifact']}",
+                f"- Artifact types: `{'; '.join(issue['artifact_types'])}`",
+                f"- Expected behavior: {issue['expected_security_or_evidence_behavior']}",
+                "- Actual result: `" + "; ".join(
+                    row["nodeid"] + "=" + row["result"] for row in issue["actual_result"]
+                ) + "`",
+                f"- Closure behavior: `{issue['closure_behavior']}`",
+                f"- Evidence record: `{issue['evidence_record_path']}`",
+                f"- Evidence SHA-256: `{issue['evidence_record_sha256']}`",
+                "",
+            ]
+        )
+    return "\n".join(lines)
+
+
 def _command_summary(record: dict[str, Any], root: Path) -> dict[str, Any]:
     package = Path(record["package"])
     summary = {key: value for key, value in record.items() if key != "package"}
@@ -472,9 +790,13 @@ def _validate_command_outcomes(records: list[dict[str, Any]], *, tests: bool = F
     for record in records:
         evidence_id = str(record["evidence_id"])
         classifications = set(record.get("classifications") or [])
+        reasons = record.get("nonzero_reasons") or []
+        reason_categories = {str(reason.get("category")) for reason in reasons}
         exit_code = int(record.get("exit_code", -1))
-        if "IMPLEMENTATION_DEFECT" in classifications:
+        if classifications & {"IMPLEMENTATION_DEFECT", "REMAINING_IMPLEMENTATION_DEFECT"}:
             defects.append(evidence_id + ": classified IMPLEMENTATION_DEFECT")
+        if "REMAINING_IMPLEMENTATION_DEFECT" in reason_categories:
+            defects.append(evidence_id + ": nonzero reason classified REMAINING_IMPLEMENTATION_DEFECT")
         if tests:
             counts = record.get("junit", {}).get("counts") or {}
             if exit_code != 0 or counts.get("failed") or counts.get("errors"):
@@ -483,8 +805,13 @@ def _validate_command_outcomes(records: list[dict[str, Any]], *, tests: bool = F
                 defects.append(evidence_id + ": passing regression evidence must be classified PASS")
         elif exit_code == 0 and classifications != {"PASS"}:
             defects.append(evidence_id + ": zero exit must be classified PASS")
-        elif exit_code != 0 and (not classifications or "PASS" in classifications):
-            defects.append(evidence_id + ": nonzero exit lacks an explicit non-PASS classification")
+        elif exit_code != 0:
+            if not reasons:
+                defects.append(evidence_id + ": nonzero exit lacks exact reason codes")
+            if not classifications or "PASS" in classifications:
+                defects.append(evidence_id + ": nonzero exit lacks an explicit non-PASS classification")
+            if classifications != reason_categories:
+                defects.append(evidence_id + ": reason categories differ from command classifications")
     return defects
 
 
@@ -494,6 +821,9 @@ def build_completion_audit(
     test_records: list[dict[str, Any]],
     validator_records: list[dict[str, Any]],
     workflow_records: list[dict[str, Any]],
+    reproducibility_record: dict[str, Any],
+    reproducibility_verification: dict[str, Any],
+    publication_delta_attestation: dict[str, Any],
     final_run: dict[str, Any],
 ) -> dict[str, Any]:
     final_revision = _git_revision(root)
@@ -501,6 +831,7 @@ def build_completion_audit(
         "tests": sorted({row["git_revision"] for row in test_records}),
         "validators": sorted({row["git_revision"] for row in validator_records}),
         "workflows": sorted({row["git_revision"] for row in workflow_records}),
+        "reproducibility": [reproducibility_record["git_revision"]],
         "final_audit_stages": sorted({row["git_revision"] for row in final_run["stages"]}),
     }
     revision_consistent = all(values == [final_revision] for values in revision_sets.values())
@@ -515,6 +846,7 @@ def build_completion_audit(
         *_validate_command_outcomes(test_records, tests=True),
         *_validate_command_outcomes(validator_records),
         *_validate_command_outcomes(workflow_records),
+        *_validate_command_outcomes([reproducibility_record]),
     ]
     isolation_validator = next(row for row in validator_records if row["evidence_id"] == "isolation")
     if isolation_validator["exit_code"] != 0 or isolation_validator["classifications"] != ["PASS"]:
@@ -533,6 +865,10 @@ def build_completion_audit(
         implementation_defects.append("isolation: exact prior defect disposition is not authenticated as repaired")
 
     issues = []
+    adversarial_record_path = _display_path(
+        Path(adversarial["package"]) / "record.json", root
+    )
+    adversarial_record_sha256 = file_sha256(Path(adversarial["package"]) / "record.json")
     for definition in ISSUES:
         evidence = []
         missing = []
@@ -555,6 +891,7 @@ def build_completion_audit(
             )
             if not path.is_file():
                 status = "PARTIALLY_SATISFIED" if evidence else "NOT_SATISFIED"
+        trace = TRACE_METADATA[definition["id"]]
         issues.append(
             {
                 "id": definition["id"],
@@ -566,6 +903,19 @@ def build_completion_audit(
                 "missing_tests": missing,
                 "test_evidence": evidence,
                 "code_evidence": code_evidence,
+                "original_exploit": trace["original_exploit"],
+                "regression_test_node_ids": list(definition["tests"]),
+                "fixture_or_artifact": trace["fixture_or_artifact"],
+                "artifact_types": trace["artifact_types"],
+                "expected_security_or_evidence_behavior": trace["expected_behavior"],
+                "actual_result": [
+                    {"nodeid": row["nodeid"], "result": row["status"]}
+                    for row in evidence
+                ],
+                "closure_behavior": trace["closure_behavior"],
+                "evidence_record_path": adversarial_record_path,
+                "evidence_record_sha256": adversarial_record_sha256,
+                "final_disposition": status,
             }
         )
     satisfied = sum(issue["status"] == "SATISFIED" for issue in issues)
@@ -586,7 +936,7 @@ def build_completion_audit(
         verdict = f"{satisfied}/16 SATISFIED; REMAINDER REQUIRES REPAIR"
     inventory = read_json(root / final_audit["source_inventory"]["path"])
     return {
-        "schema_version": "protocol-v5-completion-audit-v2.0.0",
+        "schema_version": "protocol-v5-completion-audit-v3.0.0",
         "protocol_version": "5.0.0",
         "created_at_utc": _utc_now(),
         "git_revision": final_revision,
@@ -599,12 +949,31 @@ def build_completion_audit(
         "test_evidence": [_command_summary(row, root) for row in test_records],
         "validator_evidence": [_command_summary(row, root) for row in validator_records],
         "workflows": [_command_summary(row, root) for row in workflow_records],
+        "canonical_reproducibility_workflow": {
+            **reproducibility_verification,
+            "evidence": _command_summary(reproducibility_record, root),
+        },
         "final_audit_evidence": {key: value for key, value in final_run.items() if key != "payload"},
+        "claim_flow_attestation": claim_flow_attestation(final_audit),
+        "e3_preservation": _e3_preservation(root, final_audit),
+        "publication_delta_attestation": publication_delta_attestation,
+        "revision_model": {
+            "tested_code_revision": final_revision,
+            "publication_revision": None,
+            "publication_revision_status": "RESOLVED_ONLY_AFTER_GENERATED_ARTIFACT_PUBLICATION",
+            "self_reference_policy": "Never claim the enclosing future publication commit was the tested commit.",
+            "previous_tested_publication_gap": {
+                "tested_code_revision": publication_delta_attestation["tested_code_revision"],
+                "publication_revision": publication_delta_attestation["publication_revision"],
+                "verdict": publication_delta_attestation["verdict"],
+            },
+        },
         "provenance_chain": {
             "final_implementation_revision": final_revision,
             "test_evidence_revisions": revision_sets["tests"],
             "validator_evidence_revisions": revision_sets["validators"],
             "workflow_evidence_revisions": revision_sets["workflows"],
+            "reproducibility_evidence_revisions": revision_sets["reproducibility"],
             "final_audit_stage_revisions": revision_sets["final_audit_stages"],
             "final_audit_run_id": final_run["run_id"],
             "final_report": final_run["final_audit"],
@@ -645,6 +1014,8 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument("--test-evidence", type=Path, action="append", required=True)
     parser.add_argument("--validator-evidence", type=Path, action="append", required=True)
     parser.add_argument("--workflow-evidence", type=Path, action="append", required=True)
+    parser.add_argument("--reproducibility-evidence", type=Path, required=True)
+    parser.add_argument("--publication-attestation", type=Path, required=True)
     parser.add_argument("--final-audit-run", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args(argv)
@@ -668,19 +1039,34 @@ def main(argv: Sequence[str] | None = None) -> int:
         args.workflow_evidence, kind="workflow", required_ids=set(REQUIRED_WORKFLOW_EVIDENCE),
         expected_revision=final_revision,
     )
+    reproducibility_records = _load_evidence_records(
+        [args.reproducibility_evidence], kind="workflow",
+        required_ids=REQUIRED_REPRODUCIBILITY_EVIDENCE,
+        expected_revision=final_revision,
+    )
+    reproducibility_verification = _verify_canonical_reproducibility(
+        root, reproducibility_records[0], expected_revision=final_revision
+    )
+    publication_payload = read_json(args.publication_attestation.resolve())
+    verify_attestation(root, publication_payload)
     final_run = _verify_final_audit_run(
         root, args.final_audit_run, expected_revision=final_revision, workflows=workflow_records
     )
     output = args.output.resolve()
     output.mkdir(parents=True, exist_ok=False)
-    copied: dict[str, list[dict[str, Any]]] = {"test": [], "validator": [], "workflow": []}
+    copied: dict[str, list[dict[str, Any]]] = {
+        "test": [], "validator": [], "workflow": [], "reproducibility": [],
+    }
     for kind, records in (
         ("test", test_records), ("validator", validator_records), ("workflow", workflow_records)
+        , ("reproducibility", reproducibility_records)
     ):
         for record in records:
             destination = output / "evidence" / kind / record["evidence_id"]
             _copy_evidence_package(record["package"], destination)
             copied[kind].append({**verify_command_evidence(destination), "package": destination})
+    publication_copy = output / "evidence/publication-delta-attestation.json"
+    write_bytes(publication_copy, args.publication_attestation.resolve().read_bytes())
     final_copy = output / "evidence/final-audit"
     source_run = args.final_audit_run.resolve()
     for relative in (
@@ -701,16 +1087,34 @@ def main(argv: Sequence[str] | None = None) -> int:
         test_records=copied["test"],
         validator_records=copied["validator"],
         workflow_records=copied["workflow"],
+        reproducibility_record=copied["reproducibility"][0],
+        reproducibility_verification=reproducibility_verification,
+        publication_delta_attestation=publication_payload,
         final_run=final_run,
     )
     write_json(output / "completion-audit.json", audit)
     write_bytes(output / "COMPLETION_AUDIT.md", _markdown(audit).encode())
+    write_json(
+        output / "adversarial-traceability.json",
+        {
+            "schema_version": "protocol-v5-adversarial-traceability-v1.0.0",
+            "git_revision": audit["git_revision"],
+            "artifact_role": "software_regression_evidence",
+            "is_experiment_evidence": False,
+            "supports_thesis_claim": False,
+            "issues": audit["issues"],
+        },
+    )
+    write_bytes(
+        output / "ADVERSARIAL_TRACEABILITY.md",
+        _traceability_markdown(audit).encode(),
+    )
     outputs = {
         str(path.relative_to(output)): file_sha256(path)
         for path in sorted(output.rglob("*")) if path.is_file()
     }
     manifest = {
-        "schema_version": "protocol-v5-completion-audit-package-v2.0.0",
+        "schema_version": "protocol-v5-completion-audit-package-v3.0.0",
         "created_at_utc": audit["created_at_utc"],
         "git_revision": audit["git_revision"],
         "protocol_version": "5.0.0",

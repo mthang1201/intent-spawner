@@ -6,6 +6,7 @@ from collections import Counter
 from datetime import datetime, timezone
 import json
 from pathlib import Path
+import platform
 import re
 import shlex
 import subprocess
@@ -15,8 +16,10 @@ from typing import Any, Sequence
 from .common import ROOT, file_sha256, read_json, write_bytes, write_json
 
 
-SCHEMA_VERSION = "protocol-v5-command-evidence-v1.0.0"
-PACKAGE_SCHEMA_VERSION = "protocol-v5-command-evidence-package-v1.0.0"
+SCHEMA_VERSION = "protocol-v5-command-evidence-v1.1.0"
+PACKAGE_SCHEMA_VERSION = "protocol-v5-command-evidence-package-v1.1.0"
+LEGACY_SCHEMA_VERSION = "protocol-v5-command-evidence-v1.0.0"
+LEGACY_PACKAGE_SCHEMA_VERSION = "protocol-v5-command-evidence-package-v1.0.0"
 ALLOWED_CLASSIFICATIONS = {
     "PASS",
     "IMPLEMENTATION_DEFECT",
@@ -24,6 +27,13 @@ ALLOWED_CLASSIFICATIONS = {
     "UNAVAILABLE_FREEZE_CUSTODY",
     "IMMUTABLE_HISTORICAL_COMPATIBILITY_BOUNDARY",
     "SCIENTIFICALLY_CORRECT_FAIL_CLOSED_STATE",
+    "REMAINING_IMPLEMENTATION_DEFECT",
+    "INTENTIONALLY_UNAVAILABLE_REAL_EXPERIMENT_EVIDENCE",
+}
+NONZERO_REASON_CATEGORIES = {
+    "REMAINING_IMPLEMENTATION_DEFECT",
+    "INTENTIONALLY_UNAVAILABLE_REAL_EXPERIMENT_EVIDENCE",
+    "IMMUTABLE_HISTORICAL_COMPATIBILITY_BOUNDARY",
 }
 
 
@@ -67,7 +77,9 @@ def junit_details(path: Path) -> dict[str, Any]:
 def verify_command_evidence(directory: Path) -> dict[str, Any]:
     directory = directory.resolve()
     manifest = read_json(directory / "manifest.json")
-    if manifest.get("schema_version") != PACKAGE_SCHEMA_VERSION:
+    if manifest.get("schema_version") not in {
+        PACKAGE_SCHEMA_VERSION, LEGACY_PACKAGE_SCHEMA_VERSION,
+    }:
         raise ValueError("unsupported command-evidence package schema")
     outputs = manifest.get("output_checksums") or {}
     for relative, digest in outputs.items():
@@ -89,14 +101,42 @@ def verify_command_evidence(directory: Path) -> dict[str, Any]:
     if (directory / "SHA256SUMS").read_bytes() != expected_sums:
         raise ValueError("command-evidence checksum manifest mismatch")
     record = read_json(directory / "record.json")
-    if record.get("schema_version") != SCHEMA_VERSION:
+    if record.get("schema_version") not in {SCHEMA_VERSION, LEGACY_SCHEMA_VERSION}:
         raise ValueError("unsupported command-evidence record schema")
     for key in ("evidence_id", "kind", "git_revision"):
         if manifest.get(key) != record.get(key):
             raise ValueError(f"command-evidence manifest/record {key} mismatch")
     if set(record.get("classifications") or []) - ALLOWED_CLASSIFICATIONS:
         raise ValueError("command evidence has an invalid classification")
+    if record.get("schema_version") == SCHEMA_VERSION:
+        _validate_nonzero_reasons(
+            int(record.get("exit_code", -1)), record.get("nonzero_reasons") or []
+        )
     return record
+
+
+def _validate_nonzero_reasons(exit_code: int, reasons: list[dict[str, str]]) -> None:
+    """Require exact code/category pairs for every current-schema nonzero run."""
+
+    if exit_code == 0:
+        if reasons:
+            raise ValueError("a zero-exit command cannot record nonzero reasons")
+        return
+    if not reasons:
+        raise ValueError("a nonzero command requires exact machine-readable reasons")
+    codes: set[str] = set()
+    for reason in reasons:
+        if not isinstance(reason, dict):
+            raise ValueError("nonzero reason must be an object")
+        code = reason.get("code")
+        category = reason.get("category")
+        if not isinstance(code, str) or not re.fullmatch(r"[A-Z][A-Z0-9_]{2,100}", code):
+            raise ValueError("nonzero reason code is invalid")
+        if code in codes:
+            raise ValueError("nonzero reason codes must be unique")
+        if category not in NONZERO_REASON_CATEGORIES:
+            raise ValueError("nonzero reason category is invalid")
+        codes.add(code)
 
 
 def capture(
@@ -106,6 +146,7 @@ def capture(
     evidence_id: str,
     kind: str,
     classifications: list[str],
+    nonzero_reasons: list[dict[str, str]] | None,
     command: list[str],
     junit: Path | None,
 ) -> int:
@@ -129,6 +170,11 @@ def capture(
     started = _utc_now()
     process = subprocess.run(command, cwd=root, capture_output=True)
     finished = _utc_now()
+    normalized_reasons = sorted(
+        (dict(reason) for reason in (nonzero_reasons or [])),
+        key=lambda reason: (str(reason.get("category")), str(reason.get("code"))),
+    )
+    _validate_nonzero_reasons(process.returncode, normalized_reasons)
     write_bytes(output / "stdout.txt", process.stdout)
     write_bytes(output / "stderr.txt", process.stderr)
     record: dict[str, Any] = {
@@ -143,6 +189,13 @@ def capture(
         "argv": command,
         "exit_code": process.returncode,
         "classifications": sorted(set(classifications)),
+        "nonzero_reasons": normalized_reasons,
+        "environment": {
+            "python_version": platform.python_version(),
+            "python_implementation": platform.python_implementation(),
+            "platform": platform.platform(),
+            "working_directory": ".",
+        },
         "stdout": {"path": "stdout.txt", "sha256": file_sha256(output / "stdout.txt")},
         "stderr": {"path": "stderr.txt", "sha256": file_sha256(output / "stderr.txt")},
     }
@@ -183,6 +236,10 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument("--evidence-id", required=True)
     parser.add_argument("--kind", choices=("test", "validator", "workflow"), required=True)
     parser.add_argument("--classification", action="append", required=True)
+    parser.add_argument(
+        "--reason", action="append", default=[], metavar="CODE=CATEGORY",
+        help="exact nonzero reason and one of the three closure categories",
+    )
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--junit", type=Path)
     parser.add_argument("command", nargs=argparse.REMAINDER)
@@ -190,12 +247,19 @@ def main(argv: Sequence[str] | None = None) -> int:
     command = list(args.command)
     if command and command[0] == "--":
         command.pop(0)
+    reasons = []
+    for value in args.reason:
+        code, separator, category = value.partition("=")
+        if not separator:
+            raise ValueError("--reason must use CODE=CATEGORY")
+        reasons.append({"code": code, "category": category})
     return capture(
         root=ROOT,
         output=args.output,
         evidence_id=args.evidence_id,
         kind=args.kind,
         classifications=args.classification,
+        nonzero_reasons=reasons,
         command=command,
         junit=args.junit,
     )

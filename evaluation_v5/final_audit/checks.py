@@ -366,6 +366,25 @@ def validate_package(inputs: Inputs, relative: str) -> dict:
     return record
 
 
+def claim_audit_fields(claim_evidence: Mapping[str, Any]) -> dict[str, Any]:
+    """Carry an authenticated claim bundle into final-audit/report fields."""
+
+    return {
+        "claims": claim_evidence["claims"],
+        "evaluated_claims": claim_evidence["evaluated_claims"],
+        "research_questions": claim_evidence["research_questions"],
+        "confirmatory_status": claim_evidence["confirmatory_status"],
+        "experiment_states": claim_evidence["requirement_states"],
+        "claim_counts": claim_evidence["claim_counts"],
+        "claim_evidence_sources": {
+            "package": claim_evidence["source"],
+            "selection": claim_evidence["selection_source"],
+            "evaluated_claims": claim_evidence["evaluated_claims_source"],
+            "registry": claim_evidence["registry_source"],
+        },
+    }
+
+
 def inspect(inputs: Inputs, *, isolation: bool = True, historical: bool = True) -> dict:
     checks = {i: {"id": i, "title": title, "verdict": "UNVERIFIED", "reason": "Not assessed",
                   "sources": [], "details": []} for i, title in CHECKS.items()}
@@ -593,18 +612,14 @@ def inspect(inputs: Inputs, *, isolation: bool = True, historical: bool = True) 
         claim_counts = {"SUPPORTED": 0, "NOT_SUPPORTED": 0, "NOT_EXECUTED": 0}
         claim_sources = {"error": claim_evidence_error}
     else:
-        claims = claim_evidence["claims"]
-        evaluated = claim_evidence["evaluated_claims"]
-        research_questions = claim_evidence["research_questions"]
-        confirmatory_status = claim_evidence["confirmatory_status"]
-        experiment_states = claim_evidence["requirement_states"]
-        claim_counts = claim_evidence["claim_counts"]
-        claim_sources = {
-            "package": claim_evidence["source"],
-            "selection": claim_evidence["selection_source"],
-            "evaluated_claims": claim_evidence["evaluated_claims_source"],
-            "registry": claim_evidence["registry_source"],
-        }
+        projected = claim_audit_fields(claim_evidence)
+        claims = projected["claims"]
+        evaluated = projected["evaluated_claims"]
+        research_questions = projected["research_questions"]
+        confirmatory_status = projected["confirmatory_status"]
+        experiment_states = projected["experiment_states"]
+        claim_counts = projected["claim_counts"]
+        claim_sources = projected["claim_evidence_sources"]
     return {"schema_version": SCHEMA_VERSION, "protocol_version": "5.0.0", "checks": list(checks.values()),
             "packages": packages, "claims": claims, "evaluated_claims": evaluated, "research_questions": research_questions,
             "primary_system": "P2", "confirmatory_status": confirmatory_status,

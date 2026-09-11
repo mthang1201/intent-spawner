@@ -270,6 +270,50 @@ def _metric_summary(metrics: Mapping[str, Any]) -> dict[str, Any]:
     }
 
 
+def summarize_evaluated_claims(
+    inputs: Inputs, package: str, claims: list[Mapping[str, Any]]
+) -> list[dict[str, Any]]:
+    """Project authenticated evaluated claims into the exact final-report shape.
+
+    Authentication and recomputation happen before this function in
+    ``load_claim_evidence``.  Keeping the projection explicit makes it possible
+    to prove that values and selection-derived reasons are not replaced by a
+    snapshot-specific reporting template.
+    """
+
+    summaries = []
+    for index, claim in enumerate(claims):
+        metrics = (claim.get("result") or {}).get("normalized_metrics") or {}
+        metric_summary = _metric_summary(metrics)
+        summaries.append(
+            {
+                "id": claim["claim_id"],
+                "research_question": claim["research_question"]["id"],
+                "hypothesis": claim["hypothesis"],
+                "claim_status": claim["claim_status"],
+                "claimable": claim["claimable"],
+                "estimate": metrics.get("effect"),
+                "confidence_interval": (
+                    {"low": metrics.get("ci_low"), "high": metrics.get("ci_high")}
+                    if metrics.get("ci_low") is not None or metrics.get("ci_high") is not None
+                    else None
+                ),
+                "effect_size": metrics.get("effect_size"),
+                "normalized_metrics": metrics,
+                **metric_summary,
+                "reason_codes": list(claim.get("reason_codes") or []),
+                "limitations": list(claim.get("limitations") or []),
+                "evidence_status": list(claim.get("evidence_status") or []),
+                "source": _registered_ref(
+                    inputs,
+                    package + "/derived/evaluated-claim-registry.json",
+                    "/claims/" + str(index),
+                ),
+            }
+        )
+    return summaries
+
+
 def _requirement_state(row: Mapping[str, Any], candidates: list[Mapping[str, Any]]) -> dict[str, Any]:
     selected = row.get("selected_package")
     if selected:
@@ -457,36 +501,7 @@ def load_claim_evidence(inputs: Inputs) -> dict[str, Any]:
         confirmatory_status = "EXECUTED_COMPLETE"
     else:
         confirmatory_status = "EXECUTED_INCOMPLETE"
-    summaries = []
-    for index, claim in enumerate(claims):
-        metrics = (claim.get("result") or {}).get("normalized_metrics") or {}
-        metric_summary = _metric_summary(metrics)
-        summaries.append(
-            {
-                "id": claim["claim_id"],
-                "research_question": claim["research_question"]["id"],
-                "hypothesis": claim["hypothesis"],
-                "claim_status": claim["claim_status"],
-                "claimable": claim["claimable"],
-                "estimate": metrics.get("effect"),
-                "confidence_interval": (
-                    {"low": metrics.get("ci_low"), "high": metrics.get("ci_high")}
-                    if metrics.get("ci_low") is not None or metrics.get("ci_high") is not None
-                    else None
-                ),
-                "effect_size": metrics.get("effect_size"),
-                "normalized_metrics": metrics,
-                **metric_summary,
-                "reason_codes": list(claim.get("reason_codes") or []),
-                "limitations": list(claim.get("limitations") or []),
-                "evidence_status": list(claim.get("evidence_status") or []),
-                "source": _registered_ref(
-                    inputs,
-                    package + "/derived/evaluated-claim-registry.json",
-                    "/claims/" + str(index),
-                ),
-            }
-        )
+    summaries = summarize_evaluated_claims(inputs, package, claims)
     h8 = next(claim for claim in claims if claim["claim_id"] == "H8")
     p3_selection = selection_rows["p2_p3"]
     if h8["claim_status"] != "NOT_EXECUTED":
