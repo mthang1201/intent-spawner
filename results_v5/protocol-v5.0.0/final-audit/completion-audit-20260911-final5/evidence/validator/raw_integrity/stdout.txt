@@ -1,0 +1,7 @@
+status=pass
+manifest=docs/evaluation/RAW_EVIDENCE_SHA256SUMS.txt
+verified_files=1877
+manifest_sha256=fb3294ad1105b10b7fc384f09bd39f9b8f525be85aa5b90319feab5816361c4e
+baseline_manifest=docs/evaluation/RAW_EVIDENCE_SHA256SUMS.before-0ffbd9a.txt
+baseline_verified_files=1541
+baseline_manifest_sha256=c6e094430a3e1ed7cfb27bb32c55bdd9208f08108b3828e7ed493dc67e75cdb9

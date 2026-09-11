@@ -1,0 +1,37 @@
+{
+  "schema_version": "protocol-v5-isolation-diagnostic-v1.0.0",
+  "protocol_version": "5.0.0",
+  "created_at_utc": "2026-09-10T09:37:57Z",
+  "observed_at_git_revision": "99eddfbcd626af5ac5b174712ca86331c89f1eca",
+  "finding": {
+    "artifact_relative_path": "tests/test_evaluation_v5_gold_dataset.py",
+    "artifact_sha256": "3e978556fa831877c959ee1dc3824315f9933d2f8d12d993cc78019842acc918",
+    "artifact_role": "synthetic_adversarial_test_source",
+    "artifact_type": "python_source",
+    "parser": "evaluation_v5.isolation_audit._contains_embedded_confirmatory_bundle",
+    "schema_signature": "protocol-v5-gold-family-v1.0.0",
+    "failure_category": "SOURCE_LITERAL_FRAGMENT_FALSE_POSITIVE",
+    "original_error_category": "UNPARSEABLE_EMBEDDED_CONFIRMATORY_BUNDLE",
+    "classification": "REMAINING_IMPLEMENTATION_DEFECT",
+    "historical": false,
+    "immutable_preserved_evidence": false,
+    "eligible_for_confirmatory_execution": false,
+    "eligible_to_support_thesis_claim": false
+  },
+  "repair": {
+    "status": "REPAIRED",
+    "method": "Parse Python source structurally and inspect complete literal bundle shapes without concatenating independent malformed fixture fragments.",
+    "regression_tests": [
+      "tests/test_evaluation_v5_isolation.py::test_isolation_audit_parses_python_literals_without_joining_fixture_fragments",
+      "tests/test_evaluation_v5_isolation.py::test_isolation_audit_still_detects_complete_python_literal_bundle",
+      "tests/test_evaluation_v5_isolation.py::test_isolation_audit_detects_complete_concatenated_python_literal"
+    ],
+    "expected_standalone_result": "PASS"
+  },
+  "evidence_boundary": {
+    "is_experiment_evidence": false,
+    "claims_permitted": false,
+    "contains_real_confirmatory_cases": false,
+    "contains_real_participant_or_cluster_observations": false
+  }
+}

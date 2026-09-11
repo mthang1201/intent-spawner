@@ -1,0 +1,42 @@
+{
+  "argv": [
+    ".venv/bin/python",
+    "-m",
+    "pytest",
+    "-q",
+    "tests/test_protocol_v5_research_analysis.py",
+    "tests/test_protocol_v5_final_audit.py",
+    "--junitxml=/tmp/protocol-v5-final4-evidence.f0K5HU/test-focused/junit.xml"
+  ],
+  "classifications": [
+    "PASS"
+  ],
+  "command": ".venv/bin/python -m pytest -q tests/test_protocol_v5_research_analysis.py tests/test_protocol_v5_final_audit.py --junitxml=/tmp/protocol-v5-final4-evidence.f0K5HU/test-focused/junit.xml",
+  "evidence_id": "focused",
+  "exit_code": 0,
+  "finished_at_utc": "2026-09-10T10:07:54.747803Z",
+  "git_dirty_before": false,
+  "git_revision": "007542fdd384174be9e0e54999d20ad000383568",
+  "junit": {
+    "counts": {
+      "errors": 0,
+      "failed": 0,
+      "passed": 93,
+      "skipped": 0,
+      "total": 93
+    },
+    "path": "junit.xml",
+    "sha256": "aa41536bf26fd9ce50a11b2b7db5f1a8fa07a5e54a300adfddafc9e8c9a41f09"
+  },
+  "kind": "test",
+  "schema_version": "protocol-v5-command-evidence-v1.0.0",
+  "started_at_utc": "2026-09-10T10:07:34.171477Z",
+  "stderr": {
+    "path": "stderr.txt",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "stdout": {
+    "path": "stdout.txt",
+    "sha256": "b1890e54f60620f071a9f051f9abcc968bbeeb0f3263ad9294504f057117ef8e"
+  }
+}

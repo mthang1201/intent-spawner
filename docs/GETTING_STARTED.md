@@ -81,7 +81,7 @@ remains **FAIL**, with confirmatory, human, resource, and storage outcomes
 
 Completed stages are sealed and may be reused only with matching inputs and
 implementation. Changed inputs or code require a new run ID. Inputs are selected
-by the [checksum-bound inventory](../benchmarks_v5/protocol-v5-final-audit-inputs-v1.json),
+by the [checksum-bound inventory](../benchmarks_v5/protocol-v5-final-audit-inputs-v2.json),
 never by filename recency. Original raw observations and damaged packages remain
 unchanged. No stage calls a recommender, LLM provider, participant, registry, or
 Kubernetes cluster, and unavailable private evidence is handled explicitly.

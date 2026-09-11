@@ -1,0 +1,34 @@
+{
+  "argv": [
+    ".venv/bin/python",
+    "-m",
+    "evaluation_v5.isolation_audit"
+  ],
+  "classifications": [
+    "PASS"
+  ],
+  "command": ".venv/bin/python -m evaluation_v5.isolation_audit",
+  "environment": {
+    "platform": "macOS-15.3.2-arm64-arm-64bit-Mach-O",
+    "python_implementation": "CPython",
+    "python_version": "3.14.6",
+    "working_directory": "."
+  },
+  "evidence_id": "isolation",
+  "exit_code": 0,
+  "finished_at_utc": "2026-09-11T02:11:29.056431Z",
+  "git_dirty_before": false,
+  "git_revision": "ec73326c947bcf3f80f71888e939dc03877f83a2",
+  "kind": "validator",
+  "nonzero_reasons": [],
+  "schema_version": "protocol-v5-command-evidence-v1.1.0",
+  "started_at_utc": "2026-09-11T02:11:27.656270Z",
+  "stderr": {
+    "path": "stderr.txt",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "stdout": {
+    "path": "stdout.txt",
+    "sha256": "71bdc1e3b2923644189ceb4c0a287dfe2218213ece1d8cd54793633c06da2ed9"
+  }
+}

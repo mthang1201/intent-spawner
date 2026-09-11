@@ -1,0 +1,3608 @@
+{
+  "artifact_role": "software_and_evidence_boundary_audit",
+  "canonical_reproducibility_workflow": {
+    "argv": [
+      "make",
+      "v5-audit",
+      "V5_RUN_ID=final-audit-20260911-canonical-repro"
+    ],
+    "canonical_command": "make v5-audit",
+    "classifications": [
+      "IMMUTABLE_HISTORICAL_COMPATIBILITY_BOUNDARY",
+      "INTENTIONALLY_UNAVAILABLE_REAL_EXPERIMENT_EVIDENCE"
+    ],
+    "configuration_proof": {
+      "documentation": {
+        "path": "docs/evaluation/PROTOCOL_V5_FINAL_REPORT.md",
+        "sha256": "a928fad70e8bfe897f46be2a36f29118bbfb3b8041202ff59b84bc964c5746f8"
+      },
+      "makefile": {
+        "path": "Makefile",
+        "sha256": "6a1aa7aaee7ace6d5d3261cb377c4cfb4c00e777699a5ed586abbe45b8361ac5"
+      },
+      "orchestrated_stages": [
+        "validation",
+        "analysis",
+        "figures",
+        "report"
+      ],
+      "recipe": "$(V5_PYTHON) -m evaluation_v5.final_audit audit $(V5_AUDIT_ARGS)",
+      "target": "v5-audit"
+    },
+    "environment": {
+      "platform": "macOS-15.3.2-arm64-arm-64bit-Mach-O",
+      "python_implementation": "CPython",
+      "python_version": "3.14.6",
+      "working_directory": "."
+    },
+    "evidence": {
+      "argv": [
+        "make",
+        "v5-audit",
+        "V5_RUN_ID=final-audit-20260911-canonical-repro"
+      ],
+      "classifications": [
+        "IMMUTABLE_HISTORICAL_COMPATIBILITY_BOUNDARY",
+        "INTENTIONALLY_UNAVAILABLE_REAL_EXPERIMENT_EVIDENCE"
+      ],
+      "command": "make v5-audit V5_RUN_ID=final-audit-20260911-canonical-repro",
+      "environment": {
+        "platform": "macOS-15.3.2-arm64-arm-64bit-Mach-O",
+        "python_implementation": "CPython",
+        "python_version": "3.14.6",
+        "working_directory": "."
+      },
+      "evidence_id": "canonical_reproducibility",
+      "exit_code": 2,
+      "finished_at_utc": "2026-09-11T02:13:21.808293Z",
+      "git_dirty_before": false,
+      "git_revision": "ec73326c947bcf3f80f71888e939dc03877f83a2",
+      "kind": "workflow",
+      "manifest": {
+        "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final5/evidence/reproducibility/canonical_reproducibility/manifest.json",
+        "sha256": "d7c8ef48f9d5a672ddcdf051c55e8b32163e106aeb655e5e34533b51dc075652"
+      },
+      "nonzero_reasons": [
+        {
+          "category": "IMMUTABLE_HISTORICAL_COMPATIBILITY_BOUNDARY",
+          "code": "HISTORICAL_E3_RECORDED_CHECKSUM_MISMATCH"
+        },
+        {
+          "category": "IMMUTABLE_HISTORICAL_COMPATIBILITY_BOUNDARY",
+          "code": "LEGACY_E5_OBSERVED_MANIFEST_MISSING_CURRENT_RETRIEVAL_CONFIGURATION"
+        },
+        {
+          "category": "IMMUTABLE_HISTORICAL_COMPATIBILITY_BOUNDARY",
+          "code": "OBSERVED_E5_PROVENANCE_DIFFERS_FROM_DESIGN_SNAPSHOT"
+        },
+        {
+          "category": "INTENTIONALLY_UNAVAILABLE_REAL_EXPERIMENT_EVIDENCE",
+          "code": "AUTHENTICATED_REAL_CONFIRMATORY_E1_TO_E5_EVIDENCE_UNAVAILABLE"
+        },
+        {
+          "category": "INTENTIONALLY_UNAVAILABLE_REAL_EXPERIMENT_EVIDENCE",
+          "code": "AUTHORITATIVE_FINAL_FREEZE_UNAVAILABLE"
+        },
+        {
+          "category": "INTENTIONALLY_UNAVAILABLE_REAL_EXPERIMENT_EVIDENCE",
+          "code": "EXTERNAL_CUSTODY_ISOLATION_ATTESTATION_UNAVAILABLE"
+        },
+        {
+          "category": "INTENTIONALLY_UNAVAILABLE_REAL_EXPERIMENT_EVIDENCE",
+          "code": "SEALED_SPLIT_CUSTODY_ATTESTATION_UNAVAILABLE"
+        }
+      ],
+      "record": {
+        "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final5/evidence/reproducibility/canonical_reproducibility/record.json",
+        "sha256": "741751a659ea92212c274f4dede2d678cff5325997e2acce66933677dd2074ec"
+      },
+      "schema_version": "protocol-v5-command-evidence-v1.1.0",
+      "started_at_utc": "2026-09-11T02:13:17.636194Z",
+      "stderr": {
+        "path": "stderr.txt",
+        "sha256": "b370955b77f023a8cc3c873ce6dc64136158f8122cb72da3bc728473013d3d9c"
+      },
+      "stdout": {
+        "path": "stdout.txt",
+        "sha256": "3d52fbbb8f52900ba580c9ab1ccb8498fe28a799924d7bec1874f83c4eed7b6b"
+      }
+    },
+    "exit_code": 2,
+    "git_revision": "ec73326c947bcf3f80f71888e939dc03877f83a2",
+    "nonzero_reasons": [
+      {
+        "category": "IMMUTABLE_HISTORICAL_COMPATIBILITY_BOUNDARY",
+        "code": "HISTORICAL_E3_RECORDED_CHECKSUM_MISMATCH"
+      },
+      {
+        "category": "IMMUTABLE_HISTORICAL_COMPATIBILITY_BOUNDARY",
+        "code": "LEGACY_E5_OBSERVED_MANIFEST_MISSING_CURRENT_RETRIEVAL_CONFIGURATION"
+      },
+      {
+        "category": "IMMUTABLE_HISTORICAL_COMPATIBILITY_BOUNDARY",
+        "code": "OBSERVED_E5_PROVENANCE_DIFFERS_FROM_DESIGN_SNAPSHOT"
+      },
+      {
+        "category": "INTENTIONALLY_UNAVAILABLE_REAL_EXPERIMENT_EVIDENCE",
+        "code": "AUTHENTICATED_REAL_CONFIRMATORY_E1_TO_E5_EVIDENCE_UNAVAILABLE"
+      },
+      {
+        "category": "INTENTIONALLY_UNAVAILABLE_REAL_EXPERIMENT_EVIDENCE",
+        "code": "AUTHORITATIVE_FINAL_FREEZE_UNAVAILABLE"
+      },
+      {
+        "category": "INTENTIONALLY_UNAVAILABLE_REAL_EXPERIMENT_EVIDENCE",
+        "code": "EXTERNAL_CUSTODY_ISOLATION_ATTESTATION_UNAVAILABLE"
+      },
+      {
+        "category": "INTENTIONALLY_UNAVAILABLE_REAL_EXPERIMENT_EVIDENCE",
+        "code": "SEALED_SPLIT_CUSTODY_ATTESTATION_UNAVAILABLE"
+      }
+    ],
+    "run_id": "final-audit-20260911-canonical-repro",
+    "stages": [
+      {
+        "manifest_path": "results_v5/protocol-v5.0.0/final-audit/final-audit-20260911-canonical-repro/validation/manifest.json",
+        "manifest_sha256": "64339410ce0754b071b0891bd73fbd38c6930d23eea58896d86724969d4af067",
+        "stage": "validation"
+      },
+      {
+        "manifest_path": "results_v5/protocol-v5.0.0/final-audit/final-audit-20260911-canonical-repro/analysis/manifest.json",
+        "manifest_sha256": "4e7b0ded8509d0ba06bfefebd57e2e0a3e5115214f51649e5b17fb4504f39b98",
+        "stage": "analysis"
+      },
+      {
+        "manifest_path": "results_v5/protocol-v5.0.0/final-audit/final-audit-20260911-canonical-repro/figures/manifest.json",
+        "manifest_sha256": "adad261adc219ba81e06708b21d27ff9b2e71247aabb4af5eb95c4b430bf73e7",
+        "stage": "figures"
+      },
+      {
+        "manifest_path": "results_v5/protocol-v5.0.0/final-audit/final-audit-20260911-canonical-repro/report/manifest.json",
+        "manifest_sha256": "2e360fc94b1a45c0885a4d318dd3cb037c7d1c819aceb0eab9b43b6ff71acc1a",
+        "stage": "report"
+      }
+    ],
+    "status": "PASS",
+    "stderr": {
+      "path": "stderr.txt",
+      "sha256": "b370955b77f023a8cc3c873ce6dc64136158f8122cb72da3bc728473013d3d9c"
+    },
+    "stdout": {
+      "path": "stdout.txt",
+      "sha256": "3d52fbbb8f52900ba580c9ab1ccb8498fe28a799924d7bec1874f83c4eed7b6b"
+    }
+  },
+  "claim_flow_attestation": {
+    "authenticated_selection_source": {
+      "locator": "",
+      "path": "results_v5/protocol-v5.0.0/analysis/research-analysis-20260905T-final/derived/evidence-selection.json",
+      "sha256": "dc36cd5fadd936a81641d4eabd251b27fdb722281ffed0a85103ee6227641d12"
+    },
+    "claim_propagation": [
+      {
+        "claim_id": "H1",
+        "evidence_requirement_count": 0,
+        "metrics_sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+        "reason_codes": [
+          "CLAIMS_NOT_PERMITTED",
+          "EVIDENCE_NOT_OBSERVED_COMPLETE",
+          "NON_CONFIRMATORY_EVIDENCE",
+          "NO_ELIGIBLE_CONFIRMATORY_EVIDENCE",
+          "REQUIRED_METRIC_OR_TEST_UNAVAILABLE"
+        ],
+        "status": "NOT_EXECUTED"
+      },
+      {
+        "claim_id": "H2",
+        "evidence_requirement_count": 0,
+        "metrics_sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+        "reason_codes": [
+          "CLAIMS_NOT_PERMITTED",
+          "EVIDENCE_NOT_OBSERVED_COMPLETE",
+          "NON_CONFIRMATORY_EVIDENCE",
+          "NO_ELIGIBLE_CONFIRMATORY_EVIDENCE",
+          "REQUIRED_METRIC_OR_TEST_UNAVAILABLE"
+        ],
+        "status": "NOT_EXECUTED"
+      },
+      {
+        "claim_id": "H3",
+        "evidence_requirement_count": 0,
+        "metrics_sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+        "reason_codes": [
+          "NO_ELIGIBLE_CONFIRMATORY_EVIDENCE",
+          "REQUIRED_METRIC_OR_TEST_UNAVAILABLE"
+        ],
+        "status": "NOT_EXECUTED"
+      },
+      {
+        "claim_id": "H4",
+        "evidence_requirement_count": 0,
+        "metrics_sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+        "reason_codes": [
+          "NO_ELIGIBLE_CONFIRMATORY_EVIDENCE",
+          "REQUIRED_METRIC_OR_TEST_UNAVAILABLE"
+        ],
+        "status": "NOT_EXECUTED"
+      },
+      {
+        "claim_id": "H5",
+        "evidence_requirement_count": 0,
+        "metrics_sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+        "reason_codes": [
+          "CLAIMS_NOT_PERMITTED",
+          "DERIVED_ANALYSIS_PACKAGE_REQUIRED",
+          "EVIDENCE_NOT_OBSERVED_COMPLETE",
+          "EVIDENCE_VALIDATION_FAILED",
+          "NON_CONFIRMATORY_EVIDENCE",
+          "NO_ELIGIBLE_CONFIRMATORY_EVIDENCE",
+          "REQUIRED_METRIC_OR_TEST_UNAVAILABLE"
+        ],
+        "status": "NOT_EXECUTED"
+      },
+      {
+        "claim_id": "H6",
+        "evidence_requirement_count": 0,
+        "metrics_sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+        "reason_codes": [
+          "CLAIMS_NOT_PERMITTED",
+          "DERIVED_ANALYSIS_PACKAGE_REQUIRED",
+          "EVIDENCE_NOT_OBSERVED_COMPLETE",
+          "EVIDENCE_VALIDATION_FAILED",
+          "NON_CONFIRMATORY_EVIDENCE",
+          "NO_ELIGIBLE_CONFIRMATORY_EVIDENCE",
+          "REQUIRED_METRIC_OR_TEST_UNAVAILABLE"
+        ],
+        "status": "NOT_EXECUTED"
+      },
+      {
+        "claim_id": "H7",
+        "evidence_requirement_count": 0,
+        "metrics_sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+        "reason_codes": [
+          "NO_ELIGIBLE_CONFIRMATORY_EVIDENCE",
+          "REQUIRED_METRIC_OR_TEST_UNAVAILABLE"
+        ],
+        "status": "NOT_EXECUTED"
+      },
+      {
+        "claim_id": "H7F",
+        "evidence_requirement_count": 0,
+        "metrics_sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+        "reason_codes": [
+          "CLAIMS_NOT_PERMITTED",
+          "EVIDENCE_NOT_OBSERVED_COMPLETE",
+          "EVIDENCE_VALIDATION_FAILED",
+          "LEGACY_E5_SCHEMA",
+          "NON_CONFIRMATORY_EVIDENCE",
+          "NO_ELIGIBLE_CONFIRMATORY_EVIDENCE",
+          "REQUIRED_METRIC_OR_TEST_UNAVAILABLE"
+        ],
+        "status": "NOT_EXECUTED"
+      },
+      {
+        "claim_id": "H8",
+        "evidence_requirement_count": 0,
+        "metrics_sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+        "reason_codes": [
+          "NO_ELIGIBLE_CONFIRMATORY_EVIDENCE",
+          "P3_NOT_RETAINED_OR_NOT_PRESENT",
+          "REQUIRED_METRIC_OR_TEST_UNAVAILABLE"
+        ],
+        "status": "NOT_EXECUTED"
+      }
+    ],
+    "evaluated_claim_source": {
+      "locator": "",
+      "path": "results_v5/protocol-v5.0.0/analysis/research-analysis-20260905T-final/derived/evaluated-claim-registry.json",
+      "sha256": "d98c4453da7583a9c6c695ec13cfac940b249a318023c72bf2e8c244adee6cad"
+    },
+    "genuinely_empty_authenticated_selection": true,
+    "schema_version": "protocol-v5-claim-flow-attestation-v1.0.0",
+    "selected_requirement_count": 0,
+    "selection_was_silently_discarded": false,
+    "status": "PASS"
+  },
+  "created_at_utc": "2026-09-11T02:13:45Z",
+  "e3_preservation": {
+    "current_policy_derivative": {
+      "manifest_path": "results_v5/protocol-v5.0.0/compatibility/E3/b0-p2-user-study-readiness-regeneration-v2/manifest.json",
+      "manifest_sha256": "aa5607bb7099f55fe3b0401dea09256e219864dadbc28dcea8d52eaa21aeb5bd",
+      "path": "results_v5/protocol-v5.0.0/compatibility/E3/b0-p2-user-study-readiness-regeneration-v2/report/tables/participant-flow.csv",
+      "sha256": "9a624a9bf3d29c57f6452bc40dce9fbcebd91d87932c4ab3fe93f16c78207877"
+    },
+    "historical": {
+      "byte_preserved_against_audit_inventory": true,
+      "path": "results_v5/protocol-v5.0.0/E3/b0-p2-user-study-readiness/report/tables/participant-flow.csv",
+      "recorded_historical_manifest_identity_sha256": "a142b8c930e1f84d123aca8c39fe564efd52027ab62b637f236db1bc8fa5686b",
+      "sha256": "bee024512c5b6f407a9f1d273d2abbdfe2be640322b05d06f9a641404e8dd73c"
+    },
+    "relationship": {
+      "historical_bytes_modified": false,
+      "identities_are_substitutable": false,
+      "newline_policy_transform": "CRLF_TO_LF",
+      "type": "VERSIONED_CRLF_TO_LF_COMPATIBILITY_DERIVATIVE"
+    },
+    "status": "PASS"
+  },
+  "final_audit_evidence": {
+    "audit_git_dirty": false,
+    "completion_copy": {
+      "files": {
+        "analysis/manifest.json": "c0d08951143944b5e246e6e4bc9acbdbdc89f84f13552b2a8af271865cd6d441",
+        "figures/manifest.json": "b9a154054015e4800aa92de1749041dd43c7e750a2a98cc169d6c1106d82b568",
+        "report/PROTOCOL_V5_FINAL_REPORT.md": "6b73586118f4143c0cb862d320d29744672c579a327aa50e52af99119cd4ed0f",
+        "report/audit.json": "2e5be55c6171aadc3db44dfcf88fb1f0385b556fb85861b776112bbb7dc0f16a",
+        "report/manifest.json": "0dbb17a8d760ebbb25da061b16eb3e73afb171c367337975dde76a25ba4999a3",
+        "run.json": "06fc885c4148c9bc2a3cfc43041fda5a4a6582357166deba5b93d9f06c27fbd2",
+        "validation/manifest.json": "6248be1e3b75d5ba33db2d95d78e015096a76e6c3646825fff12fd21532f8c56"
+      },
+      "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final5/evidence/final-audit"
+    },
+    "final_audit": {
+      "path": "results_v5/protocol-v5.0.0/final-audit/final-audit-20260911-final5/report/audit.json",
+      "sha256": "2e5be55c6171aadc3db44dfcf88fb1f0385b556fb85861b776112bbb7dc0f16a"
+    },
+    "git_revision": "ec73326c947bcf3f80f71888e939dc03877f83a2",
+    "implementation_sha256": {
+      "evaluation_v4/__init__.py": "8c2979ede3764804b140a1d844d212489e1e08727844ea7081988f1cf493ec7c",
+      "evaluation_v4/analyze.py": "006e312124d63a15f735b8cb7222385acd312a8a177f2a72a54f146adc579f6c",
+      "evaluation_v4/combine_external_results.py": "32283e3db49d2e8b447e2727bd7a69d56c110504103bb94466d2c6cde70d1a2b",
+      "evaluation_v4/dataset.py": "c208cb91ed58bf8c8a3ee0db06dd9e119fb777c60b834204bfc11f59851c33ee",
+      "evaluation_v4/plan_system.py": "fa370123df4e4c1e5de55353a09df9413008d3337097830e0ebca8e06432fa4f",
+      "evaluation_v4/pod_runner.py": "4c4d0e0335240081a36b49fb012cbcdf8fc7cd38470b72e39d016ac4d239773c",
+      "evaluation_v4/recommenders.py": "581796fb9b29663151c3302867888af2c26cea7336fce0f9e8786beca9ba1fbc",
+      "evaluation_v4/render_figures.py": "e0039fbb6bb3559999351f47ffaddd8f9ccf355e2024465a591a2d402ea3162a",
+      "evaluation_v4/run_pending_diagnostic.py": "990f683e3de2f511a6179e113b71cd3bc6b5a196973ead929dd8bb7d316f115c",
+      "evaluation_v4/run_recommenders.py": "ffa3fe1e08d9330b60f6d61a7f49cae1e37b453d041307872026f2b49125bd64",
+      "evaluation_v4/run_reprovision.py": "fd8fd638141e8e608ecf3e36b4d55bd113daa6e2eb9b2e78ac9b63f7abba9a1f",
+      "evaluation_v4/run_system.py": "6aa589aac651901afa7207f3f060b874d27d11e1ef6c0b0e2d81b85c85ff039b",
+      "evaluation_v4/schemas.py": "5a6dea632e1f656f0cbad5711666f523b888dde30a73fc7d8fda201147c1d7c3",
+      "evaluation_v4/statistics.py": "033b5af3128c005e9babcc15cd7a4ff0723ff67a4fae1b28ee5b360aca155e81",
+      "evaluation_v4/validate_evidence.py": "597f3b291aea357972e5fbaee464e1d75df62dae3bbfaea4561b7adf769bafd7",
+      "evaluation_v5/__init__.py": "236ddbbfe1ef81d38049b82565548c0830afdbb6dfe0c25ff835021ab04f83f1",
+      "evaluation_v5/analysis/__init__.py": "85f92f1ccdbe8a101642c221836b80dc86a908f09ccaac283d4c5c0863a63e1a",
+      "evaluation_v5/analysis/component_scoring.py": "abb8f161d587feff77649595e894f4b5fdd7e18bc2a6b266ef2c59364bedf41c",
+      "evaluation_v5/analysis/reporting.py": "09fb966a55ebea32c964c683e5efe86d0b040350e5854e85cb207d2020c4df51",
+      "evaluation_v5/analysis/research_analysis.py": "e6622fbaa9e8805369aa2f2076cfef4e04f8c1883081de87de809dab24f7304d",
+      "evaluation_v5/analysis/research_contracts.py": "7d204f2269888877b4f8fc68ff008c11d2b29025e656965e96ef6951d2fb0154",
+      "evaluation_v5/analysis/statistical_analysis.py": "43d0229dd9b902ae40f6c3b4c5e4acbfe6716b15d2d4b0e1b93d7ea13720c378",
+      "evaluation_v5/analysis/statistics.py": "bc5c5c58e6fd99e513a3d5ffa880eb68be7df29ce295785572c49424201b2503",
+      "evaluation_v5/evidence_trust.py": "55e1a4a857e55f5ea8c49966d345b7ee19731c255f845fbc10c9339782a64cae",
+      "evaluation_v5/final_audit/__init__.py": "33126917b68a29429f53c38ed718891e69ffa0948f96c8047d234b8da8960d96",
+      "evaluation_v5/final_audit/__main__.py": "3141816a25bdea55c990eed5bd4e561e2973fea7b6424bd7f4a6eaa85a86f638",
+      "evaluation_v5/final_audit/checks.py": "ce7822a33a26129b0f0d26e454920bd5e65bb7537decff034e013a842995a54f",
+      "evaluation_v5/final_audit/claims.py": "af25bb8d39373d2728ccedf8d12105290f75bee421a6fb70ae2e8e1adf0c46f8",
+      "evaluation_v5/final_audit/common.py": "5f56d12327e15eae793bcadacf1b0b8636b23a058a78e2f6b5e13afce575cf00",
+      "evaluation_v5/final_audit/completion.py": "8f6d300acbaacf75f6c3d8187ba7c130fb9a898396ea30e88250087ca9b19090",
+      "evaluation_v5/final_audit/evidence.py": "494d0b6f2f538bd608f0425f13a1dac5fb747159db0a3ef992c3e37eeafc2baf",
+      "evaluation_v5/final_audit/publication.py": "cf32f4b664699796c57770d5b831e398fce8787234059d68d9a1258291db48ad",
+      "evaluation_v5/final_audit/reporting.py": "3e436a4967c268f9ec7252f6ea518edd6c11130430f7910514d344f13df9b0e3",
+      "evaluation_v5/final_audit/reproduce.py": "181cbd0bc4b7b4e1d325261344866090de9d0547adb36bce53f5b028bb535fe1",
+      "evaluation_v5/final_audit/validator_suite.py": "b5f5a9d29b08a1cfff08e94be06a32b412f2b42b80db04e435c730bfd79017fd",
+      "evaluation_v5/freeze.py": "50fd83d302bad18e0f8c60dbe29628e42dda0c8f58a957bf426766a12500397a",
+      "evaluation_v5/gold_dataset.py": "cfca676e33321a6488a1806990e5b5888be1c22b5afd28028ef5d9389e821c45",
+      "evaluation_v5/image_storage/__init__.py": "3aa4358fc1330bd0f0f9929d04bffd430c9fc3a2682e5e915ee7feb27d5cbb69",
+      "evaluation_v5/image_storage/__main__.py": "867f9c29f475ffeea08dbfcdb01cd11dbb1af9c8ee26aa925d82e2a5b9ae8ae3",
+      "evaluation_v5/image_storage/contracts.py": "0e398a58ca7491f42e6aaabc24d237dc7e5e3e2e090c98df22c290f725592a96",
+      "evaluation_v5/image_storage/functional_provenance.py": "84aed7bea7c66974aaa2e09e677acb56da907f4c6890dfabd26dc3218d7b9d89",
+      "evaluation_v5/image_storage/manifest.py": "21b05b931e1a04e20f0430a46202e92794a815042488f3f23219adb937ebd9f1",
+      "evaluation_v5/image_storage/metrics.py": "2c844a27163046434e7fca6478f49bf769481fb13dbed09b5d6dbc2150611cdc",
+      "evaluation_v5/image_storage/recommendation_evaluator.py": "5fa3b3268767a77bb80c182d8b50171962ced424e2f5187a6431f50eef9b43c3",
+      "evaluation_v5/image_storage/runner.py": "64e00373940dd3bde82daa8242351cfc18ef160267aa90c141f214298a7a8b51",
+      "evaluation_v5/image_storage/storage_contracts.py": "24a255024b0c10e5e408d2a484bdf57135ab2a819010a45da7ce1807ac664234",
+      "evaluation_v5/image_storage/storage_figures.py": "23e5082e60dcb094648ef039406d1ddd0f398ef55c16325e59b19873de2ce210",
+      "evaluation_v5/image_storage/storage_orchestrator.py": "e88b38ee63e5ef554f18ed7557d849dcbc7ba0bb42a2f1628fe953023f2f6605",
+      "evaluation_v5/image_storage/storage_runner.py": "387d18af3232a838361b931bf3a716ea4ea7a90e7239d591882417130e548862",
+      "evaluation_v5/image_storage/validate_evidence.py": "0e519d7ba7cb888424d507d2b3b295447946268915abb7c14aa2011d52e5e0ad",
+      "evaluation_v5/isolation.py": "3cd140d4dd9843f5f1b5bf68a77623f87962358edfbbc540ae99ad02003b7236",
+      "evaluation_v5/isolation_audit.py": "28a3bcc1b5595de7047c6d3acf0fe99c0775d0fbf29ba821a45a6627de7291f7",
+      "evaluation_v5/manifest.py": "396e00a3bf3897418b9cbfca9a76fb6e689cde50185217449e7f9530f4ab1e2e",
+      "evaluation_v5/offline/__init__.py": "fa5b05d73fa2af9a505878bfe688bd207565f858c19fe0ffbc2c930dadc87718",
+      "evaluation_v5/offline/recommenders.py": "c6acf98368a58405b3bef3188b861ba84f192b3fc357d3bd32da29cd2e2f466b",
+      "evaluation_v5/offline/run.py": "479ed3d2c29c2280bb26c7ad05dac788443e329b0044305dac51b399d3cf3da7",
+      "evaluation_v5/offline/runner.py": "9b0fbe01ce36d7c3db4592383f7c08713a8080e45fadbdd2954d1be557488548",
+      "evaluation_v5/offline/source_run.py": "a7e8591fbb9d9cc321e0ed2902df9a3ed3b2d3748630002ce8ff99f1cc36071b",
+      "evaluation_v5/offline/validate_evidence.py": "5d0e2f0196896d7e827435b121e1a284cbfa884a973e3ef976c3e9dd3ea17260",
+      "evaluation_v5/p3_gate.py": "9a9fe29c8e8d6e08128fe96d397067e76bd75fd8d40021268356b20738022ab9",
+      "evaluation_v5/paths.py": "1877dcdab36fe5b3d3164ed5d1e552e126f7d3d2317012d74dc0bca92bbd2821",
+      "evaluation_v5/provenance.py": "3c3cc1d9f89abd7972bfcf557eff5e30f2c9215a29927e132944ff8eb93aeb6a",
+      "evaluation_v5/reporting.py": "9d70033820a266d740e379da7f0cf170c38f5c690ad228c948a893411ed1ac5e",
+      "evaluation_v5/resource/__init__.py": "27dd2f56aff77816725cc6555a0557419a055eab220b42137f7c1bf693da3e23",
+      "evaluation_v5/resource/__main__.py": "74fff10eb2bd330c92909b27a5a9ae84f41b3f268a5c04f51f849276919f19c6",
+      "evaluation_v5/resource/authenticity.py": "675a369b029ea58dbd311253274fbb2af841baf4ef782e94847a6e64eb902c0f",
+      "evaluation_v5/resource/comparison.py": "c44f4aa617a3813f1793e7150ba1999e47730ab88b4a38144d622fe1d4873f7b",
+      "evaluation_v5/resource/contracts.py": "19791fecfadb52990d634d3e1b9fa92d96aa0538605886434dc4f47a653a51ec",
+      "evaluation_v5/resource/derive.py": "580c3cca0ee048c90cd466470a2016737db0c7bdf9132f68a8812857f7cb018f",
+      "evaluation_v5/resource/efficiency_analysis.py": "9ba587a8e8fd9c027d245edc304a262a7801f842c11522b7cdbb7ba7565eb82f",
+      "evaluation_v5/resource/efficiency_capacity.py": "38469e6fcd30ed902609d433f25f6df979c235142bc37a4e3b976e2c0aa0f7c8",
+      "evaluation_v5/resource/efficiency_contracts.py": "fc1e486274579467f2fcc6381a181561e60bff685d6c5442f41085e3f7f9a469",
+      "evaluation_v5/resource/efficiency_evidence.py": "b2e79585e9f832b48e176740df0e713119eb4f9c77216e4fb8cc29bd56cb0e72",
+      "evaluation_v5/resource/efficiency_models.py": "8b5c3d9ac0b0182f70b8bc273ca8f68d8baad0efcf7f0484c57631aa4e04db21",
+      "evaluation_v5/resource/efficiency_plan.py": "22e4f188d6ffcbfd4e31ce837ee3091f4084b2c4c5d7ce57b62961073def7426",
+      "evaluation_v5/resource/efficiency_runner.py": "a8605ee2aec3c7703f20dc55b9f6013e835346dcea72be0b2905d0e4688d6e71",
+      "evaluation_v5/resource/evidence.py": "b6d7a028f76aff1dc4ccb89c919bf07bdfc1c5ebb870738fb88aaf6370ac5626",
+      "evaluation_v5/resource/legacy_compatibility.py": "4dd12d8a4349e5da573d1b620a0d2adc1b49c90b266a9f5956e9ed1d6d1471b3",
+      "evaluation_v5/resource/manifest.py": "292bd62b88266227d6e1d164cb2e189eff684bd5b2a3970659b9a622e1dfaea8",
+      "evaluation_v5/resource/models.py": "bddc470df3cca42c8fe5d5d4bafa2fd5da5c49dfbecdfe14bb45eadf201e3bc0",
+      "evaluation_v5/resource/planner.py": "f1e0b4920d1fd0693a9639d83c087bbe0dbcb332b7ca525784b4e9ff9f729018",
+      "evaluation_v5/resource/pod_runner.py": "d43c4a9b1595db649520d73ef8709c65cf7336f146d9d81e7aa675252e0b2900",
+      "evaluation_v5/resource/runner.py": "a614be76c317aaa3451a425beb764d833437f5a275a2597f2c4b8a18b268859f",
+      "evaluation_v5/resource/workloads.py": "dbc8d8b7a252eb1a1c1362b3e589279cfcae691cbdd8223f7d3a39d9fde71edb",
+      "evaluation_v5/robustness/__init__.py": "2ebfb211f4ab745f5e2c24acd3887733222a51778901eec678b2240607074b57",
+      "evaluation_v5/robustness/__main__.py": "0f7a6498bfcb599b1ce01cf09e4833fe7a4c55c83368be36219871411b6388f2",
+      "evaluation_v5/robustness/evaluator.py": "03901114f7c869c74ceaf087327a4d76314f83a22005db39b61a69fd33abf735",
+      "evaluation_v5/robustness/generator.py": "e2b9b66e38e37d012b5b730d48f968f63dbd0cd9bcb88ea779792f73f610c5ff",
+      "evaluation_v5/robustness/loader.py": "8d1a7a8a3d29cb60c7b1829f086fc6139835180105295d653e7fe0e866c4537b",
+      "evaluation_v5/robustness/metrics.py": "8c2d2f299f2251a5ce78f0a3692689b46071f3ea54a0c2df23a7f1fa43ca4855",
+      "evaluation_v5/robustness/models.py": "201f94d3470728999f850a5401dbd8a5a6a61ab7be2782bf1081ec4df3edcb90",
+      "evaluation_v5/robustness/review.py": "d455e5124b2b4ac85fad62b30deb4967fba4480421ccc49ffadf442e802b751f",
+      "evaluation_v5/robustness/taxonomy.py": "1b1abe2e7c6d0f86ea541fb02d746ddc0961d8f49381cbfa54fbb405be01e76e",
+      "evaluation_v5/schemas.py": "993726c962fbea2cfb3c7dab8c05e41a70d56b04e3ea55534d2470f0003badb4",
+      "evaluation_v5/split_dataset.py": "f57b43c8376e082f6079b35d6bd37eec202d4c539a3453d90921417692891321",
+      "evaluation_v5/user_study/__init__.py": "7b6c745791558df199b949ec96efe0b87750a35f431361cdbd786edb7b22b1fd",
+      "evaluation_v5/user_study/__main__.py": "2ee347eae2031c815bdc97ec6696a566019d566cb05c02eeefbf39f224dd9f3b",
+      "evaluation_v5/user_study/analysis.py": "8d275ea0d54da4ffd3ed11cc8acf771bea6d1640496036ba192ad27d76398685",
+      "evaluation_v5/user_study/assignment.py": "cf06fbcd92f0abfaf82e8c1da0963ee746df25f9f2950f7b13d7f4a535ec66b7",
+      "evaluation_v5/user_study/fairness.py": "7f615831a2509ea529c93e3fb274a8183bc805434f434c442cce9e5cda0a42c8",
+      "evaluation_v5/user_study/hub.py": "34b7064fc067764353dadc1fcf072ce2510d06818f5d942ab36b340a527bb12a",
+      "evaluation_v5/user_study/instrumentation.py": "3e271e19b72bc1cfa3fe138c35c854125e01aa7e015173cc182ba3e4003dc426",
+      "evaluation_v5/user_study/metrics.py": "33dd58ba4eddd9f6d3e34bf13ce7f654cad05ebaa591bdb3244dd95d4778f3ac",
+      "evaluation_v5/user_study/questionnaires.py": "55d26aad2d17de7deca22526120aa592f0fd682656d318011b73f5e21221ac60",
+      "evaluation_v5/user_study/runner.py": "bb8920d3c9ca64d963de5ee10b19dba48b4fa0e7979c12ba1fb425f412f3e6b3",
+      "evaluation_v5/user_study/schemas.py": "6432f36b33085533d62a95f571376c048267f8bfa453d9db0d9df65d3b87f38e",
+      "evaluation_v5/user_study/scoring.py": "7274af5459f6374669a7a5f21e0d2c77deb6aec28e34137bef0bdb25c6d6a6b9",
+      "evaluation_v5/user_study/smoke.py": "cc6ce54ccec061e4a50b631468673ccd3a1efb0f107038d415ca71802ef08eb6",
+      "evaluation_v5/validation.py": "30cf8b40197eb92c061d4f37958ba23e3ab875a3928a36471055b0c37c943670",
+      "requirements-analysis.txt": "e11d268b3da1d5763d3ae18b67b253d7ffcf0e25fc57384762799aa4d4970e84",
+      "requirements-dev.txt": "00cf0677086b18512b6edec24ae40af3b40abf42c4f12ecc89852c7baf46045b",
+      "scripts/validate-portable-evidence.py": "4be97f65286601c4dc0ff95902e0f8804af68c373105dede696fe8b7e3de6d5d"
+    },
+    "input_inventory_sha256": "e9e8f2a29ec1d4ea4ab588783be57ce0345071eedfffe5a8f410709731bad2cf",
+    "run_id": "final-audit-20260911-final5",
+    "run_manifest": {
+      "path": "results_v5/protocol-v5.0.0/final-audit/final-audit-20260911-final5/run.json",
+      "sha256": "06fc885c4148c9bc2a3cfc43041fda5a4a6582357166deba5b93d9f06c27fbd2"
+    },
+    "stages": [
+      {
+        "git_revision": "ec73326c947bcf3f80f71888e939dc03877f83a2",
+        "manifest_path": "results_v5/protocol-v5.0.0/final-audit/final-audit-20260911-final5/validation/manifest.json",
+        "manifest_sha256": "6248be1e3b75d5ba33db2d95d78e015096a76e6c3646825fff12fd21532f8c56",
+        "stage": "validation"
+      },
+      {
+        "git_revision": "ec73326c947bcf3f80f71888e939dc03877f83a2",
+        "manifest_path": "results_v5/protocol-v5.0.0/final-audit/final-audit-20260911-final5/analysis/manifest.json",
+        "manifest_sha256": "c0d08951143944b5e246e6e4bc9acbdbdc89f84f13552b2a8af271865cd6d441",
+        "stage": "analysis"
+      },
+      {
+        "git_revision": "ec73326c947bcf3f80f71888e939dc03877f83a2",
+        "manifest_path": "results_v5/protocol-v5.0.0/final-audit/final-audit-20260911-final5/figures/manifest.json",
+        "manifest_sha256": "b9a154054015e4800aa92de1749041dd43c7e750a2a98cc169d6c1106d82b568",
+        "stage": "figures"
+      },
+      {
+        "git_revision": "ec73326c947bcf3f80f71888e939dc03877f83a2",
+        "manifest_path": "results_v5/protocol-v5.0.0/final-audit/final-audit-20260911-final5/report/manifest.json",
+        "manifest_sha256": "0dbb17a8d760ebbb25da061b16eb3e73afb171c367337975dde76a25ba4999a3",
+        "stage": "report"
+      }
+    ]
+  },
+  "git_revision": "ec73326c947bcf3f80f71888e939dc03877f83a2",
+  "is_experiment_evidence": false,
+  "isolation_failure_disposition": {
+    "created_at_utc": "2026-09-10T09:37:57Z",
+    "evidence_boundary": {
+      "claims_permitted": false,
+      "contains_real_confirmatory_cases": false,
+      "contains_real_participant_or_cluster_observations": false,
+      "is_experiment_evidence": false
+    },
+    "finding": {
+      "artifact_relative_path": "tests/test_evaluation_v5_gold_dataset.py",
+      "artifact_role": "synthetic_adversarial_test_source",
+      "artifact_sha256": "3e978556fa831877c959ee1dc3824315f9933d2f8d12d993cc78019842acc918",
+      "artifact_type": "python_source",
+      "classification": "REMAINING_IMPLEMENTATION_DEFECT",
+      "current_artifact_sha256": "3e978556fa831877c959ee1dc3824315f9933d2f8d12d993cc78019842acc918",
+      "eligible_for_confirmatory_execution": false,
+      "eligible_to_support_thesis_claim": false,
+      "failure_category": "SOURCE_LITERAL_FRAGMENT_FALSE_POSITIVE",
+      "historical": false,
+      "immutable_preserved_evidence": false,
+      "original_error_category": "UNPARSEABLE_EMBEDDED_CONFIRMATORY_BUNDLE",
+      "parser": "evaluation_v5.isolation_audit._contains_embedded_confirmatory_bundle",
+      "schema_signature": "protocol-v5-gold-family-v1.0.0"
+    },
+    "observed_at_git_revision": "99eddfbcd626af5ac5b174712ca86331c89f1eca",
+    "protocol_version": "5.0.0",
+    "repair": {
+      "expected_standalone_result": "PASS",
+      "method": "Parse Python source structurally and inspect complete literal bundle shapes without concatenating independent malformed fixture fragments.",
+      "regression_tests": [
+        "tests/test_evaluation_v5_isolation.py::test_isolation_audit_parses_python_literals_without_joining_fixture_fragments",
+        "tests/test_evaluation_v5_isolation.py::test_isolation_audit_still_detects_complete_python_literal_bundle",
+        "tests/test_evaluation_v5_isolation.py::test_isolation_audit_detects_complete_concatenated_python_literal"
+      ],
+      "status": "REPAIRED"
+    },
+    "schema_version": "protocol-v5-isolation-diagnostic-v1.0.0",
+    "source": {
+      "locator": "",
+      "path": "benchmarks_v5/protocol-v5-isolation-diagnostic-v1.json",
+      "sha256": "ed271f8dfc5ea13f01093f62d692f93e6e41000fc82ee043e1455c96875d7917"
+    },
+    "source_blob_verification_method": "historical_git_blob",
+    "source_blob_verified": true
+  },
+  "issues": [
+    {
+      "actual_result": [
+        {
+          "nodeid": "tests/test_evaluation_v5.py::test_development_override_cannot_downgrade_existing_observed_manifest",
+          "result": "PASSED"
+        },
+        {
+          "nodeid": "tests/test_evaluation_v5.py::test_development_override_protects_claim_sensitive_target_payloads[protected_payload0]",
+          "result": "PASSED"
+        },
+        {
+          "nodeid": "tests/test_evaluation_v5.py::test_development_override_protects_claim_sensitive_target_payloads[protected_payload1]",
+          "result": "PASSED"
+        },
+        {
+          "nodeid": "tests/test_evaluation_v5.py::test_development_override_protects_claim_sensitive_target_payloads[protected_payload2]",
+          "result": "PASSED"
+        },
+        {
+          "nodeid": "tests/test_evaluation_v5.py::test_development_override_protects_claim_sensitive_target_payloads[protected_payload3]",
+          "result": "PASSED"
+        }
+      ],
+      "after": "Observed and claim-sensitive artifacts remain immutable under development override attempts.",
+      "artifact_types": [
+        "SYNTHETIC_TEST"
+      ],
+      "before": "Observed overwrite exploit was reproducible in the original audit.",
+      "closure_behavior": "FAIL_CLOSED",
+      "code_evidence": [
+        {
+          "path": "evaluation_v5/provenance.py",
+          "present": true,
+          "sha256": "3c3cc1d9f89abd7972bfcf557eff5e30f2c9215a29927e132944ff8eb93aeb6a"
+        }
+      ],
+      "evidence_record_path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final5/evidence/test/adversarial/record.json",
+      "evidence_record_sha256": "8c965faaa3c3db0b646fad593f8168b49ae22e855ac38d86472661df160898f1",
+      "expected_security_or_evidence_behavior": "Reject overwrite before any protected byte changes.",
+      "final_disposition": "SATISFIED",
+      "fixture_or_artifact": "Temporary OBSERVED manifest and claim-sensitive payloads exercised through the development writer.",
+      "id": "P1-1",
+      "missing_tests": [],
+      "original_exploit": "A development override could overwrite or downgrade an existing OBSERVED or claim-sensitive artifact.",
+      "regression_test_node_ids": [
+        "tests/test_evaluation_v5.py::test_development_override_cannot_downgrade_existing_observed_manifest",
+        "tests/test_evaluation_v5.py::test_development_override_protects_claim_sensitive_target_payloads"
+      ],
+      "severity": "CRITICAL",
+      "status": "SATISFIED",
+      "test_evidence": [
+        {
+          "nodeid": "tests/test_evaluation_v5.py::test_development_override_cannot_downgrade_existing_observed_manifest",
+          "status": "PASSED"
+        },
+        {
+          "nodeid": "tests/test_evaluation_v5.py::test_development_override_protects_claim_sensitive_target_payloads[protected_payload0]",
+          "status": "PASSED"
+        },
+        {
+          "nodeid": "tests/test_evaluation_v5.py::test_development_override_protects_claim_sensitive_target_payloads[protected_payload1]",
+          "status": "PASSED"
+        },
+        {
+          "nodeid": "tests/test_evaluation_v5.py::test_development_override_protects_claim_sensitive_target_payloads[protected_payload2]",
+          "status": "PASSED"
+        },
+        {
+          "nodeid": "tests/test_evaluation_v5.py::test_development_override_protects_claim_sensitive_target_payloads[protected_payload3]",
+          "status": "PASSED"
+        }
+      ],
+      "title": "Observed overwrite"
+    },
+    {
+      "actual_result": [
+        {
+          "nodeid": "tests/test_evaluation_v5_isolation.py::test_arbitrary_freeze_identity_string_cannot_authorize_runner",
+          "result": "PASSED"
+        },
+        {
+          "nodeid": "tests/test_evaluation_v5_isolation.py::test_isolation_audit_parses_python_literals_without_joining_fixture_fragments",
+          "result": "PASSED"
+        },
+        {
+          "nodeid": "tests/test_evaluation_v5_isolation.py::test_isolation_audit_still_detects_complete_python_literal_bundle",
+          "result": "PASSED"
+        },
+        {
+          "nodeid": "tests/test_evaluation_v5_isolation.py::test_isolation_audit_detects_complete_concatenated_python_literal",
+          "result": "PASSED"
+        }
+      ],
+      "after": "A caller-constructed split or arbitrary freeze identity cannot authorize confirmatory execution.",
+      "artifact_types": [
+        "SYNTHETIC_TEST"
+      ],
+      "before": "Fake confirmatory split/freeze exploit was reproducible in the original audit.",
+      "closure_behavior": "FAIL_CLOSED",
+      "code_evidence": [
+        {
+          "path": "evaluation_v5/freeze.py",
+          "present": true,
+          "sha256": "50fd83d302bad18e0f8c60dbe29628e42dda0c8f58a957bf426766a12500397a"
+        },
+        {
+          "path": "evaluation_v5/offline/runner.py",
+          "present": true,
+          "sha256": "9b0fbe01ce36d7c3db4592383f7c08713a8080e45fadbdd2954d1be557488548"
+        }
+      ],
+      "evidence_record_path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final5/evidence/test/adversarial/record.json",
+      "evidence_record_sha256": "8c965faaa3c3db0b646fad593f8168b49ae22e855ac38d86472661df160898f1",
+      "expected_security_or_evidence_behavior": "Reject arbitrary authority and detect complete embedded bundles without joining unrelated fragments.",
+      "final_disposition": "SATISFIED",
+      "fixture_or_artifact": "Forged temporary split/freeze envelopes and complete/fragmented Python literal bundle fixtures.",
+      "id": "P2-1",
+      "missing_tests": [],
+      "original_exploit": "Caller-created split/freeze identities or fragmented source literals could authorize or confuse confirmatory isolation.",
+      "regression_test_node_ids": [
+        "tests/test_evaluation_v5_isolation.py::test_arbitrary_freeze_identity_string_cannot_authorize_runner",
+        "tests/test_evaluation_v5_isolation.py::test_isolation_audit_parses_python_literals_without_joining_fixture_fragments",
+        "tests/test_evaluation_v5_isolation.py::test_isolation_audit_still_detects_complete_python_literal_bundle",
+        "tests/test_evaluation_v5_isolation.py::test_isolation_audit_detects_complete_concatenated_python_literal"
+      ],
+      "severity": "CRITICAL",
+      "status": "SATISFIED",
+      "test_evidence": [
+        {
+          "nodeid": "tests/test_evaluation_v5_isolation.py::test_arbitrary_freeze_identity_string_cannot_authorize_runner",
+          "status": "PASSED"
+        },
+        {
+          "nodeid": "tests/test_evaluation_v5_isolation.py::test_isolation_audit_parses_python_literals_without_joining_fixture_fragments",
+          "status": "PASSED"
+        },
+        {
+          "nodeid": "tests/test_evaluation_v5_isolation.py::test_isolation_audit_still_detects_complete_python_literal_bundle",
+          "status": "PASSED"
+        },
+        {
+          "nodeid": "tests/test_evaluation_v5_isolation.py::test_isolation_audit_detects_complete_concatenated_python_literal",
+          "status": "PASSED"
+        }
+      ],
+      "title": "Fake confirmatory split/freeze"
+    },
+    {
+      "actual_result": [
+        {
+          "nodeid": "tests/test_evaluation_v5_component_scoring.py::test_p3_gate_recomputes_decision_and_rejects_forged_retained_status",
+          "result": "PASSED"
+        }
+      ],
+      "after": "P3 retention is recomputed from authenticated development evidence; a forged retained flag fails closed.",
+      "artifact_types": [
+        "SYNTHETIC_TEST"
+      ],
+      "before": "Forged P3 gate exploit was reproducible in the original audit.",
+      "closure_behavior": "FAIL_CLOSED",
+      "code_evidence": [
+        {
+          "path": "evaluation_v5/p3_gate.py",
+          "present": true,
+          "sha256": "9a9fe29c8e8d6e08128fe96d397067e76bd75fd8d40021268356b20738022ab9"
+        },
+        {
+          "path": "evaluation_v5/analysis/component_scoring.py",
+          "present": true,
+          "sha256": "abb8f161d587feff77649595e894f4b5fdd7e18bc2a6b266ef2c59364bedf41c"
+        }
+      ],
+      "evidence_record_path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final5/evidence/test/adversarial/record.json",
+      "evidence_record_sha256": "8c965faaa3c3db0b646fad593f8168b49ae22e855ac38d86472661df160898f1",
+      "expected_security_or_evidence_behavior": "Recompute the gate and reject the forged retained state.",
+      "final_disposition": "SATISFIED",
+      "fixture_or_artifact": "Temporary forged retained decision with checksum-bound development gate inputs.",
+      "id": "P8-1",
+      "missing_tests": [],
+      "original_exploit": "A forged persisted P3 retained flag could bypass the authenticated development gate computation.",
+      "regression_test_node_ids": [
+        "tests/test_evaluation_v5_component_scoring.py::test_p3_gate_recomputes_decision_and_rejects_forged_retained_status"
+      ],
+      "severity": "CRITICAL",
+      "status": "SATISFIED",
+      "test_evidence": [
+        {
+          "nodeid": "tests/test_evaluation_v5_component_scoring.py::test_p3_gate_recomputes_decision_and_rejects_forged_retained_status",
+          "status": "PASSED"
+        }
+      ],
+      "title": "Forged P3 gate"
+    },
+    {
+      "actual_result": [
+        {
+          "nodeid": "tests/test_resource_authenticity_adversarial.py::test_forced_observed_status_on_disk_fails_closed",
+          "result": "PASSED"
+        },
+        {
+          "nodeid": "tests/test_resource_envelope_v5.py::test_fake_adapter_drives_search_and_manual_review_gate",
+          "result": "PASSED"
+        }
+      ],
+      "after": "Synthetic adapters stay synthetic and on-disk OBSERVED relabeling fails validation.",
+      "artifact_types": [
+        "SYNTHETIC_TEST"
+      ],
+      "before": "Fake resource adapter OBSERVED exploit was reproducible in the original audit.",
+      "closure_behavior": "NON_OBSERVED_NON_CLAIMABLE",
+      "code_evidence": [
+        {
+          "path": "evaluation_v5/resource/evidence.py",
+          "present": true,
+          "sha256": "b6d7a028f76aff1dc4ccb89c919bf07bdfc1c5ebb870738fb88aaf6370ac5626"
+        },
+        {
+          "path": "cluster_evaluation/resource_adapter_v5.py",
+          "present": true,
+          "sha256": "5407cf973d1c13368282db18931450012087bafe3529552719d4a21c6aaeb000"
+        }
+      ],
+      "evidence_record_path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final5/evidence/test/adversarial/record.json",
+      "evidence_record_sha256": "8c965faaa3c3db0b646fad593f8168b49ae22e855ac38d86472661df160898f1",
+      "expected_security_or_evidence_behavior": "Keep the adapter synthetic and reject the forged observation at validation.",
+      "final_disposition": "SATISFIED",
+      "fixture_or_artifact": "Synthetic adapter run plus an on-disk forced-OBSERVED tamper fixture.",
+      "id": "P11-1",
+      "missing_tests": [],
+      "original_exploit": "A fake resource adapter or an on-disk status edit could be relabelled OBSERVED.",
+      "regression_test_node_ids": [
+        "tests/test_resource_authenticity_adversarial.py::test_forced_observed_status_on_disk_fails_closed",
+        "tests/test_resource_envelope_v5.py::test_fake_adapter_drives_search_and_manual_review_gate"
+      ],
+      "severity": "CRITICAL",
+      "status": "SATISFIED",
+      "test_evidence": [
+        {
+          "nodeid": "tests/test_resource_authenticity_adversarial.py::test_forced_observed_status_on_disk_fails_closed",
+          "status": "PASSED"
+        },
+        {
+          "nodeid": "tests/test_resource_envelope_v5.py::test_fake_adapter_drives_search_and_manual_review_gate",
+          "status": "PASSED"
+        }
+      ],
+      "title": "Fake resource adapter OBSERVED"
+    },
+    {
+      "actual_result": [
+        {
+          "nodeid": "tests/test_protocol_v5_research_analysis.py::test_controlled_synthetic_storage_reproduction_never_supports_h7",
+          "result": "PASSED"
+        },
+        {
+          "nodeid": "tests/test_protocol_v5_research_analysis.py::test_external_normal_layout_synthetic_storage_is_discovered_but_never_selected",
+          "result": "PASSED"
+        }
+      ],
+      "after": "Synthetic storage remains non-observed, non-claimable, and cannot support H7 after caller flag forgery.",
+      "artifact_types": [
+        "SYNTHETIC_TEST"
+      ],
+      "before": "Synthetic storage to H7 exploit was reproducible in the original audit.",
+      "closure_behavior": "NON_OBSERVED_NON_CLAIMABLE",
+      "code_evidence": [
+        {
+          "path": "evaluation_v5/analysis/research_analysis.py",
+          "present": true,
+          "sha256": "e6622fbaa9e8805369aa2f2076cfef4e04f8c1883081de87de809dab24f7304d"
+        },
+        {
+          "path": "evaluation_v5/image_storage/validate_evidence.py",
+          "present": true,
+          "sha256": "0e519d7ba7cb888424d507d2b3b295447946268915abb7c14aa2011d52e5e0ad"
+        }
+      ],
+      "evidence_record_path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final5/evidence/test/adversarial/record.json",
+      "evidence_record_sha256": "8c965faaa3c3db0b646fad593f8168b49ae22e855ac38d86472661df160898f1",
+      "expected_security_or_evidence_behavior": "Discovery must retain SYNTHETIC_TEST origin; selection must reject it and H7 must remain NOT_EXECUTED.",
+      "final_disposition": "SATISFIED",
+      "fixture_or_artifact": "Controlled synthetic storage packages in temporary external normal-layout evidence roots, including forged eligibility flags.",
+      "id": "P14-1",
+      "missing_tests": [],
+      "original_exploit": "Synthetic image-storage data could be promoted through a normal-looking package to support H7.",
+      "regression_test_node_ids": [
+        "tests/test_protocol_v5_research_analysis.py::test_controlled_synthetic_storage_reproduction_never_supports_h7",
+        "tests/test_protocol_v5_research_analysis.py::test_external_normal_layout_synthetic_storage_is_discovered_but_never_selected"
+      ],
+      "severity": "CRITICAL",
+      "status": "SATISFIED",
+      "test_evidence": [
+        {
+          "nodeid": "tests/test_protocol_v5_research_analysis.py::test_controlled_synthetic_storage_reproduction_never_supports_h7",
+          "status": "PASSED"
+        },
+        {
+          "nodeid": "tests/test_protocol_v5_research_analysis.py::test_external_normal_layout_synthetic_storage_is_discovered_but_never_selected",
+          "status": "PASSED"
+        }
+      ],
+      "title": "Synthetic storage to H7"
+    },
+    {
+      "actual_result": [
+        {
+          "nodeid": "tests/test_evaluation_v5_gold_dataset.py::test_forged_confirmatory_classification_over_non_confirmatory_source_fails_closed",
+          "result": "PASSED"
+        }
+      ],
+      "after": "Confirmatory classification cannot be forged over development or otherwise non-confirmatory gold provenance.",
+      "artifact_types": [
+        "SYNTHETIC_TEST"
+      ],
+      "before": "Forbidden gold classification exploit was reproducible in the original audit.",
+      "closure_behavior": "FAIL_CLOSED",
+      "code_evidence": [
+        {
+          "path": "evaluation_v5/gold_dataset.py",
+          "present": true,
+          "sha256": "cfca676e33321a6488a1806990e5b5888be1c22b5afd28028ef5d9389e821c45"
+        }
+      ],
+      "evidence_record_path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final5/evidence/test/adversarial/record.json",
+      "evidence_record_sha256": "8c965faaa3c3db0b646fad593f8168b49ae22e855ac38d86472661df160898f1",
+      "expected_security_or_evidence_behavior": "Recompute source classification and reject the wrapper.",
+      "final_disposition": "SATISFIED",
+      "fixture_or_artifact": "Temporary development gold source wrapped in a forged confirmatory classification.",
+      "id": "P3-1",
+      "missing_tests": [],
+      "original_exploit": "A caller could label development gold as confirmatory.",
+      "regression_test_node_ids": [
+        "tests/test_evaluation_v5_gold_dataset.py::test_forged_confirmatory_classification_over_non_confirmatory_source_fails_closed"
+      ],
+      "severity": "HIGH",
+      "status": "SATISFIED",
+      "test_evidence": [
+        {
+          "nodeid": "tests/test_evaluation_v5_gold_dataset.py::test_forged_confirmatory_classification_over_non_confirmatory_source_fails_closed",
+          "status": "PASSED"
+        }
+      ],
+      "title": "Forbidden gold classification"
+    },
+    {
+      "actual_result": [
+        {
+          "nodeid": "tests/test_evaluation_v5_robustness.py::test_generator_unconditionally_rejects_confirmatory_families",
+          "result": "PASSED"
+        }
+      ],
+      "after": "Robustness draft generation is prohibited for confirmatory families.",
+      "artifact_types": [
+        "SYNTHETIC_TEST"
+      ],
+      "before": "Confirmatory robustness generation exploit was reproducible in the original audit.",
+      "closure_behavior": "FAIL_CLOSED",
+      "code_evidence": [
+        {
+          "path": "evaluation_v5/robustness/generator.py",
+          "present": true,
+          "sha256": "e2b9b66e38e37d012b5b730d48f968f63dbd0cd9bcb88ea779792f73f610c5ff"
+        }
+      ],
+      "evidence_record_path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final5/evidence/test/adversarial/record.json",
+      "evidence_record_sha256": "8c965faaa3c3db0b646fad593f8168b49ae22e855ac38d86472661df160898f1",
+      "expected_security_or_evidence_behavior": "Unconditionally refuse confirmatory generation.",
+      "final_disposition": "SATISFIED",
+      "fixture_or_artifact": "Temporary confirmatory-family generation request.",
+      "id": "P4-1",
+      "missing_tests": [],
+      "original_exploit": "The robustness generator could create variants for confirmatory families.",
+      "regression_test_node_ids": [
+        "tests/test_evaluation_v5_robustness.py::test_generator_unconditionally_rejects_confirmatory_families"
+      ],
+      "severity": "HIGH",
+      "status": "SATISFIED",
+      "test_evidence": [
+        {
+          "nodeid": "tests/test_evaluation_v5_robustness.py::test_generator_unconditionally_rejects_confirmatory_families",
+          "status": "PASSED"
+        }
+      ],
+      "title": "Confirmatory robustness generation"
+    },
+    {
+      "actual_result": [
+        {
+          "nodeid": "tests/test_evaluation_v5_image_functional.py::test_cuda_probe_without_site_packages_is_unavailable",
+          "result": "PASSED"
+        }
+      ],
+      "after": "CUDA availability requires the exact runtime contract; missing site packages cannot become success.",
+      "artifact_types": [
+        "SYNTHETIC_TEST"
+      ],
+      "before": "False CUDA success exploit was reproducible in the original audit.",
+      "closure_behavior": "FAIL_CLOSED",
+      "code_evidence": [
+        {
+          "path": "evaluation_v5/image_storage/manifest.py",
+          "present": true,
+          "sha256": "21b05b931e1a04e20f0430a46202e92794a815042488f3f23219adb937ebd9f1"
+        },
+        {
+          "path": "evaluation_v5/image_storage/runner.py",
+          "present": true,
+          "sha256": "64e00373940dd3bde82daa8242351cfc18ef160267aa90c141f214298a7a8b51"
+        }
+      ],
+      "evidence_record_path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final5/evidence/test/adversarial/record.json",
+      "evidence_record_sha256": "8c965faaa3c3db0b646fad593f8168b49ae22e855ac38d86472661df160898f1",
+      "expected_security_or_evidence_behavior": "Classify the probe unavailable, never successful.",
+      "final_disposition": "SATISFIED",
+      "fixture_or_artifact": "Synthetic CUDA process response with site-packages deliberately absent.",
+      "id": "P13-1",
+      "missing_tests": [],
+      "original_exploit": "A CUDA probe could report success without the required site-packages contract.",
+      "regression_test_node_ids": [
+        "tests/test_evaluation_v5_image_functional.py::test_cuda_probe_without_site_packages_is_unavailable"
+      ],
+      "severity": "HIGH",
+      "status": "SATISFIED",
+      "test_evidence": [
+        {
+          "nodeid": "tests/test_evaluation_v5_image_functional.py::test_cuda_probe_without_site_packages_is_unavailable",
+          "status": "PASSED"
+        }
+      ],
+      "title": "False CUDA success"
+    },
+    {
+      "actual_result": [
+        {
+          "nodeid": "tests/test_evaluation_v5_image_functional.py::test_docker_timeout_and_interrupt_always_remove_exact_container",
+          "result": "PASSED"
+        },
+        {
+          "nodeid": "tests/test_evaluation_v5_image_functional.py::test_kubernetes_pending_timeout_and_interrupt_delete_exact_pod",
+          "result": "PASSED"
+        }
+      ],
+      "after": "Timeout and interrupt paths deterministically clean the exact container or pod and preserve lifecycle failure state.",
+      "artifact_types": [
+        "SYNTHETIC_TEST"
+      ],
+      "before": "Lifecycle and cleanup exploit was reproducible in the original audit.",
+      "closure_behavior": "FAIL_CLOSED",
+      "code_evidence": [
+        {
+          "path": "evaluation_v5/image_storage/runner.py",
+          "present": true,
+          "sha256": "64e00373940dd3bde82daa8242351cfc18ef160267aa90c141f214298a7a8b51"
+        },
+        {
+          "path": "evaluation_v5/image_storage/validate_evidence.py",
+          "present": true,
+          "sha256": "0e519d7ba7cb888424d507d2b3b295447946268915abb7c14aa2011d52e5e0ad"
+        }
+      ],
+      "evidence_record_path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final5/evidence/test/adversarial/record.json",
+      "evidence_record_sha256": "8c965faaa3c3db0b646fad593f8168b49ae22e855ac38d86472661df160898f1",
+      "expected_security_or_evidence_behavior": "Remove the exact object and preserve the failure state on every branch.",
+      "final_disposition": "SATISFIED",
+      "fixture_or_artifact": "Fake Docker/Kubernetes clients exercising timeout and interrupt lifecycle branches.",
+      "id": "P13-2",
+      "missing_tests": [],
+      "original_exploit": "Timeout or interrupt paths could leak the exact Docker container or Kubernetes pod and obscure lifecycle failure.",
+      "regression_test_node_ids": [
+        "tests/test_evaluation_v5_image_functional.py::test_docker_timeout_and_interrupt_always_remove_exact_container",
+        "tests/test_evaluation_v5_image_functional.py::test_kubernetes_pending_timeout_and_interrupt_delete_exact_pod"
+      ],
+      "severity": "HIGH",
+      "status": "SATISFIED",
+      "test_evidence": [
+        {
+          "nodeid": "tests/test_evaluation_v5_image_functional.py::test_docker_timeout_and_interrupt_always_remove_exact_container",
+          "status": "PASSED"
+        },
+        {
+          "nodeid": "tests/test_evaluation_v5_image_functional.py::test_kubernetes_pending_timeout_and_interrupt_delete_exact_pod",
+          "status": "PASSED"
+        }
+      ],
+      "title": "Lifecycle and cleanup"
+    },
+    {
+      "actual_result": [
+        {
+          "nodeid": "tests/test_evaluation_v5_image_functional.py::test_e5_rejects_wrong_or_stale_source_run_before_execution",
+          "result": "PASSED"
+        }
+      ],
+      "after": "E5 provenance is derived from a verified recommendation run; wrong or stale caller input fails before execution.",
+      "artifact_types": [
+        "SYNTHETIC_TEST"
+      ],
+      "before": "Caller-supplied E5 provenance exploit was reproducible in the original audit.",
+      "closure_behavior": "FAIL_CLOSED",
+      "code_evidence": [
+        {
+          "path": "evaluation_v5/image_storage/functional_provenance.py",
+          "present": true,
+          "sha256": "84aed7bea7c66974aaa2e09e677acb56da907f4c6890dfabd26dc3218d7b9d89"
+        }
+      ],
+      "evidence_record_path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final5/evidence/test/adversarial/record.json",
+      "evidence_record_sha256": "8c965faaa3c3db0b646fad593f8168b49ae22e855ac38d86472661df160898f1",
+      "expected_security_or_evidence_behavior": "Reject provenance before any image execution.",
+      "final_disposition": "SATISFIED",
+      "fixture_or_artifact": "Temporary wrong/stale recommendation source-run fixture.",
+      "id": "P13-3",
+      "missing_tests": [],
+      "original_exploit": "Caller-supplied wrong or stale recommendation provenance could reach E5 execution.",
+      "regression_test_node_ids": [
+        "tests/test_evaluation_v5_image_functional.py::test_e5_rejects_wrong_or_stale_source_run_before_execution"
+      ],
+      "severity": "HIGH",
+      "status": "SATISFIED",
+      "test_evidence": [
+        {
+          "nodeid": "tests/test_evaluation_v5_image_functional.py::test_e5_rejects_wrong_or_stale_source_run_before_execution",
+          "status": "PASSED"
+        }
+      ],
+      "title": "Caller-supplied E5 provenance"
+    },
+    {
+      "actual_result": [
+        {
+          "nodeid": "tests/test_evaluation_v5_image_storage.py::test_catalog_scale_rejects_missing_canonical_v2_acceptable_gold",
+          "result": "PASSED"
+        }
+      ],
+      "after": "Catalog-scale scoring requires canonical v2 acceptable gold and cannot infer it from a v1-shaped record.",
+      "artifact_types": [
+        "SYNTHETIC_TEST"
+      ],
+      "before": "V1-shaped catalog scale scorer exploit was reproducible in the original audit.",
+      "closure_behavior": "FAIL_CLOSED",
+      "code_evidence": [
+        {
+          "path": "evaluation_v5/image_storage/metrics.py",
+          "present": true,
+          "sha256": "2c844a27163046434e7fca6478f49bf769481fb13dbed09b5d6dbc2150611cdc"
+        }
+      ],
+      "evidence_record_path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final5/evidence/test/adversarial/record.json",
+      "evidence_record_sha256": "8c965faaa3c3db0b646fad593f8168b49ae22e855ac38d86472661df160898f1",
+      "expected_security_or_evidence_behavior": "Reject catalog-scale scoring rather than infer missing gold.",
+      "final_disposition": "SATISFIED",
+      "fixture_or_artifact": "Temporary v1-shaped catalog-scale storage metric record lacking canonical v2 acceptable gold.",
+      "id": "P14-2",
+      "missing_tests": [],
+      "original_exploit": "A v1-shaped storage record could be scored as though canonical v2 acceptable-gold were present.",
+      "regression_test_node_ids": [
+        "tests/test_evaluation_v5_image_storage.py::test_catalog_scale_rejects_missing_canonical_v2_acceptable_gold"
+      ],
+      "severity": "HIGH",
+      "status": "SATISFIED",
+      "test_evidence": [
+        {
+          "nodeid": "tests/test_evaluation_v5_image_storage.py::test_catalog_scale_rejects_missing_canonical_v2_acceptable_gold",
+          "status": "PASSED"
+        }
+      ],
+      "title": "V1-shaped catalog scale scorer"
+    },
+    {
+      "actual_result": [
+        {
+          "nodeid": "tests/test_protocol_v5_research_analysis.py::test_caller_duplicate_source_identity_mismatch_fails_closed",
+          "result": "PASSED"
+        }
+      ],
+      "after": "Caller-duplicated provenance cannot override canonical source identity or a production-freeze mismatch.",
+      "artifact_types": [
+        "SYNTHETIC_TEST"
+      ],
+      "before": "Freeze mismatch exploit was reproducible in the original audit.",
+      "closure_behavior": "FAIL_CLOSED",
+      "code_evidence": [
+        {
+          "path": "evaluation_v5/analysis/research_analysis.py",
+          "present": true,
+          "sha256": "e6622fbaa9e8805369aa2f2076cfef4e04f8c1883081de87de809dab24f7304d"
+        },
+        {
+          "path": "evaluation_v5/freeze.py",
+          "present": true,
+          "sha256": "50fd83d302bad18e0f8c60dbe29628e42dda0c8f58a957bf426766a12500397a"
+        }
+      ],
+      "evidence_record_path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final5/evidence/test/adversarial/record.json",
+      "evidence_record_sha256": "8c965faaa3c3db0b646fad593f8168b49ae22e855ac38d86472661df160898f1",
+      "expected_security_or_evidence_behavior": "Reject the selected evidence and block the affected requirement.",
+      "final_disposition": "SATISFIED",
+      "fixture_or_artifact": "Verified test freeze plus deliberately mismatched canonical/caller dataset identities.",
+      "id": "P15-1",
+      "missing_tests": [],
+      "original_exploit": "Duplicated caller provenance could override a canonical source identity or production-freeze mismatch.",
+      "regression_test_node_ids": [
+        "tests/test_protocol_v5_research_analysis.py::test_caller_duplicate_source_identity_mismatch_fails_closed"
+      ],
+      "severity": "HIGH",
+      "status": "SATISFIED",
+      "test_evidence": [
+        {
+          "nodeid": "tests/test_protocol_v5_research_analysis.py::test_caller_duplicate_source_identity_mismatch_fails_closed",
+          "status": "PASSED"
+        }
+      ],
+      "title": "Freeze mismatch"
+    },
+    {
+      "actual_result": [
+        {
+          "nodeid": "tests/test_protocol_v5_final_audit.py::test_p16_case_a_no_authenticated_real_evidence_has_no_fabricated_results",
+          "result": "PASSED"
+        },
+        {
+          "nodeid": "tests/test_protocol_v5_research_analysis.py::test_p16_case_b_observed_fixture_drives_status_metrics_and_report",
+          "result": "PASSED"
+        },
+        {
+          "nodeid": "tests/test_protocol_v5_research_analysis.py::test_p16_case_c_incomplete_evidence_never_becomes_positive",
+          "result": "PASSED"
+        },
+        {
+          "nodeid": "tests/test_protocol_v5_research_analysis.py::test_contradictory_claimable_evidence_writes_failed_audit_and_exits_two",
+          "result": "PASSED"
+        },
+        {
+          "nodeid": "tests/test_protocol_v5_research_analysis.py::test_p16_case_d_nonempty_authenticated_selection_reaches_completion",
+          "result": "PASSED"
+        }
+      ],
+      "after": "The final audit consumes authenticated selected claims and renders statuses, values, counts, P3/E3/E4/E5 states, and prose from them.",
+      "artifact_types": [
+        "HISTORICAL",
+        "SYNTHETIC_TEST"
+      ],
+      "before": "Hardcoded final report exploit was reproducible in the original audit.",
+      "closure_behavior": "FAIL_CLOSED",
+      "code_evidence": [
+        {
+          "path": "evaluation_v5/final_audit/claims.py",
+          "present": true,
+          "sha256": "af25bb8d39373d2728ccedf8d12105290f75bee421a6fb70ae2e8e1adf0c46f8"
+        },
+        {
+          "path": "evaluation_v5/final_audit/checks.py",
+          "present": true,
+          "sha256": "ce7822a33a26129b0f0d26e454920bd5e65bb7537decff034e013a842995a54f"
+        },
+        {
+          "path": "evaluation_v5/final_audit/reporting.py",
+          "present": true,
+          "sha256": "3e436a4967c268f9ec7252f6ea518edd6c11130430f7910514d344f13df9b0e3"
+        }
+      ],
+      "evidence_record_path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final5/evidence/test/adversarial/record.json",
+      "evidence_record_sha256": "8c965faaa3c3db0b646fad593f8168b49ae22e855ac38d86472661df160898f1",
+      "expected_security_or_evidence_behavior": "Derive status, metrics, intervals, counts, reasons, prose, and completion propagation from evaluated evidence.",
+      "final_disposition": "SATISFIED",
+      "fixture_or_artifact": "Authenticated current package plus isolated empty, observed-path, incomplete, and non-empty-selection propagation fixtures.",
+      "id": "P16-1",
+      "missing_tests": [],
+      "original_exploit": "The final report could discard selected evidence or hardcode the current all-NOT_EXECUTED snapshot.",
+      "regression_test_node_ids": [
+        "tests/test_protocol_v5_final_audit.py::test_p16_case_a_no_authenticated_real_evidence_has_no_fabricated_results",
+        "tests/test_protocol_v5_research_analysis.py::test_p16_case_b_observed_fixture_drives_status_metrics_and_report",
+        "tests/test_protocol_v5_research_analysis.py::test_p16_case_c_incomplete_evidence_never_becomes_positive",
+        "tests/test_protocol_v5_research_analysis.py::test_contradictory_claimable_evidence_writes_failed_audit_and_exits_two",
+        "tests/test_protocol_v5_research_analysis.py::test_p16_case_d_nonempty_authenticated_selection_reaches_completion"
+      ],
+      "severity": "HIGH",
+      "status": "SATISFIED",
+      "test_evidence": [
+        {
+          "nodeid": "tests/test_protocol_v5_final_audit.py::test_p16_case_a_no_authenticated_real_evidence_has_no_fabricated_results",
+          "status": "PASSED"
+        },
+        {
+          "nodeid": "tests/test_protocol_v5_research_analysis.py::test_p16_case_b_observed_fixture_drives_status_metrics_and_report",
+          "status": "PASSED"
+        },
+        {
+          "nodeid": "tests/test_protocol_v5_research_analysis.py::test_p16_case_c_incomplete_evidence_never_becomes_positive",
+          "status": "PASSED"
+        },
+        {
+          "nodeid": "tests/test_protocol_v5_research_analysis.py::test_contradictory_claimable_evidence_writes_failed_audit_and_exits_two",
+          "status": "PASSED"
+        },
+        {
+          "nodeid": "tests/test_protocol_v5_research_analysis.py::test_p16_case_d_nonempty_authenticated_selection_reaches_completion",
+          "status": "PASSED"
+        }
+      ],
+      "title": "Hardcoded final report"
+    },
+    {
+      "actual_result": [
+        {
+          "nodeid": "tests/test_evaluation_v5_robustness.py::test_cli_draft_refuses_confirmatory_input",
+          "result": "PASSED"
+        }
+      ],
+      "after": "The public draft CLI fails closed on confirmatory input.",
+      "artifact_types": [
+        "SYNTHETIC_TEST"
+      ],
+      "before": "Draft CLI isolation exploit was reproducible in the original audit.",
+      "closure_behavior": "FAIL_CLOSED",
+      "code_evidence": [
+        {
+          "path": "evaluation_v5/robustness/__main__.py",
+          "present": true,
+          "sha256": "0f7a6498bfcb599b1ce01cf09e4833fe7a4c55c83368be36219871411b6388f2"
+        }
+      ],
+      "evidence_record_path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final5/evidence/test/adversarial/record.json",
+      "evidence_record_sha256": "8c965faaa3c3db0b646fad593f8168b49ae22e855ac38d86472661df160898f1",
+      "expected_security_or_evidence_behavior": "Exit nonzero before producing a draft.",
+      "final_disposition": "SATISFIED",
+      "fixture_or_artifact": "Temporary confirmatory input passed through the public draft CLI.",
+      "id": "P4-2",
+      "missing_tests": [],
+      "original_exploit": "The public robustness draft CLI could accept confirmatory input even if the internal generator refused it.",
+      "regression_test_node_ids": [
+        "tests/test_evaluation_v5_robustness.py::test_cli_draft_refuses_confirmatory_input"
+      ],
+      "severity": "MEDIUM",
+      "status": "SATISFIED",
+      "test_evidence": [
+        {
+          "nodeid": "tests/test_evaluation_v5_robustness.py::test_cli_draft_refuses_confirmatory_input",
+          "status": "PASSED"
+        }
+      ],
+      "title": "Draft CLI isolation"
+    },
+    {
+      "actual_result": [
+        {
+          "nodeid": "tests/test_resource_authenticity_adversarial.py::test_all_20_e4_directories_in_repository_validate",
+          "result": "PASSED"
+        }
+      ],
+      "after": "All bounded legacy E4 directories validate under explicit compatibility semantics without promotion to observed evidence.",
+      "artifact_types": [
+        "HISTORICAL"
+      ],
+      "before": "E4 legacy compatibility exploit was reproducible in the original audit.",
+      "closure_behavior": "NON_OBSERVED_NON_CLAIMABLE",
+      "code_evidence": [
+        {
+          "path": "evaluation_v5/resource/evidence.py",
+          "present": true,
+          "sha256": "b6d7a028f76aff1dc4ccb89c919bf07bdfc1c5ebb870738fb88aaf6370ac5626"
+        },
+        {
+          "path": "evaluation_v5/resource/efficiency_evidence.py",
+          "present": true,
+          "sha256": "b2e79585e9f832b48e176740df0e713119eb4f9c77216e4fb8cc29bd56cb0e72"
+        }
+      ],
+      "evidence_record_path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final5/evidence/test/adversarial/record.json",
+      "evidence_record_sha256": "8c965faaa3c3db0b646fad593f8168b49ae22e855ac38d86472661df160898f1",
+      "expected_security_or_evidence_behavior": "Validate under bounded compatibility rules without OBSERVED or claim-eligible promotion.",
+      "final_disposition": "SATISFIED",
+      "fixture_or_artifact": "All 20 preserved repository E4 legacy directories.",
+      "id": "P11-2",
+      "missing_tests": [],
+      "original_exploit": "Legacy E4 directories could either evade validation or be promoted under current semantics.",
+      "regression_test_node_ids": [
+        "tests/test_resource_authenticity_adversarial.py::test_all_20_e4_directories_in_repository_validate"
+      ],
+      "severity": "MEDIUM",
+      "status": "SATISFIED",
+      "test_evidence": [
+        {
+          "nodeid": "tests/test_resource_authenticity_adversarial.py::test_all_20_e4_directories_in_repository_validate",
+          "status": "PASSED"
+        }
+      ],
+      "title": "E4 legacy compatibility"
+    },
+    {
+      "actual_result": [
+        {
+          "nodeid": "tests/test_protocol_v5_final_audit.py::test_e3_lf_regeneration_is_versioned_and_preserves_historical_identity",
+          "result": "PASSED"
+        }
+      ],
+      "after": "Historical bytes and identity are preserved while a new LF-policy compatibility package records its own checksum.",
+      "artifact_types": [
+        "HISTORICAL",
+        "COMPATIBILITY_DERIVATIVE"
+      ],
+      "before": "E3 newline/checksum exploit was reproducible in the original audit.",
+      "closure_behavior": "NON_OBSERVED_NON_CLAIMABLE",
+      "code_evidence": [
+        {
+          "path": "results_v5/protocol-v5.0.0/compatibility/E3/b0-p2-user-study-readiness-regeneration-v2/manifest.json",
+          "present": true,
+          "sha256": "aa5607bb7099f55fe3b0401dea09256e219864dadbc28dcea8d52eaa21aeb5bd"
+        }
+      ],
+      "evidence_record_path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final5/evidence/test/adversarial/record.json",
+      "evidence_record_sha256": "8c965faaa3c3db0b646fad593f8168b49ae22e855ac38d86472661df160898f1",
+      "expected_security_or_evidence_behavior": "Preserve both identities and bind the derivative explicitly to the historical source.",
+      "final_disposition": "SATISFIED",
+      "fixture_or_artifact": "Preserved E3 participant-flow.csv and its versioned LF/current-policy derivative manifest.",
+      "id": "P10-1",
+      "missing_tests": [],
+      "original_exploit": "Newline normalization could silently replace the preserved E3 participant-flow identity.",
+      "regression_test_node_ids": [
+        "tests/test_protocol_v5_final_audit.py::test_e3_lf_regeneration_is_versioned_and_preserves_historical_identity"
+      ],
+      "severity": "LOW",
+      "status": "SATISFIED",
+      "test_evidence": [
+        {
+          "nodeid": "tests/test_protocol_v5_final_audit.py::test_e3_lf_regeneration_is_versioned_and_preserves_historical_identity",
+          "status": "PASSED"
+        }
+      ],
+      "title": "E3 newline/checksum"
+    }
+  ],
+  "protocol_version": "5.0.0",
+  "provenance_chain": {
+    "completion_generator_revision": "ec73326c947bcf3f80f71888e939dc03877f83a2",
+    "final_audit_run_id": "final-audit-20260911-final5",
+    "final_audit_stage_revisions": [
+      "ec73326c947bcf3f80f71888e939dc03877f83a2"
+    ],
+    "final_implementation_revision": "ec73326c947bcf3f80f71888e939dc03877f83a2",
+    "final_report": {
+      "path": "results_v5/protocol-v5.0.0/final-audit/final-audit-20260911-final5/report/audit.json",
+      "sha256": "2e5be55c6171aadc3db44dfcf88fb1f0385b556fb85861b776112bbb7dc0f16a"
+    },
+    "historical_collection_revision": "99eddfbcd626af5ac5b174712ca86331c89f1eca",
+    "reproducibility_evidence_revisions": [
+      "ec73326c947bcf3f80f71888e939dc03877f83a2"
+    ],
+    "revision_consistent": true,
+    "test_evidence_revisions": [
+      "ec73326c947bcf3f80f71888e939dc03877f83a2"
+    ],
+    "validator_evidence_revisions": [
+      "ec73326c947bcf3f80f71888e939dc03877f83a2"
+    ],
+    "workflow_evidence_revisions": [
+      "ec73326c947bcf3f80f71888e939dc03877f83a2"
+    ]
+  },
+  "publication_delta_attestation": {
+    "changed_path_count": 129,
+    "changed_paths": [
+      {
+        "disallowed_reasons": [],
+        "git_blob_oid": "d7d90d1255db2d9d75aa9c3ed83656e5305ece20",
+        "git_mode": "100644",
+        "path": "docs/ARTIFACT_MANIFEST.md",
+        "path_class": "DOCUMENTATION_INDEX",
+        "sha256": "ae1d274e45974afd66a8a33e7e25b7efe182087765b6662d8c42953f5109d7fd",
+        "status": "M"
+      },
+      {
+        "disallowed_reasons": [],
+        "git_blob_oid": "6aa7d927485e2568e9a4f75a3a52a64d66b1831f",
+        "git_mode": "100644",
+        "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/COMPLETION_AUDIT.md",
+        "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+        "sha256": "9d3b76dde917180c243ec70cad83e5933cb6ef2da5f71c25cc3d52b0057d3b28",
+        "status": "A"
+      },
+      {
+        "disallowed_reasons": [],
+        "git_blob_oid": "05320bd5f57bd9b38324ab52b8ecb36ddc403480",
+        "git_mode": "100644",
+        "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/SHA256SUMS",
+        "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+        "sha256": "485f94bf41ccc9a6c4ad69469608a60b16c5c6781f80e926b2d8a9ea89ce95a2",
+        "status": "A"
+      },
+      {
+        "disallowed_reasons": [],
+        "git_blob_oid": "e41cccc7195db01d37c036b749acf17bd7c3e56b",
+        "git_mode": "100644",
+        "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/completion-audit.json",
+        "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+        "sha256": "a424236d4719bcb733157e4258e7049e12803926ab0d1c2ccff81d8de45a48f9",
+        "status": "A"
+      },
+      {
+        "disallowed_reasons": [],
+        "git_blob_oid": "d8ed185356f66852ee9d0dccb0a26b7533fe8db5",
+        "git_mode": "100644",
+        "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/final-audit/analysis/manifest.json",
+        "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+        "sha256": "224316ff2435876dab749def2b30fd56221aed7ea7d694ea3fde3fbf9d5ebf1d",
+        "status": "A"
+      },
+      {
+        "disallowed_reasons": [],
+        "git_blob_oid": "1007974c37bb22d91fae86b909ad33883b0f6744",
+        "git_mode": "100644",
+        "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/final-audit/figures/manifest.json",
+        "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+        "sha256": "0d024c3f36bafecdfc6d03ca1228a8b110c69361f93a8eab1597c6baf3cea59b",
+        "status": "A"
+      },
+      {
+        "disallowed_reasons": [],
+        "git_blob_oid": "574563e237167878b7c845dd7f71e36aec2d28b6",
+        "git_mode": "100644",
+        "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/final-audit/report/PROTOCOL_V5_FINAL_REPORT.md",
+        "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+        "sha256": "6b73586118f4143c0cb862d320d29744672c579a327aa50e52af99119cd4ed0f",
+        "status": "A"
+      },
+      {
+        "disallowed_reasons": [],
+        "git_blob_oid": "f702cb697b4a5e8364175ca84fe743d7041cb842",
+        "git_mode": "100644",
+        "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/final-audit/report/audit.json",
+        "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+        "sha256": "79351d30dde747d7fc25da09a02fa79e47d4e501ed2c65fa6a33a274b149916c",
+        "status": "A"
+      },
+      {
+        "disallowed_reasons": [],
+        "git_blob_oid": "bf114da3c24f6275d8035bad295abcf791392545",
+        "git_mode": "100644",
+        "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/final-audit/report/manifest.json",
+        "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+        "sha256": "5cc7cc29c6a2889b86badeb73e7e20b96af220ee74b055c3287288c4f88204f9",
+        "status": "A"
+      },
+      {
+        "disallowed_reasons": [],
+        "git_blob_oid": "804650fee55a7b2fc18eb0d9775b1f8921b91a33",
+        "git_mode": "100644",
+        "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/final-audit/run.json",
+        "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+        "sha256": "64ff4334248b607338f312b811c144af533871dd0f4106d9bf2f4ea23d9359f4",
+        "status": "A"
+      },
+      {
+        "disallowed_reasons": [],
+        "git_blob_oid": "b727de3bd302da42ee12a77ad16654381a9ed495",
+        "git_mode": "100644",
+        "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/final-audit/validation/manifest.json",
+        "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+        "sha256": "00337e84a658e3be5a8f2e962f15c25a1b7c8e9866e2d45954061df525fa19cc",
+        "status": "A"
+      },
+      {
+        "disallowed_reasons": [],
+        "git_blob_oid": "765a63dd59955718aaa46583cda36f96d8896861",
+        "git_mode": "100644",
+        "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/test/adversarial/SHA256SUMS",
+        "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+        "sha256": "eee9f10300a16975a6aff31e6597da724888e5d4ec7b72de44e469ec8560a042",
+        "status": "A"
+      },
+      {
+        "disallowed_reasons": [],
+        "git_blob_oid": "f32b4925e29620d9340843fd0d0cbf5df793401d",
+        "git_mode": "100644",
+        "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/test/adversarial/junit.xml",
+        "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+        "sha256": "4fac3a7beead146b2b5c808568d4684ca050a8a617abae88c0d8346e62f6ff88",
+        "status": "A"
+      },
+      {
+        "disallowed_reasons": [],
+        "git_blob_oid": "43bc7958de15ffe8949d5b12b05a05d82ba2e0a9",
+        "git_mode": "100644",
+        "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/test/adversarial/manifest.json",
+        "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+        "sha256": "528abfec6177a57cadc41100a1a221c529b21e5ee10775ea0510fde7837020d2",
+        "status": "A"
+      },
+      {
+        "disallowed_reasons": [],
+        "git_blob_oid": "ef80a9d05cee1cae54170421a2131940480d8512",
+        "git_mode": "100644",
+        "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/test/adversarial/record.json",
+        "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+        "sha256": "bd539d293708dbfea99c07f61b6b05cfedb9ebdeca49ab1a3261d73c05a5e8e8",
+        "status": "A"
+      },
+      {
+        "disallowed_reasons": [],
+        "git_blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+        "git_mode": "100644",
+        "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/test/adversarial/stderr.txt",
+        "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "status": "A"
+      },
+      {
+        "disallowed_reasons": [],
+        "git_blob_oid": "1bb00e72c2fc297fd9c251a8383c3d37c0fb6b27",
+        "git_mode": "100644",
+        "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/test/adversarial/stdout.txt",
+        "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+        "sha256": "403820dfe430b87d78f32038c17c5f8b7157ccee77a788ec1ec30e55d0e715d1",
+        "status": "A"
+      },
+      {
+        "disallowed_reasons": [],
+        "git_blob_oid": "62743389cf688a5ab96ebf6a3048c4bb6efb072d",
+        "git_mode": "100644",
+        "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/test/focused/SHA256SUMS",
+        "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+        "sha256": "79c307b25f0e42fafd0d666b0fc127f86e6ecad38c4ed318c876b010dabe9773",
+        "status": "A"
+      },
+      {
+        "disallowed_reasons": [],
+        "git_blob_oid": "4d08071441303506ff7afc83d83cd17f48cd42c0",
+        "git_mode": "100644",
+        "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/test/focused/junit.xml",
+        "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+        "sha256": "aa41536bf26fd9ce50a11b2b7db5f1a8fa07a5e54a300adfddafc9e8c9a41f09",
+        "status": "A"
+      },
+      {
+        "disallowed_reasons": [],
+        "git_blob_oid": "d8ca7acce75032bd634254678be9aaa7219c089f",
+        "git_mode": "100644",
+        "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/test/focused/manifest.json",
+        "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+        "sha256": "7d658bdd80065a4998217616a6b3eba47bb52e0f7691ca5334b0bf8e41eebf83",
+        "status": "A"
+      },
+      {
+        "disallowed_reasons": [],
+        "git_blob_oid": "10b6d535265c01623eee475733bbb730a9cefb36",
+        "git_mode": "100644",
+        "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/test/focused/record.json",
+        "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+        "sha256": "88705037d7170c13183093ae8ec92637d273c9889cd82fe896930179643688d1",
+        "status": "A"
+      },
+      {
+        "disallowed_reasons": [],
+        "git_blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+        "git_mode": "100644",
+        "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/test/focused/stderr.txt",
+        "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "status": "A"
+      },
+      {
+        "disallowed_reasons": [],
+        "git_blob_oid": "16e785271aab70821bf45fc59025460e53a53577",
+        "git_mode": "100644",
+        "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/test/focused/stdout.txt",
+        "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+        "sha256": "b1890e54f60620f071a9f051f9abcc968bbeeb0f3263ad9294504f057117ef8e",
+        "status": "A"
+      },
+      {
+        "disallowed_reasons": [],
+        "git_blob_oid": "44100a5513112315f044b6ad5c5676ee562b9d71",
+        "git_mode": "100644",
+        "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/test/full/SHA256SUMS",
+        "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+        "sha256": "c11bfa9cc0d8e4c55b5f8f5ce7e212ecc845b5f37546a9c54bfe387d584b7e0a",
+        "status": "A"
+      },
+      {
+        "disallowed_reasons": [],
+        "git_blob_oid": "76986e14ec7bb50ca7c2c695451482dccea6ad18",
+        "git_mode": "100644",
+        "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/test/full/junit.xml",
+        "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+        "sha256": "99ff502c2f3f05e0da0a62e837f5284ef5c3140df402e37196df4241e6eb7103",
+        "status": "A"
+      },
+      {
+        "disallowed_reasons": [],
+        "git_blob_oid": "8071254ae373c7416f6fb8f948e0c6f17eb8f874",
+        "git_mode": "100644",
+        "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/test/full/manifest.json",
+        "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+        "sha256": "38bef491becf6f496e983ed863469f53be513479a2101935d457e36322f88686",
+        "status": "A"
+      },
+      {
+        "disallowed_reasons": [],
+        "git_blob_oid": "33595f3251916a0f124bbec68cabfc0197fe38db",
+        "git_mode": "100644",
+        "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/test/full/record.json",
+        "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+        "sha256": "2221ccdaa2d3412f288aae071503e4f10078b3bd92cee82d666d8f26cf4d0167",
+        "status": "A"
+      },
+      {
+        "disallowed_reasons": [],
+        "git_blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+        "git_mode": "100644",
+        "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/test/full/stderr.txt",
+        "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "status": "A"
+      },
+      {
+        "disallowed_reasons": [],
+        "git_blob_oid": "b7cf5f1dc6419e0aaae00c359fb67bd3489337db",
+        "git_mode": "100644",
+        "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/test/full/stdout.txt",
+        "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+        "sha256": "19bf596650d67ddf6dd5abc2a2b5afb37132fe41cef5d3289cf1df366a610f28",
+        "status": "A"
+      },
+      {
+        "disallowed_reasons": [],
+        "git_blob_oid": "a8b93e15976e94671fe62b0a2961d8544807eae4",
+        "git_mode": "100644",
+        "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/validator/claim_registry/SHA256SUMS",
+        "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+        "sha256": "332f50ff9df8a5d435eb029156ae336e07cb0b2817c420b403538b380ab1ae26",
+        "status": "A"
+      },
+      {
+        "disallowed_reasons": [],
+        "git_blob_oid": "3a023afa95f422633ea515c71621cc89687c8d8c",
+        "git_mode": "100644",
+        "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/validator/claim_registry/manifest.json",
+        "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+        "sha256": "465bbf6586c13b6636bd03094c21bac4cca62242adc16d3c61fa6cea9b13f97c",
+        "status": "A"
+      },
+      {
+        "disallowed_reasons": [],
+        "git_blob_oid": "31d68d5151883e5eb914aa931725a67f9e226136",
+        "git_mode": "100644",
+        "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/validator/claim_registry/record.json",
+        "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+        "sha256": "81e7c05d54cd5a6ded0fa7464c5886cafc57bd0244b8b46a67b652236137332c",
+        "status": "A"
+      },
+      {
+        "disallowed_reasons": [],
+        "git_blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+        "git_mode": "100644",
+        "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/validator/claim_registry/stderr.txt",
+        "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "status": "A"
+      },
+      {
+        "disallowed_reasons": [],
+        "git_blob_oid": "366210d7b659e2f7e218ca7fe7e992f722367412",
+        "git_mode": "100644",
+        "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/validator/claim_registry/stdout.txt",
+        "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+        "sha256": "1310ad709dc0682235c91acc11b4254779c80fe028d83aa2c8c0d7a6ff0a3bd7",
+        "status": "A"
+      },
+      {
+        "disallowed_reasons": [],
+        "git_blob_oid": "dc8fab713e0a7a6a01f8fef6228edc752d2be6a3",
+        "git_mode": "100644",
+        "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/validator/e5/SHA256SUMS",
+        "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+        "sha256": "ae9f1b1fac06db2cea1d4bd027b584131ea43c6b9d8dd27faca5164564e9992e",
+        "status": "A"
+      },
+      {
+        "disallowed_reasons": [],
+        "git_blob_oid": "fa1b01df4c34c053678ce6c335ae428a60659c00",
+        "git_mode": "100644",
+        "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/validator/e5/manifest.json",
+        "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+        "sha256": "333ed9da7a6b969fe4a67ec66f4867cde6246604197e40d7a90c238047042e52",
+        "status": "A"
+      },
+      {
+        "disallowed_reasons": [],
+        "git_blob_oid": "38b458382a9a0315bb657cb9aea99b321b478188",
+        "git_mode": "100644",
+        "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/validator/e5/record.json",
+        "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+        "sha256": "50e907d26e571c602a361e885a704acaec5db669f93b75eadefd4f1aad5b2a12",
+        "status": "A"
+      },
+      {
+        "disallowed_reasons": [],
+        "git_blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+        "git_mode": "100644",
+        "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/validator/e5/stderr.txt",
+        "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "status": "A"
+      },
+      {
+        "disallowed_reasons": [],
+        "git_blob_oid": "cc3337bea2f4e00a12ca21fd215b119330680f9d",
+        "git_mode": "100644",
+        "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/validator/e5/stdout.txt",
+        "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+        "sha256": "de674af0c13352a63e1dc1f4cb47230587f6844ddb13e8008323acd13b2f00b5",
+        "status": "A"
+      },
+      {
+        "disallowed_reasons": [],
+        "git_blob_oid": "722de52e55f8c80ff41cd566da093b461dc95a88",
+        "git_mode": "100644",
+        "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/validator/historical_cluster/SHA256SUMS",
+        "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+        "sha256": "559b13cb1aba63b99d7d06291eed7e45f4cc9a10d0390b0b5c7b5535bd312791",
+        "status": "A"
+      },
+      {
+        "disallowed_reasons": [],
+        "git_blob_oid": "e06bb6d1dc0db6bdeb606aacaf86cafe6db66fc4",
+        "git_mode": "100644",
+        "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/validator/historical_cluster/manifest.json",
+        "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+        "sha256": "c5c58fc3a7c61a76159f2922f7be0611393bcfa37d069dddbc8b0532c7725f42",
+        "status": "A"
+      },
+      {
+        "disallowed_reasons": [],
+        "git_blob_oid": "476ae5e0f11cd70056a82df2f8ca227012427aa9",
+        "git_mode": "100644",
+        "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/validator/historical_cluster/record.json",
+        "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+        "sha256": "f217a91a34bd6c59fea582f3fd19e50d5a3974285e9fa3c87418fb0bddd38605",
+        "status": "A"
+      },
+      {
+        "disallowed_reasons": [],
+        "git_blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+        "git_mode": "100644",
+        "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/validator/historical_cluster/stderr.txt",
+        "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "status": "A"
+      },
+      {
+        "disallowed_reasons": [],
+        "git_blob_oid": "feb641d6d6a8ba4add76f69be7262a8f4d254033",
+        "git_mode": "100644",
+        "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/validator/historical_cluster/stdout.txt",
+        "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+        "sha256": "f3d97f147fcd1f46828688f68b8a1635a6c2cfb8c95fd8ca3f844923682e97c7",
+        "status": "A"
+      },
+      {
+        "disallowed_reasons": [],
+        "git_blob_oid": "8be9be3aab090b4c1c1c9dd8d9e0a58425572286",
+        "git_mode": "100644",
+        "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/validator/isolation/SHA256SUMS",
+        "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+        "sha256": "c3b690343bd546089f73b2123401ab826dd1237bd43539c785e34af7e21c97d2",
+        "status": "A"
+      },
+      {
+        "disallowed_reasons": [],
+        "git_blob_oid": "ab4f5bb1cc3d6574812b507814ae84aedc36ac53",
+        "git_mode": "100644",
+        "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/validator/isolation/manifest.json",
+        "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+        "sha256": "9b2dc633d6791bd707005db23408431e91b7e3e871ba831fd431826de5c83dbd",
+        "status": "A"
+      },
+      {
+        "disallowed_reasons": [],
+        "git_blob_oid": "a6c91c2a8844d35dea9bbe28dafaaf81c9d6cb5a",
+        "git_mode": "100644",
+        "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/validator/isolation/record.json",
+        "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+        "sha256": "c3266f60f82d19d67ab965ca6e8a28d294f805eee9b3cc73fc4c0bbb2d1a678f",
+        "status": "A"
+      },
+      {
+        "disallowed_reasons": [],
+        "git_blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+        "git_mode": "100644",
+        "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/validator/isolation/stderr.txt",
+        "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "status": "A"
+      },
+      {
+        "disallowed_reasons": [],
+        "git_blob_oid": "42e0a89385c2cada6ca93d96bc3fdc06f7836a6b",
+        "git_mode": "100644",
+        "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/validator/isolation/stdout.txt",
+        "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+        "sha256": "7bb50d080c14e1bb33651810e91702a2686862217473fd6e0e2598593a14e11e",
+        "status": "A"
+      },
+      {
+        "disallowed_reasons": [],
+        "git_blob_oid": "1510f086a56a2510d128a57d5c2657548c9014d8",
+        "git_mode": "100644",
+        "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/validator/protocol_v4/SHA256SUMS",
+        "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+        "sha256": "65c2d30fb116a466f2e2887ab852e62f453e2b3c538d833a1497af67234ea03f",
+        "status": "A"
+      },
+      {
+        "disallowed_reasons": [],
+        "git_blob_oid": "d9a2b3a87ad8004687aaf4bef017f5561d48059f",
+        "git_mode": "100644",
+        "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/validator/protocol_v4/manifest.json",
+        "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+        "sha256": "1f734816e31a50ffd4134fd0f5ceb284e181799d183b4eefb964086a6ac889f1",
+        "status": "A"
+      },
+      {
+        "disallowed_reasons": [],
+        "git_blob_oid": "79a6788dd67ad870f6e1debc09a1407487fbc2ff",
+        "git_mode": "100644",
+        "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/validator/protocol_v4/record.json",
+        "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+        "sha256": "38c158025001b334d4e061fa706bdad215a83970756832749e7ab023449a2136",
+        "status": "A"
+      },
+      {
+        "disallowed_reasons": [],
+        "git_blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+        "git_mode": "100644",
+        "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/validator/protocol_v4/stderr.txt",
+        "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "status": "A"
+      },
+      {
+        "disallowed_reasons": [],
+        "git_blob_oid": "10dd9bcea7ec904f25598df95c6b58378ec6fb55",
+        "git_mode": "100644",
+        "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/validator/protocol_v4/stdout.txt",
+        "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+        "sha256": "9303178ec16546baf69ba67c90f83856749b52d22256261db0e4bd4901bdb0f9",
+        "status": "A"
+      },
+      {
+        "disallowed_reasons": [],
+        "git_blob_oid": "cb563e817c8303c12ff2d865565099717838ab21",
+        "git_mode": "100644",
+        "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/validator/raw_integrity/SHA256SUMS",
+        "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+        "sha256": "ae6dd47d48841bc1e9d7021f5cf7112ccdcc9dc238ca50d8573511fc2d7f7a1f",
+        "status": "A"
+      },
+      {
+        "disallowed_reasons": [],
+        "git_blob_oid": "4d7aefaf1bb29954449a092c22fecbd1dee43f48",
+        "git_mode": "100644",
+        "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/validator/raw_integrity/manifest.json",
+        "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+        "sha256": "da06ba3980985d1d75eb63a203d6552a4458561ec88d6c5c686fe2bc3aef439b",
+        "status": "A"
+      },
+      {
+        "disallowed_reasons": [],
+        "git_blob_oid": "30a7a5e72c29332d408dba1d4e51db3676a486af",
+        "git_mode": "100644",
+        "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/validator/raw_integrity/record.json",
+        "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+        "sha256": "7a021427a41be4d6d0d90ab67222af911cb7361a649df5c83664d9274467a51c",
+        "status": "A"
+      },
+      {
+        "disallowed_reasons": [],
+        "git_blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+        "git_mode": "100644",
+        "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/validator/raw_integrity/stderr.txt",
+        "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "status": "A"
+      },
+      {
+        "disallowed_reasons": [],
+        "git_blob_oid": "1fac6736bbdc3489704e49f6a0ddf5e4ccfa1baa",
+        "git_mode": "100644",
+        "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/validator/raw_integrity/stdout.txt",
+        "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+        "sha256": "e6e363a09b4c700c45d598574eeb7157e1ff79782b3f012446a714864ae9029f",
+        "status": "A"
+      },
+      {
+        "disallowed_reasons": [],
+        "git_blob_oid": "a314d24732714cba89c32005fdc76f8f1328a248",
+        "git_mode": "100644",
+        "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/validator/resource_efficiency/SHA256SUMS",
+        "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+        "sha256": "9e728a051077c7dcbe6e90aae296a3a4e678418a372e50b5ff6f33de3d2a7247",
+        "status": "A"
+      },
+      {
+        "disallowed_reasons": [],
+        "git_blob_oid": "cc0857751128137625b5fe07d46c750327224388",
+        "git_mode": "100644",
+        "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/validator/resource_efficiency/manifest.json",
+        "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+        "sha256": "022997af867345a527b25a5ba8c21ef85fd14f303cc32382917e81aa8c64423b",
+        "status": "A"
+      },
+      {
+        "disallowed_reasons": [],
+        "git_blob_oid": "05c8be553e07e50ca3dea3a0929c37688349bf1b",
+        "git_mode": "100644",
+        "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/validator/resource_efficiency/record.json",
+        "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+        "sha256": "f9dc294b6ad726afa83524bf13215347a9d85bb184abbbb498ca24bb2d95eca0",
+        "status": "A"
+      },
+      {
+        "disallowed_reasons": [],
+        "git_blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+        "git_mode": "100644",
+        "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/validator/resource_efficiency/stderr.txt",
+        "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "status": "A"
+      },
+      {
+        "disallowed_reasons": [],
+        "git_blob_oid": "e0116be2a9c8326b495bb236e501dece78648253",
+        "git_mode": "100644",
+        "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/validator/resource_efficiency/stdout.txt",
+        "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+        "sha256": "158081e7432464346a2ba04089f31bebb5b6026f39d72f122eacd46b090ffcab",
+        "status": "A"
+      },
+      {
+        "disallowed_reasons": [],
+        "git_blob_oid": "e326d307c154f1e3647c29329dbe30f9af526bb2",
+        "git_mode": "100644",
+        "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/validator/resource_oracle/SHA256SUMS",
+        "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+        "sha256": "c37e0d63980911829ad6ba6eb0b173529c16f7396c6f4c8f1adc820403e4d75c",
+        "status": "A"
+      },
+      {
+        "disallowed_reasons": [],
+        "git_blob_oid": "5f5e35d0601d606b79f73ce1b270942f427c3e45",
+        "git_mode": "100644",
+        "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/validator/resource_oracle/manifest.json",
+        "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+        "sha256": "183fb56028565f8400fff8f83c5dff618002141f436e7c7c38de71f6d3bcda3e",
+        "status": "A"
+      },
+      {
+        "disallowed_reasons": [],
+        "git_blob_oid": "db27cd1ac018329277e8cedc21d960e43509da01",
+        "git_mode": "100644",
+        "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/validator/resource_oracle/record.json",
+        "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+        "sha256": "deac05b5bfef9cfb1d95aff9f0159d01c62ebd436571ca81416cb746563944b4",
+        "status": "A"
+      },
+      {
+        "disallowed_reasons": [],
+        "git_blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+        "git_mode": "100644",
+        "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/validator/resource_oracle/stderr.txt",
+        "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "status": "A"
+      },
+      {
+        "disallowed_reasons": [],
+        "git_blob_oid": "34790fd32b02f1104e06026abfb9e0593e9fb256",
+        "git_mode": "100644",
+        "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/validator/resource_oracle/stdout.txt",
+        "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+        "sha256": "6fcf783bc636410a8bf50115b865e87159202475858aa5c5fa1a970910d7044f",
+        "status": "A"
+      },
+      {
+        "disallowed_reasons": [],
+        "git_blob_oid": "89eb1cd4f45bc947b1d7bfd4f557955e99715e11",
+        "git_mode": "100644",
+        "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/workflow/v5_analyze/SHA256SUMS",
+        "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+        "sha256": "9ab7d39b44011550bd0be6e2ba7916a0337fc16aafa73de8a59930d484f84ace",
+        "status": "A"
+      },
+      {
+        "disallowed_reasons": [],
+        "git_blob_oid": "9edb907a7913150a92031b5e2718961738b2728b",
+        "git_mode": "100644",
+        "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/workflow/v5_analyze/manifest.json",
+        "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+        "sha256": "e7bed29ed6898c93906333d8bba5b1d39129fa82a720f1c145f222ed7c3526e9",
+        "status": "A"
+      },
+      {
+        "disallowed_reasons": [],
+        "git_blob_oid": "27b43310cac4f878394b99462a8ab156ff379c02",
+        "git_mode": "100644",
+        "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/workflow/v5_analyze/record.json",
+        "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+        "sha256": "626306c2b7d57c60847710840a252f279f20ffcc5ad94e5180954077943162cc",
+        "status": "A"
+      },
+      {
+        "disallowed_reasons": [],
+        "git_blob_oid": "d4ef5a1451cafb7b8db92b088c2d550b4b5ef626",
+        "git_mode": "100644",
+        "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/workflow/v5_analyze/stderr.txt",
+        "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+        "sha256": "87cae168912b6aa7b2c4df1f83c0b4c7604b0f4ff09f6cc12abfcd8193bcf070",
+        "status": "A"
+      },
+      {
+        "disallowed_reasons": [],
+        "git_blob_oid": "638cee8f0f0959ad06d95068e267e53de137b770",
+        "git_mode": "100644",
+        "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/workflow/v5_analyze/stdout.txt",
+        "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+        "sha256": "fd0fbaf93b759a2bca5bbabe2aa1b0c5ca5bf93cb20ea4e30583d800daba1c9f",
+        "status": "A"
+      },
+      {
+        "disallowed_reasons": [],
+        "git_blob_oid": "1eb0812222a6455e9eb681ab22de04bc55b324a5",
+        "git_mode": "100644",
+        "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/workflow/v5_audit/SHA256SUMS",
+        "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+        "sha256": "e8bf6350e76b7a5a5fb32f003817089ebe08853fc40c4a7b4e936523e1d491e6",
+        "status": "A"
+      },
+      {
+        "disallowed_reasons": [],
+        "git_blob_oid": "6489b6c4a7b361ab5a1e83dc0becc969fc2f1b05",
+        "git_mode": "100644",
+        "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/workflow/v5_audit/manifest.json",
+        "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+        "sha256": "6b65faeb64c9ac27971f7e7e977c0d22a5e6f53c92c1dfbc5e653984d6ec2f0a",
+        "status": "A"
+      },
+      {
+        "disallowed_reasons": [],
+        "git_blob_oid": "32134659f6b53775c6bfff0ce4340fb0b70eb9d7",
+        "git_mode": "100644",
+        "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/workflow/v5_audit/record.json",
+        "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+        "sha256": "75b01804830e9912b9c10edbfdc2aaa212fdb70e9d048ac657cf637dd2ea4f92",
+        "status": "A"
+      },
+      {
+        "disallowed_reasons": [],
+        "git_blob_oid": "e93b066303ff59b4f177946c4bc49b039696c2e4",
+        "git_mode": "100644",
+        "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/workflow/v5_audit/stderr.txt",
+        "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+        "sha256": "b370955b77f023a8cc3c873ce6dc64136158f8122cb72da3bc728473013d3d9c",
+        "status": "A"
+      },
+      {
+        "disallowed_reasons": [],
+        "git_blob_oid": "f75d1f0789fdfd30d2ec75ac9c2f4589f9bce7fb",
+        "git_mode": "100644",
+        "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/workflow/v5_audit/stdout.txt",
+        "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+        "sha256": "36122ea0dd689109ccf4e9691a00eddbdc62ddd28e105a49c5c4abb64b74d3d8",
+        "status": "A"
+      },
+      {
+        "disallowed_reasons": [],
+        "git_blob_oid": "54d154e16194a91c69e270ec85242ee842b59262",
+        "git_mode": "100644",
+        "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/workflow/v5_figures/SHA256SUMS",
+        "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+        "sha256": "70f9e3c919c574dcdd9a9974087a62896dc56e38f1443aeec6f49ce04e01cdae",
+        "status": "A"
+      },
+      {
+        "disallowed_reasons": [],
+        "git_blob_oid": "d673d8a93bc8f7c20c2f1919e5fb57a9dc8dfa58",
+        "git_mode": "100644",
+        "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/workflow/v5_figures/manifest.json",
+        "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+        "sha256": "dab0fa839588ff8b38e0b6380b6a750b2a0621053c90a13360fe61d31b72f0fb",
+        "status": "A"
+      },
+      {
+        "disallowed_reasons": [],
+        "git_blob_oid": "232ca56b404d05202801db6edb00863bcad1aff8",
+        "git_mode": "100644",
+        "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/workflow/v5_figures/record.json",
+        "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+        "sha256": "039f295e4f7d275409665d2b23273e726f6710b3ab10a7226111e18a760a7e8c",
+        "status": "A"
+      },
+      {
+        "disallowed_reasons": [],
+        "git_blob_oid": "ff8405b82f6537bbf396399bbb285933c4522157",
+        "git_mode": "100644",
+        "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/workflow/v5_figures/stderr.txt",
+        "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+        "sha256": "410ce87e0492cc704fbc44635da6610c5319c5bfd972caa7c7590adc97a1672d",
+        "status": "A"
+      },
+      {
+        "disallowed_reasons": [],
+        "git_blob_oid": "5e5b65336aa95fb124b79348a03ec8d68e59deb5",
+        "git_mode": "100644",
+        "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/workflow/v5_figures/stdout.txt",
+        "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+        "sha256": "b70e5c5c9105d63a144c5757e011749c2c6ca92b77e0ee6df15c56f662ecc0a1",
+        "status": "A"
+      },
+      {
+        "disallowed_reasons": [],
+        "git_blob_oid": "7af31da01ce87bfde808a59d074c82a2d101d174",
+        "git_mode": "100644",
+        "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/workflow/v5_validate/SHA256SUMS",
+        "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+        "sha256": "690dbf342cde181916f2b140b47729624ea39ae9308a820f4610b354cb5d3d31",
+        "status": "A"
+      },
+      {
+        "disallowed_reasons": [],
+        "git_blob_oid": "2a526ecf82e251e8fc274f68ff029b02bd8fc948",
+        "git_mode": "100644",
+        "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/workflow/v5_validate/manifest.json",
+        "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+        "sha256": "4a602d4e9990dc7159cbd41906801069e5a0c210d0a550c1d9207c4040edc704",
+        "status": "A"
+      },
+      {
+        "disallowed_reasons": [],
+        "git_blob_oid": "361cacab1387cece0892513bcaa169a6034d2ac4",
+        "git_mode": "100644",
+        "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/workflow/v5_validate/record.json",
+        "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+        "sha256": "f7e8faac747afae5f96b91dd192149745ea2dc0c64c834b1df2145c6a6ba9112",
+        "status": "A"
+      },
+      {
+        "disallowed_reasons": [],
+        "git_blob_oid": "5ca9cb41303b07830533dbc10af88f9acac79936",
+        "git_mode": "100644",
+        "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/workflow/v5_validate/stderr.txt",
+        "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+        "sha256": "b93dc66191d27036b7663f87d2d6aeedad282f61c81f6e742e4651808569b32d",
+        "status": "A"
+      },
+      {
+        "disallowed_reasons": [],
+        "git_blob_oid": "20694f3c445c3953d6443755612f30009c7c3b75",
+        "git_mode": "100644",
+        "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/workflow/v5_validate/stdout.txt",
+        "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+        "sha256": "940f279570e317090a5b77306ada7b1dc45488e5dfb3e41064ebb74a6857546d",
+        "status": "A"
+      },
+      {
+        "disallowed_reasons": [],
+        "git_blob_oid": "9d4578a1ce894652df2dbaa7b7e1c073f2a512e9",
+        "git_mode": "100644",
+        "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/manifest.json",
+        "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+        "sha256": "32bf753c7ebe0ba35ad17f4f1ec24647f75d24cdad5587bd1bafd6cb31576ebe",
+        "status": "A"
+      },
+      {
+        "disallowed_reasons": [],
+        "git_blob_oid": "4e914a18401d03054f1229beb6f5d9b94edad722",
+        "git_mode": "100644",
+        "path": "results_v5/protocol-v5.0.0/final-audit/final-audit-20260910-final4/analysis/E1/20260825T-observed-p1-p2-development-v1/component_scoring/analysis-manifest.json",
+        "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+        "sha256": "9bf676f9b9fc0f5cc7472873c811f0fd482e3fc177e8c6a64b7dd0890862eade",
+        "status": "A"
+      },
+      {
+        "disallowed_reasons": [],
+        "git_blob_oid": "8ebdb6bbe362ff411db980e33fa8dddc61345e46",
+        "git_mode": "100644",
+        "path": "results_v5/protocol-v5.0.0/final-audit/final-audit-20260910-final4/analysis/E1/20260825T-observed-p1-p2-development-v1/raw_counts.json",
+        "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+        "sha256": "fd461a839bfa4c872d35312b5f9ae51a018628b767c07e53bd967ec057abf0ca",
+        "status": "A"
+      },
+      {
+        "disallowed_reasons": [],
+        "git_blob_oid": "96c9c8acd08f85e85a87ccc08c45b45778bc2c06",
+        "git_mode": "100644",
+        "path": "results_v5/protocol-v5.0.0/final-audit/final-audit-20260910-final4/analysis/E1/20260825T-observed-p1-p2-development-v1/statistical_analysis/analysis-manifest.json",
+        "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+        "sha256": "05e4191188b5c955d738d30b8bcb9ecb42b43bd22fa7701002e32d83aa580ebf",
+        "status": "A"
+      },
+      {
+        "disallowed_reasons": [],
+        "git_blob_oid": "1db410cd289b4fda1a5319b1a5c368f4747581de",
+        "git_mode": "100644",
+        "path": "results_v5/protocol-v5.0.0/final-audit/final-audit-20260910-final4/analysis/E3/b0-p2-user-study-readiness/analysis.json",
+        "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+        "sha256": "d0619867d9f4460f1e139e5aa2df32c06d6843b1517a1272c9f445b8855e667e",
+        "status": "A"
+      },
+      {
+        "disallowed_reasons": [],
+        "git_blob_oid": "59ce70197de455989de685f97bc99162c2180fdb",
+        "git_mode": "100644",
+        "path": "results_v5/protocol-v5.0.0/final-audit/final-audit-20260910-final4/analysis/SHA256SUMS",
+        "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+        "sha256": "67c3be2401233dc50c9b7e31f48e9348d7131aab79b63372d8e4a215ab72dcc5",
+        "status": "A"
+      },
+      {
+        "disallowed_reasons": [],
+        "git_blob_oid": "d8ed185356f66852ee9d0dccb0a26b7533fe8db5",
+        "git_mode": "100644",
+        "path": "results_v5/protocol-v5.0.0/final-audit/final-audit-20260910-final4/analysis/manifest.json",
+        "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+        "sha256": "224316ff2435876dab749def2b30fd56221aed7ea7d694ea3fde3fbf9d5ebf1d",
+        "status": "A"
+      },
+      {
+        "disallowed_reasons": [],
+        "git_blob_oid": "16d69cff655f01beb4c0034256265d7459c7e07f",
+        "git_mode": "100644",
+        "path": "results_v5/protocol-v5.0.0/final-audit/final-audit-20260910-final4/analysis/regeneration.json",
+        "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+        "sha256": "01300b72c9d8d6cfb32bb20af6f1bbb110859cfff0c9c7d92d6176e31b63e243",
+        "status": "A"
+      },
+      {
+        "disallowed_reasons": [],
+        "git_blob_oid": "1db410cd289b4fda1a5319b1a5c368f4747581de",
+        "git_mode": "100644",
+        "path": "results_v5/protocol-v5.0.0/final-audit/final-audit-20260910-final4/figures/E3/b0-p2-user-study-readiness/derived/analysis.json",
+        "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+        "sha256": "d0619867d9f4460f1e139e5aa2df32c06d6843b1517a1272c9f445b8855e667e",
+        "status": "A"
+      },
+      {
+        "disallowed_reasons": [],
+        "git_blob_oid": "0967ef424bce6791893e9a57bb952f80fd536e93",
+        "git_mode": "100644",
+        "path": "results_v5/protocol-v5.0.0/final-audit/final-audit-20260910-final4/figures/E3/b0-p2-user-study-readiness/derived/model-effects.json",
+        "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+        "sha256": "ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356",
+        "status": "A"
+      },
+      {
+        "disallowed_reasons": [],
+        "git_blob_oid": "d6cd0a9685b50c4966167c95ccfd2cd0de9f7e77",
+        "git_mode": "100644",
+        "path": "results_v5/protocol-v5.0.0/final-audit/final-audit-20260910-final4/figures/E3/b0-p2-user-study-readiness/report/USER_STUDY_REPORT.md",
+        "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+        "sha256": "ca9faed1f2d3c8a923f9fcfc70fd617602c847a6043287c5af05e3e5ef65aff5",
+        "status": "A"
+      },
+      {
+        "disallowed_reasons": [],
+        "git_blob_oid": "8f99849821308fc7b5373c0ae63bf7f7068c8a23",
+        "git_mode": "100644",
+        "path": "results_v5/protocol-v5.0.0/final-audit/final-audit-20260910-final4/figures/E3/b0-p2-user-study-readiness/report/analysis-manifest.json",
+        "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+        "sha256": "596827b376c82fcc75dfe30de2d326c0c69cf1c1718058d3dc730d9abbd3c192",
+        "status": "A"
+      },
+      {
+        "disallowed_reasons": [],
+        "git_blob_oid": "5ffe0535010435705b6441b6deaa485ded76e8f1",
+        "git_mode": "100644",
+        "path": "results_v5/protocol-v5.0.0/final-audit/final-audit-20260910-final4/figures/E3/b0-p2-user-study-readiness/report/figures/accuracy.svg",
+        "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+        "sha256": "fd41efe56098dfb382ef91506249fc4b55c314c96e007eaf46445ccf7a47b470",
+        "status": "A"
+      },
+      {
+        "disallowed_reasons": [],
+        "git_blob_oid": "5e9bc7743fe21536344e7c1194cbbef19a1ad12f",
+        "git_mode": "100644",
+        "path": "results_v5/protocol-v5.0.0/final-audit/final-audit-20260910-final4/figures/E3/b0-p2-user-study-readiness/report/figures/decision-time.svg",
+        "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+        "sha256": "3cf950005c60b1fd8bd802a47856b641a1772e88942b788378179c14b06139ba",
+        "status": "A"
+      },
+      {
+        "disallowed_reasons": [],
+        "git_blob_oid": "5d3722c43bb554cf68c65baf8a982602f1871eb6",
+        "git_mode": "100644",
+        "path": "results_v5/protocol-v5.0.0/final-audit/final-audit-20260910-final4/figures/E3/b0-p2-user-study-readiness/report/figures/interaction-effort.svg",
+        "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+        "sha256": "44d6bf5cd32e015e51a1d51b83ab6351c450e772d6e448e910cf45f589e08fe3",
+        "status": "A"
+      },
+      {
+        "disallowed_reasons": [],
+        "git_blob_oid": "292e5fd45868baecc1dcdd4d95f6af36ff0e8824",
+        "git_mode": "100644",
+        "path": "results_v5/protocol-v5.0.0/final-audit/final-audit-20260910-final4/figures/E3/b0-p2-user-study-readiness/report/figures/preference.svg",
+        "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+        "sha256": "6c988d1df642703d24cbcbed27066174cd81f8d1010bde1f53b421e976c99350",
+        "status": "A"
+      },
+      {
+        "disallowed_reasons": [],
+        "git_blob_oid": "9d0737c3241b75e2055ff901e602845a2e775c3a",
+        "git_mode": "100644",
+        "path": "results_v5/protocol-v5.0.0/final-audit/final-audit-20260910-final4/figures/E3/b0-p2-user-study-readiness/report/figures/sus-seq-custom.svg",
+        "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+        "sha256": "3d1363dcfa80d4687c4df2e2b998441a98391f2efe3a798298a7b8ac89c77f7e",
+        "status": "A"
+      },
+      {
+        "disallowed_reasons": [],
+        "git_blob_oid": "901bae9072dabf77dcd22b5c6a2ea849bedff6bd",
+        "git_mode": "100644",
+        "path": "results_v5/protocol-v5.0.0/final-audit/final-audit-20260910-final4/figures/E3/b0-p2-user-study-readiness/report/privacy-audit.json",
+        "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+        "sha256": "f494bce353355a295c033e79cf67772443ccaca3c2ff3f0f588f4969c8d80c49",
+        "status": "A"
+      },
+      {
+        "disallowed_reasons": [],
+        "git_blob_oid": "ff955154c0c29d0adc1520febeab6ba1e415e9c9",
+        "git_mode": "100644",
+        "path": "results_v5/protocol-v5.0.0/final-audit/final-audit-20260910-final4/figures/E3/b0-p2-user-study-readiness/report/tables/condition-summary.csv",
+        "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+        "sha256": "2ba7a5b4941ab5470b786e06e8692af576c890dca6b67a9826fbb08a4c0232a6",
+        "status": "A"
+      },
+      {
+        "disallowed_reasons": [],
+        "git_blob_oid": "fe51488c7066f6687ef680d6bfaa4f7768ef205c",
+        "git_mode": "100644",
+        "path": "results_v5/protocol-v5.0.0/final-audit/final-audit-20260910-final4/figures/E3/b0-p2-user-study-readiness/report/tables/condition-summary.json",
+        "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+        "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+        "status": "A"
+      },
+      {
+        "disallowed_reasons": [],
+        "git_blob_oid": "ff955154c0c29d0adc1520febeab6ba1e415e9c9",
+        "git_mode": "100644",
+        "path": "results_v5/protocol-v5.0.0/final-audit/final-audit-20260910-final4/figures/E3/b0-p2-user-study-readiness/report/tables/missingness.csv",
+        "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+        "sha256": "2ba7a5b4941ab5470b786e06e8692af576c890dca6b67a9826fbb08a4c0232a6",
+        "status": "A"
+      },
+      {
+        "disallowed_reasons": [],
+        "git_blob_oid": "fe51488c7066f6687ef680d6bfaa4f7768ef205c",
+        "git_mode": "100644",
+        "path": "results_v5/protocol-v5.0.0/final-audit/final-audit-20260910-final4/figures/E3/b0-p2-user-study-readiness/report/tables/missingness.json",
+        "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+        "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+        "status": "A"
+      },
+      {
+        "disallowed_reasons": [],
+        "git_blob_oid": "a79ff1e63b08d15cbc2ddd8249f0d5fb03513e9d",
+        "git_mode": "100644",
+        "path": "results_v5/protocol-v5.0.0/final-audit/final-audit-20260910-final4/figures/E3/b0-p2-user-study-readiness/report/tables/participant-flow.csv",
+        "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+        "sha256": "9a624a9bf3d29c57f6452bc40dce9fbcebd91d87932c4ab3fe93f16c78207877",
+        "status": "A"
+      },
+      {
+        "disallowed_reasons": [],
+        "git_blob_oid": "6d1bd1e25914472808f9535606a93b73b19de928",
+        "git_mode": "100644",
+        "path": "results_v5/protocol-v5.0.0/final-audit/final-audit-20260910-final4/figures/E3/b0-p2-user-study-readiness/report/tables/participant-flow.json",
+        "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+        "sha256": "7ff5bafc66b55354e9179e734242e0222b5732717933bccefffbb6f7b853f859",
+        "status": "A"
+      },
+      {
+        "disallowed_reasons": [],
+        "git_blob_oid": "ff955154c0c29d0adc1520febeab6ba1e415e9c9",
+        "git_mode": "100644",
+        "path": "results_v5/protocol-v5.0.0/final-audit/final-audit-20260910-final4/figures/E3/b0-p2-user-study-readiness/report/tables/preference.csv",
+        "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+        "sha256": "2ba7a5b4941ab5470b786e06e8692af576c890dca6b67a9826fbb08a4c0232a6",
+        "status": "A"
+      },
+      {
+        "disallowed_reasons": [],
+        "git_blob_oid": "fe51488c7066f6687ef680d6bfaa4f7768ef205c",
+        "git_mode": "100644",
+        "path": "results_v5/protocol-v5.0.0/final-audit/final-audit-20260910-final4/figures/E3/b0-p2-user-study-readiness/report/tables/preference.json",
+        "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+        "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+        "status": "A"
+      },
+      {
+        "disallowed_reasons": [],
+        "git_blob_oid": "ca248d80dc48a13fb21b28a33127d4f78b93b37d",
+        "git_mode": "100644",
+        "path": "results_v5/protocol-v5.0.0/final-audit/final-audit-20260910-final4/figures/SHA256SUMS",
+        "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+        "sha256": "19e0669574b49a2290636532b58e34338a0b3b46f8a4714a6a2745d062f1c421",
+        "status": "A"
+      },
+      {
+        "disallowed_reasons": [],
+        "git_blob_oid": "9b8bc9d251650aa66f813c5b656b27c7b51d9f9d",
+        "git_mode": "100644",
+        "path": "results_v5/protocol-v5.0.0/final-audit/final-audit-20260910-final4/figures/figure-regeneration.json",
+        "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+        "sha256": "94b8b62ee7175a4273d0e3e3ae68cb00e10ae3b7cec8f1d33712f2c1cbafc752",
+        "status": "A"
+      },
+      {
+        "disallowed_reasons": [],
+        "git_blob_oid": "1007974c37bb22d91fae86b909ad33883b0f6744",
+        "git_mode": "100644",
+        "path": "results_v5/protocol-v5.0.0/final-audit/final-audit-20260910-final4/figures/manifest.json",
+        "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+        "sha256": "0d024c3f36bafecdfc6d03ca1228a8b110c69361f93a8eab1597c6baf3cea59b",
+        "status": "A"
+      },
+      {
+        "disallowed_reasons": [],
+        "git_blob_oid": "24283042e793158a1f7433ea78fa751aec260f38",
+        "git_mode": "100644",
+        "path": "results_v5/protocol-v5.0.0/final-audit/final-audit-20260910-final4/figures/tables/defense-summary.json",
+        "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+        "sha256": "91ae7cf71cfebe2241b56631ccb8aa5bed2b9cc7492db7cbe043eccfd574aa9b",
+        "status": "A"
+      },
+      {
+        "disallowed_reasons": [],
+        "git_blob_oid": "3bd40e6c9dd4b4f14153753b464ebe8843e81611",
+        "git_mode": "100644",
+        "path": "results_v5/protocol-v5.0.0/final-audit/final-audit-20260910-final4/figures/tables/defense-summary.md",
+        "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+        "sha256": "69f97d4f373c3733c1cff2c7209a60c737fc6c5707f56420a16521655a32e082",
+        "status": "A"
+      },
+      {
+        "disallowed_reasons": [],
+        "git_blob_oid": "fe51488c7066f6687ef680d6bfaa4f7768ef205c",
+        "git_mode": "100644",
+        "path": "results_v5/protocol-v5.0.0/final-audit/final-audit-20260910-final4/figures/tables/functional-results.json",
+        "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+        "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+        "status": "A"
+      },
+      {
+        "disallowed_reasons": [],
+        "git_blob_oid": "574563e237167878b7c845dd7f71e36aec2d28b6",
+        "git_mode": "100644",
+        "path": "results_v5/protocol-v5.0.0/final-audit/final-audit-20260910-final4/report/PROTOCOL_V5_FINAL_REPORT.md",
+        "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+        "sha256": "6b73586118f4143c0cb862d320d29744672c579a327aa50e52af99119cd4ed0f",
+        "status": "A"
+      },
+      {
+        "disallowed_reasons": [],
+        "git_blob_oid": "09445bb622a0aba751e2fbb0a84e8483ab6f29ae",
+        "git_mode": "100644",
+        "path": "results_v5/protocol-v5.0.0/final-audit/final-audit-20260910-final4/report/SHA256SUMS",
+        "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+        "sha256": "b777f9bda6b19731712a6c7375a549eceaf536b628cda4385326ba6fc37f1cb2",
+        "status": "A"
+      },
+      {
+        "disallowed_reasons": [],
+        "git_blob_oid": "f702cb697b4a5e8364175ca84fe743d7041cb842",
+        "git_mode": "100644",
+        "path": "results_v5/protocol-v5.0.0/final-audit/final-audit-20260910-final4/report/audit.json",
+        "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+        "sha256": "79351d30dde747d7fc25da09a02fa79e47d4e501ed2c65fa6a33a274b149916c",
+        "status": "A"
+      },
+      {
+        "disallowed_reasons": [],
+        "git_blob_oid": "bf114da3c24f6275d8035bad295abcf791392545",
+        "git_mode": "100644",
+        "path": "results_v5/protocol-v5.0.0/final-audit/final-audit-20260910-final4/report/manifest.json",
+        "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+        "sha256": "5cc7cc29c6a2889b86badeb73e7e20b96af220ee74b055c3287288c4f88204f9",
+        "status": "A"
+      },
+      {
+        "disallowed_reasons": [],
+        "git_blob_oid": "804650fee55a7b2fc18eb0d9775b1f8921b91a33",
+        "git_mode": "100644",
+        "path": "results_v5/protocol-v5.0.0/final-audit/final-audit-20260910-final4/run.json",
+        "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+        "sha256": "64ff4334248b607338f312b811c144af533871dd0f4106d9bf2f4ea23d9359f4",
+        "status": "A"
+      },
+      {
+        "disallowed_reasons": [],
+        "git_blob_oid": "8d078e6a0e08df241fd6f083b443358ad2c56dbb",
+        "git_mode": "100644",
+        "path": "results_v5/protocol-v5.0.0/final-audit/final-audit-20260910-final4/validation/SHA256SUMS",
+        "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+        "sha256": "41a7a8d6da44efa2ac35883fa4a19390a96ee9fc1b6737430555e9d35e5778d5",
+        "status": "A"
+      },
+      {
+        "disallowed_reasons": [],
+        "git_blob_oid": "8f41ec443781734e53f63ccd18b2937528eda420",
+        "git_mode": "100644",
+        "path": "results_v5/protocol-v5.0.0/final-audit/final-audit-20260910-final4/validation/audit.json",
+        "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+        "sha256": "5c867d8b1727b2ac14cb90031188a73d091bffba901d36f3e18eea21db4bdf05",
+        "status": "A"
+      },
+      {
+        "disallowed_reasons": [],
+        "git_blob_oid": "b727de3bd302da42ee12a77ad16654381a9ed495",
+        "git_mode": "100644",
+        "path": "results_v5/protocol-v5.0.0/final-audit/final-audit-20260910-final4/validation/manifest.json",
+        "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+        "sha256": "00337e84a658e3be5a8f2e962f15c25a1b7c8e9866e2d45954061df525fa19cc",
+        "status": "A"
+      }
+    ],
+    "created_at_utc": "2026-09-11T02:11:01Z",
+    "disallowed_paths": [],
+    "executable_or_validation_semantics_changed": false,
+    "publication_revision": "7ce1e9ccdecb43f6ac337609479ea067dee9735d",
+    "relationship": "DISTINCT_TESTED_CODE_AND_PUBLICATION_REVISIONS",
+    "schema_version": "protocol-v5-publication-delta-attestation-v1.0.0",
+    "tested_code_revision": "007542fdd384174be9e0e54999d20ad000383568",
+    "verdict": "PASS"
+  },
+  "published_history": [
+    {
+      "artifact": "final-audit-20260907-v2",
+      "artifact_type": "final_audit_run",
+      "authoritative_for_final_revision": false,
+      "disposition": "SUPERSEDED_BY_LATER_IMPLEMENTATION",
+      "implementation_revision": "ca2ab18ec410c8765f921683241b3f3433d5e118",
+      "run_manifest_sha256": "a364acc27a29e0e7db8d25c443e62007f2fd8cf7883cd58c72a47188a42acf52"
+    },
+    {
+      "artifact": "final-audit-20260910-final2",
+      "artifact_type": "final_audit_run",
+      "authoritative_for_final_revision": false,
+      "disposition": "SUPERSEDED_BY_LATER_IMPLEMENTATION",
+      "implementation_revision": "a297f622889761145e20567dab9f5fe42f275cb2",
+      "run_manifest_sha256": "df61fa41101de01b5e43a39387426d4a6fda7f6d1d7aa7a898a93200a7b3f5ca"
+    },
+    {
+      "artifact": "final-audit-20260910-final4",
+      "artifact_type": "final_audit_run",
+      "authoritative_for_final_revision": false,
+      "disposition": "SUPERSEDED_BY_LATER_IMPLEMENTATION",
+      "implementation_revision": "007542fdd384174be9e0e54999d20ad000383568",
+      "run_manifest_sha256": "64ff4334248b607338f312b811c144af533871dd0f4106d9bf2f4ea23d9359f4"
+    },
+    {
+      "artifact": "completion-audit-20260910-final2",
+      "artifact_type": "completion_audit",
+      "authoritative_for_final_revision": false,
+      "bundled_workflow_revision": "a297f622889761145e20567dab9f5fe42f275cb2",
+      "completion_sha256": "d5dee201396dc98ef7b57143b812570cf28eb6899eab89059d458885b983bc86",
+      "disposition": "SUPERSEDED_BY_LATER_IMPLEMENTATION",
+      "implementation_revision": "a297f622889761145e20567dab9f5fe42f275cb2",
+      "revision_consistent": true
+    },
+    {
+      "artifact": "completion-audit-20260910-final3",
+      "artifact_type": "completion_audit",
+      "authoritative_for_final_revision": false,
+      "bundled_workflow_revision": "a297f622889761145e20567dab9f5fe42f275cb2",
+      "completion_sha256": "93b024a77630a496bc3b4123306ecce906d9b03d4f53e62402e271c67aca4b9e",
+      "disposition": "SUPERSEDED_WORKFLOW_REVISION_MISMATCH",
+      "implementation_revision": "ad098134e7a2d74cab75dfbaa4519bdaf582fbb0",
+      "revision_consistent": false
+    },
+    {
+      "artifact": "completion-audit-20260911-final4",
+      "artifact_type": "completion_audit",
+      "authoritative_for_final_revision": false,
+      "bundled_workflow_revision": null,
+      "completion_sha256": "a424236d4719bcb733157e4258e7049e12803926ab0d1c2ccff81d8de45a48f9",
+      "disposition": "SUPERSEDED_WORKFLOW_REVISION_MISMATCH",
+      "implementation_revision": "007542fdd384174be9e0e54999d20ad000383568",
+      "revision_consistent": false
+    }
+  ],
+  "revision_model": {
+    "previous_tested_publication_gap": {
+      "publication_revision": "7ce1e9ccdecb43f6ac337609479ea067dee9735d",
+      "tested_code_revision": "007542fdd384174be9e0e54999d20ad000383568",
+      "verdict": "PASS"
+    },
+    "publication_revision": null,
+    "publication_revision_status": "RESOLVED_ONLY_AFTER_GENERATED_ARTIFACT_PUBLICATION",
+    "self_reference_policy": "Never claim the enclosing future publication commit was the tested commit.",
+    "tested_code_revision": "ec73326c947bcf3f80f71888e939dc03877f83a2"
+  },
+  "schema_version": "protocol-v5-completion-audit-v3.0.0",
+  "scientific_gates": {
+    "claim_counts": {
+      "NOT_EXECUTED": 9,
+      "NOT_SUPPORTED": 0,
+      "SUPPORTED": 0
+    },
+    "confirmatory_status": "NOT_EXECUTED",
+    "remaining_real_execution_requirements": [
+      "authoritative freeze, sealed split/custody, and isolation gates must pass",
+      "E1: authenticated real evidence (NOT_EXECUTED)",
+      "E2: authenticated real evidence (NOT_EXECUTED)",
+      "E3: authenticated real evidence (NOT_EXECUTED)",
+      "E4: authenticated real evidence (NOT_EXECUTED)",
+      "E5_FUNCTIONAL: authenticated real evidence (DEVELOPMENT_ONLY)",
+      "E5_STORAGE: authenticated real evidence (NOT_EXECUTED)",
+      "E6: no confirmatory execution is authorized unless a frozen authenticated development gate retains P3 (current state NOT_RETAINED_OR_NOT_PRESENT)"
+    ],
+    "sealed_confirmatory_execution_safe": false,
+    "synthetic_can_become_observed": false,
+    "synthetic_can_support_thesis_claim": false
+  },
+  "scientific_readiness_verdict": "NOT_READY",
+  "severity_counts": {
+    "CRITICAL": 5,
+    "HIGH": 8,
+    "LOW": 1,
+    "MEDIUM": 2
+  },
+  "software_evidence_boundary_verdict": "16/16 SATISFIED",
+  "status_counts": {
+    "NOT_SATISFIED": 0,
+    "PARTIALLY_SATISFIED": 0,
+    "SATISFIED": 16,
+    "SATISFIED_WITH_MINOR_ISSUES": 0
+  },
+  "supports_thesis_claim": false,
+  "test_evidence": [
+    {
+      "argv": [
+        ".venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "tests/test_evaluation_v5.py::test_development_override_cannot_downgrade_existing_observed_manifest",
+        "tests/test_evaluation_v5.py::test_development_override_protects_claim_sensitive_target_payloads",
+        "tests/test_evaluation_v5_isolation.py::test_arbitrary_freeze_identity_string_cannot_authorize_runner",
+        "tests/test_evaluation_v5_isolation.py::test_isolation_audit_parses_python_literals_without_joining_fixture_fragments",
+        "tests/test_evaluation_v5_isolation.py::test_isolation_audit_still_detects_complete_python_literal_bundle",
+        "tests/test_evaluation_v5_isolation.py::test_isolation_audit_detects_complete_concatenated_python_literal",
+        "tests/test_evaluation_v5_component_scoring.py::test_p3_gate_recomputes_decision_and_rejects_forged_retained_status",
+        "tests/test_resource_authenticity_adversarial.py::test_forced_observed_status_on_disk_fails_closed",
+        "tests/test_resource_envelope_v5.py::test_fake_adapter_drives_search_and_manual_review_gate",
+        "tests/test_protocol_v5_research_analysis.py::test_controlled_synthetic_storage_reproduction_never_supports_h7",
+        "tests/test_protocol_v5_research_analysis.py::test_external_normal_layout_synthetic_storage_is_discovered_but_never_selected",
+        "tests/test_evaluation_v5_gold_dataset.py::test_forged_confirmatory_classification_over_non_confirmatory_source_fails_closed",
+        "tests/test_evaluation_v5_robustness.py::test_generator_unconditionally_rejects_confirmatory_families",
+        "tests/test_evaluation_v5_image_functional.py::test_cuda_probe_without_site_packages_is_unavailable",
+        "tests/test_evaluation_v5_image_functional.py::test_docker_timeout_and_interrupt_always_remove_exact_container",
+        "tests/test_evaluation_v5_image_functional.py::test_kubernetes_pending_timeout_and_interrupt_delete_exact_pod",
+        "tests/test_evaluation_v5_image_functional.py::test_e5_rejects_wrong_or_stale_source_run_before_execution",
+        "tests/test_evaluation_v5_image_storage.py::test_catalog_scale_rejects_missing_canonical_v2_acceptable_gold",
+        "tests/test_protocol_v5_research_analysis.py::test_caller_duplicate_source_identity_mismatch_fails_closed",
+        "tests/test_protocol_v5_final_audit.py::test_p16_case_a_no_authenticated_real_evidence_has_no_fabricated_results",
+        "tests/test_protocol_v5_research_analysis.py::test_p16_case_b_observed_fixture_drives_status_metrics_and_report",
+        "tests/test_protocol_v5_research_analysis.py::test_p16_case_c_incomplete_evidence_never_becomes_positive",
+        "tests/test_protocol_v5_research_analysis.py::test_contradictory_claimable_evidence_writes_failed_audit_and_exits_two",
+        "tests/test_protocol_v5_research_analysis.py::test_p16_case_d_nonempty_authenticated_selection_reaches_completion",
+        "tests/test_evaluation_v5_robustness.py::test_cli_draft_refuses_confirmatory_input",
+        "tests/test_resource_authenticity_adversarial.py::test_all_20_e4_directories_in_repository_validate",
+        "tests/test_protocol_v5_final_audit.py::test_e3_lf_regeneration_is_versioned_and_preserves_historical_identity",
+        "--junitxml=/tmp/protocol-v5-final5-evidence.zqPRFY/test-adversarial/junit.xml"
+      ],
+      "classifications": [
+        "PASS"
+      ],
+      "command": ".venv/bin/python -m pytest -q tests/test_evaluation_v5.py::test_development_override_cannot_downgrade_existing_observed_manifest tests/test_evaluation_v5.py::test_development_override_protects_claim_sensitive_target_payloads tests/test_evaluation_v5_isolation.py::test_arbitrary_freeze_identity_string_cannot_authorize_runner tests/test_evaluation_v5_isolation.py::test_isolation_audit_parses_python_literals_without_joining_fixture_fragments tests/test_evaluation_v5_isolation.py::test_isolation_audit_still_detects_complete_python_literal_bundle tests/test_evaluation_v5_isolation.py::test_isolation_audit_detects_complete_concatenated_python_literal tests/test_evaluation_v5_component_scoring.py::test_p3_gate_recomputes_decision_and_rejects_forged_retained_status tests/test_resource_authenticity_adversarial.py::test_forced_observed_status_on_disk_fails_closed tests/test_resource_envelope_v5.py::test_fake_adapter_drives_search_and_manual_review_gate tests/test_protocol_v5_research_analysis.py::test_controlled_synthetic_storage_reproduction_never_supports_h7 tests/test_protocol_v5_research_analysis.py::test_external_normal_layout_synthetic_storage_is_discovered_but_never_selected tests/test_evaluation_v5_gold_dataset.py::test_forged_confirmatory_classification_over_non_confirmatory_source_fails_closed tests/test_evaluation_v5_robustness.py::test_generator_unconditionally_rejects_confirmatory_families tests/test_evaluation_v5_image_functional.py::test_cuda_probe_without_site_packages_is_unavailable tests/test_evaluation_v5_image_functional.py::test_docker_timeout_and_interrupt_always_remove_exact_container tests/test_evaluation_v5_image_functional.py::test_kubernetes_pending_timeout_and_interrupt_delete_exact_pod tests/test_evaluation_v5_image_functional.py::test_e5_rejects_wrong_or_stale_source_run_before_execution tests/test_evaluation_v5_image_storage.py::test_catalog_scale_rejects_missing_canonical_v2_acceptable_gold tests/test_protocol_v5_research_analysis.py::test_caller_duplicate_source_identity_mismatch_fails_closed tests/test_protocol_v5_final_audit.py::test_p16_case_a_no_authenticated_real_evidence_has_no_fabricated_results tests/test_protocol_v5_research_analysis.py::test_p16_case_b_observed_fixture_drives_status_metrics_and_report tests/test_protocol_v5_research_analysis.py::test_p16_case_c_incomplete_evidence_never_becomes_positive tests/test_protocol_v5_research_analysis.py::test_contradictory_claimable_evidence_writes_failed_audit_and_exits_two tests/test_protocol_v5_research_analysis.py::test_p16_case_d_nonempty_authenticated_selection_reaches_completion tests/test_evaluation_v5_robustness.py::test_cli_draft_refuses_confirmatory_input tests/test_resource_authenticity_adversarial.py::test_all_20_e4_directories_in_repository_validate tests/test_protocol_v5_final_audit.py::test_e3_lf_regeneration_is_versioned_and_preserves_historical_identity --junitxml=/tmp/protocol-v5-final5-evidence.zqPRFY/test-adversarial/junit.xml",
+      "counts": {
+        "errors": 0,
+        "failed": 0,
+        "passed": 30,
+        "skipped": 0,
+        "total": 30
+      },
+      "environment": {
+        "platform": "macOS-15.3.2-arm64-arm-64bit-Mach-O",
+        "python_implementation": "CPython",
+        "python_version": "3.14.6",
+        "working_directory": "."
+      },
+      "evidence_id": "adversarial",
+      "exit_code": 0,
+      "finished_at_utc": "2026-09-11T02:07:46.196068Z",
+      "git_dirty_before": false,
+      "git_revision": "ec73326c947bcf3f80f71888e939dc03877f83a2",
+      "junit": {
+        "counts": {
+          "errors": 0,
+          "failed": 0,
+          "passed": 30,
+          "skipped": 0,
+          "total": 30
+        },
+        "path": "junit.xml",
+        "sha256": "8fbad512ec790e5b5fff0fb9d37bb28304c1d44ac4e90449009cdd7ab9766d3f"
+      },
+      "kind": "test",
+      "manifest": {
+        "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final5/evidence/test/adversarial/manifest.json",
+        "sha256": "b5b7b371654bf51f3e6a0f86eea08b5e1fe86337b80ff06ae431519a958ec028"
+      },
+      "nonzero_reasons": [],
+      "record": {
+        "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final5/evidence/test/adversarial/record.json",
+        "sha256": "8c965faaa3c3db0b646fad593f8168b49ae22e855ac38d86472661df160898f1"
+      },
+      "schema_version": "protocol-v5-command-evidence-v1.1.0",
+      "started_at_utc": "2026-09-11T02:07:36.133510Z",
+      "stderr": {
+        "path": "stderr.txt",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "stdout": {
+        "path": "stdout.txt",
+        "sha256": "5f9b35db6e4bda818b076039a0c5e988e2c6e48e687c7321c1dbce79268afa75"
+      }
+    },
+    {
+      "argv": [
+        ".venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "tests/test_protocol_v5_research_analysis.py",
+        "tests/test_protocol_v5_final_audit.py",
+        "--junitxml=/tmp/protocol-v5-final5-evidence.zqPRFY/test-focused/junit.xml"
+      ],
+      "classifications": [
+        "PASS"
+      ],
+      "command": ".venv/bin/python -m pytest -q tests/test_protocol_v5_research_analysis.py tests/test_protocol_v5_final_audit.py --junitxml=/tmp/protocol-v5-final5-evidence.zqPRFY/test-focused/junit.xml",
+      "counts": {
+        "errors": 0,
+        "failed": 0,
+        "passed": 101,
+        "skipped": 0,
+        "total": 101
+      },
+      "environment": {
+        "platform": "macOS-15.3.2-arm64-arm-64bit-Mach-O",
+        "python_implementation": "CPython",
+        "python_version": "3.14.6",
+        "working_directory": "."
+      },
+      "evidence_id": "focused",
+      "exit_code": 0,
+      "finished_at_utc": "2026-09-11T02:08:23.173657Z",
+      "git_dirty_before": false,
+      "git_revision": "ec73326c947bcf3f80f71888e939dc03877f83a2",
+      "junit": {
+        "counts": {
+          "errors": 0,
+          "failed": 0,
+          "passed": 101,
+          "skipped": 0,
+          "total": 101
+        },
+        "path": "junit.xml",
+        "sha256": "4015523b7c53710c4798e4168113d8ab14c2cb2bdff70f1735506899cb24783a"
+      },
+      "kind": "test",
+      "manifest": {
+        "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final5/evidence/test/focused/manifest.json",
+        "sha256": "7d8556c205d2a7e09c5b73bddb082a2f99e12f63165c32cc493bc43ec8325b07"
+      },
+      "nonzero_reasons": [],
+      "record": {
+        "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final5/evidence/test/focused/record.json",
+        "sha256": "581ec6ef7e5bbc9daf0c358fe4129fb547ac31fc5fc14330824c7d0f7bf2cbd7"
+      },
+      "schema_version": "protocol-v5-command-evidence-v1.1.0",
+      "started_at_utc": "2026-09-11T02:07:53.242836Z",
+      "stderr": {
+        "path": "stderr.txt",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "stdout": {
+        "path": "stdout.txt",
+        "sha256": "d3995f4caa76cb73ca530599a0f687852395d348b10e8418571c635ae0881582"
+      }
+    },
+    {
+      "argv": [
+        ".venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "tests/test_evaluation_v5.py",
+        "tests/test_evaluation_v5_component_scoring.py",
+        "tests/test_evaluation_v5_gold_dataset.py",
+        "tests/test_evaluation_v5_image_functional.py",
+        "tests/test_evaluation_v5_image_storage.py",
+        "tests/test_evaluation_v5_isolation.py",
+        "tests/test_evaluation_v5_offline_runner.py",
+        "tests/test_evaluation_v5_offline_validator.py",
+        "tests/test_evaluation_v5_reporting.py",
+        "tests/test_evaluation_v5_robustness.py",
+        "tests/test_evaluation_v5_statistics.py",
+        "tests/test_evaluation_v5_user_study.py",
+        "tests/test_evaluation_v5_user_study_analysis.py",
+        "tests/test_protocol_v5_research_analysis.py",
+        "tests/test_protocol_v5_final_audit.py",
+        "tests/test_resource_envelope_v5.py",
+        "tests/test_resource_efficiency_v5.py",
+        "tests/test_evaluation_v4.py",
+        "tests/test_resource_authenticity_adversarial.py",
+        "tests/test_config_validation.py",
+        "tests/test_p2_backend_integration.py",
+        "--junitxml=/tmp/protocol-v5-final5-evidence.zqPRFY/test-full/junit.xml"
+      ],
+      "classifications": [
+        "PASS"
+      ],
+      "command": ".venv/bin/python -m pytest -q tests/test_evaluation_v5.py tests/test_evaluation_v5_component_scoring.py tests/test_evaluation_v5_gold_dataset.py tests/test_evaluation_v5_image_functional.py tests/test_evaluation_v5_image_storage.py tests/test_evaluation_v5_isolation.py tests/test_evaluation_v5_offline_runner.py tests/test_evaluation_v5_offline_validator.py tests/test_evaluation_v5_reporting.py tests/test_evaluation_v5_robustness.py tests/test_evaluation_v5_statistics.py tests/test_evaluation_v5_user_study.py tests/test_evaluation_v5_user_study_analysis.py tests/test_protocol_v5_research_analysis.py tests/test_protocol_v5_final_audit.py tests/test_resource_envelope_v5.py tests/test_resource_efficiency_v5.py tests/test_evaluation_v4.py tests/test_resource_authenticity_adversarial.py tests/test_config_validation.py tests/test_p2_backend_integration.py --junitxml=/tmp/protocol-v5-final5-evidence.zqPRFY/test-full/junit.xml",
+      "counts": {
+        "errors": 0,
+        "failed": 0,
+        "passed": 768,
+        "skipped": 0,
+        "total": 768
+      },
+      "environment": {
+        "platform": "macOS-15.3.2-arm64-arm-64bit-Mach-O",
+        "python_implementation": "CPython",
+        "python_version": "3.14.6",
+        "working_directory": "."
+      },
+      "evidence_id": "full",
+      "exit_code": 0,
+      "finished_at_utc": "2026-09-11T02:10:45.163759Z",
+      "git_dirty_before": false,
+      "git_revision": "ec73326c947bcf3f80f71888e939dc03877f83a2",
+      "junit": {
+        "counts": {
+          "errors": 0,
+          "failed": 0,
+          "passed": 768,
+          "skipped": 0,
+          "total": 768
+        },
+        "path": "junit.xml",
+        "sha256": "382b3d3818d129fc347ffe5bf628b5417fad641dbbae0cc56a1f7132899d61eb"
+      },
+      "kind": "test",
+      "manifest": {
+        "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final5/evidence/test/full/manifest.json",
+        "sha256": "186360ab236937afb79979da4c86304895a8e677eced42043d964312854970bb"
+      },
+      "nonzero_reasons": [],
+      "record": {
+        "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final5/evidence/test/full/record.json",
+        "sha256": "0d6d2c3a91b23c2c73d0f9753186120c5e0e4fe22ad18bbdde4ed4b36cc03072"
+      },
+      "schema_version": "protocol-v5-command-evidence-v1.1.0",
+      "started_at_utc": "2026-09-11T02:08:38.479860Z",
+      "stderr": {
+        "path": "stderr.txt",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "stdout": {
+        "path": "stdout.txt",
+        "sha256": "a693dd7eedbc84735607108aaebf2010a1a86bbb79e0ed843735c98feb633652"
+      }
+    }
+  ],
+  "unresolved_implementation_defects": [],
+  "validator_evidence": [
+    {
+      "argv": [
+        ".venv/bin/python",
+        "-m",
+        "evaluation_v5.analysis.research_analysis",
+        "validate",
+        "results_v5/protocol-v5.0.0/analysis/research-analysis-20260905T-final"
+      ],
+      "classifications": [
+        "PASS"
+      ],
+      "command": ".venv/bin/python -m evaluation_v5.analysis.research_analysis validate results_v5/protocol-v5.0.0/analysis/research-analysis-20260905T-final",
+      "environment": {
+        "platform": "macOS-15.3.2-arm64-arm-64bit-Mach-O",
+        "python_implementation": "CPython",
+        "python_version": "3.14.6",
+        "working_directory": "."
+      },
+      "evidence_id": "claim_registry",
+      "exit_code": 0,
+      "finished_at_utc": "2026-09-11T02:11:28.845842Z",
+      "git_dirty_before": false,
+      "git_revision": "ec73326c947bcf3f80f71888e939dc03877f83a2",
+      "kind": "validator",
+      "manifest": {
+        "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final5/evidence/validator/claim_registry/manifest.json",
+        "sha256": "01e5f63468c8d4a2a5d07295facdb6d2c1e31f85d03849d364039c7857b2f044"
+      },
+      "nonzero_reasons": [],
+      "record": {
+        "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final5/evidence/validator/claim_registry/record.json",
+        "sha256": "6a8648b972eacd048b851a786d4aa621cd3454f06f37bfd15dea832869288b2a"
+      },
+      "schema_version": "protocol-v5-command-evidence-v1.1.0",
+      "started_at_utc": "2026-09-11T02:11:27.623511Z",
+      "stderr": {
+        "path": "stderr.txt",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "stdout": {
+        "path": "stdout.txt",
+        "sha256": "1310ad709dc0682235c91acc11b4254779c80fe028d83aa2c8c0d7a6ff0a3bd7"
+      }
+    },
+    {
+      "argv": [
+        ".venv/bin/python",
+        "-m",
+        "evaluation_v5.final_audit.validator_suite"
+      ],
+      "classifications": [
+        "IMMUTABLE_HISTORICAL_COMPATIBILITY_BOUNDARY"
+      ],
+      "command": ".venv/bin/python -m evaluation_v5.final_audit.validator_suite",
+      "environment": {
+        "platform": "macOS-15.3.2-arm64-arm-64bit-Mach-O",
+        "python_implementation": "CPython",
+        "python_version": "3.14.6",
+        "working_directory": "."
+      },
+      "evidence_id": "e5",
+      "exit_code": 2,
+      "finished_at_utc": "2026-09-11T02:11:44.302991Z",
+      "git_dirty_before": false,
+      "git_revision": "ec73326c947bcf3f80f71888e939dc03877f83a2",
+      "kind": "validator",
+      "manifest": {
+        "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final5/evidence/validator/e5/manifest.json",
+        "sha256": "9b1106ad66cf069a31125f1a28d338609d1eda4cb353cab96f6daa62dccf5a85"
+      },
+      "nonzero_reasons": [
+        {
+          "category": "IMMUTABLE_HISTORICAL_COMPATIBILITY_BOUNDARY",
+          "code": "LEGACY_E5_OBSERVED_MANIFEST_LACKS_CURRENT_RETRIEVAL_CONFIGURATION"
+        }
+      ],
+      "record": {
+        "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final5/evidence/validator/e5/record.json",
+        "sha256": "a41f05f005df891e2106ebc50920d5070a3a5071f3a2e36a192a6a146b9b06d9"
+      },
+      "schema_version": "protocol-v5-command-evidence-v1.1.0",
+      "started_at_utc": "2026-09-11T02:11:44.151746Z",
+      "stderr": {
+        "path": "stderr.txt",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "stdout": {
+        "path": "stdout.txt",
+        "sha256": "de674af0c13352a63e1dc1f4cb47230587f6844ddb13e8008323acd13b2f00b5"
+      }
+    },
+    {
+      "argv": [
+        ".venv/bin/python",
+        "-m",
+        "cluster_evaluation.validate_artifacts"
+      ],
+      "classifications": [
+        "PASS"
+      ],
+      "command": ".venv/bin/python -m cluster_evaluation.validate_artifacts",
+      "environment": {
+        "platform": "macOS-15.3.2-arm64-arm-64bit-Mach-O",
+        "python_implementation": "CPython",
+        "python_version": "3.14.6",
+        "working_directory": "."
+      },
+      "evidence_id": "historical_cluster",
+      "exit_code": 0,
+      "finished_at_utc": "2026-09-11T02:11:28.116864Z",
+      "git_dirty_before": false,
+      "git_revision": "ec73326c947bcf3f80f71888e939dc03877f83a2",
+      "kind": "validator",
+      "manifest": {
+        "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final5/evidence/validator/historical_cluster/manifest.json",
+        "sha256": "f474fe1302604746a8dc6580ceaf714fc4e3f1c3ecb19aac4c83e6f5201a0ebb"
+      },
+      "nonzero_reasons": [],
+      "record": {
+        "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final5/evidence/validator/historical_cluster/record.json",
+        "sha256": "b17a1fc0e4e950b4b6115473ea5acd240d19a933b24aeebba84d9fb2eceafc46"
+      },
+      "schema_version": "protocol-v5-command-evidence-v1.1.0",
+      "started_at_utc": "2026-09-11T02:11:27.607677Z",
+      "stderr": {
+        "path": "stderr.txt",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "stdout": {
+        "path": "stdout.txt",
+        "sha256": "f3d97f147fcd1f46828688f68b8a1635a6c2cfb8c95fd8ca3f844923682e97c7"
+      }
+    },
+    {
+      "argv": [
+        ".venv/bin/python",
+        "-m",
+        "evaluation_v5.isolation_audit"
+      ],
+      "classifications": [
+        "PASS"
+      ],
+      "command": ".venv/bin/python -m evaluation_v5.isolation_audit",
+      "environment": {
+        "platform": "macOS-15.3.2-arm64-arm-64bit-Mach-O",
+        "python_implementation": "CPython",
+        "python_version": "3.14.6",
+        "working_directory": "."
+      },
+      "evidence_id": "isolation",
+      "exit_code": 0,
+      "finished_at_utc": "2026-09-11T02:11:29.056431Z",
+      "git_dirty_before": false,
+      "git_revision": "ec73326c947bcf3f80f71888e939dc03877f83a2",
+      "kind": "validator",
+      "manifest": {
+        "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final5/evidence/validator/isolation/manifest.json",
+        "sha256": "de39065ee9db5688f3375d1403629bd32125630e70dbc6292f8e6a33037e8da3"
+      },
+      "nonzero_reasons": [],
+      "record": {
+        "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final5/evidence/validator/isolation/record.json",
+        "sha256": "f2611c0a162087882126003e3d86696df9a7d350aaf5b05c7ce77c783af72f74"
+      },
+      "schema_version": "protocol-v5-command-evidence-v1.1.0",
+      "started_at_utc": "2026-09-11T02:11:27.656270Z",
+      "stderr": {
+        "path": "stderr.txt",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "stdout": {
+        "path": "stdout.txt",
+        "sha256": "71bdc1e3b2923644189ceb4c0a287dfe2218213ece1d8cd54793633c06da2ed9"
+      }
+    },
+    {
+      "argv": [
+        ".venv/bin/python",
+        "scripts/validate-portable-evidence.py"
+      ],
+      "classifications": [
+        "PASS"
+      ],
+      "command": ".venv/bin/python scripts/validate-portable-evidence.py",
+      "environment": {
+        "platform": "macOS-15.3.2-arm64-arm-64bit-Mach-O",
+        "python_implementation": "CPython",
+        "python_version": "3.14.6",
+        "working_directory": "."
+      },
+      "evidence_id": "protocol_v4",
+      "exit_code": 0,
+      "finished_at_utc": "2026-09-11T02:11:28.892362Z",
+      "git_dirty_before": false,
+      "git_revision": "ec73326c947bcf3f80f71888e939dc03877f83a2",
+      "kind": "validator",
+      "manifest": {
+        "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final5/evidence/validator/protocol_v4/manifest.json",
+        "sha256": "ff62d66c9363264b0348ecbc0a8cb099305f558f5c263bcef2ae35cf8a64f24a"
+      },
+      "nonzero_reasons": [],
+      "record": {
+        "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final5/evidence/validator/protocol_v4/record.json",
+        "sha256": "99c12495df30304397a9ba62ff53392cb96c6071e940ff10f98184394e7da319"
+      },
+      "schema_version": "protocol-v5-command-evidence-v1.1.0",
+      "started_at_utc": "2026-09-11T02:11:27.615658Z",
+      "stderr": {
+        "path": "stderr.txt",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "stdout": {
+        "path": "stdout.txt",
+        "sha256": "9303178ec16546baf69ba67c90f83856749b52d22256261db0e4bd4901bdb0f9"
+      }
+    },
+    {
+      "argv": [
+        ".venv/bin/python",
+        "-m",
+        "evaluation_v5.final_audit.publication",
+        "verify",
+        "--attestation",
+        "/tmp/protocol-v5-final5-evidence.zqPRFY/publication-delta-007542f-7ce1e9c.json"
+      ],
+      "classifications": [
+        "PASS"
+      ],
+      "command": ".venv/bin/python -m evaluation_v5.final_audit.publication verify --attestation /tmp/protocol-v5-final5-evidence.zqPRFY/publication-delta-007542f-7ce1e9c.json",
+      "environment": {
+        "platform": "macOS-15.3.2-arm64-arm-64bit-Mach-O",
+        "python_implementation": "CPython",
+        "python_version": "3.14.6",
+        "working_directory": "."
+      },
+      "evidence_id": "publication_delta",
+      "exit_code": 0,
+      "finished_at_utc": "2026-09-11T02:11:09.805408Z",
+      "git_dirty_before": false,
+      "git_revision": "ec73326c947bcf3f80f71888e939dc03877f83a2",
+      "kind": "validator",
+      "manifest": {
+        "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final5/evidence/validator/publication_delta/manifest.json",
+        "sha256": "1e92d01b0914ae8af72b9ad555103d6b7896cc5a0d7a7c48ad5067adf2c76c7e"
+      },
+      "nonzero_reasons": [],
+      "record": {
+        "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final5/evidence/validator/publication_delta/record.json",
+        "sha256": "88f99ed13ae3327afaf3c12edc477004e55772edec8114934a7a8d75f4e89a76"
+      },
+      "schema_version": "protocol-v5-command-evidence-v1.1.0",
+      "started_at_utc": "2026-09-11T02:11:07.637164Z",
+      "stderr": {
+        "path": "stderr.txt",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "stdout": {
+        "path": "stdout.txt",
+        "sha256": "76e55cdb02eecbd4ae5f96e3b556f0ccea67d9dbbbd87da2b9f772dfd80c6616"
+      }
+    },
+    {
+      "argv": [
+        ".venv/bin/python",
+        "-m",
+        "cluster_evaluation.raw_integrity"
+      ],
+      "classifications": [
+        "PASS"
+      ],
+      "command": ".venv/bin/python -m cluster_evaluation.raw_integrity",
+      "environment": {
+        "platform": "macOS-15.3.2-arm64-arm-64bit-Mach-O",
+        "python_implementation": "CPython",
+        "python_version": "3.14.6",
+        "working_directory": "."
+      },
+      "evidence_id": "raw_integrity",
+      "exit_code": 0,
+      "finished_at_utc": "2026-09-11T02:11:28.052200Z",
+      "git_dirty_before": false,
+      "git_revision": "ec73326c947bcf3f80f71888e939dc03877f83a2",
+      "kind": "validator",
+      "manifest": {
+        "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final5/evidence/validator/raw_integrity/manifest.json",
+        "sha256": "9b083e7c87cbb687755b9788f9f80f79ca9995c1cc52b89818aac2309ae696a1"
+      },
+      "nonzero_reasons": [],
+      "record": {
+        "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final5/evidence/validator/raw_integrity/record.json",
+        "sha256": "b6be1805f3bc00c91de74b7f1aa1e47dfeddda60cb77db33d36bed915b75672e"
+      },
+      "schema_version": "protocol-v5-command-evidence-v1.1.0",
+      "started_at_utc": "2026-09-11T02:11:27.615166Z",
+      "stderr": {
+        "path": "stderr.txt",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "stdout": {
+        "path": "stdout.txt",
+        "sha256": "e6e363a09b4c700c45d598574eeb7157e1ff79782b3f012446a714864ae9029f"
+      }
+    },
+    {
+      "argv": [
+        ".venv/bin/python",
+        "-m",
+        "evaluation_v5.resource.efficiency_runner",
+        "validate"
+      ],
+      "classifications": [
+        "PASS"
+      ],
+      "command": ".venv/bin/python -m evaluation_v5.resource.efficiency_runner validate",
+      "environment": {
+        "platform": "macOS-15.3.2-arm64-arm-64bit-Mach-O",
+        "python_implementation": "CPython",
+        "python_version": "3.14.6",
+        "working_directory": "."
+      },
+      "evidence_id": "resource_efficiency",
+      "exit_code": 0,
+      "finished_at_utc": "2026-09-11T02:11:28.778355Z",
+      "git_dirty_before": false,
+      "git_revision": "ec73326c947bcf3f80f71888e939dc03877f83a2",
+      "kind": "validator",
+      "manifest": {
+        "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final5/evidence/validator/resource_efficiency/manifest.json",
+        "sha256": "45219003f0e05ca8b42469a90d08751f39696139d3c41b022ce44b3ed815e1e6"
+      },
+      "nonzero_reasons": [],
+      "record": {
+        "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final5/evidence/validator/resource_efficiency/record.json",
+        "sha256": "d81e913b6f14f8bda4b867dcfd2ab30b06e5ea07c7512500eadffcb6248e131c"
+      },
+      "schema_version": "protocol-v5-command-evidence-v1.1.0",
+      "started_at_utc": "2026-09-11T02:11:27.613495Z",
+      "stderr": {
+        "path": "stderr.txt",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "stdout": {
+        "path": "stdout.txt",
+        "sha256": "158081e7432464346a2ba04089f31bebb5b6026f39d72f122eacd46b090ffcab"
+      }
+    },
+    {
+      "argv": [
+        ".venv/bin/python",
+        "-m",
+        "evaluation_v5.resource",
+        "validate-manifest"
+      ],
+      "classifications": [
+        "PASS"
+      ],
+      "command": ".venv/bin/python -m evaluation_v5.resource validate-manifest",
+      "environment": {
+        "platform": "macOS-15.3.2-arm64-arm-64bit-Mach-O",
+        "python_implementation": "CPython",
+        "python_version": "3.14.6",
+        "working_directory": "."
+      },
+      "evidence_id": "resource_oracle",
+      "exit_code": 0,
+      "finished_at_utc": "2026-09-11T02:11:30.940988Z",
+      "git_dirty_before": false,
+      "git_revision": "ec73326c947bcf3f80f71888e939dc03877f83a2",
+      "kind": "validator",
+      "manifest": {
+        "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final5/evidence/validator/resource_oracle/manifest.json",
+        "sha256": "5df7c8ea7d9a098877775a428555708d070c5d22276bd7d27c4752605fc88890"
+      },
+      "nonzero_reasons": [],
+      "record": {
+        "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final5/evidence/validator/resource_oracle/record.json",
+        "sha256": "24134b42fc23cb7d0f50211ad103997c4756619108a00d4b703caeab131e7535"
+      },
+      "schema_version": "protocol-v5-command-evidence-v1.1.0",
+      "started_at_utc": "2026-09-11T02:11:27.642844Z",
+      "stderr": {
+        "path": "stderr.txt",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "stdout": {
+        "path": "stdout.txt",
+        "sha256": "6fcf783bc636410a8bf50115b865e87159202475858aa5c5fa1a970910d7044f"
+      }
+    }
+  ],
+  "verdict": "16/16 SATISFIED",
+  "workflow_revision_mismatch_disposition": {
+    "artifact": "completion-audit-20260910-final3",
+    "bundled_workflow_revision": "a297f622889761145e20567dab9f5fe42f275cb2",
+    "completion_revision": "ad098134e7a2d74cab75dfbaa4519bdaf582fbb0",
+    "disposition": "SUPERSEDED_WORKFLOW_REVISION_MISMATCH",
+    "historical_artifacts_mutated": false,
+    "revision_consistent": false
+  },
+  "workflows": [
+    {
+      "argv": [
+        "make",
+        "v5-analyze",
+        "V5_RUN_ID=final-audit-20260911-final5"
+      ],
+      "classifications": [
+        "IMMUTABLE_HISTORICAL_COMPATIBILITY_BOUNDARY",
+        "INTENTIONALLY_UNAVAILABLE_REAL_EXPERIMENT_EVIDENCE"
+      ],
+      "command": "make v5-analyze V5_RUN_ID=final-audit-20260911-final5",
+      "environment": {
+        "platform": "macOS-15.3.2-arm64-arm-64bit-Mach-O",
+        "python_implementation": "CPython",
+        "python_version": "3.14.6",
+        "working_directory": "."
+      },
+      "evidence_id": "v5_analyze",
+      "exit_code": 2,
+      "finished_at_utc": "2026-09-11T02:12:38.215707Z",
+      "git_dirty_before": false,
+      "git_revision": "ec73326c947bcf3f80f71888e939dc03877f83a2",
+      "kind": "workflow",
+      "manifest": {
+        "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final5/evidence/workflow/v5_analyze/manifest.json",
+        "sha256": "8a4c0c8d86c81f8dd63c199a24d43a4c211fabc8c3aa6e924500c68d8370fd0c"
+      },
+      "nonzero_reasons": [
+        {
+          "category": "IMMUTABLE_HISTORICAL_COMPATIBILITY_BOUNDARY",
+          "code": "HISTORICAL_E3_RECORDED_CHECKSUM_MISMATCH"
+        },
+        {
+          "category": "IMMUTABLE_HISTORICAL_COMPATIBILITY_BOUNDARY",
+          "code": "LEGACY_E5_OBSERVED_MANIFEST_MISSING_CURRENT_RETRIEVAL_CONFIGURATION"
+        },
+        {
+          "category": "IMMUTABLE_HISTORICAL_COMPATIBILITY_BOUNDARY",
+          "code": "OBSERVED_E5_PROVENANCE_DIFFERS_FROM_DESIGN_SNAPSHOT"
+        },
+        {
+          "category": "INTENTIONALLY_UNAVAILABLE_REAL_EXPERIMENT_EVIDENCE",
+          "code": "AUTHENTICATED_REAL_CONFIRMATORY_E1_TO_E5_EVIDENCE_UNAVAILABLE"
+        },
+        {
+          "category": "INTENTIONALLY_UNAVAILABLE_REAL_EXPERIMENT_EVIDENCE",
+          "code": "AUTHORITATIVE_FINAL_FREEZE_UNAVAILABLE"
+        },
+        {
+          "category": "INTENTIONALLY_UNAVAILABLE_REAL_EXPERIMENT_EVIDENCE",
+          "code": "EXTERNAL_CUSTODY_ISOLATION_ATTESTATION_UNAVAILABLE"
+        },
+        {
+          "category": "INTENTIONALLY_UNAVAILABLE_REAL_EXPERIMENT_EVIDENCE",
+          "code": "SEALED_SPLIT_CUSTODY_ATTESTATION_UNAVAILABLE"
+        }
+      ],
+      "record": {
+        "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final5/evidence/workflow/v5_analyze/record.json",
+        "sha256": "04060bba6f8c4d38211075878c1f320981eec1308cfeb16060d6371f58fa07c1"
+      },
+      "schema_version": "protocol-v5-command-evidence-v1.1.0",
+      "started_at_utc": "2026-09-11T02:12:37.210968Z",
+      "stderr": {
+        "path": "stderr.txt",
+        "sha256": "87cae168912b6aa7b2c4df1f83c0b4c7604b0f4ff09f6cc12abfcd8193bcf070"
+      },
+      "stdout": {
+        "path": "stdout.txt",
+        "sha256": "9542796f95ac59d70cdfeef00db351ec496bf7c27c4bfc90b7b9cea08e4df7e7"
+      }
+    },
+    {
+      "argv": [
+        "make",
+        "v5-audit",
+        "V5_RUN_ID=final-audit-20260911-final5"
+      ],
+      "classifications": [
+        "IMMUTABLE_HISTORICAL_COMPATIBILITY_BOUNDARY",
+        "INTENTIONALLY_UNAVAILABLE_REAL_EXPERIMENT_EVIDENCE"
+      ],
+      "command": "make v5-audit V5_RUN_ID=final-audit-20260911-final5",
+      "environment": {
+        "platform": "macOS-15.3.2-arm64-arm-64bit-Mach-O",
+        "python_implementation": "CPython",
+        "python_version": "3.14.6",
+        "working_directory": "."
+      },
+      "evidence_id": "v5_audit",
+      "exit_code": 2,
+      "finished_at_utc": "2026-09-11T02:13:03.963906Z",
+      "git_dirty_before": false,
+      "git_revision": "ec73326c947bcf3f80f71888e939dc03877f83a2",
+      "kind": "workflow",
+      "manifest": {
+        "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final5/evidence/workflow/v5_audit/manifest.json",
+        "sha256": "716ab59038306ccd83bfd153e55d510379c626443fdcf50eee9f725e7659f510"
+      },
+      "nonzero_reasons": [
+        {
+          "category": "IMMUTABLE_HISTORICAL_COMPATIBILITY_BOUNDARY",
+          "code": "HISTORICAL_E3_RECORDED_CHECKSUM_MISMATCH"
+        },
+        {
+          "category": "IMMUTABLE_HISTORICAL_COMPATIBILITY_BOUNDARY",
+          "code": "LEGACY_E5_OBSERVED_MANIFEST_MISSING_CURRENT_RETRIEVAL_CONFIGURATION"
+        },
+        {
+          "category": "IMMUTABLE_HISTORICAL_COMPATIBILITY_BOUNDARY",
+          "code": "OBSERVED_E5_PROVENANCE_DIFFERS_FROM_DESIGN_SNAPSHOT"
+        },
+        {
+          "category": "INTENTIONALLY_UNAVAILABLE_REAL_EXPERIMENT_EVIDENCE",
+          "code": "AUTHENTICATED_REAL_CONFIRMATORY_E1_TO_E5_EVIDENCE_UNAVAILABLE"
+        },
+        {
+          "category": "INTENTIONALLY_UNAVAILABLE_REAL_EXPERIMENT_EVIDENCE",
+          "code": "AUTHORITATIVE_FINAL_FREEZE_UNAVAILABLE"
+        },
+        {
+          "category": "INTENTIONALLY_UNAVAILABLE_REAL_EXPERIMENT_EVIDENCE",
+          "code": "EXTERNAL_CUSTODY_ISOLATION_ATTESTATION_UNAVAILABLE"
+        },
+        {
+          "category": "INTENTIONALLY_UNAVAILABLE_REAL_EXPERIMENT_EVIDENCE",
+          "code": "SEALED_SPLIT_CUSTODY_ATTESTATION_UNAVAILABLE"
+        }
+      ],
+      "record": {
+        "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final5/evidence/workflow/v5_audit/record.json",
+        "sha256": "be7ec94ce35420ccba5bc2dd451c8d4fe77af69b56158cc859e3e4e33731b0da"
+      },
+      "schema_version": "protocol-v5-command-evidence-v1.1.0",
+      "started_at_utc": "2026-09-11T02:13:02.846726Z",
+      "stderr": {
+        "path": "stderr.txt",
+        "sha256": "b370955b77f023a8cc3c873ce6dc64136158f8122cb72da3bc728473013d3d9c"
+      },
+      "stdout": {
+        "path": "stdout.txt",
+        "sha256": "2ec77e31d1c8bdfae9650e0bce74dbe198e520ce1e1bcf37246317b2f26e2169"
+      }
+    },
+    {
+      "argv": [
+        "make",
+        "v5-figures",
+        "V5_RUN_ID=final-audit-20260911-final5"
+      ],
+      "classifications": [
+        "IMMUTABLE_HISTORICAL_COMPATIBILITY_BOUNDARY",
+        "INTENTIONALLY_UNAVAILABLE_REAL_EXPERIMENT_EVIDENCE"
+      ],
+      "command": "make v5-figures V5_RUN_ID=final-audit-20260911-final5",
+      "environment": {
+        "platform": "macOS-15.3.2-arm64-arm-64bit-Mach-O",
+        "python_implementation": "CPython",
+        "python_version": "3.14.6",
+        "working_directory": "."
+      },
+      "evidence_id": "v5_figures",
+      "exit_code": 2,
+      "finished_at_utc": "2026-09-11T02:12:49.990240Z",
+      "git_dirty_before": false,
+      "git_revision": "ec73326c947bcf3f80f71888e939dc03877f83a2",
+      "kind": "workflow",
+      "manifest": {
+        "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final5/evidence/workflow/v5_figures/manifest.json",
+        "sha256": "1da1a407fbf83ee45dac4e0cd8d8f5d36ae034799cc702404a1ac243037b8cd6"
+      },
+      "nonzero_reasons": [
+        {
+          "category": "IMMUTABLE_HISTORICAL_COMPATIBILITY_BOUNDARY",
+          "code": "HISTORICAL_E3_RECORDED_CHECKSUM_MISMATCH"
+        },
+        {
+          "category": "IMMUTABLE_HISTORICAL_COMPATIBILITY_BOUNDARY",
+          "code": "LEGACY_E5_OBSERVED_MANIFEST_MISSING_CURRENT_RETRIEVAL_CONFIGURATION"
+        },
+        {
+          "category": "IMMUTABLE_HISTORICAL_COMPATIBILITY_BOUNDARY",
+          "code": "OBSERVED_E5_PROVENANCE_DIFFERS_FROM_DESIGN_SNAPSHOT"
+        },
+        {
+          "category": "INTENTIONALLY_UNAVAILABLE_REAL_EXPERIMENT_EVIDENCE",
+          "code": "AUTHENTICATED_REAL_CONFIRMATORY_E1_TO_E5_EVIDENCE_UNAVAILABLE"
+        },
+        {
+          "category": "INTENTIONALLY_UNAVAILABLE_REAL_EXPERIMENT_EVIDENCE",
+          "code": "AUTHORITATIVE_FINAL_FREEZE_UNAVAILABLE"
+        },
+        {
+          "category": "INTENTIONALLY_UNAVAILABLE_REAL_EXPERIMENT_EVIDENCE",
+          "code": "EXTERNAL_CUSTODY_ISOLATION_ATTESTATION_UNAVAILABLE"
+        },
+        {
+          "category": "INTENTIONALLY_UNAVAILABLE_REAL_EXPERIMENT_EVIDENCE",
+          "code": "SEALED_SPLIT_CUSTODY_ATTESTATION_UNAVAILABLE"
+        }
+      ],
+      "record": {
+        "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final5/evidence/workflow/v5_figures/record.json",
+        "sha256": "d864e0b21086a04fbbdb94957d3d60b8aceeec030abaa1ba9d83d214422a789d"
+      },
+      "schema_version": "protocol-v5-command-evidence-v1.1.0",
+      "started_at_utc": "2026-09-11T02:12:48.840263Z",
+      "stderr": {
+        "path": "stderr.txt",
+        "sha256": "410ce87e0492cc704fbc44635da6610c5319c5bfd972caa7c7590adc97a1672d"
+      },
+      "stdout": {
+        "path": "stdout.txt",
+        "sha256": "6fee907674debcdb1896cdb77be766c9a63c1e165cec4d363f43f195938a554f"
+      }
+    },
+    {
+      "argv": [
+        "make",
+        "v5-validate",
+        "V5_RUN_ID=final-audit-20260911-final5"
+      ],
+      "classifications": [
+        "IMMUTABLE_HISTORICAL_COMPATIBILITY_BOUNDARY",
+        "INTENTIONALLY_UNAVAILABLE_REAL_EXPERIMENT_EVIDENCE"
+      ],
+      "command": "make v5-validate V5_RUN_ID=final-audit-20260911-final5",
+      "environment": {
+        "platform": "macOS-15.3.2-arm64-arm-64bit-Mach-O",
+        "python_implementation": "CPython",
+        "python_version": "3.14.6",
+        "working_directory": "."
+      },
+      "evidence_id": "v5_validate",
+      "exit_code": 2,
+      "finished_at_utc": "2026-09-11T02:12:24.071469Z",
+      "git_dirty_before": false,
+      "git_revision": "ec73326c947bcf3f80f71888e939dc03877f83a2",
+      "kind": "workflow",
+      "manifest": {
+        "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final5/evidence/workflow/v5_validate/manifest.json",
+        "sha256": "2af57b83bd2f2bccb7c9540b7db4947d0e3d8be18e12c69cc0d41d75d0302005"
+      },
+      "nonzero_reasons": [
+        {
+          "category": "IMMUTABLE_HISTORICAL_COMPATIBILITY_BOUNDARY",
+          "code": "HISTORICAL_E3_RECORDED_CHECKSUM_MISMATCH"
+        },
+        {
+          "category": "IMMUTABLE_HISTORICAL_COMPATIBILITY_BOUNDARY",
+          "code": "LEGACY_E5_OBSERVED_MANIFEST_MISSING_CURRENT_RETRIEVAL_CONFIGURATION"
+        },
+        {
+          "category": "IMMUTABLE_HISTORICAL_COMPATIBILITY_BOUNDARY",
+          "code": "OBSERVED_E5_PROVENANCE_DIFFERS_FROM_DESIGN_SNAPSHOT"
+        },
+        {
+          "category": "INTENTIONALLY_UNAVAILABLE_REAL_EXPERIMENT_EVIDENCE",
+          "code": "AUTHENTICATED_REAL_CONFIRMATORY_E1_TO_E5_EVIDENCE_UNAVAILABLE"
+        },
+        {
+          "category": "INTENTIONALLY_UNAVAILABLE_REAL_EXPERIMENT_EVIDENCE",
+          "code": "AUTHORITATIVE_FINAL_FREEZE_UNAVAILABLE"
+        },
+        {
+          "category": "INTENTIONALLY_UNAVAILABLE_REAL_EXPERIMENT_EVIDENCE",
+          "code": "EXTERNAL_CUSTODY_ISOLATION_ATTESTATION_UNAVAILABLE"
+        },
+        {
+          "category": "INTENTIONALLY_UNAVAILABLE_REAL_EXPERIMENT_EVIDENCE",
+          "code": "SEALED_SPLIT_CUSTODY_ATTESTATION_UNAVAILABLE"
+        }
+      ],
+      "record": {
+        "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final5/evidence/workflow/v5_validate/record.json",
+        "sha256": "35d453157e2af046132cdd25af34615ad366b5ad09853c7c026eb19dc95f41a7"
+      },
+      "schema_version": "protocol-v5-command-evidence-v1.1.0",
+      "started_at_utc": "2026-09-11T02:12:20.155831Z",
+      "stderr": {
+        "path": "stderr.txt",
+        "sha256": "b93dc66191d27036b7663f87d2d6aeedad282f61c81f6e742e4651808569b32d"
+      },
+      "stdout": {
+        "path": "stdout.txt",
+        "sha256": "eae04aa624aee385a469242752a55ea14a989c3f4da702b74339fd2ab50d74f3"
+      }
+    }
+  ]
+}

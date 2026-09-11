@@ -1,0 +1,15 @@
+{
+  "created_at_utc": "2026-09-10T08:43:12Z",
+  "git_revision": "a297f622889761145e20567dab9f5fe42f275cb2",
+  "is_experiment_evidence": false,
+  "output_checksums": {
+    "COMPLETION_AUDIT.md": "3332c2258c793aab8b653c36b3e70e7ef0e541cf8b707ec63ab78c9363aa5948",
+    "completion-audit.json": "d5dee201396dc98ef7b57143b812570cf28eb6899eab89059d458885b983bc86",
+    "evidence/adversarial-regressions.xml": "20e4cac6bb57b222c79f9e29de7875ca780d652ea6ea3055fb5f1a1e87c0688a",
+    "evidence/workflow-results.json": "d3e7732408e6775c940c805435695c3ef722d21142577a6c910ec29c6eb83bac"
+  },
+  "protocol_version": "5.0.0",
+  "schema_version": "protocol-v5-completion-audit-package-v1.0.0",
+  "status": "COMPLETE",
+  "supports_thesis_claim": false
+}

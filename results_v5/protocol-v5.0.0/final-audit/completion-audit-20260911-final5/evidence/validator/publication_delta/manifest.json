@@ -1,0 +1,11 @@
+{
+  "evidence_id": "publication_delta",
+  "git_revision": "ec73326c947bcf3f80f71888e939dc03877f83a2",
+  "kind": "validator",
+  "output_checksums": {
+    "record.json": "88f99ed13ae3327afaf3c12edc477004e55772edec8114934a7a8d75f4e89a76",
+    "stderr.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stdout.txt": "76e55cdb02eecbd4ae5f96e3b556f0ccea67d9dbbbd87da2b9f772dfd80c6616"
+  },
+  "schema_version": "protocol-v5-command-evidence-package-v1.1.0"
+}

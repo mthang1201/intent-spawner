@@ -1,0 +1,7 @@
+{
+  "claims_validated": 9,
+  "files_validated": 16,
+  "package_status": "INCOMPLETE",
+  "schema_version": "protocol-v5-research-analysis-package-v1.0.0",
+  "status": "PASS"
+}

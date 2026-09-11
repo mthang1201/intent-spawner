@@ -372,7 +372,15 @@ def analyze(inputs: Inputs, audit: dict, output: Path) -> dict:
                         }
                     )
             elif package["kind"] == "research_analysis":
-                entry.update(reason="Historical aggregate analysis preserved and reference checksums validated; current claim inventory is regenerated separately.", status="PRESERVED")
+                selected = relative == inputs.lock.get("claim_analysis_package")
+                entry.update(
+                    reason=(
+                        "Authenticated evaluated-claim registry selected as the final audit input; claim decisions are consumed without reevaluation."
+                        if selected else
+                        "Historical aggregate analysis preserved and reference checksums validated; it is not the selected claim authority."
+                    ),
+                    status="CONSUMED" if selected else "PRESERVED",
+                )
             elif package["kind"] == "resource_plan":
                 result["defense_sources"]["resources"].append(inputs.ref(relative + "/plan.json", "/primary_trial_count"))
         except Exception as exc:

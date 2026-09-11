@@ -31,21 +31,45 @@ def functional_rows(analysis: dict) -> list[dict]:
     return rows
 
 
+def _compact(value) -> str:
+    if value is None or value == {} or value == []:
+        return "N/A"
+    if isinstance(value, float):
+        return f"{value:.6g}"
+    if isinstance(value, (dict, list)):
+        import json
+        return json.dumps(value, sort_keys=True, ensure_ascii=False, separators=(",", ":"))
+    return str(value)
+
+
+def _claim_result(claim: dict) -> str:
+    metrics = claim.get("normalized_metrics") or {}
+    return claim["claim_status"] + (("; " + _compact(metrics)) if metrics else "")
+
+
 def defense_rows(analysis: dict, format_source=None) -> list[list]:
-    current = functional_rows(analysis)
-    images = "; ".join(f"{row['run']}: {row['system']} {row['gold_image_matches']}/{row['recommendations']} image-label matches"
-                       for row in current) or "NOT EXECUTED"
-    def refs(key):
-        formatter = format_source or (lambda r: r["path"] + " " + r.get("locator", "") + " SHA-256 " + r["sha256"])
-        return "; ".join(formatter(r) for r in analysis["defense_sources"][key])
+    claims = {row["id"]: row for row in analysis.get("claims", [])}
+
+    def outcome(claim_id: str) -> str:
+        return _claim_result(claims[claim_id]) if claim_id in claims else "UNSUPPORTED"
+
+    def claim_ref(claim_id: str) -> str:
+        if claim_id not in claims:
+            return "N/A"
+        ref = claims[claim_id]["source"]
+        formatter = format_source or (
+            lambda row: row["path"] + " " + row.get("locator", "") + " SHA-256 " + row["sha256"]
+        )
+        return formatter(ref)
+
     return [
-        ["satisfaction", "E3", "SEQ ease; SUS usability", "NOT EXECUTED", refs("human")],
-        ["time saving", "E3", "Paired decision time", "NOT EXECUTED", refs("human")],
-        ["correct image", "E5 functional", "Gold image match; required functional probes", images + "; current observations only; no confirmatory inference", refs("functional")],
-        ["image storage reuse", "E5 storage", "LogicalImageBytes; UniqueLayerBytes; marginal reuse", "NOT EXECUTED", refs("storage")],
-        ["additional/fine-grained profiles", "E4", "Dynamic CPU/memory oracle error; allocation coverage", "NOT EXECUTED", refs("resources")],
-        ["resource saving", "E4", "CPU/memory request cost per successful workload; reliability", "NOT EXECUTED", refs("resources")],
-        ["flexible natural-language interaction", "E2", "Family-level robustness across equivalent variants", "NOT EXECUTED", refs("offline")],
+        ["satisfaction", "E3", "SEQ ease; SUS usability", outcome("H4"), claim_ref("H4")],
+        ["time saving", "E3", "Paired decision time and selection effectiveness", outcome("H3"), claim_ref("H3")],
+        ["correct image", "E5 functional", "Gold image match; required functional probes", outcome("H7F"), claim_ref("H7F")],
+        ["image storage reuse", "E5 storage", "LogicalImageBytes; UniqueLayerBytes; marginal reuse", outcome("H7"), claim_ref("H7")],
+        ["additional/fine-grained profiles", "E4", "Dynamic CPU/memory oracle error; allocation coverage", outcome("H6"), claim_ref("H6")],
+        ["resource saving", "E4", "CPU/memory request cost per successful workload; reliability", outcome("H5"), claim_ref("H5")],
+        ["flexible natural-language interaction", "E2", "Family-level robustness across equivalent variants", outcome("H2"), claim_ref("H2")],
     ]
 
 
@@ -64,13 +88,20 @@ def render_report(inputs: Inputs, audit: dict, analysis: dict, figures: dict, ta
             table([[c["id"], c["title"], c["verdict"], c["reason"]] for c in audit["checks"]],
                   ["ID", "Requirement", "Verdict", "Reason"]), "",
             "Inspect validation/audit.json for content-free missing/checksum findings. Every preserved source remains unchanged.", ""])
+    counts = audit.get("claim_counts") or {}
+    claim_sources = audit.get("claim_evidence_sources") or {}
     lines = ["# Protocol-v5 Final Reproducibility and Evidence Report", "",
-        f"**Audit verdict: {audit['audit_status']}. Confirmatory experiments: NOT EXECUTED. Primary proposed method: P2.**", "",
-        "This report closes the reviewed repository evidence snapshot. Audit completion does not certify that every requirement passed. Design, genuine development execution, historical evidence and confirmatory evidence are separated below.", "",
+        f"**Audit verdict: {audit['audit_status']}. Confirmatory evidence: {audit['confirmatory_status']}. Primary proposed method: {audit['primary_system']}.**", "",
+        "This report is rendered from the checksum-bound input inventory and the explicitly selected evaluated-claim package. It does not rerun claim evaluation or infer a result from a filename, timestamp, or missing value.", "",
         "Input inventory: " + source(audit["source_inventory"]), "",
-        f"The inventory was captured at `{inputs.lock['created_at_utc']}` from Git revision `{inputs.lock['source_git_revision']}`. "
-        "It preserves the bytes found, including damaged or incomplete packages; it is not a retroactive experiment freeze. Each source manifest records its own collection revision, timestamp, dataset and environment. Audit implementation/runtime provenance is recorded in the generated run and stage manifests.", "",
-        "## Research questions and hypotheses", ""]
+        f"The reviewed inventory was captured at `{inputs.lock['created_at_utc']}` from source revision `{inputs.lock['source_git_revision']}`. Historical bytes remain unchanged; current audit runtime provenance is recorded separately in run.json and the sealed stage manifests.", ""]
+    if claim_sources.get("package"):
+        lines += ["Authenticated claim-analysis package: " + source(claim_sources["package"]),
+                  "Evidence selection: " + source(claim_sources["selection"]),
+                  "Evaluated registry: " + source(claim_sources["evaluated_claims"]), ""]
+    else:
+        lines += ["Claim evidence status: **UNSUPPORTED**. " + _compact(claim_sources.get("error")), ""]
+    lines += ["## Research questions and hypotheses", ""]
     if audit.get("audit_output_relative_path"):
         base = inputs.root / audit["audit_output_relative_path"]
         lines[8:8] = ["Archived audit outputs: "
@@ -78,23 +109,22 @@ def render_report(inputs: Inputs, audit: dict, analysis: dict, figures: dict, ta
                       + f"[run provenance]({os.path.relpath(base / 'run.json', target.parent)}), "
                       + f"[regeneration comparisons]({os.path.relpath(base / 'analysis/regeneration.json', target.parent)}).", ""]
     lines.append(table([[q["id"], q["question"]] for q in audit["research_questions"]], ["Question", "Definition"]))
-    lines.append(table([[c["id"], c["research_question"], c["hypothesis"], c["claim_status"]] for c in audit["claims"]],
-                       ["Hypothesis", "RQ", "Predeclared statement", "Confirmatory decision"]))
-    lines += ["Hypotheses and decision predicates are reused from the checksum-bound claim registry. None has sufficient authenticated confirmatory evidence for SUPPORTED or NOT_SUPPORTED. Missing results do not contradict a hypothesis.", "",
+    lines.append(table([[c["id"], c["research_question"], c["hypothesis"], c["claim_status"],
+                         _compact(c.get("normalized_metrics")), "; ".join(c.get("reason_codes") or []) or "—"]
+                        for c in audit["claims"]],
+                       ["Hypothesis", "RQ", "Predeclared statement", "Decision", "Validated result", "Reason codes"]))
+    lines += [f"Authenticated decision counts: SUPPORTED={counts.get('SUPPORTED', 0)}, NOT_SUPPORTED={counts.get('NOT_SUPPORTED', 0)}, NOT_EXECUTED={counts.get('NOT_EXECUTED', 0)}. A NOT_EXECUTED decision is neither a zero effect nor evidence against the hypothesis.", "",
         "## Systems", "",
         table([["B0", "Ordinary/manual JupyterHub selection; no recommendation ranking."],
                ["P1", "Frozen existing rule-based recommender."],
                ["P2", "Structured Intent + hybrid retrieval + deterministic constraints/ranking; main proposed method."],
-               ["P3", "P2 plus grounded LLM reranking; not retained by the development decision."]], ["System", "Definition"]),
+               ["P3", "P2 plus grounded LLM reranking; authenticated state: " + audit.get("p3_state", "UNSUPPORTED") + "."]], ["System", "Definition"]),
         "B0 has no MRR, nDCG or Hit@K outcome. Artifact names containing 'observed-run' do not determine execution status.", "",
         "## Experiment matrix and sample boundaries", "",
-        table([["E1", "P1 vs P2", "Development raw outputs available; component/statistical analysis NOT EXECUTED"],
-               ["E2", "P1 vs P2 natural-language variants", "Formal robustness analysis NOT EXECUTED"],
-               ["E3", "B0 vs P2 human crossover", "NOT EXECUTED; zero participant sessions"],
-               ["E4", "Static Large, P1 Catalog, P2 Catalog, P2 Dynamic", "NOT EXECUTED; planning/readiness packages only"],
-               ["E5 functional", "Image labels, catalog capabilities, container probes", "Archived development packages are legacy-valid; current v1.4 observation NOT EXECUTED"],
-               ["E5 storage", "Shared-layer reuse and catalog expansion", "NOT EXECUTED"],
-               ["E6", "Optional P2 vs P3 confirmation", "NOT EXECUTED; P3 not retained"]], ["Experiment", "Comparison", "Evidence status"])]
+        table([[row["experiment"], row["requirement_id"], row["status"], row["candidate_count"],
+                row["eligible_candidate_count"], "; ".join(row["reason_codes"]) or "—"]
+               for row in audit.get("experiment_states", [])],
+              ["Experiment", "Evidence requirement", "Derived state", "Candidates", "Eligible", "Reason codes"])]
     for counts in analysis["observed_offline_counts"]:
         lines += [f"E1 raw execution: **{counts['records']} records**, **{counts['cases']} cases**, **{counts['families']} workload families**; "
                   + ", ".join(f"{s}: {n} records" for s, n in counts["per_system"].items()) + ". These are development observations, not confirmatory accuracy samples. " + source(counts["source"]), ""]
@@ -102,11 +132,10 @@ def render_report(inputs: Inputs, audit: dict, analysis: dict, figures: dict, ta
         if p["kind"] == "resource_plan" and p["validation"] == "PASS":
             plan = inputs.json(p["path"] + "/plan.json")
             lines += [f"E4 **design only**: {plan['family_count']} workload families × {len(plan['conditions'])} conditions × {plan['repetitions']} repetition blocks = {plan['primary_trial_count']} planned trials. Zero observed hardware trials. " + source(inputs.ref(p["path"] + "/plan.json", "/trials")), ""]
-    lines += ["E3 target enrollment is 36 participants in the readiness design; observed enrollment and measured outcomes are zero. Assignments and synthetic smoke actions are not participant observations.", "",
-        "## Methods and statistical boundaries", "",
-        "E1 preserves paired outputs from frozen P1/P2 on the visible development split. The raw validator recomputes matrix coverage, checksums and case bindings. The current complete component/statistical pipeline requires frozen family gold or compiled split v2; the visible v1 bundle is insufficient. The audit does not fill its missing labels.", "",
-        "Current E5 regeneration requires a checksum-bound Prompt 3 recommendation capability, exact recommendation-record joins, selected image digest/platform identity, and deterministic runtime cleanup. The archived functional packages predate that contract and are retained without reinterpretation. Gold-label agreement, catalog capability declarations and in-container functional success are different constructs. A passing import probe is not proof of GPU hardware, workload success, correct resource allocation, image storage savings or overall recommendation quality.", "",
-        "The workload family is the semantic unit for offline/resource inference. Variants and repeated calls describe within-family variation. Human study analysis follows its participant/task pairing and crossover contract. Image probes share digests across recommendations and are not independent human or semantic samples. Archived E5 packages are not pooled or promoted to current evidence.", "",
+    lines += ["## Methods and statistical boundaries", "",
+        "Only a validated claim package can produce SUPPORTED or NOT_SUPPORTED. Its exact metric values, confidence intervals, counts, effect sizes, tests, reason codes, and lineage are retained in the evaluated registry linked above.", "",
+        "The workload family is the semantic unit for offline and resource inference. Variants and repeated executions describe within-family robustness or stability, not additional independent accuracy samples. E3 uses its frozen participant/task pairing contract. B0 never produces ranking metrics.", "",
+        "Development, historical, synthetic, dry-run, incomplete, and invalid packages may remain visible for traceability, but they cannot be promoted to confirmatory claim evidence.", "",
         "## Exact available development observations", ""]
     rows = functional_rows(analysis)
     lines.append(table([[r["run"], r["system"], f"{r['gold_image_matches']}/{r['recommendations']}",
@@ -135,19 +164,44 @@ def render_report(inputs: Inputs, audit: dict, analysis: dict, figures: dict, ta
                       f"(recorded rate {m['conservative_functional_success_rate']}); catalog-underclaim cases {m['catalog_underclaim_count']}; "
                       f"label-fail/functional-pass cases {m['label_fail_functional_pass_count']}. "
                       + source({**run["metric_source"], "locator": "/systems/" + system}), ""]
-    if rows:
-        lines += ["The image-label match counts do not show an advantage for P2 in these runs. This is a bounded descriptive observation, not a family-level hypothesis test. Current v1.4 rows use verified sealed source provenance; final-freeze and confirmatory-custody requirements remain separate claim boundaries.", ""]
+    lines += ["These development observations are descriptive only. Their presence cannot change the authenticated confirmatory decisions above.", "",
+        "### Evidence-driven claim conclusions", ""]
+    for claim in audit["claims"]:
+        lines += [f"**{claim['id']} — {claim['claim_status']}**. Validated metrics: `{_compact(claim.get('normalized_metrics'))}`. "
+                  f"Confidence intervals: `{_compact(claim.get('confidence_intervals'))}`. Counts: `{_compact(claim.get('counts'))}`. "
+                  f"Effect sizes: `{_compact(claim.get('effect_sizes'))}`. Reason codes: `{'; '.join(claim.get('reason_codes') or []) or 'none'}`. "
+                  + source(claim["source"]), ""]
+    regeneration = inputs.lock.get("e3_readiness_regeneration_package")
+    if regeneration:
+        lines += ["### Historical E3 newline compatibility", "",
+                  "The preserved E3 participant-flow CSV and its historical manifest identity were not rewritten. A versioned package records the current regenerated table under the LF policy plus both preserved identities: "
+                  + source(inputs.ref(regeneration + "/manifest.json")) + ".", ""]
+    scan = audit.get("synthetic_origin_scan") or {}
+    lines += ["### Synthetic-origin scan", "",
+        f"Collector-origin scan: **{scan.get('status', 'UNSUPPORTED')}** across {scan.get('candidate_count', 0)} discovered candidates; synthetic candidates={scan.get('synthetic_candidate_count', 0)}, promoted synthetic candidates={scan.get('promoted_synthetic_count', 0)}, unauthenticated exposed candidates={scan.get('unauthenticated_exposed_count', 0)}. The scan uses collector provenance and claim eligibility, not filenames.", "",
+        "### Isolation parser diagnostic", ""]
+    isolation = audit.get("isolation_diagnostic") or {}
+    finding = isolation.get("finding") or {}
+    repair = isolation.get("repair") or {}
+    if isolation.get("source"):
+        lines += [
+            f"Prior failure classification: **{finding.get('classification', 'UNCLASSIFIED')}**; repair status: **{repair.get('status', 'UNVERIFIED')}**. "
+            f"Artifact `{finding.get('artifact_relative_path', 'unknown')}` at observed SHA-256 `{finding.get('artifact_sha256', 'unknown')}` "
+            f"was a `{finding.get('artifact_role', 'unknown')}` / `{finding.get('artifact_type', 'unknown')}`. "
+            f"Parser `{finding.get('parser', 'unknown')}` encountered schema signature `{finding.get('schema_signature', 'unknown')}` "
+            f"and produced `{finding.get('failure_category', 'unknown')}`. Historical={str(finding.get('historical')).lower()}, "
+            f"immutable-preserved-evidence={str(finding.get('immutable_preserved_evidence')).lower()}, "
+            f"confirmatory-eligible={str(finding.get('eligible_for_confirmatory_execution')).lower()}, "
+            f"thesis-claim-eligible={str(finding.get('eligible_to_support_thesis_claim')).lower()}. "
+            + source(isolation["source"]),
+            "",
+        ]
     else:
-        lines += ["No current v1.4 functional observation is available for performance interpretation. Any reproducible DRY_RUN or synthetic package above remains non-empirical and non-claimable.", ""]
-    lines += ["### Confidence intervals and effect sizes", "",
-        "Protocol-v5 inferential confidence intervals, p-values and standardized effect sizes: **N/A — NOT EXECUTED**. Complete offline gold is unavailable; human, resource and storage experiments were not executed. No interval is inferred from repetitions or recycled probes.", "",
-        "### Failure analysis and P3 decision", "",
-        "The E3 participant-flow CSV no longer matches its recorded checksum. In-memory LF→CRLF reconstruction matches the historical digest, consistent with the repository CSV newline policy. Original bytes and checksums are preserved; regeneration creates a separate corrected artifact. Older E4 contracts fail current validators and remain historical development packages. Archived E5 packages lack sealed recommendation-run provenance; v1.3 also lacks exact recommendation-record joins and selected-image platform binding. Their bytes and recorded statuses remain preserved, but they are legacy-valid and not claim-eligible. These are audit limitations and failures, not inferred performance effects.", "",
-        "The preserved P3 development/formative decision excludes P3 from the main contribution: its historical evaluation reported no wrong-to-correct transitions, one regression, and substantial reranking overhead. This audit does not relabel that earlier evaluation as Protocol-v5 confirmation. " + source(inputs.ref("docs/evaluation/P3_INCREMENTAL_EVALUATION_V1.md")), "",
-        "## Human, resource and image-storage outcomes", "",
-        "Human study: **NOT EXECUTED**. Satisfaction, usability, decision-time saving and participant selection outcomes are unavailable. Resource study: **NOT EXECUTED**. CPU/memory savings, capacity, OOM and runtime effects are unavailable. Image storage study: **NOT EXECUTED**. No measured logical bytes, unique layer bytes, node storage use or expansion savings exist. The functional image manifests record digests, but host metadata alone does not establish container platform identity.", "",
+        lines += ["Isolation diagnostic: **UNAVAILABLE**.", ""]
+    lines += [
+        "### P3 state", "",
+        "Authenticated P3 state: **" + audit.get("p3_state", "UNSUPPORTED") + "**. Historical P3 material remains formative unless the selected claim package contains a validated retained-gate confirmatory decision. " + source(inputs.ref("docs/evaluation/P3_INCREMENTAL_EVALUATION_V1.md")), "",
         "## Defense-summary table", "", table(defense_rows(analysis, source), ["Professor criterion", "Experiment", "Metric", "Observed result", "Evidence reference"]),
-        "All non-E5 rows point to the exact source packages in the inventory below; the correct-image rows point to the checksum-and-locator references above. Planned profile flexibility is design evidence only.", "",
         "## Seventeen audit checks", "",
         table([[c["id"], c["title"], c["verdict"], c["reason"]] for c in audit["checks"]], ["ID", "Requirement", "Verdict", "Evidence boundary"]),
         "Detailed per-file errors, source hashes, privacy results and provenance differences are in the generated validation/audit JSON. An INCOMPLETE or FAIL audit does not authorize empirical claims.", "",
@@ -155,20 +209,20 @@ def render_report(inputs: Inputs, audit: dict, analysis: dict, figures: dict, ta
         table([[p["path"].split("/")[-1], p["kind"], p["status"], p["stage"], p["validation"],
                 "; ".join(e.get("reason", e["code"]) for e in p["errors"]) or "—"] for p in audit["packages"]],
               ["Package", "Kind", "Recorded status", "Stage", "Validation", "Failure / limitation"]),
-        "Package names above are unambiguous entries in the reviewed input inventory; every constituent file has a SHA-256. No timestamp ordering promotes archived functional runs: every legacy or invalid package remains listed, and no current v1.4 E5 observation is inferred.", "",
+        "Package names above are entries in the reviewed input inventory; every constituent file has a SHA-256. Filesystem ordering and timestamps never select claim evidence.", "",
         "## Threats to validity and evidence boundaries", "",
-        "Construct validity: image gold agreement, catalog capability descriptions, functional probes, user satisfaction and workload success measure different things. Undefined probes and label/operational discrepancies are retained.", "",
-        "Internal validity: no final freeze/custody record establishes confirmatory isolation or frozen execution revisions. Archived E5 packages retain their recorded extractor/source mismatches; current v1.4 packages are assessed from their sealed source artifacts. Integrity failures cannot be repaired by accepting a new inventory checksum.", "",
-        "External validity: ten visible development families, a small administrator catalog, developer-machine container probes and repeated use of the same image digests do not establish general performance. There is no participant population or measured eligible Kubernetes environment to generalize from.", "",
-        "Statistical validity: cases/variants/repeats are not independent families; probes are reused. No new p-values, intervals, effect sizes or causal improvements are claimed. Failure to execute a hypothesis test is neither support nor contradiction.", "",
-        "Custody/privacy: repository/archive scanning detects visible contamination patterns, not undisclosed external access or semantic overlap. Private confirmatory data was not opened. Human-study files are empty of participant observations. Future real human/cluster/storage collection requires a separately authorized, preregistered execution package.", "",
+        "Claim-specific limitations are copied from the authenticated evaluated registry. No narrative sentence can override a machine-readable status, decision predicate, or reason code.", "",
+        table([[claim["id"], limitation.get("code"), limitation.get("severity"), limitation.get("statement")]
+               for claim in audit["claims"] for limitation in claim.get("limitations") or []],
+              ["Claim", "Limitation", "Severity", "Recorded statement"]), "",
+        "Repository/archive isolation scanning cannot replace external custody attestation. Functional image checks, storage measurements, user outcomes, resource outcomes, and recommendation quality remain distinct constructs.", "",
         "Historical Protocol-v4 evidence remains historical/formative. Its portable checksum/headline reproduction passes independently of the v5 verdict; external deep-archive sidecars are not required for the portable workflow. Raw observations, derived metrics and report interpretation remain separate.", "",
         "## Reproducibility", "",
         "Use the pinned `requirements-dev.txt` / `requirements-analysis.txt` environment (CPython 3.12–3.14; source observation provenance specifies its actual Python). Run from the repository root:", "",
         "```bash\npython3 -m venv .venv\n.venv/bin/python -m pip install -r requirements-dev.txt\nmake v5-audit\n```", "",
         "For inspectable separate stages, reuse one ID:", "",
         "```bash\nexport V5_RUN_ID=review-20260907-01\nmake v5-validate\nmake v5-analyze\nmake v5-figures\nmake v5-audit\n```", "",
-        "Each command creates only missing stages under `results_v5/protocol-v5.0.0/final-audit/<run-id>/`; completed stages are checksum-verified before reuse. A changed input lock or implementation requires a new ID. `make v5-audit` runs every stage and writes the report before returning nonzero for integrity failures. On this snapshot nonzero is expected; do not suppress it as a success. Valid NOT_EXECUTED evidence does not itself cause a nonzero exit.", "",
+        "Each command creates only missing stages under `results_v5/protocol-v5.0.0/final-audit/<run-id>/`; completed stages are checksum-verified before reuse. A changed input lock or implementation requires a new ID. `make v5-audit` writes the report before returning nonzero for integrity failures. Valid NOT_EXECUTED evidence does not itself cause a nonzero exit.", "",
         "No reproduction command runs recommenders, LLM providers, container probes, registry pulls or Kubernetes jobs. All raw inputs are the privacy-reviewed allowlisted files. Legacy absolute references resolve only through checksum-bound mappings; they are never edited. Missing external evidence remains unavailable.", "",
         "The run contains validation findings, regenerated derived artifacts, JSON/CSV tables, deterministic SVGs, exact reproduction comparisons, manifests and SHA256SUMS. Stage manifests bind input inventory, code hashes and runtime. Regeneration ignores only `created_at_utc` and `git_revision` when comparing status-manifest semantics; all empirical values and other fields must match. Figures use deterministic SVG metadata and fresh output directories.", "",
         "Read-only historical validation and focused tests:", "",
@@ -201,11 +255,31 @@ def figures(inputs: Inputs, analysis: dict, analysis_root: Path, output: Path) -
                 if not f.is_file() or f.suffix not in (".svg", ".csv"):
                     continue
                 relative = entry["path"] + "/" + str(f.relative_to(target))
-                expected = inputs.files.get(relative)
+                baseline = relative
+                reason = "New derivative retained separately; original never changed."
+                comparison = "exact_bytes"
+                preserved_original_sha256 = None
+                if f.name == "participant-flow.csv":
+                    raw = f.read_bytes()
+                    normalized = raw.replace(b"\r\n", b"\n")
+                    if raw != normalized:
+                        f.write_bytes(normalized)
+                    compatibility = inputs.lock.get("e3_readiness_regeneration_package")
+                    if not isinstance(compatibility, str):
+                        raise ValueError("versioned E3 newline compatibility package is not selected")
+                    baseline = compatibility + "/" + str(f.relative_to(target))
+                    preserved_original_sha256 = inputs.files.get(relative)
+                    reason = (
+                        "Current regeneration is normalized to LF and compared with the versioned compatibility artifact; "
+                        "the historical artifact and identity remain unchanged."
+                    )
+                expected = inputs.files.get(baseline)
                 actual = file_sha256(f)
-                comparisons.append({"artifact": relative, "comparison": "exact_bytes", "status": "PASS" if actual == expected else "FAIL",
+                comparisons.append({"artifact": relative, "baseline_artifact": baseline,
+                                    "comparison": comparison, "status": "PASS" if actual == expected else "FAIL",
                                     "original_sha256": expected, "regenerated_sha256": actual,
-                                    "reason": "New derivative retained separately; original never changed."})
+                                    "preserved_original_sha256": preserved_original_sha256,
+                                    "reason": reason})
     if rows:
         import matplotlib
         matplotlib.use("Agg")

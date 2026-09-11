@@ -8,6 +8,7 @@ for enforcing the external-custody and pre-freeze boundary at runtime.
 from __future__ import annotations
 
 import argparse
+import ast
 from collections.abc import Iterator, Mapping, Sequence
 from dataclasses import dataclass
 import hashlib
@@ -180,6 +181,23 @@ def _is_confirmatory_bundle(document: object) -> bool:
     return document.get("role") == "confirmatory"
 
 
+def _is_complete_confirmatory_bundle(document: object) -> bool:
+    """Require a complete root shape when inspecting executable literals."""
+
+    if not _is_confirmatory_bundle(document) or not isinstance(document, Mapping):
+        return False
+    schema_version = str(document["schema_version"])
+    if schema_version.startswith(SPLIT_SCHEMA_PREFIX):
+        return isinstance(document.get("split_manifest"), Mapping) and isinstance(
+            document.get("cases"), list
+        )
+    if schema_version.startswith(GOLD_SCHEMA_PREFIX):
+        return isinstance(document.get("dataset_metadata"), Mapping) and isinstance(
+            document.get("families"), list
+        )
+    return False
+
+
 def _parse_documents(
     raw: bytes,
     name: str,
@@ -212,7 +230,11 @@ def _parse_documents(
             ) from exc
 
 
-def _contains_embedded_confirmatory_bundle(raw: bytes) -> bool:
+def _contains_embedded_confirmatory_bundle(
+    raw: bytes,
+    *,
+    require_complete_shape: bool = False,
+) -> bool:
     """Find an intact bundle embedded in prose, a fence, or a larger document.
 
     Exact structural schema declarations select candidates; a prose mention of
@@ -227,6 +249,7 @@ def _contains_embedded_confirmatory_bundle(raw: bytes) -> bool:
         # The ordinary parser owns the existing fail-closed invalid-UTF-8 path.
         return False
 
+    predicate = _is_complete_confirmatory_bundle if require_complete_shape else _is_confirmatory_bundle
     seen_candidates: set[str] = set()
     probe_count = 0
     confirmatory_candidate_parse_failed = False
@@ -255,7 +278,7 @@ def _contains_embedded_confirmatory_bundle(raw: bytes) -> bool:
             if _looks_like_confirmatory_bundle(encoded):
                 confirmatory_candidate_parse_failed = True
             return False
-        return any(_is_confirmatory_bundle(document) for document in documents)
+        return any(predicate(document) for document in documents)
 
     def balanced_flow_mapping(start: int) -> str | None:
         """Return one bounded YAML/JSON flow mapping that begins at ``start``."""
@@ -390,7 +413,7 @@ def _contains_embedded_confirmatory_bundle(raw: bytes) -> bool:
             except json.JSONDecodeError:
                 cursor = brace
                 continue
-            if _is_confirmatory_bundle(document):
+            if predicate(document):
                 return True
             cursor = brace
     if confirmatory_candidate_parse_failed:
@@ -601,18 +624,94 @@ def _inspect_document(
     name: str,
     location: str,
     strict_parse: bool = True,
+    require_complete_shape: bool = False,
 ) -> list[AuditFinding]:
     if not raw:
         return []
     if (
         _looks_like_confirmatory_bundle(raw)
-        and _contains_embedded_confirmatory_bundle(raw)
+        and _contains_embedded_confirmatory_bundle(
+            raw,
+            require_complete_shape=require_complete_shape,
+        )
     ):
         return [AuditFinding(location=location, category="confirmatory-split-bundle")]
     documents = tuple(_parse_documents(raw, name, strict_parse=strict_parse))
-    if any(_is_confirmatory_bundle(document) for document in documents):
+    predicate = _is_complete_confirmatory_bundle if require_complete_shape else _is_confirmatory_bundle
+    if any(predicate(document) for document in documents):
         return [AuditFinding(location=location, category="confirmatory-split-bundle")]
     return []
+
+
+def _inspect_python_source(
+    raw: bytes,
+    *,
+    location: str,
+) -> list[AuditFinding]:
+    """Inspect literal payloads without parsing Python syntax as YAML.
+
+    A source module may legitimately construct separate malformed byte fragments
+    for a fail-closed regression.  Treating the whole module as one YAML suffix
+    candidate conflates those inert literals.  Complete serialized bundles and
+    complete literal mapping objects remain detectable.
+    """
+
+    try:
+        source = raw.decode("utf-8")
+    except UnicodeDecodeError as exc:
+        raise IsolationAuditError(
+            f"a Python source artifact containing a Protocol-v5 signature was not valid UTF-8 in {location}"
+        ) from exc
+    try:
+        tree = ast.parse(source, filename=location)
+    except SyntaxError as exc:
+        raise IsolationAuditError(
+            f"a Python source artifact containing a Protocol-v5 signature could not be parsed in {location}"
+        ) from exc
+
+    def static_bytes(node: ast.AST) -> bytes | None:
+        if isinstance(node, ast.Constant) and isinstance(node.value, str):
+            return node.value.encode("utf-8")
+        if isinstance(node, ast.Constant) and isinstance(node.value, bytes):
+            return node.value
+        if isinstance(node, ast.BinOp) and isinstance(node.op, ast.Add):
+            left = static_bytes(node.left)
+            right = static_bytes(node.right)
+            if left is None or right is None or len(left) + len(right) > _MAX_DOCUMENT_BYTES:
+                return None
+            return left + right
+        return None
+
+    findings: list[AuditFinding] = []
+    for node in ast.walk(tree):
+        if isinstance(node, (ast.Constant, ast.BinOp)):
+            payload = static_bytes(node)
+            if payload is None:
+                continue
+            if not _SCHEMA_SIGNATURE.search(payload):
+                continue
+            findings.extend(
+                _inspect_document(
+                    payload,
+                    name="embedded-source-literal.yaml",
+                    location=location,
+                    strict_parse=False,
+                    require_complete_shape=True,
+                )
+            )
+        elif isinstance(node, ast.Dict):
+            try:
+                payload = ast.literal_eval(node)
+            except (ValueError, TypeError, SyntaxError, MemoryError, RecursionError):
+                continue
+            if _is_complete_confirmatory_bundle(payload):
+                findings.append(
+                    AuditFinding(
+                        location=location,
+                        category="confirmatory-split-bundle",
+                    )
+                )
+    return sorted(set(findings))
 
 
 def _repository_location(path: Path, repository_root: Path) -> str:
@@ -905,7 +1004,9 @@ def audit_repository(
             )
         repository_documents_scanned += 1
         findings.extend(
-            _inspect_document(
+            _inspect_python_source(raw, location=location)
+            if path.suffix.lower() == ".py"
+            else _inspect_document(
                 raw,
                 name=path.name,
                 location=location,

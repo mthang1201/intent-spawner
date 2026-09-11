@@ -1,0 +1,68 @@
+{
+  "argv": [
+    ".venv/bin/python",
+    "-m",
+    "pytest",
+    "-q",
+    "tests/test_evaluation_v5.py",
+    "tests/test_evaluation_v5_component_scoring.py",
+    "tests/test_evaluation_v5_gold_dataset.py",
+    "tests/test_evaluation_v5_image_functional.py",
+    "tests/test_evaluation_v5_image_storage.py",
+    "tests/test_evaluation_v5_isolation.py",
+    "tests/test_evaluation_v5_offline_runner.py",
+    "tests/test_evaluation_v5_offline_validator.py",
+    "tests/test_evaluation_v5_reporting.py",
+    "tests/test_evaluation_v5_robustness.py",
+    "tests/test_evaluation_v5_statistics.py",
+    "tests/test_evaluation_v5_user_study.py",
+    "tests/test_evaluation_v5_user_study_analysis.py",
+    "tests/test_protocol_v5_research_analysis.py",
+    "tests/test_protocol_v5_final_audit.py",
+    "tests/test_resource_envelope_v5.py",
+    "tests/test_resource_efficiency_v5.py",
+    "tests/test_evaluation_v4.py",
+    "tests/test_resource_authenticity_adversarial.py",
+    "tests/test_config_validation.py",
+    "tests/test_p2_backend_integration.py",
+    "--junitxml=/tmp/protocol-v5-final5-evidence.zqPRFY/test-full/junit.xml"
+  ],
+  "classifications": [
+    "PASS"
+  ],
+  "command": ".venv/bin/python -m pytest -q tests/test_evaluation_v5.py tests/test_evaluation_v5_component_scoring.py tests/test_evaluation_v5_gold_dataset.py tests/test_evaluation_v5_image_functional.py tests/test_evaluation_v5_image_storage.py tests/test_evaluation_v5_isolation.py tests/test_evaluation_v5_offline_runner.py tests/test_evaluation_v5_offline_validator.py tests/test_evaluation_v5_reporting.py tests/test_evaluation_v5_robustness.py tests/test_evaluation_v5_statistics.py tests/test_evaluation_v5_user_study.py tests/test_evaluation_v5_user_study_analysis.py tests/test_protocol_v5_research_analysis.py tests/test_protocol_v5_final_audit.py tests/test_resource_envelope_v5.py tests/test_resource_efficiency_v5.py tests/test_evaluation_v4.py tests/test_resource_authenticity_adversarial.py tests/test_config_validation.py tests/test_p2_backend_integration.py --junitxml=/tmp/protocol-v5-final5-evidence.zqPRFY/test-full/junit.xml",
+  "environment": {
+    "platform": "macOS-15.3.2-arm64-arm-64bit-Mach-O",
+    "python_implementation": "CPython",
+    "python_version": "3.14.6",
+    "working_directory": "."
+  },
+  "evidence_id": "full",
+  "exit_code": 0,
+  "finished_at_utc": "2026-09-11T02:10:45.163759Z",
+  "git_dirty_before": false,
+  "git_revision": "ec73326c947bcf3f80f71888e939dc03877f83a2",
+  "junit": {
+    "counts": {
+      "errors": 0,
+      "failed": 0,
+      "passed": 768,
+      "skipped": 0,
+      "total": 768
+    },
+    "path": "junit.xml",
+    "sha256": "382b3d3818d129fc347ffe5bf628b5417fad641dbbae0cc56a1f7132899d61eb"
+  },
+  "kind": "test",
+  "nonzero_reasons": [],
+  "schema_version": "protocol-v5-command-evidence-v1.1.0",
+  "started_at_utc": "2026-09-11T02:08:38.479860Z",
+  "stderr": {
+    "path": "stderr.txt",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "stdout": {
+    "path": "stdout.txt",
+    "sha256": "a693dd7eedbc84735607108aaebf2010a1a86bbb79e0ed843735c98feb633652"
+  }
+}

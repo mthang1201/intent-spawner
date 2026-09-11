@@ -1,0 +1,11 @@
+{
+  "evidence_id": "claim_registry",
+  "git_revision": "007542fdd384174be9e0e54999d20ad000383568",
+  "kind": "validator",
+  "output_checksums": {
+    "record.json": "81e7c05d54cd5a6ded0fa7464c5886cafc57bd0244b8b46a67b652236137332c",
+    "stderr.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stdout.txt": "1310ad709dc0682235c91acc11b4254779c80fe028d83aa2c8c0d7a6ff0a3bd7"
+  },
+  "schema_version": "protocol-v5-command-evidence-package-v1.0.0"
+}

@@ -1,0 +1,12 @@
+{
+  "evidence_id": "focused",
+  "git_revision": "007542fdd384174be9e0e54999d20ad000383568",
+  "kind": "test",
+  "output_checksums": {
+    "junit.xml": "aa41536bf26fd9ce50a11b2b7db5f1a8fa07a5e54a300adfddafc9e8c9a41f09",
+    "record.json": "88705037d7170c13183093ae8ec92637d273c9889cd82fe896930179643688d1",
+    "stderr.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stdout.txt": "b1890e54f60620f071a9f051f9abcc968bbeeb0f3263ad9294504f057117ef8e"
+  },
+  "schema_version": "protocol-v5-command-evidence-package-v1.0.0"
+}

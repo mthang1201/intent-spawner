@@ -1,0 +1,8 @@
+.venv/bin/python -m evaluation_v5.final_audit audit --run-id "final-audit-20260910-final4"
+{
+  "audit_status": "FAIL",
+  "confirmatory_status": "NOT_EXECUTED",
+  "exit_code": 2,
+  "output": "/Users/mthang1201/Documents/datn/intent-spawner-wt-v5-final-audit/results_v5/protocol-v5.0.0/final-audit/final-audit-20260910-final4",
+  "run_id": "final-audit-20260910-final4"
+}

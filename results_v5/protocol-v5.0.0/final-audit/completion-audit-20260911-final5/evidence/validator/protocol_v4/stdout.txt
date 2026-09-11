@@ -1,0 +1,37 @@
+{
+  "boundary": "Stage C per-trial sidecars are external deep-archive evidence; their checksum manifest is portable.",
+  "portable_bundle": {
+    "bytes": 4067810,
+    "files": 13
+  },
+  "recommendation_matrices": {
+    "v4-combined-evidence-20260813T050500Z": 960,
+    "v4-external-confirmatory-20260813T045543Z": 240,
+    "v4-revised-test-20260812T095453Z": 960
+  },
+  "reproduced_analysis": {
+    "claim_gates": {
+      "RQ1": "CLAIMABLE",
+      "RQ2": "CLAIMABLE",
+      "RQ3": "PARTIALLY CLAIMABLE",
+      "RQ4": "CLAIMABLE",
+      "RQ5": "CLAIMABLE"
+    },
+    "headline_points": {
+      "external_llm.raw_valid_response_rate": 0.0875,
+      "rule_based_mapping.joint_acceptable_rate": 0.6875,
+      "self_hosted_local_ollama_llm.joint_acceptable_rate": 0.4375,
+      "static_large.workload_success_rate": 1.0,
+      "static_small.workload_success_rate": 0.3625
+    },
+    "temporary_output_removed": true
+  },
+  "stage_c": {
+    "deep_archive_checksum_entries": 2244,
+    "deep_archive_sidecars_present": 4,
+    "plan_records": 320,
+    "records": 320,
+    "unique_trial_ids": 320
+  },
+  "status": "pass"
+}

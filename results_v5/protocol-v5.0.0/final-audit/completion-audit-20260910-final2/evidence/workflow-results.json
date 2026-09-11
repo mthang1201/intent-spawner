@@ -1,0 +1,30 @@
+{
+  "run_id": "final-audit-20260910-final2",
+  "git_revision": "a297f622889761145e20567dab9f5fe42f275cb2",
+  "workflows": [
+    {
+      "command": "make v5-validate",
+      "exit_code": 2,
+      "classification": "INTENTIONALLY_UNAVAILABLE_REAL_EVIDENCE_AND_PRESERVED_INVALID_HISTORY",
+      "result": "audit_status=FAIL; final freeze/custody are unavailable, isolation is not certifiable, and invalid historical packages remain rejected"
+    },
+    {
+      "command": "make v5-analyze",
+      "exit_code": 2,
+      "classification": "UNAVAILABLE_REAL_EXPERIMENT_EVIDENCE",
+      "result": "regeneration_status=PASS_WITH_UNAVAILABLE_ANALYSES; the nonzero exit propagates the validation audit failure"
+    },
+    {
+      "command": "make v5-figures",
+      "exit_code": 2,
+      "classification": "PASSING_STAGE_WITH_PROPAGATED_AUDIT_FAILURE",
+      "result": "figure_status=PASS; the versioned E3 LF compatibility baseline reproduces, while the nonzero exit preserves the audit failure"
+    },
+    {
+      "command": "make v5-audit",
+      "exit_code": 2,
+      "classification": "SCIENTIFIC_FAIL_CLOSED",
+      "result": "audit_status=FAIL; confirmatory_status=NOT_EXECUTED; no empirical claim is authorized"
+    }
+  ]
+}

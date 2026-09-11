@@ -1914,6 +1914,67 @@ def test_isolation_audit_does_not_flag_schema_code_or_prose_mentions(tmp_path: P
     assert audit_repository(repository).clean
 
 
+def test_isolation_audit_parses_python_literals_without_joining_fixture_fragments(
+    tmp_path: Path,
+):
+    repository = tmp_path / "repository"
+    repository.mkdir()
+    (repository / "malformed-fixture.py").write_text(
+        "payload = (\n"
+        "    b\"schema_version: protocol-v5-gold-family-v1.0.0\\n\"\n"
+        "    + b\"dataset_metadata:\\n  role: confirmatory\\n\"\n"
+        "    + sentinel.encode(\"utf-8\")\n"
+        "    + b\"\\xff\"\n"
+        ")\n",
+        encoding="utf-8",
+    )
+
+    assert audit_repository(repository).clean
+
+
+def test_isolation_audit_still_detects_complete_python_literal_bundle(tmp_path: Path):
+    repository = tmp_path / "repository"
+    repository.mkdir()
+    document = _document(cases=[_case(prompt="source literal sentinel")])
+    (repository / "embedded.py").write_text(
+        "SEALED = " + repr(document) + "\n",
+        encoding="utf-8",
+    )
+
+    report = audit_repository(repository)
+
+    assert not report.clean
+    assert report.findings == (
+        isolation_audit_module.AuditFinding(
+            location="embedded.py",
+            category="confirmatory-split-bundle",
+        ),
+    )
+
+
+def test_isolation_audit_detects_complete_concatenated_python_literal(tmp_path: Path):
+    repository = tmp_path / "repository"
+    repository.mkdir()
+    (repository / "embedded.py").write_text(
+        "SEALED = (\n"
+        "    'schema_version: protocol-v5-gold-family-v1.0.0\\n'\n"
+        "    + 'dataset_metadata:\\n  role: confirmatory\\n'\n"
+        "    + 'families: []\\n'\n"
+        ")\n",
+        encoding="utf-8",
+    )
+
+    report = audit_repository(repository)
+
+    assert not report.clean
+    assert report.findings == (
+        isolation_audit_module.AuditFinding(
+            location="embedded.py",
+            category="confirmatory-split-bundle",
+        ),
+    )
+
+
 def test_isolation_audit_streams_past_large_unknown_file_prefix(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,

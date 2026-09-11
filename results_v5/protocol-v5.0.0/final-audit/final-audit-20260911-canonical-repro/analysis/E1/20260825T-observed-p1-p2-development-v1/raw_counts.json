@@ -1,0 +1,16 @@
+{
+  "cases": 18,
+  "families": 10,
+  "per_system": {
+    "P1": 18,
+    "P2": 18
+  },
+  "records": 36,
+  "run": "20260825T-observed-p1-p2-development-v1",
+  "source": {
+    "locator": "",
+    "path": "results_v5/protocol-v5.0.0/E1/20260825T-observed-p1-p2-development-v1/raw/recommendations.jsonl",
+    "sha256": "25868752054231fa271e540210aad0845113ba3974722376029b18184959daf8"
+  },
+  "stage": "development"
+}

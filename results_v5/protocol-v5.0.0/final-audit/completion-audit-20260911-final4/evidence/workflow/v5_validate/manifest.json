@@ -1,0 +1,11 @@
+{
+  "evidence_id": "v5_validate",
+  "git_revision": "007542fdd384174be9e0e54999d20ad000383568",
+  "kind": "workflow",
+  "output_checksums": {
+    "record.json": "f7e8faac747afae5f96b91dd192149745ea2dc0c64c834b1df2145c6a6ba9112",
+    "stderr.txt": "b93dc66191d27036b7663f87d2d6aeedad282f61c81f6e742e4651808569b32d",
+    "stdout.txt": "940f279570e317090a5b77306ada7b1dc45488e5dfb3e41064ebb74a6857546d"
+  },
+  "schema_version": "protocol-v5-command-evidence-package-v1.0.0"
+}

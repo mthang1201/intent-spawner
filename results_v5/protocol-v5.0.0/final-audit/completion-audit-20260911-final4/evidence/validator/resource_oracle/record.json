@@ -1,0 +1,28 @@
+{
+  "argv": [
+    ".venv/bin/python",
+    "-m",
+    "evaluation_v5.resource",
+    "validate-manifest"
+  ],
+  "classifications": [
+    "PASS"
+  ],
+  "command": ".venv/bin/python -m evaluation_v5.resource validate-manifest",
+  "evidence_id": "resource_oracle",
+  "exit_code": 0,
+  "finished_at_utc": "2026-09-10T10:11:40.090155Z",
+  "git_dirty_before": false,
+  "git_revision": "007542fdd384174be9e0e54999d20ad000383568",
+  "kind": "validator",
+  "schema_version": "protocol-v5-command-evidence-v1.0.0",
+  "started_at_utc": "2026-09-10T10:11:36.657504Z",
+  "stderr": {
+    "path": "stderr.txt",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "stdout": {
+    "path": "stdout.txt",
+    "sha256": "6fcf783bc636410a8bf50115b865e87159202475858aa5c5fa1a970910d7044f"
+  }
+}

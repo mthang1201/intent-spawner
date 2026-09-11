@@ -4,6 +4,7 @@ from __future__ import annotations
 import hashlib
 import json
 from pathlib import Path
+import copy
 import shutil
 import socket
 import subprocess
@@ -16,8 +17,17 @@ from evaluation_v5.final_audit.common import (
 )
 from evaluation_v5.final_audit.checks import (
     CHECKS, b0_ranking_findings, cluster_findings, execution_findings, inference_findings,
-    inspect, p3_findings, placeholder_findings, storage_identity_findings,
+    inspect, load_isolation_diagnostic, p3_findings, placeholder_findings,
+    storage_identity_findings,
 )
+from evaluation_v5.final_audit.claims import load_claim_evidence, synthetic_origin_scan
+from evaluation_v5.final_audit import completion as completion_module
+from evaluation_v5.final_audit.completion import (
+    _load_evidence_records, _remaining_execution_requirements, _validate_command_outcomes,
+    claim_flow_attestation,
+)
+from evaluation_v5.final_audit.evidence import capture, junit_details, verify_command_evidence
+from evaluation_v5.final_audit.publication import build_attestation, verify_attestation
 from evaluation_v5.final_audit.reproduce import analyze, compare_json, regenerate_functional
 from evaluation_v5.final_audit.reporting import figures, render_report
 
@@ -45,6 +55,178 @@ def test_snapshot_is_not_a_production_freeze():
         validate_freeze_manifest(snapshot)
 
 
+def test_isolation_failure_is_exactly_classified_and_repaired():
+    inputs = Inputs()
+    diagnostic = load_isolation_diagnostic(inputs)
+    finding = diagnostic["finding"]
+    assert diagnostic["source_blob_verified"] is True
+    assert finding | {
+        "artifact_relative_path": "tests/test_evaluation_v5_gold_dataset.py",
+        "artifact_sha256": "3e978556fa831877c959ee1dc3824315f9933d2f8d12d993cc78019842acc918",
+        "artifact_role": "synthetic_adversarial_test_source",
+        "artifact_type": "python_source",
+        "parser": "evaluation_v5.isolation_audit._contains_embedded_confirmatory_bundle",
+        "schema_signature": "protocol-v5-gold-family-v1.0.0",
+        "failure_category": "SOURCE_LITERAL_FRAGMENT_FALSE_POSITIVE",
+        "original_error_category": "UNPARSEABLE_EMBEDDED_CONFIRMATORY_BUNDLE",
+        "classification": "REMAINING_IMPLEMENTATION_DEFECT",
+        "historical": False,
+        "immutable_preserved_evidence": False,
+        "eligible_for_confirmatory_execution": False,
+        "eligible_to_support_thesis_claim": False,
+    } == finding
+    audit = inspect(inputs, isolation=True, historical=False)
+    isolation_check = audit["checks"][2]
+    assert isolation_check["verdict"] == "UNVERIFIED"
+    assert isolation_check["details"][0]["repository_scan"] == "PASS"
+    assert isolation_check["details"][1]["prior_failure_diagnostic"]["repair"]["status"] == "REPAIRED"
+
+
+def test_command_evidence_captures_revision_command_exit_and_hashes(tmp_path):
+    output = tmp_path / "command-evidence"
+    exit_code = capture(
+        root=ROOT,
+        output=output,
+        evidence_id="unit_capture",
+        kind="validator",
+        classifications=["PASS"],
+        nonzero_reasons=None,
+        command=[sys.executable, "-c", "print('validated')"],
+        junit=None,
+    )
+    record = verify_command_evidence(output)
+    assert exit_code == record["exit_code"] == 0
+    assert len(record["git_revision"]) == 40
+    assert record["argv"] == [sys.executable, "-c", "print('validated')"]
+    assert record["classifications"] == ["PASS"]
+    assert record["stdout"]["sha256"] == file_sha256(output / "stdout.txt")
+
+
+def test_nonzero_command_evidence_requires_exact_reason_category_pairs(tmp_path):
+    output = tmp_path / "scientific-nonzero"
+    reason = {
+        "code": "AUTHORITATIVE_FINAL_FREEZE_UNAVAILABLE",
+        "category": "INTENTIONALLY_UNAVAILABLE_REAL_EXPERIMENT_EVIDENCE",
+    }
+    exit_code = capture(
+        root=ROOT,
+        output=output,
+        evidence_id="scientific_nonzero",
+        kind="workflow",
+        classifications=[reason["category"]],
+        nonzero_reasons=[reason],
+        command=[sys.executable, "-c", "raise SystemExit(2)"],
+        junit=None,
+    )
+    record = verify_command_evidence(output)
+    assert exit_code == 2
+    assert record["nonzero_reasons"] == [reason]
+    assert record["environment"]["python_version"]
+
+
+def test_junit_counts_are_recomputed_from_cases(tmp_path):
+    junit = tmp_path / "junit.xml"
+    write_bytes(
+        junit,
+        b'<testsuite><testcase classname="tests.test_sample" name="pass"/>'
+        b'<testcase classname="tests.test_sample" name="fail"><failure/></testcase>'
+        b'<testcase classname="tests.test_sample" name="error"><error/></testcase>'
+        b'<testcase classname="tests.test_sample" name="skip"><skipped/></testcase></testsuite>',
+    )
+    details = junit_details(junit)
+    assert {key: value for key, value in details.items() if key != "cases"} == {
+        "total": 4, "passed": 1, "failed": 1, "errors": 1, "skipped": 1,
+    }
+
+
+def test_completion_rejects_command_evidence_from_another_revision(tmp_path, monkeypatch):
+    package = tmp_path / "evidence"
+    package.mkdir()
+    monkeypatch.setattr(
+        completion_module,
+        "verify_command_evidence",
+        lambda _path: {
+            "evidence_id": "only", "kind": "validator", "git_revision": "0" * 40,
+            "git_dirty_before": False,
+        },
+    )
+    with pytest.raises(ValueError, match="revision differs"):
+        _load_evidence_records(
+            [package], kind="validator", required_ids={"only"}, expected_revision="1" * 40,
+        )
+
+
+def test_scientific_nonzero_is_not_misclassified_as_implementation_defect():
+    records = [{
+        "evidence_id": "audit", "exit_code": 2,
+        "classifications": ["INTENTIONALLY_UNAVAILABLE_REAL_EXPERIMENT_EVIDENCE"],
+        "nonzero_reasons": [{
+            "code": "AUTHORITATIVE_FINAL_FREEZE_UNAVAILABLE",
+            "category": "INTENTIONALLY_UNAVAILABLE_REAL_EXPERIMENT_EVIDENCE",
+        }],
+    }]
+    assert _validate_command_outcomes(records) == []
+
+
+def test_previous_tested_to_publication_delta_is_fully_classified_and_nonsemantic():
+    attestation = build_attestation(
+        ROOT,
+        "007542fdd384174be9e0e54999d20ad000383568",
+        "7ce1e9ccdecb43f6ac337609479ea067dee9735d",
+    )
+    assert attestation["tested_code_revision"] != attestation["publication_revision"]
+    assert attestation["verdict"] == "PASS"
+    assert attestation["changed_path_count"] == len(attestation["changed_paths"]) > 0
+    assert attestation["disallowed_paths"] == []
+    assert attestation["executable_or_validation_semantics_changed"] is False
+    assert {row["path_class"] for row in attestation["changed_paths"]} == {
+        "DOCUMENTATION_INDEX", "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+    }
+    verify_attestation(ROOT, attestation)
+
+
+def test_post_publication_delta_verifier_rejects_disallowed_path_class(tmp_path):
+    repository = tmp_path / "publication-repository"
+    repository.mkdir()
+    subprocess.run(["git", "init", "-q"], cwd=repository, check=True)
+    subprocess.run(
+        ["git", "config", "user.name", "Audit Test"], cwd=repository, check=True
+    )
+    subprocess.run(
+        ["git", "config", "user.email", "audit@example.invalid"], cwd=repository, check=True
+    )
+    (repository / "README.md").write_text("tested\n", encoding="utf-8")
+    subprocess.run(["git", "add", "README.md"], cwd=repository, check=True)
+    subprocess.run(["git", "commit", "-qm", "tested"], cwd=repository, check=True)
+    tested = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=repository, text=True).strip()
+
+    allowed = repository / "results_v5/protocol-v5.0.0/final-audit/final-audit-fixture/report/audit.json"
+    allowed.parent.mkdir(parents=True)
+    allowed.write_text("{}\n", encoding="utf-8")
+    subprocess.run(["git", "add", str(allowed.relative_to(repository))], cwd=repository, check=True)
+    subprocess.run(["git", "commit", "-qm", "publish report"], cwd=repository, check=True)
+    publication = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=repository, text=True).strip()
+    assert build_attestation(repository, tested, publication)["verdict"] == "PASS"
+
+    executable = repository / "evaluation_v5/claim_validator.py"
+    executable.parent.mkdir()
+    executable.write_text("raise SystemExit(0)\n", encoding="utf-8")
+    subprocess.run(["git", "add", str(executable.relative_to(repository))], cwd=repository, check=True)
+    subprocess.run(["git", "commit", "-qm", "disallowed semantic change"], cwd=repository, check=True)
+    disallowed = build_attestation(repository, tested, "HEAD")
+    assert disallowed["verdict"] == "FAIL"
+    assert disallowed["executable_or_validation_semantics_changed"] is True
+    assert disallowed["disallowed_paths"] == [{
+        "path": "evaluation_v5/claim_validator.py",
+        "reasons": [
+            "DISALLOWED_PATH_CLASS",
+            "EXECUTABLE_VALIDATOR_SCHEMA_WORKFLOW_TEST_OR_CONFIG_PATH",
+        ],
+    }]
+    with pytest.raises(ValueError, match="disallowed path class"):
+        verify_attestation(repository, disallowed)
+
+
 def test_existing_failures_are_preserved_and_not_selected_away(current_audit):
     packages = current_audit["packages"]
     assert len(packages) == 34
@@ -58,6 +240,176 @@ def test_existing_failures_are_preserved_and_not_selected_away(current_audit):
     assert observed_failure["status"] == "OBSERVED"
     assert observed_failure["validation"] == "FAIL"
     assert current_audit["checks"][12]["verdict"] == "PASS"
+
+
+def test_final_audit_consumes_explicit_authenticated_claim_package(current_audit):
+    inputs = Inputs()
+    bundle = load_claim_evidence(inputs)
+    configured = inputs.lock["claim_analysis_package"]
+    persisted = inputs.json(configured + "/derived/evaluated-claim-registry.json")["claims"]
+    assert bundle["evaluated_claims"] == persisted == current_audit["evaluated_claims"]
+    assert current_audit["claim_evidence_sources"]["selection"] == inputs.ref(
+        configured + "/derived/evidence-selection.json"
+    )
+    assert current_audit["claim_counts"] == {
+        "SUPPORTED": 0,
+        "NOT_SUPPORTED": 0,
+        "NOT_EXECUTED": 9,
+    }
+    source = (ROOT / "evaluation_v5/final_audit/checks.py").read_text()
+    assert "selected={}" not in source
+    assert 'confirmatory_status": "NOT_EXECUTED"' not in source
+
+
+def test_p16_case_a_no_authenticated_real_evidence_has_no_fabricated_results(
+    current_audit, tmp_path
+):
+    assert current_audit["confirmatory_status"] == "NOT_EXECUTED"
+    for claim in current_audit["claims"]:
+        assert claim["claim_status"] == "NOT_EXECUTED"
+        assert claim["claimable"] is False
+        assert claim["estimate"] is None
+        assert claim["confidence_interval"] is None
+        assert claim["counts"] == {}
+        assert claim["effect_sizes"] == {}
+        assert claim["normalized_metrics"] == {}
+        assert claim["reason_codes"]
+    report = render_report(
+        Inputs(),
+        current_audit,
+        {
+            "claims": current_audit["claims"],
+            "observed_offline_counts": [],
+            "observed_functional": [],
+            "legacy_functional": [],
+            "packages": [],
+        },
+        {},
+        tmp_path / "REPORT.md",
+    )
+    h1 = next(row for row in current_audit["claims"] if row["id"] == "H1")
+    assert "**H1 — NOT_EXECUTED**" in report
+    assert "; ".join(h1["reason_codes"]) in report
+    assert "**H1 — SUPPORTED**" not in report
+    propagation = claim_flow_attestation(current_audit)
+    assert propagation["status"] == "PASS"
+    assert propagation["genuinely_empty_authenticated_selection"] is True
+    assert propagation["selection_was_silently_discarded"] is False
+
+
+def test_report_renders_changed_validated_claim_state_instead_of_snapshot_prose(
+    current_audit, tmp_path
+):
+    audit = copy.deepcopy(current_audit)
+    audit["audit_status"] = "INCOMPLETE"
+    audit["confirmatory_status"] = "EXECUTED_INCOMPLETE"
+    audit["claim_counts"] = {"SUPPORTED": 1, "NOT_SUPPORTED": 1, "NOT_EXECUTED": 7}
+    audit["claims"][0].update(
+        claim_status="SUPPORTED",
+        normalized_metrics={"effect": 0.25, "ci_low": 0.10, "ci_high": 0.40, "family_n": 12},
+        confidence_intervals={"primary": {"low": 0.10, "high": 0.40}},
+        counts={"family_n": 12},
+        effect_sizes={},
+        reason_codes=[],
+    )
+    audit["claims"][1].update(
+        claim_status="NOT_SUPPORTED",
+        normalized_metrics={"effect": -0.05, "ci_low": -0.15, "ci_high": 0.02},
+        confidence_intervals={"primary": {"low": -0.15, "high": 0.02}},
+        counts={},
+        effect_sizes={},
+        reason_codes=[],
+    )
+    analysis = {
+        "claims": audit["claims"],
+        "observed_functional": [],
+        "legacy_functional": [],
+        "observed_offline_counts": [],
+        "defense_sources": {key: [] for key in ("human", "resources", "offline", "functional", "storage")},
+    }
+    report = render_report(Inputs(), audit, analysis, {}, tmp_path / "REPORT.md")
+    assert "Confirmatory evidence: EXECUTED_INCOMPLETE" in report
+    assert "SUPPORTED=1, NOT_SUPPORTED=1, NOT_EXECUTED=7" in report
+    assert "**H1 — SUPPORTED**" in report and '"effect":0.25' in report
+    assert "**H2 — NOT_SUPPORTED**" in report and '"effect":-0.05' in report
+    assert "None has sufficient authenticated confirmatory evidence" not in report
+
+
+def test_collector_origin_scan_rejects_synthetic_observed_fixture_outside_repository(tmp_path):
+    package = tmp_path / "normal-layout" / "results_v5" / "protocol-v5.0.0" / "E4" / "observed-run"
+    selected = {
+        "schema_version": "protocol-v5-evidence-selection-result-v1.0.0",
+        "requirements": [{
+            "requirement_id": "resource_efficiency",
+            "selected_package": str(package),
+            "selected_manifest_sha256": "a" * 64,
+        }],
+        "global_errors": [],
+    }
+    inventory = {
+        "candidates": [{
+            "requirement_id": "resource_efficiency",
+            "package_path": str(package),
+            "execution_status": "OBSERVED",
+            "stage": "confirmatory",
+            "validation_status": "PASS",
+            "claims_permitted": True,
+            "claim_eligibility": "ELIGIBLE_CONFIRMATORY",
+            "authentication": {
+                "collector_origin": "SYNTHETIC",
+                "collector_authentic": False,
+                "source_checksums_verified": True,
+            },
+            "reason_codes": ["SYNTHETIC_RESOURCE_EVIDENCE"],
+        }]
+    }
+    result = synthetic_origin_scan(selected, inventory)
+    assert result["status"] == "FAIL"
+    assert result["promoted_synthetic_count"] == 1
+    assert result["findings"][0]["disposition"] == "FAIL_PROMOTED"
+    selected["requirements"][0]["selected_package"] = None
+    inventory["candidates"][0].update(claims_permitted=False, claim_eligibility="INELIGIBLE")
+    bounded = synthetic_origin_scan(selected, inventory)
+    assert bounded["status"] == "PASS"
+    assert bounded["findings"][0]["disposition"] == "NON_CLAIMABLE"
+
+
+def test_e3_lf_regeneration_is_versioned_and_preserves_historical_identity():
+    inputs = Inputs()
+    historical = "results_v5/protocol-v5.0.0/E3/b0-p2-user-study-readiness"
+    regenerated = inputs.lock["e3_readiness_regeneration_package"]
+    historical_bytes = inputs.path(historical + "/report/tables/participant-flow.csv").read_bytes()
+    manifest = inputs.json(regenerated + "/manifest.json")
+    regenerated_bytes = inputs.path(regenerated + "/report/tables/participant-flow.csv").read_bytes()
+    assert b"\r\n" not in historical_bytes and b"\r\n" not in regenerated_bytes
+    assert regenerated_bytes != historical_bytes
+    assert file_sha256(inputs.path(historical + "/report/tables/participant-flow.csv")) == "bee024512c5b6f407a9f1d273d2abbdfe2be640322b05d06f9a641404e8dd73c"
+    assert manifest["source"]["historical_manifest_sha256"] == "a142b8c930e1f84d123aca8c39fe564efd52027ab62b637f236db1bc8fa5686b"
+    assert manifest["source"]["historical_bytes_modified"] is False
+    assert manifest["source"]["regenerated_pre_normalization_sha256"] == "9d76ebf517d544a7913cfd744f67ca478620a4d5c93605baf2746c5873520416"
+    assert manifest["source"]["newline_policy_transform"] == "CRLF_TO_LF"
+    assert manifest["output_checksums"]["report/tables/participant-flow.csv"] == file_sha256(
+        inputs.path(regenerated + "/report/tables/participant-flow.csv")
+    )
+    assert manifest["execution_status"] == "NOT_EXECUTED"
+    assert manifest["claims_permitted"] is False
+
+
+def test_completion_audit_makes_p3_confirmatory_execution_conditional():
+    remaining = _remaining_execution_requirements(
+        {
+            "p3_state": "NOT_RETAINED_OR_NOT_PRESENT",
+            "experiment_states": [
+                {"experiment": "E1", "status": "NOT_EXECUTED"},
+                {"experiment": "E6", "status": "NOT_EXECUTED"},
+            ],
+        },
+        [{"id": 1, "verdict": "UNVERIFIED"}],
+    )
+    assert remaining[0].startswith("authoritative freeze")
+    assert "E1: authenticated real evidence (NOT_EXECUTED)" in remaining
+    assert any("E6: no confirmatory execution is authorized unless" in row for row in remaining)
+    assert not any("E6: authenticated real evidence" in row for row in remaining)
 
 
 def test_legacy_v1_probes_are_not_misclassified_as_unexecuted():
@@ -231,10 +583,24 @@ def _current_e5_inputs(tmp_path: Path, source_package: Path) -> tuple[Inputs, st
     package = tmp_path / relative
     package.parent.mkdir(parents=True, exist_ok=True)
     shutil.copytree(source_package, package)
-    for required in (REGISTRY, "docs/evaluation/P3_INCREMENTAL_EVALUATION_V1.md"):
+    isolation_diagnostic = "benchmarks_v5/protocol-v5-isolation-diagnostic-v1.json"
+    for required in (
+        REGISTRY,
+        "docs/evaluation/P3_INCREMENTAL_EVALUATION_V1.md",
+        isolation_diagnostic,
+    ):
         target = tmp_path / required
         target.parent.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(ROOT / required, target)
+    diagnostic = read_json(ROOT / isolation_diagnostic)
+    finding = diagnostic["finding"]
+    artifact = finding["artifact_relative_path"]
+    historical_blob = subprocess.check_output(
+        ["git", "show", f"{diagnostic['observed_at_git_revision']}:{artifact}"],
+        cwd=ROOT,
+    )
+    assert hashlib.sha256(historical_blob).hexdigest() == finding["artifact_sha256"]
+    write_bytes(tmp_path / artifact, historical_blob)
     files = {
         str(path.relative_to(tmp_path)): file_sha256(path)
         for path in tmp_path.rglob("*")
@@ -248,6 +614,7 @@ def _current_e5_inputs(tmp_path: Path, source_package: Path) -> tuple[Inputs, st
             "source_git_revision": "synthetic-current-v1.4-fixture",
             "files": files,
             "packages": [relative],
+            "isolation_diagnostic": isolation_diagnostic,
             "protected_files": [],
             "legacy_reference_map": {},
         },
@@ -414,7 +781,14 @@ def test_current_raw_analysis_and_figures_reproduce_without_collectors(tmp_path,
     first = figures(inputs, a, tmp_path / "analysis", tmp_path / "figures1")
     figures(inputs, a, tmp_path / "analysis", tmp_path / "figures2")
     failures = [c for c in first["comparisons"] if c["status"] == "FAIL"]
-    assert len(failures) == 1 and failures[0]["artifact"].endswith("participant-flow.csv")
+    assert failures == [] and first["status"] == "PASS"
+    participant_flow = next(
+        row for row in first["comparisons"] if row["artifact"].endswith("participant-flow.csv")
+    )
+    assert participant_flow["baseline_artifact"].startswith(
+        inputs.lock["e3_readiness_regeneration_package"]
+    )
+    assert participant_flow["preserved_original_sha256"] == "bee024512c5b6f407a9f1d273d2abbdfe2be640322b05d06f9a641404e8dd73c"
     assert not (tmp_path / "figures1/functional-development.svg").exists()
     assert file_sha256(tmp_path / "figures1/tables/functional-results.json") == file_sha256(tmp_path / "figures2/tables/functional-results.json")
     assert all(file_sha256(inputs.root / p) == digest for p, digest in before.items())

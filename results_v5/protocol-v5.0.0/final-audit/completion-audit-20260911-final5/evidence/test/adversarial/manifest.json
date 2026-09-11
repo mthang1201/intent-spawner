@@ -1,0 +1,12 @@
+{
+  "evidence_id": "adversarial",
+  "git_revision": "ec73326c947bcf3f80f71888e939dc03877f83a2",
+  "kind": "test",
+  "output_checksums": {
+    "junit.xml": "8fbad512ec790e5b5fff0fb9d37bb28304c1d44ac4e90449009cdd7ab9766d3f",
+    "record.json": "8c965faaa3c3db0b646fad593f8168b49ae22e855ac38d86472661df160898f1",
+    "stderr.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stdout.txt": "5f9b35db6e4bda818b076039a0c5e988e2c6e48e687c7321c1dbce79268afa75"
+  },
+  "schema_version": "protocol-v5-command-evidence-package-v1.1.0"
+}

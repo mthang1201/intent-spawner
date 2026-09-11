@@ -1,0 +1,3848 @@
+{
+  "audit_output_relative_path": "results_v5/protocol-v5.0.0/final-audit/final-audit-20260911-canonical-repro",
+  "audit_run_id": "final-audit-20260911-canonical-repro",
+  "audit_status": "FAIL",
+  "checks": [
+    {
+      "details": [],
+      "id": 1,
+      "reason": "No authoritative final freeze exists. frozen-configuration.json is a design snapshot, not a FROZEN envelope.",
+      "sources": [],
+      "title": "Authoritative final experiment freeze",
+      "verdict": "UNVERIFIED"
+    },
+    {
+      "details": [],
+      "id": 2,
+      "reason": "Confirmatory split and safe custodian checksum attestation are unavailable; no sealed file was opened.",
+      "sources": [],
+      "title": "Confirmatory dataset checksum and split manifest",
+      "verdict": "UNVERIFIED"
+    },
+    {
+      "details": [
+        {
+          "archives": 0,
+          "documents": 1844,
+          "findings": [],
+          "repository_scan": "PASS"
+        },
+        {
+          "prior_failure_diagnostic": {
+            "created_at_utc": "2026-09-10T09:37:57Z",
+            "evidence_boundary": {
+              "claims_permitted": false,
+              "contains_real_confirmatory_cases": false,
+              "contains_real_participant_or_cluster_observations": false,
+              "is_experiment_evidence": false
+            },
+            "finding": {
+              "artifact_relative_path": "tests/test_evaluation_v5_gold_dataset.py",
+              "artifact_role": "synthetic_adversarial_test_source",
+              "artifact_sha256": "3e978556fa831877c959ee1dc3824315f9933d2f8d12d993cc78019842acc918",
+              "artifact_type": "python_source",
+              "classification": "REMAINING_IMPLEMENTATION_DEFECT",
+              "current_artifact_sha256": "3e978556fa831877c959ee1dc3824315f9933d2f8d12d993cc78019842acc918",
+              "eligible_for_confirmatory_execution": false,
+              "eligible_to_support_thesis_claim": false,
+              "failure_category": "SOURCE_LITERAL_FRAGMENT_FALSE_POSITIVE",
+              "historical": false,
+              "immutable_preserved_evidence": false,
+              "original_error_category": "UNPARSEABLE_EMBEDDED_CONFIRMATORY_BUNDLE",
+              "parser": "evaluation_v5.isolation_audit._contains_embedded_confirmatory_bundle",
+              "schema_signature": "protocol-v5-gold-family-v1.0.0"
+            },
+            "observed_at_git_revision": "99eddfbcd626af5ac5b174712ca86331c89f1eca",
+            "protocol_version": "5.0.0",
+            "repair": {
+              "expected_standalone_result": "PASS",
+              "method": "Parse Python source structurally and inspect complete literal bundle shapes without concatenating independent malformed fixture fragments.",
+              "regression_tests": [
+                "tests/test_evaluation_v5_isolation.py::test_isolation_audit_parses_python_literals_without_joining_fixture_fragments",
+                "tests/test_evaluation_v5_isolation.py::test_isolation_audit_still_detects_complete_python_literal_bundle",
+                "tests/test_evaluation_v5_isolation.py::test_isolation_audit_detects_complete_concatenated_python_literal"
+              ],
+              "status": "REPAIRED"
+            },
+            "schema_version": "protocol-v5-isolation-diagnostic-v1.0.0",
+            "source": {
+              "locator": "",
+              "path": "benchmarks_v5/protocol-v5-isolation-diagnostic-v1.json",
+              "sha256": "ed271f8dfc5ea13f01093f62d692f93e6e41000fc82ee043e1455c96875d7917"
+            },
+            "source_blob_verification_method": "historical_git_blob",
+            "source_blob_verified": true
+          }
+        }
+      ],
+      "id": 3,
+      "reason": "Repository/archive isolation scan completed. The prior source-literal parser false positive is classified and repaired; external custody remains unavailable and is not inferred from this scan.",
+      "sources": [],
+      "title": "Development/confirmatory isolation",
+      "verdict": "UNVERIFIED"
+    },
+    {
+      "details": [],
+      "id": 4,
+      "reason": "Recommender bytes checked against audit-start inventory. No final authority exists to certify confirmatory revisions; audit revision is separate from collection revision.",
+      "sources": [],
+      "title": "Frozen P1/P2/P3 implementation identities",
+      "verdict": "UNVERIFIED"
+    },
+    {
+      "details": [
+        {
+          "field": "/extractor/extractor_prompt_sha256",
+          "path": "results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T020014Z/manifest.json",
+          "recorded": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "snapshot": "88f4f6935bf7c3f7e0be87cc29af97761f72fcfa1f95c0a0e54ac7b800a16972"
+        },
+        {
+          "field": "/retrieval_configuration",
+          "path": "results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T020014Z/manifest.json",
+          "recorded": {},
+          "snapshot": {
+            "config_version": "p2-config-v1.0.0",
+            "dense_top_k": 10,
+            "dense_weight": 1.0,
+            "extractor_mode": "local",
+            "max_concurrent_recommendations": 4,
+            "rrf_k": 60.0,
+            "sparse_top_k": 10,
+            "sparse_weight": 1.0,
+            "top_k": 10,
+            "total_timeout": 30.0
+          }
+        },
+        {
+          "field": "/constraint_ranking_configuration",
+          "path": "results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T020014Z/manifest.json",
+          "recorded": {},
+          "snapshot": {
+            "evaluator_version": "p2-deterministic-constraint-evaluator-v1.0.0",
+            "policy_version": "p2-constraint-policy-v1.0.0",
+            "ranker_version": "p2-deterministic-ranker-v1.0.0",
+            "retrieval_rank_weight": 0.75,
+            "soft_preference_weight": 0.25
+          }
+        },
+        {
+          "field": "/extractor/extractor_prompt_sha256",
+          "path": "results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T024426Z/manifest.json",
+          "recorded": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "snapshot": "88f4f6935bf7c3f7e0be87cc29af97761f72fcfa1f95c0a0e54ac7b800a16972"
+        },
+        {
+          "field": "/extractor/extractor_prompt_sha256",
+          "path": "results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T024633Z/manifest.json",
+          "recorded": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "snapshot": "88f4f6935bf7c3f7e0be87cc29af97761f72fcfa1f95c0a0e54ac7b800a16972"
+        },
+        {
+          "field": "/extractor/extractor_prompt_sha256",
+          "path": "results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T032437Z/manifest.json",
+          "recorded": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "snapshot": "88f4f6935bf7c3f7e0be87cc29af97761f72fcfa1f95c0a0e54ac7b800a16972"
+        },
+        {
+          "field": "/extractor/extractor_prompt_sha256",
+          "path": "results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T033805Z/manifest.json",
+          "recorded": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "snapshot": "88f4f6935bf7c3f7e0be87cc29af97761f72fcfa1f95c0a0e54ac7b800a16972"
+        },
+        {
+          "field": "/extractor/extractor_prompt_sha256",
+          "path": "results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T033832Z/manifest.json",
+          "recorded": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "snapshot": "88f4f6935bf7c3f7e0be87cc29af97761f72fcfa1f95c0a0e54ac7b800a16972"
+        },
+        {
+          "field": "/extractor/extractor_prompt_sha256",
+          "path": "results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T040730Z/manifest.json",
+          "recorded": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "snapshot": "88f4f6935bf7c3f7e0be87cc29af97761f72fcfa1f95c0a0e54ac7b800a16972"
+        },
+        {
+          "field": "/extractor/extractor_prompt_sha256",
+          "path": "results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T071910Z/manifest.json",
+          "recorded": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "snapshot": "88f4f6935bf7c3f7e0be87cc29af97761f72fcfa1f95c0a0e54ac7b800a16972"
+        }
+      ],
+      "id": 5,
+      "reason": "Recorded metadata compared with the design snapshot without rebuilding indexes or invoking recommenders. Snapshot agreement alone cannot certify confirmation.",
+      "sources": [],
+      "title": "Catalog, corpus, index, prompt and configuration provenance",
+      "verdict": "FAIL"
+    },
+    {
+      "details": [
+        {
+          "errors": [
+            {
+              "actual_sha256": "bee024512c5b6f407a9f1d273d2abbdfe2be640322b05d06f9a641404e8dd73c",
+              "code": "ORIGINAL_CHECKSUM_MISMATCH",
+              "crlf_reconstruction_matches_recorded_hash": true,
+              "path": "results_v5/protocol-v5.0.0/E3/b0-p2-user-study-readiness/report/tables/participant-flow.csv",
+              "recorded_sha256": "a142b8c930e1f84d123aca8c39fe564efd52027ab62b637f236db1bc8fa5686b"
+            },
+            {
+              "code": "SOURCE_VALIDATOR_FAILED",
+              "reason": "output checksum mismatch: report/tables/participant-flow.csv"
+            }
+          ],
+          "path": "results_v5/protocol-v5.0.0/E3/b0-p2-user-study-readiness"
+        },
+        {
+          "errors": [
+            {
+              "code": "SOURCE_VALIDATOR_FAILED",
+              "reason": "Invalid manifest in results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T020014Z: OBSERVED manifest requires retrieval_configuration"
+            }
+          ],
+          "path": "results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T020014Z"
+        }
+      ],
+      "id": 6,
+      "reason": "Original seals and reviewed input bytes checked; failed packages remain preserved.",
+      "sources": [],
+      "title": "Raw evidence preservation and package integrity",
+      "verdict": "FAIL"
+    },
+    {
+      "details": [
+        {
+          "artifact": "results_v5/protocol-v5.0.0/E1/20260825T-observed-p1-p2-development-v1/derived/component_scoring/analysis-manifest.json",
+          "comparison": "exact_parsed_json",
+          "ignored_top_level_fields": [
+            "created_at_utc",
+            "git_revision"
+          ],
+          "status": "PASS"
+        },
+        {
+          "artifact": "results_v5/protocol-v5.0.0/E1/20260825T-observed-p1-p2-development-v1/derived/statistical_analysis/analysis-manifest.json",
+          "comparison": "exact_parsed_json",
+          "ignored_top_level_fields": [
+            "created_at_utc",
+            "git_revision"
+          ],
+          "status": "PASS"
+        },
+        {
+          "artifact": "results_v5/protocol-v5.0.0/E3/b0-p2-user-study-readiness/derived/analysis.json",
+          "comparison": "exact_parsed_json",
+          "ignored_top_level_fields": [],
+          "status": "PASS"
+        },
+        {
+          "unverified_legacy_packages": [
+            "results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T015905Z",
+            "results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T020014Z",
+            "results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T021913Z",
+            "results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T024426Z",
+            "results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T024633Z",
+            "results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T032437Z",
+            "results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T033805Z",
+            "results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T033832Z",
+            "results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T040730Z",
+            "results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T071910Z"
+          ]
+        }
+      ],
+      "id": 7,
+      "reason": "Available current-schema raw-to-derived outputs regenerated; unavailable and legacy analyses remain explicitly bounded.",
+      "sources": [],
+      "title": "Raw-to-derived regeneration",
+      "verdict": "UNVERIFIED"
+    },
+    {
+      "details": [
+        {
+          "artifact": "results_v5/protocol-v5.0.0/E3/b0-p2-user-study-readiness/report/figures/accuracy.svg",
+          "baseline_artifact": "results_v5/protocol-v5.0.0/E3/b0-p2-user-study-readiness/report/figures/accuracy.svg",
+          "comparison": "exact_bytes",
+          "original_sha256": "fd41efe56098dfb382ef91506249fc4b55c314c96e007eaf46445ccf7a47b470",
+          "preserved_original_sha256": null,
+          "reason": "New derivative retained separately; original never changed.",
+          "regenerated_sha256": "fd41efe56098dfb382ef91506249fc4b55c314c96e007eaf46445ccf7a47b470",
+          "status": "PASS"
+        },
+        {
+          "artifact": "results_v5/protocol-v5.0.0/E3/b0-p2-user-study-readiness/report/figures/decision-time.svg",
+          "baseline_artifact": "results_v5/protocol-v5.0.0/E3/b0-p2-user-study-readiness/report/figures/decision-time.svg",
+          "comparison": "exact_bytes",
+          "original_sha256": "3cf950005c60b1fd8bd802a47856b641a1772e88942b788378179c14b06139ba",
+          "preserved_original_sha256": null,
+          "reason": "New derivative retained separately; original never changed.",
+          "regenerated_sha256": "3cf950005c60b1fd8bd802a47856b641a1772e88942b788378179c14b06139ba",
+          "status": "PASS"
+        },
+        {
+          "artifact": "results_v5/protocol-v5.0.0/E3/b0-p2-user-study-readiness/report/figures/interaction-effort.svg",
+          "baseline_artifact": "results_v5/protocol-v5.0.0/E3/b0-p2-user-study-readiness/report/figures/interaction-effort.svg",
+          "comparison": "exact_bytes",
+          "original_sha256": "44d6bf5cd32e015e51a1d51b83ab6351c450e772d6e448e910cf45f589e08fe3",
+          "preserved_original_sha256": null,
+          "reason": "New derivative retained separately; original never changed.",
+          "regenerated_sha256": "44d6bf5cd32e015e51a1d51b83ab6351c450e772d6e448e910cf45f589e08fe3",
+          "status": "PASS"
+        },
+        {
+          "artifact": "results_v5/protocol-v5.0.0/E3/b0-p2-user-study-readiness/report/figures/preference.svg",
+          "baseline_artifact": "results_v5/protocol-v5.0.0/E3/b0-p2-user-study-readiness/report/figures/preference.svg",
+          "comparison": "exact_bytes",
+          "original_sha256": "6c988d1df642703d24cbcbed27066174cd81f8d1010bde1f53b421e976c99350",
+          "preserved_original_sha256": null,
+          "reason": "New derivative retained separately; original never changed.",
+          "regenerated_sha256": "6c988d1df642703d24cbcbed27066174cd81f8d1010bde1f53b421e976c99350",
+          "status": "PASS"
+        },
+        {
+          "artifact": "results_v5/protocol-v5.0.0/E3/b0-p2-user-study-readiness/report/figures/sus-seq-custom.svg",
+          "baseline_artifact": "results_v5/protocol-v5.0.0/E3/b0-p2-user-study-readiness/report/figures/sus-seq-custom.svg",
+          "comparison": "exact_bytes",
+          "original_sha256": "3d1363dcfa80d4687c4df2e2b998441a98391f2efe3a798298a7b8ac89c77f7e",
+          "preserved_original_sha256": null,
+          "reason": "New derivative retained separately; original never changed.",
+          "regenerated_sha256": "3d1363dcfa80d4687c4df2e2b998441a98391f2efe3a798298a7b8ac89c77f7e",
+          "status": "PASS"
+        },
+        {
+          "artifact": "results_v5/protocol-v5.0.0/E3/b0-p2-user-study-readiness/report/tables/condition-summary.csv",
+          "baseline_artifact": "results_v5/protocol-v5.0.0/E3/b0-p2-user-study-readiness/report/tables/condition-summary.csv",
+          "comparison": "exact_bytes",
+          "original_sha256": "2ba7a5b4941ab5470b786e06e8692af576c890dca6b67a9826fbb08a4c0232a6",
+          "preserved_original_sha256": null,
+          "reason": "New derivative retained separately; original never changed.",
+          "regenerated_sha256": "2ba7a5b4941ab5470b786e06e8692af576c890dca6b67a9826fbb08a4c0232a6",
+          "status": "PASS"
+        },
+        {
+          "artifact": "results_v5/protocol-v5.0.0/E3/b0-p2-user-study-readiness/report/tables/missingness.csv",
+          "baseline_artifact": "results_v5/protocol-v5.0.0/E3/b0-p2-user-study-readiness/report/tables/missingness.csv",
+          "comparison": "exact_bytes",
+          "original_sha256": "2ba7a5b4941ab5470b786e06e8692af576c890dca6b67a9826fbb08a4c0232a6",
+          "preserved_original_sha256": null,
+          "reason": "New derivative retained separately; original never changed.",
+          "regenerated_sha256": "2ba7a5b4941ab5470b786e06e8692af576c890dca6b67a9826fbb08a4c0232a6",
+          "status": "PASS"
+        },
+        {
+          "artifact": "results_v5/protocol-v5.0.0/E3/b0-p2-user-study-readiness/report/tables/participant-flow.csv",
+          "baseline_artifact": "results_v5/protocol-v5.0.0/compatibility/E3/b0-p2-user-study-readiness-regeneration-v2/report/tables/participant-flow.csv",
+          "comparison": "exact_bytes",
+          "original_sha256": "9a624a9bf3d29c57f6452bc40dce9fbcebd91d87932c4ab3fe93f16c78207877",
+          "preserved_original_sha256": "bee024512c5b6f407a9f1d273d2abbdfe2be640322b05d06f9a641404e8dd73c",
+          "reason": "Current regeneration is normalized to LF and compared with the versioned compatibility artifact; the historical artifact and identity remain unchanged.",
+          "regenerated_sha256": "9a624a9bf3d29c57f6452bc40dce9fbcebd91d87932c4ab3fe93f16c78207877",
+          "status": "PASS"
+        },
+        {
+          "artifact": "results_v5/protocol-v5.0.0/E3/b0-p2-user-study-readiness/report/tables/preference.csv",
+          "baseline_artifact": "results_v5/protocol-v5.0.0/E3/b0-p2-user-study-readiness/report/tables/preference.csv",
+          "comparison": "exact_bytes",
+          "original_sha256": "2ba7a5b4941ab5470b786e06e8692af576c890dca6b67a9826fbb08a4c0232a6",
+          "preserved_original_sha256": null,
+          "reason": "New derivative retained separately; original never changed.",
+          "regenerated_sha256": "2ba7a5b4941ab5470b786e06e8692af576c890dca6b67a9826fbb08a4c0232a6",
+          "status": "PASS"
+        }
+      ],
+      "id": 8,
+      "reason": "Current derived tables/figures regenerated; differences from preserved historical artifacts are retained.",
+      "sources": [],
+      "title": "Derived-to-figures/tables regeneration",
+      "verdict": "PASS"
+    },
+    {
+      "details": [
+        {
+          "boundary": "Stage C per-trial sidecars are external deep-archive evidence; their checksum manifest is portable.",
+          "portable_bundle": {
+            "bytes": 4067810,
+            "files": 13
+          },
+          "recommendation_matrices": {
+            "v4-combined-evidence-20260813T050500Z": 960,
+            "v4-external-confirmatory-20260813T045543Z": 240,
+            "v4-revised-test-20260812T095453Z": 960
+          },
+          "reproduced_analysis": {
+            "claim_gates": {
+              "RQ1": "CLAIMABLE",
+              "RQ2": "CLAIMABLE",
+              "RQ3": "PARTIALLY CLAIMABLE",
+              "RQ4": "CLAIMABLE",
+              "RQ5": "CLAIMABLE"
+            },
+            "headline_points": {
+              "external_llm.raw_valid_response_rate": 0.0875,
+              "rule_based_mapping.joint_acceptable_rate": 0.6875,
+              "self_hosted_local_ollama_llm.joint_acceptable_rate": 0.4375,
+              "static_large.workload_success_rate": 1.0,
+              "static_small.workload_success_rate": 0.3625
+            },
+            "temporary_output_removed": true
+          },
+          "stage_c": {
+            "deep_archive_checksum_entries": 2244,
+            "deep_archive_sidecars_present": 4,
+            "plan_records": 320,
+            "records": 320,
+            "unique_trial_ids": 320
+          },
+          "status": "pass"
+        }
+      ],
+      "id": 9,
+      "reason": "Protocol-v4 portable checksums and reproduced headline values; external deep sidecars remain a separate boundary.",
+      "sources": [
+        {
+          "locator": "",
+          "path": "docs/evaluation/PROTOCOL_V4_PORTABLE_SHA256SUMS.txt",
+          "sha256": "2e40373b5576d932c5570423d56da8fbd55510cb8652ba031b7b3ea2c482a907"
+        }
+      ],
+      "title": "Historical Protocol-v4 preservation",
+      "verdict": "PASS"
+    },
+    {
+      "details": [
+        {
+          "allow_pseudonyms": true,
+          "categories_checked": [
+            "email",
+            "direct_personal_identifier_key",
+            "ip_address",
+            "unexpected_local_absolute_path",
+            "free_text_response_field",
+            "secret_token_key"
+          ],
+          "checks": [
+            "email",
+            "IP address",
+            "direct identifier field",
+            "free-text response field",
+            "absolute local path",
+            "secret key or token"
+          ],
+          "direct_identifier_findings": 0,
+          "files_scanned": 5,
+          "path": "results_v5/protocol-v5.0.0/E3/b0-p2-user-study-readiness/raw",
+          "pseudonym_handling_policy": "Permitted in research manifests and event streams (format P-<12 hex digits>); excluded from public aggregate reports.",
+          "public_aggregate_pseudonym_policy": "EXCLUDED (pseudonyms and participant IDs rejected in aggregate reports).",
+          "schema_version": "protocol-v5-user-study-report-privacy-audit-v1.0.0",
+          "status": "PASS",
+          "violations_per_category": {
+            "direct_personal_identifier_key": 0,
+            "email": 0,
+            "free_text_response_field": 0,
+            "ip_address": 0,
+            "secret_token_key": 0,
+            "unexpected_local_absolute_path": 0
+          }
+        },
+        {
+          "allow_pseudonyms": true,
+          "categories_checked": [
+            "email",
+            "direct_personal_identifier_key",
+            "ip_address",
+            "unexpected_local_absolute_path",
+            "free_text_response_field",
+            "secret_token_key"
+          ],
+          "checks": [
+            "email",
+            "IP address",
+            "direct identifier field",
+            "free-text response field",
+            "absolute local path",
+            "secret key or token"
+          ],
+          "direct_identifier_findings": 0,
+          "files_scanned": 6,
+          "path": "results_v5/protocol-v5.0.0/E3/b0-p2-user-study-readiness/derived",
+          "pseudonym_handling_policy": "Permitted in research manifests and event streams (format P-<12 hex digits>); excluded from public aggregate reports.",
+          "public_aggregate_pseudonym_policy": "EXCLUDED (pseudonyms and participant IDs rejected in aggregate reports).",
+          "schema_version": "protocol-v5-user-study-report-privacy-audit-v1.0.0",
+          "status": "PASS",
+          "violations_per_category": {
+            "direct_personal_identifier_key": 0,
+            "email": 0,
+            "free_text_response_field": 0,
+            "ip_address": 0,
+            "secret_token_key": 0,
+            "unexpected_local_absolute_path": 0
+          }
+        },
+        {
+          "categories_checked": [
+            "email",
+            "direct_personal_identifier_key",
+            "ip_address",
+            "unexpected_local_absolute_path",
+            "free_text_response_field",
+            "secret_token_key",
+            "pseudonym"
+          ],
+          "checks": [
+            "pseudonym",
+            "email",
+            "IP address",
+            "direct identifier field",
+            "free-text response field",
+            "absolute local path",
+            "secret key or token"
+          ],
+          "direct_identifier_findings": 0,
+          "files_scanned": 17,
+          "path": "results_v5/protocol-v5.0.0/E3/b0-p2-user-study-readiness/report",
+          "pseudonym_handling_policy": "EXCLUDED (pseudonyms and participant IDs rejected in aggregate reports).",
+          "public_aggregate_pseudonym_policy": "EXCLUDED (pseudonyms and participant IDs rejected in aggregate reports).",
+          "schema_version": "protocol-v5-user-study-report-privacy-audit-v1.0.0",
+          "status": "PASS",
+          "violations_per_category": {
+            "direct_personal_identifier_key": 0,
+            "email": 0,
+            "free_text_response_field": 0,
+            "ip_address": 0,
+            "pseudonym": 0,
+            "secret_token_key": 0,
+            "unexpected_local_absolute_path": 0
+          }
+        }
+      ],
+      "id": 10,
+      "reason": "Direct-identifier checks applied to available human-study files. No participant sessions were observed; public aggregate reports exclude pseudonyms.",
+      "sources": [],
+      "title": "Human-study direct-identifier exclusion",
+      "verdict": "PASS"
+    },
+    {
+      "details": [],
+      "id": 11,
+      "reason": "No observed Kubernetes trials exist; readiness identities are not hardware measurements.",
+      "sources": [],
+      "title": "Kubernetes environment identity",
+      "verdict": "NOT_APPLICABLE"
+    },
+    {
+      "details": [],
+      "id": 12,
+      "reason": "No storage measurements exist. Functional-probe host metadata does not establish an image platform or storage reuse.",
+      "sources": [],
+      "title": "Image-storage immutable digests and platforms",
+      "verdict": "NOT_APPLICABLE"
+    },
+    {
+      "details": [
+        {
+          "claim_candidate_scan": {
+            "candidate_count": 17,
+            "findings": [],
+            "promoted_synthetic_count": 0,
+            "schema_version": "protocol-v5-final-synthetic-origin-scan-v1.0.0",
+            "status": "PASS",
+            "synthetic_candidate_count": 0,
+            "unauthenticated_exposed_count": 0
+          }
+        }
+      ],
+      "id": 13,
+      "reason": "Raw records and every discovered claim candidate were checked for collector origin and claim eligibility; path names do not establish authenticity.",
+      "sources": [],
+      "title": "Observed execution versus synthetic fixtures",
+      "verdict": "PASS"
+    },
+    {
+      "details": [],
+      "id": 14,
+      "reason": "No available v5 inferential p-value was found using repetitions as semantic samples. Family/participant contracts are also checked by the existing claim-registry validator.",
+      "sources": [],
+      "title": "Independent statistical units",
+      "verdict": "PASS"
+    },
+    {
+      "details": [],
+      "id": 15,
+      "reason": "Result-bearing JSON, JSONL and CSV artifacts checked for B0 ranking metrics.",
+      "sources": [],
+      "title": "No B0 ranking metrics",
+      "verdict": "PASS"
+    },
+    {
+      "details": [],
+      "id": 16,
+      "reason": "P3 state is derived from the authenticated evaluated-claim package: NOT_RETAINED_OR_NOT_PRESENT.",
+      "sources": [
+        {
+          "locator": "",
+          "path": "docs/evaluation/P3_INCREMENTAL_EVALUATION_V1.md",
+          "sha256": "3ed59ae76bd79e5e86cb08f63f86d7a49c8c5632f578b74f8ee51a1f8c4b8d9f"
+        }
+      ],
+      "title": "P3 development gate and primary-system boundary",
+      "verdict": "PASS"
+    },
+    {
+      "details": [],
+      "id": 17,
+      "reason": "Unavailable experiments remain NOT_EXECUTED with null estimates; planned counts and fixture image identifiers are design only.",
+      "sources": [],
+      "title": "Missing experiments and placeholder values",
+      "verdict": "PASS"
+    }
+  ],
+  "claim_counts": {
+    "NOT_EXECUTED": 9,
+    "NOT_SUPPORTED": 0,
+    "SUPPORTED": 0
+  },
+  "claim_evidence_sources": {
+    "evaluated_claims": {
+      "locator": "",
+      "path": "results_v5/protocol-v5.0.0/analysis/research-analysis-20260905T-final/derived/evaluated-claim-registry.json",
+      "sha256": "d98c4453da7583a9c6c695ec13cfac940b249a318023c72bf2e8c244adee6cad"
+    },
+    "package": {
+      "locator": "",
+      "path": "results_v5/protocol-v5.0.0/analysis/research-analysis-20260905T-final/manifest.json",
+      "sha256": "b614f527da9d12c8f9d06a102eb933d17d42b64b7c72749083c15deacb681669"
+    },
+    "registry": {
+      "locator": "",
+      "path": "benchmarks_v5/protocol-v5-claim-registry-v1.yaml",
+      "sha256": "882e66677225f9fa75bd3fe66870d4618664e62e3bd978e4e6458d1f544fa798"
+    },
+    "selection": {
+      "locator": "",
+      "path": "results_v5/protocol-v5.0.0/analysis/research-analysis-20260905T-final/derived/evidence-selection.json",
+      "sha256": "dc36cd5fadd936a81641d4eabd251b27fdb722281ffed0a85103ee6227641d12"
+    }
+  },
+  "claims": [
+    {
+      "claim_status": "NOT_EXECUTED",
+      "claimable": false,
+      "confidence_interval": null,
+      "confidence_intervals": {},
+      "counts": {},
+      "effect_size": null,
+      "effect_sizes": {},
+      "estimate": null,
+      "estimates": {},
+      "evidence_status": [
+        {
+          "claim_eligibility": "UNAVAILABLE",
+          "execution_status": null,
+          "requirement_id": "offline_recommendation",
+          "selection_mode": "NONE",
+          "stage": null,
+          "validation_status": null
+        }
+      ],
+      "hypothesis": "P2 has higher JointAccept@1 than P1.",
+      "id": "H1",
+      "limitations": [
+        {
+          "affected_claims": [
+            "H1"
+          ],
+          "affected_evidence_requirements": [
+            "offline_recommendation"
+          ],
+          "category": "statistical_conclusion",
+          "code": "REQUIRED_EVIDENCE_UNAVAILABLE",
+          "observed_value": {
+            "candidate_count": 1,
+            "eligible_candidate_count": 0,
+            "reason_codes": [
+              "CLAIMS_NOT_PERMITTED",
+              "EVIDENCE_NOT_OBSERVED_COMPLETE",
+              "NON_CONFIRMATORY_EVIDENCE",
+              "NO_ELIGIBLE_CONFIRMATORY_EVIDENCE"
+            ]
+          },
+          "severity": "blocking",
+          "source_artifact": "derived/evidence-selection.json",
+          "source_pointer": "/requirements/0",
+          "statement": "The required confirmatory evidence was unavailable or unselected, so the linked claim cannot be decided.",
+          "threat_id": "TV-001"
+        },
+        {
+          "affected_claims": [
+            "H1"
+          ],
+          "affected_evidence_requirements": [
+            "offline_recommendation"
+          ],
+          "category": "benchmark_contamination",
+          "code": "NON_CONFIRMATORY_EVIDENCE_PRESENT",
+          "observed_value": {
+            "count": 1,
+            "manifests": [
+              "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E1/20260825T-observed-p1-p2-development-v1/derived/statistical_analysis/analysis-manifest.json"
+            ],
+            "stages": [
+              "development"
+            ]
+          },
+          "severity": "boundary",
+          "source_artifact": "derived/evidence-inventory.json",
+          "source_pointer": "/candidates",
+          "statement": "Development, historical, or unknown-stage packages are inventoried but excluded from confirmatory claim decisions.",
+          "threat_id": "TV-010"
+        }
+      ],
+      "normalized_metrics": {},
+      "reason_codes": [
+        "CLAIMS_NOT_PERMITTED",
+        "EVIDENCE_NOT_OBSERVED_COMPLETE",
+        "NON_CONFIRMATORY_EVIDENCE",
+        "NO_ELIGIBLE_CONFIRMATORY_EVIDENCE",
+        "REQUIRED_METRIC_OR_TEST_UNAVAILABLE"
+      ],
+      "research_question": "RQ1",
+      "source": {
+        "locator": "/claims/0",
+        "path": "results_v5/protocol-v5.0.0/analysis/research-analysis-20260905T-final/derived/evaluated-claim-registry.json",
+        "sha256": "d98c4453da7583a9c6c695ec13cfac940b249a318023c72bf2e8c244adee6cad"
+      }
+    },
+    {
+      "claim_status": "NOT_EXECUTED",
+      "claimable": false,
+      "confidence_interval": null,
+      "confidence_intervals": {},
+      "counts": {},
+      "effect_size": null,
+      "effect_sizes": {},
+      "estimate": null,
+      "estimates": {},
+      "evidence_status": [
+        {
+          "claim_eligibility": "UNAVAILABLE",
+          "execution_status": null,
+          "requirement_id": "natural_language_robustness",
+          "selection_mode": "NONE",
+          "stage": null,
+          "validation_status": null
+        }
+      ],
+      "hypothesis": "P2 loses less JointAccept@1 under reviewed-equivalent surface-form changes than P1.",
+      "id": "H2",
+      "limitations": [
+        {
+          "affected_claims": [
+            "H2"
+          ],
+          "affected_evidence_requirements": [
+            "natural_language_robustness"
+          ],
+          "category": "statistical_conclusion",
+          "code": "REQUIRED_EVIDENCE_UNAVAILABLE",
+          "observed_value": {
+            "candidate_count": 1,
+            "eligible_candidate_count": 0,
+            "reason_codes": [
+              "CLAIMS_NOT_PERMITTED",
+              "EVIDENCE_NOT_OBSERVED_COMPLETE",
+              "NON_CONFIRMATORY_EVIDENCE",
+              "NO_ELIGIBLE_CONFIRMATORY_EVIDENCE"
+            ]
+          },
+          "severity": "blocking",
+          "source_artifact": "derived/evidence-selection.json",
+          "source_pointer": "/requirements/1",
+          "statement": "The required confirmatory evidence was unavailable or unselected, so the linked claim cannot be decided.",
+          "threat_id": "TV-002"
+        },
+        {
+          "affected_claims": [
+            "H2"
+          ],
+          "affected_evidence_requirements": [
+            "natural_language_robustness"
+          ],
+          "category": "benchmark_contamination",
+          "code": "NON_CONFIRMATORY_EVIDENCE_PRESENT",
+          "observed_value": {
+            "count": 1,
+            "manifests": [
+              "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E1/20260825T-observed-p1-p2-development-v1/derived/statistical_analysis/analysis-manifest.json"
+            ],
+            "stages": [
+              "development"
+            ]
+          },
+          "severity": "boundary",
+          "source_artifact": "derived/evidence-inventory.json",
+          "source_pointer": "/candidates",
+          "statement": "Development, historical, or unknown-stage packages are inventoried but excluded from confirmatory claim decisions.",
+          "threat_id": "TV-009"
+        }
+      ],
+      "normalized_metrics": {},
+      "reason_codes": [
+        "CLAIMS_NOT_PERMITTED",
+        "EVIDENCE_NOT_OBSERVED_COMPLETE",
+        "NON_CONFIRMATORY_EVIDENCE",
+        "NO_ELIGIBLE_CONFIRMATORY_EVIDENCE",
+        "REQUIRED_METRIC_OR_TEST_UNAVAILABLE"
+      ],
+      "research_question": "RQ2",
+      "source": {
+        "locator": "/claims/1",
+        "path": "results_v5/protocol-v5.0.0/analysis/research-analysis-20260905T-final/derived/evaluated-claim-registry.json",
+        "sha256": "d98c4453da7583a9c6c695ec13cfac940b249a318023c72bf2e8c244adee6cad"
+      }
+    },
+    {
+      "claim_status": "NOT_EXECUTED",
+      "claimable": false,
+      "confidence_interval": null,
+      "confidence_intervals": {},
+      "counts": {},
+      "effect_size": null,
+      "effect_sizes": {},
+      "estimate": null,
+      "estimates": {},
+      "evidence_status": [
+        {
+          "claim_eligibility": "UNAVAILABLE",
+          "execution_status": null,
+          "requirement_id": "user_study",
+          "selection_mode": "NONE",
+          "stage": null,
+          "validation_status": null
+        }
+      ],
+      "hypothesis": "Users achieve acceptable selections more often and faster with P2 than B0.",
+      "id": "H3",
+      "limitations": [
+        {
+          "affected_claims": [
+            "H3",
+            "H4"
+          ],
+          "affected_evidence_requirements": [
+            "user_study"
+          ],
+          "category": "statistical_conclusion",
+          "code": "REQUIRED_EVIDENCE_UNAVAILABLE",
+          "observed_value": {
+            "candidate_count": 0,
+            "eligible_candidate_count": 0,
+            "reason_codes": [
+              "NO_ELIGIBLE_CONFIRMATORY_EVIDENCE"
+            ]
+          },
+          "severity": "blocking",
+          "source_artifact": "derived/evidence-selection.json",
+          "source_pointer": "/requirements/2",
+          "statement": "The required confirmatory evidence was unavailable or unselected, so the linked claim cannot be decided.",
+          "threat_id": "TV-003"
+        }
+      ],
+      "normalized_metrics": {},
+      "reason_codes": [
+        "NO_ELIGIBLE_CONFIRMATORY_EVIDENCE",
+        "REQUIRED_METRIC_OR_TEST_UNAVAILABLE"
+      ],
+      "research_question": "RQ3",
+      "source": {
+        "locator": "/claims/2",
+        "path": "results_v5/protocol-v5.0.0/analysis/research-analysis-20260905T-final/derived/evaluated-claim-registry.json",
+        "sha256": "d98c4453da7583a9c6c695ec13cfac940b249a318023c72bf2e8c244adee6cad"
+      }
+    },
+    {
+      "claim_status": "NOT_EXECUTED",
+      "claimable": false,
+      "confidence_interval": null,
+      "confidence_intervals": {},
+      "counts": {},
+      "effect_size": null,
+      "effect_sizes": {},
+      "estimate": null,
+      "estimates": {},
+      "evidence_status": [
+        {
+          "claim_eligibility": "UNAVAILABLE",
+          "execution_status": null,
+          "requirement_id": "user_study",
+          "selection_mode": "NONE",
+          "stage": null,
+          "validation_status": null
+        }
+      ],
+      "hypothesis": "Users report greater task ease and usability with P2 than B0.",
+      "id": "H4",
+      "limitations": [
+        {
+          "affected_claims": [
+            "H3",
+            "H4"
+          ],
+          "affected_evidence_requirements": [
+            "user_study"
+          ],
+          "category": "statistical_conclusion",
+          "code": "REQUIRED_EVIDENCE_UNAVAILABLE",
+          "observed_value": {
+            "candidate_count": 0,
+            "eligible_candidate_count": 0,
+            "reason_codes": [
+              "NO_ELIGIBLE_CONFIRMATORY_EVIDENCE"
+            ]
+          },
+          "severity": "blocking",
+          "source_artifact": "derived/evidence-selection.json",
+          "source_pointer": "/requirements/2",
+          "statement": "The required confirmatory evidence was unavailable or unselected, so the linked claim cannot be decided.",
+          "threat_id": "TV-003"
+        }
+      ],
+      "normalized_metrics": {},
+      "reason_codes": [
+        "NO_ELIGIBLE_CONFIRMATORY_EVIDENCE",
+        "REQUIRED_METRIC_OR_TEST_UNAVAILABLE"
+      ],
+      "research_question": "RQ3",
+      "source": {
+        "locator": "/claims/3",
+        "path": "results_v5/protocol-v5.0.0/analysis/research-analysis-20260905T-final/derived/evaluated-claim-registry.json",
+        "sha256": "d98c4453da7583a9c6c695ec13cfac940b249a318023c72bf2e8c244adee6cad"
+      }
+    },
+    {
+      "claim_status": "NOT_EXECUTED",
+      "claimable": false,
+      "confidence_interval": null,
+      "confidence_intervals": {},
+      "counts": {},
+      "effect_size": null,
+      "effect_sizes": {},
+      "estimate": null,
+      "estimates": {},
+      "evidence_status": [
+        {
+          "claim_eligibility": "UNAVAILABLE",
+          "execution_status": null,
+          "requirement_id": "resource_efficiency",
+          "selection_mode": "NONE",
+          "stage": null,
+          "validation_status": null
+        }
+      ],
+      "hypothesis": "P2 Catalog reduces requested-resource cost per successful workload while preserving reliability relative to Static Large.",
+      "id": "H5",
+      "limitations": [
+        {
+          "affected_claims": [
+            "H5",
+            "H6"
+          ],
+          "affected_evidence_requirements": [
+            "resource_efficiency"
+          ],
+          "category": "statistical_conclusion",
+          "code": "REQUIRED_EVIDENCE_UNAVAILABLE",
+          "observed_value": {
+            "candidate_count": 5,
+            "eligible_candidate_count": 0,
+            "reason_codes": [
+              "CLAIMS_NOT_PERMITTED",
+              "DERIVED_ANALYSIS_PACKAGE_REQUIRED",
+              "EVIDENCE_NOT_OBSERVED_COMPLETE",
+              "EVIDENCE_VALIDATION_FAILED",
+              "NON_CONFIRMATORY_EVIDENCE",
+              "NO_ELIGIBLE_CONFIRMATORY_EVIDENCE"
+            ]
+          },
+          "severity": "blocking",
+          "source_artifact": "derived/evidence-selection.json",
+          "source_pointer": "/requirements/3",
+          "statement": "The required confirmatory evidence was unavailable or unselected, so the linked claim cannot be decided.",
+          "threat_id": "TV-004"
+        },
+        {
+          "affected_claims": [
+            "H5",
+            "H6"
+          ],
+          "affected_evidence_requirements": [
+            "resource_efficiency"
+          ],
+          "category": "benchmark_contamination",
+          "code": "NON_CONFIRMATORY_EVIDENCE_PRESENT",
+          "observed_value": {
+            "count": 5,
+            "manifests": [
+              "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E4/e4-resource-efficiency-dry-run-20260904T093503Z/manifest.json",
+              "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E4/e4-resource-efficiency-dry-run-20260904T094050Z/manifest.json",
+              "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E4/e4-resource-efficiency-dry-run-20260904T094316Z/manifest.json",
+              "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E4/e4-resource-efficiency-dry-run-20260905T013330Z/manifest.json",
+              "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E4/e4-resource-efficiency-dry-run-20260905T013619Z/manifest.json"
+            ],
+            "stages": [
+              "development"
+            ]
+          },
+          "severity": "boundary",
+          "source_artifact": "derived/evidence-inventory.json",
+          "source_pointer": "/candidates",
+          "statement": "Development, historical, or unknown-stage packages are inventoried but excluded from confirmatory claim decisions.",
+          "threat_id": "TV-011"
+        }
+      ],
+      "normalized_metrics": {},
+      "reason_codes": [
+        "CLAIMS_NOT_PERMITTED",
+        "DERIVED_ANALYSIS_PACKAGE_REQUIRED",
+        "EVIDENCE_NOT_OBSERVED_COMPLETE",
+        "EVIDENCE_VALIDATION_FAILED",
+        "NON_CONFIRMATORY_EVIDENCE",
+        "NO_ELIGIBLE_CONFIRMATORY_EVIDENCE",
+        "REQUIRED_METRIC_OR_TEST_UNAVAILABLE"
+      ],
+      "research_question": "RQ4",
+      "source": {
+        "locator": "/claims/4",
+        "path": "results_v5/protocol-v5.0.0/analysis/research-analysis-20260905T-final/derived/evaluated-claim-registry.json",
+        "sha256": "d98c4453da7583a9c6c695ec13cfac940b249a318023c72bf2e8c244adee6cad"
+      }
+    },
+    {
+      "claim_status": "NOT_EXECUTED",
+      "claimable": false,
+      "confidence_interval": null,
+      "confidence_intervals": {},
+      "counts": {},
+      "effect_size": null,
+      "effect_sizes": {},
+      "estimate": null,
+      "estimates": {},
+      "evidence_status": [
+        {
+          "claim_eligibility": "UNAVAILABLE",
+          "execution_status": null,
+          "requirement_id": "resource_efficiency",
+          "selection_mode": "NONE",
+          "stage": null,
+          "validation_status": null
+        }
+      ],
+      "hypothesis": "P2 Dynamic has lower CPU-request and memory-request absolute oracle error than P2 Catalog.",
+      "id": "H6",
+      "limitations": [
+        {
+          "affected_claims": [
+            "H5",
+            "H6"
+          ],
+          "affected_evidence_requirements": [
+            "resource_efficiency"
+          ],
+          "category": "statistical_conclusion",
+          "code": "REQUIRED_EVIDENCE_UNAVAILABLE",
+          "observed_value": {
+            "candidate_count": 5,
+            "eligible_candidate_count": 0,
+            "reason_codes": [
+              "CLAIMS_NOT_PERMITTED",
+              "DERIVED_ANALYSIS_PACKAGE_REQUIRED",
+              "EVIDENCE_NOT_OBSERVED_COMPLETE",
+              "EVIDENCE_VALIDATION_FAILED",
+              "NON_CONFIRMATORY_EVIDENCE",
+              "NO_ELIGIBLE_CONFIRMATORY_EVIDENCE"
+            ]
+          },
+          "severity": "blocking",
+          "source_artifact": "derived/evidence-selection.json",
+          "source_pointer": "/requirements/3",
+          "statement": "The required confirmatory evidence was unavailable or unselected, so the linked claim cannot be decided.",
+          "threat_id": "TV-004"
+        },
+        {
+          "affected_claims": [
+            "H5",
+            "H6"
+          ],
+          "affected_evidence_requirements": [
+            "resource_efficiency"
+          ],
+          "category": "benchmark_contamination",
+          "code": "NON_CONFIRMATORY_EVIDENCE_PRESENT",
+          "observed_value": {
+            "count": 5,
+            "manifests": [
+              "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E4/e4-resource-efficiency-dry-run-20260904T093503Z/manifest.json",
+              "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E4/e4-resource-efficiency-dry-run-20260904T094050Z/manifest.json",
+              "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E4/e4-resource-efficiency-dry-run-20260904T094316Z/manifest.json",
+              "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E4/e4-resource-efficiency-dry-run-20260905T013330Z/manifest.json",
+              "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E4/e4-resource-efficiency-dry-run-20260905T013619Z/manifest.json"
+            ],
+            "stages": [
+              "development"
+            ]
+          },
+          "severity": "boundary",
+          "source_artifact": "derived/evidence-inventory.json",
+          "source_pointer": "/candidates",
+          "statement": "Development, historical, or unknown-stage packages are inventoried but excluded from confirmatory claim decisions.",
+          "threat_id": "TV-011"
+        }
+      ],
+      "normalized_metrics": {},
+      "reason_codes": [
+        "CLAIMS_NOT_PERMITTED",
+        "DERIVED_ANALYSIS_PACKAGE_REQUIRED",
+        "EVIDENCE_NOT_OBSERVED_COMPLETE",
+        "EVIDENCE_VALIDATION_FAILED",
+        "NON_CONFIRMATORY_EVIDENCE",
+        "NO_ELIGIBLE_CONFIRMATORY_EVIDENCE",
+        "REQUIRED_METRIC_OR_TEST_UNAVAILABLE"
+      ],
+      "research_question": "RQ4",
+      "source": {
+        "locator": "/claims/5",
+        "path": "results_v5/protocol-v5.0.0/analysis/research-analysis-20260905T-final/derived/evaluated-claim-registry.json",
+        "sha256": "d98c4453da7583a9c6c695ec13cfac940b249a318023c72bf2e8c244adee6cad"
+      }
+    },
+    {
+      "claim_status": "NOT_EXECUTED",
+      "claimable": false,
+      "confidence_interval": null,
+      "confidence_intervals": {},
+      "counts": {},
+      "effect_size": null,
+      "effect_sizes": {},
+      "estimate": null,
+      "estimates": {},
+      "evidence_status": [
+        {
+          "claim_eligibility": "UNAVAILABLE",
+          "execution_status": null,
+          "requirement_id": "image_functional",
+          "selection_mode": "NONE",
+          "stage": null,
+          "validation_status": null
+        }
+      ],
+      "hypothesis": "P2 recommended images satisfy every required functional capability probe at immutable digests.",
+      "id": "H7F",
+      "limitations": [
+        {
+          "affected_claims": [
+            "H7F"
+          ],
+          "affected_evidence_requirements": [
+            "image_functional"
+          ],
+          "category": "statistical_conclusion",
+          "code": "REQUIRED_EVIDENCE_UNAVAILABLE",
+          "observed_value": {
+            "candidate_count": 10,
+            "eligible_candidate_count": 0,
+            "reason_codes": [
+              "CLAIMS_NOT_PERMITTED",
+              "EVIDENCE_NOT_OBSERVED_COMPLETE",
+              "EVIDENCE_VALIDATION_FAILED",
+              "LEGACY_E5_SCHEMA",
+              "NON_CONFIRMATORY_EVIDENCE",
+              "NO_ELIGIBLE_CONFIRMATORY_EVIDENCE"
+            ]
+          },
+          "severity": "blocking",
+          "source_artifact": "derived/evidence-selection.json",
+          "source_pointer": "/requirements/4",
+          "statement": "The required confirmatory evidence was unavailable or unselected, so the linked claim cannot be decided.",
+          "threat_id": "TV-005"
+        },
+        {
+          "affected_claims": [
+            "H7F"
+          ],
+          "affected_evidence_requirements": [
+            "image_functional"
+          ],
+          "category": "benchmark_contamination",
+          "code": "NON_CONFIRMATORY_EVIDENCE_PRESENT",
+          "observed_value": {
+            "count": 10,
+            "manifests": [
+              "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T015905Z/manifest.json",
+              "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T020014Z/manifest.json",
+              "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T021913Z/manifest.json",
+              "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T024426Z/manifest.json",
+              "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T024633Z/manifest.json",
+              "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T032437Z/manifest.json",
+              "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T033805Z/manifest.json",
+              "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T033832Z/manifest.json",
+              "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T040730Z/manifest.json",
+              "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T071910Z/manifest.json"
+            ],
+            "stages": [
+              "development"
+            ]
+          },
+          "severity": "boundary",
+          "source_artifact": "derived/evidence-inventory.json",
+          "source_pointer": "/candidates",
+          "statement": "Development, historical, or unknown-stage packages are inventoried but excluded from confirmatory claim decisions.",
+          "threat_id": "TV-008"
+        }
+      ],
+      "normalized_metrics": {},
+      "reason_codes": [
+        "CLAIMS_NOT_PERMITTED",
+        "EVIDENCE_NOT_OBSERVED_COMPLETE",
+        "EVIDENCE_VALIDATION_FAILED",
+        "LEGACY_E5_SCHEMA",
+        "NON_CONFIRMATORY_EVIDENCE",
+        "NO_ELIGIBLE_CONFIRMATORY_EVIDENCE",
+        "REQUIRED_METRIC_OR_TEST_UNAVAILABLE"
+      ],
+      "research_question": "RQ5",
+      "source": {
+        "locator": "/claims/6",
+        "path": "results_v5/protocol-v5.0.0/analysis/research-analysis-20260905T-final/derived/evaluated-claim-registry.json",
+        "sha256": "d98c4453da7583a9c6c695ec13cfac940b249a318023c72bf2e8c244adee6cad"
+      }
+    },
+    {
+      "claim_status": "NOT_EXECUTED",
+      "claimable": false,
+      "confidence_interval": null,
+      "confidence_intervals": {},
+      "counts": {},
+      "effect_size": null,
+      "effect_sizes": {},
+      "estimate": null,
+      "estimates": {},
+      "evidence_status": [
+        {
+          "claim_eligibility": "UNAVAILABLE",
+          "execution_status": null,
+          "requirement_id": "image_storage",
+          "selection_mode": "NONE",
+          "stage": null,
+          "validation_status": null
+        }
+      ],
+      "hypothesis": "Shared image layers require less cumulative storage than a naive logical sum as the frozen catalog grows.",
+      "id": "H7",
+      "limitations": [
+        {
+          "affected_claims": [
+            "H7"
+          ],
+          "affected_evidence_requirements": [
+            "image_storage"
+          ],
+          "category": "statistical_conclusion",
+          "code": "REQUIRED_EVIDENCE_UNAVAILABLE",
+          "observed_value": {
+            "candidate_count": 0,
+            "eligible_candidate_count": 0,
+            "reason_codes": [
+              "NO_ELIGIBLE_CONFIRMATORY_EVIDENCE"
+            ]
+          },
+          "severity": "blocking",
+          "source_artifact": "derived/evidence-selection.json",
+          "source_pointer": "/requirements/5",
+          "statement": "The required confirmatory evidence was unavailable or unselected, so the linked claim cannot be decided.",
+          "threat_id": "TV-006"
+        }
+      ],
+      "normalized_metrics": {},
+      "reason_codes": [
+        "NO_ELIGIBLE_CONFIRMATORY_EVIDENCE",
+        "REQUIRED_METRIC_OR_TEST_UNAVAILABLE"
+      ],
+      "research_question": "RQ5",
+      "source": {
+        "locator": "/claims/7",
+        "path": "results_v5/protocol-v5.0.0/analysis/research-analysis-20260905T-final/derived/evaluated-claim-registry.json",
+        "sha256": "d98c4453da7583a9c6c695ec13cfac940b249a318023c72bf2e8c244adee6cad"
+      }
+    },
+    {
+      "claim_status": "NOT_EXECUTED",
+      "claimable": false,
+      "confidence_interval": null,
+      "confidence_intervals": {},
+      "counts": {},
+      "effect_size": null,
+      "effect_sizes": {},
+      "estimate": null,
+      "estimates": {},
+      "evidence_status": [
+        {
+          "claim_eligibility": "UNAVAILABLE",
+          "execution_status": null,
+          "requirement_id": "p2_p3",
+          "selection_mode": "NONE",
+          "stage": null,
+          "validation_status": null
+        }
+      ],
+      "hypothesis": "Retained P3 improves JointAccept@1 over P2 while remaining within a separately frozen practical-overhead budget.",
+      "id": "H8",
+      "limitations": [
+        {
+          "affected_claims": [
+            "H8"
+          ],
+          "affected_evidence_requirements": [
+            "p2_p3"
+          ],
+          "category": "statistical_conclusion",
+          "code": "REQUIRED_EVIDENCE_UNAVAILABLE",
+          "observed_value": {
+            "candidate_count": 0,
+            "eligible_candidate_count": 0,
+            "reason_codes": [
+              "NO_ELIGIBLE_CONFIRMATORY_EVIDENCE",
+              "P3_NOT_RETAINED_OR_NOT_PRESENT"
+            ]
+          },
+          "severity": "blocking",
+          "source_artifact": "derived/evidence-selection.json",
+          "source_pointer": "/requirements/6",
+          "statement": "The required confirmatory evidence was unavailable or unselected, so the linked claim cannot be decided.",
+          "threat_id": "TV-007"
+        }
+      ],
+      "normalized_metrics": {},
+      "reason_codes": [
+        "NO_ELIGIBLE_CONFIRMATORY_EVIDENCE",
+        "P3_NOT_RETAINED_OR_NOT_PRESENT",
+        "REQUIRED_METRIC_OR_TEST_UNAVAILABLE"
+      ],
+      "research_question": "RQ6",
+      "source": {
+        "locator": "/claims/8",
+        "path": "results_v5/protocol-v5.0.0/analysis/research-analysis-20260905T-final/derived/evaluated-claim-registry.json",
+        "sha256": "d98c4453da7583a9c6c695ec13cfac940b249a318023c72bf2e8c244adee6cad"
+      }
+    }
+  ],
+  "confirmatory_status": "NOT_EXECUTED",
+  "evaluated_claims": [
+    {
+      "claim_id": "H1",
+      "claim_status": "NOT_EXECUTED",
+      "claimable": false,
+      "evidence": [],
+      "evidence_status": [
+        {
+          "claim_eligibility": "UNAVAILABLE",
+          "execution_status": null,
+          "requirement_id": "offline_recommendation",
+          "selection_mode": "NONE",
+          "stage": null,
+          "validation_status": null
+        }
+      ],
+      "experiments": [
+        "E1"
+      ],
+      "hypothesis": "P2 has higher JointAccept@1 than P1.",
+      "limitations": [
+        {
+          "affected_claims": [
+            "H1"
+          ],
+          "affected_evidence_requirements": [
+            "offline_recommendation"
+          ],
+          "category": "statistical_conclusion",
+          "code": "REQUIRED_EVIDENCE_UNAVAILABLE",
+          "observed_value": {
+            "candidate_count": 1,
+            "eligible_candidate_count": 0,
+            "reason_codes": [
+              "CLAIMS_NOT_PERMITTED",
+              "EVIDENCE_NOT_OBSERVED_COMPLETE",
+              "NON_CONFIRMATORY_EVIDENCE",
+              "NO_ELIGIBLE_CONFIRMATORY_EVIDENCE"
+            ]
+          },
+          "severity": "blocking",
+          "source_artifact": "derived/evidence-selection.json",
+          "source_pointer": "/requirements/0",
+          "statement": "The required confirmatory evidence was unavailable or unselected, so the linked claim cannot be decided.",
+          "threat_id": "TV-001"
+        },
+        {
+          "affected_claims": [
+            "H1"
+          ],
+          "affected_evidence_requirements": [
+            "offline_recommendation"
+          ],
+          "category": "benchmark_contamination",
+          "code": "NON_CONFIRMATORY_EVIDENCE_PRESENT",
+          "observed_value": {
+            "count": 1,
+            "manifests": [
+              "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E1/20260825T-observed-p1-p2-development-v1/derived/statistical_analysis/analysis-manifest.json"
+            ],
+            "stages": [
+              "development"
+            ]
+          },
+          "severity": "boundary",
+          "source_artifact": "derived/evidence-inventory.json",
+          "source_pointer": "/candidates",
+          "statement": "Development, historical, or unknown-stage packages are inventoried but excluded from confirmatory claim decisions.",
+          "threat_id": "TV-010"
+        }
+      ],
+      "metrics": [
+        {
+          "direction": "higher",
+          "id": "joint_accept_at_1_difference",
+          "label": "P2 minus P1 JointAccept@1",
+          "systems": [
+            "P1",
+            "P2"
+          ],
+          "unit": "proportion"
+        }
+      ],
+      "reason_codes": [
+        "CLAIMS_NOT_PERMITTED",
+        "EVIDENCE_NOT_OBSERVED_COMPLETE",
+        "NON_CONFIRMATORY_EVIDENCE",
+        "NO_ELIGIBLE_CONFIRMATORY_EVIDENCE",
+        "REQUIRED_METRIC_OR_TEST_UNAVAILABLE"
+      ],
+      "research_question": {
+        "id": "RQ1",
+        "question": "Does P2 improve top-one recommendation quality relative to frozen P1?"
+      },
+      "result": {
+        "all_support_conditions_passed": null,
+        "decision_checks": [
+          {
+            "expected": 0,
+            "observed": null,
+            "operator": "gt",
+            "passed": null,
+            "path": "metrics.effect"
+          },
+          {
+            "expected": 0,
+            "observed": null,
+            "operator": "gt",
+            "passed": null,
+            "path": "metrics.ci_low"
+          },
+          {
+            "expected": 0.05,
+            "observed": null,
+            "operator": "lt",
+            "passed": null,
+            "path": "metrics.p_value"
+          },
+          {
+            "expected": true,
+            "observed": null,
+            "operator": "eq",
+            "passed": null,
+            "path": "metrics.test_available"
+          }
+        ],
+        "normalized_metrics": {}
+      },
+      "schema_version": "protocol-v5-evaluated-claim-v1.0.0",
+      "statistical_tests": [
+        {
+          "alpha": 0.05,
+          "id": "h1_paired_family_test",
+          "independent_unit": "workload_family",
+          "method": "exact McNemar when family outcomes are binary, otherwise paired Wilcoxon; family bootstrap CI",
+          "multiplicity": null,
+          "observed_evidence_tests": []
+        }
+      ]
+    },
+    {
+      "claim_id": "H2",
+      "claim_status": "NOT_EXECUTED",
+      "claimable": false,
+      "evidence": [],
+      "evidence_status": [
+        {
+          "claim_eligibility": "UNAVAILABLE",
+          "execution_status": null,
+          "requirement_id": "natural_language_robustness",
+          "selection_mode": "NONE",
+          "stage": null,
+          "validation_status": null
+        }
+      ],
+      "experiments": [
+        "E2"
+      ],
+      "hypothesis": "P2 loses less JointAccept@1 under reviewed-equivalent surface-form changes than P1.",
+      "limitations": [
+        {
+          "affected_claims": [
+            "H2"
+          ],
+          "affected_evidence_requirements": [
+            "natural_language_robustness"
+          ],
+          "category": "statistical_conclusion",
+          "code": "REQUIRED_EVIDENCE_UNAVAILABLE",
+          "observed_value": {
+            "candidate_count": 1,
+            "eligible_candidate_count": 0,
+            "reason_codes": [
+              "CLAIMS_NOT_PERMITTED",
+              "EVIDENCE_NOT_OBSERVED_COMPLETE",
+              "NON_CONFIRMATORY_EVIDENCE",
+              "NO_ELIGIBLE_CONFIRMATORY_EVIDENCE"
+            ]
+          },
+          "severity": "blocking",
+          "source_artifact": "derived/evidence-selection.json",
+          "source_pointer": "/requirements/1",
+          "statement": "The required confirmatory evidence was unavailable or unselected, so the linked claim cannot be decided.",
+          "threat_id": "TV-002"
+        },
+        {
+          "affected_claims": [
+            "H2"
+          ],
+          "affected_evidence_requirements": [
+            "natural_language_robustness"
+          ],
+          "category": "benchmark_contamination",
+          "code": "NON_CONFIRMATORY_EVIDENCE_PRESENT",
+          "observed_value": {
+            "count": 1,
+            "manifests": [
+              "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E1/20260825T-observed-p1-p2-development-v1/derived/statistical_analysis/analysis-manifest.json"
+            ],
+            "stages": [
+              "development"
+            ]
+          },
+          "severity": "boundary",
+          "source_artifact": "derived/evidence-inventory.json",
+          "source_pointer": "/candidates",
+          "statement": "Development, historical, or unknown-stage packages are inventoried but excluded from confirmatory claim decisions.",
+          "threat_id": "TV-009"
+        }
+      ],
+      "metrics": [
+        {
+          "direction": "lower",
+          "id": "surface_form_loss_difference",
+          "label": "P2 minus P1 canonical-to-equivalent loss",
+          "systems": [
+            "P1",
+            "P2"
+          ],
+          "unit": "proportion"
+        }
+      ],
+      "reason_codes": [
+        "CLAIMS_NOT_PERMITTED",
+        "EVIDENCE_NOT_OBSERVED_COMPLETE",
+        "NON_CONFIRMATORY_EVIDENCE",
+        "NO_ELIGIBLE_CONFIRMATORY_EVIDENCE",
+        "REQUIRED_METRIC_OR_TEST_UNAVAILABLE"
+      ],
+      "research_question": {
+        "id": "RQ2",
+        "question": "Is P2 more robust than P1 to semantically equivalent natural-language surface forms?"
+      },
+      "result": {
+        "all_support_conditions_passed": null,
+        "decision_checks": [
+          {
+            "expected": 0,
+            "observed": null,
+            "operator": "lt",
+            "passed": null,
+            "path": "metrics.effect"
+          },
+          {
+            "expected": 0,
+            "observed": null,
+            "operator": "lt",
+            "passed": null,
+            "path": "metrics.ci_high"
+          },
+          {
+            "expected": 0.05,
+            "observed": null,
+            "operator": "lt",
+            "passed": null,
+            "path": "metrics.p_value"
+          },
+          {
+            "expected": true,
+            "observed": null,
+            "operator": "eq",
+            "passed": null,
+            "path": "metrics.test_available"
+          }
+        ],
+        "normalized_metrics": {}
+      },
+      "schema_version": "protocol-v5-evaluated-claim-v1.0.0",
+      "statistical_tests": [
+        {
+          "alpha": 0.05,
+          "id": "h2_paired_family_test",
+          "independent_unit": "workload_family",
+          "method": "paired Wilcoxon over family losses with family bootstrap CI",
+          "multiplicity": null,
+          "observed_evidence_tests": []
+        }
+      ]
+    },
+    {
+      "claim_id": "H3",
+      "claim_status": "NOT_EXECUTED",
+      "claimable": false,
+      "evidence": [],
+      "evidence_status": [
+        {
+          "claim_eligibility": "UNAVAILABLE",
+          "execution_status": null,
+          "requirement_id": "user_study",
+          "selection_mode": "NONE",
+          "stage": null,
+          "validation_status": null
+        }
+      ],
+      "experiments": [
+        "E3"
+      ],
+      "hypothesis": "Users achieve acceptable selections more often and faster with P2 than B0.",
+      "limitations": [
+        {
+          "affected_claims": [
+            "H3",
+            "H4"
+          ],
+          "affected_evidence_requirements": [
+            "user_study"
+          ],
+          "category": "statistical_conclusion",
+          "code": "REQUIRED_EVIDENCE_UNAVAILABLE",
+          "observed_value": {
+            "candidate_count": 0,
+            "eligible_candidate_count": 0,
+            "reason_codes": [
+              "NO_ELIGIBLE_CONFIRMATORY_EVIDENCE"
+            ]
+          },
+          "severity": "blocking",
+          "source_artifact": "derived/evidence-selection.json",
+          "source_pointer": "/requirements/2",
+          "statement": "The required confirmatory evidence was unavailable or unselected, so the linked claim cannot be decided.",
+          "threat_id": "TV-003"
+        }
+      ],
+      "metrics": [
+        {
+          "direction": "higher",
+          "id": "selection_success_risk_difference",
+          "label": "P2 minus B0 SelectionSuccess",
+          "systems": [
+            "B0",
+            "P2"
+          ],
+          "unit": "proportion"
+        },
+        {
+          "direction": "lower",
+          "id": "decision_time_difference",
+          "label": "P2 minus B0 DecisionTime",
+          "systems": [
+            "B0",
+            "P2"
+          ],
+          "unit": "seconds"
+        }
+      ],
+      "reason_codes": [
+        "NO_ELIGIBLE_CONFIRMATORY_EVIDENCE",
+        "REQUIRED_METRIC_OR_TEST_UNAVAILABLE"
+      ],
+      "research_question": {
+        "id": "RQ3",
+        "question": "Does P2 improve real-user selection effectiveness, speed, and perceived usability relative to B0?"
+      },
+      "result": {
+        "all_support_conditions_passed": null,
+        "decision_checks": [
+          {
+            "expected": 0,
+            "observed": null,
+            "operator": "gt",
+            "passed": null,
+            "path": "metrics.selection_effect"
+          },
+          {
+            "expected": 0,
+            "observed": null,
+            "operator": "gt",
+            "passed": null,
+            "path": "metrics.selection_ci_low"
+          },
+          {
+            "expected": 0.05,
+            "observed": null,
+            "operator": "lt",
+            "passed": null,
+            "path": "metrics.selection_p_holm"
+          },
+          {
+            "expected": 0,
+            "observed": null,
+            "operator": "lt",
+            "passed": null,
+            "path": "metrics.time_effect"
+          },
+          {
+            "expected": 0,
+            "observed": null,
+            "operator": "lt",
+            "passed": null,
+            "path": "metrics.time_ci_high"
+          },
+          {
+            "expected": 0.05,
+            "observed": null,
+            "operator": "lt",
+            "passed": null,
+            "path": "metrics.time_p_holm"
+          },
+          {
+            "expected": true,
+            "observed": null,
+            "operator": "eq",
+            "passed": null,
+            "path": "metrics.tests_available"
+          }
+        ],
+        "normalized_metrics": {}
+      },
+      "schema_version": "protocol-v5-evaluated-claim-v1.0.0",
+      "statistical_tests": [
+        {
+          "alpha": 0.05,
+          "id": "e3_co_primary",
+          "independent_unit": "participant",
+          "method": "frozen participant-clustered models or predeclared fallbacks",
+          "multiplicity": "Holm across SelectionSuccess and DecisionTime",
+          "observed_evidence_tests": []
+        }
+      ]
+    },
+    {
+      "claim_id": "H4",
+      "claim_status": "NOT_EXECUTED",
+      "claimable": false,
+      "evidence": [],
+      "evidence_status": [
+        {
+          "claim_eligibility": "UNAVAILABLE",
+          "execution_status": null,
+          "requirement_id": "user_study",
+          "selection_mode": "NONE",
+          "stage": null,
+          "validation_status": null
+        }
+      ],
+      "experiments": [
+        "E3"
+      ],
+      "hypothesis": "Users report greater task ease and usability with P2 than B0.",
+      "limitations": [
+        {
+          "affected_claims": [
+            "H3",
+            "H4"
+          ],
+          "affected_evidence_requirements": [
+            "user_study"
+          ],
+          "category": "statistical_conclusion",
+          "code": "REQUIRED_EVIDENCE_UNAVAILABLE",
+          "observed_value": {
+            "candidate_count": 0,
+            "eligible_candidate_count": 0,
+            "reason_codes": [
+              "NO_ELIGIBLE_CONFIRMATORY_EVIDENCE"
+            ]
+          },
+          "severity": "blocking",
+          "source_artifact": "derived/evidence-selection.json",
+          "source_pointer": "/requirements/2",
+          "statement": "The required confirmatory evidence was unavailable or unselected, so the linked claim cannot be decided.",
+          "threat_id": "TV-003"
+        }
+      ],
+      "metrics": [
+        {
+          "direction": "higher",
+          "id": "seq_difference",
+          "label": "P2 minus B0 SEQ ease",
+          "systems": [
+            "B0",
+            "P2"
+          ],
+          "unit": "scale_points"
+        },
+        {
+          "direction": "higher",
+          "id": "sus_difference",
+          "label": "P2 minus B0 SUS",
+          "systems": [
+            "B0",
+            "P2"
+          ],
+          "unit": "scale_points"
+        }
+      ],
+      "reason_codes": [
+        "NO_ELIGIBLE_CONFIRMATORY_EVIDENCE",
+        "REQUIRED_METRIC_OR_TEST_UNAVAILABLE"
+      ],
+      "research_question": {
+        "id": "RQ3",
+        "question": "Does P2 improve real-user selection effectiveness, speed, and perceived usability relative to B0?"
+      },
+      "result": {
+        "all_support_conditions_passed": null,
+        "decision_checks": [
+          {
+            "expected": 0,
+            "observed": null,
+            "operator": "gt",
+            "passed": null,
+            "path": "metrics.seq_effect"
+          },
+          {
+            "expected": 0,
+            "observed": null,
+            "operator": "gt",
+            "passed": null,
+            "path": "metrics.seq_ci_low"
+          },
+          {
+            "expected": 0,
+            "observed": null,
+            "operator": "gt",
+            "passed": null,
+            "path": "metrics.sus_effect"
+          },
+          {
+            "expected": 0,
+            "observed": null,
+            "operator": "gt",
+            "passed": null,
+            "path": "metrics.sus_ci_low"
+          },
+          {
+            "expected": true,
+            "observed": null,
+            "operator": "eq",
+            "passed": null,
+            "path": "metrics.estimates_available"
+          }
+        ],
+        "normalized_metrics": {}
+      },
+      "schema_version": "protocol-v5-evaluated-claim-v1.0.0",
+      "statistical_tests": [
+        {
+          "alpha": 0.05,
+          "id": "e3_secondary_intervals",
+          "independent_unit": "participant",
+          "method": "frozen participant bootstrap intervals; CUSTOM items descriptive only",
+          "multiplicity": null,
+          "observed_evidence_tests": []
+        }
+      ]
+    },
+    {
+      "claim_id": "H5",
+      "claim_status": "NOT_EXECUTED",
+      "claimable": false,
+      "evidence": [],
+      "evidence_status": [
+        {
+          "claim_eligibility": "UNAVAILABLE",
+          "execution_status": null,
+          "requirement_id": "resource_efficiency",
+          "selection_mode": "NONE",
+          "stage": null,
+          "validation_status": null
+        }
+      ],
+      "experiments": [
+        "E4"
+      ],
+      "hypothesis": "P2 Catalog reduces requested-resource cost per successful workload while preserving reliability relative to Static Large.",
+      "limitations": [
+        {
+          "affected_claims": [
+            "H5",
+            "H6"
+          ],
+          "affected_evidence_requirements": [
+            "resource_efficiency"
+          ],
+          "category": "statistical_conclusion",
+          "code": "REQUIRED_EVIDENCE_UNAVAILABLE",
+          "observed_value": {
+            "candidate_count": 5,
+            "eligible_candidate_count": 0,
+            "reason_codes": [
+              "CLAIMS_NOT_PERMITTED",
+              "DERIVED_ANALYSIS_PACKAGE_REQUIRED",
+              "EVIDENCE_NOT_OBSERVED_COMPLETE",
+              "EVIDENCE_VALIDATION_FAILED",
+              "NON_CONFIRMATORY_EVIDENCE",
+              "NO_ELIGIBLE_CONFIRMATORY_EVIDENCE"
+            ]
+          },
+          "severity": "blocking",
+          "source_artifact": "derived/evidence-selection.json",
+          "source_pointer": "/requirements/3",
+          "statement": "The required confirmatory evidence was unavailable or unselected, so the linked claim cannot be decided.",
+          "threat_id": "TV-004"
+        },
+        {
+          "affected_claims": [
+            "H5",
+            "H6"
+          ],
+          "affected_evidence_requirements": [
+            "resource_efficiency"
+          ],
+          "category": "benchmark_contamination",
+          "code": "NON_CONFIRMATORY_EVIDENCE_PRESENT",
+          "observed_value": {
+            "count": 5,
+            "manifests": [
+              "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E4/e4-resource-efficiency-dry-run-20260904T093503Z/manifest.json",
+              "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E4/e4-resource-efficiency-dry-run-20260904T094050Z/manifest.json",
+              "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E4/e4-resource-efficiency-dry-run-20260904T094316Z/manifest.json",
+              "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E4/e4-resource-efficiency-dry-run-20260905T013330Z/manifest.json",
+              "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E4/e4-resource-efficiency-dry-run-20260905T013619Z/manifest.json"
+            ],
+            "stages": [
+              "development"
+            ]
+          },
+          "severity": "boundary",
+          "source_artifact": "derived/evidence-inventory.json",
+          "source_pointer": "/candidates",
+          "statement": "Development, historical, or unknown-stage packages are inventoried but excluded from confirmatory claim decisions.",
+          "threat_id": "TV-011"
+        }
+      ],
+      "metrics": [
+        {
+          "direction": "lower",
+          "id": "cpu_cost_per_success_difference",
+          "label": "P2 Catalog minus Static Large CPU cost per success",
+          "systems": [
+            "STATIC_LARGE",
+            "P2_CATALOG"
+          ],
+          "unit": "cpu_seconds"
+        },
+        {
+          "direction": "lower",
+          "id": "memory_cost_per_success_difference",
+          "label": "P2 Catalog minus Static Large memory cost per success",
+          "systems": [
+            "STATIC_LARGE",
+            "P2_CATALOG"
+          ],
+          "unit": "MiB_seconds"
+        }
+      ],
+      "reason_codes": [
+        "CLAIMS_NOT_PERMITTED",
+        "DERIVED_ANALYSIS_PACKAGE_REQUIRED",
+        "EVIDENCE_NOT_OBSERVED_COMPLETE",
+        "EVIDENCE_VALIDATION_FAILED",
+        "NON_CONFIRMATORY_EVIDENCE",
+        "NO_ELIGIBLE_CONFIRMATORY_EVIDENCE",
+        "REQUIRED_METRIC_OR_TEST_UNAVAILABLE"
+      ],
+      "research_question": {
+        "id": "RQ4",
+        "question": "Does P2 improve resource efficiency and oracle calibration under the frozen Kubernetes protocol?"
+      },
+      "result": {
+        "all_support_conditions_passed": null,
+        "decision_checks": [
+          {
+            "expected": "STRICT_FRONTIER_IMPROVEMENT",
+            "observed": null,
+            "operator": "eq",
+            "passed": null,
+            "path": "metrics.pareto_classification"
+          },
+          {
+            "expected": 0,
+            "observed": null,
+            "operator": "lt",
+            "passed": null,
+            "path": "metrics.cpu_effect"
+          },
+          {
+            "expected": 0,
+            "observed": null,
+            "operator": "lt",
+            "passed": null,
+            "path": "metrics.cpu_ci_high"
+          },
+          {
+            "expected": 0.05,
+            "observed": null,
+            "operator": "lt",
+            "passed": null,
+            "path": "metrics.cpu_p_holm"
+          },
+          {
+            "expected": 0,
+            "observed": null,
+            "operator": "lt",
+            "passed": null,
+            "path": "metrics.memory_effect"
+          },
+          {
+            "expected": 0,
+            "observed": null,
+            "operator": "lt",
+            "passed": null,
+            "path": "metrics.memory_ci_high"
+          },
+          {
+            "expected": 0.05,
+            "observed": null,
+            "operator": "lt",
+            "passed": null,
+            "path": "metrics.memory_p_holm"
+          },
+          {
+            "expected": true,
+            "observed": null,
+            "operator": "eq",
+            "passed": null,
+            "path": "metrics.tests_available"
+          }
+        ],
+        "normalized_metrics": {}
+      },
+      "schema_version": "protocol-v5-evaluated-claim-v1.0.0",
+      "statistical_tests": [
+        {
+          "alpha": 0.05,
+          "id": "e4_family_cost_tests",
+          "independent_unit": "workload_family",
+          "method": "paired Wilcoxon with family bootstrap CIs",
+          "multiplicity": "Holm within endpoint",
+          "observed_evidence_tests": []
+        }
+      ]
+    },
+    {
+      "claim_id": "H6",
+      "claim_status": "NOT_EXECUTED",
+      "claimable": false,
+      "evidence": [],
+      "evidence_status": [
+        {
+          "claim_eligibility": "UNAVAILABLE",
+          "execution_status": null,
+          "requirement_id": "resource_efficiency",
+          "selection_mode": "NONE",
+          "stage": null,
+          "validation_status": null
+        }
+      ],
+      "experiments": [
+        "E4"
+      ],
+      "hypothesis": "P2 Dynamic has lower CPU-request and memory-request absolute oracle error than P2 Catalog.",
+      "limitations": [
+        {
+          "affected_claims": [
+            "H5",
+            "H6"
+          ],
+          "affected_evidence_requirements": [
+            "resource_efficiency"
+          ],
+          "category": "statistical_conclusion",
+          "code": "REQUIRED_EVIDENCE_UNAVAILABLE",
+          "observed_value": {
+            "candidate_count": 5,
+            "eligible_candidate_count": 0,
+            "reason_codes": [
+              "CLAIMS_NOT_PERMITTED",
+              "DERIVED_ANALYSIS_PACKAGE_REQUIRED",
+              "EVIDENCE_NOT_OBSERVED_COMPLETE",
+              "EVIDENCE_VALIDATION_FAILED",
+              "NON_CONFIRMATORY_EVIDENCE",
+              "NO_ELIGIBLE_CONFIRMATORY_EVIDENCE"
+            ]
+          },
+          "severity": "blocking",
+          "source_artifact": "derived/evidence-selection.json",
+          "source_pointer": "/requirements/3",
+          "statement": "The required confirmatory evidence was unavailable or unselected, so the linked claim cannot be decided.",
+          "threat_id": "TV-004"
+        },
+        {
+          "affected_claims": [
+            "H5",
+            "H6"
+          ],
+          "affected_evidence_requirements": [
+            "resource_efficiency"
+          ],
+          "category": "benchmark_contamination",
+          "code": "NON_CONFIRMATORY_EVIDENCE_PRESENT",
+          "observed_value": {
+            "count": 5,
+            "manifests": [
+              "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E4/e4-resource-efficiency-dry-run-20260904T093503Z/manifest.json",
+              "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E4/e4-resource-efficiency-dry-run-20260904T094050Z/manifest.json",
+              "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E4/e4-resource-efficiency-dry-run-20260904T094316Z/manifest.json",
+              "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E4/e4-resource-efficiency-dry-run-20260905T013330Z/manifest.json",
+              "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E4/e4-resource-efficiency-dry-run-20260905T013619Z/manifest.json"
+            ],
+            "stages": [
+              "development"
+            ]
+          },
+          "severity": "boundary",
+          "source_artifact": "derived/evidence-inventory.json",
+          "source_pointer": "/candidates",
+          "statement": "Development, historical, or unknown-stage packages are inventoried but excluded from confirmatory claim decisions.",
+          "threat_id": "TV-011"
+        }
+      ],
+      "metrics": [
+        {
+          "direction": "lower",
+          "id": "absolute_cpu_request_error_difference",
+          "label": "P2 Dynamic minus P2 Catalog absolute CPU request error",
+          "systems": [
+            "P2_CATALOG",
+            "P2_DYNAMIC"
+          ],
+          "unit": "millicores"
+        },
+        {
+          "direction": "lower",
+          "id": "absolute_memory_request_error_difference",
+          "label": "P2 Dynamic minus P2 Catalog absolute memory request error",
+          "systems": [
+            "P2_CATALOG",
+            "P2_DYNAMIC"
+          ],
+          "unit": "MiB"
+        }
+      ],
+      "reason_codes": [
+        "CLAIMS_NOT_PERMITTED",
+        "DERIVED_ANALYSIS_PACKAGE_REQUIRED",
+        "EVIDENCE_NOT_OBSERVED_COMPLETE",
+        "EVIDENCE_VALIDATION_FAILED",
+        "NON_CONFIRMATORY_EVIDENCE",
+        "NO_ELIGIBLE_CONFIRMATORY_EVIDENCE",
+        "REQUIRED_METRIC_OR_TEST_UNAVAILABLE"
+      ],
+      "research_question": {
+        "id": "RQ4",
+        "question": "Does P2 improve resource efficiency and oracle calibration under the frozen Kubernetes protocol?"
+      },
+      "result": {
+        "all_support_conditions_passed": null,
+        "decision_checks": [
+          {
+            "expected": 0,
+            "observed": null,
+            "operator": "lt",
+            "passed": null,
+            "path": "metrics.cpu_effect"
+          },
+          {
+            "expected": 0,
+            "observed": null,
+            "operator": "lt",
+            "passed": null,
+            "path": "metrics.cpu_ci_high"
+          },
+          {
+            "expected": 0.05,
+            "observed": null,
+            "operator": "lt",
+            "passed": null,
+            "path": "metrics.cpu_p_holm"
+          },
+          {
+            "expected": 0,
+            "observed": null,
+            "operator": "lt",
+            "passed": null,
+            "path": "metrics.memory_effect"
+          },
+          {
+            "expected": 0,
+            "observed": null,
+            "operator": "lt",
+            "passed": null,
+            "path": "metrics.memory_ci_high"
+          },
+          {
+            "expected": 0.05,
+            "observed": null,
+            "operator": "lt",
+            "passed": null,
+            "path": "metrics.memory_p_holm"
+          },
+          {
+            "expected": true,
+            "observed": null,
+            "operator": "eq",
+            "passed": null,
+            "path": "metrics.tests_available"
+          }
+        ],
+        "normalized_metrics": {}
+      },
+      "schema_version": "protocol-v5-evaluated-claim-v1.0.0",
+      "statistical_tests": [
+        {
+          "alpha": 0.05,
+          "id": "e4_oracle_error_tests",
+          "independent_unit": "workload_family",
+          "method": "paired Wilcoxon with family bootstrap CIs",
+          "multiplicity": "Holm across CPU and memory request axes",
+          "observed_evidence_tests": []
+        }
+      ]
+    },
+    {
+      "claim_id": "H7F",
+      "claim_status": "NOT_EXECUTED",
+      "claimable": false,
+      "evidence": [],
+      "evidence_status": [
+        {
+          "claim_eligibility": "UNAVAILABLE",
+          "execution_status": null,
+          "requirement_id": "image_functional",
+          "selection_mode": "NONE",
+          "stage": null,
+          "validation_status": null
+        }
+      ],
+      "experiments": [
+        "E5-functional"
+      ],
+      "hypothesis": "P2 recommended images satisfy every required functional capability probe at immutable digests.",
+      "limitations": [
+        {
+          "affected_claims": [
+            "H7F"
+          ],
+          "affected_evidence_requirements": [
+            "image_functional"
+          ],
+          "category": "statistical_conclusion",
+          "code": "REQUIRED_EVIDENCE_UNAVAILABLE",
+          "observed_value": {
+            "candidate_count": 10,
+            "eligible_candidate_count": 0,
+            "reason_codes": [
+              "CLAIMS_NOT_PERMITTED",
+              "EVIDENCE_NOT_OBSERVED_COMPLETE",
+              "EVIDENCE_VALIDATION_FAILED",
+              "LEGACY_E5_SCHEMA",
+              "NON_CONFIRMATORY_EVIDENCE",
+              "NO_ELIGIBLE_CONFIRMATORY_EVIDENCE"
+            ]
+          },
+          "severity": "blocking",
+          "source_artifact": "derived/evidence-selection.json",
+          "source_pointer": "/requirements/4",
+          "statement": "The required confirmatory evidence was unavailable or unselected, so the linked claim cannot be decided.",
+          "threat_id": "TV-005"
+        },
+        {
+          "affected_claims": [
+            "H7F"
+          ],
+          "affected_evidence_requirements": [
+            "image_functional"
+          ],
+          "category": "benchmark_contamination",
+          "code": "NON_CONFIRMATORY_EVIDENCE_PRESENT",
+          "observed_value": {
+            "count": 10,
+            "manifests": [
+              "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T015905Z/manifest.json",
+              "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T020014Z/manifest.json",
+              "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T021913Z/manifest.json",
+              "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T024426Z/manifest.json",
+              "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T024633Z/manifest.json",
+              "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T032437Z/manifest.json",
+              "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T033805Z/manifest.json",
+              "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T033832Z/manifest.json",
+              "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T040730Z/manifest.json",
+              "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T071910Z/manifest.json"
+            ],
+            "stages": [
+              "development"
+            ]
+          },
+          "severity": "boundary",
+          "source_artifact": "derived/evidence-inventory.json",
+          "source_pointer": "/candidates",
+          "statement": "Development, historical, or unknown-stage packages are inventoried but excluded from confirmatory claim decisions.",
+          "threat_id": "TV-008"
+        }
+      ],
+      "metrics": [
+        {
+          "direction": "exact",
+          "id": "conservative_functional_success_rate",
+          "label": "P2 conservative functional success",
+          "systems": [
+            "P2"
+          ],
+          "unit": "proportion"
+        },
+        {
+          "direction": "exact",
+          "id": "operational_adequacy_rate",
+          "label": "P2 operational adequacy",
+          "systems": [
+            "P2"
+          ],
+          "unit": "proportion"
+        }
+      ],
+      "reason_codes": [
+        "CLAIMS_NOT_PERMITTED",
+        "EVIDENCE_NOT_OBSERVED_COMPLETE",
+        "EVIDENCE_VALIDATION_FAILED",
+        "LEGACY_E5_SCHEMA",
+        "NON_CONFIRMATORY_EVIDENCE",
+        "NO_ELIGIBLE_CONFIRMATORY_EVIDENCE",
+        "REQUIRED_METRIC_OR_TEST_UNAVAILABLE"
+      ],
+      "research_question": {
+        "id": "RQ5",
+        "question": "Are P2 image selections functionally correct and is shared-layer storage lower than naive catalog storage?"
+      },
+      "result": {
+        "all_support_conditions_passed": null,
+        "decision_checks": [
+          {
+            "expected": 1.0,
+            "observed": null,
+            "operator": "eq",
+            "passed": null,
+            "path": "metrics.conservative_success"
+          },
+          {
+            "expected": 1.0,
+            "observed": null,
+            "operator": "eq",
+            "passed": null,
+            "path": "metrics.operational_adequacy"
+          },
+          {
+            "expected": 0,
+            "observed": null,
+            "operator": "eq",
+            "passed": null,
+            "path": "metrics.required_probe_not_defined_count"
+          },
+          {
+            "expected": 0,
+            "observed": null,
+            "operator": "eq",
+            "passed": null,
+            "path": "metrics.execution_unavailable_count"
+          },
+          {
+            "expected": 0,
+            "observed": null,
+            "operator": "eq",
+            "passed": null,
+            "path": "metrics.failed_probe_count"
+          },
+          {
+            "expected": true,
+            "observed": null,
+            "operator": "eq",
+            "passed": null,
+            "path": "metrics.all_digests_immutable"
+          }
+        ],
+        "normalized_metrics": {}
+      },
+      "schema_version": "protocol-v5-evaluated-claim-v1.0.0",
+      "statistical_tests": [
+        {
+          "alpha": null,
+          "id": "exact_probe_coverage",
+          "independent_unit": "image_digest_and_required_probe",
+          "method": "exact deterministic all-required-probes criterion",
+          "multiplicity": null,
+          "observed_evidence_tests": []
+        }
+      ]
+    },
+    {
+      "claim_id": "H7",
+      "claim_status": "NOT_EXECUTED",
+      "claimable": false,
+      "evidence": [],
+      "evidence_status": [
+        {
+          "claim_eligibility": "UNAVAILABLE",
+          "execution_status": null,
+          "requirement_id": "image_storage",
+          "selection_mode": "NONE",
+          "stage": null,
+          "validation_status": null
+        }
+      ],
+      "experiments": [
+        "E5-storage"
+      ],
+      "hypothesis": "Shared image layers require less cumulative storage than a naive logical sum as the frozen catalog grows.",
+      "limitations": [
+        {
+          "affected_claims": [
+            "H7"
+          ],
+          "affected_evidence_requirements": [
+            "image_storage"
+          ],
+          "category": "statistical_conclusion",
+          "code": "REQUIRED_EVIDENCE_UNAVAILABLE",
+          "observed_value": {
+            "candidate_count": 0,
+            "eligible_candidate_count": 0,
+            "reason_codes": [
+              "NO_ELIGIBLE_CONFIRMATORY_EVIDENCE"
+            ]
+          },
+          "severity": "blocking",
+          "source_artifact": "derived/evidence-selection.json",
+          "source_pointer": "/requirements/5",
+          "statement": "The required confirmatory evidence was unavailable or unselected, so the linked claim cannot be decided.",
+          "threat_id": "TV-006"
+        }
+      ],
+      "metrics": [
+        {
+          "direction": "higher",
+          "id": "final_storage_savings_bytes",
+          "label": "Final naive minus unique-layer storage",
+          "systems": [
+            "P2"
+          ],
+          "unit": "bytes"
+        },
+        {
+          "direction": "exact",
+          "id": "prefix_nonexpansion",
+          "label": "Unique-layer bytes no greater than naive bytes at every prefix",
+          "systems": [
+            "P2"
+          ],
+          "unit": "boolean"
+        }
+      ],
+      "reason_codes": [
+        "NO_ELIGIBLE_CONFIRMATORY_EVIDENCE",
+        "REQUIRED_METRIC_OR_TEST_UNAVAILABLE"
+      ],
+      "research_question": {
+        "id": "RQ5",
+        "question": "Are P2 image selections functionally correct and is shared-layer storage lower than naive catalog storage?"
+      },
+      "result": {
+        "all_support_conditions_passed": null,
+        "decision_checks": [
+          {
+            "expected": true,
+            "observed": null,
+            "operator": "eq",
+            "passed": null,
+            "path": "metrics.all_prefixes_nonexpanding"
+          },
+          {
+            "expected": 0,
+            "observed": null,
+            "operator": "gt",
+            "passed": null,
+            "path": "metrics.final_savings_bytes"
+          },
+          {
+            "expected": true,
+            "observed": null,
+            "operator": "eq",
+            "passed": null,
+            "path": "metrics.prefix_order_valid"
+          }
+        ],
+        "normalized_metrics": {}
+      },
+      "schema_version": "protocol-v5-evaluated-claim-v1.0.0",
+      "statistical_tests": [
+        {
+          "alpha": null,
+          "id": "exact_storage_criterion",
+          "independent_unit": "frozen_catalog_prefix",
+          "method": "exact deterministic ordered-prefix criterion; no sampling inference",
+          "multiplicity": null,
+          "observed_evidence_tests": []
+        }
+      ]
+    },
+    {
+      "claim_id": "H8",
+      "claim_status": "NOT_EXECUTED",
+      "claimable": false,
+      "evidence": [],
+      "evidence_status": [
+        {
+          "claim_eligibility": "UNAVAILABLE",
+          "execution_status": null,
+          "requirement_id": "p2_p3",
+          "selection_mode": "NONE",
+          "stage": null,
+          "validation_status": null
+        }
+      ],
+      "experiments": [
+        "P2-vs-P3"
+      ],
+      "hypothesis": "Retained P3 improves JointAccept@1 over P2 while remaining within a separately frozen practical-overhead budget.",
+      "limitations": [
+        {
+          "affected_claims": [
+            "H8"
+          ],
+          "affected_evidence_requirements": [
+            "p2_p3"
+          ],
+          "category": "statistical_conclusion",
+          "code": "REQUIRED_EVIDENCE_UNAVAILABLE",
+          "observed_value": {
+            "candidate_count": 0,
+            "eligible_candidate_count": 0,
+            "reason_codes": [
+              "NO_ELIGIBLE_CONFIRMATORY_EVIDENCE",
+              "P3_NOT_RETAINED_OR_NOT_PRESENT"
+            ]
+          },
+          "severity": "blocking",
+          "source_artifact": "derived/evidence-selection.json",
+          "source_pointer": "/requirements/6",
+          "statement": "The required confirmatory evidence was unavailable or unselected, so the linked claim cannot be decided.",
+          "threat_id": "TV-007"
+        }
+      ],
+      "metrics": [
+        {
+          "direction": "higher",
+          "id": "p3_joint_accept_difference",
+          "label": "P3 minus P2 JointAccept@1",
+          "systems": [
+            "P2",
+            "P3"
+          ],
+          "unit": "proportion"
+        },
+        {
+          "direction": "bounded",
+          "id": "p3_overhead_budget",
+          "label": "P3 minus P2 overhead against frozen limits",
+          "systems": [
+            "P2",
+            "P3"
+          ],
+          "unit": "contract_defined"
+        }
+      ],
+      "reason_codes": [
+        "NO_ELIGIBLE_CONFIRMATORY_EVIDENCE",
+        "P3_NOT_RETAINED_OR_NOT_PRESENT",
+        "REQUIRED_METRIC_OR_TEST_UNAVAILABLE"
+      ],
+      "research_question": {
+        "id": "RQ6",
+        "question": "If retained, does P3 improve recommendation quality enough to remain within its frozen practical-overhead budget?"
+      },
+      "result": {
+        "all_support_conditions_passed": null,
+        "decision_checks": [
+          {
+            "expected": true,
+            "observed": null,
+            "operator": "eq",
+            "passed": null,
+            "path": "metrics.gate_retained"
+          },
+          {
+            "expected": true,
+            "observed": null,
+            "operator": "eq",
+            "passed": null,
+            "path": "metrics.threshold_frozen"
+          },
+          {
+            "expected": 0,
+            "observed": null,
+            "operator": "gt",
+            "passed": null,
+            "path": "metrics.quality_effect"
+          },
+          {
+            "expected": 0,
+            "observed": null,
+            "operator": "gt",
+            "passed": null,
+            "path": "metrics.quality_ci_low"
+          },
+          {
+            "expected": 0.05,
+            "observed": null,
+            "operator": "lt",
+            "passed": null,
+            "path": "metrics.quality_p_value"
+          },
+          {
+            "expected": true,
+            "observed": null,
+            "operator": "eq",
+            "passed": null,
+            "path": "metrics.all_overhead_ci_within_limits"
+          },
+          {
+            "expected": true,
+            "observed": null,
+            "operator": "eq",
+            "passed": null,
+            "path": "metrics.tests_available"
+          }
+        ],
+        "normalized_metrics": {}
+      },
+      "schema_version": "protocol-v5-evaluated-claim-v1.0.0",
+      "statistical_tests": [
+        {
+          "alpha": 0.05,
+          "id": "p3_quality_and_overhead_gate",
+          "independent_unit": "workload_family",
+          "method": "paired family quality inference plus frozen per-metric overhead limits",
+          "multiplicity": null,
+          "observed_evidence_tests": []
+        }
+      ]
+    }
+  ],
+  "experiment_states": [
+    {
+      "candidate_count": 1,
+      "eligible_candidate_count": 0,
+      "experiment": "E1",
+      "reason_codes": [
+        "CLAIMS_NOT_PERMITTED",
+        "EVIDENCE_NOT_OBSERVED_COMPLETE",
+        "NON_CONFIRMATORY_EVIDENCE",
+        "NO_ELIGIBLE_CONFIRMATORY_EVIDENCE"
+      ],
+      "requirement_id": "offline_recommendation",
+      "selected_manifest_sha256": null,
+      "selected_package": null,
+      "status": "NOT_EXECUTED"
+    },
+    {
+      "candidate_count": 1,
+      "eligible_candidate_count": 0,
+      "experiment": "E2",
+      "reason_codes": [
+        "CLAIMS_NOT_PERMITTED",
+        "EVIDENCE_NOT_OBSERVED_COMPLETE",
+        "NON_CONFIRMATORY_EVIDENCE",
+        "NO_ELIGIBLE_CONFIRMATORY_EVIDENCE"
+      ],
+      "requirement_id": "natural_language_robustness",
+      "selected_manifest_sha256": null,
+      "selected_package": null,
+      "status": "NOT_EXECUTED"
+    },
+    {
+      "candidate_count": 0,
+      "eligible_candidate_count": 0,
+      "experiment": "E3",
+      "reason_codes": [
+        "NO_ELIGIBLE_CONFIRMATORY_EVIDENCE"
+      ],
+      "requirement_id": "user_study",
+      "selected_manifest_sha256": null,
+      "selected_package": null,
+      "status": "NOT_EXECUTED"
+    },
+    {
+      "candidate_count": 5,
+      "eligible_candidate_count": 0,
+      "experiment": "E4",
+      "reason_codes": [
+        "CLAIMS_NOT_PERMITTED",
+        "DERIVED_ANALYSIS_PACKAGE_REQUIRED",
+        "EVIDENCE_NOT_OBSERVED_COMPLETE",
+        "EVIDENCE_VALIDATION_FAILED",
+        "NON_CONFIRMATORY_EVIDENCE",
+        "NO_ELIGIBLE_CONFIRMATORY_EVIDENCE"
+      ],
+      "requirement_id": "resource_efficiency",
+      "selected_manifest_sha256": null,
+      "selected_package": null,
+      "status": "NOT_EXECUTED"
+    },
+    {
+      "candidate_count": 10,
+      "eligible_candidate_count": 0,
+      "experiment": "E5_FUNCTIONAL",
+      "reason_codes": [
+        "CLAIMS_NOT_PERMITTED",
+        "EVIDENCE_NOT_OBSERVED_COMPLETE",
+        "EVIDENCE_VALIDATION_FAILED",
+        "LEGACY_E5_SCHEMA",
+        "NON_CONFIRMATORY_EVIDENCE",
+        "NO_ELIGIBLE_CONFIRMATORY_EVIDENCE"
+      ],
+      "requirement_id": "image_functional",
+      "selected_manifest_sha256": null,
+      "selected_package": null,
+      "status": "DEVELOPMENT_ONLY"
+    },
+    {
+      "candidate_count": 0,
+      "eligible_candidate_count": 0,
+      "experiment": "E5_STORAGE",
+      "reason_codes": [
+        "NO_ELIGIBLE_CONFIRMATORY_EVIDENCE"
+      ],
+      "requirement_id": "image_storage",
+      "selected_manifest_sha256": null,
+      "selected_package": null,
+      "status": "NOT_EXECUTED"
+    },
+    {
+      "candidate_count": 0,
+      "eligible_candidate_count": 0,
+      "experiment": "E6",
+      "reason_codes": [
+        "NO_ELIGIBLE_CONFIRMATORY_EVIDENCE",
+        "P3_NOT_RETAINED_OR_NOT_PRESENT"
+      ],
+      "requirement_id": "p2_p3",
+      "selected_manifest_sha256": null,
+      "selected_package": null,
+      "status": "NOT_EXECUTED"
+    }
+  ],
+  "isolation_diagnostic": {
+    "created_at_utc": "2026-09-10T09:37:57Z",
+    "evidence_boundary": {
+      "claims_permitted": false,
+      "contains_real_confirmatory_cases": false,
+      "contains_real_participant_or_cluster_observations": false,
+      "is_experiment_evidence": false
+    },
+    "finding": {
+      "artifact_relative_path": "tests/test_evaluation_v5_gold_dataset.py",
+      "artifact_role": "synthetic_adversarial_test_source",
+      "artifact_sha256": "3e978556fa831877c959ee1dc3824315f9933d2f8d12d993cc78019842acc918",
+      "artifact_type": "python_source",
+      "classification": "REMAINING_IMPLEMENTATION_DEFECT",
+      "current_artifact_sha256": "3e978556fa831877c959ee1dc3824315f9933d2f8d12d993cc78019842acc918",
+      "eligible_for_confirmatory_execution": false,
+      "eligible_to_support_thesis_claim": false,
+      "failure_category": "SOURCE_LITERAL_FRAGMENT_FALSE_POSITIVE",
+      "historical": false,
+      "immutable_preserved_evidence": false,
+      "original_error_category": "UNPARSEABLE_EMBEDDED_CONFIRMATORY_BUNDLE",
+      "parser": "evaluation_v5.isolation_audit._contains_embedded_confirmatory_bundle",
+      "schema_signature": "protocol-v5-gold-family-v1.0.0"
+    },
+    "observed_at_git_revision": "99eddfbcd626af5ac5b174712ca86331c89f1eca",
+    "protocol_version": "5.0.0",
+    "repair": {
+      "expected_standalone_result": "PASS",
+      "method": "Parse Python source structurally and inspect complete literal bundle shapes without concatenating independent malformed fixture fragments.",
+      "regression_tests": [
+        "tests/test_evaluation_v5_isolation.py::test_isolation_audit_parses_python_literals_without_joining_fixture_fragments",
+        "tests/test_evaluation_v5_isolation.py::test_isolation_audit_still_detects_complete_python_literal_bundle",
+        "tests/test_evaluation_v5_isolation.py::test_isolation_audit_detects_complete_concatenated_python_literal"
+      ],
+      "status": "REPAIRED"
+    },
+    "schema_version": "protocol-v5-isolation-diagnostic-v1.0.0",
+    "source": {
+      "locator": "",
+      "path": "benchmarks_v5/protocol-v5-isolation-diagnostic-v1.json",
+      "sha256": "ed271f8dfc5ea13f01093f62d692f93e6e41000fc82ee043e1455c96875d7917"
+    },
+    "source_blob_verification_method": "historical_git_blob",
+    "source_blob_verified": true
+  },
+  "p3_state": "NOT_RETAINED_OR_NOT_PRESENT",
+  "packages": [
+    {
+      "case_count": 18,
+      "errors": [],
+      "experiment": "E1",
+      "family_count": 10,
+      "kind": "offline",
+      "path": "results_v5/protocol-v5.0.0/E1/20260825T-observed-p1-p2-development-v1",
+      "raw_records": 36,
+      "schema_version": "protocol-v5-offline-recommendation-provenance-v1.0.0",
+      "source": {
+        "locator": "",
+        "path": "results_v5/protocol-v5.0.0/E1/20260825T-observed-p1-p2-development-v1/raw/offline-run-provenance.json",
+        "sha256": "53a366ad40991d303a5e4e41b4e699f424dc1e05ff1c64bd455ff50105aabb17"
+      },
+      "stage": "development",
+      "status": "OBSERVED",
+      "validation": "PASS",
+      "validator_result": {
+        "claims_permitted": false,
+        "dataset_id": "protocol-v5-development-2026-08-22",
+        "dataset_sha256": "e3fff5167ef2194fb365fec7510d1efc2b17a18b13182063c2b63c26f021d3cd",
+        "effective_repeats": {
+          "P1": 1,
+          "P2": 1
+        },
+        "error_records": 0,
+        "experiment_id": "E1",
+        "metric_input_sufficiency": "PASS",
+        "recommendations_jsonl_sha256": "25868752054231fa271e540210aad0845113ba3974722376029b18184959daf8",
+        "records_validated": 36,
+        "requested_repeats": 1,
+        "run_id": "20260825T-observed-p1-p2-development-v1",
+        "schema_version": "protocol-v5-offline-evidence-validation-v1.0.0",
+        "split_id": "v5-development",
+        "split_role": "development",
+        "statistical_interpretation_performed": false,
+        "status": "PASS",
+        "systems": [
+          "P1",
+          "P2"
+        ]
+      }
+    },
+    {
+      "errors": [
+        {
+          "actual_sha256": "bee024512c5b6f407a9f1d273d2abbdfe2be640322b05d06f9a641404e8dd73c",
+          "code": "ORIGINAL_CHECKSUM_MISMATCH",
+          "crlf_reconstruction_matches_recorded_hash": true,
+          "path": "results_v5/protocol-v5.0.0/E3/b0-p2-user-study-readiness/report/tables/participant-flow.csv",
+          "recorded_sha256": "a142b8c930e1f84d123aca8c39fe564efd52027ab62b637f236db1bc8fa5686b"
+        },
+        {
+          "code": "SOURCE_VALIDATOR_FAILED",
+          "reason": "output checksum mismatch: report/tables/participant-flow.csv"
+        }
+      ],
+      "experiment": "E3",
+      "kind": "user_study",
+      "path": "results_v5/protocol-v5.0.0/E3/b0-p2-user-study-readiness",
+      "raw_records": 0,
+      "schema_version": "protocol-v5-user-study-provenance-v1.0.0",
+      "source": {
+        "locator": "",
+        "path": "results_v5/protocol-v5.0.0/E3/b0-p2-user-study-readiness/manifest.json",
+        "sha256": "cde41a53105bace71ba13af1eb9ad55fd0743b72155508065235ca9002f1d732"
+      },
+      "stage": "development",
+      "status": "NOT_EXECUTED",
+      "validation": "FAIL"
+    },
+    {
+      "errors": [],
+      "experiment": "E4",
+      "kind": "resource_efficiency",
+      "path": "results_v5/protocol-v5.0.0/E4/e4-resource-efficiency-dry-run-20260904T093503Z",
+      "raw_records": 0,
+      "schema_version": "protocol-v5-resource-efficiency-raw-package-v1.0.0",
+      "source": {
+        "locator": "",
+        "path": "results_v5/protocol-v5.0.0/E4/e4-resource-efficiency-dry-run-20260904T093503Z/manifest.json",
+        "sha256": "c8a53aefeadbe635cd784661f5291d40bfdd39884bb7f973dd17bb1b599e0b07"
+      },
+      "stage": "development",
+      "status": "NOT_EXECUTED",
+      "validation": "PASS",
+      "validator_result": {
+        "execution_status": "NOT_EXECUTED",
+        "plan_sha256": "6352b9dba94802c6d1b7e9f417bc95fe067b35e82e3f6436f1b1157100c4b65f",
+        "sealed": true,
+        "status": "pass",
+        "trials": 0
+      }
+    },
+    {
+      "errors": [],
+      "experiment": "E4",
+      "kind": "resource_efficiency",
+      "path": "results_v5/protocol-v5.0.0/E4/e4-resource-efficiency-dry-run-20260904T094050Z",
+      "raw_records": 0,
+      "schema_version": "protocol-v5-resource-efficiency-raw-package-v1.0.0",
+      "source": {
+        "locator": "",
+        "path": "results_v5/protocol-v5.0.0/E4/e4-resource-efficiency-dry-run-20260904T094050Z/manifest.json",
+        "sha256": "f35ea5cc6d75615178672d62c3a65592ab959d1dbcb416120c52d5fb4e82584a"
+      },
+      "stage": "development",
+      "status": "NOT_EXECUTED",
+      "validation": "PASS",
+      "validator_result": {
+        "execution_status": "NOT_EXECUTED",
+        "plan_sha256": "1978752d428253518533c1cda677052fedecf276e57f85411ed3985a582bee85",
+        "sealed": true,
+        "status": "pass",
+        "trials": 0
+      }
+    },
+    {
+      "errors": [],
+      "experiment": "E4",
+      "kind": "resource_efficiency",
+      "path": "results_v5/protocol-v5.0.0/E4/e4-resource-efficiency-dry-run-20260904T094316Z",
+      "raw_records": 0,
+      "schema_version": "protocol-v5-resource-efficiency-raw-package-v1.0.0",
+      "source": {
+        "locator": "",
+        "path": "results_v5/protocol-v5.0.0/E4/e4-resource-efficiency-dry-run-20260904T094316Z/manifest.json",
+        "sha256": "ad109b7711535d7120b82879ba96b472ee0f7e7873c4881721f19eff5b40d8f0"
+      },
+      "stage": "development",
+      "status": "NOT_EXECUTED",
+      "validation": "PASS",
+      "validator_result": {
+        "execution_status": "NOT_EXECUTED",
+        "plan_sha256": "5bdab35de76643a4814fd5cc636fb69251b87823f9572f30067ebb0e5265bba9",
+        "sealed": true,
+        "status": "pass",
+        "trials": 0
+      }
+    },
+    {
+      "errors": [],
+      "experiment": "E4",
+      "kind": "resource_efficiency",
+      "path": "results_v5/protocol-v5.0.0/E4/e4-resource-efficiency-dry-run-20260905T013330Z",
+      "raw_records": 0,
+      "schema_version": "protocol-v5-resource-efficiency-raw-package-v1.0.0",
+      "source": {
+        "locator": "",
+        "path": "results_v5/protocol-v5.0.0/E4/e4-resource-efficiency-dry-run-20260905T013330Z/manifest.json",
+        "sha256": "48b5ffd71a9dc20e52a9fd3a10e09020e2cf3caa92c51762032cf87c54ade79d"
+      },
+      "stage": "development",
+      "status": "NOT_EXECUTED",
+      "validation": "PASS",
+      "validator_result": {
+        "execution_status": "NOT_EXECUTED",
+        "plan_sha256": "354d25df0ff856e55ded7fd2e388a4f89c9037f7143e845455d50472b4492a02",
+        "sealed": true,
+        "status": "pass",
+        "trials": 0
+      }
+    },
+    {
+      "errors": [],
+      "experiment": "E4",
+      "kind": "resource_efficiency",
+      "path": "results_v5/protocol-v5.0.0/E4/e4-resource-efficiency-dry-run-20260905T013619Z",
+      "raw_records": 0,
+      "schema_version": "protocol-v5-resource-efficiency-raw-package-v1.0.0",
+      "source": {
+        "locator": "",
+        "path": "results_v5/protocol-v5.0.0/E4/e4-resource-efficiency-dry-run-20260905T013619Z/manifest.json",
+        "sha256": "d19f97de92a2fe1a2d2aa2fb2a370af9faecae570db9ff2248f74154836a3e7a"
+      },
+      "stage": "development",
+      "status": "NOT_EXECUTED",
+      "validation": "PASS",
+      "validator_result": {
+        "execution_status": "NOT_EXECUTED",
+        "plan_sha256": "516f135de12270faed603fb903e7656693069d70b33252b469a6d436e5f664bd",
+        "sealed": true,
+        "status": "pass",
+        "trials": 0
+      }
+    },
+    {
+      "errors": [],
+      "experiment": "E4",
+      "kind": "resource_efficiency",
+      "path": "results_v5/protocol-v5.0.0/E4/e4-resource-efficiency-observed-run-20260905T081825Z",
+      "raw_records": 0,
+      "schema_version": "protocol-v5-resource-efficiency-raw-package-v1.0.0",
+      "source": {
+        "locator": "",
+        "path": "results_v5/protocol-v5.0.0/E4/e4-resource-efficiency-observed-run-20260905T081825Z/manifest.json",
+        "sha256": "a89fec046bcbd07a8c187e8551409f66ee5fa521b8b8818db1ac428209f305f7"
+      },
+      "stage": "development",
+      "status": "NOT_EXECUTED",
+      "validation": "PASS",
+      "validator_result": {
+        "execution_status": "NOT_EXECUTED",
+        "plan_sha256": "eec8b92fcc6750b466cde3a15893babe2aacba71ef95ee4adb636ead75354466",
+        "sealed": true,
+        "status": "pass",
+        "trials": 0
+      }
+    },
+    {
+      "errors": [],
+      "experiment": "E4",
+      "kind": "resource_plan",
+      "path": "results_v5/protocol-v5.0.0/E4/e4-resource-efficiency-plan-20260905T082000Z",
+      "raw_records": 0,
+      "schema_version": "protocol-v5-resource-efficiency-plan-v1.0.0",
+      "source": {
+        "locator": "",
+        "path": "results_v5/protocol-v5.0.0/E4/e4-resource-efficiency-plan-20260905T082000Z/plan.json",
+        "sha256": "5260288122847397f2ec7d1db80f20044be2a7fa39e8dab7a885847e38d6db81"
+      },
+      "stage": "development",
+      "status": "PLANNED",
+      "validation": "PASS",
+      "validator_result": {}
+    },
+    {
+      "errors": [],
+      "experiment": "E4",
+      "kind": "resource_envelope",
+      "path": "results_v5/protocol-v5.0.0/E4/e4-resource-envelope-dry-run-20260828",
+      "raw_records": 0,
+      "schema_version": "protocol-v5-resource-calibration-run-v1.0.0",
+      "source": {
+        "locator": "",
+        "path": "results_v5/protocol-v5.0.0/E4/e4-resource-envelope-dry-run-20260828/manifest.json",
+        "sha256": "1227b34ada2bc53b77e08185213f0efaa4ff143915b716ea0b041fb0b4379d93"
+      },
+      "stage": "development",
+      "status": "DRY_RUN",
+      "validation": "PASS",
+      "validator_result": {
+        "decision_records": 0,
+        "eligible_for_comparison": false,
+        "execution_status": "DRY_RUN",
+        "integrity": {
+          "manifest_sha256": "ddaa9157b347ab0e3c5a256af5f4371b407d24f2030adb6de5cc7cb9cff10881",
+          "status": "pass",
+          "verified_files": 6
+        },
+        "manual_review_status": "NOT_APPLICABLE",
+        "sealed": true,
+        "status": "pass",
+        "trial_records": 0
+      }
+    },
+    {
+      "errors": [],
+      "experiment": "E4",
+      "kind": "resource_envelope",
+      "path": "results_v5/protocol-v5.0.0/E4/e4-resource-envelope-dry-run-20260828T065331Z",
+      "raw_records": 0,
+      "schema_version": "protocol-v5-resource-calibration-run-v1.0.0",
+      "source": {
+        "locator": "",
+        "path": "results_v5/protocol-v5.0.0/E4/e4-resource-envelope-dry-run-20260828T065331Z/manifest.json",
+        "sha256": "3752523ce8cf61d88d6e56c393e73766982df1bacf7e2ee94259e4452855f958"
+      },
+      "stage": "development",
+      "status": "DRY_RUN",
+      "validation": "PASS",
+      "validator_result": {
+        "decision_records": 0,
+        "eligible_for_comparison": false,
+        "execution_status": "DRY_RUN",
+        "integrity": {
+          "manifest_sha256": "2fce2fd8cf005209a6a7195511a1e8085af931a9e0fd48171b1c04607f104908",
+          "status": "pass",
+          "verified_files": 6
+        },
+        "manual_review_status": "NOT_APPLICABLE",
+        "sealed": true,
+        "status": "pass",
+        "trial_records": 0
+      }
+    },
+    {
+      "errors": [],
+      "experiment": "E4",
+      "kind": "resource_envelope",
+      "path": "results_v5/protocol-v5.0.0/E4/e4-resource-envelope-dry-run-20260904T075658Z",
+      "raw_records": 0,
+      "schema_version": "protocol-v5-resource-calibration-run-v1.1.0",
+      "source": {
+        "locator": "",
+        "path": "results_v5/protocol-v5.0.0/E4/e4-resource-envelope-dry-run-20260904T075658Z/manifest.json",
+        "sha256": "a84386191d5a8998a0ee2306646de8de11fc733aad6ed34a229613f548878381"
+      },
+      "stage": "development",
+      "status": "DRY_RUN",
+      "validation": "PASS",
+      "validator_result": {
+        "decision_records": 0,
+        "eligible_for_comparison": false,
+        "execution_status": "DRY_RUN",
+        "integrity": {
+          "manifest_sha256": "e567095d6e5d4585f9c75e252847c8e9ab87b0f343527393f80694e746bc1fe1",
+          "status": "pass",
+          "verified_files": 6
+        },
+        "manual_review_status": "NOT_APPLICABLE",
+        "sealed": true,
+        "status": "pass",
+        "trial_records": 0
+      }
+    },
+    {
+      "errors": [],
+      "experiment": "E4",
+      "kind": "resource_envelope",
+      "path": "results_v5/protocol-v5.0.0/E4/e4-resource-envelope-dry-run-20260904T081412Z",
+      "raw_records": 0,
+      "schema_version": "protocol-v5-resource-calibration-run-v1.1.0",
+      "source": {
+        "locator": "",
+        "path": "results_v5/protocol-v5.0.0/E4/e4-resource-envelope-dry-run-20260904T081412Z/manifest.json",
+        "sha256": "e19db773e3f39e66a2d3b812543a47afa0f4abf8a9a93c190d64aa81642c6597"
+      },
+      "stage": "development",
+      "status": "DRY_RUN",
+      "validation": "PASS",
+      "validator_result": {
+        "decision_records": 0,
+        "eligible_for_comparison": false,
+        "execution_status": "DRY_RUN",
+        "integrity": {
+          "manifest_sha256": "02323af41e6f0511b9760ff7a4a55f9474f2f088630c41207a6b1daad2a41678",
+          "status": "pass",
+          "verified_files": 6
+        },
+        "manual_review_status": "NOT_APPLICABLE",
+        "sealed": true,
+        "status": "pass",
+        "trial_records": 0
+      }
+    },
+    {
+      "errors": [],
+      "experiment": "E4",
+      "kind": "resource_envelope",
+      "path": "results_v5/protocol-v5.0.0/E4/e4-resource-envelope-dry-run-20260904T081601Z",
+      "raw_records": 0,
+      "schema_version": "protocol-v5-resource-calibration-run-v1.1.0",
+      "source": {
+        "locator": "",
+        "path": "results_v5/protocol-v5.0.0/E4/e4-resource-envelope-dry-run-20260904T081601Z/manifest.json",
+        "sha256": "be3495b1a31e299ae6f66e2e9b9a45a3b2054359d08fa055cb405c0a3ae36834"
+      },
+      "stage": "development",
+      "status": "DRY_RUN",
+      "validation": "PASS",
+      "validator_result": {
+        "decision_records": 0,
+        "eligible_for_comparison": false,
+        "execution_status": "DRY_RUN",
+        "integrity": {
+          "manifest_sha256": "f97c6758717ccb2c0e086c4eaa856efca314620c323005425c4fc063c874dc2d",
+          "status": "pass",
+          "verified_files": 6
+        },
+        "manual_review_status": "NOT_APPLICABLE",
+        "sealed": true,
+        "status": "pass",
+        "trial_records": 0
+      }
+    },
+    {
+      "errors": [],
+      "experiment": "E4",
+      "kind": "resource_envelope",
+      "path": "results_v5/protocol-v5.0.0/E4/e4-resource-envelope-dry-run-20260904T081753Z",
+      "raw_records": 0,
+      "schema_version": "protocol-v5-resource-calibration-run-v1.1.0",
+      "source": {
+        "locator": "",
+        "path": "results_v5/protocol-v5.0.0/E4/e4-resource-envelope-dry-run-20260904T081753Z/manifest.json",
+        "sha256": "9a5798041df9e612a5f2b6abef945c6581676830151f94f8065abe719b873200"
+      },
+      "stage": "development",
+      "status": "DRY_RUN",
+      "validation": "PASS",
+      "validator_result": {
+        "decision_records": 0,
+        "eligible_for_comparison": false,
+        "execution_status": "DRY_RUN",
+        "integrity": {
+          "manifest_sha256": "3a6b21a4b51b34a072675f9db5ca7baa0e27681a6a8ffd4b5fbdaf9475dad75e",
+          "status": "pass",
+          "verified_files": 6
+        },
+        "manual_review_status": "NOT_APPLICABLE",
+        "sealed": true,
+        "status": "pass",
+        "trial_records": 0
+      }
+    },
+    {
+      "errors": [],
+      "experiment": "E4",
+      "kind": "resource_envelope",
+      "path": "results_v5/protocol-v5.0.0/E4/e4-resource-envelope-dry-run-20260904T081907Z",
+      "raw_records": 0,
+      "schema_version": "protocol-v5-resource-calibration-run-v1.1.0",
+      "source": {
+        "locator": "",
+        "path": "results_v5/protocol-v5.0.0/E4/e4-resource-envelope-dry-run-20260904T081907Z/manifest.json",
+        "sha256": "4a6f3bde53f2d4d6c2080fc22e93e27806a91795dd3df63149e126101518d983"
+      },
+      "stage": "development",
+      "status": "DRY_RUN",
+      "validation": "PASS",
+      "validator_result": {
+        "decision_records": 0,
+        "eligible_for_comparison": false,
+        "execution_status": "DRY_RUN",
+        "integrity": {
+          "manifest_sha256": "6c0d7de460d06f11e47e48d4d09c7adaf8c339fd7ccf2143a36ba4e8e5f5dd66",
+          "status": "pass",
+          "verified_files": 6
+        },
+        "manual_review_status": "NOT_APPLICABLE",
+        "sealed": true,
+        "status": "pass",
+        "trial_records": 0
+      }
+    },
+    {
+      "errors": [],
+      "experiment": "E4",
+      "kind": "resource_envelope",
+      "path": "results_v5/protocol-v5.0.0/E4/e4-resource-envelope-dry-run-20260904T082658Z",
+      "raw_records": 0,
+      "schema_version": "protocol-v5-resource-calibration-run-v1.1.0",
+      "source": {
+        "locator": "",
+        "path": "results_v5/protocol-v5.0.0/E4/e4-resource-envelope-dry-run-20260904T082658Z/manifest.json",
+        "sha256": "a30f253b0f55d67bca75a1ac203ee69f940af850706088880296a5f60768a285"
+      },
+      "stage": "development",
+      "status": "DRY_RUN",
+      "validation": "PASS",
+      "validator_result": {
+        "decision_records": 0,
+        "eligible_for_comparison": false,
+        "execution_status": "DRY_RUN",
+        "integrity": {
+          "manifest_sha256": "218cf550742d05961e3523e4497c06a825789fb2cbb04c4f8420ed2b4b243efe",
+          "status": "pass",
+          "verified_files": 6
+        },
+        "manual_review_status": "NOT_APPLICABLE",
+        "sealed": true,
+        "status": "pass",
+        "trial_records": 0
+      }
+    },
+    {
+      "errors": [],
+      "experiment": "E4",
+      "kind": "resource_envelope",
+      "path": "results_v5/protocol-v5.0.0/E4/e4-resource-envelope-dry-run-20260904T082806Z",
+      "raw_records": 0,
+      "schema_version": "protocol-v5-resource-calibration-run-v1.1.0",
+      "source": {
+        "locator": "",
+        "path": "results_v5/protocol-v5.0.0/E4/e4-resource-envelope-dry-run-20260904T082806Z/manifest.json",
+        "sha256": "a332c6436004021c466ff384e1aceaa56eae9d029862bffc80381c4d6b2ff2e9"
+      },
+      "stage": "development",
+      "status": "DRY_RUN",
+      "validation": "PASS",
+      "validator_result": {
+        "decision_records": 0,
+        "eligible_for_comparison": false,
+        "execution_status": "DRY_RUN",
+        "integrity": {
+          "manifest_sha256": "49de5655d7490e5844c2338b8f3d5e1fcc02c18419c24a17b3656e6ab401d453",
+          "status": "pass",
+          "verified_files": 6
+        },
+        "manual_review_status": "NOT_APPLICABLE",
+        "sealed": true,
+        "status": "pass",
+        "trial_records": 0
+      }
+    },
+    {
+      "errors": [],
+      "experiment": "E4",
+      "kind": "resource_envelope",
+      "path": "results_v5/protocol-v5.0.0/E4/e4-resource-envelope-dry-run-20260904T083119Z",
+      "raw_records": 0,
+      "schema_version": "protocol-v5-resource-calibration-run-v1.1.0",
+      "source": {
+        "locator": "",
+        "path": "results_v5/protocol-v5.0.0/E4/e4-resource-envelope-dry-run-20260904T083119Z/manifest.json",
+        "sha256": "19b4f193173e04efaea302cb622afc74dd1aabec947d994c7fafe48ab78f7470"
+      },
+      "stage": "development",
+      "status": "DRY_RUN",
+      "validation": "PASS",
+      "validator_result": {
+        "decision_records": 0,
+        "eligible_for_comparison": false,
+        "execution_status": "DRY_RUN",
+        "integrity": {
+          "manifest_sha256": "c71d9ced66d6299362508d6fa6a110b219ed15bf55e3022db48b0c911dad3800",
+          "status": "pass",
+          "verified_files": 6
+        },
+        "manual_review_status": "NOT_APPLICABLE",
+        "sealed": true,
+        "status": "pass",
+        "trial_records": 0
+      }
+    },
+    {
+      "errors": [],
+      "experiment": "E4",
+      "kind": "resource_envelope",
+      "path": "results_v5/protocol-v5.0.0/E4/e4-resource-envelope-dry-run-20260904T083327Z",
+      "raw_records": 0,
+      "schema_version": "protocol-v5-resource-calibration-run-v1.1.0",
+      "source": {
+        "locator": "",
+        "path": "results_v5/protocol-v5.0.0/E4/e4-resource-envelope-dry-run-20260904T083327Z/manifest.json",
+        "sha256": "700a1a5e3e53323c93e87587c59fb46840c51fead6a3bca8048d9bdceabd973a"
+      },
+      "stage": "development",
+      "status": "DRY_RUN",
+      "validation": "PASS",
+      "validator_result": {
+        "decision_records": 0,
+        "eligible_for_comparison": false,
+        "execution_status": "DRY_RUN",
+        "integrity": {
+          "manifest_sha256": "19897efd5f9570f4846c082dffde6bb00ecbe829d0674ae221a6b3ccd90aeb91",
+          "status": "pass",
+          "verified_files": 6
+        },
+        "manual_review_status": "NOT_APPLICABLE",
+        "sealed": true,
+        "status": "pass",
+        "trial_records": 0
+      }
+    },
+    {
+      "errors": [],
+      "experiment": "E4",
+      "kind": "resource_envelope",
+      "path": "results_v5/protocol-v5.0.0/E4/e4-resource-envelope-observed-run-20260905T081833Z",
+      "raw_records": 0,
+      "schema_version": "protocol-v5-resource-calibration-run-v1.1.0",
+      "source": {
+        "locator": "",
+        "path": "results_v5/protocol-v5.0.0/E4/e4-resource-envelope-observed-run-20260905T081833Z/manifest.json",
+        "sha256": "d2ad9daf0a05d418ac8940506b866e48f3ab0732d43cbc10a488b56e9a5bece3"
+      },
+      "stage": "development",
+      "status": "DRY_RUN",
+      "validation": "PASS",
+      "validator_result": {
+        "decision_records": 0,
+        "eligible_for_comparison": false,
+        "execution_status": "DRY_RUN",
+        "integrity": {
+          "manifest_sha256": "4412a7e383af87254f339f86b2a18c6ab1baaf910276d92cb7ead4bc1bd3ef99",
+          "status": "pass",
+          "verified_files": 6
+        },
+        "manual_review_status": "NOT_APPLICABLE",
+        "sealed": true,
+        "status": "pass",
+        "trial_records": 0
+      }
+    },
+    {
+      "errors": [],
+      "experiment": "E4",
+      "kind": "resource_envelope",
+      "path": "results_v5/protocol-v5.0.0/E4/e4-resource-envelope-readiness-dry-run-20260828T074359Z",
+      "raw_records": 0,
+      "schema_version": "protocol-v5-resource-calibration-run-v1.0.0",
+      "source": {
+        "locator": "",
+        "path": "results_v5/protocol-v5.0.0/E4/e4-resource-envelope-readiness-dry-run-20260828T074359Z/manifest.json",
+        "sha256": "a388f2649784b63f620d2a331e660eeddaf7cbcd4a0ddae0b270aba6e74528fd"
+      },
+      "stage": "development",
+      "status": "DRY_RUN",
+      "validation": "PASS",
+      "validator_result": {
+        "decision_records": 0,
+        "eligible_for_comparison": false,
+        "execution_status": "DRY_RUN",
+        "integrity": {
+          "manifest_sha256": "9bcb4a22ad1e55d2f09733aad4673eaacb828dd64f4e1cdc1069bcaea41598a6",
+          "status": "pass",
+          "verified_files": 6
+        },
+        "manual_review_status": "NOT_APPLICABLE",
+        "sealed": true,
+        "status": "pass",
+        "trial_records": 0
+      }
+    },
+    {
+      "errors": [],
+      "experiment": "E5",
+      "kind": "image_functional",
+      "path": "results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T015905Z",
+      "raw_records": 17,
+      "schema_version": "protocol-v5-manifest-v1.0.0",
+      "source": {
+        "locator": "",
+        "path": "results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T015905Z/manifest.json",
+        "sha256": "82bdda5fa5e42397aa189623480a9b82e849b8d406ccd97d7d929ef54beff937"
+      },
+      "stage": "development",
+      "status": "DRY_RUN",
+      "validation": "PASS",
+      "validator_result": {
+        "eligible_as_current_e5_evidence": false,
+        "execution_status": "DRY_RUN",
+        "experiment_id": "E5",
+        "files_checked": 8,
+        "limitations": [
+          "UNSEALED_RECOMMENDATION_PROVENANCE"
+        ],
+        "probes_executed": 0,
+        "probes_functionally_unavailable": 0,
+        "probes_unavailable": 17,
+        "recommendations_evaluated": 36,
+        "status": "PASS",
+        "total_probes_configured": 17,
+        "validation_profile": "LEGACY_SCHEMA_V1_0",
+        "validator_status": "LEGACY_VALID"
+      }
+    },
+    {
+      "errors": [
+        {
+          "code": "SOURCE_VALIDATOR_FAILED",
+          "reason": "Invalid manifest in results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T020014Z: OBSERVED manifest requires retrieval_configuration"
+        }
+      ],
+      "experiment": "E5",
+      "kind": "image_functional",
+      "path": "results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T020014Z",
+      "raw_records": 17,
+      "schema_version": "protocol-v5-manifest-v1.0.0",
+      "source": {
+        "locator": "",
+        "path": "results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T020014Z/manifest.json",
+        "sha256": "4556cc0ccfc0f21bc480adc962424a102205c73ba76f5ab4b2ce041c6eafab28"
+      },
+      "stage": "development",
+      "status": "OBSERVED",
+      "validation": "FAIL"
+    },
+    {
+      "errors": [],
+      "experiment": "E5",
+      "kind": "image_functional",
+      "path": "results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T021913Z",
+      "raw_records": 17,
+      "schema_version": "protocol-v5-manifest-v1.0.0",
+      "source": {
+        "locator": "",
+        "path": "results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T021913Z/manifest.json",
+        "sha256": "189c9d0b5a5d3d6b6b347be3577c3678d37ef25ec1232285436973f6f3c6880d"
+      },
+      "stage": "development",
+      "status": "INCOMPLETE",
+      "validation": "PASS",
+      "validator_result": {
+        "eligible_as_current_e5_evidence": false,
+        "execution_status": "INCOMPLETE",
+        "experiment_id": "E5",
+        "files_checked": 8,
+        "limitations": [
+          "UNSEALED_RECOMMENDATION_PROVENANCE"
+        ],
+        "probes_executed": 13,
+        "probes_functionally_unavailable": 0,
+        "probes_unavailable": 4,
+        "recommendations_evaluated": 36,
+        "status": "PASS",
+        "total_probes_configured": 17,
+        "validation_profile": "LEGACY_SCHEMA_V1_1",
+        "validator_status": "LEGACY_VALID"
+      }
+    },
+    {
+      "errors": [],
+      "experiment": "E5",
+      "kind": "image_functional",
+      "path": "results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T024426Z",
+      "raw_records": 17,
+      "schema_version": "protocol-v5-manifest-v1.0.0",
+      "source": {
+        "locator": "",
+        "path": "results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T024426Z/manifest.json",
+        "sha256": "51e935616f191b8001a067fdad27ca4d7a7c0350129b2eeb41e4717ed098efdb"
+      },
+      "stage": "development",
+      "status": "OBSERVED",
+      "validation": "PASS",
+      "validator_result": {
+        "eligible_as_current_e5_evidence": false,
+        "execution_status": "OBSERVED",
+        "experiment_id": "E5",
+        "files_checked": 8,
+        "limitations": [
+          "UNSEALED_RECOMMENDATION_PROVENANCE"
+        ],
+        "probes_executed": 17,
+        "probes_functionally_unavailable": 0,
+        "probes_unavailable": 0,
+        "recommendations_evaluated": 36,
+        "status": "PASS",
+        "total_probes_configured": 17,
+        "validation_profile": "LEGACY_SCHEMA_V1_1",
+        "validator_status": "LEGACY_VALID"
+      }
+    },
+    {
+      "errors": [],
+      "experiment": "E5",
+      "kind": "image_functional",
+      "path": "results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T024633Z",
+      "raw_records": 17,
+      "schema_version": "protocol-v5-manifest-v1.0.0",
+      "source": {
+        "locator": "",
+        "path": "results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T024633Z/manifest.json",
+        "sha256": "b2aee3180e6fae0c6e2df248798149b5c063da8efac557704dca4c31c322bee5"
+      },
+      "stage": "development",
+      "status": "OBSERVED",
+      "validation": "PASS",
+      "validator_result": {
+        "eligible_as_current_e5_evidence": false,
+        "execution_status": "OBSERVED",
+        "experiment_id": "E5",
+        "files_checked": 8,
+        "limitations": [
+          "UNSEALED_RECOMMENDATION_PROVENANCE"
+        ],
+        "probes_executed": 17,
+        "probes_functionally_unavailable": 0,
+        "probes_unavailable": 0,
+        "recommendations_evaluated": 36,
+        "status": "PASS",
+        "total_probes_configured": 17,
+        "validation_profile": "LEGACY_SCHEMA_V1_1",
+        "validator_status": "LEGACY_VALID"
+      }
+    },
+    {
+      "errors": [],
+      "experiment": "E5",
+      "kind": "image_functional",
+      "path": "results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T032437Z",
+      "raw_records": 17,
+      "schema_version": "protocol-v5-manifest-v1.0.0",
+      "source": {
+        "locator": "",
+        "path": "results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T032437Z/manifest.json",
+        "sha256": "63b62a578c2c382bcf36fee63f254bc7c0fdf3dd0776d706ff28bea27ea26078"
+      },
+      "stage": "development",
+      "status": "OBSERVED",
+      "validation": "PASS",
+      "validator_result": {
+        "eligible_as_current_e5_evidence": false,
+        "execution_status": "OBSERVED",
+        "experiment_id": "E5",
+        "files_checked": 8,
+        "limitations": [
+          "UNSEALED_RECOMMENDATION_PROVENANCE"
+        ],
+        "probes_executed": 17,
+        "probes_functionally_unavailable": 0,
+        "probes_unavailable": 0,
+        "recommendations_evaluated": 36,
+        "status": "PASS",
+        "total_probes_configured": 17,
+        "validation_profile": "LEGACY_SCHEMA_V1_2",
+        "validator_status": "LEGACY_VALID"
+      }
+    },
+    {
+      "errors": [],
+      "experiment": "E5",
+      "kind": "image_functional",
+      "path": "results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T033805Z",
+      "raw_records": 17,
+      "schema_version": "protocol-v5-manifest-v1.0.0",
+      "source": {
+        "locator": "",
+        "path": "results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T033805Z/manifest.json",
+        "sha256": "539bdacfbe7318b3af04803f19aad26bad7d1b8d42947b0c51e96b696a04baa1"
+      },
+      "stage": "development",
+      "status": "OBSERVED",
+      "validation": "PASS",
+      "validator_result": {
+        "eligible_as_current_e5_evidence": false,
+        "execution_status": "OBSERVED",
+        "experiment_id": "E5",
+        "files_checked": 8,
+        "limitations": [
+          "UNSEALED_RECOMMENDATION_PROVENANCE"
+        ],
+        "probes_executed": 17,
+        "probes_functionally_unavailable": 0,
+        "probes_unavailable": 0,
+        "recommendations_evaluated": 36,
+        "status": "PASS",
+        "total_probes_configured": 17,
+        "validation_profile": "LEGACY_SCHEMA_V1_2",
+        "validator_status": "LEGACY_VALID"
+      }
+    },
+    {
+      "errors": [],
+      "experiment": "E5",
+      "kind": "image_functional",
+      "path": "results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T033832Z",
+      "raw_records": 17,
+      "schema_version": "protocol-v5-manifest-v1.0.0",
+      "source": {
+        "locator": "",
+        "path": "results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T033832Z/manifest.json",
+        "sha256": "0b7c5eb1894e8c4508fbe30703643eecf12c55b303032e6c156d05a21e56015a"
+      },
+      "stage": "development",
+      "status": "OBSERVED",
+      "validation": "PASS",
+      "validator_result": {
+        "eligible_as_current_e5_evidence": false,
+        "execution_status": "OBSERVED",
+        "experiment_id": "E5",
+        "files_checked": 8,
+        "limitations": [
+          "UNSEALED_RECOMMENDATION_PROVENANCE"
+        ],
+        "probes_executed": 17,
+        "probes_functionally_unavailable": 0,
+        "probes_unavailable": 0,
+        "recommendations_evaluated": 36,
+        "status": "PASS",
+        "total_probes_configured": 17,
+        "validation_profile": "LEGACY_SCHEMA_V1_2",
+        "validator_status": "LEGACY_VALID"
+      }
+    },
+    {
+      "errors": [],
+      "experiment": "E5",
+      "kind": "image_functional",
+      "path": "results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T040730Z",
+      "raw_records": 17,
+      "schema_version": "protocol-v5-manifest-v1.0.0",
+      "source": {
+        "locator": "",
+        "path": "results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T040730Z/manifest.json",
+        "sha256": "6e8635a1d11c500d722ae2d6d98f6c1618809ceda80a2ea79ee5c8dff76a18d0"
+      },
+      "stage": "development",
+      "status": "OBSERVED",
+      "validation": "PASS",
+      "validator_result": {
+        "eligible_as_current_e5_evidence": false,
+        "execution_status": "OBSERVED",
+        "experiment_id": "E5",
+        "files_checked": 8,
+        "limitations": [
+          "UNSEALED_RECOMMENDATION_PROVENANCE",
+          "MISSING_RECOMMENDATION_RECORD_JOIN",
+          "MISSING_SELECTED_IMAGE_PLATFORM_BINDING"
+        ],
+        "probes_executed": 17,
+        "probes_functionally_unavailable": 0,
+        "probes_unavailable": 0,
+        "recommendations_evaluated": 36,
+        "status": "PASS",
+        "total_probes_configured": 17,
+        "validation_profile": "LEGACY_SCHEMA_V1_3",
+        "validator_status": "LEGACY_VALID"
+      }
+    },
+    {
+      "errors": [],
+      "experiment": "E5",
+      "kind": "image_functional",
+      "path": "results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T071910Z",
+      "raw_records": 17,
+      "schema_version": "protocol-v5-manifest-v1.0.0",
+      "source": {
+        "locator": "",
+        "path": "results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T071910Z/manifest.json",
+        "sha256": "5142657dd2122080ca722b0b1b701486a71e63306ab3bd7d609030e54d166be6"
+      },
+      "stage": "development",
+      "status": "OBSERVED",
+      "validation": "PASS",
+      "validator_result": {
+        "eligible_as_current_e5_evidence": false,
+        "execution_status": "OBSERVED",
+        "experiment_id": "E5",
+        "files_checked": 8,
+        "limitations": [
+          "UNSEALED_RECOMMENDATION_PROVENANCE",
+          "MISSING_RECOMMENDATION_RECORD_JOIN",
+          "MISSING_SELECTED_IMAGE_PLATFORM_BINDING"
+        ],
+        "probes_executed": 17,
+        "probes_functionally_unavailable": 0,
+        "probes_unavailable": 0,
+        "recommendations_evaluated": 36,
+        "status": "PASS",
+        "total_probes_configured": 17,
+        "validation_profile": "LEGACY_SCHEMA_V1_3",
+        "validator_status": "LEGACY_VALID"
+      }
+    },
+    {
+      "errors": [],
+      "experiment": "analysis",
+      "kind": "research_analysis",
+      "path": "results_v5/protocol-v5.0.0/analysis/research-analysis-20260905T-final",
+      "raw_records": null,
+      "schema_version": "protocol-v5-research-analysis-package-v1.0.0",
+      "source": {
+        "locator": "",
+        "path": "results_v5/protocol-v5.0.0/analysis/research-analysis-20260905T-final/manifest.json",
+        "sha256": "b614f527da9d12c8f9d06a102eb933d17d42b64b7c72749083c15deacb681669"
+      },
+      "stage": "analysis",
+      "status": "INCOMPLETE",
+      "validation": "PASS",
+      "validator_result": {}
+    },
+    {
+      "errors": [],
+      "experiment": "analysis",
+      "kind": "research_analysis",
+      "path": "results_v5/protocol-v5.0.0/analysis/research-analysis-20260905T-implementation",
+      "raw_records": null,
+      "schema_version": "protocol-v5-research-analysis-package-v1.0.0",
+      "source": {
+        "locator": "",
+        "path": "results_v5/protocol-v5.0.0/analysis/research-analysis-20260905T-implementation/manifest.json",
+        "sha256": "71b80ffcf8beb57f247aa99680d1487318aa36f6ad03f1020c05b60cdc2158de"
+      },
+      "stage": "analysis",
+      "status": "INCOMPLETE",
+      "validation": "PASS",
+      "validator_result": {}
+    }
+  ],
+  "primary_system": "P2",
+  "protocol_version": "5.0.0",
+  "research_questions": [
+    {
+      "id": "RQ1",
+      "question": "Does P2 improve top-one recommendation quality relative to frozen P1?"
+    },
+    {
+      "id": "RQ2",
+      "question": "Is P2 more robust than P1 to semantically equivalent natural-language surface forms?"
+    },
+    {
+      "id": "RQ3",
+      "question": "Does P2 improve real-user selection effectiveness, speed, and perceived usability relative to B0?"
+    },
+    {
+      "id": "RQ4",
+      "question": "Does P2 improve resource efficiency and oracle calibration under the frozen Kubernetes protocol?"
+    },
+    {
+      "id": "RQ5",
+      "question": "Are P2 image selections functionally correct and is shared-layer storage lower than naive catalog storage?"
+    },
+    {
+      "id": "RQ6",
+      "question": "If retained, does P3 improve recommendation quality enough to remain within its frozen practical-overhead budget?"
+    }
+  ],
+  "schema_version": "protocol-v5-final-audit-v1.2.0",
+  "source_inventory": {
+    "path": "benchmarks_v5/protocol-v5-final-audit-inputs-v3.json",
+    "sha256": "e9e8f2a29ec1d4ea4ab588783be57ce0345071eedfffe5a8f410709731bad2cf"
+  },
+  "stage_manifest_sha256": {
+    "analysis": "4e7b0ded8509d0ba06bfefebd57e2e0a3e5115214f51649e5b17fb4504f39b98",
+    "figures": "adad261adc219ba81e06708b21d27ff9b2e71247aabb4af5eb95c4b430bf73e7",
+    "validation": "64339410ce0754b071b0891bd73fbd38c6930d23eea58896d86724969d4af067"
+  },
+  "synthetic_origin_scan": {
+    "candidate_count": 17,
+    "findings": [],
+    "promoted_synthetic_count": 0,
+    "schema_version": "protocol-v5-final-synthetic-origin-scan-v1.0.0",
+    "status": "PASS",
+    "synthetic_candidate_count": 0,
+    "unauthenticated_exposed_count": 0
+  }
+}
