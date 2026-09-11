@@ -882,3 +882,56 @@ def test_17_negative_binding_development_assignment_as_observed_fails_closed(tmp
     assert exit_code != 0
     err = capsys.readouterr().err
     assert "confirmatory preparation rejects a development task set" in err
+
+
+def test_18_canonical_e3_not_executed_readiness_package_validates_cleanly(tmp_path):
+    """Check 18: Canonical E3 NOT_EXECUTED readiness package generates with valid checksums and passes adaptation."""
+    from evaluation_v5.analysis.research_analysis import _adapt_user_study_package
+
+    dev_assignment_path = (
+        ROOT
+        / "benchmarks_v5"
+        / "protocol-v5-e3-assignment-target-36"
+        / "assignment-manifest.json"
+    )
+    output_dir = tmp_path / "readiness-package-v3"
+    exit_code = user_study_main(
+        [
+            "finalize",
+            "--run-id",
+            "b0-p2-user-study-readiness-v3",
+            "--task-set",
+            str(TASK_SET_PATH),
+            "--assignments",
+            str(dev_assignment_path),
+            "--execution-status",
+            "NOT_EXECUTED",
+            "--output-dir",
+            str(output_dir),
+            "--created-at-utc",
+            "2026-08-26T12:00:00Z",
+        ]
+    )
+    assert exit_code == 0
+
+    # Test file line endings
+    flow_csv = output_dir / "report" / "tables" / "participant-flow.csv"
+    assert flow_csv.is_file()
+    bytes_content = flow_csv.read_bytes()
+    assert b"\r" not in bytes_content
+    assert bytes_content.endswith(b"\n")
+
+    # Adapt package and verify invariant contract
+    candidate = _adapt_user_study_package(output_dir)
+    assert candidate.validation_status == "PASS"
+    assert candidate.validation_error is None
+    assert candidate.execution_status == "NOT_EXECUTED"
+    assert candidate.claims_permitted is False
+    assert candidate.claim_eligibility == "INELIGIBLE"
+    assert candidate.metadata["completed_participants"] == 0
+
+    # Privacy audit passes without direct identifiers
+    privacy = candidate.metadata["privacy_audit"]
+    assert privacy["status"] == "PASS"
+    assert privacy["direct_identifier_findings"] == 0
+

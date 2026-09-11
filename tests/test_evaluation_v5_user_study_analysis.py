@@ -850,3 +850,68 @@ def test_not_executed_finalization_enforces_runtime_contract(
     ) == 2
     assert "unsupported Python 3.11" in capsys.readouterr().err
     assert not output.exists()
+
+
+def test_csv_text_canonical_lf_across_crlf_and_lf_inputs():
+    """Verify _csv_text produces canonical LF-terminated lines across LF/CRLF inputs."""
+    from evaluation_v5.user_study.analysis import _csv_text
+
+    rows_lf = [
+        {"stage": "assignments_issued", "count": 36, "notes": "line1\nline2"},
+        {"stage": "session_records", "count": 0, "notes": "single"},
+    ]
+    rows_crlf = [
+        {"stage": "assignments_issued", "count": 36, "notes": "line1\r\nline2"},
+        {"stage": "session_records", "count": 0, "notes": "single"},
+    ]
+
+    csv_lf = _csv_text(rows_lf)
+    csv_crlf = _csv_text(rows_crlf)
+
+    # Must be strictly identical
+    assert csv_lf == csv_crlf
+    # Must use canonical LF only, no CRLF
+    assert "\r\n" not in csv_lf
+    assert "\r" not in csv_lf
+    assert csv_lf.endswith("\n")
+
+    # Empty rows produce canonical LF status
+    assert _csv_text([]) == "status\nNOT_EXECUTED\n"
+
+
+def test_write_analysis_artifacts_deterministic_canonical_lf(tmp_path):
+    """Verify write_analysis_artifacts produces bit-identical LF files and matching checksums."""
+    import hashlib
+
+    target = tmp_path / "artifacts"
+    analysis_data = {
+        "execution_status": "NOT_EXECUTED",
+        "analysis_plan_version": ANALYSIS_PLAN_VERSION,
+        "analysis_plan_sha256": ANALYSIS_PLAN_SHA256,
+        "participant_flow": [
+            {"stage": "assignments_issued", "count": 36},
+            {"stage": "session_records", "count": 0},
+            {"stage": "consent_acknowledged", "count": 0},
+            {"stage": "completed_sessions", "count": 0},
+            {"stage": "excluded_sessions", "count": 0},
+            {"stage": "incomplete_sessions", "count": 0},
+            {"stage": "analyzable_participants", "count": 0},
+        ],
+        "condition_summary": [],
+        "preference": [],
+        "missingness": [],
+        "effects": {},
+    }
+
+    write_analysis_artifacts(target, analysis_data)
+    flow_csv = target / "report" / "tables" / "participant-flow.csv"
+    assert flow_csv.is_file()
+
+    bytes_content = flow_csv.read_bytes()
+    assert b"\r" not in bytes_content
+    assert bytes_content.endswith(b"\n")
+
+    actual_hash = hashlib.sha256(bytes_content).hexdigest()
+    manifest_data = json.loads((target / "report" / "analysis-manifest.json").read_text())
+    assert manifest_data["generated_file_sha256"]["report/tables/participant-flow.csv"] == actual_hash
+
