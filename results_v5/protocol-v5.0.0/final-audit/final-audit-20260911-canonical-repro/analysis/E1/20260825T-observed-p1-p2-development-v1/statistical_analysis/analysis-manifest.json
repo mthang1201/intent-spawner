@@ -1,0 +1,12 @@
+{
+  "claims_permitted": false,
+  "created_at_utc": "2026-09-11T02:13:21Z",
+  "git_revision": "ec73326c947bcf3f80f71888e939dc03877f83a2",
+  "outputs": {},
+  "protocol_version": "5.0.0",
+  "reason": "Statistical inputs unavailable or invalid: complete gold must be a frozen family dataset or compiled split v2",
+  "reason_code": "INPUTS_UNAVAILABLE_OR_INVALID",
+  "schema_version": "protocol-v5-statistical-analysis-v1.0.0",
+  "statistics_schema_version": "protocol-v5-statistics-v1.0.0",
+  "status": "NOT_EXECUTED"
+}

@@ -1,0 +1,11 @@
+{
+  "evidence_id": "canonical_reproducibility",
+  "git_revision": "ec73326c947bcf3f80f71888e939dc03877f83a2",
+  "kind": "workflow",
+  "output_checksums": {
+    "record.json": "741751a659ea92212c274f4dede2d678cff5325997e2acce66933677dd2074ec",
+    "stderr.txt": "b370955b77f023a8cc3c873ce6dc64136158f8122cb72da3bc728473013d3d9c",
+    "stdout.txt": "3d52fbbb8f52900ba580c9ab1ccb8498fe28a799924d7bec1874f83c4eed7b6b"
+  },
+  "schema_version": "protocol-v5-command-evidence-package-v1.1.0"
+}

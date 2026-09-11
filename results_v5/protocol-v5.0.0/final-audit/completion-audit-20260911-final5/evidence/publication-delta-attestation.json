@@ -1,0 +1,1174 @@
+{
+  "changed_path_count": 129,
+  "changed_paths": [
+    {
+      "disallowed_reasons": [],
+      "git_blob_oid": "d7d90d1255db2d9d75aa9c3ed83656e5305ece20",
+      "git_mode": "100644",
+      "path": "docs/ARTIFACT_MANIFEST.md",
+      "path_class": "DOCUMENTATION_INDEX",
+      "sha256": "ae1d274e45974afd66a8a33e7e25b7efe182087765b6662d8c42953f5109d7fd",
+      "status": "M"
+    },
+    {
+      "disallowed_reasons": [],
+      "git_blob_oid": "6aa7d927485e2568e9a4f75a3a52a64d66b1831f",
+      "git_mode": "100644",
+      "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/COMPLETION_AUDIT.md",
+      "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+      "sha256": "9d3b76dde917180c243ec70cad83e5933cb6ef2da5f71c25cc3d52b0057d3b28",
+      "status": "A"
+    },
+    {
+      "disallowed_reasons": [],
+      "git_blob_oid": "05320bd5f57bd9b38324ab52b8ecb36ddc403480",
+      "git_mode": "100644",
+      "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/SHA256SUMS",
+      "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+      "sha256": "485f94bf41ccc9a6c4ad69469608a60b16c5c6781f80e926b2d8a9ea89ce95a2",
+      "status": "A"
+    },
+    {
+      "disallowed_reasons": [],
+      "git_blob_oid": "e41cccc7195db01d37c036b749acf17bd7c3e56b",
+      "git_mode": "100644",
+      "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/completion-audit.json",
+      "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+      "sha256": "a424236d4719bcb733157e4258e7049e12803926ab0d1c2ccff81d8de45a48f9",
+      "status": "A"
+    },
+    {
+      "disallowed_reasons": [],
+      "git_blob_oid": "d8ed185356f66852ee9d0dccb0a26b7533fe8db5",
+      "git_mode": "100644",
+      "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/final-audit/analysis/manifest.json",
+      "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+      "sha256": "224316ff2435876dab749def2b30fd56221aed7ea7d694ea3fde3fbf9d5ebf1d",
+      "status": "A"
+    },
+    {
+      "disallowed_reasons": [],
+      "git_blob_oid": "1007974c37bb22d91fae86b909ad33883b0f6744",
+      "git_mode": "100644",
+      "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/final-audit/figures/manifest.json",
+      "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+      "sha256": "0d024c3f36bafecdfc6d03ca1228a8b110c69361f93a8eab1597c6baf3cea59b",
+      "status": "A"
+    },
+    {
+      "disallowed_reasons": [],
+      "git_blob_oid": "574563e237167878b7c845dd7f71e36aec2d28b6",
+      "git_mode": "100644",
+      "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/final-audit/report/PROTOCOL_V5_FINAL_REPORT.md",
+      "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+      "sha256": "6b73586118f4143c0cb862d320d29744672c579a327aa50e52af99119cd4ed0f",
+      "status": "A"
+    },
+    {
+      "disallowed_reasons": [],
+      "git_blob_oid": "f702cb697b4a5e8364175ca84fe743d7041cb842",
+      "git_mode": "100644",
+      "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/final-audit/report/audit.json",
+      "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+      "sha256": "79351d30dde747d7fc25da09a02fa79e47d4e501ed2c65fa6a33a274b149916c",
+      "status": "A"
+    },
+    {
+      "disallowed_reasons": [],
+      "git_blob_oid": "bf114da3c24f6275d8035bad295abcf791392545",
+      "git_mode": "100644",
+      "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/final-audit/report/manifest.json",
+      "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+      "sha256": "5cc7cc29c6a2889b86badeb73e7e20b96af220ee74b055c3287288c4f88204f9",
+      "status": "A"
+    },
+    {
+      "disallowed_reasons": [],
+      "git_blob_oid": "804650fee55a7b2fc18eb0d9775b1f8921b91a33",
+      "git_mode": "100644",
+      "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/final-audit/run.json",
+      "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+      "sha256": "64ff4334248b607338f312b811c144af533871dd0f4106d9bf2f4ea23d9359f4",
+      "status": "A"
+    },
+    {
+      "disallowed_reasons": [],
+      "git_blob_oid": "b727de3bd302da42ee12a77ad16654381a9ed495",
+      "git_mode": "100644",
+      "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/final-audit/validation/manifest.json",
+      "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+      "sha256": "00337e84a658e3be5a8f2e962f15c25a1b7c8e9866e2d45954061df525fa19cc",
+      "status": "A"
+    },
+    {
+      "disallowed_reasons": [],
+      "git_blob_oid": "765a63dd59955718aaa46583cda36f96d8896861",
+      "git_mode": "100644",
+      "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/test/adversarial/SHA256SUMS",
+      "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+      "sha256": "eee9f10300a16975a6aff31e6597da724888e5d4ec7b72de44e469ec8560a042",
+      "status": "A"
+    },
+    {
+      "disallowed_reasons": [],
+      "git_blob_oid": "f32b4925e29620d9340843fd0d0cbf5df793401d",
+      "git_mode": "100644",
+      "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/test/adversarial/junit.xml",
+      "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+      "sha256": "4fac3a7beead146b2b5c808568d4684ca050a8a617abae88c0d8346e62f6ff88",
+      "status": "A"
+    },
+    {
+      "disallowed_reasons": [],
+      "git_blob_oid": "43bc7958de15ffe8949d5b12b05a05d82ba2e0a9",
+      "git_mode": "100644",
+      "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/test/adversarial/manifest.json",
+      "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+      "sha256": "528abfec6177a57cadc41100a1a221c529b21e5ee10775ea0510fde7837020d2",
+      "status": "A"
+    },
+    {
+      "disallowed_reasons": [],
+      "git_blob_oid": "ef80a9d05cee1cae54170421a2131940480d8512",
+      "git_mode": "100644",
+      "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/test/adversarial/record.json",
+      "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+      "sha256": "bd539d293708dbfea99c07f61b6b05cfedb9ebdeca49ab1a3261d73c05a5e8e8",
+      "status": "A"
+    },
+    {
+      "disallowed_reasons": [],
+      "git_blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+      "git_mode": "100644",
+      "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/test/adversarial/stderr.txt",
+      "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "status": "A"
+    },
+    {
+      "disallowed_reasons": [],
+      "git_blob_oid": "1bb00e72c2fc297fd9c251a8383c3d37c0fb6b27",
+      "git_mode": "100644",
+      "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/test/adversarial/stdout.txt",
+      "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+      "sha256": "403820dfe430b87d78f32038c17c5f8b7157ccee77a788ec1ec30e55d0e715d1",
+      "status": "A"
+    },
+    {
+      "disallowed_reasons": [],
+      "git_blob_oid": "62743389cf688a5ab96ebf6a3048c4bb6efb072d",
+      "git_mode": "100644",
+      "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/test/focused/SHA256SUMS",
+      "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+      "sha256": "79c307b25f0e42fafd0d666b0fc127f86e6ecad38c4ed318c876b010dabe9773",
+      "status": "A"
+    },
+    {
+      "disallowed_reasons": [],
+      "git_blob_oid": "4d08071441303506ff7afc83d83cd17f48cd42c0",
+      "git_mode": "100644",
+      "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/test/focused/junit.xml",
+      "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+      "sha256": "aa41536bf26fd9ce50a11b2b7db5f1a8fa07a5e54a300adfddafc9e8c9a41f09",
+      "status": "A"
+    },
+    {
+      "disallowed_reasons": [],
+      "git_blob_oid": "d8ca7acce75032bd634254678be9aaa7219c089f",
+      "git_mode": "100644",
+      "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/test/focused/manifest.json",
+      "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+      "sha256": "7d658bdd80065a4998217616a6b3eba47bb52e0f7691ca5334b0bf8e41eebf83",
+      "status": "A"
+    },
+    {
+      "disallowed_reasons": [],
+      "git_blob_oid": "10b6d535265c01623eee475733bbb730a9cefb36",
+      "git_mode": "100644",
+      "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/test/focused/record.json",
+      "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+      "sha256": "88705037d7170c13183093ae8ec92637d273c9889cd82fe896930179643688d1",
+      "status": "A"
+    },
+    {
+      "disallowed_reasons": [],
+      "git_blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+      "git_mode": "100644",
+      "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/test/focused/stderr.txt",
+      "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "status": "A"
+    },
+    {
+      "disallowed_reasons": [],
+      "git_blob_oid": "16e785271aab70821bf45fc59025460e53a53577",
+      "git_mode": "100644",
+      "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/test/focused/stdout.txt",
+      "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+      "sha256": "b1890e54f60620f071a9f051f9abcc968bbeeb0f3263ad9294504f057117ef8e",
+      "status": "A"
+    },
+    {
+      "disallowed_reasons": [],
+      "git_blob_oid": "44100a5513112315f044b6ad5c5676ee562b9d71",
+      "git_mode": "100644",
+      "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/test/full/SHA256SUMS",
+      "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+      "sha256": "c11bfa9cc0d8e4c55b5f8f5ce7e212ecc845b5f37546a9c54bfe387d584b7e0a",
+      "status": "A"
+    },
+    {
+      "disallowed_reasons": [],
+      "git_blob_oid": "76986e14ec7bb50ca7c2c695451482dccea6ad18",
+      "git_mode": "100644",
+      "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/test/full/junit.xml",
+      "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+      "sha256": "99ff502c2f3f05e0da0a62e837f5284ef5c3140df402e37196df4241e6eb7103",
+      "status": "A"
+    },
+    {
+      "disallowed_reasons": [],
+      "git_blob_oid": "8071254ae373c7416f6fb8f948e0c6f17eb8f874",
+      "git_mode": "100644",
+      "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/test/full/manifest.json",
+      "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+      "sha256": "38bef491becf6f496e983ed863469f53be513479a2101935d457e36322f88686",
+      "status": "A"
+    },
+    {
+      "disallowed_reasons": [],
+      "git_blob_oid": "33595f3251916a0f124bbec68cabfc0197fe38db",
+      "git_mode": "100644",
+      "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/test/full/record.json",
+      "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+      "sha256": "2221ccdaa2d3412f288aae071503e4f10078b3bd92cee82d666d8f26cf4d0167",
+      "status": "A"
+    },
+    {
+      "disallowed_reasons": [],
+      "git_blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+      "git_mode": "100644",
+      "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/test/full/stderr.txt",
+      "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "status": "A"
+    },
+    {
+      "disallowed_reasons": [],
+      "git_blob_oid": "b7cf5f1dc6419e0aaae00c359fb67bd3489337db",
+      "git_mode": "100644",
+      "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/test/full/stdout.txt",
+      "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+      "sha256": "19bf596650d67ddf6dd5abc2a2b5afb37132fe41cef5d3289cf1df366a610f28",
+      "status": "A"
+    },
+    {
+      "disallowed_reasons": [],
+      "git_blob_oid": "a8b93e15976e94671fe62b0a2961d8544807eae4",
+      "git_mode": "100644",
+      "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/validator/claim_registry/SHA256SUMS",
+      "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+      "sha256": "332f50ff9df8a5d435eb029156ae336e07cb0b2817c420b403538b380ab1ae26",
+      "status": "A"
+    },
+    {
+      "disallowed_reasons": [],
+      "git_blob_oid": "3a023afa95f422633ea515c71621cc89687c8d8c",
+      "git_mode": "100644",
+      "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/validator/claim_registry/manifest.json",
+      "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+      "sha256": "465bbf6586c13b6636bd03094c21bac4cca62242adc16d3c61fa6cea9b13f97c",
+      "status": "A"
+    },
+    {
+      "disallowed_reasons": [],
+      "git_blob_oid": "31d68d5151883e5eb914aa931725a67f9e226136",
+      "git_mode": "100644",
+      "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/validator/claim_registry/record.json",
+      "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+      "sha256": "81e7c05d54cd5a6ded0fa7464c5886cafc57bd0244b8b46a67b652236137332c",
+      "status": "A"
+    },
+    {
+      "disallowed_reasons": [],
+      "git_blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+      "git_mode": "100644",
+      "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/validator/claim_registry/stderr.txt",
+      "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "status": "A"
+    },
+    {
+      "disallowed_reasons": [],
+      "git_blob_oid": "366210d7b659e2f7e218ca7fe7e992f722367412",
+      "git_mode": "100644",
+      "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/validator/claim_registry/stdout.txt",
+      "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+      "sha256": "1310ad709dc0682235c91acc11b4254779c80fe028d83aa2c8c0d7a6ff0a3bd7",
+      "status": "A"
+    },
+    {
+      "disallowed_reasons": [],
+      "git_blob_oid": "dc8fab713e0a7a6a01f8fef6228edc752d2be6a3",
+      "git_mode": "100644",
+      "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/validator/e5/SHA256SUMS",
+      "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+      "sha256": "ae9f1b1fac06db2cea1d4bd027b584131ea43c6b9d8dd27faca5164564e9992e",
+      "status": "A"
+    },
+    {
+      "disallowed_reasons": [],
+      "git_blob_oid": "fa1b01df4c34c053678ce6c335ae428a60659c00",
+      "git_mode": "100644",
+      "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/validator/e5/manifest.json",
+      "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+      "sha256": "333ed9da7a6b969fe4a67ec66f4867cde6246604197e40d7a90c238047042e52",
+      "status": "A"
+    },
+    {
+      "disallowed_reasons": [],
+      "git_blob_oid": "38b458382a9a0315bb657cb9aea99b321b478188",
+      "git_mode": "100644",
+      "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/validator/e5/record.json",
+      "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+      "sha256": "50e907d26e571c602a361e885a704acaec5db669f93b75eadefd4f1aad5b2a12",
+      "status": "A"
+    },
+    {
+      "disallowed_reasons": [],
+      "git_blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+      "git_mode": "100644",
+      "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/validator/e5/stderr.txt",
+      "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "status": "A"
+    },
+    {
+      "disallowed_reasons": [],
+      "git_blob_oid": "cc3337bea2f4e00a12ca21fd215b119330680f9d",
+      "git_mode": "100644",
+      "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/validator/e5/stdout.txt",
+      "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+      "sha256": "de674af0c13352a63e1dc1f4cb47230587f6844ddb13e8008323acd13b2f00b5",
+      "status": "A"
+    },
+    {
+      "disallowed_reasons": [],
+      "git_blob_oid": "722de52e55f8c80ff41cd566da093b461dc95a88",
+      "git_mode": "100644",
+      "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/validator/historical_cluster/SHA256SUMS",
+      "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+      "sha256": "559b13cb1aba63b99d7d06291eed7e45f4cc9a10d0390b0b5c7b5535bd312791",
+      "status": "A"
+    },
+    {
+      "disallowed_reasons": [],
+      "git_blob_oid": "e06bb6d1dc0db6bdeb606aacaf86cafe6db66fc4",
+      "git_mode": "100644",
+      "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/validator/historical_cluster/manifest.json",
+      "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+      "sha256": "c5c58fc3a7c61a76159f2922f7be0611393bcfa37d069dddbc8b0532c7725f42",
+      "status": "A"
+    },
+    {
+      "disallowed_reasons": [],
+      "git_blob_oid": "476ae5e0f11cd70056a82df2f8ca227012427aa9",
+      "git_mode": "100644",
+      "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/validator/historical_cluster/record.json",
+      "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+      "sha256": "f217a91a34bd6c59fea582f3fd19e50d5a3974285e9fa3c87418fb0bddd38605",
+      "status": "A"
+    },
+    {
+      "disallowed_reasons": [],
+      "git_blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+      "git_mode": "100644",
+      "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/validator/historical_cluster/stderr.txt",
+      "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "status": "A"
+    },
+    {
+      "disallowed_reasons": [],
+      "git_blob_oid": "feb641d6d6a8ba4add76f69be7262a8f4d254033",
+      "git_mode": "100644",
+      "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/validator/historical_cluster/stdout.txt",
+      "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+      "sha256": "f3d97f147fcd1f46828688f68b8a1635a6c2cfb8c95fd8ca3f844923682e97c7",
+      "status": "A"
+    },
+    {
+      "disallowed_reasons": [],
+      "git_blob_oid": "8be9be3aab090b4c1c1c9dd8d9e0a58425572286",
+      "git_mode": "100644",
+      "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/validator/isolation/SHA256SUMS",
+      "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+      "sha256": "c3b690343bd546089f73b2123401ab826dd1237bd43539c785e34af7e21c97d2",
+      "status": "A"
+    },
+    {
+      "disallowed_reasons": [],
+      "git_blob_oid": "ab4f5bb1cc3d6574812b507814ae84aedc36ac53",
+      "git_mode": "100644",
+      "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/validator/isolation/manifest.json",
+      "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+      "sha256": "9b2dc633d6791bd707005db23408431e91b7e3e871ba831fd431826de5c83dbd",
+      "status": "A"
+    },
+    {
+      "disallowed_reasons": [],
+      "git_blob_oid": "a6c91c2a8844d35dea9bbe28dafaaf81c9d6cb5a",
+      "git_mode": "100644",
+      "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/validator/isolation/record.json",
+      "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+      "sha256": "c3266f60f82d19d67ab965ca6e8a28d294f805eee9b3cc73fc4c0bbb2d1a678f",
+      "status": "A"
+    },
+    {
+      "disallowed_reasons": [],
+      "git_blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+      "git_mode": "100644",
+      "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/validator/isolation/stderr.txt",
+      "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "status": "A"
+    },
+    {
+      "disallowed_reasons": [],
+      "git_blob_oid": "42e0a89385c2cada6ca93d96bc3fdc06f7836a6b",
+      "git_mode": "100644",
+      "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/validator/isolation/stdout.txt",
+      "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+      "sha256": "7bb50d080c14e1bb33651810e91702a2686862217473fd6e0e2598593a14e11e",
+      "status": "A"
+    },
+    {
+      "disallowed_reasons": [],
+      "git_blob_oid": "1510f086a56a2510d128a57d5c2657548c9014d8",
+      "git_mode": "100644",
+      "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/validator/protocol_v4/SHA256SUMS",
+      "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+      "sha256": "65c2d30fb116a466f2e2887ab852e62f453e2b3c538d833a1497af67234ea03f",
+      "status": "A"
+    },
+    {
+      "disallowed_reasons": [],
+      "git_blob_oid": "d9a2b3a87ad8004687aaf4bef017f5561d48059f",
+      "git_mode": "100644",
+      "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/validator/protocol_v4/manifest.json",
+      "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+      "sha256": "1f734816e31a50ffd4134fd0f5ceb284e181799d183b4eefb964086a6ac889f1",
+      "status": "A"
+    },
+    {
+      "disallowed_reasons": [],
+      "git_blob_oid": "79a6788dd67ad870f6e1debc09a1407487fbc2ff",
+      "git_mode": "100644",
+      "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/validator/protocol_v4/record.json",
+      "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+      "sha256": "38c158025001b334d4e061fa706bdad215a83970756832749e7ab023449a2136",
+      "status": "A"
+    },
+    {
+      "disallowed_reasons": [],
+      "git_blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+      "git_mode": "100644",
+      "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/validator/protocol_v4/stderr.txt",
+      "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "status": "A"
+    },
+    {
+      "disallowed_reasons": [],
+      "git_blob_oid": "10dd9bcea7ec904f25598df95c6b58378ec6fb55",
+      "git_mode": "100644",
+      "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/validator/protocol_v4/stdout.txt",
+      "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+      "sha256": "9303178ec16546baf69ba67c90f83856749b52d22256261db0e4bd4901bdb0f9",
+      "status": "A"
+    },
+    {
+      "disallowed_reasons": [],
+      "git_blob_oid": "cb563e817c8303c12ff2d865565099717838ab21",
+      "git_mode": "100644",
+      "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/validator/raw_integrity/SHA256SUMS",
+      "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+      "sha256": "ae6dd47d48841bc1e9d7021f5cf7112ccdcc9dc238ca50d8573511fc2d7f7a1f",
+      "status": "A"
+    },
+    {
+      "disallowed_reasons": [],
+      "git_blob_oid": "4d7aefaf1bb29954449a092c22fecbd1dee43f48",
+      "git_mode": "100644",
+      "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/validator/raw_integrity/manifest.json",
+      "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+      "sha256": "da06ba3980985d1d75eb63a203d6552a4458561ec88d6c5c686fe2bc3aef439b",
+      "status": "A"
+    },
+    {
+      "disallowed_reasons": [],
+      "git_blob_oid": "30a7a5e72c29332d408dba1d4e51db3676a486af",
+      "git_mode": "100644",
+      "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/validator/raw_integrity/record.json",
+      "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+      "sha256": "7a021427a41be4d6d0d90ab67222af911cb7361a649df5c83664d9274467a51c",
+      "status": "A"
+    },
+    {
+      "disallowed_reasons": [],
+      "git_blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+      "git_mode": "100644",
+      "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/validator/raw_integrity/stderr.txt",
+      "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "status": "A"
+    },
+    {
+      "disallowed_reasons": [],
+      "git_blob_oid": "1fac6736bbdc3489704e49f6a0ddf5e4ccfa1baa",
+      "git_mode": "100644",
+      "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/validator/raw_integrity/stdout.txt",
+      "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+      "sha256": "e6e363a09b4c700c45d598574eeb7157e1ff79782b3f012446a714864ae9029f",
+      "status": "A"
+    },
+    {
+      "disallowed_reasons": [],
+      "git_blob_oid": "a314d24732714cba89c32005fdc76f8f1328a248",
+      "git_mode": "100644",
+      "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/validator/resource_efficiency/SHA256SUMS",
+      "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+      "sha256": "9e728a051077c7dcbe6e90aae296a3a4e678418a372e50b5ff6f33de3d2a7247",
+      "status": "A"
+    },
+    {
+      "disallowed_reasons": [],
+      "git_blob_oid": "cc0857751128137625b5fe07d46c750327224388",
+      "git_mode": "100644",
+      "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/validator/resource_efficiency/manifest.json",
+      "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+      "sha256": "022997af867345a527b25a5ba8c21ef85fd14f303cc32382917e81aa8c64423b",
+      "status": "A"
+    },
+    {
+      "disallowed_reasons": [],
+      "git_blob_oid": "05c8be553e07e50ca3dea3a0929c37688349bf1b",
+      "git_mode": "100644",
+      "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/validator/resource_efficiency/record.json",
+      "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+      "sha256": "f9dc294b6ad726afa83524bf13215347a9d85bb184abbbb498ca24bb2d95eca0",
+      "status": "A"
+    },
+    {
+      "disallowed_reasons": [],
+      "git_blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+      "git_mode": "100644",
+      "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/validator/resource_efficiency/stderr.txt",
+      "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "status": "A"
+    },
+    {
+      "disallowed_reasons": [],
+      "git_blob_oid": "e0116be2a9c8326b495bb236e501dece78648253",
+      "git_mode": "100644",
+      "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/validator/resource_efficiency/stdout.txt",
+      "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+      "sha256": "158081e7432464346a2ba04089f31bebb5b6026f39d72f122eacd46b090ffcab",
+      "status": "A"
+    },
+    {
+      "disallowed_reasons": [],
+      "git_blob_oid": "e326d307c154f1e3647c29329dbe30f9af526bb2",
+      "git_mode": "100644",
+      "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/validator/resource_oracle/SHA256SUMS",
+      "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+      "sha256": "c37e0d63980911829ad6ba6eb0b173529c16f7396c6f4c8f1adc820403e4d75c",
+      "status": "A"
+    },
+    {
+      "disallowed_reasons": [],
+      "git_blob_oid": "5f5e35d0601d606b79f73ce1b270942f427c3e45",
+      "git_mode": "100644",
+      "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/validator/resource_oracle/manifest.json",
+      "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+      "sha256": "183fb56028565f8400fff8f83c5dff618002141f436e7c7c38de71f6d3bcda3e",
+      "status": "A"
+    },
+    {
+      "disallowed_reasons": [],
+      "git_blob_oid": "db27cd1ac018329277e8cedc21d960e43509da01",
+      "git_mode": "100644",
+      "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/validator/resource_oracle/record.json",
+      "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+      "sha256": "deac05b5bfef9cfb1d95aff9f0159d01c62ebd436571ca81416cb746563944b4",
+      "status": "A"
+    },
+    {
+      "disallowed_reasons": [],
+      "git_blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+      "git_mode": "100644",
+      "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/validator/resource_oracle/stderr.txt",
+      "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "status": "A"
+    },
+    {
+      "disallowed_reasons": [],
+      "git_blob_oid": "34790fd32b02f1104e06026abfb9e0593e9fb256",
+      "git_mode": "100644",
+      "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/validator/resource_oracle/stdout.txt",
+      "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+      "sha256": "6fcf783bc636410a8bf50115b865e87159202475858aa5c5fa1a970910d7044f",
+      "status": "A"
+    },
+    {
+      "disallowed_reasons": [],
+      "git_blob_oid": "89eb1cd4f45bc947b1d7bfd4f557955e99715e11",
+      "git_mode": "100644",
+      "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/workflow/v5_analyze/SHA256SUMS",
+      "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+      "sha256": "9ab7d39b44011550bd0be6e2ba7916a0337fc16aafa73de8a59930d484f84ace",
+      "status": "A"
+    },
+    {
+      "disallowed_reasons": [],
+      "git_blob_oid": "9edb907a7913150a92031b5e2718961738b2728b",
+      "git_mode": "100644",
+      "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/workflow/v5_analyze/manifest.json",
+      "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+      "sha256": "e7bed29ed6898c93906333d8bba5b1d39129fa82a720f1c145f222ed7c3526e9",
+      "status": "A"
+    },
+    {
+      "disallowed_reasons": [],
+      "git_blob_oid": "27b43310cac4f878394b99462a8ab156ff379c02",
+      "git_mode": "100644",
+      "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/workflow/v5_analyze/record.json",
+      "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+      "sha256": "626306c2b7d57c60847710840a252f279f20ffcc5ad94e5180954077943162cc",
+      "status": "A"
+    },
+    {
+      "disallowed_reasons": [],
+      "git_blob_oid": "d4ef5a1451cafb7b8db92b088c2d550b4b5ef626",
+      "git_mode": "100644",
+      "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/workflow/v5_analyze/stderr.txt",
+      "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+      "sha256": "87cae168912b6aa7b2c4df1f83c0b4c7604b0f4ff09f6cc12abfcd8193bcf070",
+      "status": "A"
+    },
+    {
+      "disallowed_reasons": [],
+      "git_blob_oid": "638cee8f0f0959ad06d95068e267e53de137b770",
+      "git_mode": "100644",
+      "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/workflow/v5_analyze/stdout.txt",
+      "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+      "sha256": "fd0fbaf93b759a2bca5bbabe2aa1b0c5ca5bf93cb20ea4e30583d800daba1c9f",
+      "status": "A"
+    },
+    {
+      "disallowed_reasons": [],
+      "git_blob_oid": "1eb0812222a6455e9eb681ab22de04bc55b324a5",
+      "git_mode": "100644",
+      "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/workflow/v5_audit/SHA256SUMS",
+      "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+      "sha256": "e8bf6350e76b7a5a5fb32f003817089ebe08853fc40c4a7b4e936523e1d491e6",
+      "status": "A"
+    },
+    {
+      "disallowed_reasons": [],
+      "git_blob_oid": "6489b6c4a7b361ab5a1e83dc0becc969fc2f1b05",
+      "git_mode": "100644",
+      "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/workflow/v5_audit/manifest.json",
+      "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+      "sha256": "6b65faeb64c9ac27971f7e7e977c0d22a5e6f53c92c1dfbc5e653984d6ec2f0a",
+      "status": "A"
+    },
+    {
+      "disallowed_reasons": [],
+      "git_blob_oid": "32134659f6b53775c6bfff0ce4340fb0b70eb9d7",
+      "git_mode": "100644",
+      "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/workflow/v5_audit/record.json",
+      "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+      "sha256": "75b01804830e9912b9c10edbfdc2aaa212fdb70e9d048ac657cf637dd2ea4f92",
+      "status": "A"
+    },
+    {
+      "disallowed_reasons": [],
+      "git_blob_oid": "e93b066303ff59b4f177946c4bc49b039696c2e4",
+      "git_mode": "100644",
+      "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/workflow/v5_audit/stderr.txt",
+      "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+      "sha256": "b370955b77f023a8cc3c873ce6dc64136158f8122cb72da3bc728473013d3d9c",
+      "status": "A"
+    },
+    {
+      "disallowed_reasons": [],
+      "git_blob_oid": "f75d1f0789fdfd30d2ec75ac9c2f4589f9bce7fb",
+      "git_mode": "100644",
+      "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/workflow/v5_audit/stdout.txt",
+      "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+      "sha256": "36122ea0dd689109ccf4e9691a00eddbdc62ddd28e105a49c5c4abb64b74d3d8",
+      "status": "A"
+    },
+    {
+      "disallowed_reasons": [],
+      "git_blob_oid": "54d154e16194a91c69e270ec85242ee842b59262",
+      "git_mode": "100644",
+      "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/workflow/v5_figures/SHA256SUMS",
+      "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+      "sha256": "70f9e3c919c574dcdd9a9974087a62896dc56e38f1443aeec6f49ce04e01cdae",
+      "status": "A"
+    },
+    {
+      "disallowed_reasons": [],
+      "git_blob_oid": "d673d8a93bc8f7c20c2f1919e5fb57a9dc8dfa58",
+      "git_mode": "100644",
+      "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/workflow/v5_figures/manifest.json",
+      "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+      "sha256": "dab0fa839588ff8b38e0b6380b6a750b2a0621053c90a13360fe61d31b72f0fb",
+      "status": "A"
+    },
+    {
+      "disallowed_reasons": [],
+      "git_blob_oid": "232ca56b404d05202801db6edb00863bcad1aff8",
+      "git_mode": "100644",
+      "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/workflow/v5_figures/record.json",
+      "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+      "sha256": "039f295e4f7d275409665d2b23273e726f6710b3ab10a7226111e18a760a7e8c",
+      "status": "A"
+    },
+    {
+      "disallowed_reasons": [],
+      "git_blob_oid": "ff8405b82f6537bbf396399bbb285933c4522157",
+      "git_mode": "100644",
+      "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/workflow/v5_figures/stderr.txt",
+      "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+      "sha256": "410ce87e0492cc704fbc44635da6610c5319c5bfd972caa7c7590adc97a1672d",
+      "status": "A"
+    },
+    {
+      "disallowed_reasons": [],
+      "git_blob_oid": "5e5b65336aa95fb124b79348a03ec8d68e59deb5",
+      "git_mode": "100644",
+      "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/workflow/v5_figures/stdout.txt",
+      "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+      "sha256": "b70e5c5c9105d63a144c5757e011749c2c6ca92b77e0ee6df15c56f662ecc0a1",
+      "status": "A"
+    },
+    {
+      "disallowed_reasons": [],
+      "git_blob_oid": "7af31da01ce87bfde808a59d074c82a2d101d174",
+      "git_mode": "100644",
+      "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/workflow/v5_validate/SHA256SUMS",
+      "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+      "sha256": "690dbf342cde181916f2b140b47729624ea39ae9308a820f4610b354cb5d3d31",
+      "status": "A"
+    },
+    {
+      "disallowed_reasons": [],
+      "git_blob_oid": "2a526ecf82e251e8fc274f68ff029b02bd8fc948",
+      "git_mode": "100644",
+      "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/workflow/v5_validate/manifest.json",
+      "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+      "sha256": "4a602d4e9990dc7159cbd41906801069e5a0c210d0a550c1d9207c4040edc704",
+      "status": "A"
+    },
+    {
+      "disallowed_reasons": [],
+      "git_blob_oid": "361cacab1387cece0892513bcaa169a6034d2ac4",
+      "git_mode": "100644",
+      "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/workflow/v5_validate/record.json",
+      "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+      "sha256": "f7e8faac747afae5f96b91dd192149745ea2dc0c64c834b1df2145c6a6ba9112",
+      "status": "A"
+    },
+    {
+      "disallowed_reasons": [],
+      "git_blob_oid": "5ca9cb41303b07830533dbc10af88f9acac79936",
+      "git_mode": "100644",
+      "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/workflow/v5_validate/stderr.txt",
+      "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+      "sha256": "b93dc66191d27036b7663f87d2d6aeedad282f61c81f6e742e4651808569b32d",
+      "status": "A"
+    },
+    {
+      "disallowed_reasons": [],
+      "git_blob_oid": "20694f3c445c3953d6443755612f30009c7c3b75",
+      "git_mode": "100644",
+      "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/evidence/workflow/v5_validate/stdout.txt",
+      "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+      "sha256": "940f279570e317090a5b77306ada7b1dc45488e5dfb3e41064ebb74a6857546d",
+      "status": "A"
+    },
+    {
+      "disallowed_reasons": [],
+      "git_blob_oid": "9d4578a1ce894652df2dbaa7b7e1c073f2a512e9",
+      "git_mode": "100644",
+      "path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/manifest.json",
+      "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+      "sha256": "32bf753c7ebe0ba35ad17f4f1ec24647f75d24cdad5587bd1bafd6cb31576ebe",
+      "status": "A"
+    },
+    {
+      "disallowed_reasons": [],
+      "git_blob_oid": "4e914a18401d03054f1229beb6f5d9b94edad722",
+      "git_mode": "100644",
+      "path": "results_v5/protocol-v5.0.0/final-audit/final-audit-20260910-final4/analysis/E1/20260825T-observed-p1-p2-development-v1/component_scoring/analysis-manifest.json",
+      "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+      "sha256": "9bf676f9b9fc0f5cc7472873c811f0fd482e3fc177e8c6a64b7dd0890862eade",
+      "status": "A"
+    },
+    {
+      "disallowed_reasons": [],
+      "git_blob_oid": "8ebdb6bbe362ff411db980e33fa8dddc61345e46",
+      "git_mode": "100644",
+      "path": "results_v5/protocol-v5.0.0/final-audit/final-audit-20260910-final4/analysis/E1/20260825T-observed-p1-p2-development-v1/raw_counts.json",
+      "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+      "sha256": "fd461a839bfa4c872d35312b5f9ae51a018628b767c07e53bd967ec057abf0ca",
+      "status": "A"
+    },
+    {
+      "disallowed_reasons": [],
+      "git_blob_oid": "96c9c8acd08f85e85a87ccc08c45b45778bc2c06",
+      "git_mode": "100644",
+      "path": "results_v5/protocol-v5.0.0/final-audit/final-audit-20260910-final4/analysis/E1/20260825T-observed-p1-p2-development-v1/statistical_analysis/analysis-manifest.json",
+      "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+      "sha256": "05e4191188b5c955d738d30b8bcb9ecb42b43bd22fa7701002e32d83aa580ebf",
+      "status": "A"
+    },
+    {
+      "disallowed_reasons": [],
+      "git_blob_oid": "1db410cd289b4fda1a5319b1a5c368f4747581de",
+      "git_mode": "100644",
+      "path": "results_v5/protocol-v5.0.0/final-audit/final-audit-20260910-final4/analysis/E3/b0-p2-user-study-readiness/analysis.json",
+      "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+      "sha256": "d0619867d9f4460f1e139e5aa2df32c06d6843b1517a1272c9f445b8855e667e",
+      "status": "A"
+    },
+    {
+      "disallowed_reasons": [],
+      "git_blob_oid": "59ce70197de455989de685f97bc99162c2180fdb",
+      "git_mode": "100644",
+      "path": "results_v5/protocol-v5.0.0/final-audit/final-audit-20260910-final4/analysis/SHA256SUMS",
+      "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+      "sha256": "67c3be2401233dc50c9b7e31f48e9348d7131aab79b63372d8e4a215ab72dcc5",
+      "status": "A"
+    },
+    {
+      "disallowed_reasons": [],
+      "git_blob_oid": "d8ed185356f66852ee9d0dccb0a26b7533fe8db5",
+      "git_mode": "100644",
+      "path": "results_v5/protocol-v5.0.0/final-audit/final-audit-20260910-final4/analysis/manifest.json",
+      "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+      "sha256": "224316ff2435876dab749def2b30fd56221aed7ea7d694ea3fde3fbf9d5ebf1d",
+      "status": "A"
+    },
+    {
+      "disallowed_reasons": [],
+      "git_blob_oid": "16d69cff655f01beb4c0034256265d7459c7e07f",
+      "git_mode": "100644",
+      "path": "results_v5/protocol-v5.0.0/final-audit/final-audit-20260910-final4/analysis/regeneration.json",
+      "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+      "sha256": "01300b72c9d8d6cfb32bb20af6f1bbb110859cfff0c9c7d92d6176e31b63e243",
+      "status": "A"
+    },
+    {
+      "disallowed_reasons": [],
+      "git_blob_oid": "1db410cd289b4fda1a5319b1a5c368f4747581de",
+      "git_mode": "100644",
+      "path": "results_v5/protocol-v5.0.0/final-audit/final-audit-20260910-final4/figures/E3/b0-p2-user-study-readiness/derived/analysis.json",
+      "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+      "sha256": "d0619867d9f4460f1e139e5aa2df32c06d6843b1517a1272c9f445b8855e667e",
+      "status": "A"
+    },
+    {
+      "disallowed_reasons": [],
+      "git_blob_oid": "0967ef424bce6791893e9a57bb952f80fd536e93",
+      "git_mode": "100644",
+      "path": "results_v5/protocol-v5.0.0/final-audit/final-audit-20260910-final4/figures/E3/b0-p2-user-study-readiness/derived/model-effects.json",
+      "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+      "sha256": "ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356",
+      "status": "A"
+    },
+    {
+      "disallowed_reasons": [],
+      "git_blob_oid": "d6cd0a9685b50c4966167c95ccfd2cd0de9f7e77",
+      "git_mode": "100644",
+      "path": "results_v5/protocol-v5.0.0/final-audit/final-audit-20260910-final4/figures/E3/b0-p2-user-study-readiness/report/USER_STUDY_REPORT.md",
+      "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+      "sha256": "ca9faed1f2d3c8a923f9fcfc70fd617602c847a6043287c5af05e3e5ef65aff5",
+      "status": "A"
+    },
+    {
+      "disallowed_reasons": [],
+      "git_blob_oid": "8f99849821308fc7b5373c0ae63bf7f7068c8a23",
+      "git_mode": "100644",
+      "path": "results_v5/protocol-v5.0.0/final-audit/final-audit-20260910-final4/figures/E3/b0-p2-user-study-readiness/report/analysis-manifest.json",
+      "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+      "sha256": "596827b376c82fcc75dfe30de2d326c0c69cf1c1718058d3dc730d9abbd3c192",
+      "status": "A"
+    },
+    {
+      "disallowed_reasons": [],
+      "git_blob_oid": "5ffe0535010435705b6441b6deaa485ded76e8f1",
+      "git_mode": "100644",
+      "path": "results_v5/protocol-v5.0.0/final-audit/final-audit-20260910-final4/figures/E3/b0-p2-user-study-readiness/report/figures/accuracy.svg",
+      "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+      "sha256": "fd41efe56098dfb382ef91506249fc4b55c314c96e007eaf46445ccf7a47b470",
+      "status": "A"
+    },
+    {
+      "disallowed_reasons": [],
+      "git_blob_oid": "5e9bc7743fe21536344e7c1194cbbef19a1ad12f",
+      "git_mode": "100644",
+      "path": "results_v5/protocol-v5.0.0/final-audit/final-audit-20260910-final4/figures/E3/b0-p2-user-study-readiness/report/figures/decision-time.svg",
+      "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+      "sha256": "3cf950005c60b1fd8bd802a47856b641a1772e88942b788378179c14b06139ba",
+      "status": "A"
+    },
+    {
+      "disallowed_reasons": [],
+      "git_blob_oid": "5d3722c43bb554cf68c65baf8a982602f1871eb6",
+      "git_mode": "100644",
+      "path": "results_v5/protocol-v5.0.0/final-audit/final-audit-20260910-final4/figures/E3/b0-p2-user-study-readiness/report/figures/interaction-effort.svg",
+      "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+      "sha256": "44d6bf5cd32e015e51a1d51b83ab6351c450e772d6e448e910cf45f589e08fe3",
+      "status": "A"
+    },
+    {
+      "disallowed_reasons": [],
+      "git_blob_oid": "292e5fd45868baecc1dcdd4d95f6af36ff0e8824",
+      "git_mode": "100644",
+      "path": "results_v5/protocol-v5.0.0/final-audit/final-audit-20260910-final4/figures/E3/b0-p2-user-study-readiness/report/figures/preference.svg",
+      "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+      "sha256": "6c988d1df642703d24cbcbed27066174cd81f8d1010bde1f53b421e976c99350",
+      "status": "A"
+    },
+    {
+      "disallowed_reasons": [],
+      "git_blob_oid": "9d0737c3241b75e2055ff901e602845a2e775c3a",
+      "git_mode": "100644",
+      "path": "results_v5/protocol-v5.0.0/final-audit/final-audit-20260910-final4/figures/E3/b0-p2-user-study-readiness/report/figures/sus-seq-custom.svg",
+      "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+      "sha256": "3d1363dcfa80d4687c4df2e2b998441a98391f2efe3a798298a7b8ac89c77f7e",
+      "status": "A"
+    },
+    {
+      "disallowed_reasons": [],
+      "git_blob_oid": "901bae9072dabf77dcd22b5c6a2ea849bedff6bd",
+      "git_mode": "100644",
+      "path": "results_v5/protocol-v5.0.0/final-audit/final-audit-20260910-final4/figures/E3/b0-p2-user-study-readiness/report/privacy-audit.json",
+      "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+      "sha256": "f494bce353355a295c033e79cf67772443ccaca3c2ff3f0f588f4969c8d80c49",
+      "status": "A"
+    },
+    {
+      "disallowed_reasons": [],
+      "git_blob_oid": "ff955154c0c29d0adc1520febeab6ba1e415e9c9",
+      "git_mode": "100644",
+      "path": "results_v5/protocol-v5.0.0/final-audit/final-audit-20260910-final4/figures/E3/b0-p2-user-study-readiness/report/tables/condition-summary.csv",
+      "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+      "sha256": "2ba7a5b4941ab5470b786e06e8692af576c890dca6b67a9826fbb08a4c0232a6",
+      "status": "A"
+    },
+    {
+      "disallowed_reasons": [],
+      "git_blob_oid": "fe51488c7066f6687ef680d6bfaa4f7768ef205c",
+      "git_mode": "100644",
+      "path": "results_v5/protocol-v5.0.0/final-audit/final-audit-20260910-final4/figures/E3/b0-p2-user-study-readiness/report/tables/condition-summary.json",
+      "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+      "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+      "status": "A"
+    },
+    {
+      "disallowed_reasons": [],
+      "git_blob_oid": "ff955154c0c29d0adc1520febeab6ba1e415e9c9",
+      "git_mode": "100644",
+      "path": "results_v5/protocol-v5.0.0/final-audit/final-audit-20260910-final4/figures/E3/b0-p2-user-study-readiness/report/tables/missingness.csv",
+      "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+      "sha256": "2ba7a5b4941ab5470b786e06e8692af576c890dca6b67a9826fbb08a4c0232a6",
+      "status": "A"
+    },
+    {
+      "disallowed_reasons": [],
+      "git_blob_oid": "fe51488c7066f6687ef680d6bfaa4f7768ef205c",
+      "git_mode": "100644",
+      "path": "results_v5/protocol-v5.0.0/final-audit/final-audit-20260910-final4/figures/E3/b0-p2-user-study-readiness/report/tables/missingness.json",
+      "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+      "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+      "status": "A"
+    },
+    {
+      "disallowed_reasons": [],
+      "git_blob_oid": "a79ff1e63b08d15cbc2ddd8249f0d5fb03513e9d",
+      "git_mode": "100644",
+      "path": "results_v5/protocol-v5.0.0/final-audit/final-audit-20260910-final4/figures/E3/b0-p2-user-study-readiness/report/tables/participant-flow.csv",
+      "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+      "sha256": "9a624a9bf3d29c57f6452bc40dce9fbcebd91d87932c4ab3fe93f16c78207877",
+      "status": "A"
+    },
+    {
+      "disallowed_reasons": [],
+      "git_blob_oid": "6d1bd1e25914472808f9535606a93b73b19de928",
+      "git_mode": "100644",
+      "path": "results_v5/protocol-v5.0.0/final-audit/final-audit-20260910-final4/figures/E3/b0-p2-user-study-readiness/report/tables/participant-flow.json",
+      "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+      "sha256": "7ff5bafc66b55354e9179e734242e0222b5732717933bccefffbb6f7b853f859",
+      "status": "A"
+    },
+    {
+      "disallowed_reasons": [],
+      "git_blob_oid": "ff955154c0c29d0adc1520febeab6ba1e415e9c9",
+      "git_mode": "100644",
+      "path": "results_v5/protocol-v5.0.0/final-audit/final-audit-20260910-final4/figures/E3/b0-p2-user-study-readiness/report/tables/preference.csv",
+      "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+      "sha256": "2ba7a5b4941ab5470b786e06e8692af576c890dca6b67a9826fbb08a4c0232a6",
+      "status": "A"
+    },
+    {
+      "disallowed_reasons": [],
+      "git_blob_oid": "fe51488c7066f6687ef680d6bfaa4f7768ef205c",
+      "git_mode": "100644",
+      "path": "results_v5/protocol-v5.0.0/final-audit/final-audit-20260910-final4/figures/E3/b0-p2-user-study-readiness/report/tables/preference.json",
+      "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+      "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+      "status": "A"
+    },
+    {
+      "disallowed_reasons": [],
+      "git_blob_oid": "ca248d80dc48a13fb21b28a33127d4f78b93b37d",
+      "git_mode": "100644",
+      "path": "results_v5/protocol-v5.0.0/final-audit/final-audit-20260910-final4/figures/SHA256SUMS",
+      "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+      "sha256": "19e0669574b49a2290636532b58e34338a0b3b46f8a4714a6a2745d062f1c421",
+      "status": "A"
+    },
+    {
+      "disallowed_reasons": [],
+      "git_blob_oid": "9b8bc9d251650aa66f813c5b656b27c7b51d9f9d",
+      "git_mode": "100644",
+      "path": "results_v5/protocol-v5.0.0/final-audit/final-audit-20260910-final4/figures/figure-regeneration.json",
+      "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+      "sha256": "94b8b62ee7175a4273d0e3e3ae68cb00e10ae3b7cec8f1d33712f2c1cbafc752",
+      "status": "A"
+    },
+    {
+      "disallowed_reasons": [],
+      "git_blob_oid": "1007974c37bb22d91fae86b909ad33883b0f6744",
+      "git_mode": "100644",
+      "path": "results_v5/protocol-v5.0.0/final-audit/final-audit-20260910-final4/figures/manifest.json",
+      "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+      "sha256": "0d024c3f36bafecdfc6d03ca1228a8b110c69361f93a8eab1597c6baf3cea59b",
+      "status": "A"
+    },
+    {
+      "disallowed_reasons": [],
+      "git_blob_oid": "24283042e793158a1f7433ea78fa751aec260f38",
+      "git_mode": "100644",
+      "path": "results_v5/protocol-v5.0.0/final-audit/final-audit-20260910-final4/figures/tables/defense-summary.json",
+      "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+      "sha256": "91ae7cf71cfebe2241b56631ccb8aa5bed2b9cc7492db7cbe043eccfd574aa9b",
+      "status": "A"
+    },
+    {
+      "disallowed_reasons": [],
+      "git_blob_oid": "3bd40e6c9dd4b4f14153753b464ebe8843e81611",
+      "git_mode": "100644",
+      "path": "results_v5/protocol-v5.0.0/final-audit/final-audit-20260910-final4/figures/tables/defense-summary.md",
+      "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+      "sha256": "69f97d4f373c3733c1cff2c7209a60c737fc6c5707f56420a16521655a32e082",
+      "status": "A"
+    },
+    {
+      "disallowed_reasons": [],
+      "git_blob_oid": "fe51488c7066f6687ef680d6bfaa4f7768ef205c",
+      "git_mode": "100644",
+      "path": "results_v5/protocol-v5.0.0/final-audit/final-audit-20260910-final4/figures/tables/functional-results.json",
+      "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+      "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+      "status": "A"
+    },
+    {
+      "disallowed_reasons": [],
+      "git_blob_oid": "574563e237167878b7c845dd7f71e36aec2d28b6",
+      "git_mode": "100644",
+      "path": "results_v5/protocol-v5.0.0/final-audit/final-audit-20260910-final4/report/PROTOCOL_V5_FINAL_REPORT.md",
+      "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+      "sha256": "6b73586118f4143c0cb862d320d29744672c579a327aa50e52af99119cd4ed0f",
+      "status": "A"
+    },
+    {
+      "disallowed_reasons": [],
+      "git_blob_oid": "09445bb622a0aba751e2fbb0a84e8483ab6f29ae",
+      "git_mode": "100644",
+      "path": "results_v5/protocol-v5.0.0/final-audit/final-audit-20260910-final4/report/SHA256SUMS",
+      "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+      "sha256": "b777f9bda6b19731712a6c7375a549eceaf536b628cda4385326ba6fc37f1cb2",
+      "status": "A"
+    },
+    {
+      "disallowed_reasons": [],
+      "git_blob_oid": "f702cb697b4a5e8364175ca84fe743d7041cb842",
+      "git_mode": "100644",
+      "path": "results_v5/protocol-v5.0.0/final-audit/final-audit-20260910-final4/report/audit.json",
+      "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+      "sha256": "79351d30dde747d7fc25da09a02fa79e47d4e501ed2c65fa6a33a274b149916c",
+      "status": "A"
+    },
+    {
+      "disallowed_reasons": [],
+      "git_blob_oid": "bf114da3c24f6275d8035bad295abcf791392545",
+      "git_mode": "100644",
+      "path": "results_v5/protocol-v5.0.0/final-audit/final-audit-20260910-final4/report/manifest.json",
+      "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+      "sha256": "5cc7cc29c6a2889b86badeb73e7e20b96af220ee74b055c3287288c4f88204f9",
+      "status": "A"
+    },
+    {
+      "disallowed_reasons": [],
+      "git_blob_oid": "804650fee55a7b2fc18eb0d9775b1f8921b91a33",
+      "git_mode": "100644",
+      "path": "results_v5/protocol-v5.0.0/final-audit/final-audit-20260910-final4/run.json",
+      "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+      "sha256": "64ff4334248b607338f312b811c144af533871dd0f4106d9bf2f4ea23d9359f4",
+      "status": "A"
+    },
+    {
+      "disallowed_reasons": [],
+      "git_blob_oid": "8d078e6a0e08df241fd6f083b443358ad2c56dbb",
+      "git_mode": "100644",
+      "path": "results_v5/protocol-v5.0.0/final-audit/final-audit-20260910-final4/validation/SHA256SUMS",
+      "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+      "sha256": "41a7a8d6da44efa2ac35883fa4a19390a96ee9fc1b6737430555e9d35e5778d5",
+      "status": "A"
+    },
+    {
+      "disallowed_reasons": [],
+      "git_blob_oid": "8f41ec443781734e53f63ccd18b2937528eda420",
+      "git_mode": "100644",
+      "path": "results_v5/protocol-v5.0.0/final-audit/final-audit-20260910-final4/validation/audit.json",
+      "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+      "sha256": "5c867d8b1727b2ac14cb90031188a73d091bffba901d36f3e18eea21db4bdf05",
+      "status": "A"
+    },
+    {
+      "disallowed_reasons": [],
+      "git_blob_oid": "b727de3bd302da42ee12a77ad16654381a9ed495",
+      "git_mode": "100644",
+      "path": "results_v5/protocol-v5.0.0/final-audit/final-audit-20260910-final4/validation/manifest.json",
+      "path_class": "GENERATED_AUDIT_REPORT_OR_EVIDENCE",
+      "sha256": "00337e84a658e3be5a8f2e962f15c25a1b7c8e9866e2d45954061df525fa19cc",
+      "status": "A"
+    }
+  ],
+  "created_at_utc": "2026-09-11T02:11:01Z",
+  "disallowed_paths": [],
+  "executable_or_validation_semantics_changed": false,
+  "publication_revision": "7ce1e9ccdecb43f6ac337609479ea067dee9735d",
+  "relationship": "DISTINCT_TESTED_CODE_AND_PUBLICATION_REVISIONS",
+  "schema_version": "protocol-v5-publication-delta-attestation-v1.0.0",
+  "tested_code_revision": "007542fdd384174be9e0e54999d20ad000383568",
+  "verdict": "PASS"
+}

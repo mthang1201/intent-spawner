@@ -1,0 +1,51 @@
+[
+  [
+    "satisfaction",
+    "E3",
+    "SEQ ease; SUS usability",
+    "NOT_EXECUTED",
+    "results_v5/protocol-v5.0.0/analysis/research-analysis-20260905T-final/derived/evaluated-claim-registry.json /claims/3 SHA-256 d98c4453da7583a9c6c695ec13cfac940b249a318023c72bf2e8c244adee6cad"
+  ],
+  [
+    "time saving",
+    "E3",
+    "Paired decision time and selection effectiveness",
+    "NOT_EXECUTED",
+    "results_v5/protocol-v5.0.0/analysis/research-analysis-20260905T-final/derived/evaluated-claim-registry.json /claims/2 SHA-256 d98c4453da7583a9c6c695ec13cfac940b249a318023c72bf2e8c244adee6cad"
+  ],
+  [
+    "correct image",
+    "E5 functional",
+    "Gold image match; required functional probes",
+    "NOT_EXECUTED",
+    "results_v5/protocol-v5.0.0/analysis/research-analysis-20260905T-final/derived/evaluated-claim-registry.json /claims/6 SHA-256 d98c4453da7583a9c6c695ec13cfac940b249a318023c72bf2e8c244adee6cad"
+  ],
+  [
+    "image storage reuse",
+    "E5 storage",
+    "LogicalImageBytes; UniqueLayerBytes; marginal reuse",
+    "NOT_EXECUTED",
+    "results_v5/protocol-v5.0.0/analysis/research-analysis-20260905T-final/derived/evaluated-claim-registry.json /claims/7 SHA-256 d98c4453da7583a9c6c695ec13cfac940b249a318023c72bf2e8c244adee6cad"
+  ],
+  [
+    "additional/fine-grained profiles",
+    "E4",
+    "Dynamic CPU/memory oracle error; allocation coverage",
+    "NOT_EXECUTED",
+    "results_v5/protocol-v5.0.0/analysis/research-analysis-20260905T-final/derived/evaluated-claim-registry.json /claims/5 SHA-256 d98c4453da7583a9c6c695ec13cfac940b249a318023c72bf2e8c244adee6cad"
+  ],
+  [
+    "resource saving",
+    "E4",
+    "CPU/memory request cost per successful workload; reliability",
+    "NOT_EXECUTED",
+    "results_v5/protocol-v5.0.0/analysis/research-analysis-20260905T-final/derived/evaluated-claim-registry.json /claims/4 SHA-256 d98c4453da7583a9c6c695ec13cfac940b249a318023c72bf2e8c244adee6cad"
+  ],
+  [
+    "flexible natural-language interaction",
+    "E2",
+    "Family-level robustness across equivalent variants",
+    "NOT_EXECUTED",
+    "results_v5/protocol-v5.0.0/analysis/research-analysis-20260905T-final/derived/evaluated-claim-registry.json /claims/1 SHA-256 d98c4453da7583a9c6c695ec13cfac940b249a318023c72bf2e8c244adee6cad"
+  ]
+]

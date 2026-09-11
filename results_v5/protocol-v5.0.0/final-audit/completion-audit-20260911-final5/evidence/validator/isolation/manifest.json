@@ -1,0 +1,11 @@
+{
+  "evidence_id": "isolation",
+  "git_revision": "ec73326c947bcf3f80f71888e939dc03877f83a2",
+  "kind": "validator",
+  "output_checksums": {
+    "record.json": "f2611c0a162087882126003e3d86696df9a7d350aaf5b05c7ce77c783af72f74",
+    "stderr.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stdout.txt": "71bdc1e3b2923644189ceb4c0a287dfe2218213ece1d8cd54793633c06da2ed9"
+  },
+  "schema_version": "protocol-v5-command-evidence-package-v1.1.0"
+}

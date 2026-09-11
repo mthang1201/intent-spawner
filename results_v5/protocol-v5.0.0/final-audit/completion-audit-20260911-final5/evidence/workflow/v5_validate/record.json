@@ -1,0 +1,64 @@
+{
+  "argv": [
+    "make",
+    "v5-validate",
+    "V5_RUN_ID=final-audit-20260911-final5"
+  ],
+  "classifications": [
+    "IMMUTABLE_HISTORICAL_COMPATIBILITY_BOUNDARY",
+    "INTENTIONALLY_UNAVAILABLE_REAL_EXPERIMENT_EVIDENCE"
+  ],
+  "command": "make v5-validate V5_RUN_ID=final-audit-20260911-final5",
+  "environment": {
+    "platform": "macOS-15.3.2-arm64-arm-64bit-Mach-O",
+    "python_implementation": "CPython",
+    "python_version": "3.14.6",
+    "working_directory": "."
+  },
+  "evidence_id": "v5_validate",
+  "exit_code": 2,
+  "finished_at_utc": "2026-09-11T02:12:24.071469Z",
+  "git_dirty_before": false,
+  "git_revision": "ec73326c947bcf3f80f71888e939dc03877f83a2",
+  "kind": "workflow",
+  "nonzero_reasons": [
+    {
+      "category": "IMMUTABLE_HISTORICAL_COMPATIBILITY_BOUNDARY",
+      "code": "HISTORICAL_E3_RECORDED_CHECKSUM_MISMATCH"
+    },
+    {
+      "category": "IMMUTABLE_HISTORICAL_COMPATIBILITY_BOUNDARY",
+      "code": "LEGACY_E5_OBSERVED_MANIFEST_MISSING_CURRENT_RETRIEVAL_CONFIGURATION"
+    },
+    {
+      "category": "IMMUTABLE_HISTORICAL_COMPATIBILITY_BOUNDARY",
+      "code": "OBSERVED_E5_PROVENANCE_DIFFERS_FROM_DESIGN_SNAPSHOT"
+    },
+    {
+      "category": "INTENTIONALLY_UNAVAILABLE_REAL_EXPERIMENT_EVIDENCE",
+      "code": "AUTHENTICATED_REAL_CONFIRMATORY_E1_TO_E5_EVIDENCE_UNAVAILABLE"
+    },
+    {
+      "category": "INTENTIONALLY_UNAVAILABLE_REAL_EXPERIMENT_EVIDENCE",
+      "code": "AUTHORITATIVE_FINAL_FREEZE_UNAVAILABLE"
+    },
+    {
+      "category": "INTENTIONALLY_UNAVAILABLE_REAL_EXPERIMENT_EVIDENCE",
+      "code": "EXTERNAL_CUSTODY_ISOLATION_ATTESTATION_UNAVAILABLE"
+    },
+    {
+      "category": "INTENTIONALLY_UNAVAILABLE_REAL_EXPERIMENT_EVIDENCE",
+      "code": "SEALED_SPLIT_CUSTODY_ATTESTATION_UNAVAILABLE"
+    }
+  ],
+  "schema_version": "protocol-v5-command-evidence-v1.1.0",
+  "started_at_utc": "2026-09-11T02:12:20.155831Z",
+  "stderr": {
+    "path": "stderr.txt",
+    "sha256": "b93dc66191d27036b7663f87d2d6aeedad282f61c81f6e742e4651808569b32d"
+  },
+  "stdout": {
+    "path": "stdout.txt",
+    "sha256": "eae04aa624aee385a469242752a55ea14a989c3f4da702b74339fd2ab50d74f3"
+  }
+}

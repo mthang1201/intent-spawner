@@ -1,0 +1,74 @@
+{
+  "argv": [
+    ".venv/bin/python",
+    "-m",
+    "pytest",
+    "-q",
+    "tests/test_evaluation_v5.py::test_development_override_cannot_downgrade_existing_observed_manifest",
+    "tests/test_evaluation_v5.py::test_development_override_protects_claim_sensitive_target_payloads",
+    "tests/test_evaluation_v5_isolation.py::test_arbitrary_freeze_identity_string_cannot_authorize_runner",
+    "tests/test_evaluation_v5_isolation.py::test_isolation_audit_parses_python_literals_without_joining_fixture_fragments",
+    "tests/test_evaluation_v5_isolation.py::test_isolation_audit_still_detects_complete_python_literal_bundle",
+    "tests/test_evaluation_v5_isolation.py::test_isolation_audit_detects_complete_concatenated_python_literal",
+    "tests/test_evaluation_v5_component_scoring.py::test_p3_gate_recomputes_decision_and_rejects_forged_retained_status",
+    "tests/test_resource_authenticity_adversarial.py::test_forced_observed_status_on_disk_fails_closed",
+    "tests/test_resource_envelope_v5.py::test_fake_adapter_drives_search_and_manual_review_gate",
+    "tests/test_protocol_v5_research_analysis.py::test_controlled_synthetic_storage_reproduction_never_supports_h7",
+    "tests/test_protocol_v5_research_analysis.py::test_external_normal_layout_synthetic_storage_is_discovered_but_never_selected",
+    "tests/test_evaluation_v5_gold_dataset.py::test_forged_confirmatory_classification_over_non_confirmatory_source_fails_closed",
+    "tests/test_evaluation_v5_robustness.py::test_generator_unconditionally_rejects_confirmatory_families",
+    "tests/test_evaluation_v5_image_functional.py::test_cuda_probe_without_site_packages_is_unavailable",
+    "tests/test_evaluation_v5_image_functional.py::test_docker_timeout_and_interrupt_always_remove_exact_container",
+    "tests/test_evaluation_v5_image_functional.py::test_kubernetes_pending_timeout_and_interrupt_delete_exact_pod",
+    "tests/test_evaluation_v5_image_functional.py::test_e5_rejects_wrong_or_stale_source_run_before_execution",
+    "tests/test_evaluation_v5_image_storage.py::test_catalog_scale_rejects_missing_canonical_v2_acceptable_gold",
+    "tests/test_protocol_v5_research_analysis.py::test_caller_duplicate_source_identity_mismatch_fails_closed",
+    "tests/test_protocol_v5_final_audit.py::test_p16_case_a_no_authenticated_real_evidence_has_no_fabricated_results",
+    "tests/test_protocol_v5_research_analysis.py::test_p16_case_b_observed_fixture_drives_status_metrics_and_report",
+    "tests/test_protocol_v5_research_analysis.py::test_p16_case_c_incomplete_evidence_never_becomes_positive",
+    "tests/test_protocol_v5_research_analysis.py::test_contradictory_claimable_evidence_writes_failed_audit_and_exits_two",
+    "tests/test_protocol_v5_research_analysis.py::test_p16_case_d_nonempty_authenticated_selection_reaches_completion",
+    "tests/test_evaluation_v5_robustness.py::test_cli_draft_refuses_confirmatory_input",
+    "tests/test_resource_authenticity_adversarial.py::test_all_20_e4_directories_in_repository_validate",
+    "tests/test_protocol_v5_final_audit.py::test_e3_lf_regeneration_is_versioned_and_preserves_historical_identity",
+    "--junitxml=/tmp/protocol-v5-final5-evidence.zqPRFY/test-adversarial/junit.xml"
+  ],
+  "classifications": [
+    "PASS"
+  ],
+  "command": ".venv/bin/python -m pytest -q tests/test_evaluation_v5.py::test_development_override_cannot_downgrade_existing_observed_manifest tests/test_evaluation_v5.py::test_development_override_protects_claim_sensitive_target_payloads tests/test_evaluation_v5_isolation.py::test_arbitrary_freeze_identity_string_cannot_authorize_runner tests/test_evaluation_v5_isolation.py::test_isolation_audit_parses_python_literals_without_joining_fixture_fragments tests/test_evaluation_v5_isolation.py::test_isolation_audit_still_detects_complete_python_literal_bundle tests/test_evaluation_v5_isolation.py::test_isolation_audit_detects_complete_concatenated_python_literal tests/test_evaluation_v5_component_scoring.py::test_p3_gate_recomputes_decision_and_rejects_forged_retained_status tests/test_resource_authenticity_adversarial.py::test_forced_observed_status_on_disk_fails_closed tests/test_resource_envelope_v5.py::test_fake_adapter_drives_search_and_manual_review_gate tests/test_protocol_v5_research_analysis.py::test_controlled_synthetic_storage_reproduction_never_supports_h7 tests/test_protocol_v5_research_analysis.py::test_external_normal_layout_synthetic_storage_is_discovered_but_never_selected tests/test_evaluation_v5_gold_dataset.py::test_forged_confirmatory_classification_over_non_confirmatory_source_fails_closed tests/test_evaluation_v5_robustness.py::test_generator_unconditionally_rejects_confirmatory_families tests/test_evaluation_v5_image_functional.py::test_cuda_probe_without_site_packages_is_unavailable tests/test_evaluation_v5_image_functional.py::test_docker_timeout_and_interrupt_always_remove_exact_container tests/test_evaluation_v5_image_functional.py::test_kubernetes_pending_timeout_and_interrupt_delete_exact_pod tests/test_evaluation_v5_image_functional.py::test_e5_rejects_wrong_or_stale_source_run_before_execution tests/test_evaluation_v5_image_storage.py::test_catalog_scale_rejects_missing_canonical_v2_acceptable_gold tests/test_protocol_v5_research_analysis.py::test_caller_duplicate_source_identity_mismatch_fails_closed tests/test_protocol_v5_final_audit.py::test_p16_case_a_no_authenticated_real_evidence_has_no_fabricated_results tests/test_protocol_v5_research_analysis.py::test_p16_case_b_observed_fixture_drives_status_metrics_and_report tests/test_protocol_v5_research_analysis.py::test_p16_case_c_incomplete_evidence_never_becomes_positive tests/test_protocol_v5_research_analysis.py::test_contradictory_claimable_evidence_writes_failed_audit_and_exits_two tests/test_protocol_v5_research_analysis.py::test_p16_case_d_nonempty_authenticated_selection_reaches_completion tests/test_evaluation_v5_robustness.py::test_cli_draft_refuses_confirmatory_input tests/test_resource_authenticity_adversarial.py::test_all_20_e4_directories_in_repository_validate tests/test_protocol_v5_final_audit.py::test_e3_lf_regeneration_is_versioned_and_preserves_historical_identity --junitxml=/tmp/protocol-v5-final5-evidence.zqPRFY/test-adversarial/junit.xml",
+  "environment": {
+    "platform": "macOS-15.3.2-arm64-arm-64bit-Mach-O",
+    "python_implementation": "CPython",
+    "python_version": "3.14.6",
+    "working_directory": "."
+  },
+  "evidence_id": "adversarial",
+  "exit_code": 0,
+  "finished_at_utc": "2026-09-11T02:07:46.196068Z",
+  "git_dirty_before": false,
+  "git_revision": "ec73326c947bcf3f80f71888e939dc03877f83a2",
+  "junit": {
+    "counts": {
+      "errors": 0,
+      "failed": 0,
+      "passed": 30,
+      "skipped": 0,
+      "total": 30
+    },
+    "path": "junit.xml",
+    "sha256": "8fbad512ec790e5b5fff0fb9d37bb28304c1d44ac4e90449009cdd7ab9766d3f"
+  },
+  "kind": "test",
+  "nonzero_reasons": [],
+  "schema_version": "protocol-v5-command-evidence-v1.1.0",
+  "started_at_utc": "2026-09-11T02:07:36.133510Z",
+  "stderr": {
+    "path": "stderr.txt",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "stdout": {
+    "path": "stdout.txt",
+    "sha256": "5f9b35db6e4bda818b076039a0c5e988e2c6e48e687c7321c1dbce79268afa75"
+  }
+}

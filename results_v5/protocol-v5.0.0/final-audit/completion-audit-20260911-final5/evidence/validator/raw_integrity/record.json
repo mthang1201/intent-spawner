@@ -1,0 +1,34 @@
+{
+  "argv": [
+    ".venv/bin/python",
+    "-m",
+    "cluster_evaluation.raw_integrity"
+  ],
+  "classifications": [
+    "PASS"
+  ],
+  "command": ".venv/bin/python -m cluster_evaluation.raw_integrity",
+  "environment": {
+    "platform": "macOS-15.3.2-arm64-arm-64bit-Mach-O",
+    "python_implementation": "CPython",
+    "python_version": "3.14.6",
+    "working_directory": "."
+  },
+  "evidence_id": "raw_integrity",
+  "exit_code": 0,
+  "finished_at_utc": "2026-09-11T02:11:28.052200Z",
+  "git_dirty_before": false,
+  "git_revision": "ec73326c947bcf3f80f71888e939dc03877f83a2",
+  "kind": "validator",
+  "nonzero_reasons": [],
+  "schema_version": "protocol-v5-command-evidence-v1.1.0",
+  "started_at_utc": "2026-09-11T02:11:27.615166Z",
+  "stderr": {
+    "path": "stderr.txt",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "stdout": {
+    "path": "stdout.txt",
+    "sha256": "e6e363a09b4c700c45d598574eeb7157e1ff79782b3f012446a714864ae9029f"
+  }
+}

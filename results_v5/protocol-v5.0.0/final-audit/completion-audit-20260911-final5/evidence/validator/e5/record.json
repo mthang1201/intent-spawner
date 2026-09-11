@@ -1,0 +1,39 @@
+{
+  "argv": [
+    ".venv/bin/python",
+    "-m",
+    "evaluation_v5.final_audit.validator_suite"
+  ],
+  "classifications": [
+    "IMMUTABLE_HISTORICAL_COMPATIBILITY_BOUNDARY"
+  ],
+  "command": ".venv/bin/python -m evaluation_v5.final_audit.validator_suite",
+  "environment": {
+    "platform": "macOS-15.3.2-arm64-arm-64bit-Mach-O",
+    "python_implementation": "CPython",
+    "python_version": "3.14.6",
+    "working_directory": "."
+  },
+  "evidence_id": "e5",
+  "exit_code": 2,
+  "finished_at_utc": "2026-09-11T02:11:44.302991Z",
+  "git_dirty_before": false,
+  "git_revision": "ec73326c947bcf3f80f71888e939dc03877f83a2",
+  "kind": "validator",
+  "nonzero_reasons": [
+    {
+      "category": "IMMUTABLE_HISTORICAL_COMPATIBILITY_BOUNDARY",
+      "code": "LEGACY_E5_OBSERVED_MANIFEST_LACKS_CURRENT_RETRIEVAL_CONFIGURATION"
+    }
+  ],
+  "schema_version": "protocol-v5-command-evidence-v1.1.0",
+  "started_at_utc": "2026-09-11T02:11:44.151746Z",
+  "stderr": {
+    "path": "stderr.txt",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "stdout": {
+    "path": "stdout.txt",
+    "sha256": "de674af0c13352a63e1dc1f4cb47230587f6844ddb13e8008323acd13b2f00b5"
+  }
+}

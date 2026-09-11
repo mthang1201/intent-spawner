@@ -1,0 +1,49 @@
+{
+  "argv": [
+    ".venv/bin/python",
+    "-m",
+    "pytest",
+    "-q",
+    "tests/test_protocol_v5_research_analysis.py",
+    "tests/test_protocol_v5_final_audit.py",
+    "--junitxml=/tmp/protocol-v5-final5-evidence.zqPRFY/test-focused/junit.xml"
+  ],
+  "classifications": [
+    "PASS"
+  ],
+  "command": ".venv/bin/python -m pytest -q tests/test_protocol_v5_research_analysis.py tests/test_protocol_v5_final_audit.py --junitxml=/tmp/protocol-v5-final5-evidence.zqPRFY/test-focused/junit.xml",
+  "environment": {
+    "platform": "macOS-15.3.2-arm64-arm-64bit-Mach-O",
+    "python_implementation": "CPython",
+    "python_version": "3.14.6",
+    "working_directory": "."
+  },
+  "evidence_id": "focused",
+  "exit_code": 0,
+  "finished_at_utc": "2026-09-11T02:08:23.173657Z",
+  "git_dirty_before": false,
+  "git_revision": "ec73326c947bcf3f80f71888e939dc03877f83a2",
+  "junit": {
+    "counts": {
+      "errors": 0,
+      "failed": 0,
+      "passed": 101,
+      "skipped": 0,
+      "total": 101
+    },
+    "path": "junit.xml",
+    "sha256": "4015523b7c53710c4798e4168113d8ab14c2cb2bdff70f1735506899cb24783a"
+  },
+  "kind": "test",
+  "nonzero_reasons": [],
+  "schema_version": "protocol-v5-command-evidence-v1.1.0",
+  "started_at_utc": "2026-09-11T02:07:53.242836Z",
+  "stderr": {
+    "path": "stderr.txt",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "stdout": {
+    "path": "stdout.txt",
+    "sha256": "d3995f4caa76cb73ca530599a0f687852395d348b10e8418571c635ae0881582"
+  }
+}

@@ -1,0 +1,840 @@
+{
+  "artifact_role": "software_regression_evidence",
+  "git_revision": "ec73326c947bcf3f80f71888e939dc03877f83a2",
+  "is_experiment_evidence": false,
+  "issues": [
+    {
+      "actual_result": [
+        {
+          "nodeid": "tests/test_evaluation_v5.py::test_development_override_cannot_downgrade_existing_observed_manifest",
+          "result": "PASSED"
+        },
+        {
+          "nodeid": "tests/test_evaluation_v5.py::test_development_override_protects_claim_sensitive_target_payloads[protected_payload0]",
+          "result": "PASSED"
+        },
+        {
+          "nodeid": "tests/test_evaluation_v5.py::test_development_override_protects_claim_sensitive_target_payloads[protected_payload1]",
+          "result": "PASSED"
+        },
+        {
+          "nodeid": "tests/test_evaluation_v5.py::test_development_override_protects_claim_sensitive_target_payloads[protected_payload2]",
+          "result": "PASSED"
+        },
+        {
+          "nodeid": "tests/test_evaluation_v5.py::test_development_override_protects_claim_sensitive_target_payloads[protected_payload3]",
+          "result": "PASSED"
+        }
+      ],
+      "after": "Observed and claim-sensitive artifacts remain immutable under development override attempts.",
+      "artifact_types": [
+        "SYNTHETIC_TEST"
+      ],
+      "before": "Observed overwrite exploit was reproducible in the original audit.",
+      "closure_behavior": "FAIL_CLOSED",
+      "code_evidence": [
+        {
+          "path": "evaluation_v5/provenance.py",
+          "present": true,
+          "sha256": "3c3cc1d9f89abd7972bfcf557eff5e30f2c9215a29927e132944ff8eb93aeb6a"
+        }
+      ],
+      "evidence_record_path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final5/evidence/test/adversarial/record.json",
+      "evidence_record_sha256": "8c965faaa3c3db0b646fad593f8168b49ae22e855ac38d86472661df160898f1",
+      "expected_security_or_evidence_behavior": "Reject overwrite before any protected byte changes.",
+      "final_disposition": "SATISFIED",
+      "fixture_or_artifact": "Temporary OBSERVED manifest and claim-sensitive payloads exercised through the development writer.",
+      "id": "P1-1",
+      "missing_tests": [],
+      "original_exploit": "A development override could overwrite or downgrade an existing OBSERVED or claim-sensitive artifact.",
+      "regression_test_node_ids": [
+        "tests/test_evaluation_v5.py::test_development_override_cannot_downgrade_existing_observed_manifest",
+        "tests/test_evaluation_v5.py::test_development_override_protects_claim_sensitive_target_payloads"
+      ],
+      "severity": "CRITICAL",
+      "status": "SATISFIED",
+      "test_evidence": [
+        {
+          "nodeid": "tests/test_evaluation_v5.py::test_development_override_cannot_downgrade_existing_observed_manifest",
+          "status": "PASSED"
+        },
+        {
+          "nodeid": "tests/test_evaluation_v5.py::test_development_override_protects_claim_sensitive_target_payloads[protected_payload0]",
+          "status": "PASSED"
+        },
+        {
+          "nodeid": "tests/test_evaluation_v5.py::test_development_override_protects_claim_sensitive_target_payloads[protected_payload1]",
+          "status": "PASSED"
+        },
+        {
+          "nodeid": "tests/test_evaluation_v5.py::test_development_override_protects_claim_sensitive_target_payloads[protected_payload2]",
+          "status": "PASSED"
+        },
+        {
+          "nodeid": "tests/test_evaluation_v5.py::test_development_override_protects_claim_sensitive_target_payloads[protected_payload3]",
+          "status": "PASSED"
+        }
+      ],
+      "title": "Observed overwrite"
+    },
+    {
+      "actual_result": [
+        {
+          "nodeid": "tests/test_evaluation_v5_isolation.py::test_arbitrary_freeze_identity_string_cannot_authorize_runner",
+          "result": "PASSED"
+        },
+        {
+          "nodeid": "tests/test_evaluation_v5_isolation.py::test_isolation_audit_parses_python_literals_without_joining_fixture_fragments",
+          "result": "PASSED"
+        },
+        {
+          "nodeid": "tests/test_evaluation_v5_isolation.py::test_isolation_audit_still_detects_complete_python_literal_bundle",
+          "result": "PASSED"
+        },
+        {
+          "nodeid": "tests/test_evaluation_v5_isolation.py::test_isolation_audit_detects_complete_concatenated_python_literal",
+          "result": "PASSED"
+        }
+      ],
+      "after": "A caller-constructed split or arbitrary freeze identity cannot authorize confirmatory execution.",
+      "artifact_types": [
+        "SYNTHETIC_TEST"
+      ],
+      "before": "Fake confirmatory split/freeze exploit was reproducible in the original audit.",
+      "closure_behavior": "FAIL_CLOSED",
+      "code_evidence": [
+        {
+          "path": "evaluation_v5/freeze.py",
+          "present": true,
+          "sha256": "50fd83d302bad18e0f8c60dbe29628e42dda0c8f58a957bf426766a12500397a"
+        },
+        {
+          "path": "evaluation_v5/offline/runner.py",
+          "present": true,
+          "sha256": "9b0fbe01ce36d7c3db4592383f7c08713a8080e45fadbdd2954d1be557488548"
+        }
+      ],
+      "evidence_record_path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final5/evidence/test/adversarial/record.json",
+      "evidence_record_sha256": "8c965faaa3c3db0b646fad593f8168b49ae22e855ac38d86472661df160898f1",
+      "expected_security_or_evidence_behavior": "Reject arbitrary authority and detect complete embedded bundles without joining unrelated fragments.",
+      "final_disposition": "SATISFIED",
+      "fixture_or_artifact": "Forged temporary split/freeze envelopes and complete/fragmented Python literal bundle fixtures.",
+      "id": "P2-1",
+      "missing_tests": [],
+      "original_exploit": "Caller-created split/freeze identities or fragmented source literals could authorize or confuse confirmatory isolation.",
+      "regression_test_node_ids": [
+        "tests/test_evaluation_v5_isolation.py::test_arbitrary_freeze_identity_string_cannot_authorize_runner",
+        "tests/test_evaluation_v5_isolation.py::test_isolation_audit_parses_python_literals_without_joining_fixture_fragments",
+        "tests/test_evaluation_v5_isolation.py::test_isolation_audit_still_detects_complete_python_literal_bundle",
+        "tests/test_evaluation_v5_isolation.py::test_isolation_audit_detects_complete_concatenated_python_literal"
+      ],
+      "severity": "CRITICAL",
+      "status": "SATISFIED",
+      "test_evidence": [
+        {
+          "nodeid": "tests/test_evaluation_v5_isolation.py::test_arbitrary_freeze_identity_string_cannot_authorize_runner",
+          "status": "PASSED"
+        },
+        {
+          "nodeid": "tests/test_evaluation_v5_isolation.py::test_isolation_audit_parses_python_literals_without_joining_fixture_fragments",
+          "status": "PASSED"
+        },
+        {
+          "nodeid": "tests/test_evaluation_v5_isolation.py::test_isolation_audit_still_detects_complete_python_literal_bundle",
+          "status": "PASSED"
+        },
+        {
+          "nodeid": "tests/test_evaluation_v5_isolation.py::test_isolation_audit_detects_complete_concatenated_python_literal",
+          "status": "PASSED"
+        }
+      ],
+      "title": "Fake confirmatory split/freeze"
+    },
+    {
+      "actual_result": [
+        {
+          "nodeid": "tests/test_evaluation_v5_component_scoring.py::test_p3_gate_recomputes_decision_and_rejects_forged_retained_status",
+          "result": "PASSED"
+        }
+      ],
+      "after": "P3 retention is recomputed from authenticated development evidence; a forged retained flag fails closed.",
+      "artifact_types": [
+        "SYNTHETIC_TEST"
+      ],
+      "before": "Forged P3 gate exploit was reproducible in the original audit.",
+      "closure_behavior": "FAIL_CLOSED",
+      "code_evidence": [
+        {
+          "path": "evaluation_v5/p3_gate.py",
+          "present": true,
+          "sha256": "9a9fe29c8e8d6e08128fe96d397067e76bd75fd8d40021268356b20738022ab9"
+        },
+        {
+          "path": "evaluation_v5/analysis/component_scoring.py",
+          "present": true,
+          "sha256": "abb8f161d587feff77649595e894f4b5fdd7e18bc2a6b266ef2c59364bedf41c"
+        }
+      ],
+      "evidence_record_path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final5/evidence/test/adversarial/record.json",
+      "evidence_record_sha256": "8c965faaa3c3db0b646fad593f8168b49ae22e855ac38d86472661df160898f1",
+      "expected_security_or_evidence_behavior": "Recompute the gate and reject the forged retained state.",
+      "final_disposition": "SATISFIED",
+      "fixture_or_artifact": "Temporary forged retained decision with checksum-bound development gate inputs.",
+      "id": "P8-1",
+      "missing_tests": [],
+      "original_exploit": "A forged persisted P3 retained flag could bypass the authenticated development gate computation.",
+      "regression_test_node_ids": [
+        "tests/test_evaluation_v5_component_scoring.py::test_p3_gate_recomputes_decision_and_rejects_forged_retained_status"
+      ],
+      "severity": "CRITICAL",
+      "status": "SATISFIED",
+      "test_evidence": [
+        {
+          "nodeid": "tests/test_evaluation_v5_component_scoring.py::test_p3_gate_recomputes_decision_and_rejects_forged_retained_status",
+          "status": "PASSED"
+        }
+      ],
+      "title": "Forged P3 gate"
+    },
+    {
+      "actual_result": [
+        {
+          "nodeid": "tests/test_resource_authenticity_adversarial.py::test_forced_observed_status_on_disk_fails_closed",
+          "result": "PASSED"
+        },
+        {
+          "nodeid": "tests/test_resource_envelope_v5.py::test_fake_adapter_drives_search_and_manual_review_gate",
+          "result": "PASSED"
+        }
+      ],
+      "after": "Synthetic adapters stay synthetic and on-disk OBSERVED relabeling fails validation.",
+      "artifact_types": [
+        "SYNTHETIC_TEST"
+      ],
+      "before": "Fake resource adapter OBSERVED exploit was reproducible in the original audit.",
+      "closure_behavior": "NON_OBSERVED_NON_CLAIMABLE",
+      "code_evidence": [
+        {
+          "path": "evaluation_v5/resource/evidence.py",
+          "present": true,
+          "sha256": "b6d7a028f76aff1dc4ccb89c919bf07bdfc1c5ebb870738fb88aaf6370ac5626"
+        },
+        {
+          "path": "cluster_evaluation/resource_adapter_v5.py",
+          "present": true,
+          "sha256": "5407cf973d1c13368282db18931450012087bafe3529552719d4a21c6aaeb000"
+        }
+      ],
+      "evidence_record_path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final5/evidence/test/adversarial/record.json",
+      "evidence_record_sha256": "8c965faaa3c3db0b646fad593f8168b49ae22e855ac38d86472661df160898f1",
+      "expected_security_or_evidence_behavior": "Keep the adapter synthetic and reject the forged observation at validation.",
+      "final_disposition": "SATISFIED",
+      "fixture_or_artifact": "Synthetic adapter run plus an on-disk forced-OBSERVED tamper fixture.",
+      "id": "P11-1",
+      "missing_tests": [],
+      "original_exploit": "A fake resource adapter or an on-disk status edit could be relabelled OBSERVED.",
+      "regression_test_node_ids": [
+        "tests/test_resource_authenticity_adversarial.py::test_forced_observed_status_on_disk_fails_closed",
+        "tests/test_resource_envelope_v5.py::test_fake_adapter_drives_search_and_manual_review_gate"
+      ],
+      "severity": "CRITICAL",
+      "status": "SATISFIED",
+      "test_evidence": [
+        {
+          "nodeid": "tests/test_resource_authenticity_adversarial.py::test_forced_observed_status_on_disk_fails_closed",
+          "status": "PASSED"
+        },
+        {
+          "nodeid": "tests/test_resource_envelope_v5.py::test_fake_adapter_drives_search_and_manual_review_gate",
+          "status": "PASSED"
+        }
+      ],
+      "title": "Fake resource adapter OBSERVED"
+    },
+    {
+      "actual_result": [
+        {
+          "nodeid": "tests/test_protocol_v5_research_analysis.py::test_controlled_synthetic_storage_reproduction_never_supports_h7",
+          "result": "PASSED"
+        },
+        {
+          "nodeid": "tests/test_protocol_v5_research_analysis.py::test_external_normal_layout_synthetic_storage_is_discovered_but_never_selected",
+          "result": "PASSED"
+        }
+      ],
+      "after": "Synthetic storage remains non-observed, non-claimable, and cannot support H7 after caller flag forgery.",
+      "artifact_types": [
+        "SYNTHETIC_TEST"
+      ],
+      "before": "Synthetic storage to H7 exploit was reproducible in the original audit.",
+      "closure_behavior": "NON_OBSERVED_NON_CLAIMABLE",
+      "code_evidence": [
+        {
+          "path": "evaluation_v5/analysis/research_analysis.py",
+          "present": true,
+          "sha256": "e6622fbaa9e8805369aa2f2076cfef4e04f8c1883081de87de809dab24f7304d"
+        },
+        {
+          "path": "evaluation_v5/image_storage/validate_evidence.py",
+          "present": true,
+          "sha256": "0e519d7ba7cb888424d507d2b3b295447946268915abb7c14aa2011d52e5e0ad"
+        }
+      ],
+      "evidence_record_path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final5/evidence/test/adversarial/record.json",
+      "evidence_record_sha256": "8c965faaa3c3db0b646fad593f8168b49ae22e855ac38d86472661df160898f1",
+      "expected_security_or_evidence_behavior": "Discovery must retain SYNTHETIC_TEST origin; selection must reject it and H7 must remain NOT_EXECUTED.",
+      "final_disposition": "SATISFIED",
+      "fixture_or_artifact": "Controlled synthetic storage packages in temporary external normal-layout evidence roots, including forged eligibility flags.",
+      "id": "P14-1",
+      "missing_tests": [],
+      "original_exploit": "Synthetic image-storage data could be promoted through a normal-looking package to support H7.",
+      "regression_test_node_ids": [
+        "tests/test_protocol_v5_research_analysis.py::test_controlled_synthetic_storage_reproduction_never_supports_h7",
+        "tests/test_protocol_v5_research_analysis.py::test_external_normal_layout_synthetic_storage_is_discovered_but_never_selected"
+      ],
+      "severity": "CRITICAL",
+      "status": "SATISFIED",
+      "test_evidence": [
+        {
+          "nodeid": "tests/test_protocol_v5_research_analysis.py::test_controlled_synthetic_storage_reproduction_never_supports_h7",
+          "status": "PASSED"
+        },
+        {
+          "nodeid": "tests/test_protocol_v5_research_analysis.py::test_external_normal_layout_synthetic_storage_is_discovered_but_never_selected",
+          "status": "PASSED"
+        }
+      ],
+      "title": "Synthetic storage to H7"
+    },
+    {
+      "actual_result": [
+        {
+          "nodeid": "tests/test_evaluation_v5_gold_dataset.py::test_forged_confirmatory_classification_over_non_confirmatory_source_fails_closed",
+          "result": "PASSED"
+        }
+      ],
+      "after": "Confirmatory classification cannot be forged over development or otherwise non-confirmatory gold provenance.",
+      "artifact_types": [
+        "SYNTHETIC_TEST"
+      ],
+      "before": "Forbidden gold classification exploit was reproducible in the original audit.",
+      "closure_behavior": "FAIL_CLOSED",
+      "code_evidence": [
+        {
+          "path": "evaluation_v5/gold_dataset.py",
+          "present": true,
+          "sha256": "cfca676e33321a6488a1806990e5b5888be1c22b5afd28028ef5d9389e821c45"
+        }
+      ],
+      "evidence_record_path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final5/evidence/test/adversarial/record.json",
+      "evidence_record_sha256": "8c965faaa3c3db0b646fad593f8168b49ae22e855ac38d86472661df160898f1",
+      "expected_security_or_evidence_behavior": "Recompute source classification and reject the wrapper.",
+      "final_disposition": "SATISFIED",
+      "fixture_or_artifact": "Temporary development gold source wrapped in a forged confirmatory classification.",
+      "id": "P3-1",
+      "missing_tests": [],
+      "original_exploit": "A caller could label development gold as confirmatory.",
+      "regression_test_node_ids": [
+        "tests/test_evaluation_v5_gold_dataset.py::test_forged_confirmatory_classification_over_non_confirmatory_source_fails_closed"
+      ],
+      "severity": "HIGH",
+      "status": "SATISFIED",
+      "test_evidence": [
+        {
+          "nodeid": "tests/test_evaluation_v5_gold_dataset.py::test_forged_confirmatory_classification_over_non_confirmatory_source_fails_closed",
+          "status": "PASSED"
+        }
+      ],
+      "title": "Forbidden gold classification"
+    },
+    {
+      "actual_result": [
+        {
+          "nodeid": "tests/test_evaluation_v5_robustness.py::test_generator_unconditionally_rejects_confirmatory_families",
+          "result": "PASSED"
+        }
+      ],
+      "after": "Robustness draft generation is prohibited for confirmatory families.",
+      "artifact_types": [
+        "SYNTHETIC_TEST"
+      ],
+      "before": "Confirmatory robustness generation exploit was reproducible in the original audit.",
+      "closure_behavior": "FAIL_CLOSED",
+      "code_evidence": [
+        {
+          "path": "evaluation_v5/robustness/generator.py",
+          "present": true,
+          "sha256": "e2b9b66e38e37d012b5b730d48f968f63dbd0cd9bcb88ea779792f73f610c5ff"
+        }
+      ],
+      "evidence_record_path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final5/evidence/test/adversarial/record.json",
+      "evidence_record_sha256": "8c965faaa3c3db0b646fad593f8168b49ae22e855ac38d86472661df160898f1",
+      "expected_security_or_evidence_behavior": "Unconditionally refuse confirmatory generation.",
+      "final_disposition": "SATISFIED",
+      "fixture_or_artifact": "Temporary confirmatory-family generation request.",
+      "id": "P4-1",
+      "missing_tests": [],
+      "original_exploit": "The robustness generator could create variants for confirmatory families.",
+      "regression_test_node_ids": [
+        "tests/test_evaluation_v5_robustness.py::test_generator_unconditionally_rejects_confirmatory_families"
+      ],
+      "severity": "HIGH",
+      "status": "SATISFIED",
+      "test_evidence": [
+        {
+          "nodeid": "tests/test_evaluation_v5_robustness.py::test_generator_unconditionally_rejects_confirmatory_families",
+          "status": "PASSED"
+        }
+      ],
+      "title": "Confirmatory robustness generation"
+    },
+    {
+      "actual_result": [
+        {
+          "nodeid": "tests/test_evaluation_v5_image_functional.py::test_cuda_probe_without_site_packages_is_unavailable",
+          "result": "PASSED"
+        }
+      ],
+      "after": "CUDA availability requires the exact runtime contract; missing site packages cannot become success.",
+      "artifact_types": [
+        "SYNTHETIC_TEST"
+      ],
+      "before": "False CUDA success exploit was reproducible in the original audit.",
+      "closure_behavior": "FAIL_CLOSED",
+      "code_evidence": [
+        {
+          "path": "evaluation_v5/image_storage/manifest.py",
+          "present": true,
+          "sha256": "21b05b931e1a04e20f0430a46202e92794a815042488f3f23219adb937ebd9f1"
+        },
+        {
+          "path": "evaluation_v5/image_storage/runner.py",
+          "present": true,
+          "sha256": "64e00373940dd3bde82daa8242351cfc18ef160267aa90c141f214298a7a8b51"
+        }
+      ],
+      "evidence_record_path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final5/evidence/test/adversarial/record.json",
+      "evidence_record_sha256": "8c965faaa3c3db0b646fad593f8168b49ae22e855ac38d86472661df160898f1",
+      "expected_security_or_evidence_behavior": "Classify the probe unavailable, never successful.",
+      "final_disposition": "SATISFIED",
+      "fixture_or_artifact": "Synthetic CUDA process response with site-packages deliberately absent.",
+      "id": "P13-1",
+      "missing_tests": [],
+      "original_exploit": "A CUDA probe could report success without the required site-packages contract.",
+      "regression_test_node_ids": [
+        "tests/test_evaluation_v5_image_functional.py::test_cuda_probe_without_site_packages_is_unavailable"
+      ],
+      "severity": "HIGH",
+      "status": "SATISFIED",
+      "test_evidence": [
+        {
+          "nodeid": "tests/test_evaluation_v5_image_functional.py::test_cuda_probe_without_site_packages_is_unavailable",
+          "status": "PASSED"
+        }
+      ],
+      "title": "False CUDA success"
+    },
+    {
+      "actual_result": [
+        {
+          "nodeid": "tests/test_evaluation_v5_image_functional.py::test_docker_timeout_and_interrupt_always_remove_exact_container",
+          "result": "PASSED"
+        },
+        {
+          "nodeid": "tests/test_evaluation_v5_image_functional.py::test_kubernetes_pending_timeout_and_interrupt_delete_exact_pod",
+          "result": "PASSED"
+        }
+      ],
+      "after": "Timeout and interrupt paths deterministically clean the exact container or pod and preserve lifecycle failure state.",
+      "artifact_types": [
+        "SYNTHETIC_TEST"
+      ],
+      "before": "Lifecycle and cleanup exploit was reproducible in the original audit.",
+      "closure_behavior": "FAIL_CLOSED",
+      "code_evidence": [
+        {
+          "path": "evaluation_v5/image_storage/runner.py",
+          "present": true,
+          "sha256": "64e00373940dd3bde82daa8242351cfc18ef160267aa90c141f214298a7a8b51"
+        },
+        {
+          "path": "evaluation_v5/image_storage/validate_evidence.py",
+          "present": true,
+          "sha256": "0e519d7ba7cb888424d507d2b3b295447946268915abb7c14aa2011d52e5e0ad"
+        }
+      ],
+      "evidence_record_path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final5/evidence/test/adversarial/record.json",
+      "evidence_record_sha256": "8c965faaa3c3db0b646fad593f8168b49ae22e855ac38d86472661df160898f1",
+      "expected_security_or_evidence_behavior": "Remove the exact object and preserve the failure state on every branch.",
+      "final_disposition": "SATISFIED",
+      "fixture_or_artifact": "Fake Docker/Kubernetes clients exercising timeout and interrupt lifecycle branches.",
+      "id": "P13-2",
+      "missing_tests": [],
+      "original_exploit": "Timeout or interrupt paths could leak the exact Docker container or Kubernetes pod and obscure lifecycle failure.",
+      "regression_test_node_ids": [
+        "tests/test_evaluation_v5_image_functional.py::test_docker_timeout_and_interrupt_always_remove_exact_container",
+        "tests/test_evaluation_v5_image_functional.py::test_kubernetes_pending_timeout_and_interrupt_delete_exact_pod"
+      ],
+      "severity": "HIGH",
+      "status": "SATISFIED",
+      "test_evidence": [
+        {
+          "nodeid": "tests/test_evaluation_v5_image_functional.py::test_docker_timeout_and_interrupt_always_remove_exact_container",
+          "status": "PASSED"
+        },
+        {
+          "nodeid": "tests/test_evaluation_v5_image_functional.py::test_kubernetes_pending_timeout_and_interrupt_delete_exact_pod",
+          "status": "PASSED"
+        }
+      ],
+      "title": "Lifecycle and cleanup"
+    },
+    {
+      "actual_result": [
+        {
+          "nodeid": "tests/test_evaluation_v5_image_functional.py::test_e5_rejects_wrong_or_stale_source_run_before_execution",
+          "result": "PASSED"
+        }
+      ],
+      "after": "E5 provenance is derived from a verified recommendation run; wrong or stale caller input fails before execution.",
+      "artifact_types": [
+        "SYNTHETIC_TEST"
+      ],
+      "before": "Caller-supplied E5 provenance exploit was reproducible in the original audit.",
+      "closure_behavior": "FAIL_CLOSED",
+      "code_evidence": [
+        {
+          "path": "evaluation_v5/image_storage/functional_provenance.py",
+          "present": true,
+          "sha256": "84aed7bea7c66974aaa2e09e677acb56da907f4c6890dfabd26dc3218d7b9d89"
+        }
+      ],
+      "evidence_record_path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final5/evidence/test/adversarial/record.json",
+      "evidence_record_sha256": "8c965faaa3c3db0b646fad593f8168b49ae22e855ac38d86472661df160898f1",
+      "expected_security_or_evidence_behavior": "Reject provenance before any image execution.",
+      "final_disposition": "SATISFIED",
+      "fixture_or_artifact": "Temporary wrong/stale recommendation source-run fixture.",
+      "id": "P13-3",
+      "missing_tests": [],
+      "original_exploit": "Caller-supplied wrong or stale recommendation provenance could reach E5 execution.",
+      "regression_test_node_ids": [
+        "tests/test_evaluation_v5_image_functional.py::test_e5_rejects_wrong_or_stale_source_run_before_execution"
+      ],
+      "severity": "HIGH",
+      "status": "SATISFIED",
+      "test_evidence": [
+        {
+          "nodeid": "tests/test_evaluation_v5_image_functional.py::test_e5_rejects_wrong_or_stale_source_run_before_execution",
+          "status": "PASSED"
+        }
+      ],
+      "title": "Caller-supplied E5 provenance"
+    },
+    {
+      "actual_result": [
+        {
+          "nodeid": "tests/test_evaluation_v5_image_storage.py::test_catalog_scale_rejects_missing_canonical_v2_acceptable_gold",
+          "result": "PASSED"
+        }
+      ],
+      "after": "Catalog-scale scoring requires canonical v2 acceptable gold and cannot infer it from a v1-shaped record.",
+      "artifact_types": [
+        "SYNTHETIC_TEST"
+      ],
+      "before": "V1-shaped catalog scale scorer exploit was reproducible in the original audit.",
+      "closure_behavior": "FAIL_CLOSED",
+      "code_evidence": [
+        {
+          "path": "evaluation_v5/image_storage/metrics.py",
+          "present": true,
+          "sha256": "2c844a27163046434e7fca6478f49bf769481fb13dbed09b5d6dbc2150611cdc"
+        }
+      ],
+      "evidence_record_path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final5/evidence/test/adversarial/record.json",
+      "evidence_record_sha256": "8c965faaa3c3db0b646fad593f8168b49ae22e855ac38d86472661df160898f1",
+      "expected_security_or_evidence_behavior": "Reject catalog-scale scoring rather than infer missing gold.",
+      "final_disposition": "SATISFIED",
+      "fixture_or_artifact": "Temporary v1-shaped catalog-scale storage metric record lacking canonical v2 acceptable gold.",
+      "id": "P14-2",
+      "missing_tests": [],
+      "original_exploit": "A v1-shaped storage record could be scored as though canonical v2 acceptable-gold were present.",
+      "regression_test_node_ids": [
+        "tests/test_evaluation_v5_image_storage.py::test_catalog_scale_rejects_missing_canonical_v2_acceptable_gold"
+      ],
+      "severity": "HIGH",
+      "status": "SATISFIED",
+      "test_evidence": [
+        {
+          "nodeid": "tests/test_evaluation_v5_image_storage.py::test_catalog_scale_rejects_missing_canonical_v2_acceptable_gold",
+          "status": "PASSED"
+        }
+      ],
+      "title": "V1-shaped catalog scale scorer"
+    },
+    {
+      "actual_result": [
+        {
+          "nodeid": "tests/test_protocol_v5_research_analysis.py::test_caller_duplicate_source_identity_mismatch_fails_closed",
+          "result": "PASSED"
+        }
+      ],
+      "after": "Caller-duplicated provenance cannot override canonical source identity or a production-freeze mismatch.",
+      "artifact_types": [
+        "SYNTHETIC_TEST"
+      ],
+      "before": "Freeze mismatch exploit was reproducible in the original audit.",
+      "closure_behavior": "FAIL_CLOSED",
+      "code_evidence": [
+        {
+          "path": "evaluation_v5/analysis/research_analysis.py",
+          "present": true,
+          "sha256": "e6622fbaa9e8805369aa2f2076cfef4e04f8c1883081de87de809dab24f7304d"
+        },
+        {
+          "path": "evaluation_v5/freeze.py",
+          "present": true,
+          "sha256": "50fd83d302bad18e0f8c60dbe29628e42dda0c8f58a957bf426766a12500397a"
+        }
+      ],
+      "evidence_record_path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final5/evidence/test/adversarial/record.json",
+      "evidence_record_sha256": "8c965faaa3c3db0b646fad593f8168b49ae22e855ac38d86472661df160898f1",
+      "expected_security_or_evidence_behavior": "Reject the selected evidence and block the affected requirement.",
+      "final_disposition": "SATISFIED",
+      "fixture_or_artifact": "Verified test freeze plus deliberately mismatched canonical/caller dataset identities.",
+      "id": "P15-1",
+      "missing_tests": [],
+      "original_exploit": "Duplicated caller provenance could override a canonical source identity or production-freeze mismatch.",
+      "regression_test_node_ids": [
+        "tests/test_protocol_v5_research_analysis.py::test_caller_duplicate_source_identity_mismatch_fails_closed"
+      ],
+      "severity": "HIGH",
+      "status": "SATISFIED",
+      "test_evidence": [
+        {
+          "nodeid": "tests/test_protocol_v5_research_analysis.py::test_caller_duplicate_source_identity_mismatch_fails_closed",
+          "status": "PASSED"
+        }
+      ],
+      "title": "Freeze mismatch"
+    },
+    {
+      "actual_result": [
+        {
+          "nodeid": "tests/test_protocol_v5_final_audit.py::test_p16_case_a_no_authenticated_real_evidence_has_no_fabricated_results",
+          "result": "PASSED"
+        },
+        {
+          "nodeid": "tests/test_protocol_v5_research_analysis.py::test_p16_case_b_observed_fixture_drives_status_metrics_and_report",
+          "result": "PASSED"
+        },
+        {
+          "nodeid": "tests/test_protocol_v5_research_analysis.py::test_p16_case_c_incomplete_evidence_never_becomes_positive",
+          "result": "PASSED"
+        },
+        {
+          "nodeid": "tests/test_protocol_v5_research_analysis.py::test_contradictory_claimable_evidence_writes_failed_audit_and_exits_two",
+          "result": "PASSED"
+        },
+        {
+          "nodeid": "tests/test_protocol_v5_research_analysis.py::test_p16_case_d_nonempty_authenticated_selection_reaches_completion",
+          "result": "PASSED"
+        }
+      ],
+      "after": "The final audit consumes authenticated selected claims and renders statuses, values, counts, P3/E3/E4/E5 states, and prose from them.",
+      "artifact_types": [
+        "HISTORICAL",
+        "SYNTHETIC_TEST"
+      ],
+      "before": "Hardcoded final report exploit was reproducible in the original audit.",
+      "closure_behavior": "FAIL_CLOSED",
+      "code_evidence": [
+        {
+          "path": "evaluation_v5/final_audit/claims.py",
+          "present": true,
+          "sha256": "af25bb8d39373d2728ccedf8d12105290f75bee421a6fb70ae2e8e1adf0c46f8"
+        },
+        {
+          "path": "evaluation_v5/final_audit/checks.py",
+          "present": true,
+          "sha256": "ce7822a33a26129b0f0d26e454920bd5e65bb7537decff034e013a842995a54f"
+        },
+        {
+          "path": "evaluation_v5/final_audit/reporting.py",
+          "present": true,
+          "sha256": "3e436a4967c268f9ec7252f6ea518edd6c11130430f7910514d344f13df9b0e3"
+        }
+      ],
+      "evidence_record_path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final5/evidence/test/adversarial/record.json",
+      "evidence_record_sha256": "8c965faaa3c3db0b646fad593f8168b49ae22e855ac38d86472661df160898f1",
+      "expected_security_or_evidence_behavior": "Derive status, metrics, intervals, counts, reasons, prose, and completion propagation from evaluated evidence.",
+      "final_disposition": "SATISFIED",
+      "fixture_or_artifact": "Authenticated current package plus isolated empty, observed-path, incomplete, and non-empty-selection propagation fixtures.",
+      "id": "P16-1",
+      "missing_tests": [],
+      "original_exploit": "The final report could discard selected evidence or hardcode the current all-NOT_EXECUTED snapshot.",
+      "regression_test_node_ids": [
+        "tests/test_protocol_v5_final_audit.py::test_p16_case_a_no_authenticated_real_evidence_has_no_fabricated_results",
+        "tests/test_protocol_v5_research_analysis.py::test_p16_case_b_observed_fixture_drives_status_metrics_and_report",
+        "tests/test_protocol_v5_research_analysis.py::test_p16_case_c_incomplete_evidence_never_becomes_positive",
+        "tests/test_protocol_v5_research_analysis.py::test_contradictory_claimable_evidence_writes_failed_audit_and_exits_two",
+        "tests/test_protocol_v5_research_analysis.py::test_p16_case_d_nonempty_authenticated_selection_reaches_completion"
+      ],
+      "severity": "HIGH",
+      "status": "SATISFIED",
+      "test_evidence": [
+        {
+          "nodeid": "tests/test_protocol_v5_final_audit.py::test_p16_case_a_no_authenticated_real_evidence_has_no_fabricated_results",
+          "status": "PASSED"
+        },
+        {
+          "nodeid": "tests/test_protocol_v5_research_analysis.py::test_p16_case_b_observed_fixture_drives_status_metrics_and_report",
+          "status": "PASSED"
+        },
+        {
+          "nodeid": "tests/test_protocol_v5_research_analysis.py::test_p16_case_c_incomplete_evidence_never_becomes_positive",
+          "status": "PASSED"
+        },
+        {
+          "nodeid": "tests/test_protocol_v5_research_analysis.py::test_contradictory_claimable_evidence_writes_failed_audit_and_exits_two",
+          "status": "PASSED"
+        },
+        {
+          "nodeid": "tests/test_protocol_v5_research_analysis.py::test_p16_case_d_nonempty_authenticated_selection_reaches_completion",
+          "status": "PASSED"
+        }
+      ],
+      "title": "Hardcoded final report"
+    },
+    {
+      "actual_result": [
+        {
+          "nodeid": "tests/test_evaluation_v5_robustness.py::test_cli_draft_refuses_confirmatory_input",
+          "result": "PASSED"
+        }
+      ],
+      "after": "The public draft CLI fails closed on confirmatory input.",
+      "artifact_types": [
+        "SYNTHETIC_TEST"
+      ],
+      "before": "Draft CLI isolation exploit was reproducible in the original audit.",
+      "closure_behavior": "FAIL_CLOSED",
+      "code_evidence": [
+        {
+          "path": "evaluation_v5/robustness/__main__.py",
+          "present": true,
+          "sha256": "0f7a6498bfcb599b1ce01cf09e4833fe7a4c55c83368be36219871411b6388f2"
+        }
+      ],
+      "evidence_record_path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final5/evidence/test/adversarial/record.json",
+      "evidence_record_sha256": "8c965faaa3c3db0b646fad593f8168b49ae22e855ac38d86472661df160898f1",
+      "expected_security_or_evidence_behavior": "Exit nonzero before producing a draft.",
+      "final_disposition": "SATISFIED",
+      "fixture_or_artifact": "Temporary confirmatory input passed through the public draft CLI.",
+      "id": "P4-2",
+      "missing_tests": [],
+      "original_exploit": "The public robustness draft CLI could accept confirmatory input even if the internal generator refused it.",
+      "regression_test_node_ids": [
+        "tests/test_evaluation_v5_robustness.py::test_cli_draft_refuses_confirmatory_input"
+      ],
+      "severity": "MEDIUM",
+      "status": "SATISFIED",
+      "test_evidence": [
+        {
+          "nodeid": "tests/test_evaluation_v5_robustness.py::test_cli_draft_refuses_confirmatory_input",
+          "status": "PASSED"
+        }
+      ],
+      "title": "Draft CLI isolation"
+    },
+    {
+      "actual_result": [
+        {
+          "nodeid": "tests/test_resource_authenticity_adversarial.py::test_all_20_e4_directories_in_repository_validate",
+          "result": "PASSED"
+        }
+      ],
+      "after": "All bounded legacy E4 directories validate under explicit compatibility semantics without promotion to observed evidence.",
+      "artifact_types": [
+        "HISTORICAL"
+      ],
+      "before": "E4 legacy compatibility exploit was reproducible in the original audit.",
+      "closure_behavior": "NON_OBSERVED_NON_CLAIMABLE",
+      "code_evidence": [
+        {
+          "path": "evaluation_v5/resource/evidence.py",
+          "present": true,
+          "sha256": "b6d7a028f76aff1dc4ccb89c919bf07bdfc1c5ebb870738fb88aaf6370ac5626"
+        },
+        {
+          "path": "evaluation_v5/resource/efficiency_evidence.py",
+          "present": true,
+          "sha256": "b2e79585e9f832b48e176740df0e713119eb4f9c77216e4fb8cc29bd56cb0e72"
+        }
+      ],
+      "evidence_record_path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final5/evidence/test/adversarial/record.json",
+      "evidence_record_sha256": "8c965faaa3c3db0b646fad593f8168b49ae22e855ac38d86472661df160898f1",
+      "expected_security_or_evidence_behavior": "Validate under bounded compatibility rules without OBSERVED or claim-eligible promotion.",
+      "final_disposition": "SATISFIED",
+      "fixture_or_artifact": "All 20 preserved repository E4 legacy directories.",
+      "id": "P11-2",
+      "missing_tests": [],
+      "original_exploit": "Legacy E4 directories could either evade validation or be promoted under current semantics.",
+      "regression_test_node_ids": [
+        "tests/test_resource_authenticity_adversarial.py::test_all_20_e4_directories_in_repository_validate"
+      ],
+      "severity": "MEDIUM",
+      "status": "SATISFIED",
+      "test_evidence": [
+        {
+          "nodeid": "tests/test_resource_authenticity_adversarial.py::test_all_20_e4_directories_in_repository_validate",
+          "status": "PASSED"
+        }
+      ],
+      "title": "E4 legacy compatibility"
+    },
+    {
+      "actual_result": [
+        {
+          "nodeid": "tests/test_protocol_v5_final_audit.py::test_e3_lf_regeneration_is_versioned_and_preserves_historical_identity",
+          "result": "PASSED"
+        }
+      ],
+      "after": "Historical bytes and identity are preserved while a new LF-policy compatibility package records its own checksum.",
+      "artifact_types": [
+        "HISTORICAL",
+        "COMPATIBILITY_DERIVATIVE"
+      ],
+      "before": "E3 newline/checksum exploit was reproducible in the original audit.",
+      "closure_behavior": "NON_OBSERVED_NON_CLAIMABLE",
+      "code_evidence": [
+        {
+          "path": "results_v5/protocol-v5.0.0/compatibility/E3/b0-p2-user-study-readiness-regeneration-v2/manifest.json",
+          "present": true,
+          "sha256": "aa5607bb7099f55fe3b0401dea09256e219864dadbc28dcea8d52eaa21aeb5bd"
+        }
+      ],
+      "evidence_record_path": "results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final5/evidence/test/adversarial/record.json",
+      "evidence_record_sha256": "8c965faaa3c3db0b646fad593f8168b49ae22e855ac38d86472661df160898f1",
+      "expected_security_or_evidence_behavior": "Preserve both identities and bind the derivative explicitly to the historical source.",
+      "final_disposition": "SATISFIED",
+      "fixture_or_artifact": "Preserved E3 participant-flow.csv and its versioned LF/current-policy derivative manifest.",
+      "id": "P10-1",
+      "missing_tests": [],
+      "original_exploit": "Newline normalization could silently replace the preserved E3 participant-flow identity.",
+      "regression_test_node_ids": [
+        "tests/test_protocol_v5_final_audit.py::test_e3_lf_regeneration_is_versioned_and_preserves_historical_identity"
+      ],
+      "severity": "LOW",
+      "status": "SATISFIED",
+      "test_evidence": [
+        {
+          "nodeid": "tests/test_protocol_v5_final_audit.py::test_e3_lf_regeneration_is_versioned_and_preserves_historical_identity",
+          "status": "PASSED"
+        }
+      ],
+      "title": "E3 newline/checksum"
+    }
+  ],
+  "schema_version": "protocol-v5-adversarial-traceability-v1.0.0",
+  "supports_thesis_claim": false
+}

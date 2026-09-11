@@ -1,0 +1,36 @@
+{
+  "argv": [
+    ".venv/bin/python",
+    "-m",
+    "evaluation_v5.analysis.research_analysis",
+    "validate",
+    "results_v5/protocol-v5.0.0/analysis/research-analysis-20260905T-final"
+  ],
+  "classifications": [
+    "PASS"
+  ],
+  "command": ".venv/bin/python -m evaluation_v5.analysis.research_analysis validate results_v5/protocol-v5.0.0/analysis/research-analysis-20260905T-final",
+  "environment": {
+    "platform": "macOS-15.3.2-arm64-arm-64bit-Mach-O",
+    "python_implementation": "CPython",
+    "python_version": "3.14.6",
+    "working_directory": "."
+  },
+  "evidence_id": "claim_registry",
+  "exit_code": 0,
+  "finished_at_utc": "2026-09-11T02:11:28.845842Z",
+  "git_dirty_before": false,
+  "git_revision": "ec73326c947bcf3f80f71888e939dc03877f83a2",
+  "kind": "validator",
+  "nonzero_reasons": [],
+  "schema_version": "protocol-v5-command-evidence-v1.1.0",
+  "started_at_utc": "2026-09-11T02:11:27.623511Z",
+  "stderr": {
+    "path": "stderr.txt",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "stdout": {
+    "path": "stdout.txt",
+    "sha256": "1310ad709dc0682235c91acc11b4254779c80fe028d83aa2c8c0d7a6ff0a3bd7"
+  }
+}
