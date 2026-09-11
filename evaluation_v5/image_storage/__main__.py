@@ -256,10 +256,6 @@ def run_e5_evaluation(
 ) -> Path:
     """Execute the full Protocol-v5 E5 image functional validation suite."""
     timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
-    run_id = run_id or f"e5-image-validation-{timestamp}"
-    out_dir = output_dir or (DEFAULT_RESULTS_ROOT / run_id)
-    if out_dir.exists():
-        raise FileExistsError(f"E5 result directory already exists: {out_dir}")
     if recommendation_run is None:
         raise TypeError(
             "E5 functional evaluation requires the verified originating "
@@ -299,6 +295,17 @@ def run_e5_evaluation(
         dry_run_if_unavailable=dry_run_if_unavailable,
         pull_policy=pull_policy,
     )
+
+    if not run_id:
+        if type(runner) is DryRunProbeRunner:
+            run_id = f"e5-image-validation-dry-run-{timestamp}"
+        elif type(runner) is SyntheticProbeRunner:
+            run_id = f"e5-image-validation-synthetic-{timestamp}"
+        else:
+            run_id = f"e5-image-validation-{timestamp}"
+    out_dir = output_dir or (DEFAULT_RESULTS_ROOT / run_id)
+    if out_dir.exists():
+        raise FileExistsError(f"E5 result directory already exists: {out_dir}")
 
     # 4. Run probes on all images in manifest
     probe_results = runner.run_all(probe_manifest)
@@ -509,7 +516,12 @@ def main() -> None:
         help="Originating validated offline recommendation evidence directory (required for functional E5).",
     )
     parser.add_argument("--split", type=Path, default=DEFAULT_SPLIT_PATH, help="Path to development split YAML.")
-    parser.add_argument("--mode", choices=["auto", "docker", "kubernetes", "dry-run"], default="auto", help="Runner mode.")
+    parser.add_argument(
+        "--mode",
+        choices=["auto", "docker", "docker-local", "local", "kubernetes", "dry-run"],
+        default="auto",
+        help="Runner mode.",
+    )
     parser.add_argument("--no-dry-run-fallback", action="store_true", help="Fail if container runtime is unavailable.")
     parser.add_argument("--output-dir", type=Path, default=None, help="Results output directory.")
     parser.add_argument("--run-id", type=str, default=None, help="Custom run ID.")
