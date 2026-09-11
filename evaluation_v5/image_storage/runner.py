@@ -1089,7 +1089,7 @@ def create_probe_runner(
         else:
             raise ProbeExecutionError("No container runtime or cluster detected and dry-run fallback disabled.")
 
-    if selected_mode == "docker":
+    if selected_mode in ("docker", "local", "docker-local"):
         return DockerProbeRunner(
             catalog,
             pull_policy=pull_policy,

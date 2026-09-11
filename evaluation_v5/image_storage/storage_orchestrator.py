@@ -479,7 +479,13 @@ def run_storage_evaluation(
 
     git = _git_info()
     timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
-    run_id = run_id or f"e5-storage-scalability-{timestamp}"
+    if not run_id:
+        if real_origin and execution_status == StorageExecutionStatus.OBSERVED.value:
+            run_id = f"e5-storage-scalability-{timestamp}"
+        elif origin == StorageCollectorOrigin.SYNTHETIC_TEST.value:
+            run_id = f"e5-storage-scalability-synthetic-{timestamp}"
+        else:
+            run_id = f"e5-storage-scalability-dry-run-{timestamp}"
 
     # Audit immutable catalog gate and derive claims; callers cannot promote a run.
     immutability_result = check_immutable_catalog_gate(inspections, stage=norm_stage)

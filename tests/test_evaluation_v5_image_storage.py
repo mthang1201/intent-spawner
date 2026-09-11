@@ -59,6 +59,7 @@ from evaluation_v5.image_storage.storage_figures import generate_all_figures
 from evaluation_v5.image_storage.storage_orchestrator import run_storage_evaluation
 from evaluation_v5.image_storage.storage_runner import (
     BaseStorageRunner,
+    DockerLocalStorageRunner,
     DockerManifestStorageRunner,
     DryRunStorageRunner,
     SyntheticStorageRunner,
@@ -66,6 +67,7 @@ from evaluation_v5.image_storage.storage_runner import (
 )
 from evaluation_v5.image_storage.validate_evidence import (
     EvidenceValidationError,
+    _registry_manifest_from_raw,
     validate_e5_storage_evidence,
 )
 from evaluation_v5.split_dataset import (
@@ -1632,3 +1634,247 @@ def test_catalog_scale_rejects_missing_canonical_v2_acceptable_gold(catalog):
             stage="development",
             split_bundle=_canonical_v2_split(malformed),
         )
+
+
+def test_docker_manifest_storage_runner_single_arch_manifest(catalog):
+    """Test DockerManifestStorageRunner handles single-arch manifests where Descriptor lacks platform."""
+    approved_ref = catalog["images"]["minimal-python"]["reference"]
+    test_digest = parse_image_digest(approved_ref)
+    config_digest = "sha256:" + "c" * 64
+    layer1_digest = "sha256:" + "a" * 64
+    layer2_digest = "sha256:" + "b" * 64
+
+    # Single manifest inspect response (no platform in Descriptor)
+    mock_single_manifest = {
+        "Ref": approved_ref,
+        "Descriptor": {
+            "mediaType": "application/vnd.docker.distribution.manifest.v2+json",
+            "digest": test_digest,
+            "size": 1500,
+        },
+        "SchemaV2Manifest": {
+            "schemaVersion": 2,
+            "mediaType": "application/vnd.docker.distribution.manifest.v2+json",
+            "config": {
+                "mediaType": "application/vnd.docker.container.image.v1+json",
+                "size": 3000,
+                "digest": config_digest,
+            },
+            "layers": [
+                {
+                    "mediaType": "application/vnd.docker.image.rootfs.diff.tar.gzip",
+                    "size": 100000,
+                    "digest": layer1_digest,
+                },
+                {
+                    "mediaType": "application/vnd.docker.image.rootfs.diff.tar.gzip",
+                    "size": 200000,
+                    "digest": layer2_digest,
+                },
+            ],
+        },
+    }
+
+    runner = DockerManifestStorageRunner(catalog, target_arch="amd64", target_os="linux")
+    with patch("subprocess.run") as mock_run:
+        mock_run.return_value = SimpleNamespace(
+            returncode=0,
+            stdout=json.dumps(mock_single_manifest),
+            stderr="",
+        )
+        meta = runner.inspect_image_layers("minimal-python", approved_ref)
+
+    assert meta.image_id == "minimal-python"
+    assert meta.image_digest == test_digest
+    assert meta.manifest_digest == test_digest
+    assert meta.config_digest == config_digest
+    assert meta.size_domain == SIZE_DOMAIN_COMPRESSED_OCI_BLOB
+    assert meta.uncompressed_layer_bytes is None
+    assert meta.total_bytes == 300000
+    assert len(meta.layers) == 2
+    assert meta.ordered_layer_digests == (layer1_digest, layer2_digest)
+    assert meta.raw_observation_path == f"registry_manifests/{test_digest.removeprefix('sha256:')}.json"
+
+
+def test_docker_manifest_storage_runner_multi_arch_manifest(catalog):
+    """Test DockerManifestStorageRunner selects matching platform in multi-arch manifest list."""
+    approved_ref = catalog["images"]["minimal-python"]["reference"]
+    amd64_digest = parse_image_digest(approved_ref)
+    arm64_digest = "sha256:" + "3" * 64
+    config_amd64 = "sha256:" + "4" * 64
+    config_arm64 = "sha256:" + "5" * 64
+
+    mock_multi_manifest = [
+        {
+            "Descriptor": {
+                "mediaType": "application/vnd.docker.distribution.manifest.v2+json",
+                "digest": arm64_digest,
+                "size": 1500,
+                "platform": {"architecture": "arm64", "os": "linux"},
+            },
+            "SchemaV2Manifest": {
+                "schemaVersion": 2,
+                "config": {"digest": config_arm64},
+                "layers": [{"size": 100, "digest": "sha256:" + "a" * 64}],
+            },
+        },
+        {
+            "Descriptor": {
+                "mediaType": "application/vnd.docker.distribution.manifest.v2+json",
+                "digest": amd64_digest,
+                "size": 1600,
+                "platform": {"architecture": "amd64", "os": "linux"},
+            },
+            "SchemaV2Manifest": {
+                "schemaVersion": 2,
+                "config": {"digest": config_amd64},
+                "layers": [{"size": 200, "digest": "sha256:" + "b" * 64}],
+            },
+        },
+    ]
+
+    runner = DockerManifestStorageRunner(catalog, target_arch="amd64", target_os="linux")
+    with patch("subprocess.run") as mock_run:
+        mock_run.return_value = SimpleNamespace(
+            returncode=0,
+            stdout=json.dumps(mock_multi_manifest),
+            stderr="",
+        )
+        meta = runner.inspect_image_layers("minimal-python", approved_ref)
+
+    assert meta.image_digest == amd64_digest
+    assert meta.config_digest == config_amd64
+    assert meta.total_bytes == 200
+
+
+def test_registry_manifest_from_raw_single_arch():
+    """Test _registry_manifest_from_raw with single-arch manifest lacking Descriptor.platform."""
+    test_digest = "sha256:" + "7" * 64
+    raw_payload = {
+        "Descriptor": {
+            "mediaType": "application/vnd.docker.distribution.manifest.v2+json",
+            "digest": test_digest,
+        },
+        "OCIManifest": {
+            "schemaVersion": 2,
+            "mediaType": "application/vnd.oci.image.manifest.v1+json",
+            "config": {"digest": "sha256:" + "8" * 64},
+            "layers": [{"digest": "sha256:" + "9" * 64, "size": 500}],
+        },
+    }
+    raw_bytes = json.dumps(raw_payload).encode("utf-8")
+    img_meta = {
+        "image_id": "minimal-python",
+        "platform": {"architecture": "amd64", "os": "linux"},
+    }
+    desc, manifest = _registry_manifest_from_raw(raw_bytes, image=img_meta)
+    assert desc.get("digest") == test_digest
+    assert manifest.get("config", {}).get("digest") == "sha256:" + "8" * 64
+
+
+def test_docker_local_storage_runner_uncompressed_domain_and_unavailable_layers(catalog):
+    """Test DockerLocalStorageRunner cleanly marks layer byte quantities unavailable without guessing."""
+    approved_ref = catalog["images"]["minimal-python"]["reference"]
+    test_digest = parse_image_digest(approved_ref)
+    diff_id_1 = "sha256:" + "d" * 64
+    diff_id_2 = "sha256:" + "e" * 64
+
+    mock_inspect = [
+        {
+            "Id": "sha256:" + "c" * 64,
+            "RepoDigests": [approved_ref],
+            "Architecture": "amd64",
+            "Os": "linux",
+            "Size": 1500000000,
+            "RootFS": {
+                "Type": "layers",
+                "Layers": [diff_id_1, diff_id_2],
+            },
+        }
+    ]
+
+    runner = DockerLocalStorageRunner(catalog, target_arch="amd64", target_os="linux")
+    with patch("subprocess.run") as mock_run:
+        mock_run.return_value = SimpleNamespace(
+            returncode=0,
+            stdout=json.dumps(mock_inspect),
+            stderr="",
+        )
+        meta = runner.inspect_image_layers("minimal-python", approved_ref)
+
+    assert meta.collector_origin == StorageCollectorOrigin.CONTAINER_STORAGE_OBSERVATION.value
+    assert meta.size_domain == SIZE_DOMAIN_UNCOMPRESSED
+    assert meta.uncompressed_layer_bytes == 1500000000
+    # Individual layer sizes unavailable from docker inspect; layers is empty, total_bytes is 0
+    # (prohibiting guessing from Dockerfile inheritance)
+    assert meta.layers == ()
+    assert meta.total_bytes == 0
+    assert meta.ordered_layer_digests == (diff_id_1, diff_id_2)
+    assert meta.raw_observation_path == f"container_inspect/{test_digest.removeprefix('sha256:')}.json"
+    assert runner.execution_status == StorageExecutionStatus.NOT_EXECUTED.value
+
+
+def test_create_storage_runner_local_modes(catalog):
+    """Test create_storage_runner routes 'local' and 'docker-local' to DockerLocalStorageRunner."""
+    runner1 = create_storage_runner(catalog, mode="local")
+    assert isinstance(runner1, DockerLocalStorageRunner)
+
+    runner2 = create_storage_runner(catalog, mode="docker-local")
+    assert isinstance(runner2, DockerLocalStorageRunner)
+
+
+def test_storage_assert_size_domain_consistent_rejection(catalog):
+    """Test that mixing compressed and uncompressed size domains raises SizeDomainMismatchError."""
+    compressed_meta = ImageLayerMetadata(
+        image_id="img-1",
+        image_reference="img-1@sha256:" + "1" * 64,
+        image_digest="sha256:" + "1" * 64,
+        platform={"architecture": "amd64", "os": "linux"},
+        layers=(LayerInspection(digest="sha256:" + "a" * 64, size=100),),
+        total_bytes=100,
+        size_domain=SIZE_DOMAIN_COMPRESSED_OCI_BLOB,
+    )
+    uncompressed_meta = ImageLayerMetadata(
+        image_id="img-2",
+        image_reference="img-2@sha256:" + "2" * 64,
+        image_digest="sha256:" + "2" * 64,
+        platform={"architecture": "amd64", "os": "linux"},
+        layers=(LayerInspection(digest="sha256:" + "b" * 64, size=200),),
+        total_bytes=200,
+        size_domain=SIZE_DOMAIN_UNCOMPRESSED,
+    )
+
+    with pytest.raises(SizeDomainMismatchError, match="Cross-domain aggregation rejected"):
+        assert_size_domain_consistent(compressed_meta.size_domain, uncompressed_meta.size_domain)
+
+    with pytest.raises(SizeDomainMismatchError):
+        compute_marginal_storage([compressed_meta, uncompressed_meta])
+
+    with pytest.raises(SizeDomainMismatchError):
+        compute_pairwise_layer_reuse([compressed_meta, uncompressed_meta])
+
+
+def test_storage_orchestrator_run_id_differentiation(tmp_path, catalog):
+    """Test that default run_id generation separates dry-run, synthetic, and observed packages."""
+    with patch("evaluation_v5.image_storage.storage_orchestrator.DEFAULT_STORAGE_RESULTS_ROOT", tmp_path):
+        out_dry = run_storage_evaluation(
+            catalog_path=CATALOG_PATH,
+            mode="dry-run",
+            stage="development",
+            output_dir=None,
+            run_id=None,
+            scales=[4],
+            eval_recommendation=False,
+        )
+        assert "e5-storage-scalability-dry-run-" in out_dry.name
+
+        out_synth = run_storage_evaluation(
+            catalog_path=CATALOG_PATH,
+            mode="synthetic",
+            stage="development",
+            output_dir=None,
+            run_id=None,
+            scales=[4],
+            eval_recommendation=False,
+        )
+        assert "e5-storage-scalability-synthetic-" in out_synth.name
