@@ -935,3 +935,78 @@ def test_18_canonical_e3_not_executed_readiness_package_validates_cleanly(tmp_pa
     assert privacy["status"] == "PASS"
     assert privacy["direct_identifier_findings"] == 0
 
+
+def test_19_persistent_e3_readiness_package_validates_with_zero_sessions():
+    """Check 19: Persistent repository readiness package validates cleanly with 0 sessions and canonical LF checksums."""
+    import hashlib
+    from evaluation_v5.analysis.research_analysis import (
+        _adapt_user_study_package,
+        discover_evidence,
+    )
+
+    pkg = ROOT / "results_v5/protocol-v5.0.0/compatibility/E3/b0-p2-user-study-readiness-v3"
+    assert pkg.is_dir(), f"Expected persistent readiness package at {pkg}"
+
+    manifest_path = pkg / "manifest.json"
+    assert manifest_path.is_file()
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+
+    # Contract metadata
+    assert manifest["execution_status"] == "NOT_EXECUTED"
+    assert manifest["schema_version"] == "protocol-v5-user-study-provenance-v1.0.0"
+    assert manifest["run_id"] == "b0-p2-user-study-readiness-v3"
+    assert manifest["experiment_id"] == "E3"
+    analysis_json = json.loads((pkg / "derived/analysis.json").read_text(encoding="utf-8"))
+    assert analysis_json["claims_permitted"] is False
+    assert manifest["input_checksums"]["sessions"]["record_count"] == 0
+    assert manifest["input_checksums"]["events"]["record_count"] == 0
+
+    # Verify participant-flow.csv bytes: no CR bytes, canonical LF, checksums match
+    flow_path = pkg / "report/tables/participant-flow.csv"
+    assert flow_path.is_file()
+    flow_bytes = flow_path.read_bytes()
+    assert b"\r" not in flow_bytes, "Found CR bytes in canonical participant-flow.csv"
+    assert flow_bytes.endswith(b"\n")
+
+    actual_flow_sha = hashlib.sha256(flow_bytes).hexdigest()
+    assert manifest["output_checksums"]["report/tables/participant-flow.csv"] == actual_flow_sha
+    analysis_manifest = json.loads((pkg / "report/analysis-manifest.json").read_text(encoding="utf-8"))
+    assert analysis_manifest["generated_file_sha256"]["report/tables/participant-flow.csv"] == actual_flow_sha
+
+    # Verify SHA256SUMS inventory
+    sums_file = pkg / "SHA256SUMS"
+    assert sums_file.is_file()
+    for line in sums_file.read_text(encoding="utf-8").splitlines():
+        if not line.strip():
+            continue
+        expected_digest, rel_path = line.split(maxsplit=1)
+        file_path = pkg / rel_path
+        assert file_path.is_file()
+        assert hashlib.sha256(file_path.read_bytes()).hexdigest() == expected_digest
+
+    # Adapt package through current-schema adapter
+    candidate = _adapt_user_study_package(pkg)
+    assert candidate.validation_status == "PASS"
+    assert candidate.validation_error is None
+    assert candidate.execution_status == "NOT_EXECUTED"
+    assert candidate.claims_permitted is False
+    assert candidate.claim_eligibility == "INELIGIBLE"
+    assert candidate.metadata["completed_participants"] == 0
+
+    # Privacy audit
+    privacy = candidate.metadata["privacy_audit"]
+    assert privacy["status"] == "PASS"
+    assert privacy["direct_identifier_findings"] == 0
+
+    # Discoverability in inventory
+    results_root = ROOT / "results_v5/protocol-v5.0.0"
+    discovered = discover_evidence(results_root)
+    discovered_pkg_paths = {str(c.package_path.resolve()): c for c in discovered if c.experiment_id == "E3"}
+    assert str(pkg.resolve()) in discovered_pkg_paths
+    assert discovered_pkg_paths[str(pkg.resolve())].validation_status == "PASS"
+
+    # Historical package remains preserved and its mismatch disclosed
+    hist_pkg = ROOT / "results_v5/protocol-v5.0.0/E3/b0-p2-user-study-readiness"
+    assert str(hist_pkg.resolve()) in discovered_pkg_paths
+    assert discovered_pkg_paths[str(hist_pkg.resolve())].validation_status == "FAIL"
+
