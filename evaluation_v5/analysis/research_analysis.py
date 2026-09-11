@@ -1992,17 +1992,18 @@ def discover_evidence(
                         ("natural_language_robustness", "E2"),
                     )
                 )
-    e3 = results_root / "E3"
-    if e3.is_dir():
-        for package in sorted(path for path in e3.iterdir() if path.is_dir()):
-            manifest = package / "manifest.json"
-            if not manifest.is_file():
-                continue
-            try:
-                if _read_json(manifest).get("schema_version") == "protocol-v5-user-study-provenance-v1.0.0":
-                    candidates.append(_adapt_user_study_package(package))
-            except Exception as exc:
-                candidates.append(_invalid_candidate(package, "user_study", "E3", exc))
+    e3_dirs = [results_root / "E3", results_root / "compatibility" / "E3"]
+    for e3 in e3_dirs:
+        if e3.is_dir():
+            for package in sorted(path for path in e3.iterdir() if path.is_dir()):
+                manifest = package / "manifest.json"
+                if not manifest.is_file():
+                    continue
+                try:
+                    if _read_json(manifest).get("schema_version") == "protocol-v5-user-study-provenance-v1.0.0":
+                        candidates.append(_adapt_user_study_package(package))
+                except Exception as exc:
+                    candidates.append(_invalid_candidate(package, "user_study", "E3", exc))
     e4 = results_root / "E4"
     if e4.is_dir():
         for package in sorted(path for path in e4.iterdir() if path.is_dir()):
