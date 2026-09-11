@@ -334,6 +334,7 @@ def analyze(inputs: Inputs, audit: dict, output: Path) -> dict:
                 result["defense_sources"]["offline"].append(inputs.ref(relative + "/derived/statistical_analysis/analysis-manifest.json", "/status"))
                 from evaluation_v5.analysis.component_scoring import ComponentAnalysisError, load_component_gold, write_not_executed as component_status
                 from evaluation_v5.analysis.statistical_analysis import write_not_executed as statistical_status
+                from evaluation_v5.analysis.reporting import write_not_executed_report
                 try:
                     load_component_gold(inputs.path("benchmarks_v5/v5-development.yaml"), role="development")
                 except ComponentAnalysisError:
@@ -348,8 +349,45 @@ def analyze(inputs: Inputs, audit: dict, output: Path) -> dict:
                     writer(destination / folder, reason=source["reason"], reason_code=source["reason_code"])
                     comparisons.append({"artifact": relative + "/derived/" + folder + "/analysis-manifest.json",
                         **compare_json(source, read_json(destination / folder / "analysis-manifest.json"), ignored_fields=VOLATILE_MANIFEST_FIELDS)})
+                report_manifest_rel = relative + "/report/offline_report/report-manifest.json"
+                if report_manifest_rel in inputs.files:
+                    source_report = inputs.json(report_manifest_rel)
+                    if source_report["status"] != "NOT_EXECUTED":
+                        raise ValueError("unsupported observed offline report in this snapshot")
+                    report_dest = destination / "report" / "offline_report"
+                    write_not_executed_report(
+                        report_dest,
+                        reason=source_report["reason"],
+                        reason_code=source_report["reason_code"],
+                    )
+                    comparisons.append(
+                        {
+                            "artifact": report_manifest_rel,
+                            **compare_json(
+                                source_report,
+                                read_json(report_dest / "report-manifest.json"),
+                                ignored_fields=VOLATILE_MANIFEST_FIELDS,
+                            ),
+                        }
+                    )
+                    report_md_rel = relative + "/report/offline_report/E1_E2_OFFLINE_REPORT.md"
+                    if report_md_rel in inputs.files:
+                        actual_md = (report_dest / "E1_E2_OFFLINE_REPORT.md").read_bytes()
+                        expected_md = inputs.path(report_md_rel).read_bytes()
+                        comparisons.append(
+                            {
+                                "artifact": report_md_rel,
+                                "comparison": "exact_bytes",
+                                "status": "PASS" if actual_md == expected_md else "FAIL",
+                            }
+                        )
+                    result["defense_sources"]["offline"].append(inputs.ref(report_manifest_rel, "/status"))
                 result["comparisons"].extend(comparisons)
-                entry.update(reason="Raw execution counts reproduced; incomplete v1 gold prevents component/statistical inference.", comparisons=comparisons)
+                entry.update(
+                    status="REGENERATED",
+                    reason="Raw execution counts and offline status manifests reproduced; incomplete v1 gold prevents component/statistical inference.",
+                    comparisons=comparisons,
+                )
             elif package["kind"] == "user_study":
                 result["defense_sources"]["human"].append(inputs.ref(relative + "/report/status.json", "/execution_status"))
                 analysis, comparisons = regenerate_user_study(inputs, package)
