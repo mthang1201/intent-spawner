@@ -1,0 +1,11 @@
+{
+  "evidence_id": "resource_oracle",
+  "git_revision": "007542fdd384174be9e0e54999d20ad000383568",
+  "kind": "validator",
+  "output_checksums": {
+    "record.json": "deac05b5bfef9cfb1d95aff9f0159d01c62ebd436571ca81416cb746563944b4",
+    "stderr.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stdout.txt": "6fcf783bc636410a8bf50115b865e87159202475858aa5c5fa1a970910d7044f"
+  },
+  "schema_version": "protocol-v5-command-evidence-package-v1.0.0"
+}

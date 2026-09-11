@@ -1,0 +1,11 @@
+{
+  "evidence_id": "resource_efficiency",
+  "git_revision": "007542fdd384174be9e0e54999d20ad000383568",
+  "kind": "validator",
+  "output_checksums": {
+    "record.json": "f9dc294b6ad726afa83524bf13215347a9d85bb184abbbb498ca24bb2d95eca0",
+    "stderr.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stdout.txt": "158081e7432464346a2ba04089f31bebb5b6026f39d72f122eacd46b090ffcab"
+  },
+  "schema_version": "protocol-v5-command-evidence-package-v1.0.0"
+}

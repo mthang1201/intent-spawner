@@ -1,0 +1,100 @@
+{
+  "failed": 1,
+  "is_experiment_evidence": false,
+  "packages": [
+    {
+      "claim_eligible": false,
+      "execution_status": "DRY_RUN",
+      "path": "results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T015905Z",
+      "status": "PASS",
+      "type": "functional",
+      "validation_profile": "LEGACY_SCHEMA_V1_0",
+      "validator_status": "LEGACY_VALID"
+    },
+    {
+      "claim_eligible": false,
+      "error_type": "EvidenceValidationError",
+      "path": "results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T020014Z",
+      "reason": "Invalid manifest in results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T020014Z: OBSERVED manifest requires retrieval_configuration",
+      "status": "FAIL",
+      "type": "functional"
+    },
+    {
+      "claim_eligible": false,
+      "execution_status": "INCOMPLETE",
+      "path": "results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T021913Z",
+      "status": "PASS",
+      "type": "functional",
+      "validation_profile": "LEGACY_SCHEMA_V1_1",
+      "validator_status": "LEGACY_VALID"
+    },
+    {
+      "claim_eligible": false,
+      "execution_status": "OBSERVED",
+      "path": "results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T024426Z",
+      "status": "PASS",
+      "type": "functional",
+      "validation_profile": "LEGACY_SCHEMA_V1_1",
+      "validator_status": "LEGACY_VALID"
+    },
+    {
+      "claim_eligible": false,
+      "execution_status": "OBSERVED",
+      "path": "results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T024633Z",
+      "status": "PASS",
+      "type": "functional",
+      "validation_profile": "LEGACY_SCHEMA_V1_1",
+      "validator_status": "LEGACY_VALID"
+    },
+    {
+      "claim_eligible": false,
+      "execution_status": "OBSERVED",
+      "path": "results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T032437Z",
+      "status": "PASS",
+      "type": "functional",
+      "validation_profile": "LEGACY_SCHEMA_V1_2",
+      "validator_status": "LEGACY_VALID"
+    },
+    {
+      "claim_eligible": false,
+      "execution_status": "OBSERVED",
+      "path": "results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T033805Z",
+      "status": "PASS",
+      "type": "functional",
+      "validation_profile": "LEGACY_SCHEMA_V1_2",
+      "validator_status": "LEGACY_VALID"
+    },
+    {
+      "claim_eligible": false,
+      "execution_status": "OBSERVED",
+      "path": "results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T033832Z",
+      "status": "PASS",
+      "type": "functional",
+      "validation_profile": "LEGACY_SCHEMA_V1_2",
+      "validator_status": "LEGACY_VALID"
+    },
+    {
+      "claim_eligible": false,
+      "execution_status": "OBSERVED",
+      "path": "results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T040730Z",
+      "status": "PASS",
+      "type": "functional",
+      "validation_profile": "LEGACY_SCHEMA_V1_3",
+      "validator_status": "LEGACY_VALID"
+    },
+    {
+      "claim_eligible": false,
+      "execution_status": "OBSERVED",
+      "path": "results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T071910Z",
+      "status": "PASS",
+      "type": "functional",
+      "validation_profile": "LEGACY_SCHEMA_V1_3",
+      "validator_status": "LEGACY_VALID"
+    }
+  ],
+  "packages_checked": 10,
+  "passed": 9,
+  "schema_version": "protocol-v5-e5-validator-summary-v1.0.0",
+  "status": "FAIL_WITH_PRESERVED_INVALID_HISTORY",
+  "supports_thesis_claim": false
+}

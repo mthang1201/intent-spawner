@@ -1,0 +1,19 @@
+{
+  "capacity_batches": 9,
+  "capacity_git_commit": "ca2e74b2043a5ea85a68119097d6c325fe84c294",
+  "capacity_pods": 108,
+  "capacity_provenance": "reproducible_v2",
+  "cleanup_failures": 0,
+  "comparative_records": 180,
+  "evaluated_git_commit": "39b69731a9aeaa85247c01e946e26656beae6e64",
+  "failed_pod_runs": 0,
+  "full_window_average_cpu_records": 202,
+  "genuine_cgroup_cpu_peak_records": 0,
+  "ground_truth_records": 108,
+  "legacy_hybrid_cpu_records": 86,
+  "oom_killed_pod_runs": 0,
+  "sampled_cpu_records": 0,
+  "status": "pass",
+  "timed_out_pod_runs": 0,
+  "unavailable_cpu_records": 0
+}

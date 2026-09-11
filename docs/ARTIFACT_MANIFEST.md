@@ -1,7 +1,7 @@
 # Artifact and Documentation Index
 
 Start with the [project overview](../README.md), [Getting Started](GETTING_STARTED.md),
-and the [current Protocol-v5 evidence-driven final report](../results_v5/protocol-v5.0.0/final-audit/final-audit-20260910-final2/report/PROTOCOL_V5_FINAL_REPORT.md).
+and the [current Protocol-v5 evidence-driven final report](../results_v5/protocol-v5.0.0/final-audit/final-audit-20260910-final4/report/PROTOCOL_V5_FINAL_REPORT.md).
 This index describes current navigation; historical reports retain the facts and
 identities of the repository snapshots they audited.
 
@@ -32,13 +32,13 @@ decisions remain **NOT_EXECUTED**.
 
 | Document or artifact | Purpose and evidence boundary |
 | --- | --- |
-| [Current evidence-driven final report](../results_v5/protocol-v5.0.0/final-audit/final-audit-20260910-final2/report/PROTOCOL_V5_FINAL_REPORT.md) | Authenticated claim decisions, counts, experiment states, audit failures, and defense table. |
-| [16-prompt completion audit](../results_v5/protocol-v5.0.0/final-audit/completion-audit-20260910-final3/COMPLETION_AUDIT.md) and [machine-readable form](../results_v5/protocol-v5.0.0/final-audit/completion-audit-20260910-final3/completion-audit.json) | Exact issue dispositions, regression test identities, Make exits, and scientific gates; not experiment evidence. |
+| [Current evidence-driven final report](../results_v5/protocol-v5.0.0/final-audit/final-audit-20260910-final4/report/PROTOCOL_V5_FINAL_REPORT.md) | Authenticated claim decisions, counts, experiment states, audit failures, and defense table. |
+| [16-prompt completion audit](../results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/COMPLETION_AUDIT.md) and [machine-readable form](../results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final4/completion-audit.json) | Revision-bound issue dispositions, JUnit-derived test counts, validator and Make exits, superseded-artifact provenance, and scientific gates; not experiment evidence. |
 | [Historical final report](evaluation/PROTOCOL_V5_FINAL_REPORT.md) | Preserved report for the earlier reviewed snapshot. |
 | [Historical final-audit verification](evaluation/PROTOCOL_V5_FINAL_AUDIT_VERIFICATION.md) | Recorded software/reproduction checks and reviewed output identity for that snapshot. |
 | [Evidence packaging](../results_v5/README.md) | Portable allowlist, immutable outputs, and offline workflow. |
-| [Current input inventory](../benchmarks_v5/protocol-v5-final-audit-inputs-v2.json) | 423 source/dependency hashes, 34 source packages, the explicit claim authority, and the E3 compatibility package. |
-| [Current machine-readable audit](../results_v5/protocol-v5.0.0/final-audit/final-audit-20260910-final2/report/audit.json) | Evidence-driven findings for the current snapshot. |
+| [Current input inventory](../benchmarks_v5/protocol-v5-final-audit-inputs-v3.json) | 424 source/dependency hashes, 34 source packages, the explicit claim authority, E3 compatibility package, and content-free isolation diagnostic. |
+| [Current machine-readable audit](../results_v5/protocol-v5.0.0/final-audit/final-audit-20260910-final4/report/audit.json) | Evidence-driven findings and the exact repaired isolation-parser disposition for the current implementation snapshot. |
 | [Historical input inventory](../benchmarks_v5/protocol-v5-final-audit-inputs-v1.json) and [audit output](../results_v5/protocol-v5.0.0/final-audit/final-audit-20260907-v2/report/audit.json) | Preserved identities and findings for the earlier snapshot. |
 | [Claim registry](../benchmarks_v5/protocol-v5-claim-registry-v1.1.yaml) | Predeclared RQ1–RQ6, hypotheses, metrics, and decision predicates. |
 | [Experiment architecture](evaluation/PROTOCOL_V5_ARCHITECTURE.md) | Protocol design and manifest contracts; historical status statements are not current execution results. |
@@ -110,9 +110,9 @@ those historical protocols, never to newly observed Protocol-v5 confirmation.
 ## Portable Evidence and Preservation
 
 Protocol-v5’s reviewed core preserves 34 original packages and separately
-publishes the sealed `final-audit-20260910-final2` outputs. The v2 inventory adds
-an explicit authenticated claim package and a versioned E3 LF compatibility
-artifact without rewriting the historical CSV or its identity. It authenticates
+publishes the sealed `final-audit-20260910-final4` outputs. The v3 inventory adds
+a content-free isolation diagnostic to the v2 authenticated claim package and
+versioned E3 LF compatibility artifact without rewriting historical evidence. It authenticates
 the bytes present, including invalid historical packages and E5 provenance
 omissions; it does not promote them. Missing private human/cluster/storage evidence
 is not a dependency for the offline audit.

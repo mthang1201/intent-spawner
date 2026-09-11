@@ -1,0 +1,12 @@
+{
+  "evidence_id": "full",
+  "git_revision": "007542fdd384174be9e0e54999d20ad000383568",
+  "kind": "test",
+  "output_checksums": {
+    "junit.xml": "99ff502c2f3f05e0da0a62e837f5284ef5c3140df402e37196df4241e6eb7103",
+    "record.json": "2221ccdaa2d3412f288aae071503e4f10078b3bd92cee82d666d8f26cf4d0167",
+    "stderr.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stdout.txt": "19bf596650d67ddf6dd5abc2a2b5afb37132fe41cef5d3289cf1df366a610f28"
+  },
+  "schema_version": "protocol-v5-command-evidence-package-v1.0.0"
+}

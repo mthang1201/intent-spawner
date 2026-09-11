@@ -1,0 +1,29 @@
+{
+  "argv": [
+    "make",
+    "v5-validate",
+    "V5_RUN_ID=final-audit-20260910-final4"
+  ],
+  "classifications": [
+    "IMMUTABLE_HISTORICAL_COMPATIBILITY_BOUNDARY",
+    "SCIENTIFICALLY_CORRECT_FAIL_CLOSED_STATE",
+    "UNAVAILABLE_FREEZE_CUSTODY"
+  ],
+  "command": "make v5-validate V5_RUN_ID=final-audit-20260910-final4",
+  "evidence_id": "v5_validate",
+  "exit_code": 2,
+  "finished_at_utc": "2026-09-10T10:12:16.784698Z",
+  "git_dirty_before": false,
+  "git_revision": "007542fdd384174be9e0e54999d20ad000383568",
+  "kind": "workflow",
+  "schema_version": "protocol-v5-command-evidence-v1.0.0",
+  "started_at_utc": "2026-09-10T10:12:12.951525Z",
+  "stderr": {
+    "path": "stderr.txt",
+    "sha256": "b93dc66191d27036b7663f87d2d6aeedad282f61c81f6e742e4651808569b32d"
+  },
+  "stdout": {
+    "path": "stdout.txt",
+    "sha256": "940f279570e317090a5b77306ada7b1dc45488e5dfb3e41064ebb74a6857546d"
+  }
+}

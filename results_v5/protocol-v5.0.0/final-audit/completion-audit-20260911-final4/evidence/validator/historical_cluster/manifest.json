@@ -1,0 +1,11 @@
+{
+  "evidence_id": "historical_cluster",
+  "git_revision": "007542fdd384174be9e0e54999d20ad000383568",
+  "kind": "validator",
+  "output_checksums": {
+    "record.json": "f217a91a34bd6c59fea582f3fd19e50d5a3974285e9fa3c87418fb0bddd38605",
+    "stderr.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stdout.txt": "f3d97f147fcd1f46828688f68b8a1635a6c2cfb8c95fd8ca3f844923682e97c7"
+  },
+  "schema_version": "protocol-v5-command-evidence-package-v1.0.0"
+}

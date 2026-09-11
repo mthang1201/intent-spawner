@@ -1,0 +1,11 @@
+{
+  "evidence_id": "e5",
+  "git_revision": "007542fdd384174be9e0e54999d20ad000383568",
+  "kind": "validator",
+  "output_checksums": {
+    "record.json": "50e907d26e571c602a361e885a704acaec5db669f93b75eadefd4f1aad5b2a12",
+    "stderr.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stdout.txt": "de674af0c13352a63e1dc1f4cb47230587f6844ddb13e8008323acd13b2f00b5"
+  },
+  "schema_version": "protocol-v5-command-evidence-package-v1.0.0"
+}
