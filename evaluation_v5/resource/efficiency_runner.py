@@ -117,12 +117,42 @@ def execute_plan(
     auth = validate_collector_implementation(adapter)
     if not enforce_readiness and auth.is_production_implementation:
         raise ValueError("readiness gates cannot be disabled for the Kubernetes adapter")
+    if resume and (
+        not root.is_dir()
+        or (root / "SHA256SUMS").exists()
+    ):
+        raise ValueError("sealed or completed comparative packages cannot be resumed")
+    if resume:
+        manifest_p = root / "manifest.json"
+        if manifest_p.is_file():
+            try:
+                prior_m = json.loads(manifest_p.read_text(encoding="utf-8"))
+                if prior_m.get("execution_status") == "NOT_EXECUTED" and auth.is_production_implementation:
+                    raise ValueError("cannot resume not-executed package as real execution")
+            except (json.JSONDecodeError, OSError):
+                pass
+        env_p = root / "raw" / "environment.json"
+        if env_p.is_file():
+            try:
+                prior_env = json.loads(env_p.read_text(encoding="utf-8"))
+                if prior_env.get("collector_origin") in ("DRY_RUN", "SYNTHETIC") and auth.is_production_implementation:
+                    raise ValueError("cannot resume dry-run or synthetic package as real execution")
+            except (json.JSONDecodeError, OSError):
+                pass
     freeze = load_efficiency_freeze()
     capacity = load_capacity_contract()
     blockers = confirmatory_readiness(freeze, capacity)
     if enforce_readiness and not git_is_clean():
         blockers.append("GIT_TREE_NOT_CLEAN")
     if enforce_readiness:
+        from .preflight import assert_live_execution_ready
+        assert_live_execution_ready(
+            target="efficiency",
+            adapter=adapter,
+            image=getattr(adapter, "image", "") or "",
+            result_dir=root,
+            resume=resume,
+        )
         if not auth.is_production_implementation:
             blockers.append("AUTHENTICATED_REAL_KUBERNETES_COLLECTOR_REQUIRED")
         if plan.get("condition_input_sha256") != freeze["experiment"]["workload_input_sha256"] or plan.get("freeze_contract_sha256") != file_sha256(Path(__file__).resolve().parents[2] / "benchmarks_v5" / "resource-efficiency-freeze-contract-v1.yaml"):
@@ -364,6 +394,11 @@ def write_analysis_package(*, raw_root: Path, analysis_root: Path, oracle_root: 
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     commands = parser.add_subparsers(dest="command", required=True)
+    preflight = commands.add_parser("preflight")
+    preflight.add_argument("--image", default=None)
+    preflight.add_argument("--result-dir", type=Path, default=None)
+    preflight.add_argument("--resume", action="store_true")
+    preflight.add_argument("--format", choices=("json", "text"), default="json")
     commands.add_parser("validate")
     plan = commands.add_parser("plan"); plan.add_argument("--result-dir", type=Path, required=True)
     dry = commands.add_parser("dry-run")
@@ -379,6 +414,27 @@ def _parser() -> argparse.ArgumentParser:
 
 def main(argv: list[str] | None = None) -> int:
     args = _parser().parse_args(argv)
+    if args.command == "preflight":
+        from .preflight import evaluate_operator_preflight
+        report = evaluate_operator_preflight(
+            target="efficiency",
+            image=args.image,
+            result_dir=args.result_dir,
+            resume=args.resume,
+        )
+        if getattr(args, "format", "json") == "json":
+            print(json.dumps(report, indent=2, sort_keys=True))
+        else:
+            status = report["status"]
+            print(f"Protocol-v5 E4 Efficiency Preflight Status: {status}")
+            print(f"Git Revision: {report['git_revision']} (dirty: {report['git_dirty']})")
+            if status == "READY":
+                print("Environment is READY for real Kubernetes efficiency execution.")
+            else:
+                print(f"Environment is NOT_EXECUTED. Blockers ({len(report['summary']['blocker_codes'])}):")
+                for code in report["summary"]["blocker_codes"]:
+                    print(f"  - {code}")
+        return 0
     if args.command == "validate":
         print(json.dumps(validate_efficiency_contracts(), sort_keys=True)); return 0
     if args.command == "plan":

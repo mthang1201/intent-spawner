@@ -485,6 +485,15 @@ def run_calibration(
         or (result_dir / "manifest.json").exists()
     ):
         raise ValueError("resume requires an existing unsealed resource run")
+    if resume:
+        env_p = result_dir / "raw" / "environment.json"
+        if env_p.is_file():
+            try:
+                prior_env = json.loads(env_p.read_text(encoding="utf-8"))
+                if prior_env.get("collector_origin") in ("DRY_RUN", "SYNTHETIC") and auth.is_production_implementation:
+                    raise ValueError("cannot resume non-production or dry-run run as real execution")
+            except (json.JSONDecodeError, OSError):
+                pass
     manifest = load_resource_manifest(manifest_path)
     workloads = workloads_by_id(manifest)
     provenance = _base_provenance(
@@ -496,17 +505,15 @@ def run_calibration(
     if not enforce_readiness and auth.is_production_implementation:
         raise ValueError("readiness gates cannot be disabled for the Kubernetes adapter")
     if enforce_readiness:
-        blockers: list[str] = []
-        if not auth.is_production_implementation:
-            blockers.append("AUTHENTICATED_REAL_KUBERNETES_COLLECTOR_REQUIRED")
-        if provenance["git_dirty"]:
-            blockers.append("DIRTY_GIT_TREE")
-        if not freeze_is_confirmatory(load_freeze_contract()):
-            blockers.append("CONFIRMATORY_FREEZE_NOT_ACTIVE")
-        if not image_state_is_verified(load_image_state(), image):
-            blockers.append("IMAGE_DIGEST_UNVERIFIED")
-        if blockers:
-            raise RuntimeError("OBSERVED_E4_EXECUTION_BLOCKED: " + ",".join(blockers))
+        from .preflight import assert_live_execution_ready
+        assert_live_execution_ready(
+            target="envelope",
+            adapter=adapter,
+            image=image,
+            result_dir=result_dir,
+            resume=resume,
+            manifest_path=manifest_path,
+        )
         environment_snapshot = adapter.environment_provenance()
         if environment_snapshot.get("eligibility_status") != "ELIGIBLE":
             raise RuntimeError("OBSERVED_E4_EXECUTION_BLOCKED: CLUSTER_INELIGIBLE")
@@ -811,6 +818,12 @@ def record_manual_review(result_dir: Path, *, reviewer_id: str, decision: str, r
 def _parse_args(argv: Sequence[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Protocol-v5 E4 resource-envelope calibration")
     sub = parser.add_subparsers(dest="command", required=True)
+    preflight = sub.add_parser("preflight")
+    preflight.add_argument("--target", choices=("envelope", "efficiency", "all"), default="envelope")
+    preflight.add_argument("--image", default=None)
+    preflight.add_argument("--result-dir", type=Path, default=None)
+    preflight.add_argument("--resume", action="store_true")
+    preflight.add_argument("--format", choices=("json", "text"), default="json")
     validate = sub.add_parser("validate-manifest")
     validate.add_argument("--manifest", type=Path, default=DEFAULT_MANIFEST)
     dry = sub.add_parser("dry-run")
@@ -843,6 +856,28 @@ def _parse_args(argv: Sequence[str]) -> argparse.Namespace:
 
 def main(argv: Sequence[str] | None = None) -> int:
     args = _parse_args(sys.argv[1:] if argv is None else argv)
+    if args.command == "preflight":
+        from .preflight import evaluate_operator_preflight
+        report = evaluate_operator_preflight(
+            target=args.target,
+            image=args.image,
+            result_dir=args.result_dir,
+            resume=args.resume,
+        )
+        if getattr(args, "format", "json") == "json":
+            print(json.dumps(report, indent=2, sort_keys=True))
+        else:
+            status = report["status"]
+            print(f"Protocol-v5 E4 Preflight Status: {status}")
+            print(f"Target: {report['target']}")
+            print(f"Git Revision: {report['git_revision']} (dirty: {report['git_dirty']})")
+            if status == "READY":
+                print("Environment is READY for real Kubernetes execution.")
+            else:
+                print(f"Environment is NOT_EXECUTED. Blockers ({len(report['summary']['blocker_codes'])}):")
+                for code in report["summary"]["blocker_codes"]:
+                    print(f"  - {code}")
+        return 0
     if args.command == "validate-manifest":
         manifest = load_resource_manifest(args.manifest)
         marker_report = verify_workload_markers(manifest)
