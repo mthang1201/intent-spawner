@@ -1,0 +1,695 @@
+{
+  "configuration_snapshot": {
+    "candidate_catalog": {
+      "candidate_count": 12,
+      "corpus_sha256": "987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444",
+      "corpus_version": "environment-candidate-corpus-v1",
+      "file_sha256": "f45b04efc2ea6f271d49c6806b58bfc0f30503cb68944930609f6e0f71882a71",
+      "image_catalog_canonical_sha256": "bd2211d5fd769b5addec3c41e8cbd48bb0d9cd1c958aa554ada9bf88c29509f3",
+      "path": "recommender/image-catalog.yaml",
+      "profile_catalog_canonical_sha256": "c8f797b9c4d30459da99dad8d6d1c28e07e6803d76fab7cf88cdcd0f6c679348",
+      "version": "2026-08-06.1"
+    },
+    "configuration": {
+      "P2": {
+        "config_version": "p2-config-v1.0.0",
+        "dense_top_k": 10,
+        "dense_weight": 1.0,
+        "extractor_mode": "local",
+        "max_concurrent_recommendations": 4,
+        "rrf_k": 60.0,
+        "sparse_top_k": 10,
+        "sparse_weight": 1.0,
+        "top_k": 10,
+        "total_timeout": 30.0
+      },
+      "P3": {
+        "config_version": "p3-config-v1.0.0",
+        "max_concurrent_recommendations": 4,
+        "reranker_mode": "llm",
+        "total_timeout": 30.0
+      },
+      "constraints": {
+        "evaluator_version": "p2-deterministic-constraint-evaluator-v1.0.0",
+        "policy_version": "p2-constraint-policy-v1.0.0",
+        "ranker_version": "p2-deterministic-ranker-v1.0.0",
+        "retrieval_rank_weight": 0.75,
+        "soft_preference_weight": 0.25
+      },
+      "provider": {
+        "P2_extractor": null,
+        "P3_reranker": null,
+        "pricing_configuration": null
+      },
+      "ranking": {
+        "ranker_version": "p2-deterministic-ranker-v1.0.0",
+        "retrieval_rank_weight": 0.75,
+        "soft_preference_weight": 0.25,
+        "tie_breaker": "candidate_id"
+      },
+      "retrieval": {
+        "dense_top_k": 10,
+        "dense_weight": 1.0,
+        "rrf_k": 60.0,
+        "sparse_top_k": 10,
+        "sparse_weight": 1.0,
+        "top_k": 10
+      }
+    },
+    "development_dataset": {
+      "canonical_sha256": "18894b73ec98d895348498bf6b1c4dd4d2dc6004437202bd8b93c17d09b0dc0b",
+      "case_count": 18,
+      "dataset_id": "protocol-v5-development-2026-08-22",
+      "family_count": 10,
+      "file_sha256": "e3fff5167ef2194fb365fec7510d1efc2b17a18b13182063c2b63c26f021d3cd",
+      "path": "benchmarks_v5/v5-development.yaml",
+      "role": "development",
+      "schema_version": "protocol-v5-split-bundle-v1.0.0",
+      "split_id": "v5-development"
+    },
+    "dynamic_resource_policy": {
+      "file_sha256": "fd1e2696452d4c4eae589e1c01bafeca50e84d21b52cc7320e9b467baa745cc3",
+      "path": "recommender/resource-policy.yaml",
+      "policy_version": "dynamic-resource-policy-v2",
+      "semantic_sha256": "65a7a1600e5385f24b8409b881e587fae4eb8b483558746aae7a013ad7b4a729"
+    },
+    "environment": {
+      "platform": "macOS-15.3.2-arm64-arm-64bit-Mach-O",
+      "python_version": "3.14.6"
+    },
+    "environment_requirements": {
+      "cluster": {
+        "contract": "external_checksum_bound_e4_readiness_attestation",
+        "disposable_nonproduction_cluster_required": true,
+        "real_kubernetes_required_for_observed_e4": true
+      },
+      "dependencies": {
+        "PyYAML": "6.0.3",
+        "jsonschema": "4.26.0",
+        "jupyterhub": "5.2.1",
+        "matplotlib": "3.11.1",
+        "numpy": "2.5.1",
+        "pandas": "3.0.5",
+        "patsy": "1.0.2",
+        "scipy": "1.18.1",
+        "statsmodels": "0.14.6"
+      },
+      "python": ">=3.12,<3.15",
+      "storage": {
+        "digest_pinned_images_required": true,
+        "platform": {
+          "architecture": "amd64",
+          "os": "linux"
+        },
+        "real_registry_collector_required_for_observed_e5": true
+      }
+    },
+    "experiment_contracts": {
+      "E3": {
+        "analysis": {
+          "analysis_plan_contract_sha256": "1874b426666111362ef79f4e23315dc8f51a97b10827ae2e596cc70523b1a3ce",
+          "analysis_plan_sha256": "1874b426666111362ef79f4e23315dc8f51a97b10827ae2e596cc70523b1a3ce",
+          "analysis_plan_version": "protocol-v5-user-study-analysis-plan-v1.2.0",
+          "analysis_schema_version": "protocol-v5-user-study-analysis-v1.2.0",
+          "reporting_version": "protocol-v5-user-study-reporting-v1.2.0"
+        },
+        "files": [
+          {
+            "file_sha256": "9d3a71e380075ee946cea930d86b52c3b6ab6acaf3bb64a2aab23637603a0c7d",
+            "path": "evaluation_v5/user_study/analysis.py"
+          },
+          {
+            "file_sha256": "cf06fbcd92f0abfaf82e8c1da0963ee746df25f9f2950f7b13d7f4a535ec66b7",
+            "path": "evaluation_v5/user_study/assignment.py"
+          },
+          {
+            "file_sha256": "55d26aad2d17de7deca22526120aa592f0fd682656d318011b73f5e21221ac60",
+            "path": "evaluation_v5/user_study/questionnaires.py"
+          },
+          {
+            "file_sha256": "6432f36b33085533d62a95f571376c048267f8bfa453d9db0d9df65d3b87f38e",
+            "path": "evaluation_v5/user_study/schemas.py"
+          },
+          {
+            "file_sha256": "7274af5459f6374669a7a5f21e0d2c77deb6aec28e34137bef0bdb25c6d6a6b9",
+            "path": "evaluation_v5/user_study/scoring.py"
+          },
+          {
+            "file_sha256": "234ab087d7b2b2d488ceb73fe98b50f3ee4dcc7560a3c1411b883b7be47431e4",
+            "path": "benchmarks_v5/user-study-draft-v1.yaml"
+          },
+          {
+            "file_sha256": "16c6ed5dec3812c83aec9a727201f63b1ec7d931d97093f76dabf01ce23e68e1",
+            "path": "benchmarks_v5/protocol-v5-user-study-task-set-v1.schema.json"
+          },
+          {
+            "file_sha256": "7c2f5950644f16a26f24bec5939646dd4c4a21d6fd1723797c70b29748dbea56",
+            "path": "benchmarks_v5/protocol-v5-user-study-questionnaire-v1.schema.json"
+          }
+        ],
+        "runtime": {
+          "dependency_python_requirements": {
+            "matplotlib": ">=3.11",
+            "numpy": ">=3.12",
+            "pandas": ">=3.11",
+            "patsy": ">=3.6",
+            "scipy": ">=3.12",
+            "statsmodels": ">=3.9"
+          },
+          "pinned_dependencies": {
+            "matplotlib": "3.11.1",
+            "numpy": "2.5.1",
+            "pandas": "3.0.5",
+            "patsy": "1.0.2",
+            "scipy": "1.18.1",
+            "statsmodels": "0.14.6"
+          },
+          "supported_python": ">=3.12,<3.15"
+        },
+        "scoring": {
+          "implementation": {
+            "file_sha256": "7274af5459f6374669a7a5f21e0d2c77deb6aec28e34137bef0bdb25c6d6a6b9",
+            "path": "evaluation_v5/user_study/scoring.py"
+          },
+          "version": "protocol-v5-user-study-final-selection-scoring-v1.0.0"
+        },
+        "timing": {
+          "contract": {
+            "decision_time_nonconfirmation_bound_seconds": 600.0,
+            "decision_time_nonconfirmation_bound_semantics": "server_enforced_task_decision_limit_and_secondary_analysis_bound_only",
+            "version": "protocol-v5-user-study-timing-contract-v1.0.0"
+          },
+          "sha256": "3a1cbe7ea27d0c52eb909770d8c72f6b7a6c566e049692cae647569dd47e055d",
+          "version": "protocol-v5-user-study-timing-contract-v1.0.0"
+        },
+        "workload": {
+          "assignment_generator_version": "protocol-v5-user-study-counterbalance-v1.2.0",
+          "assignment_schema_version": "protocol-v5-user-study-assignment-v1.1.0",
+          "browser_task_set_schema_version": "protocol-v5-user-study-browser-task-set-v1.0.0",
+          "event_schema_version": "protocol-v5-user-study-event-v1.0.0",
+          "participant_target": 36,
+          "questionnaire_instrument_version": "protocol-v5-user-study-questionnaire-instrument-v1.1.0",
+          "task_set_schema_version": "protocol-v5-user-study-task-set-v1.0.0"
+        }
+      },
+      "E4": {
+        "eligibility": {
+          "capacity_development_contract": {
+            "file_sha256": "1ab062a085d8cfd5b87d8a8d8c75b9b5630d6b659c154e0cbe81760dbb45f989",
+            "path": "benchmarks_v5/resource-efficiency-capacity-v1.yaml"
+          },
+          "cluster_contract": {
+            "file_sha256": "8d12fed8b50de92278f18dd1e7a242931e32e9162326c88e7105a51b49c59af8",
+            "path": "benchmarks_v5/resource-envelope-cluster-eligibility-v1.yaml"
+          },
+          "legacy_image_state_contract": {
+            "file_sha256": "4600f45aa83862475f409722ff31c6e9a10404eadaafcdc20f729c5f986f2a1f",
+            "path": "cluster_evaluation/resource-v5-image-state.yaml"
+          }
+        },
+        "execution": {
+          "efficiency_decision_schema_version": "protocol-v5-resource-efficiency-decision-v1.0.0",
+          "efficiency_plan_schema_version": "protocol-v5-resource-efficiency-plan-v1.0.0",
+          "efficiency_runner_implementation": {
+            "file_sha256": "b9e469c3d64e31f8869bda80c34cdcaa3cf5bf8c2b4046eee78d40e7cec2d5f0",
+            "path": "evaluation_v5/resource/efficiency_runner.py"
+          },
+          "efficiency_trial_schema_version": "protocol-v5-resource-efficiency-trial-v1.0.0",
+          "envelope_runner_implementation": {
+            "file_sha256": "acd06a371d9bb5259cbb34fd8f2570fb29f4c0ea1ac9defbd09ff7b77dba15ad",
+            "path": "evaluation_v5/resource/runner.py"
+          },
+          "preflight_implementation": {
+            "file_sha256": "8c1ef16becf5bd9c6280c79c1acfcbb0efc98091b4a148680d824bc4dd1b4d8f",
+            "path": "evaluation_v5/resource/preflight.py"
+          },
+          "readiness_attestation_schema": {
+            "file_sha256": "876383674666ad5deb165ed1d4bb1117f67d4c3c01f58490eb75ad9a73ef0844",
+            "path": "benchmarks_v5/protocol-v5-e4-readiness-attestation-v1.schema.json"
+          },
+          "resource_plan_schema_version": "protocol-v5-resource-calibration-plan-v1.1.0",
+          "resource_trial_schema_version": "protocol-v5-resource-trial-v1.1.0"
+        },
+        "files": [
+          {
+            "file_sha256": "85221bce48b42e0c9421d463503843b530117781db2e5a58a2c332f1adb7e98f",
+            "path": "benchmarks_v5/resource-envelope-workloads-v1.yaml"
+          },
+          {
+            "file_sha256": "389e129642a593367d517ae772e51b17d0e33d17fc365e69514dbe29e8d26f60",
+            "path": "benchmarks_v5/resource-envelope-semantic-independence-v1.yaml"
+          },
+          {
+            "file_sha256": "8d12fed8b50de92278f18dd1e7a242931e32e9162326c88e7105a51b49c59af8",
+            "path": "benchmarks_v5/resource-envelope-cluster-eligibility-v1.yaml"
+          },
+          {
+            "file_sha256": "3395f25e5a3e425a368f5706a24a3bca821ecf8da0c5011d6a64b50872d4fa14",
+            "path": "benchmarks_v5/resource-envelope-freeze-contract-v1.yaml"
+          },
+          {
+            "file_sha256": "dce8d2b65bdfc7e2ce280e05645906b91a5d4bbfa1f089601ff54dbb5ab02e66",
+            "path": "benchmarks_v5/resource-efficiency-inputs-v1.yaml"
+          },
+          {
+            "file_sha256": "400aedfaf453ff67da6aa759025c53765cceaa8d8bea6a1abd2d58e607615b62",
+            "path": "benchmarks_v5/resource-efficiency-freeze-contract-v1.yaml"
+          },
+          {
+            "file_sha256": "1ab062a085d8cfd5b87d8a8d8c75b9b5630d6b659c154e0cbe81760dbb45f989",
+            "path": "benchmarks_v5/resource-efficiency-capacity-v1.yaml"
+          },
+          {
+            "file_sha256": "d585a6626afd66eecce65b2489fc6c7cdabf7193635ae6c52f32f33bf3533f2c",
+            "path": "benchmarks_v5/resource-allocation-crosswalk-v1.yaml"
+          },
+          {
+            "file_sha256": "4600f45aa83862475f409722ff31c6e9a10404eadaafcdc20f729c5f986f2a1f",
+            "path": "cluster_evaluation/resource-v5-image-state.yaml"
+          },
+          {
+            "file_sha256": "19791fecfadb52990d634d3e1b9fa92d96aa0538605886434dc4f47a653a51ec",
+            "path": "evaluation_v5/resource/contracts.py"
+          },
+          {
+            "file_sha256": "73314d67246c1e41e05b73af70e62243981dc659907a6e42f458b45280e385df",
+            "path": "evaluation_v5/resource/efficiency_contracts.py"
+          },
+          {
+            "file_sha256": "292bd62b88266227d6e1d164cb2e189eff684bd5b2a3970659b9a622e1dfaea8",
+            "path": "evaluation_v5/resource/manifest.py"
+          },
+          {
+            "file_sha256": "8c1ef16becf5bd9c6280c79c1acfcbb0efc98091b4a148680d824bc4dd1b4d8f",
+            "path": "evaluation_v5/resource/preflight.py"
+          },
+          {
+            "file_sha256": "acd06a371d9bb5259cbb34fd8f2570fb29f4c0ea1ac9defbd09ff7b77dba15ad",
+            "path": "evaluation_v5/resource/runner.py"
+          },
+          {
+            "file_sha256": "b9e469c3d64e31f8869bda80c34cdcaa3cf5bf8c2b4046eee78d40e7cec2d5f0",
+            "path": "evaluation_v5/resource/efficiency_runner.py"
+          },
+          {
+            "file_sha256": "9ba587a8e8fd9c027d245edc304a262a7801f842c11522b7cdbb7ba7565eb82f",
+            "path": "evaluation_v5/resource/efficiency_analysis.py"
+          }
+        ],
+        "ordering": {
+          "algorithm": "seeded-family-shuffle-with-balanced-latin-condition-rotation-v1",
+          "conditions": [
+            "STATIC_LARGE",
+            "P1_CATALOG",
+            "P2_CATALOG",
+            "P2_DYNAMIC"
+          ],
+          "primary_trial_count": 640,
+          "repetitions": 10
+        },
+        "policy": {
+          "allocation_crosswalk_contract": {
+            "file_sha256": "d585a6626afd66eecce65b2489fc6c7cdabf7193635ae6c52f32f33bf3533f2c",
+            "path": "benchmarks_v5/resource-allocation-crosswalk-v1.yaml"
+          },
+          "efficiency_design_contract": {
+            "file_sha256": "400aedfaf453ff67da6aa759025c53765cceaa8d8bea6a1abd2d58e607615b62",
+            "path": "benchmarks_v5/resource-efficiency-freeze-contract-v1.yaml"
+          },
+          "envelope_freeze_contract": {
+            "file_sha256": "3395f25e5a3e425a368f5706a24a3bca821ecf8da0c5011d6a64b50872d4fa14",
+            "path": "benchmarks_v5/resource-envelope-freeze-contract-v1.yaml"
+          }
+        },
+        "statistics": {
+          "analysis_implementation": {
+            "file_sha256": "9ba587a8e8fd9c027d245edc304a262a7801f842c11522b7cdbb7ba7565eb82f",
+            "path": "evaluation_v5/resource/efficiency_analysis.py"
+          },
+          "independent_unit": "workload_family",
+          "pareto_objectives": {
+            "lower_cost_with_worse_reliability": "EFFICIENCY_RELIABILITY_TRADEOFF",
+            "maximize": [
+              "success_rate",
+              "correct_completion_rate"
+            ],
+            "minimize": [
+              "cpu_cost_per_success",
+              "memory_cost_per_success",
+              "oom_rate",
+              "timeout_rate",
+              "pending_or_admission_rate",
+              "runtime_error_rate",
+              "incorrect_rate"
+            ],
+            "undefined_cost": "INDETERMINATE"
+          },
+          "primary_endpoints": [
+            "success_rate",
+            "oom_rate",
+            "cpu_cost_per_success",
+            "memory_cost_per_success"
+          ],
+          "repetitions_are_independent_samples": false,
+          "secondary_endpoints": [
+            "timeout_rate",
+            "pending_or_admission_rate",
+            "runtime_error_rate",
+            "correctness_rate",
+            "correct_completion_rate",
+            "incorrect_rate",
+            "runtime_seconds",
+            "cpu_request_ratio",
+            "memory_request_ratio",
+            "cpu_request_error_signed",
+            "memory_request_error_signed",
+            "cpu_limit_error_signed",
+            "memory_limit_error_signed"
+          ]
+        },
+        "workload": {
+          "cpu_lattice_millicores": [
+            100,
+            200,
+            300,
+            500,
+            750,
+            1000,
+            1500,
+            2000
+          ],
+          "efficiency_inputs_contract": {
+            "file_sha256": "dce8d2b65bdfc7e2ce280e05645906b91a5d4bbfa1f089601ff54dbb5ab02e66",
+            "path": "benchmarks_v5/resource-efficiency-inputs-v1.yaml"
+          },
+          "family_count": 16,
+          "manifest_contract": {
+            "file_sha256": "85221bce48b42e0c9421d463503843b530117781db2e5a58a2c332f1adb7e98f",
+            "path": "benchmarks_v5/resource-envelope-workloads-v1.yaml"
+          },
+          "memory_lattice_mib": [
+            64,
+            96,
+            128,
+            192,
+            256,
+            384,
+            512,
+            768,
+            1024,
+            1280,
+            1536,
+            1792,
+            2048
+          ],
+          "schema_version": "protocol-v5-resource-workloads-v1.1.0",
+          "semantic_independence_contract": {
+            "file_sha256": "389e129642a593367d517ae772e51b17d0e33d17fc365e69514dbe29e8d26f60",
+            "path": "benchmarks_v5/resource-envelope-semantic-independence-v1.yaml"
+          }
+        }
+      },
+      "E5": {
+        "collector": {
+          "evidence_validator_implementation": {
+            "file_sha256": "bc7ccbe4fbb047c3c67fa3b66ca673cfd18fe3a458e719c9005593386185e927",
+            "path": "evaluation_v5/image_storage/validate_evidence.py"
+          },
+          "orchestrator_implementation": {
+            "file_sha256": "363f0fdb9ec3011e5166d56d4b8f21d07e70b08ad3e5f3d1dac7754ae8e1235a",
+            "path": "evaluation_v5/image_storage/storage_orchestrator.py"
+          },
+          "schema_version": "protocol-v5-storage-collector-v1.0.0",
+          "storage_runner_implementation": {
+            "file_sha256": "1d0256dbbcd9c99cf320fb7e62b5d6b53ad6ccd74b315deddd7624e90e92859d",
+            "path": "evaluation_v5/image_storage/storage_runner.py"
+          }
+        },
+        "files": [
+          {
+            "file_sha256": "b05128247c619c30f3e9498c77cfcf55ff16a816557a080b0ce60192d9f185d7",
+            "path": "evaluation_v5/image_storage/contracts.py"
+          },
+          {
+            "file_sha256": "35de6b70b69fb0eaba6501d551d642f3b05ec639a689ad0fba99b073408ebb9f",
+            "path": "evaluation_v5/image_storage/__main__.py"
+          },
+          {
+            "file_sha256": "8326df376b6412576a501e5fa10ccbfc3886ba3b1cd9ea998e6b6781059f5abf",
+            "path": "evaluation_v5/image_storage/functional_provenance.py"
+          },
+          {
+            "file_sha256": "21b05b931e1a04e20f0430a46202e92794a815042488f3f23219adb937ebd9f1",
+            "path": "evaluation_v5/image_storage/manifest.py"
+          },
+          {
+            "file_sha256": "1c67a74fa7a25b65f912399e77859c2e3e97c3ff067832669053ce2c6316583d",
+            "path": "evaluation_v5/image_storage/runner.py"
+          },
+          {
+            "file_sha256": "2c844a27163046434e7fca6478f49bf769481fb13dbed09b5d6dbc2150611cdc",
+            "path": "evaluation_v5/image_storage/metrics.py"
+          },
+          {
+            "file_sha256": "54be2f0e9c70000fbc60d4b33e8486e3162d8f40a89e14886bf4afcad59a6bf8",
+            "path": "evaluation_v5/image_storage/storage_contracts.py"
+          },
+          {
+            "file_sha256": "1d0256dbbcd9c99cf320fb7e62b5d6b53ad6ccd74b315deddd7624e90e92859d",
+            "path": "evaluation_v5/image_storage/storage_runner.py"
+          },
+          {
+            "file_sha256": "363f0fdb9ec3011e5166d56d4b8f21d07e70b08ad3e5f3d1dac7754ae8e1235a",
+            "path": "evaluation_v5/image_storage/storage_orchestrator.py"
+          },
+          {
+            "file_sha256": "bc7ccbe4fbb047c3c67fa3b66ca673cfd18fe3a458e719c9005593386185e927",
+            "path": "evaluation_v5/image_storage/validate_evidence.py"
+          },
+          {
+            "file_sha256": "d20ae50c354ed8f5fce9d453b389b974c1342c290d71853b376db09d068a3f0e",
+            "path": "benchmarks_v5/protocol-v5-image-storage-evidence-v1.1.schema.json"
+          }
+        ],
+        "functional_probe": {
+          "contracts_implementation": {
+            "file_sha256": "b05128247c619c30f3e9498c77cfcf55ff16a816557a080b0ce60192d9f185d7",
+            "path": "evaluation_v5/image_storage/contracts.py"
+          },
+          "evaluation_schema_version": "protocol-v5-image-functional-evaluation-v1.4.0",
+          "manifest_implementation": {
+            "file_sha256": "21b05b931e1a04e20f0430a46202e92794a815042488f3f23219adb937ebd9f1",
+            "path": "evaluation_v5/image_storage/manifest.py"
+          },
+          "manifest_schema_version": "protocol-v5-image-probe-manifest-v1.2.0",
+          "max_cpu_millicores": 2000,
+          "max_memory_bytes": 2147483648,
+          "max_timeout_seconds": 120.0,
+          "metrics_implementation": {
+            "file_sha256": "2c844a27163046434e7fca6478f49bf769481fb13dbed09b5d6dbc2150611cdc",
+            "path": "evaluation_v5/image_storage/metrics.py"
+          },
+          "metrics_schema_version": "protocol-v5-image-functional-metrics-v1.4.0",
+          "record_schema_version": "protocol-v5-image-probe-record-v1.2.0",
+          "run_schema_version": "protocol-v5-image-validation-run-v1.4.0",
+          "runner_implementation": {
+            "file_sha256": "1c67a74fa7a25b65f912399e77859c2e3e97c3ff067832669053ce2c6316583d",
+            "path": "evaluation_v5/image_storage/runner.py"
+          }
+        },
+        "platform": {
+          "architecture": "amd64",
+          "exact_manifest_selection_required": true,
+          "operating_system": "linux"
+        },
+        "storage": {
+          "allowed_size_domains": [
+            "compressed_oci_manifest_layer_bytes",
+            "uncompressed_filesystem_layer_bytes"
+          ],
+          "catalog_scales": [
+            4,
+            8,
+            16
+          ],
+          "collector_schema_version": "protocol-v5-storage-collector-v1.0.0",
+          "evidence_schema": {
+            "file_sha256": "d20ae50c354ed8f5fce9d453b389b974c1342c290d71853b376db09d068a3f0e",
+            "path": "benchmarks_v5/protocol-v5-image-storage-evidence-v1.1.schema.json"
+          },
+          "evidence_schema_version": "protocol-v5-image-storage-evidence-v1.1.0"
+        }
+      }
+    },
+    "indexes": {
+      "dense": {
+        "catalog_version": "2026-08-06.1",
+        "corpus_checksum": "987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444",
+        "dimensions": 384,
+        "index_checksum": "c0561bcd1ee6ec5153b710aef3deae88bd259a011ddd454513cbb1c675118387",
+        "index_version": "environment-dense-index-v1",
+        "model_id": "intent-spawner-local-feature-hash",
+        "model_revision": "feature-hash-embedding-v1.0.0",
+        "normalization": "l2",
+        "query_representation_version": "dense-query-representation-v1",
+        "retriever_version": "cosine-dense-retriever-v1",
+        "schema_version": "dense-embedding-index-v1"
+      },
+      "hybrid": {
+        "catalog_version": "2026-08-06.1",
+        "corpus_checksum": "987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444",
+        "corpus_version": "environment-candidate-corpus-v1",
+        "dense_index_version": "environment-dense-index-v1",
+        "dense_retriever_version": "cosine-dense-retriever-v1",
+        "dense_top_k": 10,
+        "dense_weight": 1.0,
+        "index_checksum": "45ea08f29492d796189920713636b3a9cae2f0fb264e023124eb38c8cfad83a4",
+        "index_version": "environment-hybrid-index-v1",
+        "retriever_version": "reciprocal-rank-fusion-hybrid-retriever-v1",
+        "rrf_k": 60.0,
+        "schema_version": "hybrid-retrieval-metadata-v1",
+        "sparse_index_version": "environment-sparse-index-v1",
+        "sparse_retriever_version": "bm25-okapi-retriever-v1",
+        "sparse_top_k": 10,
+        "sparse_weight": 1.0,
+        "top_k": 10
+      },
+      "source": "administrator_catalog_only",
+      "sparse": {
+        "b": 0.75,
+        "catalog_version": "2026-08-06.1",
+        "corpus_checksum": "987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444",
+        "corpus_version": "environment-candidate-corpus-v1",
+        "index_checksum": "931fac84b818cb934a37bfbfa76092a89626cd5eaffc869887de8558bc6fa747",
+        "index_version": "environment-sparse-index-v1",
+        "k1": 1.5,
+        "retriever_version": "bm25-okapi-retriever-v1",
+        "schema_version": "sparse-retrieval-index-v1",
+        "tokenizer_version": "unicode-alphanumeric-tokenizer-v1"
+      }
+    },
+    "p3_gate": {
+      "claim_eligible": false,
+      "confirmatory_data_used": false,
+      "decision_artifact_path": "benchmarks_v5/protocol-v5-p3-final-inclusion-decision.json",
+      "decision_artifact_sha256": "096aeba1c83b0bb940a61b9b9fb3f06fa79b79bb5f3af6aa1949fb704fac8b72",
+      "evidence_classification": "HISTORICAL_FORMATIVE",
+      "future_retention_rule": "requires_strict_source_recomputed_protocol_v5_development_gate",
+      "p3_active": false,
+      "snapshot_version": "protocol-v5-p3-final-inclusion-snapshot-v1.0.0",
+      "source_artifacts": [
+        {
+          "file_sha256": "3ed59ae76bd79e5e86cb08f63f86d7a49c8c5632f578b74f8ee51a1f8c4b8d9f",
+          "path": "docs/evaluation/P3_INCREMENTAL_EVALUATION_V1.md"
+        },
+        {
+          "file_sha256": "86b3c276549f688755cb013edc70803495a63dec6fc573492897c44d1ff0b4ec",
+          "path": "evaluation_p3/results/20260821T-observed-p2-p3-ollama-llama3-v1/manifest.json"
+        },
+        {
+          "file_sha256": "581388c1e5fd144d10791ac9ef5c191cc0e4a7af9c1257d7575239e4a535de95",
+          "path": "evaluation_p3/results/20260821T-observed-p2-p3-ollama-llama3-v1/raw/predictions.jsonl"
+        },
+        {
+          "file_sha256": "ba7e216f50b714e9a274821c687462970aa49e52fc64409906ddfa414cb62802",
+          "path": "evaluation_p3/results/20260821T-observed-p2-p3-ollama-llama3-v1/corrections/20260821T-transition-definition-v1.1/correction-manifest.json"
+        },
+        {
+          "file_sha256": "418c9ac6f2a84cf343f1942f66820b37b5737350517a1eb663e7c4496e66c8ca",
+          "path": "evaluation_p3/results/20260821T-observed-p2-p3-ollama-llama3-v1/corrections/20260821T-transition-definition-v1.1/metrics.json"
+        },
+        {
+          "file_sha256": "98914a0961a780d7d78032dc9271fb3e84c2a4b1a12215b4b227a7dd0a1d8a42",
+          "path": "evaluation_p3/results/20260821T-observed-p2-p3-ollama-llama3-v1/corrections/20260821T-transition-definition-v1.1/paired_changes.json"
+        },
+        {
+          "file_sha256": "afc56436d6b81eb9d83898a543db1aa81800fe49891d3965f54a739807de9c95",
+          "path": "evaluation_p3/results/20260821T-observed-p2-p3-ollama-llama3-v1/corrections/20260821T-transition-definition-v1.1/error_transitions.json"
+        }
+      ],
+      "status": "not_retained",
+      "verification_status": "VERIFIED_EXCLUSION"
+    },
+    "prompts": {
+      "P2_extractor": {
+        "model_id": "deterministic-explicit-parser-v1.1.0-python-3.14",
+        "model_source": "built_in_local_model",
+        "name": "p2-local-structured-parser",
+        "prompt_sha256": "88f4f6935bf7c3f7e0be87cc29af97761f72fcfa1f95c0a0e54ac7b800a16972",
+        "prompt_version": "local-parser-contract-v1.1.0",
+        "version": "local-structured-parser-v1.1.0"
+      },
+      "P3_reranker": {
+        "prompt_sha256": "696dabd22010a03c110b315c48b84efb5b8517733c2174a21aa79be4807d1e44",
+        "prompt_version": "p3-reranker-prompt-v1.0.0"
+      }
+    },
+    "runtime_package": {
+      "sha256": "b846fda1aef20f8c4b948de2dc361779584dcc9f424b701a74812c36bfb89bf5",
+      "version": "intent-spawner-recommender-v3"
+    },
+    "structured_intent": {
+      "extractor_implementation": {
+        "file_sha256": "b9c249d1c6db9b664ef11275b7ca5dc355d6b75ab0f0ebac4d3a59631882d5ba",
+        "path": "recommender/local_structured_intent.py"
+      },
+      "model_contract": {
+        "file_sha256": "f9574976aaecb8a02e052f5a92ac4a34357864cf85592f8cc4f7603022fa39fa",
+        "path": "recommender/models.py"
+      },
+      "resource_constraints_schema_version": "resource-constraints-v1",
+      "schema_version": "structured-intent-v1"
+    },
+    "systems": {
+      "P1": {
+        "backend_version": "rule-based-v1",
+        "implementation": {
+          "file_sha256": "063d70244a59d261101e286f6c0fcff5f92f8c7d906072d305b5a2c328e3c581",
+          "path": "recommender/rule_based.py"
+        }
+      },
+      "P2": {
+        "backend_version": "p2-hybrid-v1.0.0",
+        "implementation": {
+          "file_sha256": "3ca68ea72f7010c671684021ca3172dbc58c76408f6d31fb0900e88beb78e2ff",
+          "path": "recommender/p2_backend.py"
+        },
+        "pipeline_version": "p2-pipeline-v1.0.0"
+      },
+      "P3": {
+        "active": false,
+        "backend_version": "p3-reranker-v1.0.0",
+        "implementation": {
+          "file_sha256": "e0d5b21645987df5260bdfd9cfcb675959ae1c04ed558b3dbaa7a5b4e37a92d4",
+          "path": "recommender/p3_backend.py"
+        },
+        "pipeline_version": "p3-pipeline-v1.0.0",
+        "reranker_model_id": null,
+        "reranker_model_source": "EXTERNAL_LLM_MODEL",
+        "reranker_version": "p3-reranker-v1.0.0"
+      }
+    }
+  },
+  "created_at_utc": "2026-09-12T06:14:52Z",
+  "freeze_id": "v5-final-execution-freeze",
+  "integrity_rules": {
+    "allowed_post_freeze_paths": [
+      "results_v5/protocol-v5.0.0/freezes/v5-final-execution-freeze/freeze-manifest.json",
+      "docs/evaluation/PROTOCOL_V5_FINAL_EXECUTION_HANDOFF.md"
+    ],
+    "created_before_sealed_data_supply": true,
+    "exclusive_create_no_overwrite": true,
+    "post_freeze_changes_restricted": true,
+    "sealed_data_not_read_by_freeze": true,
+    "tuning_after_freeze_prohibited": true
+  },
+  "protocol_version": "5.0.0",
+  "schema_version": "protocol-v5-freeze-v2.0.0",
+  "source_control": {
+    "freeze_artifact_commit_recorded_in_manifest": false,
+    "frozen_execution_sha": "0f73c0a2da34916df1ef6134cc898ce01512acff",
+    "frozen_execution_tree": "d1f6c417c834ed77f344c330a0b09a36c5731873",
+    "git_worktree_clean": true
+  },
+  "status": "FROZEN"
+}
