@@ -1,0 +1,35 @@
+{
+  "catalog_16_status": "NOT_EXECUTED",
+  "catalog_4_status": "OBSERVED",
+  "catalog_8_status": "NOT_EXECUTED",
+  "claims_permitted": true,
+  "configured_scales": [
+    4,
+    8,
+    16
+  ],
+  "final_naive_logical_bytes": 12070068082,
+  "final_storage_savings_bytes": 3181589930,
+  "final_unique_layer_bytes": 8888478152,
+  "immutability_details": "All 4 image reference(s) are digest-pinned and satisfy immutable catalog gate.",
+  "immutable_catalog_valid": true,
+  "overall_verdict": "PASS_WITH_LIMITATIONS",
+  "recommendation_scale_4_role": "none",
+  "recommendation_scale_4_stage": "confirmatory",
+  "recommendation_scale_4_status": "NOT_EXECUTED",
+  "run_id": "e5-storage-scalability-20260912T124502Z",
+  "schema_version": "protocol-v5-image-storage-evidence-v1.1.0",
+  "split_stage": "confirmatory",
+  "status": "OBSERVED",
+  "storage_collector": {
+    "collector_name": "docker-manifest-inspect",
+    "collector_version": "storage-collector-v1.0.0",
+    "evidence_classification": "REAL_OBSERVATION",
+    "origin": "REAL_REGISTRY",
+    "raw_observation_count": 4,
+    "schema_version": "protocol-v5-storage-collector-v1.0.0"
+  },
+  "timestamp_utc": "2026-09-12T12:45:03.599733Z",
+  "total_images": 4,
+  "total_prefixes": 4
+}

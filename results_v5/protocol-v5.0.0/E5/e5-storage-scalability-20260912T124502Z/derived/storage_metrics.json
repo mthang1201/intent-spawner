@@ -1,0 +1,82 @@
+{
+  "catalog": {
+    "file_sha256": "f45b04efc2ea6f271d49c6806b58bfc0f30503cb68944930609f6e0f71882a71",
+    "ordered_image_digests": [
+      "sha256:a153ceb6b41db4f86b7d7dc20c7b63d08e75e2038d5e8758b954fda50ed2e18d",
+      "sha256:1a91a693c8cb086f3607f2ed38a2743ecd53dd1dac2d3e84e6cd647b33fd2bba",
+      "sha256:69c72823a4e0dbee17114bbe44d0377bc9a39504a76f6314995f7d5bfaa98d60",
+      "sha256:25ddc4f73bea5a252335775b59c0e1d4969bbf70ee78d3c6d1d9da02ce58fb68"
+    ],
+    "version": "2026-08-06.1"
+  },
+  "claims_permitted": true,
+  "collector": {
+    "collector_name": "docker-manifest-inspect",
+    "collector_version": "storage-collector-v1.0.0",
+    "evidence_classification": "REAL_OBSERVATION",
+    "origin": "REAL_REGISTRY",
+    "raw_observation_count": 4,
+    "schema_version": "protocol-v5-storage-collector-v1.0.0"
+  },
+  "execution_status": "OBSERVED",
+  "experiment_id": "E5",
+  "measured_at_utc": "2026-09-12T12:45:02.136221Z",
+  "measurement_method": "docker manifest inspect OCI layer digest accounting (platform: linux/amd64)",
+  "platform": {
+    "architecture": "amd64",
+    "environment_id": "e5-storage-darwin-amd64",
+    "operating_system": "linux",
+    "runtime": "docker"
+  },
+  "prefixes": [
+    {
+      "image_digests": [
+        "sha256:a153ceb6b41db4f86b7d7dc20c7b63d08e75e2038d5e8758b954fda50ed2e18d"
+      ],
+      "naive_logical_bytes": 575161576,
+      "prefix_size": 1,
+      "unique_layer_bytes": 575161288
+    },
+    {
+      "image_digests": [
+        "sha256:a153ceb6b41db4f86b7d7dc20c7b63d08e75e2038d5e8758b954fda50ed2e18d",
+        "sha256:1a91a693c8cb086f3607f2ed38a2743ecd53dd1dac2d3e84e6cd647b33fd2bba"
+      ],
+      "naive_logical_bytes": 1878375513,
+      "prefix_size": 2,
+      "unique_layer_bytes": 1303213553
+    },
+    {
+      "image_digests": [
+        "sha256:a153ceb6b41db4f86b7d7dc20c7b63d08e75e2038d5e8758b954fda50ed2e18d",
+        "sha256:1a91a693c8cb086f3607f2ed38a2743ecd53dd1dac2d3e84e6cd647b33fd2bba",
+        "sha256:69c72823a4e0dbee17114bbe44d0377bc9a39504a76f6314995f7d5bfaa98d60"
+      ],
+      "naive_logical_bytes": 7183064355,
+      "prefix_size": 3,
+      "unique_layer_bytes": 5304688426
+    },
+    {
+      "image_digests": [
+        "sha256:a153ceb6b41db4f86b7d7dc20c7b63d08e75e2038d5e8758b954fda50ed2e18d",
+        "sha256:1a91a693c8cb086f3607f2ed38a2743ecd53dd1dac2d3e84e6cd647b33fd2bba",
+        "sha256:69c72823a4e0dbee17114bbe44d0377bc9a39504a76f6314995f7d5bfaa98d60",
+        "sha256:25ddc4f73bea5a252335775b59c0e1d4969bbf70ee78d3c6d1d9da02ce58fb68"
+      ],
+      "naive_logical_bytes": 12070068082,
+      "prefix_size": 4,
+      "unique_layer_bytes": 8888478152
+    }
+  ],
+  "protocol_version": "5.0.0",
+  "provenance": {
+    "backend_system_versions": {
+      "P2": "p2-pipeline-v1.0.0"
+    },
+    "dataset_sha256": "f45b04efc2ea6f271d49c6806b58bfc0f30503cb68944930609f6e0f71882a71",
+    "git_revision": "38877fa71d04f4caad30f253a7cbbb049ecda4f8",
+    "storage_collector_origin": "REAL_REGISTRY"
+  },
+  "schema_version": "protocol-v5-image-storage-evidence-v1.1.0",
+  "split_stage": "confirmatory"
+}

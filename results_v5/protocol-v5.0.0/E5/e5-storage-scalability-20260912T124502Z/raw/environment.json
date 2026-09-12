@@ -1,0 +1,22 @@
+{
+  "architecture": "amd64",
+  "environment_id": "e5-storage-darwin-amd64",
+  "git_info": {
+    "git_dirty": false,
+    "git_revision": "38877fa71d04f4caad30f253a7cbbb049ecda4f8"
+  },
+  "measurement_method": "docker manifest inspect OCI layer digest accounting (platform: linux/amd64)",
+  "operating_system": "linux",
+  "platform_details": "macOS-15.3.2-arm64-arm-64bit-Mach-O",
+  "python_version": "3.14.6 (main, Jun 10 2026, 10:03:53) [Clang 17.0.0 (clang-1700.6.4.2)]",
+  "runtime": "docker",
+  "size_domain": "compressed_oci_manifest_layer_bytes",
+  "storage_collector": {
+    "collector_name": "docker-manifest-inspect",
+    "collector_version": "storage-collector-v1.0.0",
+    "evidence_classification": "REAL_OBSERVATION",
+    "origin": "REAL_REGISTRY",
+    "raw_observation_count": 4,
+    "schema_version": "protocol-v5-storage-collector-v1.0.0"
+  }
+}
