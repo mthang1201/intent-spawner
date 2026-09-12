@@ -1,0 +1,263 @@
+{
+  "checks": {
+    "approved_independent_resource_oracle": {
+      "blocker_codes": [],
+      "details": {
+        "status": "not_applicable_to_envelope_calibration"
+      },
+      "reasons": [],
+      "status": "PASS"
+    },
+    "authoritative_final_freeze": {
+      "blocker_codes": [],
+      "details": {
+        "freeze_artifact_commit_sha": "38877fa71d04f4caad30f253a7cbbb049ecda4f8",
+        "freeze_id": "v5-final-execution-freeze",
+        "freeze_manifest_sha256": "6228673d9459ab2f447c342adb17e0f3f60867c55a74ff98dac2291a01811b8b",
+        "frozen_at_utc": "2026-09-12T06:14:52Z",
+        "frozen_by": "authoritative_protocol_v5_freeze",
+        "frozen_execution_sha": "0f73c0a2da34916df1ef6134cc898ce01512acff",
+        "source": "confirmatory_freeze_manifest"
+      },
+      "reasons": [],
+      "status": "PASS"
+    },
+    "cgroup_telemetry_capability": {
+      "blocker_codes": [
+        "CGROUP_CAPABILITY_NOT_ATTESTED"
+      ],
+      "details": {
+        "required_cgroup_version": "v2",
+        "required_controllers": [
+          "cpu",
+          "memory",
+          "pids"
+        ],
+        "required_files": [
+          "cgroup.controllers",
+          "cpu.max",
+          "cpu.stat",
+          "memory.current",
+          "memory.events",
+          "memory.max",
+          "memory.peak"
+        ],
+        "required_memory_events": [
+          "oom",
+          "oom_kill"
+        ]
+      },
+      "reasons": [
+        "External cgroup-v2 capability attestation is missing."
+      ],
+      "status": "FAIL"
+    },
+    "collector_implementation_authenticity": {
+      "blocker_codes": [],
+      "details": {
+        "status": "not_applicable_no_adapter_passed"
+      },
+      "reasons": [],
+      "status": "PASS"
+    },
+    "disposable_cluster_and_environment": {
+      "blocker_codes": [
+        "CGROUP_V2_REQUIRED",
+        "CLUSTER_INELIGIBLE",
+        "IMAGE_DIGEST_UNVERIFIED",
+        "KUBERNETES_VERSION_UNAVAILABLE",
+        "REQUIRED_API_ACCESS_MISSING",
+        "WRONG_CLUSTER_FINGERPRINT",
+        "WRONG_KUBERNETES_CONTEXT",
+        "WRONG_NODE_COUNT"
+      ],
+      "details": {
+        "read_only_preflight": {
+          "eligibility_status": "CLUSTER_INELIGIBLE",
+          "facts": {
+            "api_access": {},
+            "cgroup_probe": {},
+            "current_context": "orbstack",
+            "expected_context": "intent-spawner-eval-v5",
+            "image_declared_state": {
+              "build_context_dockerignore_path": "cluster_evaluation/Dockerfile.resource-v5.dockerignore",
+              "build_context_dockerignore_sha256": "1cedf3c42d1173e18b735eb92bebd3fbc80872ce6c8e6e31111a73ecdcc315ad",
+              "built": false,
+              "digest_syntactically_pinned": false,
+              "digest_verified": false,
+              "dockerfile_path": "cluster_evaluation/Dockerfile.resource-v5",
+              "dockerfile_sha256": "a9ce83468dbdf19569a703cb9277a39f5d26308a1230e2b00ed88d614bc10ed4",
+              "image_reference": null,
+              "note": "This repository records no image build or registry verification; observed execution must use a separately frozen verified state artifact.",
+              "operationally_verified": false,
+              "pre_pulled_on_eligible_node": false,
+              "protocol_version": "5.0.0",
+              "reference_configured": false,
+              "resolved_digest": null,
+              "schema_version": "protocol-v5-resource-image-state-v1.0.0",
+              "status": "NOT_BUILT_OR_VERIFIED"
+            },
+            "image_reference": "example.invalid/intent-spawner-resource-v5@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "image_reference_pinned": true,
+            "kubernetes_version": null,
+            "namespace_labels": {},
+            "namespace_name": null,
+            "node_allocatable": null,
+            "node_capacity": null,
+            "node_info": null,
+            "node_labels": {},
+            "node_name": null,
+            "node_uid": null
+          },
+          "failure_codes": [
+            "CGROUP_V2_REQUIRED",
+            "CLUSTER_INELIGIBLE",
+            "IMAGE_DIGEST_UNVERIFIED",
+            "KUBERNETES_VERSION_UNAVAILABLE",
+            "REQUIRED_API_ACCESS_MISSING",
+            "WRONG_CLUSTER_FINGERPRINT",
+            "WRONG_KUBERNETES_CONTEXT",
+            "WRONG_NODE_COUNT"
+          ],
+          "schema_version": "protocol-v5-resource-cluster-preflight-v1.1.0"
+        }
+      },
+      "reasons": [
+        "Namespace lacks safety label 'z2jh-context-demo.local/disposable-experiment-v5=true'.",
+        "Kubernetes server version is unreachable.",
+        "Service account lacks required API permissions (create/get/list/delete pods).",
+        "Namespace lacks cluster identity label 'z2jh-context-demo.local/cluster-identity'.",
+        "Current context is 'orbstack', required is 'intent-spawner-eval-v5'.",
+        "Cluster does not have exactly 1 node."
+      ],
+      "status": "FAIL"
+    },
+    "external_readiness_attestation": {
+      "blocker_codes": [
+        "E4_READINESS_ATTESTATION_MISSING"
+      ],
+      "details": {
+        "required_schema": "benchmarks_v5/protocol-v5-e4-readiness-attestation-v1.schema.json"
+      },
+      "reasons": [
+        "No external E4 readiness attestation was supplied."
+      ],
+      "status": "FAIL"
+    },
+    "frozen_git_revision": {
+      "blocker_codes": [],
+      "details": {
+        "expected_git_revision": null,
+        "git_available": true,
+        "git_dirty": false,
+        "git_revision": "38877fa71d04f4caad30f253a7cbbb049ecda4f8"
+      },
+      "reasons": [],
+      "status": "PASS"
+    },
+    "frozen_node_capacity": {
+      "blocker_codes": [],
+      "details": {},
+      "reasons": [],
+      "status": "PASS"
+    },
+    "pinned_execution_image_digest": {
+      "blocker_codes": [
+        "IMAGE_DIGEST_UNVERIFIED",
+        "IMAGE_REFERENCE_UNPINNED"
+      ],
+      "details": {
+        "image_reference": null,
+        "image_state_status": "NOT_BUILT_OR_VERIFIED"
+      },
+      "reasons": [
+        "Image 'None' is not pinned to an immutable sha256 digest."
+      ],
+      "status": "FAIL"
+    },
+    "resume_state": {
+      "blocker_codes": [],
+      "details": {
+        "status": "not_applicable_no_result_dir_provided"
+      },
+      "reasons": [],
+      "status": "PASS"
+    },
+    "timeout_and_cleanup_contracts": {
+      "blocker_codes": [],
+      "details": {
+        "adapter_monitor_grace_seconds": 15,
+        "bounded_cleanup": true,
+        "pod_lifecycle_grace_seconds": 30,
+        "single_active_e4_pod": true
+      },
+      "reasons": [],
+      "status": "PASS"
+    },
+    "trial_ordering_contract": {
+      "blocker_codes": [],
+      "details": {
+        "envelope_ordering": "deterministic_family_lattice_walk"
+      },
+      "reasons": [],
+      "status": "PASS"
+    },
+    "workload_correctness_markers": {
+      "blocker_codes": [],
+      "details": {
+        "status": "pass",
+        "verified_markers": 16
+      },
+      "reasons": [],
+      "status": "PASS"
+    },
+    "workload_manifest": {
+      "blocker_codes": [],
+      "details": {
+        "family_count": 16,
+        "manifest_path": "benchmarks_v5/resource-envelope-workloads-v1.yaml",
+        "manifest_sha256": "85221bce48b42e0c9421d463503843b530117781db2e5a58a2c332f1adb7e98f"
+      },
+      "reasons": [],
+      "status": "PASS"
+    }
+  },
+  "git_dirty": false,
+  "git_revision": "38877fa71d04f4caad30f253a7cbbb049ecda4f8",
+  "limitations": [
+    "Preflight verifies software and cluster readiness only; it does not observe experimental trials.",
+    "OBSERVED status remains impossible without genuine collector execution records."
+  ],
+  "schema_version": "protocol-v5-resource-preflight-report-v1.0.0",
+  "status": "NOT_EXECUTED",
+  "summary": {
+    "blocker_codes": [
+      "CGROUP_CAPABILITY_NOT_ATTESTED",
+      "CGROUP_V2_REQUIRED",
+      "CLUSTER_INELIGIBLE",
+      "E4_READINESS_ATTESTATION_MISSING",
+      "IMAGE_DIGEST_UNVERIFIED",
+      "IMAGE_REFERENCE_UNPINNED",
+      "KUBERNETES_VERSION_UNAVAILABLE",
+      "REQUIRED_API_ACCESS_MISSING",
+      "WRONG_CLUSTER_FINGERPRINT",
+      "WRONG_KUBERNETES_CONTEXT",
+      "WRONG_NODE_COUNT"
+    ],
+    "blocker_count": 11,
+    "is_ready": false,
+    "reasons": [
+      "No external E4 readiness attestation was supplied.",
+      "Namespace lacks safety label 'z2jh-context-demo.local/disposable-experiment-v5=true'.",
+      "Kubernetes server version is unreachable.",
+      "Service account lacks required API permissions (create/get/list/delete pods).",
+      "Namespace lacks cluster identity label 'z2jh-context-demo.local/cluster-identity'.",
+      "Current context is 'orbstack', required is 'intent-spawner-eval-v5'.",
+      "Cluster does not have exactly 1 node.",
+      "Image 'None' is not pinned to an immutable sha256 digest.",
+      "External cgroup-v2 capability attestation is missing."
+    ]
+  },
+  "target": "envelope",
+  "timestamp_utc": "2026-09-12T12:46:31.065270Z"
+}

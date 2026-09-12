@@ -1,0 +1,73 @@
+{
+  "schema_version": "protocol-v5-e4-oracle-attempt-manifest-v1.0.0",
+  "protocol_version": "5.0.0",
+  "experiment_id": "E4",
+  "evidence_role": "independent_resource_envelope_calibration_attempt",
+  "run_id": "e4-resource-envelope-not-executed-20260912T124631Z",
+  "created_at_utc": "2026-09-12T12:46:31.065270Z",
+  "execution_status": "NOT_EXECUTED",
+  "cluster_measurement_status": "NOT_EXECUTED",
+  "measurement_claims_permitted": false,
+  "eligible_for_comparison": false,
+  "oracle_status": "NOT_AVAILABLE",
+  "source_control": {
+    "frozen_execution_sha": "0f73c0a2da34916df1ef6134cc898ce01512acff",
+    "execution_checkout_sha": "38877fa71d04f4caad30f253a7cbbb049ecda4f8",
+    "execution_checkout_clean": true,
+    "freeze_artifact_commit_sha": "38877fa71d04f4caad30f253a7cbbb049ecda4f8",
+    "freeze_manifest_sha256": "6228673d9459ab2f447c342adb17e0f3f60867c55a74ff98dac2291a01811b8b"
+  },
+  "workload": {
+    "manifest_path": "benchmarks_v5/resource-envelope-workloads-v1.yaml",
+    "manifest_sha256": "85221bce48b42e0c9421d463503843b530117781db2e5a58a2c332f1adb7e98f",
+    "family_count": 16,
+    "trial_count": 0,
+    "successful_calibration_count": 0,
+    "failed_calibration_count": 0,
+    "unattempted_family_count": 16,
+    "derived_envelope_count": 0
+  },
+  "environment": {
+    "observed_context": "orbstack",
+    "required_context": "intent-spawner-eval-v5",
+    "approved_disposable_environment_verified": false,
+    "kubernetes_mutations": [],
+    "image_reference": null,
+    "image_digest_verified": false,
+    "cgroup_telemetry_verified": false,
+    "readiness_attestation_supplied": false
+  },
+  "comparison_provenance_only": {
+    "recommendation_backends_called": false,
+    "recommendation_outputs_used": false,
+    "P1_backend_version": "rule-based-v1",
+    "P2_backend_version": "p2-hybrid-v1.0.0",
+    "P2_pipeline_version": "p2-pipeline-v1.0.0",
+    "P3_status": "not_retained",
+    "candidate_catalog_version": "2026-08-06.1",
+    "candidate_corpus_sha256": "987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444",
+    "sparse_index_version": "environment-sparse-index-v1",
+    "dense_index_version": "environment-dense-index-v1",
+    "hybrid_index_version": "environment-hybrid-index-v1"
+  },
+  "blocker_codes": [
+    "CGROUP_CAPABILITY_NOT_ATTESTED",
+    "CGROUP_V2_REQUIRED",
+    "CLUSTER_INELIGIBLE",
+    "E4_READINESS_ATTESTATION_MISSING",
+    "IMAGE_DIGEST_UNVERIFIED",
+    "IMAGE_REFERENCE_UNPINNED",
+    "KUBERNETES_VERSION_UNAVAILABLE",
+    "REQUIRED_API_ACCESS_MISSING",
+    "WRONG_CLUSTER_FINGERPRINT",
+    "WRONG_KUBERNETES_CONTEXT",
+    "WRONG_NODE_COUNT"
+  ],
+  "limitations": [
+    "The connected Kubernetes context was orbstack, not the approved disposable intent-spawner-eval-v5 environment.",
+    "No external E4 readiness attestation or approved digest-pinned workload image was supplied.",
+    "The frozen readiness-attestation schema requires an APPROVED oracle field even for the oracle-calibration entry point; no such field was fabricated.",
+    "No pods or jobs were created, no trials ran, and no CPU, memory, runtime, OOM, timeout, node, image-runtime, or cgroup measurement was observed.",
+    "This package is fail-closed readiness evidence, not an empirical oracle, and cannot be consumed by the E4 comparative resource experiment."
+  ]
+}
