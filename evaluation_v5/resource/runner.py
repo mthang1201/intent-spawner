@@ -55,7 +55,7 @@ from .planner import build_calibration_plan, make_trial_spec
 
 
 ROOT = Path(__file__).resolve().parents[2]
-DEFAULT_FREEZE = ROOT / "results_v5" / "protocol-v5.0.0" / "freezes" / "frozen-configuration.json"
+DEFAULT_FREEZE = ROOT / "results_v5" / "protocol-v5.0.0" / "freezes" / "v5-final-execution-freeze" / "freeze-manifest.json"
 RUN_SCHEMA_VERSION = "protocol-v5-resource-calibration-run-v1.1.0"
 RUNNER_VERSION = "protocol-v5-resource-calibration-runner-v1.2.0"
 
@@ -78,8 +78,29 @@ def _git_identity() -> dict[str, Any]:
     return {"git_revision": revision, "git_dirty": dirty}
 
 
-def _comparison_provenance(freeze_path: Path) -> dict[str, Any]:
-    payload = json.loads(freeze_path.read_text(encoding="utf-8"))
+def _comparison_provenance(
+    freeze_path: Path, *, require_production: bool
+) -> dict[str, Any]:
+    if require_production:
+        from evaluation_v5.freeze import verify_production_freeze
+
+        verified = verify_production_freeze(freeze_path)
+        payload = verified.configuration_snapshot.to_dict()
+        freeze_identity = verified.identity
+        recorded_path = verified.artifact_path
+    else:
+        # Compatibility is intentionally confined to non-observed test/dry-run
+        # paths. It grants no production capability.
+        from evaluation_v5.freeze import DEFAULT_DESIGN_SNAPSHOT, load_design_snapshot
+
+        selected = freeze_path if freeze_path.is_file() else DEFAULT_DESIGN_SNAPSHOT
+        payload = load_design_snapshot(selected).to_dict()
+        freeze_identity = {
+            "freeze_id": None,
+            "freeze_manifest_sha256": file_sha256(selected),
+            "source": "non_authoritative_design_snapshot",
+        }
+        recorded_path = selected
     systems = payload.get("systems", {})
     p3 = payload.get("p3_gate", {})
     if not isinstance(systems, dict) or "P1" not in systems or "P2" not in systems:
@@ -88,8 +109,9 @@ def _comparison_provenance(freeze_path: Path) -> dict[str, Any]:
         raise ValueError("E4 calibration requires the frozen not-retained P3 gate")
     return {
         "role": "comparison_provenance_only_not_calibration_input",
-        "freeze_path": str(freeze_path.relative_to(ROOT)),
-        "freeze_sha256": file_sha256(freeze_path),
+        "freeze_path": str(recorded_path.relative_to(ROOT)),
+        "freeze_sha256": file_sha256(recorded_path),
+        "freeze_identity": freeze_identity,
         "systems": {"P1": systems["P1"], "P2": systems["P2"]},
         "candidate_catalog": payload.get("candidate_catalog"),
         "indexes": payload.get("indexes"),
@@ -105,9 +127,12 @@ def _base_provenance(
     run_id: str,
     image: str,
     adapter_version: str,
+    require_production_freeze: bool,
 ) -> dict[str, Any]:
     plan = build_calibration_plan(manifest)
-    comparison = _comparison_provenance(freeze_path)
+    comparison = _comparison_provenance(
+        freeze_path, require_production=require_production_freeze
+    )
     semantic = load_semantic_independence(manifest_path=manifest_path)
     policy = load_cluster_policy()
     image_state = load_image_state()
@@ -228,6 +253,7 @@ def create_dry_run_package(
     provenance = _base_provenance(
         manifest_path, manifest, freeze_path, run_id=run_id, image=image,
         adapter_version="dry-run-adapter-v1",
+        require_production_freeze=False,
     )
     from cluster_evaluation.resource_adapter_v5 import (
         ADAPTER_MONITOR_GRACE_SECONDS, IMAGE_RE, POD_LIFECYCLE_GRACE_SECONDS,
@@ -474,6 +500,7 @@ def run_calibration(
     image: str,
     resume: bool = False,
     enforce_readiness: bool = True,
+    readiness_attestation_path: Path | None = None,
 ) -> dict[str, Any]:
     manifest_path = manifest_path.resolve()
     freeze_path = freeze_path.resolve()
@@ -496,10 +523,6 @@ def run_calibration(
                 pass
     manifest = load_resource_manifest(manifest_path)
     workloads = workloads_by_id(manifest)
-    provenance = _base_provenance(
-        manifest_path, manifest, freeze_path, run_id=run_id, image=image,
-        adapter_version=adapter.adapter_version,
-    )
     environment_snapshot: Mapping[str, Any] | None = None
     auth = validate_collector_implementation(adapter)
     if not enforce_readiness and auth.is_production_implementation:
@@ -513,10 +536,17 @@ def run_calibration(
             result_dir=result_dir,
             resume=resume,
             manifest_path=manifest_path,
+            freeze_path=freeze_path,
+            readiness_attestation_path=readiness_attestation_path,
         )
         environment_snapshot = adapter.environment_provenance()
         if environment_snapshot.get("eligibility_status") != "ELIGIBLE":
             raise RuntimeError("OBSERVED_E4_EXECUTION_BLOCKED: CLUSTER_INELIGIBLE")
+    provenance = _base_provenance(
+        manifest_path, manifest, freeze_path, run_id=run_id, image=image,
+        adapter_version=adapter.adapter_version,
+        require_production_freeze=enforce_readiness,
+    )
     _make_directories(result_dir, resume=resume)
     provenance_path = result_dir / "raw" / "run-provenance.json"
     plan_path = result_dir / "raw" / "plan.json"
@@ -824,6 +854,8 @@ def _parse_args(argv: Sequence[str]) -> argparse.Namespace:
     preflight.add_argument("--result-dir", type=Path, default=None)
     preflight.add_argument("--resume", action="store_true")
     preflight.add_argument("--format", choices=("json", "text"), default="json")
+    preflight.add_argument("--freeze", type=Path, default=DEFAULT_FREEZE)
+    preflight.add_argument("--readiness-attestation", type=Path, default=None)
     validate = sub.add_parser("validate-manifest")
     validate.add_argument("--manifest", type=Path, default=DEFAULT_MANIFEST)
     dry = sub.add_parser("dry-run")
@@ -840,6 +872,7 @@ def _parse_args(argv: Sequence[str]) -> argparse.Namespace:
     execute.add_argument("--freeze", type=Path, default=DEFAULT_FREEZE)
     execute.add_argument("--image", required=True)
     execute.add_argument("--resume", action="store_true")
+    execute.add_argument("--readiness-attestation", type=Path, required=True)
     verify = sub.add_parser("validate-evidence")
     verify.add_argument("--result-dir", type=Path, required=True)
     verify.add_argument("--allow-unsealed", action="store_true")
@@ -863,6 +896,8 @@ def main(argv: Sequence[str] | None = None) -> int:
             image=args.image,
             result_dir=args.result_dir,
             resume=args.resume,
+            freeze_path=args.freeze,
+            readiness_attestation_path=args.readiness_attestation,
         )
         if getattr(args, "format", "json") == "json":
             print(json.dumps(report, indent=2, sort_keys=True))
@@ -908,6 +943,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             result_dir=args.result_dir.resolve(), run_id=args.run_id,
             adapter=adapter, manifest_path=args.manifest,
             freeze_path=args.freeze, image=args.image, resume=args.resume,
+            readiness_attestation_path=args.readiness_attestation,
         )
     elif args.command == "validate-evidence":
         report = validate_evidence_package(args.result_dir, allow_unsealed=args.allow_unsealed)

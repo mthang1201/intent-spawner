@@ -128,11 +128,12 @@ def load_efficiency_freeze(path: Path = FREEZE_PATH) -> dict[str, Any]:
         raise ValueError("decision generation must be oracle-free and once per family")
     p3 = decision.get("p3") or {}
     gate_path = ROOT / str(p3.get("gate_path", ""))
+    # This is an immutable compatibility checksum in the registered development
+    # contract, not execution authority.  Live E4 obtains the P3 decision from
+    # VerifiedProductionFreeze in efficiency_runner.py and never parses this
+    # historical design snapshot.
     if p3 != {"included": False, "authoritative_gate": "not_retained", "gate_path": "results_v5/protocol-v5.0.0/freezes/frozen-configuration.json", "gate_sha256": file_sha256(gate_path) if gate_path.is_file() else None}:
-        raise ValueError("P3 is excluded because the authoritative gate is not_retained")
-    gate = json.loads(gate_path.read_text(encoding="utf-8"))
-    if (gate.get("p3_gate") or {}).get("status") != "not_retained" or (gate.get("p3_gate") or {}).get("p3_active") is not False:
-        raise ValueError("authoritative P3 gate no longer supports exclusion")
+        raise ValueError("legacy development P3 exclusion binding differs")
     contrasts = tuple(tuple(item) for item in value["statistics"].get("contrasts", []))
     statistics = value["statistics"]
     if set(statistics) != {"family_is_primary_unit", "repetitions_are_independent_families", "primary_endpoints", "secondary_endpoints", "pareto_objectives", "success_noninferiority_margin", "contrasts", "multiplicity", "bootstrap_replicates"}:

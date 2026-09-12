@@ -1,0 +1,116 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://intent-spawner.local/schemas/protocol-v5-e4-readiness-attestation-v1.schema.json",
+  "title": "Protocol-v5 external E4 readiness attestation",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "protocol_version", "attestation_id", "attested_at_utc",
+    "attestor_pseudonym", "freeze", "oracle", "execution_image", "cluster",
+    "node_capacity", "cgroup", "assertions"
+  ],
+  "properties": {
+    "schema_version": {"const": "protocol-v5-e4-readiness-attestation-v1.0.0"},
+    "protocol_version": {"const": "5.0.0"},
+    "attestation_id": {"$ref": "#/$defs/safeId"},
+    "attested_at_utc": {"$ref": "#/$defs/utcTimestamp"},
+    "attestor_pseudonym": {"$ref": "#/$defs/safeId"},
+    "freeze": {
+      "type": "object", "additionalProperties": false,
+      "required": ["freeze_id", "freeze_manifest_sha256", "frozen_execution_sha", "freeze_artifact_commit_sha"],
+      "properties": {
+        "freeze_id": {"$ref": "#/$defs/safeId"},
+        "freeze_manifest_sha256": {"$ref": "#/$defs/sha256"},
+        "frozen_execution_sha": {"$ref": "#/$defs/gitSha"},
+        "freeze_artifact_commit_sha": {"$ref": "#/$defs/gitSha"}
+      }
+    },
+    "oracle": {
+      "type": "object", "additionalProperties": false,
+      "required": ["package_id", "package_path", "sha256sums_sha256", "manual_review_status"],
+      "properties": {
+        "package_id": {"$ref": "#/$defs/safeId"},
+        "package_path": {"type": "string", "minLength": 1},
+        "sha256sums_sha256": {"$ref": "#/$defs/sha256"},
+        "manual_review_status": {"const": "APPROVED"}
+      }
+    },
+    "execution_image": {
+      "type": "object", "additionalProperties": false,
+      "required": ["reference", "runtime_verified"],
+      "properties": {
+        "reference": {"type": "string", "pattern": "^[a-z0-9._/-]+@sha256:[0-9a-f]{64}$"},
+        "runtime_verified": {"const": true}
+      }
+    },
+    "cluster": {
+      "type": "object", "additionalProperties": false,
+      "required": ["context", "cluster_identity", "namespace", "kubernetes_version", "kubernetes_version_sha256", "disposable_nonproduction", "api_access_verified"],
+      "properties": {
+        "context": {"$ref": "#/$defs/nonblank"},
+        "cluster_identity": {"$ref": "#/$defs/safeId"},
+        "namespace": {"$ref": "#/$defs/safeId"},
+        "kubernetes_version": {"$ref": "#/$defs/nonblank"},
+        "kubernetes_version_sha256": {"$ref": "#/$defs/sha256"},
+        "disposable_nonproduction": {"const": true},
+        "api_access_verified": {"const": true}
+      }
+    },
+    "node_capacity": {
+      "type": "object", "additionalProperties": false,
+      "required": ["node_identity", "node_name", "node_uid", "node_count", "allocatable_cpu_millicores", "allocatable_memory_mib", "allocatable_gpu_count", "allocatable_gpu_resource", "dedicated"],
+      "properties": {
+        "node_identity": {"$ref": "#/$defs/safeId"},
+        "node_name": {"$ref": "#/$defs/nonblank"},
+        "node_uid": {"$ref": "#/$defs/nonblank"},
+        "node_count": {"const": 1},
+        "allocatable_cpu_millicores": {"type": "integer", "minimum": 1},
+        "allocatable_memory_mib": {"type": "integer", "minimum": 1},
+        "allocatable_gpu_count": {"type": "integer", "minimum": 0},
+        "allocatable_gpu_resource": {"type": ["string", "null"], "pattern": ".*\\S.*"},
+        "dedicated": {"const": true}
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"allocatable_gpu_count": {"const": 0}}},
+          "then": {"properties": {"allocatable_gpu_resource": {"const": null}}},
+          "else": {"properties": {"allocatable_gpu_resource": {"type": "string", "minLength": 1}}}
+        }
+      ]
+    },
+    "cgroup": {
+      "type": "object", "additionalProperties": false,
+      "required": ["version", "controllers", "required_files_verified"],
+      "properties": {
+        "version": {"const": "v2"},
+        "controllers": {
+          "type": "array", "minItems": 3, "uniqueItems": true,
+          "items": {"enum": ["cpu", "memory", "pids", "io"]},
+          "allOf": [
+            {"contains": {"const": "cpu"}},
+            {"contains": {"const": "memory"}},
+            {"contains": {"const": "pids"}}
+          ]
+        },
+        "required_files_verified": {"const": true}
+      }
+    },
+    "assertions": {
+      "type": "object", "additionalProperties": false,
+      "required": ["facts_collected_read_only", "no_experiment_trials_executed", "attestation_external_to_frozen_source", "not_confirmatory_dataset_material"],
+      "properties": {
+        "facts_collected_read_only": {"const": true},
+        "no_experiment_trials_executed": {"const": true},
+        "attestation_external_to_frozen_source": {"const": true},
+        "not_confirmatory_dataset_material": {"const": true}
+      }
+    }
+  },
+  "$defs": {
+    "safeId": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"},
+    "nonblank": {"type": "string", "minLength": 1, "pattern": ".*\\S.*"},
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "gitSha": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+    "utcTimestamp": {"type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(?:\\.[0-9]+)?Z$"}
+  }
+}

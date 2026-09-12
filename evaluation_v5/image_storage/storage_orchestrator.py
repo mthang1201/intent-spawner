@@ -384,21 +384,15 @@ def run_storage_evaluation(
         injected_image_layers=injected_image_layers,
     )
 
-    # Execute layer measurement across available catalog images. The caller's
-    # mode string selects a collector but never supplies evidence status.
-    inspections, prefixes, reported_status = runner.measure_all()
-    execution_status = runner.execution_status
-    if reported_status != execution_status:
-        raise ValueError("Storage runner status disagrees with its fixed collector origin")
-    collector = runner.collector_provenance()
-    raw_observations = runner.raw_observations()
-
-    # Determine stage before deriving the non-overridable claim boundary.
     norm_stage = stage.lower().strip()
     if norm_stage not in (SplitStage.CONFIRMATORY.value, SplitStage.DEVELOPMENT.value):
         raise ValueError(f"Invalid split stage: {stage!r}. Must be 'confirmatory' or 'development'.")
 
+    # Verify the production freeze before any real collector is allowed to run.
+    # Dry-run and synthetic development paths remain usable without production
+    # authority, but can never emit OBSERVED evidence.
     confirmatory_capability = None
+    verified_freeze = None
     if norm_stage == SplitStage.CONFIRMATORY.value and eval_recommendation:
         from evaluation_v5.isolation import (
             CONFIRMATORY_DATASET_ENV_VAR,
@@ -409,23 +403,40 @@ def run_storage_evaluation(
 
         source_requested = bool(
             dataset_path is not None
-            or freeze_path is not None
             or CONFIRMATORY_DATASET_ENV_VAR in os.environ
-            or FREEZE_ARTIFACT_ENV_VAR in os.environ
+            or (freeze_path is not None and dataset_path is not None)
+            or (FREEZE_ARTIFACT_ENV_VAR in os.environ and CONFIRMATORY_DATASET_ENV_VAR in os.environ)
         )
         if source_requested:
-            try:
-                dataset_source, freeze_source = resolve_confirmatory_sources(
-                    dataset_path=Path(dataset_path) if dataset_path is not None else None,
-                    freeze_path=Path(freeze_path) if freeze_path is not None else None,
-                )
-                confirmatory_capability = load_confirmatory_split(
-                    dataset_source, freeze_source
-                )
-            except Exception as exc:
-                logger.warning(
-                    "Failed to prepare confirmatory recommendation split: %s", exc
-                )
+            dataset_source, freeze_source = resolve_confirmatory_sources(
+                dataset_path=Path(dataset_path) if dataset_path is not None else None,
+                freeze_path=Path(freeze_path) if freeze_path is not None else None,
+            )
+            confirmatory_capability = load_confirmatory_split(
+                dataset_source, freeze_source
+            )
+
+    if freeze_path is not None:
+        from evaluation_v5.freeze import verify_production_freeze
+
+        verified_freeze = verify_production_freeze(Path(freeze_path))
+
+    real_collector_selected = is_real_storage_collector_origin(
+        runner.collector_origin
+    )
+    if real_collector_selected and verified_freeze is None:
+        raise ValueError(
+            "OBSERVED storage execution requires an explicit verified production freeze"
+        )
+
+    # Execute layer measurement across available catalog images. The caller's
+    # mode string selects a collector but never supplies evidence status.
+    inspections, prefixes, reported_status = runner.measure_all()
+    execution_status = runner.execution_status
+    if reported_status != execution_status:
+        raise ValueError("Storage runner status disagrees with its fixed collector origin")
+    collector = runner.collector_provenance()
+    raw_observations = runner.raw_observations()
 
     origin = str(collector.get("origin", ""))
     real_origin = is_real_storage_collector_origin(origin)
@@ -465,17 +476,13 @@ def run_storage_evaluation(
     # Compute pairwise layer-reuse analysis
     pairwise_analysis = compute_pairwise_layer_reuse(inspections)
 
-    # Read freeze configuration if available for semantic provenance
-    frozen_cfg_path = freeze_path or (ROOT / "results_v5" / "protocol-v5.0.0" / "freezes" / "frozen-configuration.json")
+    # Production provenance is consumed only through the typed verifier.
+    freeze_data: dict[str, Any] = {}
     backend_systems = {"P2": "p2-pipeline-v1.0.0"}
-    if frozen_cfg_path.is_file():
-        try:
-            freeze_data = json.loads(frozen_cfg_path.read_text(encoding="utf-8"))
-            p2_sys = freeze_data.get("systems", {}).get("P2", {})
-            if "pipeline_version" in p2_sys:
-                backend_systems["P2"] = p2_sys["pipeline_version"]
-        except Exception:
-            pass
+    if verified_freeze is not None:
+        freeze_data = verified_freeze.configuration_snapshot.to_dict()
+        p2_sys = freeze_data["systems"]["P2"]
+        backend_systems["P2"] = p2_sys["pipeline_version"]
 
     git = _git_info()
     timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
@@ -881,13 +888,6 @@ def run_storage_evaluation(
     )
     (report_dir / "E5_IMAGE_STORAGE_REPORT.md").write_text(report_md, encoding="utf-8")
 
-    freeze_data: dict[str, Any] = {}
-    if frozen_cfg_path.is_file():
-        try:
-            freeze_data = json.loads(frozen_cfg_path.read_text(encoding="utf-8"))
-        except Exception:
-            pass
-
     frozen_cand = freeze_data.get("candidate_catalog", {})
     frozen_indexes = freeze_data.get("indexes", {})
     dense_idx = frozen_indexes.get("dense", {})
@@ -904,21 +904,35 @@ def run_storage_evaluation(
 
     frozen_cfg = freeze_data.get("configuration", {})
     retrieval_cfg = (
-        frozen_cfg.get("P2", {})
+        frozen_cfg.get("retrieval", {})
         if execution_status == StorageExecutionStatus.OBSERVED.value
         else {}
     )
     constraints_cfg = (
-        frozen_cfg.get("constraints", {})
+        {
+            "constraints": frozen_cfg.get("constraints", {}),
+            "ranking": frozen_cfg.get("ranking", {}),
+        }
         if execution_status == StorageExecutionStatus.OBSERVED.value
         else {}
     )
+    frozen_extractor = freeze_data.get("prompts", {}).get("P2_extractor", {})
+    frozen_structured_intent = freeze_data.get("structured_intent", {})
     if execution_status == StorageExecutionStatus.OBSERVED.value and (
-        not retrieval_cfg or not constraints_cfg
+        not retrieval_cfg
+        or not constraints_cfg.get("constraints")
+        or not constraints_cfg.get("ranking")
+        or not frozen_extractor
+        or not frozen_structured_intent
     ):
         raise ValueError(
-            "OBSERVED storage evidence requires frozen retrieval and constraint provenance"
+            "OBSERVED storage evidence requires verified frozen extractor, retrieval, constraint, and ranking provenance"
         )
+    if is_real_storage_collector_origin(origin) and (
+        frozen_cand.get("file_sha256") != cat_sha
+        or frozen_cand.get("version") != catalog_version
+    ):
+        raise ValueError("OBSERVED storage catalog differs from the verified production freeze")
 
     # 8. Manifest.json (cross-experiment ProtocolV5Manifest compatibility)
     is_obs = (execution_status == StorageExecutionStatus.OBSERVED.value)
@@ -939,32 +953,32 @@ def run_storage_evaluation(
         },
         "backend_system_versions": {
             "B0": "jupyterhub-default-selection",
-            "P1": "rule-based-v1",
+            "P1": freeze_data.get("systems", {}).get("P1", {}).get("backend_version", "rule-based-v1"),
             "P2": backend_systems.get("P2", "p2-pipeline-v1.0.0"),
         },
         "candidate_catalog": {
             "catalog_version": catalog_version,
             "catalog_sha256": cat_sha,
-            "corpus_version": "environment-candidate-corpus-v1",
+            "corpus_version": frozen_cand.get("corpus_version") if is_obs else None,
             "corpus_sha256": corpus_sha,
         },
-        "structured_intent_schema_version": "protocol-v5-structured-intent-v1.0.0" if is_obs else None,
+        "structured_intent_schema_version": frozen_structured_intent.get("schema_version") if is_obs else None,
         "extractor": {
-            "extractor_name": "intent-spawner-local-feature-extractor" if is_obs else None,
-            "extractor_version": "feature-extractor-v1.0.0" if is_obs else None,
-            "extractor_model_id": "intent-spawner-local-rule-hash" if is_obs else None,
-            "extractor_prompt_version": "prompt-v1.0.0" if is_obs else None,
-            "extractor_prompt_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855" if is_obs else None,
+            "extractor_name": frozen_extractor.get("name") if is_obs else None,
+            "extractor_version": frozen_extractor.get("version") if is_obs else None,
+            "extractor_model_id": frozen_extractor.get("model_id") if is_obs else None,
+            "extractor_prompt_version": frozen_extractor.get("prompt_version") if is_obs else None,
+            "extractor_prompt_sha256": frozen_extractor.get("prompt_sha256") if is_obs else None,
         },
         "embedding_indexes": {
-            "embedding_model_id": dense_idx.get("model_id", "intent-spawner-local-feature-hash") if is_obs else None,
-            "embedding_model_revision": dense_idx.get("model_revision", "feature-hash-embedding-v1.0.0") if is_obs else None,
-            "dense_index_version": dense_idx.get("index_version", "environment-dense-index-v1") if is_obs else None,
-            "dense_index_sha256": dense_idx.get("index_checksum", "c0561bcd1ee6ec5153b710aef3deae88bd259a011ddd454513cbb1c675118387") if is_obs else None,
-            "sparse_index_version": sparse_idx.get("index_version", "environment-sparse-index-v1") if is_obs else None,
-            "sparse_index_sha256": sparse_idx.get("index_checksum", "931fac84b818cb934a37bfbfa76092a89626cd5eaffc869887de8558bc6fa747") if is_obs else None,
-            "hybrid_index_version": hybrid_idx.get("index_version", "environment-hybrid-index-v1") if is_obs else None,
-            "hybrid_index_sha256": hybrid_idx.get("index_checksum", "45ea08f29492d796189920713636b3a9cae2f0fb264e023124eb38c8cfad83a4") if is_obs else None,
+            "embedding_model_id": dense_idx.get("model_id") if is_obs else None,
+            "embedding_model_revision": dense_idx.get("model_revision") if is_obs else None,
+            "dense_index_version": dense_idx.get("index_version") if is_obs else None,
+            "dense_index_sha256": dense_idx.get("index_checksum") if is_obs else None,
+            "sparse_index_version": sparse_idx.get("index_version") if is_obs else None,
+            "sparse_index_sha256": sparse_idx.get("index_checksum") if is_obs else None,
+            "hybrid_index_version": hybrid_idx.get("index_version") if is_obs else None,
+            "hybrid_index_sha256": hybrid_idx.get("index_checksum") if is_obs else None,
         },
         "retrieval_configuration": retrieval_cfg,
         "constraint_ranking_configuration": constraints_cfg,

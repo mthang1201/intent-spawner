@@ -27,6 +27,7 @@ from __future__ import annotations
 import argparse
 from dataclasses import dataclass
 from datetime import datetime, timezone
+import hashlib
 import json
 import os
 from pathlib import Path
@@ -34,6 +35,13 @@ import re
 import subprocess
 import sys
 from typing import Any, Mapping, Sequence
+
+from jsonschema import Draft202012Validator
+
+from evaluation_v5.freeze import (
+    VerifiedProductionFreeze,
+    verify_production_freeze,
+)
 
 from .contracts import (
     DEFAULT_MANIFEST,
@@ -61,7 +69,9 @@ from .evidence import file_sha256, validate_evidence_package
 from .manifest import load_resource_manifest, verify_workload_markers
 
 PREFLIGHT_REPORT_SCHEMA_VERSION = "protocol-v5-resource-preflight-report-v1.0.0"
-AUTHORITATIVE_FREEZE_PATH = ROOT / "results_v5" / "protocol-v5.0.0" / "freezes" / "frozen-configuration.json"
+AUTHORITATIVE_FREEZE_PATH = ROOT / "results_v5" / "protocol-v5.0.0" / "freezes" / "v5-final-execution-freeze" / "freeze-manifest.json"
+READINESS_ATTESTATION_SCHEMA_PATH = ROOT / "benchmarks_v5" / "protocol-v5-e4-readiness-attestation-v1.schema.json"
+READINESS_ATTESTATION_ENV_VAR = "PROTOCOL_V5_E4_READINESS_ATTESTATION"
 EXPECTED_EFFICIENCY_INPUT_SHA256 = "dce8d2b65bdfc7e2ce280e05645906b91a5d4bbfa1f089601ff54dbb5ab02e66"
 IMAGE_RE = re.compile(r"^[a-z0-9._/-]+@sha256:[0-9a-f]{64}$")
 FORBIDDEN_PRODUCTION_CONTEXTS = {
@@ -72,6 +82,17 @@ FORBIDDEN_PRODUCTION_CONTEXTS = {
 
 def _utc_now() -> str:
     return datetime.now(timezone.utc).isoformat(timespec="microseconds").replace("+00:00", "Z")
+
+
+def _canonical_json_sha256(value: Any) -> str:
+    encoded = json.dumps(
+        value,
+        allow_nan=False,
+        ensure_ascii=False,
+        separators=(",", ":"),
+        sort_keys=True,
+    ).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()
 
 
 def _get_git_info() -> dict[str, Any]:
@@ -116,6 +137,88 @@ class PreflightCheckResult:
     blocker_codes: tuple[str, ...]
     details: dict[str, Any]
     reasons: tuple[str, ...]
+
+
+def _load_readiness_attestation(
+    path: Path,
+    *,
+    freeze: VerifiedProductionFreeze,
+) -> dict[str, Any]:
+    """Load an external, checksum-bound readiness statement and bind its freeze."""
+
+    def reject_duplicate_keys(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
+        selected: dict[str, Any] = {}
+        for key, value in pairs:
+            if key in selected:
+                raise ValueError("E4 readiness attestation contains duplicate JSON keys")
+            selected[key] = value
+        return selected
+
+    try:
+        raw = path.read_bytes()
+        document = json.loads(
+            raw.decode("utf-8"),
+            object_pairs_hook=reject_duplicate_keys,
+            parse_constant=lambda value: (_ for _ in ()).throw(
+                ValueError(
+                    f"E4 readiness attestation contains non-finite JSON value {value}"
+                )
+            ),
+        )
+        schema = json.loads(READINESS_ATTESTATION_SCHEMA_PATH.read_text(encoding="utf-8"))
+    except (OSError, UnicodeError, json.JSONDecodeError, ValueError) as exc:
+        raise ValueError("E4 readiness attestation is unreadable") from exc
+    if not isinstance(document, dict):
+        raise ValueError("E4 readiness attestation must be a JSON object")
+    Draft202012Validator.check_schema(schema)
+    errors = sorted(
+        Draft202012Validator(schema).iter_errors(document),
+        key=lambda error: tuple(str(part) for part in error.absolute_path),
+    )
+    if errors:
+        location = ".".join(str(part) for part in errors[0].absolute_path) or "root"
+        raise ValueError(
+            f"E4 readiness attestation schema violation at {location}: {errors[0].message}"
+        )
+    expected = freeze.identity
+    actual = document["freeze"]
+    for key in (
+        "freeze_id",
+        "freeze_manifest_sha256",
+        "frozen_execution_sha",
+        "freeze_artifact_commit_sha",
+    ):
+        if actual.get(key) != expected.get(key):
+            raise ValueError(f"E4 readiness attestation freeze mismatch at {key}")
+    document["_attestation_path"] = str(path.resolve())
+    document["_attestation_sha256"] = file_sha256(path)
+    return document
+
+
+def _external_image_state(attestation: Mapping[str, Any]) -> dict[str, Any]:
+    reference = str(attestation["execution_image"]["reference"])
+    digest = reference.split("@", 1)[1]
+    return {
+        "schema_version": "protocol-v5-external-resource-image-state-v1.0.0",
+        "image_reference": reference,
+        "reference_configured": True,
+        "digest_syntactically_pinned": True,
+        "built": True,
+        "resolved_digest": digest,
+        "digest_verified": True,
+        "pre_pulled_on_eligible_node": True,
+        "operationally_verified": True,
+        "status": "EXTERNALLY_ATTESTED_AND_LIVE_RECHECKED",
+    }
+
+
+def verify_e4_readiness_inputs(
+    *, freeze_path: Path, readiness_attestation_path: Path
+) -> tuple[VerifiedProductionFreeze, dict[str, Any]]:
+    freeze = verify_production_freeze(freeze_path)
+    return freeze, _load_readiness_attestation(
+        readiness_attestation_path, freeze=freeze
+    )
 
 
 def check_adapter_authenticity(adapter: Any | None = None) -> PreflightCheckResult:
@@ -178,47 +281,27 @@ def check_frozen_git_revision(environ: Mapping[str, str] | None = None) -> Prefl
     )
 
 
-def check_authoritative_final_freeze(*, target: str) -> PreflightCheckResult:
+def check_authoritative_final_freeze(
+    *, target: str, freeze_path: Path = AUTHORITATIVE_FREEZE_PATH
+) -> PreflightCheckResult:
     blockers: list[str] = []
     reasons: list[str] = []
     details: dict[str, Any] = {}
 
-    if not AUTHORITATIVE_FREEZE_PATH.is_file():
+    if not freeze_path.is_file():
         blockers.append("AUTHORITATIVE_FREEZE_MISSING")
-        reasons.append(f"Authoritative freeze file missing at {AUTHORITATIVE_FREEZE_PATH.relative_to(ROOT)}.")
+        reasons.append(f"Authoritative freeze file missing at {freeze_path}.")
     else:
         try:
-            freeze_json = json.loads(AUTHORITATIVE_FREEZE_PATH.read_text(encoding="utf-8"))
-            details["authoritative_freeze_sha256"] = file_sha256(AUTHORITATIVE_FREEZE_PATH)
-            p3 = freeze_json.get("p3_gate") or {}
+            verified = verify_production_freeze(freeze_path)
+            details.update(verified.identity)
+            p3 = verified.configuration_snapshot["p3_gate"]
             if p3.get("status") != "not_retained" or p3.get("p3_active") is not False:
                 blockers.append("P3_GATE_NOT_EXCLUDED")
                 reasons.append("Authoritative freeze configuration does not exclude P3.")
         except Exception as exc:
             blockers.append("AUTHORITATIVE_FREEZE_CORRUPT")
-            reasons.append(f"Authoritative freeze invalid JSON: {exc}")
-
-    if target in ("envelope", "all"):
-        try:
-            env_contract = load_freeze_contract()
-            details["envelope_freeze_status"] = env_contract.get("confirmatory_freeze_status")
-            if not freeze_is_confirmatory(env_contract):
-                blockers.append("CONFIRMATORY_FREEZE_INACTIVE")
-                reasons.append("Envelope freeze contract is not FROZEN in confirmatory phase.")
-        except Exception as exc:
-            blockers.append("ENVELOPE_FREEZE_CONTRACT_INVALID")
-            reasons.append(f"Envelope freeze contract error: {exc}")
-
-    if target in ("efficiency", "all"):
-        try:
-            eff_freeze = load_efficiency_freeze()
-            details["efficiency_freeze_status"] = eff_freeze.get("confirmatory_freeze_status")
-            if eff_freeze.get("confirmatory_freeze_status") != "FROZEN" or eff_freeze.get("current_phase") != "confirmatory":
-                blockers.append("CONFIRMATORY_FREEZE_INACTIVE")
-                reasons.append("Efficiency freeze contract is not FROZEN in confirmatory phase.")
-        except Exception as exc:
-            blockers.append("EFFICIENCY_FREEZE_CONTRACT_INVALID")
-            reasons.append(f"Efficiency freeze contract error: {exc}")
+            reasons.append(f"Authoritative freeze verification failed: {exc}")
 
     return PreflightCheckResult(
         check_name="authoritative_final_freeze",
@@ -226,6 +309,52 @@ def check_authoritative_final_freeze(*, target: str) -> PreflightCheckResult:
         blocker_codes=tuple(sorted(set(blockers))),
         details=details,
         reasons=tuple(reasons),
+    )
+
+
+def check_external_readiness_attestation(
+    *, freeze_path: Path, attestation_path: Path | None
+) -> tuple[PreflightCheckResult, dict[str, Any] | None]:
+    if attestation_path is None:
+        return (
+            PreflightCheckResult(
+                check_name="external_readiness_attestation",
+                passed=False,
+                blocker_codes=("E4_READINESS_ATTESTATION_MISSING",),
+                details={"required_schema": str(READINESS_ATTESTATION_SCHEMA_PATH.relative_to(ROOT))},
+                reasons=("No external E4 readiness attestation was supplied.",),
+            ),
+            None,
+        )
+    try:
+        _, attestation = verify_e4_readiness_inputs(
+            freeze_path=freeze_path,
+            readiness_attestation_path=attestation_path,
+        )
+    except Exception as exc:
+        return (
+            PreflightCheckResult(
+                check_name="external_readiness_attestation",
+                passed=False,
+                blocker_codes=("E4_READINESS_ATTESTATION_INVALID",),
+                details={"path": str(attestation_path)},
+                reasons=(str(exc),),
+            ),
+            None,
+        )
+    return (
+        PreflightCheckResult(
+            check_name="external_readiness_attestation",
+            passed=True,
+            blocker_codes=(),
+            details={
+                "path": attestation["_attestation_path"],
+                "sha256": attestation["_attestation_sha256"],
+                "attestation_id": attestation["attestation_id"],
+            },
+            reasons=(),
+        ),
+        attestation,
     )
 
 
@@ -277,7 +406,9 @@ def check_workload_manifest(*, target: str, manifest_path: Path | None = None) -
     )
 
 
-def check_approved_resource_oracle(*, target: str) -> PreflightCheckResult:
+def check_approved_resource_oracle(
+    *, target: str, attestation: Mapping[str, Any] | None = None
+) -> PreflightCheckResult:
     if target == "envelope":
         return PreflightCheckResult(
             check_name="approved_independent_resource_oracle",
@@ -292,18 +423,17 @@ def check_approved_resource_oracle(*, target: str) -> PreflightCheckResult:
     details: dict[str, Any] = {}
 
     try:
-        freeze = load_efficiency_freeze()
-        oracle_info = freeze.get("oracle_package") or {}
-        oracle_path_str = oracle_info.get("path")
-        expected_sha = oracle_info.get("sha256")
-        approval_status = oracle_info.get("manual_approval_status")
+        oracle_info = (attestation or {}).get("oracle") or {}
+        oracle_path_str = oracle_info.get("package_path")
+        expected_sha = oracle_info.get("sha256sums_sha256")
+        approval_status = oracle_info.get("manual_review_status")
         details["oracle_path"] = oracle_path_str
         details["expected_sha256"] = expected_sha
         details["manual_approval_status"] = approval_status
 
         if approval_status != "APPROVED" or not oracle_path_str or not expected_sha:
             blockers.append("APPROVED_ORACLE_UNAVAILABLE")
-            reasons.append("Resource efficiency freeze does not contain an approved independent oracle.")
+            reasons.append("External readiness attestation does not bind an approved independent oracle.")
         else:
             oracle_path = (ROOT / str(oracle_path_str)).resolve()
             if not oracle_path.is_dir():
@@ -331,22 +461,86 @@ def check_approved_resource_oracle(*, target: str) -> PreflightCheckResult:
     )
 
 
-def check_disposable_cluster_and_environment(*, image: str | None = None) -> PreflightCheckResult:
-    from cluster_evaluation.resource_adapter_v5 import collect_read_only_preflight
+def check_disposable_cluster_and_environment(
+    *, image: str | None = None, attestation: Mapping[str, Any] | None = None
+) -> PreflightCheckResult:
+    from cluster_evaluation.resource_adapter_v5 import (
+        _cpu_m,
+        _memory_mib,
+        collect_read_only_preflight,
+    )
 
     blockers: list[str] = []
     reasons: list[str] = []
     details: dict[str, Any] = {}
 
     policy = load_cluster_policy()
-    img_state = load_image_state()
+    img_state = (
+        _external_image_state(attestation)
+        if attestation is not None
+        else load_image_state()
+    )
     test_image = image or img_state.get("image_reference") or "example.invalid/intent-spawner-resource-v5@sha256:" + "a" * 64
 
     preflight_facts = collect_read_only_preflight(image=test_image, policy=policy, image_state=img_state)
     details["read_only_preflight"] = preflight_facts
     failure_codes = list(preflight_facts.get("failure_codes") or [])
+    if attestation is not None:
+        externally_bound_cgroup = {
+            "CGROUP_V2_REQUIRED",
+            "CGROUP_CONTROLLER_MISSING",
+            "CGROUP_MEASUREMENT_FILE_MISSING",
+            "CGROUP_MEMORY_EVENT_KEY_MISSING",
+        }
+        failure_codes = [code for code in failure_codes if code not in externally_bound_cgroup]
 
     facts = preflight_facts.get("facts") or {}
+    if attestation is not None:
+        cluster = attestation["cluster"]
+        capacity = attestation["node_capacity"]
+        policy_node_label = policy["node_identity_label"]
+        if facts.get("current_context") != cluster["context"]:
+            failure_codes.append("ATTESTED_CLUSTER_CONTEXT_MISMATCH")
+        if facts.get("namespace_name") != cluster["namespace"]:
+            failure_codes.append("ATTESTED_CLUSTER_NAMESPACE_MISMATCH")
+        cluster_label = policy["cluster_identity_label"]
+        if (facts.get("namespace_labels") or {}).get(
+            cluster_label["key"]
+        ) != cluster["cluster_identity"]:
+            failure_codes.append("ATTESTED_CLUSTER_IDENTITY_MISMATCH")
+        version_identity = _canonical_json_sha256(
+            facts.get("kubernetes_version")
+        )
+        if version_identity != cluster["kubernetes_version_sha256"]:
+            failure_codes.append("ATTESTED_KUBERNETES_VERSION_MISMATCH")
+        if (facts.get("node_labels") or {}).get(policy_node_label["key"]) != capacity["node_identity"]:
+            failure_codes.append("ATTESTED_NODE_IDENTITY_MISMATCH")
+        if facts.get("node_name") != capacity["node_name"]:
+            failure_codes.append("ATTESTED_NODE_NAME_MISMATCH")
+        if facts.get("node_uid") != capacity["node_uid"]:
+            failure_codes.append("ATTESTED_NODE_UID_MISMATCH")
+        allocatable = facts.get("node_allocatable") or {}
+        gpu_resource = capacity["allocatable_gpu_resource"]
+        raw_gpu = 0 if gpu_resource is None else allocatable.get(gpu_resource)
+        if isinstance(raw_gpu, str) and raw_gpu.isdigit():
+            raw_gpu = int(raw_gpu)
+        observed_capacity = {
+            "allocatable_cpu_millicores": _cpu_m(allocatable.get("cpu")),
+            "allocatable_memory_mib": _memory_mib(allocatable.get("memory")),
+            "allocatable_gpu_count": raw_gpu,
+            "allocatable_gpu_resource": gpu_resource,
+        }
+        expected_capacity = {
+            key: capacity[key]
+            for key in (
+                "allocatable_cpu_millicores",
+                "allocatable_memory_mib",
+                "allocatable_gpu_count",
+                "allocatable_gpu_resource",
+            )
+        }
+        if observed_capacity != expected_capacity:
+            failure_codes.append("ATTESTED_NODE_CAPACITY_MISMATCH")
     current_context = facts.get("current_context")
     if current_context and any(prod_token in current_context.lower() for prod_token in FORBIDDEN_PRODUCTION_CONTEXTS):
         failure_codes.append("PRODUCTION_CLUSTER_FORBIDDEN")
@@ -386,20 +580,23 @@ def check_disposable_cluster_and_environment(*, image: str | None = None) -> Pre
     )
 
 
-def check_frozen_node_capacity(*, target: str) -> PreflightCheckResult:
+def check_frozen_node_capacity(
+    *, target: str, attestation: Mapping[str, Any] | None = None
+) -> PreflightCheckResult:
     blockers: list[str] = []
     reasons: list[str] = []
     details: dict[str, Any] = {}
 
     if target in ("efficiency", "all"):
         try:
-            capacity_contract = load_capacity_contract()
-            details["capacity_freeze_status"] = capacity_contract.get("freeze_status")
-            details["allocatable"] = capacity_contract.get("allocatable")
-            details["eligible_node"] = capacity_contract.get("eligible_node")
-            if capacity_contract.get("freeze_status") != "FROZEN":
+            capacity_contract = (attestation or {}).get("node_capacity") or {}
+            details["capacity_freeze_status"] = (
+                "EXTERNALLY_ATTESTED" if capacity_contract else "NOT_FROZEN"
+            )
+            details["allocatable"] = capacity_contract
+            if not capacity_contract:
                 blockers.append("NODE_CAPACITY_NOT_FROZEN")
-                reasons.append("Resource efficiency capacity contract is NOT_FROZEN.")
+                reasons.append("No externally attested node capacity was supplied.")
         except Exception as exc:
             blockers.append("NODE_CAPACITY_NOT_FROZEN")
             reasons.append(f"Failed to load capacity contract: {exc}")
@@ -413,12 +610,18 @@ def check_frozen_node_capacity(*, target: str) -> PreflightCheckResult:
     )
 
 
-def check_pinned_image_digest(*, image: str | None = None) -> PreflightCheckResult:
+def check_pinned_image_digest(
+    *, image: str | None = None, attestation: Mapping[str, Any] | None = None
+) -> PreflightCheckResult:
     blockers: list[str] = []
     reasons: list[str] = []
     details: dict[str, Any] = {}
 
-    img_state = load_image_state()
+    img_state = (
+        _external_image_state(attestation)
+        if attestation is not None
+        else load_image_state()
+    )
     declared_ref = img_state.get("image_reference")
     effective_image = image or declared_ref
     details["image_reference"] = effective_image
@@ -441,19 +644,30 @@ def check_pinned_image_digest(*, image: str | None = None) -> PreflightCheckResu
     )
 
 
-def check_cgroup_capability() -> PreflightCheckResult:
+def check_cgroup_capability(
+    attestation: Mapping[str, Any] | None = None,
+) -> PreflightCheckResult:
     policy = load_cluster_policy()
+    cgroup = (attestation or {}).get("cgroup") or {}
+    passed = bool(
+        cgroup
+        and cgroup.get("version") == policy.get("required_cgroup_version")
+        and set(policy.get("required_cgroup_controllers") or []).issubset(
+            set(cgroup.get("controllers") or [])
+        )
+        and cgroup.get("required_files_verified") is True
+    )
     return PreflightCheckResult(
         check_name="cgroup_telemetry_capability",
-        passed=True,
-        blocker_codes=(),
+        passed=passed,
+        blocker_codes=() if passed else ("CGROUP_CAPABILITY_NOT_ATTESTED",),
         details={
             "required_cgroup_version": policy.get("required_cgroup_version"),
             "required_controllers": policy.get("required_cgroup_controllers"),
             "required_files": policy.get("required_cgroup_files"),
             "required_memory_events": policy.get("required_memory_event_keys"),
         },
-        reasons=(),
+        reasons=() if passed else ("External cgroup-v2 capability attestation is missing.",),
     )
 
 
@@ -597,21 +811,33 @@ def evaluate_operator_preflight(
     resume: bool = False,
     manifest_path: Path | None = None,
     environ: Mapping[str, str] | None = None,
+    freeze_path: Path = AUTHORITATIVE_FREEZE_PATH,
+    readiness_attestation_path: Path | None = None,
 ) -> dict[str, Any]:
     """Evaluate all 16 execution prerequisites and emit authoritative preflight report."""
     if target not in ("envelope", "efficiency", "all"):
         raise ValueError(f"Invalid preflight target '{target}'. Must be envelope, efficiency, or all.")
 
+    selected_environ = os.environ if environ is None else environ
+    if readiness_attestation_path is None:
+        attestation_value = selected_environ.get(READINESS_ATTESTATION_ENV_VAR)
+        if attestation_value:
+            readiness_attestation_path = Path(attestation_value)
+    attestation_check, attestation = check_external_readiness_attestation(
+        freeze_path=freeze_path,
+        attestation_path=readiness_attestation_path,
+    )
     checks: list[PreflightCheckResult] = [
         check_frozen_git_revision(environ=environ),
-        check_authoritative_final_freeze(target=target),
+        check_authoritative_final_freeze(target=target, freeze_path=freeze_path),
+        attestation_check,
         check_workload_manifest(target=target, manifest_path=manifest_path),
-        check_approved_resource_oracle(target=target),
+        check_approved_resource_oracle(target=target, attestation=attestation),
         check_adapter_authenticity(adapter=adapter),
-        check_disposable_cluster_and_environment(image=image),
-        check_frozen_node_capacity(target=target),
-        check_pinned_image_digest(image=image),
-        check_cgroup_capability(),
+        check_disposable_cluster_and_environment(image=image, attestation=attestation),
+        check_frozen_node_capacity(target=target, attestation=attestation),
+        check_pinned_image_digest(image=image, attestation=attestation),
+        check_cgroup_capability(attestation),
         check_workload_correctness_markers(manifest_path=manifest_path),
         check_timeout_and_cleanup_contracts(),
         check_trial_ordering_contract(target=target),
@@ -666,6 +892,8 @@ def assert_live_execution_ready(
     resume: bool = False,
     manifest_path: Path | None = None,
     environ: Mapping[str, str] | None = None,
+    freeze_path: Path = AUTHORITATIVE_FREEZE_PATH,
+    readiness_attestation_path: Path | None = None,
 ) -> dict[str, Any]:
     """Fail closed with descriptive RuntimeError if environment is not READY for real execution."""
     report = evaluate_operator_preflight(
@@ -676,6 +904,8 @@ def assert_live_execution_ready(
         resume=resume,
         manifest_path=manifest_path,
         environ=environ,
+        freeze_path=freeze_path,
+        readiness_attestation_path=readiness_attestation_path,
     )
     if report["status"] != "READY":
         blockers = report["summary"]["blocker_codes"]
@@ -690,6 +920,8 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument("--image", type=str, default=None, help="Container image reference to check")
     parser.add_argument("--result-dir", type=Path, default=None, help="Target result directory to verify resume/pre-existence")
     parser.add_argument("--resume", action="store_true", help="Whether run is resuming")
+    parser.add_argument("--freeze", type=Path, default=AUTHORITATIVE_FREEZE_PATH, help="Authoritative final freeze manifest")
+    parser.add_argument("--readiness-attestation", type=Path, default=None, help="External E4 readiness attestation")
     parser.add_argument("--format", choices=("json", "text"), default="json", help="Output format")
     args = parser.parse_args(argv)
 
@@ -698,6 +930,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         image=args.image,
         result_dir=args.result_dir,
         resume=args.resume,
+        freeze_path=args.freeze,
+        readiness_attestation_path=args.readiness_attestation,
     )
 
     if args.format == "json":

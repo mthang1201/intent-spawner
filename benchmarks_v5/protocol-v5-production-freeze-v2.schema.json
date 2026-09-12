@@ -1,0 +1,210 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://intent-spawner.local/schemas/protocol-v5-production-freeze-v2.schema.json",
+  "title": "Protocol-v5 authoritative final execution freeze",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "protocol_version", "freeze_id", "created_at_utc",
+    "status", "source_control", "configuration_snapshot", "integrity_rules"
+  ],
+  "properties": {
+    "schema_version": {"const": "protocol-v5-freeze-v2.0.0"},
+    "protocol_version": {"const": "5.0.0"},
+    "freeze_id": {"$ref": "#/$defs/safeId"},
+    "created_at_utc": {"$ref": "#/$defs/utcTimestamp"},
+    "status": {"enum": ["FROZEN", "DRY_RUN"]},
+    "source_control": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "frozen_execution_sha", "frozen_execution_tree", "git_worktree_clean",
+        "freeze_artifact_commit_recorded_in_manifest"
+      ],
+      "properties": {
+        "frozen_execution_sha": {"$ref": "#/$defs/gitSha"},
+        "frozen_execution_tree": {"$ref": "#/$defs/gitSha"},
+        "git_worktree_clean": {"type": "boolean"},
+        "freeze_artifact_commit_recorded_in_manifest": {"const": false}
+      }
+    },
+    "configuration_snapshot": {"$ref": "#/$defs/configurationSnapshot"},
+    "integrity_rules": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "created_before_sealed_data_supply", "sealed_data_not_read_by_freeze",
+        "tuning_after_freeze_prohibited", "exclusive_create_no_overwrite",
+        "post_freeze_changes_restricted", "allowed_post_freeze_paths"
+      ],
+      "properties": {
+        "created_before_sealed_data_supply": {"const": true},
+        "sealed_data_not_read_by_freeze": {"const": true},
+        "tuning_after_freeze_prohibited": {"const": true},
+        "exclusive_create_no_overwrite": {"const": true},
+        "post_freeze_changes_restricted": {"const": true},
+        "allowed_post_freeze_paths": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "uniqueItems": true,
+          "items": {"type": "string", "minLength": 1}
+        }
+      }
+    }
+  },
+  "$defs": {
+    "safeId": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"},
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "gitSha": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+    "nonblank": {"type": "string", "minLength": 1, "pattern": ".*\\S.*"},
+    "utcTimestamp": {"type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(?:\\.[0-9]+)?Z$"},
+    "fileIdentity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "file_sha256"],
+      "properties": {
+        "path": {"$ref": "#/$defs/nonblank"},
+        "file_sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "indexIdentity": {
+      "type": "object",
+      "minProperties": 4,
+      "required": ["schema_version", "index_version", "index_checksum", "corpus_checksum"],
+      "properties": {
+        "schema_version": {"$ref": "#/$defs/nonblank"},
+        "index_version": {"$ref": "#/$defs/nonblank"},
+        "index_checksum": {"$ref": "#/$defs/sha256"},
+        "corpus_checksum": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "p3Decision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "snapshot_version", "status", "p3_active", "claim_eligible",
+        "verification_status", "evidence_classification", "confirmatory_data_used",
+        "decision_artifact_path", "decision_artifact_sha256",
+        "future_retention_rule", "source_artifacts"
+      ],
+      "properties": {
+        "snapshot_version": {"const": "protocol-v5-p3-final-inclusion-snapshot-v1.0.0"},
+        "status": {"const": "not_retained"},
+        "p3_active": {"const": false},
+        "claim_eligible": {"const": false},
+        "verification_status": {"const": "VERIFIED_EXCLUSION"},
+        "evidence_classification": {"const": "HISTORICAL_FORMATIVE"},
+        "confirmatory_data_used": {"const": false},
+        "decision_artifact_path": {"$ref": "#/$defs/nonblank"},
+        "decision_artifact_sha256": {"$ref": "#/$defs/sha256"},
+        "future_retention_rule": {"const": "requires_strict_source_recomputed_protocol_v5_development_gate"},
+        "source_artifacts": {
+          "type": "array", "minItems": 1,
+          "items": {"$ref": "#/$defs/fileIdentity"}
+        }
+      }
+    },
+    "verifiedP3DevelopmentGate": {
+      "type": "object",
+      "required": [
+        "snapshot_version", "status", "p3_active", "verification_status",
+        "decision_artifact_path", "decision_artifact_sha256", "development_split",
+        "raw_evidence", "component_evidence", "statistical_evidence"
+      ],
+      "properties": {
+        "snapshot_version": {"const": "protocol-v5-p3-gate-snapshot-v2.0.0"},
+        "status": {"enum": ["retained", "not_retained"]},
+        "p3_active": {"type": "boolean"},
+        "verification_status": {"const": "VERIFIED"},
+        "decision_artifact_path": {"$ref": "#/$defs/nonblank"},
+        "decision_artifact_sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "configurationSnapshot": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "p3_gate", "systems", "structured_intent", "runtime_package",
+        "candidate_catalog", "indexes", "prompts", "configuration",
+        "dynamic_resource_policy", "experiment_contracts",
+        "development_dataset", "environment_requirements", "environment"
+      ],
+      "properties": {
+        "p3_gate": {"oneOf": [{"$ref": "#/$defs/p3Decision"}, {"$ref": "#/$defs/verifiedP3DevelopmentGate"}]},
+        "systems": {
+          "type": "object", "additionalProperties": false,
+          "required": ["P1", "P2", "P3"],
+          "properties": {
+            "P1": {"type": "object", "required": ["backend_version", "implementation"], "properties": {"backend_version": {"$ref": "#/$defs/nonblank"}, "implementation": {"$ref": "#/$defs/fileIdentity"}}},
+            "P2": {"type": "object", "required": ["backend_version", "pipeline_version", "implementation"], "properties": {"backend_version": {"$ref": "#/$defs/nonblank"}, "pipeline_version": {"$ref": "#/$defs/nonblank"}, "implementation": {"$ref": "#/$defs/fileIdentity"}}},
+            "P3": {"type": "object", "required": ["backend_version", "pipeline_version", "implementation", "reranker_version", "reranker_model_id", "reranker_model_source", "active"], "properties": {"backend_version": {"$ref": "#/$defs/nonblank"}, "pipeline_version": {"$ref": "#/$defs/nonblank"}, "implementation": {"$ref": "#/$defs/fileIdentity"}, "reranker_version": {"$ref": "#/$defs/nonblank"}, "reranker_model_id": {"type": ["string", "null"]}, "reranker_model_source": {"$ref": "#/$defs/nonblank"}, "active": {"type": "boolean"}}}
+          }
+        },
+        "structured_intent": {
+          "type": "object", "additionalProperties": false,
+          "required": ["schema_version", "resource_constraints_schema_version", "model_contract", "extractor_implementation"],
+          "properties": {
+            "schema_version": {"$ref": "#/$defs/nonblank"},
+            "resource_constraints_schema_version": {"$ref": "#/$defs/nonblank"},
+            "model_contract": {"$ref": "#/$defs/fileIdentity"},
+            "extractor_implementation": {"$ref": "#/$defs/fileIdentity"}
+          }
+        },
+        "runtime_package": {"type": "object", "required": ["version", "sha256"], "properties": {"version": {"$ref": "#/$defs/nonblank"}, "sha256": {"$ref": "#/$defs/sha256"}}},
+        "candidate_catalog": {
+          "type": "object", "additionalProperties": false,
+          "required": ["version", "path", "file_sha256", "image_catalog_canonical_sha256", "profile_catalog_canonical_sha256", "corpus_version", "corpus_sha256", "candidate_count"],
+          "properties": {
+            "version": {"$ref": "#/$defs/nonblank"}, "path": {"$ref": "#/$defs/nonblank"},
+            "file_sha256": {"$ref": "#/$defs/sha256"}, "image_catalog_canonical_sha256": {"$ref": "#/$defs/sha256"},
+            "profile_catalog_canonical_sha256": {"$ref": "#/$defs/sha256"}, "corpus_version": {"$ref": "#/$defs/nonblank"},
+            "corpus_sha256": {"$ref": "#/$defs/sha256"}, "candidate_count": {"type": "integer", "minimum": 1}
+          }
+        },
+        "indexes": {"type": "object", "additionalProperties": false, "required": ["sparse", "dense", "hybrid", "source"], "properties": {"sparse": {"$ref": "#/$defs/indexIdentity"}, "dense": {"$ref": "#/$defs/indexIdentity"}, "hybrid": {"$ref": "#/$defs/indexIdentity"}, "source": {"const": "administrator_catalog_only"}}},
+        "prompts": {"type": "object", "required": ["P2_extractor", "P3_reranker"], "properties": {"P2_extractor": {"type": "object", "required": ["name", "version", "model_id", "model_source", "prompt_version", "prompt_sha256"]}, "P3_reranker": {"type": "object", "required": ["prompt_version", "prompt_sha256"]}}},
+        "configuration": {"type": "object", "required": ["P2", "P3", "provider", "retrieval", "constraints", "ranking"]},
+        "dynamic_resource_policy": {"type": "object", "additionalProperties": false, "required": ["path", "policy_version", "file_sha256", "semantic_sha256"], "properties": {"path": {"$ref": "#/$defs/nonblank"}, "policy_version": {"$ref": "#/$defs/nonblank"}, "file_sha256": {"$ref": "#/$defs/sha256"}, "semantic_sha256": {"$ref": "#/$defs/sha256"}}},
+        "experiment_contracts": {
+          "type": "object", "additionalProperties": false,
+          "required": ["E3", "E4", "E5"],
+          "properties": {
+            "E3": {
+              "type": "object", "additionalProperties": false,
+              "required": ["analysis", "timing", "scoring", "workload", "runtime", "files"],
+              "properties": {
+                "analysis": {"type": "object"}, "timing": {"type": "object"},
+                "scoring": {"type": "object"}, "workload": {"type": "object"},
+                "runtime": {"type": "object"},
+                "files": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/fileIdentity"}}
+              }
+            },
+            "E4": {
+              "type": "object", "additionalProperties": false,
+              "required": ["workload", "ordering", "statistics", "policy", "eligibility", "execution", "files"],
+              "properties": {
+                "workload": {"type": "object"}, "ordering": {"type": "object"},
+                "statistics": {"type": "object"}, "policy": {"type": "object"},
+                "eligibility": {"type": "object"}, "execution": {"type": "object"},
+                "files": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/fileIdentity"}}
+              }
+            },
+            "E5": {
+              "type": "object", "additionalProperties": false,
+              "required": ["functional_probe", "collector", "platform", "storage", "files"],
+              "properties": {
+                "functional_probe": {"type": "object"}, "collector": {"type": "object"},
+                "platform": {"type": "object"}, "storage": {"type": "object"},
+                "files": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/fileIdentity"}}
+              }
+            }
+          }
+        },
+        "development_dataset": {"type": "object", "required": ["dataset_id", "split_id", "role", "schema_version", "canonical_sha256", "file_sha256", "case_count", "family_count", "path"]},
+        "environment_requirements": {"type": "object", "required": ["python", "dependencies", "cluster", "storage"]},
+        "environment": {"type": "object", "required": ["python_version", "platform"]}
+      }
+    }
+  }
+}

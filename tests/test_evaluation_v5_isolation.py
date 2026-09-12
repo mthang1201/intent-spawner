@@ -982,8 +982,10 @@ def test_production_freeze_is_complete_immutable_and_contains_no_sealed_data(
     assert manifest["schema_version"] == FREEZE_SCHEMA_VERSION
     assert manifest["status"] == "FROZEN"
     assert manifest["source_control"] == {
-        "git_revision": FIXED_REVISION,
+        "frozen_execution_sha": FIXED_REVISION,
+        "frozen_execution_tree": FIXED_REVISION,
         "git_worktree_clean": True,
+        "freeze_artifact_commit_recorded_in_manifest": False,
     }
     assert snapshot["development_dataset"]["case_count"] == 18
     assert set(snapshot["systems"]) == {"P1", "P2", "P3"}
