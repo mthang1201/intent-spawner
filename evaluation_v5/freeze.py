@@ -781,10 +781,20 @@ def _verified_p3_gate_snapshot(
 ) -> dict[str, Any]:
     """Verify and recompute the recorded development gate before freezing it."""
 
-    if p3_gate_status == "not_retained":
-        return _validate_p3_exclusion_decision(p3_gate_evidence)
-
     gate_evidence = _require_repository_gate_evidence(p3_gate_evidence)
+    if p3_gate_status == "not_retained":
+        candidate = _strict_json_document(
+            gate_evidence.read_bytes(), label="P3 gate evidence"
+        )
+        if (
+            candidate.get("schema_version")
+            == "protocol-v5-p3-final-inclusion-decision-v1.0.0"
+        ):
+            return _validate_p3_exclusion_decision(gate_evidence)
+
+    # Existing source-recomputed development decisions remain valid for both
+    # outcomes.  The conservative historical/formative artifact is merely the
+    # default final exclusion; it does not weaken or replace the strict gate.
     from .p3_gate import P3GateValidationError, verify_p3_development_decision
 
     try:
