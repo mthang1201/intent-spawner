@@ -1380,7 +1380,17 @@ def build_configuration_snapshot(
             "python": ">=3.12,<3.15",
             "dependencies": {
                 name: _installed_version(name)
-                for name in ("PyYAML", "jsonschema", "numpy", "scipy", "pandas", "matplotlib", "statsmodels", "patsy")
+                for name in (
+                    "PyYAML",
+                    "jsonschema",
+                    "jupyterhub",
+                    "numpy",
+                    "scipy",
+                    "pandas",
+                    "matplotlib",
+                    "statsmodels",
+                    "patsy",
+                )
             },
             "cluster": {
                 "contract": "external_checksum_bound_e4_readiness_attestation",
