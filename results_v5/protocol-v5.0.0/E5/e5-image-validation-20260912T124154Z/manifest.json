@@ -1,0 +1,82 @@
+{
+  "backend_system_versions": {
+    "P1": {
+      "adapter_version": "protocol-v5-p1-frozen-adapter-v1",
+      "backend_name": "rule_based",
+      "backend_version": "rule-based-v1"
+    },
+    "P2": {
+      "adapter_version": "protocol-v5-p2-frozen-adapter-v1",
+      "backend_name": "p2",
+      "backend_version": "p2-hybrid-v1.0.0"
+    }
+  },
+  "candidate_catalog": {
+    "catalog_sha256": "bd2211d5fd769b5addec3c41e8cbd48bb0d9cd1c958aa554ada9bf88c29509f3",
+    "catalog_version": "2026-08-06.1",
+    "corpus_sha256": "987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444",
+    "corpus_version": "environment-candidate-corpus-v1"
+  },
+  "constraint_ranking_configuration": {
+    "constraint_evaluator_version": "p2-deterministic-constraint-evaluator-v1.0.0",
+    "constraint_policy_version": "p2-constraint-policy-v1.0.0",
+    "ranker_version": "p2-deterministic-ranker-v1.0.0"
+  },
+  "dataset_identity": {
+    "dataset_id": "protocol-v5-development-2026-08-22",
+    "dataset_sha256": "e3fff5167ef2194fb365fec7510d1efc2b17a18b13182063c2b63c26f021d3cd"
+  },
+  "embedding_indexes": {
+    "dense_index_sha256": "c0561bcd1ee6ec5153b710aef3deae88bd259a011ddd454513cbb1c675118387",
+    "dense_index_version": "environment-dense-index-v1",
+    "embedding_model_id": "intent-spawner-local-feature-hash",
+    "embedding_model_revision": "feature-hash-embedding-v1.0.0",
+    "hybrid_index_sha256": "45ea08f29492d796189920713636b3a9cae2f0fb264e023124eb38c8cfad83a4",
+    "hybrid_index_version": "environment-hybrid-index-v1",
+    "sparse_index_sha256": "931fac84b818cb934a37bfbfa76092a89626cd5eaffc869887de8558bc6fa747",
+    "sparse_index_version": "environment-sparse-index-v1"
+  },
+  "environment_identity": {
+    "environment_id": "e5-docker-darwin",
+    "execution_mode": "docker",
+    "git_info": {
+      "git_dirty": false,
+      "git_revision": "0f73c0a2da34916df1ef6134cc898ce01512acff"
+    },
+    "platform": "macOS-15.3.2-arm64-arm-64bit-Mach-O",
+    "python_version": "3.14.6 (main, Jun 10 2026, 10:03:53) [Clang 17.0.0 (clang-1700.6.4.2)]",
+    "runtime_detected": "docker",
+    "source_recommendation_run_id": "20260825T-observed-p1-p2-development-v1",
+    "source_recommendation_run_sha256": "25868752054231fa271e540210aad0845113ba3974722376029b18184959daf8"
+  },
+  "execution_status": "OBSERVED",
+  "execution_timestamp_utc": "2026-09-12T12:42:24.754068Z",
+  "experiment_id": "E5",
+  "extractor": {
+    "extractor_model_id": "deterministic-explicit-parser-v1.1.0-python-3.14",
+    "extractor_name": "p2-local-structured-parser",
+    "extractor_prompt_sha256": "88f4f6935bf7c3f7e0be87cc29af97761f72fcfa1f95c0a0e54ac7b800a16972",
+    "extractor_prompt_version": "local-parser-contract-v1.1.0",
+    "extractor_version": "local-structured-parser-v1.1.0"
+  },
+  "git_revision": "0f73c0a2da34916df1ef6134cc898ce01512acff",
+  "p3_reranker_version": null,
+  "protocol_version": "5.0.0",
+  "random_seeds": [],
+  "retrieval_configuration": {
+    "dense_top_k": 10,
+    "dense_weight": 1.0,
+    "retriever_version": "reciprocal-rank-fusion-hybrid-retriever-v1",
+    "rrf_k": 60.0,
+    "sparse_top_k": 10,
+    "sparse_weight": 1.0,
+    "top_k": 10
+  },
+  "run_id": "e5-image-validation-20260912T124154Z",
+  "schema_version": "protocol-v5-manifest-v1.0.0",
+  "split_identity": {
+    "split_id": "v5-development",
+    "stage": "development"
+  },
+  "structured_intent_schema_version": "structured-intent-v1"
+}
