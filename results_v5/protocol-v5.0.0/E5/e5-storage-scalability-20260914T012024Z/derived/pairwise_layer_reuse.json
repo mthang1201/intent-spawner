@@ -1,0 +1,207 @@
+{
+  "diagonal_semantics": "Self total layer count and self total logical layer bytes",
+  "image_digests": [
+    "sha256:a153ceb6b41db4f86b7d7dc20c7b63d08e75e2038d5e8758b954fda50ed2e18d",
+    "sha256:1a91a693c8cb086f3607f2ed38a2743ecd53dd1dac2d3e84e6cd647b33fd2bba",
+    "sha256:69c72823a4e0dbee17114bbe44d0377bc9a39504a76f6314995f7d5bfaa98d60",
+    "sha256:25ddc4f73bea5a252335775b59c0e1d4969bbf70ee78d3c6d1d9da02ce58fb68"
+  ],
+  "image_ids": [
+    "minimal-python",
+    "scipy-data-science",
+    "pytorch-deep-learning",
+    "tensorflow-deep-learning"
+  ],
+  "jaccard_byte_matrix": [
+    [
+      1.0,
+      0.441341,
+      0.108425,
+      0.117692
+    ],
+    [
+      0.441341,
+      1.0,
+      0.245672,
+      0.266669
+    ],
+    [
+      0.108425,
+      0.245672,
+      1.0,
+      0.146618
+    ],
+    [
+      0.117692,
+      0.266669,
+      0.146618,
+      1.0
+    ]
+  ],
+  "pairwise_records": [
+    {
+      "image_a": "minimal-python",
+      "image_a_digest": "sha256:a153ceb6b41db4f86b7d7dc20c7b63d08e75e2038d5e8758b954fda50ed2e18d",
+      "image_b": "minimal-python",
+      "image_b_digest": "sha256:a153ceb6b41db4f86b7d7dc20c7b63d08e75e2038d5e8758b954fda50ed2e18d",
+      "jaccard_layer_bytes": 1.0,
+      "jaccard_layer_count": 1.0,
+      "shared_layer_bytes": 575161288,
+      "shared_layer_count": 23,
+      "size_domain": "compressed_oci_manifest_layer_bytes"
+    },
+    {
+      "image_a": "minimal-python",
+      "image_a_digest": "sha256:a153ceb6b41db4f86b7d7dc20c7b63d08e75e2038d5e8758b954fda50ed2e18d",
+      "image_b": "scipy-data-science",
+      "image_b_digest": "sha256:1a91a693c8cb086f3607f2ed38a2743ecd53dd1dac2d3e84e6cd647b33fd2bba",
+      "jaccard_layer_bytes": 0.441341,
+      "jaccard_layer_count": 0.884615,
+      "shared_layer_bytes": 575161288,
+      "shared_layer_count": 23,
+      "size_domain": "compressed_oci_manifest_layer_bytes"
+    },
+    {
+      "image_a": "minimal-python",
+      "image_a_digest": "sha256:a153ceb6b41db4f86b7d7dc20c7b63d08e75e2038d5e8758b954fda50ed2e18d",
+      "image_b": "pytorch-deep-learning",
+      "image_b_digest": "sha256:69c72823a4e0dbee17114bbe44d0377bc9a39504a76f6314995f7d5bfaa98d60",
+      "jaccard_layer_bytes": 0.108425,
+      "jaccard_layer_count": 0.851852,
+      "shared_layer_bytes": 575161288,
+      "shared_layer_count": 23,
+      "size_domain": "compressed_oci_manifest_layer_bytes"
+    },
+    {
+      "image_a": "minimal-python",
+      "image_a_digest": "sha256:a153ceb6b41db4f86b7d7dc20c7b63d08e75e2038d5e8758b954fda50ed2e18d",
+      "image_b": "tensorflow-deep-learning",
+      "image_b_digest": "sha256:25ddc4f73bea5a252335775b59c0e1d4969bbf70ee78d3c6d1d9da02ce58fb68",
+      "jaccard_layer_bytes": 0.117692,
+      "jaccard_layer_count": 0.766667,
+      "shared_layer_bytes": 575161288,
+      "shared_layer_count": 23,
+      "size_domain": "compressed_oci_manifest_layer_bytes"
+    },
+    {
+      "image_a": "scipy-data-science",
+      "image_a_digest": "sha256:1a91a693c8cb086f3607f2ed38a2743ecd53dd1dac2d3e84e6cd647b33fd2bba",
+      "image_b": "scipy-data-science",
+      "image_b_digest": "sha256:1a91a693c8cb086f3607f2ed38a2743ecd53dd1dac2d3e84e6cd647b33fd2bba",
+      "jaccard_layer_bytes": 1.0,
+      "jaccard_layer_count": 1.0,
+      "shared_layer_bytes": 1303213553,
+      "shared_layer_count": 26,
+      "size_domain": "compressed_oci_manifest_layer_bytes"
+    },
+    {
+      "image_a": "scipy-data-science",
+      "image_a_digest": "sha256:1a91a693c8cb086f3607f2ed38a2743ecd53dd1dac2d3e84e6cd647b33fd2bba",
+      "image_b": "pytorch-deep-learning",
+      "image_b_digest": "sha256:69c72823a4e0dbee17114bbe44d0377bc9a39504a76f6314995f7d5bfaa98d60",
+      "jaccard_layer_bytes": 0.245672,
+      "jaccard_layer_count": 0.962963,
+      "shared_layer_bytes": 1303213553,
+      "shared_layer_count": 26,
+      "size_domain": "compressed_oci_manifest_layer_bytes"
+    },
+    {
+      "image_a": "scipy-data-science",
+      "image_a_digest": "sha256:1a91a693c8cb086f3607f2ed38a2743ecd53dd1dac2d3e84e6cd647b33fd2bba",
+      "image_b": "tensorflow-deep-learning",
+      "image_b_digest": "sha256:25ddc4f73bea5a252335775b59c0e1d4969bbf70ee78d3c6d1d9da02ce58fb68",
+      "jaccard_layer_bytes": 0.266669,
+      "jaccard_layer_count": 0.866667,
+      "shared_layer_bytes": 1303213553,
+      "shared_layer_count": 26,
+      "size_domain": "compressed_oci_manifest_layer_bytes"
+    },
+    {
+      "image_a": "pytorch-deep-learning",
+      "image_a_digest": "sha256:69c72823a4e0dbee17114bbe44d0377bc9a39504a76f6314995f7d5bfaa98d60",
+      "image_b": "pytorch-deep-learning",
+      "image_b_digest": "sha256:69c72823a4e0dbee17114bbe44d0377bc9a39504a76f6314995f7d5bfaa98d60",
+      "jaccard_layer_bytes": 1.0,
+      "jaccard_layer_count": 1.0,
+      "shared_layer_bytes": 5304688426,
+      "shared_layer_count": 27,
+      "size_domain": "compressed_oci_manifest_layer_bytes"
+    },
+    {
+      "image_a": "pytorch-deep-learning",
+      "image_a_digest": "sha256:69c72823a4e0dbee17114bbe44d0377bc9a39504a76f6314995f7d5bfaa98d60",
+      "image_b": "tensorflow-deep-learning",
+      "image_b_digest": "sha256:25ddc4f73bea5a252335775b59c0e1d4969bbf70ee78d3c6d1d9da02ce58fb68",
+      "jaccard_layer_bytes": 0.146618,
+      "jaccard_layer_count": 0.83871,
+      "shared_layer_bytes": 1303213553,
+      "shared_layer_count": 26,
+      "size_domain": "compressed_oci_manifest_layer_bytes"
+    },
+    {
+      "image_a": "tensorflow-deep-learning",
+      "image_a_digest": "sha256:25ddc4f73bea5a252335775b59c0e1d4969bbf70ee78d3c6d1d9da02ce58fb68",
+      "image_b": "tensorflow-deep-learning",
+      "image_b_digest": "sha256:25ddc4f73bea5a252335775b59c0e1d4969bbf70ee78d3c6d1d9da02ce58fb68",
+      "jaccard_layer_bytes": 1.0,
+      "jaccard_layer_count": 1.0,
+      "shared_layer_bytes": 4887003279,
+      "shared_layer_count": 30,
+      "size_domain": "compressed_oci_manifest_layer_bytes"
+    }
+  ],
+  "shared_layer_byte_matrix": [
+    [
+      575161288,
+      575161288,
+      575161288,
+      575161288
+    ],
+    [
+      575161288,
+      1303213553,
+      1303213553,
+      1303213553
+    ],
+    [
+      575161288,
+      1303213553,
+      5304688426,
+      1303213553
+    ],
+    [
+      575161288,
+      1303213553,
+      1303213553,
+      4887003279
+    ]
+  ],
+  "shared_layer_count_matrix": [
+    [
+      23,
+      23,
+      23,
+      23
+    ],
+    [
+      23,
+      26,
+      26,
+      26
+    ],
+    [
+      23,
+      26,
+      27,
+      26
+    ],
+    [
+      23,
+      26,
+      26,
+      30
+    ]
+  ],
+  "size_domain": "compressed_oci_manifest_layer_bytes",
+  "symmetry_verified": true
+}
