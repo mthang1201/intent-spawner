@@ -64,8 +64,8 @@ if [[ -n "$BACKEND_AUTH_VALUES" ]]; then
     --namespace "$NAMESPACE" --values "$BACKEND_AUTH_VALUES"
 fi
 
-printf '\n+ kubectl apply -f %q\n' "$CONFIGMAP_MANIFEST"
-kubectl apply -f "$CONFIGMAP_MANIFEST"
+printf '\n+ kubectl apply --server-side --force-conflicts -f %q\n' "$CONFIGMAP_MANIFEST"
+kubectl apply --server-side --force-conflicts -f "$CONFIGMAP_MANIFEST"
 
 run helm repo add jupyterhub https://hub.jupyter.org/helm-chart/ --force-update
 run helm repo update
