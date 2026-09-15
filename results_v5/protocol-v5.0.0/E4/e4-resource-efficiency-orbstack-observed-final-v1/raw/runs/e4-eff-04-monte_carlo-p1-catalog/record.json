@@ -1,0 +1,142 @@
+{
+  "admission_or_scheduling_reason": "UNKNOWN",
+  "cgroup_metrics": {
+    "cgroup_version": "v2",
+    "controllers": [
+      "cpuset",
+      "cpu",
+      "io",
+      "memory",
+      "pids"
+    ],
+    "cpu_full_window_average_m": 508.869676,
+    "cpu_interval_sample_max_m": 658.677881,
+    "cpu_max": "50000 100000",
+    "cpu_nr_periods_delta": 5,
+    "cpu_nr_throttled_delta": 5,
+    "cpu_throttled_usec_delta": 57451,
+    "cpu_usage_usec_delta": 253450,
+    "memory_current_sample_max_mib": 12.109375,
+    "memory_events_delta": {
+      "high": 0,
+      "low": 0,
+      "max": 0,
+      "oom": 0,
+      "oom_group_kill": 0,
+      "oom_kill": 0,
+      "sock_throttled": 0
+    },
+    "memory_high": "max",
+    "memory_max": "402653184",
+    "memory_peak_mib": 12.109375,
+    "sample_count": 3,
+    "sample_interval_seconds": 0.1,
+    "source": "cgroup_v2_in_container"
+  },
+  "collector_origin": "REAL_KUBERNETES_COLLECTOR",
+  "condition": "P1_CATALOG",
+  "container_runtime_seconds": 0.0,
+  "correctness": true,
+  "correctness_details": {
+    "all_invariants_match": true,
+    "checker_version": "frozen-invariant-checker-v1.0.0",
+    "expected_invariants": {
+      "inside": 393007,
+      "samples": 500000,
+      "tail": 9127871472810359356
+    },
+    "observed_invariants": {
+      "inside": 393007,
+      "samples": 500000,
+      "tail": 9127871472810359356
+    }
+  },
+  "correctness_invariants_ok": true,
+  "deterministic_seed": 8114,
+  "exclusion_reason": null,
+  "expected_marker_sha256": "dc6329a98ab0591fde6a6502176beab27f249eb028f1dcebe0eb1731495f9dfd",
+  "family_id": "monte_carlo",
+  "infrastructure_invalid": false,
+  "kubernetes": {
+    "cleanup_status": "succeeded",
+    "events": [
+      {
+        "count": 1,
+        "first_timestamp": "2026-09-15T08:33:37Z",
+        "last_timestamp": "2026-09-15T08:33:37Z",
+        "message": "Container image \"intent-spawner-resource-v5:e4-ffebc19805a6\" already present on machine",
+        "reason": "Pulled",
+        "type": "Normal"
+      },
+      {
+        "count": 1,
+        "first_timestamp": "2026-09-15T08:33:37Z",
+        "last_timestamp": "2026-09-15T08:33:37Z",
+        "message": "Created container: workload",
+        "reason": "Created",
+        "type": "Normal"
+      },
+      {
+        "count": 1,
+        "first_timestamp": "2026-09-15T08:33:37Z",
+        "last_timestamp": "2026-09-15T08:33:37Z",
+        "message": "Started container workload",
+        "reason": "Started",
+        "type": "Normal"
+      }
+    ],
+    "exit_code": 0,
+    "finished_at": "2026-09-15T08:33:37Z",
+    "image_id": "docker://sha256:1b7702f073b094eb3f5ced5fadd33d6f3e0346481b15ed8de998fd3a4e8a3bdd",
+    "image_reference": "intent-spawner-resource-v5:e4-ffebc19805a6",
+    "node_name": "orbstack",
+    "phase": "Succeeded",
+    "pod_name": "e4e-b0e8c4248aa2d61f62627f53",
+    "pod_uid": "3f26293c-ef3e-438c-b80f-80db6b277b97",
+    "reason": "Completed",
+    "restart_count": 0,
+    "started_at": "2026-09-15T08:33:37Z",
+    "terminated_reason": "Completed",
+    "waiting_reason": null
+  },
+  "observed_marker_sha256": "dc6329a98ab0591fde6a6502176beab27f249eb028f1dcebe0eb1731495f9dfd",
+  "observed_resources": {
+    "cpu_limit_m": 500,
+    "cpu_request_m": 100,
+    "gpu_count": 0,
+    "gpu_resource": null,
+    "memory_limit_mib": 384,
+    "memory_request_mib": 256
+  },
+  "oom": false,
+  "pending_or_admission_failure": false,
+  "plan_index": 225,
+  "planned_resources": {
+    "cpu_limit_m": 500,
+    "cpu_request_m": 100,
+    "gpu_count": 0,
+    "gpu_resource": null,
+    "memory_limit_mib": 384,
+    "memory_request_mib": 256
+  },
+  "pod_created": true,
+  "primary_outcome": "SUCCESS",
+  "primary_trial_id": "e4-eff-04-monte_carlo-p1-catalog",
+  "recorded_at_utc": "2026-09-15T08:33:39.630571Z",
+  "repetition": 4,
+  "replacement_of": null,
+  "runtime_error": false,
+  "scheduled": true,
+  "schema_version": "protocol-v5-resource-efficiency-trial-v1.0.0",
+  "sidecar_paths": {
+    "record": "raw/runs/e4-eff-04-monte_carlo-p1-catalog/record.json"
+  },
+  "success": true,
+  "timeout": false,
+  "timeout_seconds": 120,
+  "trial_id": "e4-eff-04-monte_carlo-p1-catalog",
+  "workload_fingerprint": "db484e6c6e3315e2b66b630c293ff291a43ef10dc34e591e0e4af0c68c4ac4a9",
+  "workload_instance_id": "monte-carlo-v1-samples-500000-seed-8114",
+  "workload_output_exists": true,
+  "workload_runtime_seconds": 0.498283
+}

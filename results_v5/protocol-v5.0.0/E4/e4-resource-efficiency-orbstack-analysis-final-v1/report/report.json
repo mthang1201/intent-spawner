@@ -1,0 +1,42 @@
+{
+  "capacity_evidence_type": "SIMULATED_CAPACITY",
+  "capacity_scope": "deterministic request-packing simulation only",
+  "cost_semantics": {
+    "cpu": "sum CPU request-time across all valid attempts divided by successful tasks",
+    "memory": "sum memory request-time across all valid attempts divided by successful tasks",
+    "missing_scheduled_duration": "undefined, never imputed as zero",
+    "zero_success": "undefined (null with ZERO_SUCCESS), never zero"
+  },
+  "design_counts": {
+    "independent_semantic_n": 16,
+    "number_of_families": 16,
+    "raw_primary_trial_count": 640,
+    "repetitions_per_family_condition": 10
+  },
+  "empirical_scope": "single-pod sequential Kubernetes evidence",
+  "experiment": "E4_RESOURCE_EFFICIENCY",
+  "limitations": [
+    "No claim about real concurrent-cluster throughput follows from request packing.",
+    "Allocation-oracle comparisons apply only to the exact frozen workload instances."
+  ],
+  "observed_concurrency_claims_permitted": false,
+  "pareto": [
+    {
+      "classification": "STRICT_FRONTIER_IMPROVEMENT",
+      "condition": "P1_CATALOG",
+      "reference": "STATIC_LARGE"
+    },
+    {
+      "classification": "STRICT_FRONTIER_IMPROVEMENT",
+      "condition": "P2_CATALOG",
+      "reference": "STATIC_LARGE"
+    },
+    {
+      "classification": "STRICT_FRONTIER_IMPROVEMENT",
+      "condition": "P2_DYNAMIC",
+      "reference": "STATIC_LARGE"
+    }
+  ],
+  "primary_semantic_unit": "workload family",
+  "repetitions_role": "within-family run variability"
+}

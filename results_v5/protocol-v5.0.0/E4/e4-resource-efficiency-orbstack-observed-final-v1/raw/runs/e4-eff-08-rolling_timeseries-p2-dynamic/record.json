@@ -1,0 +1,142 @@
+{
+  "admission_or_scheduling_reason": "UNKNOWN",
+  "cgroup_metrics": {
+    "cgroup_version": "v2",
+    "controllers": [
+      "cpuset",
+      "cpu",
+      "io",
+      "memory",
+      "pids"
+    ],
+    "cpu_full_window_average_m": 1007.674236,
+    "cpu_interval_sample_max_m": null,
+    "cpu_max": "150000 100000",
+    "cpu_nr_periods_delta": 0,
+    "cpu_nr_throttled_delta": 0,
+    "cpu_throttled_usec_delta": 0,
+    "cpu_usage_usec_delta": 60553,
+    "memory_current_sample_max_mib": 11.304688,
+    "memory_events_delta": {
+      "high": 0,
+      "low": 0,
+      "max": 0,
+      "oom": 0,
+      "oom_group_kill": 0,
+      "oom_kill": 0,
+      "sock_throttled": 0
+    },
+    "memory_high": "max",
+    "memory_max": "1610612736",
+    "memory_peak_mib": 12.710938,
+    "sample_count": 0,
+    "sample_interval_seconds": 0.1,
+    "source": "cgroup_v2_in_container"
+  },
+  "collector_origin": "REAL_KUBERNETES_COLLECTOR",
+  "condition": "P2_DYNAMIC",
+  "container_runtime_seconds": 0.0,
+  "correctness": true,
+  "correctness_details": {
+    "all_invariants_match": true,
+    "checker_version": "frozen-invariant-checker-v1.0.0",
+    "expected_invariants": {
+      "checksum": 3747453850101910656,
+      "points": 300000,
+      "window": 128
+    },
+    "observed_invariants": {
+      "checksum": 3747453850101910656,
+      "points": 300000,
+      "window": 128
+    }
+  },
+  "correctness_invariants_ok": true,
+  "deterministic_seed": 8113,
+  "exclusion_reason": null,
+  "expected_marker_sha256": "b8eb84828578c3bb2d04871d945051847e12de066e856a6522fa8481a0a0d4c5",
+  "family_id": "rolling_timeseries",
+  "infrastructure_invalid": false,
+  "kubernetes": {
+    "cleanup_status": "succeeded",
+    "events": [
+      {
+        "count": 1,
+        "first_timestamp": "2026-09-15T08:45:13Z",
+        "last_timestamp": "2026-09-15T08:45:13Z",
+        "message": "Container image \"intent-spawner-resource-v5:e4-ffebc19805a6\" already present on machine",
+        "reason": "Pulled",
+        "type": "Normal"
+      },
+      {
+        "count": 1,
+        "first_timestamp": "2026-09-15T08:45:13Z",
+        "last_timestamp": "2026-09-15T08:45:13Z",
+        "message": "Created container: workload",
+        "reason": "Created",
+        "type": "Normal"
+      },
+      {
+        "count": 1,
+        "first_timestamp": "2026-09-15T08:45:13Z",
+        "last_timestamp": "2026-09-15T08:45:13Z",
+        "message": "Started container workload",
+        "reason": "Started",
+        "type": "Normal"
+      }
+    ],
+    "exit_code": 0,
+    "finished_at": "2026-09-15T08:45:13Z",
+    "image_id": "docker://sha256:1b7702f073b094eb3f5ced5fadd33d6f3e0346481b15ed8de998fd3a4e8a3bdd",
+    "image_reference": "intent-spawner-resource-v5:e4-ffebc19805a6",
+    "node_name": "orbstack",
+    "phase": "Succeeded",
+    "pod_name": "e4e-4945585567138e5ecd5993e1",
+    "pod_uid": "05d45f0f-a39f-425a-8b9e-a912ba901def",
+    "reason": "Completed",
+    "restart_count": 0,
+    "started_at": "2026-09-15T08:45:13Z",
+    "terminated_reason": "Completed",
+    "waiting_reason": null
+  },
+  "observed_marker_sha256": "b8eb84828578c3bb2d04871d945051847e12de066e856a6522fa8481a0a0d4c5",
+  "observed_resources": {
+    "cpu_limit_m": 1500,
+    "cpu_request_m": 1100,
+    "gpu_count": 0,
+    "gpu_resource": null,
+    "memory_limit_mib": 1536,
+    "memory_request_mib": 1280
+  },
+  "oom": false,
+  "pending_or_admission_failure": false,
+  "plan_index": 453,
+  "planned_resources": {
+    "cpu_limit_m": 1500,
+    "cpu_request_m": 1100,
+    "gpu_count": 0,
+    "gpu_resource": null,
+    "memory_limit_mib": 1536,
+    "memory_request_mib": 1280
+  },
+  "pod_created": true,
+  "primary_outcome": "SUCCESS",
+  "primary_trial_id": "e4-eff-08-rolling_timeseries-p2-dynamic",
+  "recorded_at_utc": "2026-09-15T08:45:15.721771Z",
+  "repetition": 8,
+  "replacement_of": null,
+  "runtime_error": false,
+  "scheduled": true,
+  "schema_version": "protocol-v5-resource-efficiency-trial-v1.0.0",
+  "sidecar_paths": {
+    "record": "raw/runs/e4-eff-08-rolling_timeseries-p2-dynamic/record.json"
+  },
+  "success": true,
+  "timeout": false,
+  "timeout_seconds": 120,
+  "trial_id": "e4-eff-08-rolling_timeseries-p2-dynamic",
+  "workload_fingerprint": "2a7da40e7b51e018c3172c97b4685e11c17b9042b7fd0a59b1000b844e06ee0e",
+  "workload_instance_id": "rolling-timeseries-v1-points-300000-window-128-seed-8113",
+  "workload_output_exists": true,
+  "workload_runtime_seconds": 0.060284
+}
