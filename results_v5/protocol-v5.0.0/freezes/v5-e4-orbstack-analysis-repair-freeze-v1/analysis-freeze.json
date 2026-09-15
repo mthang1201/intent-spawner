@@ -5,7 +5,7 @@
   "status": "FROZEN_FOR_POST_EXECUTION_CORRECTIVE_ANALYSIS",
   "created_at_utc": "2026-09-15T09:35:51Z",
   "package_created_at_utc": "2026-09-15T09:35:51Z",
-  "analysis_source_commit": "5946546af666e03459438d64588fd18b16e1e1f4",
+  "analysis_source_commit": "bfc76bb3d8075f960237e15fe0de9f50df39b84f",
   "original_confirmatory_freeze": {
     "freeze_id": "v5-e4-orbstack-confirmatory-freeze-v1",
     "manifest_path": "results_v5/protocol-v5.0.0/freezes/v5-e4-orbstack-confirmatory-freeze-v1/freeze-manifest.json",
@@ -58,7 +58,7 @@
     {
       "role": "analysis_evidence_validator",
       "path": "evaluation_v5/resource/efficiency_evidence.py",
-      "file_sha256": "a26e575fafffc161b4a7ffb8b1a62e7c08420770f4d674315290e6e471714058"
+      "file_sha256": "6d02426fcacc2ddc60dfa7d509a0becac0aa811bc86dfe757304eab906868040"
     },
     {
       "role": "efficiency_contracts",
