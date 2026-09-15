@@ -89,6 +89,23 @@ def _username(subject: object) -> str:
     return "anonymous-user"
 
 
+_DATASET_SIZE_PATTERN = re.compile(
+    r"\b([0-9]+(?:\.[0-9]+)?)\s*(?:gb|gib)\b", re.IGNORECASE
+)
+
+
+def _extract_dataset_size_gb(text: str) -> float | None:
+    match = _DATASET_SIZE_PATTERN.search(text)
+    if match:
+        try:
+            val = float(match.group(1))
+            if math.isfinite(val) and val >= 0:
+                return val
+        except (ValueError, TypeError):
+            pass
+    return None
+
+
 def validate_preview_request(values: object) -> RecommendationRequest:
     if not isinstance(values, dict):
         raise ValueError("recommendation request must be a JSON object")
@@ -113,6 +130,8 @@ def validate_preview_request(values: object) -> RecommendationRequest:
             raise ValueError("dataset_size_gb must be a finite non-negative number") from None
         if not math.isfinite(parsed_size) or parsed_size < 0:
             raise ValueError("dataset_size_gb must be a finite non-negative number")
+    else:
+        parsed_size = _extract_dataset_size_gb(intent)
     return RecommendationRequest(
         intent=intent,
         dataset_size_gb=parsed_size,

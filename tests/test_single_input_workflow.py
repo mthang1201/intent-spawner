@@ -151,7 +151,7 @@ def test_workload_alias_is_rejected_as_unsupported_field():
 
 
 def test_legacy_fields_backward_compatibility():
-    # When omitted, dataset_size_gb is None
+    # When omitted and no size in intent, dataset_size_gb is None
     req = validate_preview_request({"intent": "train a model"})
     assert req.intent == "train a model"
     assert req.dataset_size_gb is None
@@ -164,6 +164,21 @@ def test_legacy_fields_backward_compatibility():
     assert req_legacy.intent == "train a model"
     assert req_legacy.dataset_size_gb == 3.5
     assert req_legacy.code_context == "import torch"
+
+
+def test_validate_preview_request_extracts_dataset_size_from_natural_language():
+    req = validate_preview_request({"intent": "train a model on 5 GB of tabular data"})
+    assert req.dataset_size_gb == 5.0
+
+    req_gib = validate_preview_request({"intent": "process a 2.5 GiB parquet dataset"})
+    assert req_gib.dataset_size_gb == 2.5
+
+    # Explicit dataset_size_gb overrides intent regex
+    req_override = validate_preview_request({
+        "intent": "train on 5 GB of data",
+        "dataset_size_gb": 10.0,
+    })
+    assert req_override.dataset_size_gb == 10.0
 
 
 # --- 3. P1 Rule-Based Baseline Tests ---
@@ -206,6 +221,22 @@ def test_p1_with_natural_language_and_backward_compatible_size():
     legacy_rec = p1.recommend(legacy_req)
     assert any("dataset size >= 2GB" in reason for reason in legacy_rec.reasons)
     assert legacy_rec.profile == "large"
+
+
+def test_p1_end_to_end_single_input_with_extracted_size():
+    p1 = RuleBasedRecommender(catalog=load_image_catalog())
+
+    # User enters 5 GB in natural language into the single input form
+    req = validate_preview_request({
+        "intent": "I want to process a 5 GB CSV dataset using pandas for data analytics."
+    })
+    assert req.dataset_size_gb == 5.0
+    rec = p1.recommend(req)
+
+    # Size extracted by the UI layer allows P1 to evaluate dataset size >= 2GB (+3 points)
+    assert any("dataset size >= 2GB" in reason for reason in rec.reasons)
+    assert rec.profile == "large"
+    assert rec.image_id == "scipy-data-science"
 
 
 def test_p1_keyword_gpu_short_circuit_from_raw_natural_language():

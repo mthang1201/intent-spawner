@@ -95,7 +95,7 @@
     "recommender/external_llm.py": "f2d15faf47df3bb034b77100288b81f5088f1cf7fce4e55bab2c20ed770fb767",
     "recommender/hybrid_retrieval.py": "59a550e8f42214c13b284d4a59c99e28aa9d8db0f6456af60ad3adedd6b544b3",
     "recommender/image-catalog.yaml": "f45b04efc2ea6f271d49c6806b58bfc0f30503cb68944930609f6e0f71882a71",
-    "recommender/jupyterhub_integration.py": "a5ac3b2e860061eb1f14dd966019a7a03c860b608e4d571eba158a1f7223b60b",
+    "recommender/jupyterhub_integration.py": "350f83d9c2c6993a4e2a17ae46dc99c4abb0a0ead340e2503c3cc3908b4a0880",
     "recommender/local_embeddings.py": "70bc2de0dd1423268e10618308e63264aa6298ca16e00dc63c3545500136adf6",
     "recommender/local_structured_intent.py": "b9c249d1c6db9b664ef11275b7ca5dc355d6b75ab0f0ebac4d3a59631882d5ba",
     "recommender/models.py": "f9574976aaecb8a02e052f5a92ac4a34357864cf85592f8cc4f7603022fa39fa",
