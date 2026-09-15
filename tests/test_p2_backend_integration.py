@@ -8,7 +8,11 @@ import pytest
 
 from recommender.deployment import DeploymentMetadata
 from recommender.hybrid_retrieval import HybridCandidateHit, HybridRetrievalResult
-from recommender.jupyterhub_integration import PREVIEW_VERSION, RecommendationPreviewRuntime
+from recommender.jupyterhub_integration import (
+    PREVIEW_VERSION,
+    RecommendationPreviewRuntime,
+    options_form,
+)
 from recommender.local_structured_intent import LocalStructuredIntentExtractor
 from recommender.models import GPURequirement, RecommendationRequest, RetrievalSource
 from recommender.p2_backend import P2Recommender
@@ -17,10 +21,10 @@ from recommender.registry import DEFAULT_REGISTRY, create_recommender
 from recommender.rule_based import PROFILES, load_image_catalog
 
 
-def _spawner(*, options=None):
+def _spawner(*, options=None, username="alice"):
     logs = []
     return SimpleNamespace(
-        user=SimpleNamespace(name="alice"),
+        user=SimpleNamespace(name=username),
         user_options=options or {},
         extra_annotations={},
         extra_resource_guarantees={},
@@ -192,5 +196,171 @@ def test_infeasible_p2_preview_requires_existing_manual_override_path():
         audit = json.loads(target.logs[-1][1])
         assert audit["p2_provenance"]["fallback_category"] == "unsupported_catalog"
         assert "requires a GPU" not in json.dumps(audit)
+        # Verify infeasibility metadata is exposed
+        assert "infeasibility" in preview
+        assert preview["infeasibility"]["infeasible"] is True
+        assert preview["infeasibility"]["message"] == "No approved profile fully satisfies this workload."
     finally:
         runtime.executor.shutdown()
+
+
+def test_infeasible_workload_triggers_server_side_confirmation_block():
+    backend = P2Recommender()
+    runtime = _runtime(backend)
+    try:
+        preview = asyncio.run(
+            runtime.issue(
+                "alice",
+                {
+                    "intent": "Requires GPU acceleration with cuda 12 and 64 GB RAM.",
+                    "code_context": "import torch",
+                },
+            )
+        )
+        assert preview["requires_manual_override"] is True
+        inf = preview["infeasibility"]
+        assert inf["infeasible"] is True
+        assert inf["message"] == "No approved profile fully satisfies this workload."
+        assert "action_guidance" in inf
+
+        # Server-side confirmation rejection: accept action is strictly blocked
+        with pytest.raises(ValueError, match="manual override is required"):
+            runtime.options_from_form(
+                _spawner(username="alice"),
+                {
+                    "preview_version": [PREVIEW_VERSION],
+                    "decision_action": ["accept"],
+                    "recommendation_preview_id": [preview["recommendation_preview_id"]],
+                },
+            )
+
+        # Manual override succeeds
+        options = runtime.options_from_form(
+            _spawner(username="alice"),
+            {
+                "preview_version": [PREVIEW_VERSION],
+                "decision_action": ["override"],
+                "recommendation_preview_id": [preview["recommendation_preview_id"]],
+                "override_profile": ["large"],
+                "override_image_id": ["scipy-data-science"],
+            },
+        )
+        assert options["applied_profile"] == "large"
+        assert options["applied_image_id"] == "scipy-data-science"
+    finally:
+        runtime.executor.shutdown()
+
+
+def test_infeasible_preview_forwards_detailed_backend_infeasibility_info():
+    class InfeasibleDetailedBackend:
+        def __init__(self):
+            self.catalog = load_image_catalog()
+            self.backend_name = "p2_mock"
+            self.backend_version = "1.0.0"
+            self.generation = {"backend": "mock-v1"}
+
+        def recommend_with_metadata(self, request, *args, **kwargs):
+            from recommender.models import SpawnRecommendation
+            from recommender.reliability import RecommendationMetadata, RecommendationResult
+            rec = SpawnRecommendation(
+                profile="small",
+                image_id="scipy-data-science",
+                image_reference=self.catalog["images"]["scipy-data-science"]["reference"],
+                catalog_version=self.catalog["catalog_version"],
+                reasons=["Fallback selection"],
+                image_reasons=["Default fallback"],
+                score=1.0,
+                backend_name="p2_mock",
+                backend_version="1.0.0",
+            )
+            class EnrichedMetadata(RecommendationMetadata):
+                def to_operational_dict(self):
+                    d = super().to_operational_dict()
+                    d["infeasibility_info"] = {
+                        "infeasible": True,
+                        "requested_resources": {"cpu_cores": 16.0, "memory_gb": 64.0, "gpu": "required"},
+                        "catalog_limits": {"cpu_cores": 2.0, "memory_gb": 2.0, "gpu_count": 0},
+                        "unmet_constraints": ["minimum_cpu_cores:16", "minimum_memory_gb:64", "gpu:required"],
+                        "message": "No approved profile fully satisfies this workload.",
+                        "action_guidance": "Please edit your workload intent or explicitly choose a manual override below.",
+                    }
+                    return d
+
+            metadata = EnrichedMetadata(
+                requested_backend="p2_mock",
+                effective_backend="p2_mock",
+                attempt_count=1,
+                total_elapsed_seconds=0.01,
+                timed_out=False,
+                deadline_exhausted=False,
+                fallback_used=True,
+                fallback_error_category="no_feasible_candidate",
+                p2_provenance={
+                    "fallback_category": "no_feasible_candidate",
+                    "feasible_candidate_count": 0,
+                },
+            )
+            return RecommendationResult(rec, metadata)
+
+    backend = InfeasibleDetailedBackend()
+    runtime = _runtime(backend)
+    try:
+        preview = asyncio.run(
+            runtime.issue(
+                "bob",
+                {"intent": "Large multi-gpu training workload with 64 GB RAM and 16 CPU cores."},
+            )
+        )
+        assert preview["requires_manual_override"] is True
+        inf = preview["infeasibility"]
+        assert inf["infeasible"] is True
+        assert inf["requested_resources"]["cpu_cores"] == 16.0
+        assert inf["requested_resources"]["memory_gb"] == 64.0
+        assert inf["requested_resources"]["gpu"] == "required"
+        assert inf["catalog_limits"]["cpu_cores"] == 2.0
+        assert inf["catalog_limits"]["memory_gb"] == 2.0
+        assert inf["catalog_limits"]["gpu_count"] == 0
+        assert "minimum_cpu_cores:16" in inf["unmet_constraints"]
+    finally:
+        runtime.executor.shutdown()
+
+
+def test_feasible_workload_does_not_show_warning_or_infeasibility():
+    backend = P2Recommender()
+    runtime = _runtime(backend)
+    try:
+        preview = asyncio.run(
+            runtime.issue(
+                "dave",
+                {
+                    "intent": "Basic pandas data analysis and plotting with matplotlib.",
+                    "dataset_size_gb": 0.1,
+                    "code_context": "import pandas as pd",
+                },
+            )
+        )
+        assert preview.get("requires_manual_override") is not True
+        assert "infeasibility" not in preview
+
+        options = runtime.options_from_form(
+            _spawner(username="dave"),
+            {
+                "preview_version": [PREVIEW_VERSION],
+                "decision_action": ["accept"],
+                "recommendation_preview_id": [preview["recommendation_preview_id"]],
+            },
+        )
+        assert options["decision_action"] == "accept"
+    finally:
+        runtime.executor.shutdown()
+
+
+def test_options_form_html_contains_infeasibility_warning_elements():
+    backend = P2Recommender()
+    runtime = _runtime(backend)
+    html_output = options_form(runtime, "/hub/recommendation-preview")
+    assert 'id="infeasibility-warning"' in html_output
+    assert 'id="infeasibility-req-line"' in html_output
+    assert 'id="infeasibility-avail-line"' in html_output
+    assert "Catalog limits per resource:" in html_output
+    assert "Workload exceeds available resources" in html_output

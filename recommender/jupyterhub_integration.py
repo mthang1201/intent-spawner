@@ -247,6 +247,20 @@ class RecommendationPreviewRuntime:
             response["resource_decision"] = record["resource_decision"]
         if record.get("requires_manual_override"):
             response["requires_manual_override"] = True
+            infeasibility = metadata.get("infeasibility_info")
+            if isinstance(infeasibility, Mapping):
+                record["infeasibility"] = dict(infeasibility)
+                response["infeasibility"] = dict(infeasibility)
+            else:
+                generic_infeasibility = {
+                    "infeasible": True,
+                    "message": "No approved profile fully satisfies this workload.",
+                    "action_guidance": (
+                        "Please edit your workload intent or explicitly choose a manual override below."
+                    ),
+                }
+                record["infeasibility"] = generic_infeasibility
+                response["infeasibility"] = generic_infeasibility
         return response
 
     def validate(self, preview_id: object, username: str, *, consume: bool) -> dict[str, Any]:
@@ -496,6 +510,16 @@ def options_form(runtime: RecommendationPreviewRuntime, endpoint: str) -> str:
       </div>
       <p id="preview-error" hidden role="alert" style="color:#d9534f;margin-top:0.5rem"></p>
       <section id="recommendation-preview" hidden style="margin-top:1rem;padding:1rem;border:1px solid #bbb">
+        <div id="infeasibility-warning" hidden role="alert" style="margin-bottom:1rem;padding:0.75rem 1rem;background-color:#fff3cd;border:1px solid #ffeeba;border-left:5px solid #ffc107;color:#856404;border-radius:4px">
+          <h4 style="margin:0 0 0.5rem 0;color:#856404;display:flex;align-items:center;gap:0.5rem">
+            <span>⚠</span> <span>Workload exceeds available resources</span>
+          </h4>
+          <div id="infeasibility-req-line" hidden style="margin-bottom:0.25rem"><strong>Your requirement:</strong> <span id="infeasibility-req-text"></span></div>
+          <div id="infeasibility-avail-line" hidden style="margin-bottom:0.25rem"><strong>Catalog limits per resource:</strong> <span id="infeasibility-avail-text"></span></div>
+          <div id="infeasibility-unmet-line" hidden style="margin-bottom:0.25rem"><strong>Unmet constraints:</strong> <span id="infeasibility-unmet-text"></span></div>
+          <p id="infeasibility-message" style="margin:0.5rem 0 0.25rem 0;font-weight:600">No approved profile fully satisfies this workload.</p>
+          <p style="margin:0;font-size:0.9rem">The normal recommendation cannot be confirmed. Please edit your workload intent above or explicitly choose an approved profile using the manual override below.</p>
+        </div>
         <h3>Recommendation Preview</h3>
         <dl><dt>Resource profile</dt><dd id="preview-profile"></dd>
         <dt>Notebook image</dt><dd id="preview-image"></dd>
@@ -523,7 +547,7 @@ def options_form(runtime: RecommendationPreviewRuntime, endpoint: str) -> str:
       const values=()=>({intent:intentField.value});
       const current=()=>JSON.stringify(values());
       const cookie=name=>document.cookie.split(";").map(v=>v.trim()).find(v=>v.startsWith(name+"="))?.split("=").slice(1).join("=")||"";
-      function invalidate(){fingerprint="";token.value="";action.value="";panel.hidden=true;overridePanel.hidden=true;confirm.disabled=true;overrideSubmit.disabled=true;}
+      function invalidate(){fingerprint="";token.value="";action.value="";panel.hidden=true;overridePanel.hidden=true;confirm.disabled=true;overrideSubmit.disabled=true;document.getElementById("infeasibility-warning").hidden=true;}
       intentField.addEventListener("input",invalidate);
       document.getElementById("preview-recommendation").addEventListener("click",async()=>{
         invalidate(); const error=document.getElementById("preview-error"); error.hidden=true;
@@ -543,7 +567,53 @@ def options_form(runtime: RecommendationPreviewRuntime, endpoint: str) -> str:
           const reasons=[...rec.reasons,...rec.image_reasons]; document.getElementById("preview-reasons").replaceChildren(...reasons.map(reason=>{const li=document.createElement("li");li.textContent=reason;return li;}));
           document.getElementById("override_profile").value=payload.applied_profile; document.getElementById("override_image_id").value=rec.image_id;
           panel.hidden=false; confirm.disabled=Boolean(payload.requires_manual_override); overrideSubmit.disabled=false;
-          if(payload.requires_manual_override){overridePanel.hidden=false;}
+          const warningBox=document.getElementById("infeasibility-warning");
+          if(payload.requires_manual_override){
+            const inf=payload.infeasibility||{};
+            const req=inf.requested_resources||{};
+            const reqParts=[];
+            if(req.cpu_cores!=null) reqParts.push("CPU ≥ "+req.cpu_cores+" cores");
+            if(req.memory_gb!=null) reqParts.push("RAM ≥ "+req.memory_gb+" GB");
+            if(req.gpu!=null) reqParts.push("GPU: "+req.gpu);
+            const reqLine=document.getElementById("infeasibility-req-line");
+            if(reqParts.length>0){
+              document.getElementById("infeasibility-req-text").textContent=reqParts.join(" · ");
+              reqLine.hidden=false;
+            } else {
+              reqLine.hidden=true;
+            }
+
+            const limits=inf.catalog_limits||{};
+            const limitParts=[];
+            if(limits.cpu_cores!=null) limitParts.push("CPU up to "+limits.cpu_cores+" cores");
+            if(limits.memory_gb!=null) limitParts.push("RAM up to "+limits.memory_gb+" GB");
+            if(limits.gpu_count!=null) limitParts.push("GPU up to "+limits.gpu_count);
+            const availLine=document.getElementById("infeasibility-avail-line");
+            if(limitParts.length>0){
+              document.getElementById("infeasibility-avail-text").textContent=limitParts.join(" · ");
+              availLine.hidden=false;
+            } else {
+              availLine.hidden=true;
+            }
+
+            const unmet=inf.unmet_constraints||[];
+            const extraUnmet=unmet.filter(c=>!c.startsWith("minimum_cpu_cores:")&&!c.startsWith("minimum_memory_gb:")&&c!=="gpu:required");
+            const unmetLine=document.getElementById("infeasibility-unmet-line");
+            if(extraUnmet.length>0){
+              document.getElementById("infeasibility-unmet-text").textContent=extraUnmet.join(", ");
+              unmetLine.hidden=false;
+            } else {
+              unmetLine.hidden=true;
+            }
+
+            if(inf.message){
+              document.getElementById("infeasibility-message").textContent=inf.message;
+            }
+            warningBox.hidden=false;
+            overridePanel.hidden=false;
+          } else {
+            warningBox.hidden=true;
+          }
         } catch (exc) { error.textContent=exc.message||"Recommendation preview failed. Check the inputs or ask an administrator to inspect safe Hub telemetry."; error.hidden=false; }
       });
       confirm.addEventListener("click",()=>{action.value="accept";});
