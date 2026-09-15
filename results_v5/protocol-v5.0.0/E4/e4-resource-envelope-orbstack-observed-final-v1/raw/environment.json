@@ -1,0 +1,286 @@
+{
+  "adapter_monitor_grace_seconds": 5,
+  "architecture": "arm64",
+  "captured_at_utc": "2026-09-15T07:47:55.830672Z",
+  "cgroup_eligibility_probe": {
+    "available_files": [
+      "cgroup.controllers",
+      "cpu.max",
+      "cpu.stat",
+      "memory.current",
+      "memory.events",
+      "memory.max",
+      "memory.peak"
+    ],
+    "cgroup_version": "v2",
+    "cleanup_status": "succeeded",
+    "controllers": [
+      "cpuset",
+      "cpu",
+      "io",
+      "memory",
+      "pids"
+    ],
+    "cpu_max": "10000 100000",
+    "memory_event_keys": [
+      "low",
+      "high",
+      "max",
+      "oom",
+      "oom_kill",
+      "oom_group_kill",
+      "sock_throttled"
+    ],
+    "memory_max": "67108864",
+    "per_container_scope_verified": true,
+    "probe_status": "succeeded",
+    "proc_self_cgroup": "0::/",
+    "runtime_image_id": "docker://sha256:1b7702f073b094eb3f5ced5fadd33d6f3e0346481b15ed8de998fd3a4e8a3bdd"
+  },
+  "cgroup_requirement": "v2",
+  "cluster_measurement_status": "OBSERVED",
+  "collector_implementation": "cluster_evaluation.resource_adapter_v5.KubernetesTrialAdapter",
+  "collector_origin": "REAL_KUBERNETES_COLLECTOR",
+  "collector_version": "protocol-v5-kubernetes-trial-adapter-v1.2.0",
+  "container_image": "intent-spawner-resource-v5:e4-ffebc19805a6",
+  "container_image_content_digest": "sha256:1b7702f073b094eb3f5ced5fadd33d6f3e0346481b15ed8de998fd3a4e8a3bdd",
+  "container_runtime": "docker://29.4.0",
+  "eligibility_policy_version": "protocol-v5-resource-cluster-eligibility-v2.0.0",
+  "eligibility_status": "ELIGIBLE",
+  "environment_id": "orbstack:z2jh-context-demo:574e43f1-b4af-45a4-94ae-385414e52560",
+  "evaluation_backend": "ORBSTACK_KUBERNETES",
+  "kernel_version": "7.0.5-orbstack-00330-ge3df4e19b0a0-dirty",
+  "kubelet_version": "v1.33.9+orb1",
+  "kubernetes_version": {
+    "clientVersion": {
+      "buildDate": "2025-07-15T17:59:41Z",
+      "compiler": "gc",
+      "gitCommit": "80779bd6ff08b451e1c165a338a7b69351e9b0b8",
+      "gitTreeState": "clean",
+      "gitVersion": "v1.33.3",
+      "goVersion": "go1.24.5",
+      "major": "1",
+      "minor": "33",
+      "platform": "darwin/arm64"
+    },
+    "kustomizeVersion": "v5.6.0",
+    "serverVersion": {
+      "buildDate": "2026-04-18T09:19:01Z",
+      "compiler": "gc",
+      "emulationMajor": "1",
+      "emulationMinor": "33",
+      "gitCommit": "9093adae538d4d93bfa398549c569fe860ffe049",
+      "gitTreeState": "clean",
+      "gitVersion": "v1.33.9+orb1",
+      "goVersion": "go1.24.13",
+      "major": "1",
+      "minCompatibilityMajor": "1",
+      "minCompatibilityMinor": "32",
+      "minor": "33",
+      "platform": "linux/arm64"
+    }
+  },
+  "namespace": "z2jh-context-demo",
+  "namespace_evaluation_label": {
+    "key": "z2jh-context-demo.local/e4-evaluation-backend",
+    "value": "orbstack-kubernetes"
+  },
+  "node_allocatable": {
+    "cpu": "8",
+    "ephemeral-storage": "70796823497",
+    "memory": "8185712Ki",
+    "pods": "110"
+  },
+  "node_capacity": {
+    "cpu": "8",
+    "ephemeral-storage": "72776340Ki",
+    "memory": "8185712Ki",
+    "pods": "110"
+  },
+  "node_name": "orbstack",
+  "node_uid": "574e43f1-b4af-45a4-94ae-385414e52560",
+  "operating_system": "linux",
+  "pod_lifecycle_grace_seconds": 30,
+  "read_only_preflight": {
+    "eligibility_status": "ELIGIBLE",
+    "facts": {
+      "api_access": {
+        "create:pods": true,
+        "delete:pods": true,
+        "get:namespaces": true,
+        "get:nodes": true,
+        "get:pods": true,
+        "get:pods/log": true,
+        "list:nodes": true,
+        "list:pods": true
+      },
+      "cgroup_probe": {
+        "available_files": [
+          "cgroup.controllers",
+          "cpu.max",
+          "cpu.stat",
+          "memory.current",
+          "memory.events",
+          "memory.max",
+          "memory.peak"
+        ],
+        "cgroup_version": "v2",
+        "cleanup_status": "succeeded",
+        "controllers": [
+          "cpuset",
+          "cpu",
+          "io",
+          "memory",
+          "pids"
+        ],
+        "cpu_max": "10000 100000",
+        "memory_event_keys": [
+          "low",
+          "high",
+          "max",
+          "oom",
+          "oom_kill",
+          "oom_group_kill",
+          "sock_throttled"
+        ],
+        "memory_max": "67108864",
+        "per_container_scope_verified": true,
+        "probe_status": "succeeded",
+        "proc_self_cgroup": "0::/",
+        "runtime_image_id": "docker://sha256:1b7702f073b094eb3f5ced5fadd33d6f3e0346481b15ed8de998fd3a4e8a3bdd"
+      },
+      "cluster_name": "orbstack",
+      "cluster_server": "https://127.0.0.1:26443",
+      "current_context": "orbstack",
+      "evaluation_backend": "ORBSTACK_KUBERNETES",
+      "expected_context": "orbstack",
+      "experimental_isolation": {
+        "active_user_notebook_pods": [],
+        "allowed_background_pods": [
+          "kube-system/coredns-6cc96b5c97-nvctn",
+          "kube-system/local-path-provisioner-66b64f874-c4p9z",
+          "z2jh-context-demo/continuous-image-puller-xwpfw",
+          "z2jh-context-demo/hub-697f7f65f7-6q9rh",
+          "z2jh-context-demo/proxy-65df59d574-h5q5p",
+          "z2jh-context-demo/user-scheduler-5d598c98f9-b7994",
+          "z2jh-context-demo/user-scheduler-5d598c98f9-vztbd"
+        ],
+        "conflicting_e4_pods": [],
+        "no_concurrent_user_notebook_pods": true,
+        "no_conflicting_e4_pods": true,
+        "no_unclassified_namespace_pods": true,
+        "per_container_cgroup_measurement_required": true,
+        "strategy": "sequential-pod-scoped-measurement-v1",
+        "unclassified_namespace_pods": []
+      },
+      "image_content_identity_verified": true,
+      "image_declared_state": {
+        "build_context_dockerignore_path": "cluster_evaluation/Dockerfile.resource-v5.dockerignore",
+        "build_context_dockerignore_sha256": "1cedf3c42d1173e18b735eb92bebd3fbc80872ce6c8e6e31111a73ecdcc315ad",
+        "build_platform": "linux/arm64",
+        "built": true,
+        "content_digest": "sha256:1b7702f073b094eb3f5ced5fadd33d6f3e0346481b15ed8de998fd3a4e8a3bdd",
+        "digest_verified": true,
+        "dockerfile_path": "cluster_evaluation/Dockerfile.resource-v5",
+        "dockerfile_sha256": "a9ce83468dbdf19569a703cb9277a39f5d26308a1230e2b00ed88d614bc10ed4",
+        "evaluation_backend": "ORBSTACK_KUBERNETES",
+        "identity_type": "LOCAL_DOCKER_IMAGE_ID",
+        "image_reference": "intent-spawner-resource-v5:e4-ffebc19805a6",
+        "observed_runtime_image_id": "docker://sha256:1b7702f073b094eb3f5ced5fadd33d6f3e0346481b15ed8de998fd3a4e8a3bdd",
+        "preloaded_on_evaluation_node": true,
+        "protocol_version": "5.0.0",
+        "reference_configured": true,
+        "runtime_verified": true,
+        "schema_version": "protocol-v5-resource-image-state-v2.0.0",
+        "source_git_revision": "ffebc19805a6656a35597468eb7dbf0919aee9b6",
+        "status": "MACHINE_VERIFIED_ORBSTACK_RUNTIME"
+      },
+      "image_reference": "intent-spawner-resource-v5:e4-ffebc19805a6",
+      "image_reference_pinned": false,
+      "kubernetes_version": {
+        "clientVersion": {
+          "buildDate": "2025-07-15T17:59:41Z",
+          "compiler": "gc",
+          "gitCommit": "80779bd6ff08b451e1c165a338a7b69351e9b0b8",
+          "gitTreeState": "clean",
+          "gitVersion": "v1.33.3",
+          "goVersion": "go1.24.5",
+          "major": "1",
+          "minor": "33",
+          "platform": "darwin/arm64"
+        },
+        "kustomizeVersion": "v5.6.0",
+        "serverVersion": {
+          "buildDate": "2026-04-18T09:19:01Z",
+          "compiler": "gc",
+          "emulationMajor": "1",
+          "emulationMinor": "33",
+          "gitCommit": "9093adae538d4d93bfa398549c569fe860ffe049",
+          "gitTreeState": "clean",
+          "gitVersion": "v1.33.9+orb1",
+          "goVersion": "go1.24.13",
+          "major": "1",
+          "minCompatibilityMajor": "1",
+          "minCompatibilityMinor": "32",
+          "minor": "33",
+          "platform": "linux/arm64"
+        }
+      },
+      "namespace_labels": {
+        "kubernetes.io/metadata.name": "z2jh-context-demo",
+        "z2jh-context-demo.local/e4-evaluation-backend": "orbstack-kubernetes"
+      },
+      "namespace_name": "z2jh-context-demo",
+      "node_allocatable": {
+        "cpu": "8",
+        "ephemeral-storage": "70796823497",
+        "memory": "8185712Ki",
+        "pods": "110"
+      },
+      "node_capacity": {
+        "cpu": "8",
+        "ephemeral-storage": "72776340Ki",
+        "memory": "8185712Ki",
+        "pods": "110"
+      },
+      "node_info": {
+        "architecture": "arm64",
+        "bootID": "c5dc7712-12c0-4566-87f8-d7ee3e246308",
+        "containerRuntimeVersion": "docker://29.4.0",
+        "kernelVersion": "7.0.5-orbstack-00330-ge3df4e19b0a0-dirty",
+        "kubeProxyVersion": "",
+        "kubeletVersion": "v1.33.9+orb1",
+        "machineID": "82ddc538b9e95ae7c1d309201ccb5f9d",
+        "operatingSystem": "linux",
+        "osImage": "OrbStack",
+        "swap": {
+          "capacity": 9455902720
+        },
+        "systemUUID": "82ddc538b9e95ae7c1d309201ccb5f9d"
+      },
+      "node_labels": {
+        "beta.kubernetes.io/arch": "arm64",
+        "beta.kubernetes.io/instance-type": "k3s",
+        "beta.kubernetes.io/os": "linux",
+        "kubernetes.io/arch": "arm64",
+        "kubernetes.io/hostname": "orbstack",
+        "kubernetes.io/os": "linux",
+        "node-role.kubernetes.io/control-plane": "true",
+        "node-role.kubernetes.io/master": "true",
+        "node.kubernetes.io/instance-type": "k3s"
+      },
+      "node_name": "orbstack",
+      "node_uid": "574e43f1-b4af-45a4-94ae-385414e52560"
+    },
+    "failure_codes": [],
+    "schema_version": "protocol-v5-resource-cluster-preflight-v2.0.0"
+  },
+  "required_context": "orbstack",
+  "required_memory_event_keys": [
+    "oom",
+    "oom_kill"
+  ],
+  "schema_version": "protocol-v5-resource-environment-v2.0.0",
+  "single_active_workload": true,
+  "workload_timeout_basis": "measured_workload_runtime_seconds"
+}
