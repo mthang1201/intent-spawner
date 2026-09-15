@@ -152,16 +152,8 @@ bash scripts/install-proposed.sh
 ```
 
 ### Open UI & Enter Example
-Open <http://127.0.0.1:8000>. Enter:
-* **Intent**: `I will train a scikit-learn model on a 1.5GB CSV dataset`
-* **Dataset size**: `1.5`
-* **Code context**:
-  ```python
-  import pandas as pd
-  from sklearn.ensemble import RandomForestClassifier
-  df = pd.read_csv("data.csv")
-  model.fit(X, y)
-  ```
+Open <http://127.0.0.1:8000>. In **Describe your workload**, enter:
+* `I will train a scikit-learn model on a 1.5GB CSV dataset using pandas and RandomForestClassifier`
 
 1. Click **Preview recommendation**: Shows Large resources, `scipy-data-science` image, and plain-text reasons.
 2. Click **Edit inputs**: Shows preview invalidation.

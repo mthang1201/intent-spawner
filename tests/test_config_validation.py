@@ -215,6 +215,16 @@ def test_options_form_fetches_server_endpoint_with_xsrf_and_no_client_rules():
     assert "recommendImage" not in rendered
     assert 'name="intent"' not in rendered
     assert 'name="code_context"' not in rendered
+    assert 'id="dataset_size_gb"' not in rendered
+    assert 'id="code_context"' not in rendered
+    assert "Estimated dataset size" not in rendered
+    assert "Optional imports or code context" not in rendered
+    assert "Describe your workload" in rendered
+    assert 'id="intent"' in rendered
+    assert 'name="backend"' not in rendered
+    assert 'id="backend"' not in rendered
+    assert "P1" not in rendered
+    assert "P2" not in rendered
     runtime.executor.shutdown()
 
 

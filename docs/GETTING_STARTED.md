@@ -165,17 +165,10 @@ The installer packages the runtime, verifies configuration, and applies its
 rollout checksum. See [Helm backend deployment](HELM_BACKEND_DEPLOYMENT.md).
 
 Open `http://127.0.0.1:8000`. You will see the new **Workload Intent Form**:
-1. Enter your task (e.g., `I will train a scikit-learn model on a 1.5GB CSV dataset`).
-2. Enter dataset size: `1.5`.
-3. Enter code snippet:
-   ```python
-   import pandas as pd
-   from sklearn.ensemble import RandomForestClassifier
-   df = pd.read_csv("data.csv")
-   model.fit(X, y)
-   ```
-4. Click **Preview recommendation**: Inspect the returned profile, image, explanation, and any fallback/manual-selection notice for the selected backend.
-5. Click **Confirm recommendation**: KubeSpawner applies the configuration and creates the user pod.
+1. Describe your workload in natural language (e.g., `I will train a scikit-learn model on a 1.5GB CSV dataset`).
+2. Click **Preview recommendation**: Inspect the returned profile, image, explanation, and any fallback/manual-selection notice for the selected backend.
+3. (Optional) Open **Manual Override** if you wish to choose an explicit profile or image from the administrator-allowlisted options.
+4. Click **Confirm recommendation**: KubeSpawner applies the configuration and creates the user pod.
 
 ---
 

@@ -96,19 +96,23 @@ def validate_preview_request(values: object) -> RecommendationRequest:
         raise ValueError("recommendation request contains unsupported fields")
     intent = values.get("intent", "")
     code_context = values.get("code_context", "")
-    dataset_size = values.get("dataset_size_gb", 0.0)
     if not isinstance(intent, str) or not isinstance(code_context, str):
         raise ValueError("intent and code_context must be strings")
+    if not intent.strip():
+        raise ValueError("workload description must not be empty")
     if len(intent) > MAX_INTENT_CHARACTERS or len(code_context) > MAX_CODE_CONTEXT_CHARACTERS:
         raise ValueError("workload context exceeds the supported preview size")
-    if not isinstance(dataset_size, (int, float, str)) or isinstance(dataset_size, bool):
-        raise ValueError("dataset_size_gb must be numeric")
-    try:
-        parsed_size = float(dataset_size or 0)
-    except (TypeError, ValueError):
-        raise ValueError("dataset_size_gb must be a finite non-negative number") from None
-    if not math.isfinite(parsed_size) or parsed_size < 0:
-        raise ValueError("dataset_size_gb must be a finite non-negative number")
+    parsed_size: float | None = None
+    if "dataset_size_gb" in values and values["dataset_size_gb"] is not None and values["dataset_size_gb"] != "":
+        dataset_size = values["dataset_size_gb"]
+        if not isinstance(dataset_size, (int, float, str)) or isinstance(dataset_size, bool):
+            raise ValueError("dataset_size_gb must be numeric")
+        try:
+            parsed_size = float(dataset_size)
+        except (TypeError, ValueError):
+            raise ValueError("dataset_size_gb must be a finite non-negative number") from None
+        if not math.isfinite(parsed_size) or parsed_size < 0:
+            raise ValueError("dataset_size_gb must be a finite non-negative number")
     return RecommendationRequest(
         intent=intent,
         dataset_size_gb=parsed_size,
@@ -461,18 +465,17 @@ def options_form(runtime: RecommendationPreviewRuntime, endpoint: str) -> str:
     template = r"""
     <div id="recommendation-flow" style="max-width:800px;margin:0 auto;font-family:sans-serif">
       <h2>Select Notebook Workload</h2>
-      <p>Describe the planned computation, preview the server recommendation, then confirm it.</p>
+      <p>Describe the planned computation in natural language, preview the server recommendation, then confirm it.</p>
       <input id="decision_action" name="decision_action" type="hidden" value=""/>
       <input id="recommendation_preview_id" name="recommendation_preview_id" type="hidden" value=""/>
       <input name="preview_version" type="hidden" value="__PREVIEW_VERSION__"/>
-      <label for="intent"><strong>Workload description</strong></label><br/>
-      <textarea id="intent" rows="3" style="width:100%"></textarea>
-      <label for="dataset_size_gb"><strong>Estimated dataset size (GB)</strong></label><br/>
-      <input id="dataset_size_gb" type="number" step="0.1" min="0" value="0.0"/>
-      <label for="code_context"><strong>Optional imports or code context</strong></label><br/>
-      <textarea id="code_context" rows="4" style="width:100%"></textarea>
-      <button id="preview-recommendation" type="button" class="btn btn-primary">Preview recommendation</button>
-      <p id="preview-error" hidden role="alert"></p>
+      <label for="intent"><strong>Describe your workload</strong></label><br/>
+      <small style="display:block;margin-top:0.25rem;margin-bottom:0.5rem;color:#555">Describe what you want to do, your framework or libraries, approximate data size, GPU needs, or any other requirements in your own words.</small>
+      <textarea id="intent" rows="5" style="width:100%;box-sizing:border-box;padding:0.5rem" placeholder="I want to fine-tune a small PyTorch image classification model using about 8 GB of images. I may need CUDA and pandas for preprocessing."></textarea>
+      <div style="margin-top:0.75rem;margin-bottom:0.5rem">
+        <button id="preview-recommendation" type="button" class="btn btn-primary">Preview recommendation</button>
+      </div>
+      <p id="preview-error" hidden role="alert" style="color:#d9534f;margin-top:0.5rem"></p>
       <section id="recommendation-preview" hidden style="margin-top:1rem;padding:1rem;border:1px solid #bbb">
         <h3>Recommendation Preview</h3>
         <dl><dt>Resource profile</dt><dd id="preview-profile"></dd>
@@ -493,18 +496,24 @@ def options_form(runtime: RecommendationPreviewRuntime, endpoint: str) -> str:
     <script>
     (() => {
       const root=document.getElementById("recommendation-flow"), form=root.closest("form");
-      const fields=["intent","dataset_size_gb","code_context"].map(id=>document.getElementById(id));
+      const intentField=document.getElementById("intent");
       const token=document.getElementById("recommendation_preview_id"), action=document.getElementById("decision_action");
       const panel=document.getElementById("recommendation-preview"), overridePanel=document.getElementById("override-panel");
       const confirm=document.getElementById("confirm-recommendation"), overrideSubmit=document.getElementById("submit-override");
       let fingerprint="";
-      const values=()=>({intent:fields[0].value,dataset_size_gb:fields[1].value,code_context:fields[2].value});
+      const values=()=>({intent:intentField.value});
       const current=()=>JSON.stringify(values());
       const cookie=name=>document.cookie.split(";").map(v=>v.trim()).find(v=>v.startsWith(name+"="))?.split("=").slice(1).join("=")||"";
       function invalidate(){fingerprint="";token.value="";action.value="";panel.hidden=true;overridePanel.hidden=true;confirm.disabled=true;overrideSubmit.disabled=true;}
-      fields.forEach(field=>field.addEventListener("input",invalidate));
+      intentField.addEventListener("input",invalidate);
       document.getElementById("preview-recommendation").addEventListener("click",async()=>{
         invalidate(); const error=document.getElementById("preview-error"); error.hidden=true;
+        const text=(intentField.value||"").trim();
+        if(!text){
+          error.textContent="Please enter a workload description before previewing.";
+          error.hidden=false;
+          return;
+        }
         try {
           const response=await fetch(__ENDPOINT__,{method:"POST",credentials:"same-origin",headers:{"Content-Type":"application/json","X-XSRFToken":decodeURIComponent(cookie("_xsrf"))},body:JSON.stringify(values())});
           const payload=await response.json(); if(!response.ok) throw new Error(payload.error||"preview failed");
@@ -516,7 +525,7 @@ def options_form(runtime: RecommendationPreviewRuntime, endpoint: str) -> str:
           document.getElementById("override_profile").value=payload.applied_profile; document.getElementById("override_image_id").value=rec.image_id;
           panel.hidden=false; confirm.disabled=Boolean(payload.requires_manual_override); overrideSubmit.disabled=false;
           if(payload.requires_manual_override){overridePanel.hidden=false;}
-        } catch (_) { error.textContent="Recommendation preview failed. Check the inputs or ask an administrator to inspect safe Hub telemetry."; error.hidden=false; }
+        } catch (exc) { error.textContent=exc.message||"Recommendation preview failed. Check the inputs or ask an administrator to inspect safe Hub telemetry."; error.hidden=false; }
       });
       confirm.addEventListener("click",()=>{action.value="accept";});
       document.getElementById("manual-override").addEventListener("click",()=>{overridePanel.hidden=false;});
