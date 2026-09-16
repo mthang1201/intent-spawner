@@ -321,7 +321,14 @@ def figures(inputs: Inputs, analysis: dict, analysis_root: Path, output: Path) -
             axis.set_title("Development observations — separate runs, no pooled inference")
             figure.text(.5, .01, "Development-only evidence; no confirmatory claim or confidence interval.", ha="center", fontsize=9)
             figure.tight_layout(rect=(0, .07, 1, 1))
-            figure.savefig(output / "functional-development.svg", metadata={"Date": None})
+            svg_path = output / "functional-development.svg"
+            svg_buffer = io.BytesIO()
+            figure.savefig(svg_buffer, format="svg", metadata={"Date": None})
+            svg = svg_buffer.getvalue()
+            write_bytes(
+                svg_path,
+                b"\n".join(line.rstrip() for line in svg.splitlines()) + b"\n",
+            )
             figure.savefig(output / "functional-development.png", dpi=160,
                            metadata={"Software": "Protocol-v5 final audit"})
             plt.close(figure)

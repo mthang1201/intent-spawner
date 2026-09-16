@@ -864,6 +864,8 @@ def test_current_raw_analysis_and_figures_reproduce_without_collectors(tmp_path,
     )
     assert participant_flow["preserved_original_sha256"] == "bee024512c5b6f407a9f1d273d2abbdfe2be640322b05d06f9a641404e8dd73c"
     assert (tmp_path / "figures1/functional-development.svg").exists()
+    svg_lines = (tmp_path / "figures1/functional-development.svg").read_bytes().splitlines()
+    assert all(line == line.rstrip() for line in svg_lines)
     assert file_sha256(tmp_path / "figures1/tables/functional-results.json") == file_sha256(tmp_path / "figures2/tables/functional-results.json")
     assert all(file_sha256(inputs.root / p) == digest for p, digest in before.items())
     report = render_report(inputs, current_audit, a, first, tmp_path / "REPORT.md")
