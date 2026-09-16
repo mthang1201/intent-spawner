@@ -17,7 +17,7 @@ from evaluation_v5.final_audit.common import (
 )
 from evaluation_v5.final_audit.checks import (
     CHECKS, b0_ranking_findings, cluster_findings, execution_findings, inference_findings,
-    inspect, load_isolation_diagnostic, p3_findings, placeholder_findings,
+    inspect, isolation_audit_summary, load_isolation_diagnostic, p3_findings, placeholder_findings,
     storage_identity_findings,
 )
 from evaluation_v5.final_audit.claims import load_claim_evidence, synthetic_origin_scan
@@ -83,6 +83,23 @@ def test_isolation_failure_is_exactly_classified_and_repaired():
     assert isolation_check["verdict"] == "UNVERIFIED"
     assert isolation_check["details"][0]["repository_scan"] == "PASS"
     assert isolation_check["details"][1]["prior_failure_diagnostic"]["repair"]["status"] == "REPAIRED"
+
+
+def test_isolation_summary_excludes_run_dependent_scan_counts():
+    class Report:
+        clean = True
+        findings = ()
+        repository_documents_scanned = 10
+        archives_scanned = 1
+
+    first = isolation_audit_summary(Report())
+    Report.repository_documents_scanned = 999
+    Report.archives_scanned = 20
+    assert isolation_audit_summary(Report()) == first == {
+        "repository_scan": "PASS",
+        "scope": "repository_and_discovered_archives",
+        "findings": [],
+    }
 
 
 def test_command_evidence_captures_revision_command_exit_and_hashes(tmp_path):

@@ -387,6 +387,19 @@ def claim_audit_fields(claim_evidence: Mapping[str, Any]) -> dict[str, Any]:
     }
 
 
+def isolation_audit_summary(report: Any) -> dict[str, Any]:
+    """Keep findings deterministic when prior generated audit runs coexist."""
+
+    return {
+        "repository_scan": "PASS" if report.clean else "FAIL",
+        "scope": "repository_and_discovered_archives",
+        "findings": [
+            {"location": finding.location, "category": finding.category}
+            for finding in report.findings
+        ],
+    }
+
+
 def inspect(inputs: Inputs, *, isolation: bool = True, historical: bool = True) -> dict:
     checks = {i: {"id": i, "title": title, "verdict": "UNVERIFIED", "reason": "Not assessed",
                   "sources": [], "details": []} for i, title in CHECKS.items()}
@@ -469,9 +482,7 @@ def inspect(inputs: Inputs, *, isolation: bool = True, historical: bool = True) 
             report = audit_repository(inputs.root)
             set_check(3, "FAIL" if not report.clean else "UNVERIFIED",
                       "Repository/archive isolation scan completed. The prior source-literal parser false positive is classified and repaired; external custody remains unavailable and is not inferred from this scan.",
-                      [{"repository_scan": "PASS" if report.clean else "FAIL",
-                        "documents": report.repository_documents_scanned, "archives": report.archives_scanned,
-                        "findings": [{"location": f.location, "category": f.category} for f in report.findings]},
+                      [isolation_audit_summary(report),
                        {"prior_failure_diagnostic": isolation_diagnostic}])
         except Exception as exc:
             set_check(3, "FAIL", _safe_error(exc, inputs.root),
