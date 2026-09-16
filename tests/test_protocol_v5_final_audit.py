@@ -318,6 +318,26 @@ def test_candidate_dispositions_are_checksum_bound_and_fail_closed(current_audit
     assert records["E5_STORAGE_RERUN"]["counts"]["observed_scales"] == [4]
 
 
+def test_generated_view_projects_selected_storage_evidence_consistently(current_audit):
+    storage = next(
+        row for row in current_audit["experiment_states"]
+        if row["requirement_id"] == "image_storage"
+    )
+    assert storage["status"] == "OBSERVED"
+    assert storage["candidate_count"] == 2
+    assert storage["eligible_candidate_count"] == 1
+    assert storage["selected_package"].endswith(
+        "E5/e5-storage-scalability-20260914T012024Z"
+    )
+    assert len(storage["selected_manifest_sha256"]) == 64
+    generated = current_audit["evaluated_claim_view"]
+    assert generated["experiment_states"] == current_audit["experiment_states"]
+    assert generated["criteria"] == current_audit["criteria"]
+    assert next(row for row in generated["claims"] if row["id"] == "H7")[
+        "claim_status"
+    ] == "SUPPORTED"
+
+
 def test_old_storage_supersession_is_conditional(monkeypatch):
     original = disposition_module._candidate_integrity
 

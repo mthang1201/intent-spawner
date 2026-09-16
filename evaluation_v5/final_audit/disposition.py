@@ -297,14 +297,33 @@ def apply_confirmatory_dispositions(
     decided = updated["claim_counts"]["SUPPORTED"] + updated["claim_counts"]["NOT_SUPPORTED"]
     updated["confirmatory_status"] = "EXECUTED_INCOMPLETE" if decided else updated.get("confirmatory_status")
     updated["evidence_dispositions"] = disposition
+    if storage["eligibility"] == "ACCEPTED_CONFIRMATORY":
+        manifest_ref = inputs.ref(str(storage["package_path"]) + "/manifest.json")
+        for state in updated.get("experiment_states") or []:
+            if state.get("requirement_id") != "image_storage":
+                continue
+            state.update(
+                status="OBSERVED",
+                selected_package=storage["package_path"],
+                selected_manifest_sha256=manifest_ref["sha256"],
+                candidate_count=sum(
+                    row.get("experiment") == "E5_STORAGE"
+                    for row in disposition["records"]
+                ),
+                eligible_candidate_count=1,
+                reason_codes=[],
+            )
+    criteria = criterion_rows(updated, disposition)
+    updated["criteria"] = criteria
     updated["evaluated_claim_view"] = {
         "schema_version": "protocol-v5-generated-evaluated-claim-view-v1.0.0",
         "source_registry": inputs.ref(REGISTRY),
         "source_authenticated_claim_package": updated.get("claim_evidence_sources", {}).get("package"),
         "claims": updated["claims"],
+        "criteria": criteria,
+        "experiment_states": updated.get("experiment_states") or [],
         "note": "Generated reporting view only; frozen registry, hypotheses, exclusions, predicates, and methods are unchanged.",
     }
-    updated["criteria"] = criterion_rows(updated, disposition)
     return updated
 
 
