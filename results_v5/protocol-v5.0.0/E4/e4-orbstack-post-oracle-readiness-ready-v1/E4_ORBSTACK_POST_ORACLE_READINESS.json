@@ -1,0 +1,192 @@
+{
+  "assertions": {
+    "machine_facts_empirically_rechecked": true,
+    "no_comparative_trials_executed": true,
+    "not_confirmatory_dataset_material": true,
+    "oracle_bound_to_pre_oracle_environment": true
+  },
+  "attestation_id": "e4-orbstack-post-oracle-readiness-v1",
+  "attested_at_utc": "2026-09-15T08:15:00.000000Z",
+  "attestor_role": "MACHINE_VERIFIED_E4_ENVIRONMENT",
+  "cgroup": {
+    "available_files": [
+      "cgroup.controllers",
+      "cpu.max",
+      "cpu.stat",
+      "memory.current",
+      "memory.events",
+      "memory.max",
+      "memory.peak"
+    ],
+    "cleanup_status": "succeeded",
+    "controllers": [
+      "cpu",
+      "cpuset",
+      "io",
+      "memory",
+      "pids"
+    ],
+    "empirically_probed": true,
+    "memory_event_keys": [
+      "high",
+      "low",
+      "max",
+      "oom",
+      "oom_group_kill",
+      "oom_kill",
+      "sock_throttled"
+    ],
+    "per_container_scope_verified": true,
+    "proc_self_cgroup": "0::/",
+    "version": "v2"
+  },
+  "cluster": {
+    "cluster_identity_sha256": "1e1bf5203c148c908738973f5e16d00e0aa294f2f59f67197738eed33f3b4ca5",
+    "cluster_name": "orbstack",
+    "container_runtime": "docker://29.4.0",
+    "context": "orbstack",
+    "host_virtualization": "OrbStack Linux VM on macOS",
+    "intent_spawner": {
+      "backend": "p2",
+      "configmap_name": "intent-spawner-recommender",
+      "configmap_uid": "50388e29-165d-4639-943c-8dcc1256e75b",
+      "deployed_package_checksum": "ccb64aa4c7c55b1b4721655f3499d1bcfefd02ab12729807458cea0aad887ca3",
+      "deployed_package_version": "intent-spawner-recommender-v3",
+      "discovered_configmaps": [
+        "intent-spawner-recommender"
+      ],
+      "repository_package_checksum": "b846fda1aef20f8c4b948de2dc361779584dcc9f424b701a74812c36bfb89bf5",
+      "repository_package_version": "intent-spawner-recommender-v3",
+      "repository_source_matches_deployed_package": false
+    },
+    "jupyterhub": {
+      "releases": [
+        {
+          "app_version": "5.2.1",
+          "chart": "jupyterhub-4.0.0",
+          "name": "context-demo",
+          "namespace": "z2jh-context-demo",
+          "revision": "2",
+          "status": "deployed",
+          "updated": "2026-09-15 10:53:35.800798 +0700 +07"
+        }
+      ]
+    },
+    "kernel": "7.0.5-orbstack-00330-ge3df4e19b0a0-dirty",
+    "kubernetes_version": "v1.33.9+orb1",
+    "namespace": "z2jh-context-demo",
+    "namespace_uid": "ab3d801b-2894-4e31-9cc4-6f6fff1d0572",
+    "node_architecture": "arm64",
+    "server": "https://127.0.0.1:26443"
+  },
+  "comparative_execution": {
+    "executed_trials": 0,
+    "status": "NOT_EXECUTED"
+  },
+  "evaluation_backend": "ORBSTACK_KUBERNETES",
+  "execution_image": {
+    "build_platform": "linux/arm64",
+    "content_digest": "sha256:1b7702f073b094eb3f5ced5fadd33d6f3e0346481b15ed8de998fd3a4e8a3bdd",
+    "identity_type": "LOCAL_DOCKER_IMAGE_ID",
+    "observed_runtime_image_id": "docker://sha256:1b7702f073b094eb3f5ced5fadd33d6f3e0346481b15ed8de998fd3a4e8a3bdd",
+    "preloaded_on_evaluation_node": true,
+    "reference": "intent-spawner-resource-v5:e4-ffebc19805a6",
+    "runtime_verified": true,
+    "source_git_revision": "ffebc19805a6656a35597468eb7dbf0919aee9b6"
+  },
+  "freeze": {
+    "freeze_artifact_commit_sha": "98ab13f490b28b1d76a0c5a06175c46cee56e30a",
+    "freeze_id": "v5-e4-orbstack-confirmatory-freeze-v1",
+    "freeze_manifest_sha256": "6d47b403e90df618165951c0d301854e4bfe8c22e9a2ab869e288056936ef32f",
+    "frozen_execution_sha": "3d9a777390ae50cac266ceee0a58c718a34d6725"
+  },
+  "isolation": {
+    "active_user_notebook_pods": [],
+    "allowed_background_pods": [
+      "kube-system/coredns-6cc96b5c97-nvctn",
+      "kube-system/local-path-provisioner-66b64f874-c4p9z",
+      "z2jh-context-demo/continuous-image-puller-xwpfw",
+      "z2jh-context-demo/hub-697f7f65f7-6q9rh",
+      "z2jh-context-demo/proxy-65df59d574-h5q5p",
+      "z2jh-context-demo/user-scheduler-5d598c98f9-b7994",
+      "z2jh-context-demo/user-scheduler-5d598c98f9-vztbd"
+    ],
+    "conflicting_e4_pods": [],
+    "per_container_cgroup_measurement": true,
+    "stable_node_allocatable": true,
+    "strategy": "sequential-pod-scoped-measurement-v1",
+    "unclassified_namespace_pods": [],
+    "verified": true
+  },
+  "node_capacity": {
+    "allocatable_cpu_millicores": 8000,
+    "allocatable_gpu_count": 0,
+    "allocatable_gpu_resource": null,
+    "allocatable_memory_mib": 7993,
+    "node_count": 1,
+    "node_name": "orbstack",
+    "node_uid": "574e43f1-b4af-45a4-94ae-385414e52560",
+    "source": "KUBERNETES_NODE_STATUS_ALLOCATABLE"
+  },
+  "operator_approval": {
+    "required_for_machine_readiness": false,
+    "status": "NOT_REQUIRED_FOR_LOCAL_MACHINE_VERIFIED_READINESS"
+  },
+  "oracle": {
+    "eligible_for_comparison": true,
+    "execution_status": "OBSERVED",
+    "manual_review_status": "APPROVED",
+    "package_id": "e4-resource-envelope-orbstack-observed-final-v1",
+    "package_path": "results_v5/protocol-v5.0.0/E4/e4-resource-envelope-orbstack-observed-final-v1",
+    "sha256sums_sha256": "aa8acc05f04bb979cf9ac7392c2f0dfac6dc3f8a87c07a1f70c02298ec3904e7"
+  },
+  "pre_oracle_attestation": {
+    "artifact_path": "results_v5/protocol-v5.0.0/E4/e4-orbstack-live-preflight-ready-v1/E4_ORBSTACK_LIVE_PREFLIGHT.json",
+    "attestation_id": "e4-orbstack-machine-readiness-v2",
+    "sha256": "91a504fc71f75fe7ebaf9d030998b87807b7d74ae114e405f1726f6254a9ba4a"
+  },
+  "protocol_version": "5.0.0",
+  "rbac": {
+    "all_required_access_verified": true,
+    "checks": {
+      "create:pods:namespace": true,
+      "delete:pods:namespace": true,
+      "get:namespaces:cluster": true,
+      "get:nodes:cluster": true,
+      "get:pods/log:namespace": true,
+      "get:pods:namespace": true,
+      "list:nodes:cluster": true,
+      "list:pods:namespace": true
+    },
+    "service_identity": "system:admin"
+  },
+  "readiness_stage": "POST_ORACLE",
+  "repository": {
+    "base_commit_sha": "ddbf44cc6cb27435b3852d8a99cee489f4b9b43c",
+    "cluster_eligibility_sha256": "e206b370e80e29a4ca1fd418f1ef2d5eea83955d88afca1576998dacf4d5901c",
+    "dockerfile_sha256": "a9ce83468dbdf19569a703cb9277a39f5d26308a1230e2b00ed88d614bc10ed4",
+    "dockerignore_sha256": "1cedf3c42d1173e18b735eb92bebd3fbc80872ce6c8e6e31111a73ecdcc315ad",
+    "git_dirty": false,
+    "prepared_source_commit_sha": "ffebc19805a6656a35597468eb7dbf0919aee9b6",
+    "workload_manifest_sha256": "85221bce48b42e0c9421d463503843b530117781db2e5a58a2c332f1adb7e98f"
+  },
+  "schema_version": "protocol-v5-e4-post-oracle-readiness-attestation-v3.0.0",
+  "semantic_design": {
+    "condition_input_sha256": "dce8d2b65bdfc7e2ce280e05645906b91a5d4bbfa1f089601ff54dbb5ab02e66",
+    "conditions": [
+      "STATIC_LARGE",
+      "P1_CATALOG",
+      "P2_CATALOG",
+      "P2_DYNAMIC"
+    ],
+    "decision_semantic_diff_count": 0,
+    "decision_sha256": "841d0ed74a15f3d05a6a357ae5b700f6583c2229e09546dda418761168c166a0",
+    "family_count": 16,
+    "plan_sha256": "3619f0f8dd6b1aedd6e6702680c119866aab23b5dbcf8162962bf8c5883d588a",
+    "primary_trial_count": 640,
+    "repetitions": 10,
+    "seed": 20260904,
+    "trial_order_sha256": "9370987fd8451016df52f2f1f674b97d4ae769e2dd4845077bb2fa5e145ab596",
+    "trial_specification_semantic_diff_count": 0
+  }
+}

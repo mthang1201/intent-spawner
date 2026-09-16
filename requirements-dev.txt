@@ -2,6 +2,7 @@
 -r requirements-analysis.txt
 iniconfig==2.3.0
 jsonschema==4.26.0
+jupyterhub==5.2.1
 packaging==26.2
 pluggy==1.6.0
 Pygments==2.20.0

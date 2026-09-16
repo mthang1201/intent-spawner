@@ -442,6 +442,11 @@ def compute_marginal_storage(
     inspections: Sequence[ImageLayerMetadata],
 ) -> list[MarginalStorageRecord]:
     """Compute first-class marginal unique byte records (U_n - U_(n-1)) for ordered images."""
+    if inspections:
+        base_domain = inspections[0].size_domain
+        for meta in inspections[1:]:
+            assert_size_domain_consistent(base_domain, meta.size_domain)
+
     records: list[MarginalStorageRecord] = []
     seen_unique_layers: dict[str, int] = {}
     prev_unique = 0
@@ -565,6 +570,11 @@ def compute_pairwise_layer_reuse(
     - Diagonal entries M[i, i] reflect the unique layer digest count and unique layer bytes for image i.
     Duplicate layer descriptors within a single image are not double-counted.
     """
+    if inspections:
+        base_domain = inspections[0].size_domain
+        for meta in inspections[1:]:
+            assert_size_domain_consistent(base_domain, meta.size_domain)
+
     image_ids = tuple(meta.image_id for meta in inspections)
     image_digests = tuple(meta.resolved_digest or meta.image_digest for meta in inspections)
     n = len(inspections)

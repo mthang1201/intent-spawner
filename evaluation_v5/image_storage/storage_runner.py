@@ -19,9 +19,11 @@ from .storage_contracts import (
     LayerInspection,
     PrefixStorageMeasurement,
     SIZE_DOMAIN_COMPRESSED_OCI_BLOB,
+    SIZE_DOMAIN_UNCOMPRESSED,
     STORAGE_COLLECTOR_SCHEMA_VERSION,
     StorageCollectorOrigin,
     StorageExecutionStatus,
+    assert_size_domain_consistent,
     get_ordered_catalog_images,
     is_real_storage_collector_origin,
 )
@@ -103,6 +105,11 @@ class BaseStorageRunner:
         for image_id, ref, _ in ordered:
             metadata = self.inspect_image_layers(image_id, ref)
             inspections.append(metadata)
+
+        if inspections:
+            base_domain = inspections[0].size_domain
+            for meta in inspections[1:]:
+                assert_size_domain_consistent(base_domain, meta.size_domain)
 
         prefixes: list[PrefixStorageMeasurement] = []
         cumulative_unique_layers: dict[str, int] = {}
@@ -210,9 +217,13 @@ class SyntheticStorageRunner(BaseStorageRunner):
         target_arch: str = "amd64",
         target_os: str = "linux",
         injected_image_layers: Mapping[str, Sequence[Mapping[str, Any]]] | None = None,
+        size_domain: str = SIZE_DOMAIN_COMPRESSED_OCI_BLOB,
+        uncompressed_layer_bytes: int | None = None,
     ) -> None:
         super().__init__(catalog, target_arch=target_arch, target_os=target_os)
         self.injected_image_layers = injected_image_layers or {}
+        self.size_domain = size_domain
+        self.uncompressed_layer_bytes = uncompressed_layer_bytes
 
     def inspect_image_layers(
         self,
@@ -247,6 +258,11 @@ class SyntheticStorageRunner(BaseStorageRunner):
 
         total = sum(l.size for l in layers)
         pinned = "@sha256:" in image_reference
+        uncompressed = (
+            self.uncompressed_layer_bytes
+            if self.uncompressed_layer_bytes is not None
+            else (total if self.size_domain == SIZE_DOMAIN_UNCOMPRESSED else None)
+        )
         return ImageLayerMetadata(
             image_id=image_id,
             image_reference=image_reference,
@@ -259,7 +275,8 @@ class SyntheticStorageRunner(BaseStorageRunner):
             manifest_digest=digest,
             manifest_media_type="application/vnd.oci.image.manifest.v1+json",
             config_digest="sha256:c000000000000000000000000000000000000000000000000000000000000000",
-            size_domain=SIZE_DOMAIN_COMPRESSED_OCI_BLOB,
+            size_domain=self.size_domain,
+            uncompressed_layer_bytes=uncompressed,
             collector_origin=self.collector_origin.value,
             collector_name=self.collector_name,
             collector_version=self.collector_version,
@@ -323,23 +340,28 @@ class DockerManifestStorageRunner(BaseStorageRunner):
 
         for entry in manifest_entries:
             desc = entry.get("Descriptor", {})
-            platform = desc.get("platform", {})
-            arch = platform.get("architecture")
-            os_name = platform.get("os")
-            if arch == self.target_arch and os_name == self.target_os:
-                matched_manifest = (
-                    entry.get("OCIManifest")
-                    or entry.get("SchemaV2Manifest")
-                )
-                if not matched_manifest and "Raw" in entry:
-                    try:
-                        decoded = base64.b64decode(entry["Raw"]).decode("utf-8")
-                        matched_manifest = json.loads(decoded)
-                    except Exception:
-                        pass
-                if matched_manifest:
-                    matched_entry = entry
-                    break
+            platform = desc.get("platform") or entry.get("platform") or {}
+            if platform:
+                arch = platform.get("architecture")
+                os_name = platform.get("os")
+                if arch != self.target_arch or os_name != self.target_os:
+                    continue
+            elif len(manifest_entries) > 1:
+                continue
+
+            matched_manifest = (
+                entry.get("OCIManifest")
+                or entry.get("SchemaV2Manifest")
+            )
+            if not matched_manifest and "Raw" in entry:
+                try:
+                    decoded = base64.b64decode(entry["Raw"]).decode("utf-8")
+                    matched_manifest = json.loads(decoded)
+                except Exception:
+                    pass
+            if matched_manifest:
+                matched_entry = entry
+                break
 
         if not matched_manifest:
             raise RuntimeError(
@@ -406,6 +428,116 @@ class DockerManifestStorageRunner(BaseStorageRunner):
             manifest_media_type=manifest_media_type,
             config_digest=config_digest,
             size_domain=SIZE_DOMAIN_COMPRESSED_OCI_BLOB,
+            uncompressed_layer_bytes=None,
+            collector_origin=self.collector_origin.value,
+            collector_name=self.collector_name,
+            collector_version=self.collector_version,
+            raw_observation_path=raw_path,
+            raw_observation_sha256=raw_sha256,
+        )
+
+
+class DockerLocalStorageRunner(BaseStorageRunner):
+    """Local container daemon runner inspecting locally available images via docker image inspect."""
+
+    collector_origin = StorageCollectorOrigin.CONTAINER_STORAGE_OBSERVATION
+    collector_name = "container-storage-observation"
+    collector_version = "storage-collector-v1.0.0"
+
+    def __init__(
+        self,
+        catalog: Mapping[str, Any],
+        *,
+        target_arch: str = "amd64",
+        target_os: str = "linux",
+        timeout_seconds: float = 60.0,
+    ) -> None:
+        super().__init__(catalog, target_arch=target_arch, target_os=target_os)
+        self.timeout_seconds = timeout_seconds
+
+    def inspect_image_layers(
+        self,
+        image_id: str,
+        image_reference: str,
+    ) -> ImageLayerMetadata:
+        digest = validate_approved_image_reference(image_reference, self.catalog)
+
+        cmd = ["docker", "image", "inspect", image_reference]
+        try:
+            res = subprocess.run(
+                cmd,
+                capture_output=True,
+                text=True,
+                timeout=self.timeout_seconds,
+                check=False,
+            )
+        except Exception as exc:
+            raise RuntimeError(
+                f"Failed to execute docker image inspect for {image_reference}: {exc}"
+            ) from exc
+
+        if res.returncode != 0:
+            raise RuntimeError(
+                f"docker image inspect failed for {image_reference} (exit {res.returncode}): {res.stderr.strip()}"
+            )
+
+        raw_response = res.stdout.encode("utf-8")
+        try:
+            raw_data = json.loads(raw_response)
+        except json.JSONDecodeError as exc:
+            raise RuntimeError(
+                f"Malformed JSON from docker image inspect for {image_reference}: {exc}"
+            ) from exc
+
+        inspect_entries = raw_data if isinstance(raw_data, list) else [raw_data]
+        if not inspect_entries:
+            raise RuntimeError(f"No inspection data returned for {image_reference}")
+
+        entry = inspect_entries[0]
+        arch = str(entry.get("Architecture", "") or self.target_arch)
+        os_name = str(entry.get("Os", "") or self.target_os)
+        if arch != self.target_arch or os_name != self.target_os:
+            raise RuntimeError(
+                f"Image platform {os_name}/{arch} does not match target {self.target_os}/{self.target_arch} in {image_reference}"
+            )
+
+        config_digest = str(entry.get("Id", ""))
+        repo_digests = entry.get("RepoDigests", [])
+        manifest_digest = ""
+        for rd in repo_digests:
+            if "@sha256:" in rd:
+                manifest_digest = rd.split("@")[-1]
+                break
+        if not manifest_digest:
+            manifest_digest = digest
+
+        root_fs = entry.get("RootFS", {})
+        diff_ids = root_fs.get("Layers", [])
+        uncompressed_total = int(entry.get("Size", 0))
+
+        pinned = "@sha256:" in image_reference
+        raw_path = f"container_inspect/{digest.removeprefix('sha256:')}.json"
+        raw_sha256 = hashlib.sha256(raw_response).hexdigest()
+        self._raw_observations[raw_path] = raw_response
+
+        # Docker image inspect reports uncompressed image Size and diff_ids,
+        # but does NOT measure individual layer byte breakdown. We cleanly mark
+        # individual layer sizes unavailable (layers=(), total_bytes=0 for layer accounting)
+        # rather than guessing from Dockerfile inheritance.
+        return ImageLayerMetadata(
+            image_id=image_id,
+            image_reference=image_reference,
+            image_digest=digest,
+            platform={"architecture": arch, "os": os_name},
+            layers=(),
+            total_bytes=0,
+            is_digest_pinned=pinned,
+            resolved_digest=digest,
+            manifest_digest=manifest_digest,
+            config_digest=config_digest,
+            ordered_layer_digests=tuple(str(d) for d in diff_ids),
+            size_domain=SIZE_DOMAIN_UNCOMPRESSED,
+            uncompressed_layer_bytes=uncompressed_total,
             collector_origin=self.collector_origin.value,
             collector_name=self.collector_name,
             collector_version=self.collector_version,
@@ -423,6 +555,7 @@ def create_storage_runner(
     dry_run_if_unavailable: bool = True,
     timeout_seconds: float = 60.0,
     injected_image_layers: Mapping[str, Sequence[Mapping[str, Any]]] | None = None,
+    size_domain: str = SIZE_DOMAIN_COMPRESSED_OCI_BLOB,
 ) -> BaseStorageRunner:
     """Factory creating the appropriate storage runner based on mode and availability."""
     selected_mode = mode.lower()
@@ -462,6 +595,13 @@ def create_storage_runner(
             target_os=target_os,
             timeout_seconds=timeout_seconds,
         )
+    if selected_mode in ("local", "docker-local"):
+        return DockerLocalStorageRunner(
+            catalog,
+            target_arch=target_arch,
+            target_os=target_os,
+            timeout_seconds=timeout_seconds,
+        )
     if selected_mode in ("dry-run", "dry_run"):
         return DryRunStorageRunner(
             catalog,
@@ -474,6 +614,7 @@ def create_storage_runner(
             target_arch=target_arch,
             target_os=target_os,
             injected_image_layers=injected_image_layers,
+            size_domain=size_domain,
         )
 
     raise ValueError(f"Unsupported storage runner mode: {mode!r}")

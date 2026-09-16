@@ -1,0 +1,3737 @@
+{
+  "analysis_plan_sha256": "1874b426666111362ef79f4e23315dc8f51a97b10827ae2e596cc70523b1a3ce",
+  "analysis_plan_version": "protocol-v5-user-study-analysis-plan-v1.2.0",
+  "assignment_id": "A-379b25d84ab62b4c423b",
+  "assignments": [
+    {
+      "b0_variant_slot": 0,
+      "condition_order": [
+        "B0",
+        "P2"
+      ],
+      "counterbalance_cell": "C-B0-0-1",
+      "order_row": 1,
+      "participant_id": "P-dc4cd3a2f7ef",
+      "session_id": "S-2c514748d90e97a2",
+      "task_sequence": [
+        {
+          "condition": "B0",
+          "pair_id": "warmup-framework-tutorial",
+          "period": 1,
+          "phase": "warm_up",
+          "position_in_period": 0,
+          "sequence_index": 0,
+          "task_id": "warmup-framework-tutorial-a",
+          "trial_id": "T-7077acc9d45335fd",
+          "variant_id": "A"
+        },
+        {
+          "condition": "B0",
+          "pair_id": "light-standard-python",
+          "period": 1,
+          "phase": "measured",
+          "position_in_period": 1,
+          "sequence_index": 1,
+          "task_id": "light-standard-python-a",
+          "trial_id": "T-e90c93167218b54f",
+          "variant_id": "A"
+        },
+        {
+          "condition": "B0",
+          "pair_id": "moderate-tabular-analysis",
+          "period": 1,
+          "phase": "measured",
+          "position_in_period": 2,
+          "sequence_index": 2,
+          "task_id": "moderate-tabular-analysis-a",
+          "trial_id": "T-67ba9cd8004d9cfd",
+          "variant_id": "A"
+        },
+        {
+          "condition": "B0",
+          "pair_id": "large-cpu-pytorch-training",
+          "period": 1,
+          "phase": "measured",
+          "position_in_period": 3,
+          "sequence_index": 3,
+          "task_id": "large-cpu-pytorch-training-a",
+          "trial_id": "T-dfee9137d5864ca6",
+          "variant_id": "A"
+        },
+        {
+          "condition": "P2",
+          "pair_id": "warmup-framework-tutorial",
+          "period": 2,
+          "phase": "warm_up",
+          "position_in_period": 0,
+          "sequence_index": 4,
+          "task_id": "warmup-framework-tutorial-b",
+          "trial_id": "T-b3576eb1ec6f8ff3",
+          "variant_id": "B"
+        },
+        {
+          "condition": "P2",
+          "pair_id": "light-standard-python",
+          "period": 2,
+          "phase": "measured",
+          "position_in_period": 1,
+          "sequence_index": 5,
+          "task_id": "light-standard-python-b",
+          "trial_id": "T-de9d82cb97fd5319",
+          "variant_id": "B"
+        },
+        {
+          "condition": "P2",
+          "pair_id": "moderate-tabular-analysis",
+          "period": 2,
+          "phase": "measured",
+          "position_in_period": 2,
+          "sequence_index": 6,
+          "task_id": "moderate-tabular-analysis-b",
+          "trial_id": "T-1648df23fc725e6d",
+          "variant_id": "B"
+        },
+        {
+          "condition": "P2",
+          "pair_id": "large-cpu-pytorch-training",
+          "period": 2,
+          "phase": "measured",
+          "position_in_period": 3,
+          "sequence_index": 7,
+          "task_id": "large-cpu-pytorch-training-b",
+          "trial_id": "T-a2fef7a22523e6ab",
+          "variant_id": "B"
+        }
+      ]
+    },
+    {
+      "b0_variant_slot": 1,
+      "condition_order": [
+        "P2",
+        "B0"
+      ],
+      "counterbalance_cell": "C-P2-1-0",
+      "order_row": 0,
+      "participant_id": "P-efd3de5d67d1",
+      "session_id": "S-1d02d9d62a880733",
+      "task_sequence": [
+        {
+          "condition": "P2",
+          "pair_id": "warmup-framework-tutorial",
+          "period": 1,
+          "phase": "warm_up",
+          "position_in_period": 0,
+          "sequence_index": 0,
+          "task_id": "warmup-framework-tutorial-a",
+          "trial_id": "T-9afe04a552d122d3",
+          "variant_id": "A"
+        },
+        {
+          "condition": "P2",
+          "pair_id": "large-cpu-pytorch-training",
+          "period": 1,
+          "phase": "measured",
+          "position_in_period": 1,
+          "sequence_index": 1,
+          "task_id": "large-cpu-pytorch-training-a",
+          "trial_id": "T-461efdfb2da2b388",
+          "variant_id": "A"
+        },
+        {
+          "condition": "P2",
+          "pair_id": "light-standard-python",
+          "period": 1,
+          "phase": "measured",
+          "position_in_period": 2,
+          "sequence_index": 2,
+          "task_id": "light-standard-python-a",
+          "trial_id": "T-c3104c9a8b7fc15a",
+          "variant_id": "A"
+        },
+        {
+          "condition": "P2",
+          "pair_id": "moderate-tabular-analysis",
+          "period": 1,
+          "phase": "measured",
+          "position_in_period": 3,
+          "sequence_index": 3,
+          "task_id": "moderate-tabular-analysis-a",
+          "trial_id": "T-397dab651e92848b",
+          "variant_id": "A"
+        },
+        {
+          "condition": "B0",
+          "pair_id": "warmup-framework-tutorial",
+          "period": 2,
+          "phase": "warm_up",
+          "position_in_period": 0,
+          "sequence_index": 4,
+          "task_id": "warmup-framework-tutorial-b",
+          "trial_id": "T-e271fc2a4e2e39fc",
+          "variant_id": "B"
+        },
+        {
+          "condition": "B0",
+          "pair_id": "large-cpu-pytorch-training",
+          "period": 2,
+          "phase": "measured",
+          "position_in_period": 1,
+          "sequence_index": 5,
+          "task_id": "large-cpu-pytorch-training-b",
+          "trial_id": "T-35764b8eb3fe7572",
+          "variant_id": "B"
+        },
+        {
+          "condition": "B0",
+          "pair_id": "light-standard-python",
+          "period": 2,
+          "phase": "measured",
+          "position_in_period": 2,
+          "sequence_index": 6,
+          "task_id": "light-standard-python-b",
+          "trial_id": "T-e1f1e1cffd039682",
+          "variant_id": "B"
+        },
+        {
+          "condition": "B0",
+          "pair_id": "moderate-tabular-analysis",
+          "period": 2,
+          "phase": "measured",
+          "position_in_period": 3,
+          "sequence_index": 7,
+          "task_id": "moderate-tabular-analysis-b",
+          "trial_id": "T-b7fee5e3524e3109",
+          "variant_id": "B"
+        }
+      ]
+    },
+    {
+      "b0_variant_slot": 0,
+      "condition_order": [
+        "P2",
+        "B0"
+      ],
+      "counterbalance_cell": "C-P2-0-2",
+      "order_row": 2,
+      "participant_id": "P-738afa5d04f3",
+      "session_id": "S-a4f875c122d3285c",
+      "task_sequence": [
+        {
+          "condition": "P2",
+          "pair_id": "warmup-framework-tutorial",
+          "period": 1,
+          "phase": "warm_up",
+          "position_in_period": 0,
+          "sequence_index": 0,
+          "task_id": "warmup-framework-tutorial-b",
+          "trial_id": "T-4257f987b4b35473",
+          "variant_id": "B"
+        },
+        {
+          "condition": "P2",
+          "pair_id": "moderate-tabular-analysis",
+          "period": 1,
+          "phase": "measured",
+          "position_in_period": 1,
+          "sequence_index": 1,
+          "task_id": "moderate-tabular-analysis-b",
+          "trial_id": "T-359ec5842fc3554a",
+          "variant_id": "B"
+        },
+        {
+          "condition": "P2",
+          "pair_id": "large-cpu-pytorch-training",
+          "period": 1,
+          "phase": "measured",
+          "position_in_period": 2,
+          "sequence_index": 2,
+          "task_id": "large-cpu-pytorch-training-b",
+          "trial_id": "T-48a0d34ae9dd4576",
+          "variant_id": "B"
+        },
+        {
+          "condition": "P2",
+          "pair_id": "light-standard-python",
+          "period": 1,
+          "phase": "measured",
+          "position_in_period": 3,
+          "sequence_index": 3,
+          "task_id": "light-standard-python-b",
+          "trial_id": "T-7a959db8503485fe",
+          "variant_id": "B"
+        },
+        {
+          "condition": "B0",
+          "pair_id": "warmup-framework-tutorial",
+          "period": 2,
+          "phase": "warm_up",
+          "position_in_period": 0,
+          "sequence_index": 4,
+          "task_id": "warmup-framework-tutorial-a",
+          "trial_id": "T-73da4ed950e11257",
+          "variant_id": "A"
+        },
+        {
+          "condition": "B0",
+          "pair_id": "moderate-tabular-analysis",
+          "period": 2,
+          "phase": "measured",
+          "position_in_period": 1,
+          "sequence_index": 5,
+          "task_id": "moderate-tabular-analysis-a",
+          "trial_id": "T-30773e16dd59eff4",
+          "variant_id": "A"
+        },
+        {
+          "condition": "B0",
+          "pair_id": "large-cpu-pytorch-training",
+          "period": 2,
+          "phase": "measured",
+          "position_in_period": 2,
+          "sequence_index": 6,
+          "task_id": "large-cpu-pytorch-training-a",
+          "trial_id": "T-1454eb94953b3d51",
+          "variant_id": "A"
+        },
+        {
+          "condition": "B0",
+          "pair_id": "light-standard-python",
+          "period": 2,
+          "phase": "measured",
+          "position_in_period": 3,
+          "sequence_index": 7,
+          "task_id": "light-standard-python-a",
+          "trial_id": "T-15a9e2939b94866c",
+          "variant_id": "A"
+        }
+      ]
+    },
+    {
+      "b0_variant_slot": 1,
+      "condition_order": [
+        "B0",
+        "P2"
+      ],
+      "counterbalance_cell": "C-B0-1-0",
+      "order_row": 0,
+      "participant_id": "P-a2af7789218b",
+      "session_id": "S-3d34bb41a4032626",
+      "task_sequence": [
+        {
+          "condition": "B0",
+          "pair_id": "warmup-framework-tutorial",
+          "period": 1,
+          "phase": "warm_up",
+          "position_in_period": 0,
+          "sequence_index": 0,
+          "task_id": "warmup-framework-tutorial-b",
+          "trial_id": "T-d0eba14ccf9ac87d",
+          "variant_id": "B"
+        },
+        {
+          "condition": "B0",
+          "pair_id": "large-cpu-pytorch-training",
+          "period": 1,
+          "phase": "measured",
+          "position_in_period": 1,
+          "sequence_index": 1,
+          "task_id": "large-cpu-pytorch-training-b",
+          "trial_id": "T-bb10dfc2ab2d0207",
+          "variant_id": "B"
+        },
+        {
+          "condition": "B0",
+          "pair_id": "light-standard-python",
+          "period": 1,
+          "phase": "measured",
+          "position_in_period": 2,
+          "sequence_index": 2,
+          "task_id": "light-standard-python-b",
+          "trial_id": "T-d78b4047f683579d",
+          "variant_id": "B"
+        },
+        {
+          "condition": "B0",
+          "pair_id": "moderate-tabular-analysis",
+          "period": 1,
+          "phase": "measured",
+          "position_in_period": 3,
+          "sequence_index": 3,
+          "task_id": "moderate-tabular-analysis-b",
+          "trial_id": "T-c01dd06feca1273a",
+          "variant_id": "B"
+        },
+        {
+          "condition": "P2",
+          "pair_id": "warmup-framework-tutorial",
+          "period": 2,
+          "phase": "warm_up",
+          "position_in_period": 0,
+          "sequence_index": 4,
+          "task_id": "warmup-framework-tutorial-a",
+          "trial_id": "T-caac2b3d4744bc02",
+          "variant_id": "A"
+        },
+        {
+          "condition": "P2",
+          "pair_id": "large-cpu-pytorch-training",
+          "period": 2,
+          "phase": "measured",
+          "position_in_period": 1,
+          "sequence_index": 5,
+          "task_id": "large-cpu-pytorch-training-a",
+          "trial_id": "T-77ceab2cf01a34df",
+          "variant_id": "A"
+        },
+        {
+          "condition": "P2",
+          "pair_id": "light-standard-python",
+          "period": 2,
+          "phase": "measured",
+          "position_in_period": 2,
+          "sequence_index": 6,
+          "task_id": "light-standard-python-a",
+          "trial_id": "T-d4e08f14060bcdbf",
+          "variant_id": "A"
+        },
+        {
+          "condition": "P2",
+          "pair_id": "moderate-tabular-analysis",
+          "period": 2,
+          "phase": "measured",
+          "position_in_period": 3,
+          "sequence_index": 7,
+          "task_id": "moderate-tabular-analysis-a",
+          "trial_id": "T-c4a8662849c33fb1",
+          "variant_id": "A"
+        }
+      ]
+    },
+    {
+      "b0_variant_slot": 1,
+      "condition_order": [
+        "B0",
+        "P2"
+      ],
+      "counterbalance_cell": "C-B0-1-2",
+      "order_row": 2,
+      "participant_id": "P-22cc9ef05d07",
+      "session_id": "S-f996bf3ac26ad4a6",
+      "task_sequence": [
+        {
+          "condition": "B0",
+          "pair_id": "warmup-framework-tutorial",
+          "period": 1,
+          "phase": "warm_up",
+          "position_in_period": 0,
+          "sequence_index": 0,
+          "task_id": "warmup-framework-tutorial-b",
+          "trial_id": "T-46c7270493624ccc",
+          "variant_id": "B"
+        },
+        {
+          "condition": "B0",
+          "pair_id": "moderate-tabular-analysis",
+          "period": 1,
+          "phase": "measured",
+          "position_in_period": 1,
+          "sequence_index": 1,
+          "task_id": "moderate-tabular-analysis-b",
+          "trial_id": "T-3203ee534f3ce5de",
+          "variant_id": "B"
+        },
+        {
+          "condition": "B0",
+          "pair_id": "large-cpu-pytorch-training",
+          "period": 1,
+          "phase": "measured",
+          "position_in_period": 2,
+          "sequence_index": 2,
+          "task_id": "large-cpu-pytorch-training-b",
+          "trial_id": "T-3181b40b5154c576",
+          "variant_id": "B"
+        },
+        {
+          "condition": "B0",
+          "pair_id": "light-standard-python",
+          "period": 1,
+          "phase": "measured",
+          "position_in_period": 3,
+          "sequence_index": 3,
+          "task_id": "light-standard-python-b",
+          "trial_id": "T-e1585c56733337e5",
+          "variant_id": "B"
+        },
+        {
+          "condition": "P2",
+          "pair_id": "warmup-framework-tutorial",
+          "period": 2,
+          "phase": "warm_up",
+          "position_in_period": 0,
+          "sequence_index": 4,
+          "task_id": "warmup-framework-tutorial-a",
+          "trial_id": "T-4b51d4c1c10bea77",
+          "variant_id": "A"
+        },
+        {
+          "condition": "P2",
+          "pair_id": "moderate-tabular-analysis",
+          "period": 2,
+          "phase": "measured",
+          "position_in_period": 1,
+          "sequence_index": 5,
+          "task_id": "moderate-tabular-analysis-a",
+          "trial_id": "T-ce1c6200054246f3",
+          "variant_id": "A"
+        },
+        {
+          "condition": "P2",
+          "pair_id": "large-cpu-pytorch-training",
+          "period": 2,
+          "phase": "measured",
+          "position_in_period": 2,
+          "sequence_index": 6,
+          "task_id": "large-cpu-pytorch-training-a",
+          "trial_id": "T-321d61b62e94f6eb",
+          "variant_id": "A"
+        },
+        {
+          "condition": "P2",
+          "pair_id": "light-standard-python",
+          "period": 2,
+          "phase": "measured",
+          "position_in_period": 3,
+          "sequence_index": 7,
+          "task_id": "light-standard-python-a",
+          "trial_id": "T-55925f351501f07a",
+          "variant_id": "A"
+        }
+      ]
+    },
+    {
+      "b0_variant_slot": 0,
+      "condition_order": [
+        "P2",
+        "B0"
+      ],
+      "counterbalance_cell": "C-P2-0-1",
+      "order_row": 1,
+      "participant_id": "P-e61680519f89",
+      "session_id": "S-fc1c8e1049974b70",
+      "task_sequence": [
+        {
+          "condition": "P2",
+          "pair_id": "warmup-framework-tutorial",
+          "period": 1,
+          "phase": "warm_up",
+          "position_in_period": 0,
+          "sequence_index": 0,
+          "task_id": "warmup-framework-tutorial-b",
+          "trial_id": "T-f09afc357da4253f",
+          "variant_id": "B"
+        },
+        {
+          "condition": "P2",
+          "pair_id": "light-standard-python",
+          "period": 1,
+          "phase": "measured",
+          "position_in_period": 1,
+          "sequence_index": 1,
+          "task_id": "light-standard-python-b",
+          "trial_id": "T-214ba1d3cb883bf2",
+          "variant_id": "B"
+        },
+        {
+          "condition": "P2",
+          "pair_id": "moderate-tabular-analysis",
+          "period": 1,
+          "phase": "measured",
+          "position_in_period": 2,
+          "sequence_index": 2,
+          "task_id": "moderate-tabular-analysis-b",
+          "trial_id": "T-4ffd838ec2dbc0bb",
+          "variant_id": "B"
+        },
+        {
+          "condition": "P2",
+          "pair_id": "large-cpu-pytorch-training",
+          "period": 1,
+          "phase": "measured",
+          "position_in_period": 3,
+          "sequence_index": 3,
+          "task_id": "large-cpu-pytorch-training-b",
+          "trial_id": "T-838381dd4ac3c855",
+          "variant_id": "B"
+        },
+        {
+          "condition": "B0",
+          "pair_id": "warmup-framework-tutorial",
+          "period": 2,
+          "phase": "warm_up",
+          "position_in_period": 0,
+          "sequence_index": 4,
+          "task_id": "warmup-framework-tutorial-a",
+          "trial_id": "T-b554d2010c1886c2",
+          "variant_id": "A"
+        },
+        {
+          "condition": "B0",
+          "pair_id": "light-standard-python",
+          "period": 2,
+          "phase": "measured",
+          "position_in_period": 1,
+          "sequence_index": 5,
+          "task_id": "light-standard-python-a",
+          "trial_id": "T-5013bb8ebdf45efc",
+          "variant_id": "A"
+        },
+        {
+          "condition": "B0",
+          "pair_id": "moderate-tabular-analysis",
+          "period": 2,
+          "phase": "measured",
+          "position_in_period": 2,
+          "sequence_index": 6,
+          "task_id": "moderate-tabular-analysis-a",
+          "trial_id": "T-de1c6f53ea5f57ba",
+          "variant_id": "A"
+        },
+        {
+          "condition": "B0",
+          "pair_id": "large-cpu-pytorch-training",
+          "period": 2,
+          "phase": "measured",
+          "position_in_period": 3,
+          "sequence_index": 7,
+          "task_id": "large-cpu-pytorch-training-a",
+          "trial_id": "T-36d0b5f1554fc92b",
+          "variant_id": "A"
+        }
+      ]
+    },
+    {
+      "b0_variant_slot": 0,
+      "condition_order": [
+        "B0",
+        "P2"
+      ],
+      "counterbalance_cell": "C-B0-0-0",
+      "order_row": 0,
+      "participant_id": "P-bb691d7f159f",
+      "session_id": "S-a4832da156cd387d",
+      "task_sequence": [
+        {
+          "condition": "B0",
+          "pair_id": "warmup-framework-tutorial",
+          "period": 1,
+          "phase": "warm_up",
+          "position_in_period": 0,
+          "sequence_index": 0,
+          "task_id": "warmup-framework-tutorial-a",
+          "trial_id": "T-8e2afc92d93b9c64",
+          "variant_id": "A"
+        },
+        {
+          "condition": "B0",
+          "pair_id": "large-cpu-pytorch-training",
+          "period": 1,
+          "phase": "measured",
+          "position_in_period": 1,
+          "sequence_index": 1,
+          "task_id": "large-cpu-pytorch-training-a",
+          "trial_id": "T-a678a1bb1ea4aaee",
+          "variant_id": "A"
+        },
+        {
+          "condition": "B0",
+          "pair_id": "light-standard-python",
+          "period": 1,
+          "phase": "measured",
+          "position_in_period": 2,
+          "sequence_index": 2,
+          "task_id": "light-standard-python-a",
+          "trial_id": "T-acffb020ecb936ac",
+          "variant_id": "A"
+        },
+        {
+          "condition": "B0",
+          "pair_id": "moderate-tabular-analysis",
+          "period": 1,
+          "phase": "measured",
+          "position_in_period": 3,
+          "sequence_index": 3,
+          "task_id": "moderate-tabular-analysis-a",
+          "trial_id": "T-5574b51c1290ffe7",
+          "variant_id": "A"
+        },
+        {
+          "condition": "P2",
+          "pair_id": "warmup-framework-tutorial",
+          "period": 2,
+          "phase": "warm_up",
+          "position_in_period": 0,
+          "sequence_index": 4,
+          "task_id": "warmup-framework-tutorial-b",
+          "trial_id": "T-ab14aa700c90e502",
+          "variant_id": "B"
+        },
+        {
+          "condition": "P2",
+          "pair_id": "large-cpu-pytorch-training",
+          "period": 2,
+          "phase": "measured",
+          "position_in_period": 1,
+          "sequence_index": 5,
+          "task_id": "large-cpu-pytorch-training-b",
+          "trial_id": "T-d277e2a6ca674464",
+          "variant_id": "B"
+        },
+        {
+          "condition": "P2",
+          "pair_id": "light-standard-python",
+          "period": 2,
+          "phase": "measured",
+          "position_in_period": 2,
+          "sequence_index": 6,
+          "task_id": "light-standard-python-b",
+          "trial_id": "T-ab112d7f7e9e3fda",
+          "variant_id": "B"
+        },
+        {
+          "condition": "P2",
+          "pair_id": "moderate-tabular-analysis",
+          "period": 2,
+          "phase": "measured",
+          "position_in_period": 3,
+          "sequence_index": 7,
+          "task_id": "moderate-tabular-analysis-b",
+          "trial_id": "T-5977f4f04ff61288",
+          "variant_id": "B"
+        }
+      ]
+    },
+    {
+      "b0_variant_slot": 1,
+      "condition_order": [
+        "P2",
+        "B0"
+      ],
+      "counterbalance_cell": "C-P2-1-1",
+      "order_row": 1,
+      "participant_id": "P-939d631cc3f3",
+      "session_id": "S-48af6f5a67e11977",
+      "task_sequence": [
+        {
+          "condition": "P2",
+          "pair_id": "warmup-framework-tutorial",
+          "period": 1,
+          "phase": "warm_up",
+          "position_in_period": 0,
+          "sequence_index": 0,
+          "task_id": "warmup-framework-tutorial-a",
+          "trial_id": "T-492ffec39a0b22f1",
+          "variant_id": "A"
+        },
+        {
+          "condition": "P2",
+          "pair_id": "light-standard-python",
+          "period": 1,
+          "phase": "measured",
+          "position_in_period": 1,
+          "sequence_index": 1,
+          "task_id": "light-standard-python-a",
+          "trial_id": "T-1a96011a0f944e71",
+          "variant_id": "A"
+        },
+        {
+          "condition": "P2",
+          "pair_id": "moderate-tabular-analysis",
+          "period": 1,
+          "phase": "measured",
+          "position_in_period": 2,
+          "sequence_index": 2,
+          "task_id": "moderate-tabular-analysis-a",
+          "trial_id": "T-b39e6af571dc075b",
+          "variant_id": "A"
+        },
+        {
+          "condition": "P2",
+          "pair_id": "large-cpu-pytorch-training",
+          "period": 1,
+          "phase": "measured",
+          "position_in_period": 3,
+          "sequence_index": 3,
+          "task_id": "large-cpu-pytorch-training-a",
+          "trial_id": "T-0508689d6652f448",
+          "variant_id": "A"
+        },
+        {
+          "condition": "B0",
+          "pair_id": "warmup-framework-tutorial",
+          "period": 2,
+          "phase": "warm_up",
+          "position_in_period": 0,
+          "sequence_index": 4,
+          "task_id": "warmup-framework-tutorial-b",
+          "trial_id": "T-1495430bc330a832",
+          "variant_id": "B"
+        },
+        {
+          "condition": "B0",
+          "pair_id": "light-standard-python",
+          "period": 2,
+          "phase": "measured",
+          "position_in_period": 1,
+          "sequence_index": 5,
+          "task_id": "light-standard-python-b",
+          "trial_id": "T-88d860f11c6cf749",
+          "variant_id": "B"
+        },
+        {
+          "condition": "B0",
+          "pair_id": "moderate-tabular-analysis",
+          "period": 2,
+          "phase": "measured",
+          "position_in_period": 2,
+          "sequence_index": 6,
+          "task_id": "moderate-tabular-analysis-b",
+          "trial_id": "T-7fcdfd0e14de0acd",
+          "variant_id": "B"
+        },
+        {
+          "condition": "B0",
+          "pair_id": "large-cpu-pytorch-training",
+          "period": 2,
+          "phase": "measured",
+          "position_in_period": 3,
+          "sequence_index": 7,
+          "task_id": "large-cpu-pytorch-training-b",
+          "trial_id": "T-eeb83a96b54006df",
+          "variant_id": "B"
+        }
+      ]
+    },
+    {
+      "b0_variant_slot": 0,
+      "condition_order": [
+        "B0",
+        "P2"
+      ],
+      "counterbalance_cell": "C-B0-0-2",
+      "order_row": 2,
+      "participant_id": "P-deee7d1ec880",
+      "session_id": "S-06946aa127828d22",
+      "task_sequence": [
+        {
+          "condition": "B0",
+          "pair_id": "warmup-framework-tutorial",
+          "period": 1,
+          "phase": "warm_up",
+          "position_in_period": 0,
+          "sequence_index": 0,
+          "task_id": "warmup-framework-tutorial-a",
+          "trial_id": "T-91bd5f2376712ab7",
+          "variant_id": "A"
+        },
+        {
+          "condition": "B0",
+          "pair_id": "moderate-tabular-analysis",
+          "period": 1,
+          "phase": "measured",
+          "position_in_period": 1,
+          "sequence_index": 1,
+          "task_id": "moderate-tabular-analysis-a",
+          "trial_id": "T-04fab2b407d35643",
+          "variant_id": "A"
+        },
+        {
+          "condition": "B0",
+          "pair_id": "large-cpu-pytorch-training",
+          "period": 1,
+          "phase": "measured",
+          "position_in_period": 2,
+          "sequence_index": 2,
+          "task_id": "large-cpu-pytorch-training-a",
+          "trial_id": "T-39d48e99e78da6ff",
+          "variant_id": "A"
+        },
+        {
+          "condition": "B0",
+          "pair_id": "light-standard-python",
+          "period": 1,
+          "phase": "measured",
+          "position_in_period": 3,
+          "sequence_index": 3,
+          "task_id": "light-standard-python-a",
+          "trial_id": "T-2f1a628682347de7",
+          "variant_id": "A"
+        },
+        {
+          "condition": "P2",
+          "pair_id": "warmup-framework-tutorial",
+          "period": 2,
+          "phase": "warm_up",
+          "position_in_period": 0,
+          "sequence_index": 4,
+          "task_id": "warmup-framework-tutorial-b",
+          "trial_id": "T-1550763fde3382d8",
+          "variant_id": "B"
+        },
+        {
+          "condition": "P2",
+          "pair_id": "moderate-tabular-analysis",
+          "period": 2,
+          "phase": "measured",
+          "position_in_period": 1,
+          "sequence_index": 5,
+          "task_id": "moderate-tabular-analysis-b",
+          "trial_id": "T-3ab31fcce9c71303",
+          "variant_id": "B"
+        },
+        {
+          "condition": "P2",
+          "pair_id": "large-cpu-pytorch-training",
+          "period": 2,
+          "phase": "measured",
+          "position_in_period": 2,
+          "sequence_index": 6,
+          "task_id": "large-cpu-pytorch-training-b",
+          "trial_id": "T-035b739ebdd83310",
+          "variant_id": "B"
+        },
+        {
+          "condition": "P2",
+          "pair_id": "light-standard-python",
+          "period": 2,
+          "phase": "measured",
+          "position_in_period": 3,
+          "sequence_index": 7,
+          "task_id": "light-standard-python-b",
+          "trial_id": "T-3bb60db4d944bb2a",
+          "variant_id": "B"
+        }
+      ]
+    },
+    {
+      "b0_variant_slot": 1,
+      "condition_order": [
+        "P2",
+        "B0"
+      ],
+      "counterbalance_cell": "C-P2-1-2",
+      "order_row": 2,
+      "participant_id": "P-4f815a21a127",
+      "session_id": "S-d2359453c43f3205",
+      "task_sequence": [
+        {
+          "condition": "P2",
+          "pair_id": "warmup-framework-tutorial",
+          "period": 1,
+          "phase": "warm_up",
+          "position_in_period": 0,
+          "sequence_index": 0,
+          "task_id": "warmup-framework-tutorial-a",
+          "trial_id": "T-9246878e7f0d89c4",
+          "variant_id": "A"
+        },
+        {
+          "condition": "P2",
+          "pair_id": "moderate-tabular-analysis",
+          "period": 1,
+          "phase": "measured",
+          "position_in_period": 1,
+          "sequence_index": 1,
+          "task_id": "moderate-tabular-analysis-a",
+          "trial_id": "T-66a898328ef0baf1",
+          "variant_id": "A"
+        },
+        {
+          "condition": "P2",
+          "pair_id": "large-cpu-pytorch-training",
+          "period": 1,
+          "phase": "measured",
+          "position_in_period": 2,
+          "sequence_index": 2,
+          "task_id": "large-cpu-pytorch-training-a",
+          "trial_id": "T-9719b2d09cfef2de",
+          "variant_id": "A"
+        },
+        {
+          "condition": "P2",
+          "pair_id": "light-standard-python",
+          "period": 1,
+          "phase": "measured",
+          "position_in_period": 3,
+          "sequence_index": 3,
+          "task_id": "light-standard-python-a",
+          "trial_id": "T-e43f18786e2d831a",
+          "variant_id": "A"
+        },
+        {
+          "condition": "B0",
+          "pair_id": "warmup-framework-tutorial",
+          "period": 2,
+          "phase": "warm_up",
+          "position_in_period": 0,
+          "sequence_index": 4,
+          "task_id": "warmup-framework-tutorial-b",
+          "trial_id": "T-972d745681c30840",
+          "variant_id": "B"
+        },
+        {
+          "condition": "B0",
+          "pair_id": "moderate-tabular-analysis",
+          "period": 2,
+          "phase": "measured",
+          "position_in_period": 1,
+          "sequence_index": 5,
+          "task_id": "moderate-tabular-analysis-b",
+          "trial_id": "T-6fcdd23715a2398a",
+          "variant_id": "B"
+        },
+        {
+          "condition": "B0",
+          "pair_id": "large-cpu-pytorch-training",
+          "period": 2,
+          "phase": "measured",
+          "position_in_period": 2,
+          "sequence_index": 6,
+          "task_id": "large-cpu-pytorch-training-b",
+          "trial_id": "T-f8031cf693095eca",
+          "variant_id": "B"
+        },
+        {
+          "condition": "B0",
+          "pair_id": "light-standard-python",
+          "period": 2,
+          "phase": "measured",
+          "position_in_period": 3,
+          "sequence_index": 7,
+          "task_id": "light-standard-python-b",
+          "trial_id": "T-f6255a06c7677b01",
+          "variant_id": "B"
+        }
+      ]
+    },
+    {
+      "b0_variant_slot": 0,
+      "condition_order": [
+        "P2",
+        "B0"
+      ],
+      "counterbalance_cell": "C-P2-0-0",
+      "order_row": 0,
+      "participant_id": "P-8be96a9ba4c1",
+      "session_id": "S-e772e7b51925cb5d",
+      "task_sequence": [
+        {
+          "condition": "P2",
+          "pair_id": "warmup-framework-tutorial",
+          "period": 1,
+          "phase": "warm_up",
+          "position_in_period": 0,
+          "sequence_index": 0,
+          "task_id": "warmup-framework-tutorial-b",
+          "trial_id": "T-7e0321de5458d668",
+          "variant_id": "B"
+        },
+        {
+          "condition": "P2",
+          "pair_id": "large-cpu-pytorch-training",
+          "period": 1,
+          "phase": "measured",
+          "position_in_period": 1,
+          "sequence_index": 1,
+          "task_id": "large-cpu-pytorch-training-b",
+          "trial_id": "T-ca2607008f4db01e",
+          "variant_id": "B"
+        },
+        {
+          "condition": "P2",
+          "pair_id": "light-standard-python",
+          "period": 1,
+          "phase": "measured",
+          "position_in_period": 2,
+          "sequence_index": 2,
+          "task_id": "light-standard-python-b",
+          "trial_id": "T-2b5ea6b799f2c7bd",
+          "variant_id": "B"
+        },
+        {
+          "condition": "P2",
+          "pair_id": "moderate-tabular-analysis",
+          "period": 1,
+          "phase": "measured",
+          "position_in_period": 3,
+          "sequence_index": 3,
+          "task_id": "moderate-tabular-analysis-b",
+          "trial_id": "T-6803b96e3d8d32ef",
+          "variant_id": "B"
+        },
+        {
+          "condition": "B0",
+          "pair_id": "warmup-framework-tutorial",
+          "period": 2,
+          "phase": "warm_up",
+          "position_in_period": 0,
+          "sequence_index": 4,
+          "task_id": "warmup-framework-tutorial-a",
+          "trial_id": "T-21fa3e7b36da54b4",
+          "variant_id": "A"
+        },
+        {
+          "condition": "B0",
+          "pair_id": "large-cpu-pytorch-training",
+          "period": 2,
+          "phase": "measured",
+          "position_in_period": 1,
+          "sequence_index": 5,
+          "task_id": "large-cpu-pytorch-training-a",
+          "trial_id": "T-c93fcb80770bc207",
+          "variant_id": "A"
+        },
+        {
+          "condition": "B0",
+          "pair_id": "light-standard-python",
+          "period": 2,
+          "phase": "measured",
+          "position_in_period": 2,
+          "sequence_index": 6,
+          "task_id": "light-standard-python-a",
+          "trial_id": "T-5411da42f6c50a27",
+          "variant_id": "A"
+        },
+        {
+          "condition": "B0",
+          "pair_id": "moderate-tabular-analysis",
+          "period": 2,
+          "phase": "measured",
+          "position_in_period": 3,
+          "sequence_index": 7,
+          "task_id": "moderate-tabular-analysis-a",
+          "trial_id": "T-46f6ef2a7947753a",
+          "variant_id": "A"
+        }
+      ]
+    },
+    {
+      "b0_variant_slot": 1,
+      "condition_order": [
+        "B0",
+        "P2"
+      ],
+      "counterbalance_cell": "C-B0-1-1",
+      "order_row": 1,
+      "participant_id": "P-aa667ddab1db",
+      "session_id": "S-3afd7fa90e7f910e",
+      "task_sequence": [
+        {
+          "condition": "B0",
+          "pair_id": "warmup-framework-tutorial",
+          "period": 1,
+          "phase": "warm_up",
+          "position_in_period": 0,
+          "sequence_index": 0,
+          "task_id": "warmup-framework-tutorial-b",
+          "trial_id": "T-ef9ef76867d92af5",
+          "variant_id": "B"
+        },
+        {
+          "condition": "B0",
+          "pair_id": "light-standard-python",
+          "period": 1,
+          "phase": "measured",
+          "position_in_period": 1,
+          "sequence_index": 1,
+          "task_id": "light-standard-python-b",
+          "trial_id": "T-545abc6989603242",
+          "variant_id": "B"
+        },
+        {
+          "condition": "B0",
+          "pair_id": "moderate-tabular-analysis",
+          "period": 1,
+          "phase": "measured",
+          "position_in_period": 2,
+          "sequence_index": 2,
+          "task_id": "moderate-tabular-analysis-b",
+          "trial_id": "T-bd461b483aa8954b",
+          "variant_id": "B"
+        },
+        {
+          "condition": "B0",
+          "pair_id": "large-cpu-pytorch-training",
+          "period": 1,
+          "phase": "measured",
+          "position_in_period": 3,
+          "sequence_index": 3,
+          "task_id": "large-cpu-pytorch-training-b",
+          "trial_id": "T-1aa09e37238879c5",
+          "variant_id": "B"
+        },
+        {
+          "condition": "P2",
+          "pair_id": "warmup-framework-tutorial",
+          "period": 2,
+          "phase": "warm_up",
+          "position_in_period": 0,
+          "sequence_index": 4,
+          "task_id": "warmup-framework-tutorial-a",
+          "trial_id": "T-d3daab9fe405a09c",
+          "variant_id": "A"
+        },
+        {
+          "condition": "P2",
+          "pair_id": "light-standard-python",
+          "period": 2,
+          "phase": "measured",
+          "position_in_period": 1,
+          "sequence_index": 5,
+          "task_id": "light-standard-python-a",
+          "trial_id": "T-ffeec7b4499b2f38",
+          "variant_id": "A"
+        },
+        {
+          "condition": "P2",
+          "pair_id": "moderate-tabular-analysis",
+          "period": 2,
+          "phase": "measured",
+          "position_in_period": 2,
+          "sequence_index": 6,
+          "task_id": "moderate-tabular-analysis-a",
+          "trial_id": "T-1c192b120e3670be",
+          "variant_id": "A"
+        },
+        {
+          "condition": "P2",
+          "pair_id": "large-cpu-pytorch-training",
+          "period": 2,
+          "phase": "measured",
+          "position_in_period": 3,
+          "sequence_index": 7,
+          "task_id": "large-cpu-pytorch-training-a",
+          "trial_id": "T-472e956017288e04",
+          "variant_id": "A"
+        }
+      ]
+    },
+    {
+      "b0_variant_slot": 0,
+      "condition_order": [
+        "B0",
+        "P2"
+      ],
+      "counterbalance_cell": "C-B0-0-1",
+      "order_row": 1,
+      "participant_id": "P-266900112c8f",
+      "session_id": "S-e212a8a57eba823c",
+      "task_sequence": [
+        {
+          "condition": "B0",
+          "pair_id": "warmup-framework-tutorial",
+          "period": 1,
+          "phase": "warm_up",
+          "position_in_period": 0,
+          "sequence_index": 0,
+          "task_id": "warmup-framework-tutorial-a",
+          "trial_id": "T-05a670857027f19c",
+          "variant_id": "A"
+        },
+        {
+          "condition": "B0",
+          "pair_id": "light-standard-python",
+          "period": 1,
+          "phase": "measured",
+          "position_in_period": 1,
+          "sequence_index": 1,
+          "task_id": "light-standard-python-a",
+          "trial_id": "T-daf521bc051ca3cf",
+          "variant_id": "A"
+        },
+        {
+          "condition": "B0",
+          "pair_id": "moderate-tabular-analysis",
+          "period": 1,
+          "phase": "measured",
+          "position_in_period": 2,
+          "sequence_index": 2,
+          "task_id": "moderate-tabular-analysis-a",
+          "trial_id": "T-eec57d6396d22c67",
+          "variant_id": "A"
+        },
+        {
+          "condition": "B0",
+          "pair_id": "large-cpu-pytorch-training",
+          "period": 1,
+          "phase": "measured",
+          "position_in_period": 3,
+          "sequence_index": 3,
+          "task_id": "large-cpu-pytorch-training-a",
+          "trial_id": "T-08a9230e753f34b3",
+          "variant_id": "A"
+        },
+        {
+          "condition": "P2",
+          "pair_id": "warmup-framework-tutorial",
+          "period": 2,
+          "phase": "warm_up",
+          "position_in_period": 0,
+          "sequence_index": 4,
+          "task_id": "warmup-framework-tutorial-b",
+          "trial_id": "T-2b0e708cb2ec3452",
+          "variant_id": "B"
+        },
+        {
+          "condition": "P2",
+          "pair_id": "light-standard-python",
+          "period": 2,
+          "phase": "measured",
+          "position_in_period": 1,
+          "sequence_index": 5,
+          "task_id": "light-standard-python-b",
+          "trial_id": "T-d01b4dce82da23b6",
+          "variant_id": "B"
+        },
+        {
+          "condition": "P2",
+          "pair_id": "moderate-tabular-analysis",
+          "period": 2,
+          "phase": "measured",
+          "position_in_period": 2,
+          "sequence_index": 6,
+          "task_id": "moderate-tabular-analysis-b",
+          "trial_id": "T-fbdf2136c11f67e6",
+          "variant_id": "B"
+        },
+        {
+          "condition": "P2",
+          "pair_id": "large-cpu-pytorch-training",
+          "period": 2,
+          "phase": "measured",
+          "position_in_period": 3,
+          "sequence_index": 7,
+          "task_id": "large-cpu-pytorch-training-b",
+          "trial_id": "T-504acca571a1702c",
+          "variant_id": "B"
+        }
+      ]
+    },
+    {
+      "b0_variant_slot": 1,
+      "condition_order": [
+        "P2",
+        "B0"
+      ],
+      "counterbalance_cell": "C-P2-1-0",
+      "order_row": 0,
+      "participant_id": "P-de2e1c6ddba3",
+      "session_id": "S-6acc06d591eea224",
+      "task_sequence": [
+        {
+          "condition": "P2",
+          "pair_id": "warmup-framework-tutorial",
+          "period": 1,
+          "phase": "warm_up",
+          "position_in_period": 0,
+          "sequence_index": 0,
+          "task_id": "warmup-framework-tutorial-a",
+          "trial_id": "T-53531e3ce503dba7",
+          "variant_id": "A"
+        },
+        {
+          "condition": "P2",
+          "pair_id": "large-cpu-pytorch-training",
+          "period": 1,
+          "phase": "measured",
+          "position_in_period": 1,
+          "sequence_index": 1,
+          "task_id": "large-cpu-pytorch-training-a",
+          "trial_id": "T-6c8a8105e7ff1d13",
+          "variant_id": "A"
+        },
+        {
+          "condition": "P2",
+          "pair_id": "light-standard-python",
+          "period": 1,
+          "phase": "measured",
+          "position_in_period": 2,
+          "sequence_index": 2,
+          "task_id": "light-standard-python-a",
+          "trial_id": "T-9430aee76653c635",
+          "variant_id": "A"
+        },
+        {
+          "condition": "P2",
+          "pair_id": "moderate-tabular-analysis",
+          "period": 1,
+          "phase": "measured",
+          "position_in_period": 3,
+          "sequence_index": 3,
+          "task_id": "moderate-tabular-analysis-a",
+          "trial_id": "T-10a981028af15da3",
+          "variant_id": "A"
+        },
+        {
+          "condition": "B0",
+          "pair_id": "warmup-framework-tutorial",
+          "period": 2,
+          "phase": "warm_up",
+          "position_in_period": 0,
+          "sequence_index": 4,
+          "task_id": "warmup-framework-tutorial-b",
+          "trial_id": "T-702454a821f9e789",
+          "variant_id": "B"
+        },
+        {
+          "condition": "B0",
+          "pair_id": "large-cpu-pytorch-training",
+          "period": 2,
+          "phase": "measured",
+          "position_in_period": 1,
+          "sequence_index": 5,
+          "task_id": "large-cpu-pytorch-training-b",
+          "trial_id": "T-890250d490bf2a6f",
+          "variant_id": "B"
+        },
+        {
+          "condition": "B0",
+          "pair_id": "light-standard-python",
+          "period": 2,
+          "phase": "measured",
+          "position_in_period": 2,
+          "sequence_index": 6,
+          "task_id": "light-standard-python-b",
+          "trial_id": "T-7eafd573959abc80",
+          "variant_id": "B"
+        },
+        {
+          "condition": "B0",
+          "pair_id": "moderate-tabular-analysis",
+          "period": 2,
+          "phase": "measured",
+          "position_in_period": 3,
+          "sequence_index": 7,
+          "task_id": "moderate-tabular-analysis-b",
+          "trial_id": "T-ebec8524978b7c8a",
+          "variant_id": "B"
+        }
+      ]
+    },
+    {
+      "b0_variant_slot": 0,
+      "condition_order": [
+        "P2",
+        "B0"
+      ],
+      "counterbalance_cell": "C-P2-0-2",
+      "order_row": 2,
+      "participant_id": "P-c615bb224903",
+      "session_id": "S-a90b4c6ef0536942",
+      "task_sequence": [
+        {
+          "condition": "P2",
+          "pair_id": "warmup-framework-tutorial",
+          "period": 1,
+          "phase": "warm_up",
+          "position_in_period": 0,
+          "sequence_index": 0,
+          "task_id": "warmup-framework-tutorial-b",
+          "trial_id": "T-514db78253bc35cf",
+          "variant_id": "B"
+        },
+        {
+          "condition": "P2",
+          "pair_id": "moderate-tabular-analysis",
+          "period": 1,
+          "phase": "measured",
+          "position_in_period": 1,
+          "sequence_index": 1,
+          "task_id": "moderate-tabular-analysis-b",
+          "trial_id": "T-a2f9afcbc5d4b13b",
+          "variant_id": "B"
+        },
+        {
+          "condition": "P2",
+          "pair_id": "large-cpu-pytorch-training",
+          "period": 1,
+          "phase": "measured",
+          "position_in_period": 2,
+          "sequence_index": 2,
+          "task_id": "large-cpu-pytorch-training-b",
+          "trial_id": "T-18e90dd99fe3e887",
+          "variant_id": "B"
+        },
+        {
+          "condition": "P2",
+          "pair_id": "light-standard-python",
+          "period": 1,
+          "phase": "measured",
+          "position_in_period": 3,
+          "sequence_index": 3,
+          "task_id": "light-standard-python-b",
+          "trial_id": "T-a993bde72a19e63e",
+          "variant_id": "B"
+        },
+        {
+          "condition": "B0",
+          "pair_id": "warmup-framework-tutorial",
+          "period": 2,
+          "phase": "warm_up",
+          "position_in_period": 0,
+          "sequence_index": 4,
+          "task_id": "warmup-framework-tutorial-a",
+          "trial_id": "T-c0bff51c0b9822cc",
+          "variant_id": "A"
+        },
+        {
+          "condition": "B0",
+          "pair_id": "moderate-tabular-analysis",
+          "period": 2,
+          "phase": "measured",
+          "position_in_period": 1,
+          "sequence_index": 5,
+          "task_id": "moderate-tabular-analysis-a",
+          "trial_id": "T-3e7b99a6c7166116",
+          "variant_id": "A"
+        },
+        {
+          "condition": "B0",
+          "pair_id": "large-cpu-pytorch-training",
+          "period": 2,
+          "phase": "measured",
+          "position_in_period": 2,
+          "sequence_index": 6,
+          "task_id": "large-cpu-pytorch-training-a",
+          "trial_id": "T-fd76f43517aa97ea",
+          "variant_id": "A"
+        },
+        {
+          "condition": "B0",
+          "pair_id": "light-standard-python",
+          "period": 2,
+          "phase": "measured",
+          "position_in_period": 3,
+          "sequence_index": 7,
+          "task_id": "light-standard-python-a",
+          "trial_id": "T-b17236ada705fb64",
+          "variant_id": "A"
+        }
+      ]
+    },
+    {
+      "b0_variant_slot": 1,
+      "condition_order": [
+        "B0",
+        "P2"
+      ],
+      "counterbalance_cell": "C-B0-1-0",
+      "order_row": 0,
+      "participant_id": "P-43f4e12e2bf3",
+      "session_id": "S-ab790edf91360e2c",
+      "task_sequence": [
+        {
+          "condition": "B0",
+          "pair_id": "warmup-framework-tutorial",
+          "period": 1,
+          "phase": "warm_up",
+          "position_in_period": 0,
+          "sequence_index": 0,
+          "task_id": "warmup-framework-tutorial-b",
+          "trial_id": "T-ff78292f1a2e3383",
+          "variant_id": "B"
+        },
+        {
+          "condition": "B0",
+          "pair_id": "large-cpu-pytorch-training",
+          "period": 1,
+          "phase": "measured",
+          "position_in_period": 1,
+          "sequence_index": 1,
+          "task_id": "large-cpu-pytorch-training-b",
+          "trial_id": "T-b8c4f8aa62e98691",
+          "variant_id": "B"
+        },
+        {
+          "condition": "B0",
+          "pair_id": "light-standard-python",
+          "period": 1,
+          "phase": "measured",
+          "position_in_period": 2,
+          "sequence_index": 2,
+          "task_id": "light-standard-python-b",
+          "trial_id": "T-4fe0d10a0a1ed9b6",
+          "variant_id": "B"
+        },
+        {
+          "condition": "B0",
+          "pair_id": "moderate-tabular-analysis",
+          "period": 1,
+          "phase": "measured",
+          "position_in_period": 3,
+          "sequence_index": 3,
+          "task_id": "moderate-tabular-analysis-b",
+          "trial_id": "T-57a1bb940873ea76",
+          "variant_id": "B"
+        },
+        {
+          "condition": "P2",
+          "pair_id": "warmup-framework-tutorial",
+          "period": 2,
+          "phase": "warm_up",
+          "position_in_period": 0,
+          "sequence_index": 4,
+          "task_id": "warmup-framework-tutorial-a",
+          "trial_id": "T-04b2fbb9103f1ddf",
+          "variant_id": "A"
+        },
+        {
+          "condition": "P2",
+          "pair_id": "large-cpu-pytorch-training",
+          "period": 2,
+          "phase": "measured",
+          "position_in_period": 1,
+          "sequence_index": 5,
+          "task_id": "large-cpu-pytorch-training-a",
+          "trial_id": "T-a7fe1a25bae673bc",
+          "variant_id": "A"
+        },
+        {
+          "condition": "P2",
+          "pair_id": "light-standard-python",
+          "period": 2,
+          "phase": "measured",
+          "position_in_period": 2,
+          "sequence_index": 6,
+          "task_id": "light-standard-python-a",
+          "trial_id": "T-093080585dd82f94",
+          "variant_id": "A"
+        },
+        {
+          "condition": "P2",
+          "pair_id": "moderate-tabular-analysis",
+          "period": 2,
+          "phase": "measured",
+          "position_in_period": 3,
+          "sequence_index": 7,
+          "task_id": "moderate-tabular-analysis-a",
+          "trial_id": "T-8f8d77d52310fef5",
+          "variant_id": "A"
+        }
+      ]
+    },
+    {
+      "b0_variant_slot": 1,
+      "condition_order": [
+        "B0",
+        "P2"
+      ],
+      "counterbalance_cell": "C-B0-1-2",
+      "order_row": 2,
+      "participant_id": "P-b575aea43ea1",
+      "session_id": "S-77e8a6aac346d8b0",
+      "task_sequence": [
+        {
+          "condition": "B0",
+          "pair_id": "warmup-framework-tutorial",
+          "period": 1,
+          "phase": "warm_up",
+          "position_in_period": 0,
+          "sequence_index": 0,
+          "task_id": "warmup-framework-tutorial-b",
+          "trial_id": "T-46337a009707971a",
+          "variant_id": "B"
+        },
+        {
+          "condition": "B0",
+          "pair_id": "moderate-tabular-analysis",
+          "period": 1,
+          "phase": "measured",
+          "position_in_period": 1,
+          "sequence_index": 1,
+          "task_id": "moderate-tabular-analysis-b",
+          "trial_id": "T-ccd8588e78eeb7f8",
+          "variant_id": "B"
+        },
+        {
+          "condition": "B0",
+          "pair_id": "large-cpu-pytorch-training",
+          "period": 1,
+          "phase": "measured",
+          "position_in_period": 2,
+          "sequence_index": 2,
+          "task_id": "large-cpu-pytorch-training-b",
+          "trial_id": "T-bb7e166c2651329a",
+          "variant_id": "B"
+        },
+        {
+          "condition": "B0",
+          "pair_id": "light-standard-python",
+          "period": 1,
+          "phase": "measured",
+          "position_in_period": 3,
+          "sequence_index": 3,
+          "task_id": "light-standard-python-b",
+          "trial_id": "T-a400b06601377705",
+          "variant_id": "B"
+        },
+        {
+          "condition": "P2",
+          "pair_id": "warmup-framework-tutorial",
+          "period": 2,
+          "phase": "warm_up",
+          "position_in_period": 0,
+          "sequence_index": 4,
+          "task_id": "warmup-framework-tutorial-a",
+          "trial_id": "T-ac4aa296f6555c23",
+          "variant_id": "A"
+        },
+        {
+          "condition": "P2",
+          "pair_id": "moderate-tabular-analysis",
+          "period": 2,
+          "phase": "measured",
+          "position_in_period": 1,
+          "sequence_index": 5,
+          "task_id": "moderate-tabular-analysis-a",
+          "trial_id": "T-1ac21899db55f5bc",
+          "variant_id": "A"
+        },
+        {
+          "condition": "P2",
+          "pair_id": "large-cpu-pytorch-training",
+          "period": 2,
+          "phase": "measured",
+          "position_in_period": 2,
+          "sequence_index": 6,
+          "task_id": "large-cpu-pytorch-training-a",
+          "trial_id": "T-e9a676a986159742",
+          "variant_id": "A"
+        },
+        {
+          "condition": "P2",
+          "pair_id": "light-standard-python",
+          "period": 2,
+          "phase": "measured",
+          "position_in_period": 3,
+          "sequence_index": 7,
+          "task_id": "light-standard-python-a",
+          "trial_id": "T-aee70710787aee8b",
+          "variant_id": "A"
+        }
+      ]
+    },
+    {
+      "b0_variant_slot": 0,
+      "condition_order": [
+        "P2",
+        "B0"
+      ],
+      "counterbalance_cell": "C-P2-0-1",
+      "order_row": 1,
+      "participant_id": "P-4b8a028882ac",
+      "session_id": "S-6ed6334b911ea0e7",
+      "task_sequence": [
+        {
+          "condition": "P2",
+          "pair_id": "warmup-framework-tutorial",
+          "period": 1,
+          "phase": "warm_up",
+          "position_in_period": 0,
+          "sequence_index": 0,
+          "task_id": "warmup-framework-tutorial-b",
+          "trial_id": "T-b2a9308668e4a4ec",
+          "variant_id": "B"
+        },
+        {
+          "condition": "P2",
+          "pair_id": "light-standard-python",
+          "period": 1,
+          "phase": "measured",
+          "position_in_period": 1,
+          "sequence_index": 1,
+          "task_id": "light-standard-python-b",
+          "trial_id": "T-095fd678c1dda4df",
+          "variant_id": "B"
+        },
+        {
+          "condition": "P2",
+          "pair_id": "moderate-tabular-analysis",
+          "period": 1,
+          "phase": "measured",
+          "position_in_period": 2,
+          "sequence_index": 2,
+          "task_id": "moderate-tabular-analysis-b",
+          "trial_id": "T-737647bc963e8209",
+          "variant_id": "B"
+        },
+        {
+          "condition": "P2",
+          "pair_id": "large-cpu-pytorch-training",
+          "period": 1,
+          "phase": "measured",
+          "position_in_period": 3,
+          "sequence_index": 3,
+          "task_id": "large-cpu-pytorch-training-b",
+          "trial_id": "T-590815a1b00921b7",
+          "variant_id": "B"
+        },
+        {
+          "condition": "B0",
+          "pair_id": "warmup-framework-tutorial",
+          "period": 2,
+          "phase": "warm_up",
+          "position_in_period": 0,
+          "sequence_index": 4,
+          "task_id": "warmup-framework-tutorial-a",
+          "trial_id": "T-011002519c3dc92c",
+          "variant_id": "A"
+        },
+        {
+          "condition": "B0",
+          "pair_id": "light-standard-python",
+          "period": 2,
+          "phase": "measured",
+          "position_in_period": 1,
+          "sequence_index": 5,
+          "task_id": "light-standard-python-a",
+          "trial_id": "T-5dc572b1aa0ee68d",
+          "variant_id": "A"
+        },
+        {
+          "condition": "B0",
+          "pair_id": "moderate-tabular-analysis",
+          "period": 2,
+          "phase": "measured",
+          "position_in_period": 2,
+          "sequence_index": 6,
+          "task_id": "moderate-tabular-analysis-a",
+          "trial_id": "T-a3d724fc2c693f9b",
+          "variant_id": "A"
+        },
+        {
+          "condition": "B0",
+          "pair_id": "large-cpu-pytorch-training",
+          "period": 2,
+          "phase": "measured",
+          "position_in_period": 3,
+          "sequence_index": 7,
+          "task_id": "large-cpu-pytorch-training-a",
+          "trial_id": "T-5e0d215f087668de",
+          "variant_id": "A"
+        }
+      ]
+    },
+    {
+      "b0_variant_slot": 0,
+      "condition_order": [
+        "B0",
+        "P2"
+      ],
+      "counterbalance_cell": "C-B0-0-0",
+      "order_row": 0,
+      "participant_id": "P-006750a0b7a1",
+      "session_id": "S-5ed3e77fd6f90979",
+      "task_sequence": [
+        {
+          "condition": "B0",
+          "pair_id": "warmup-framework-tutorial",
+          "period": 1,
+          "phase": "warm_up",
+          "position_in_period": 0,
+          "sequence_index": 0,
+          "task_id": "warmup-framework-tutorial-a",
+          "trial_id": "T-766740051d03fab6",
+          "variant_id": "A"
+        },
+        {
+          "condition": "B0",
+          "pair_id": "large-cpu-pytorch-training",
+          "period": 1,
+          "phase": "measured",
+          "position_in_period": 1,
+          "sequence_index": 1,
+          "task_id": "large-cpu-pytorch-training-a",
+          "trial_id": "T-b981007e445bdbae",
+          "variant_id": "A"
+        },
+        {
+          "condition": "B0",
+          "pair_id": "light-standard-python",
+          "period": 1,
+          "phase": "measured",
+          "position_in_period": 2,
+          "sequence_index": 2,
+          "task_id": "light-standard-python-a",
+          "trial_id": "T-a02ee85cf4fea7ab",
+          "variant_id": "A"
+        },
+        {
+          "condition": "B0",
+          "pair_id": "moderate-tabular-analysis",
+          "period": 1,
+          "phase": "measured",
+          "position_in_period": 3,
+          "sequence_index": 3,
+          "task_id": "moderate-tabular-analysis-a",
+          "trial_id": "T-b86972bb9dcc9c5d",
+          "variant_id": "A"
+        },
+        {
+          "condition": "P2",
+          "pair_id": "warmup-framework-tutorial",
+          "period": 2,
+          "phase": "warm_up",
+          "position_in_period": 0,
+          "sequence_index": 4,
+          "task_id": "warmup-framework-tutorial-b",
+          "trial_id": "T-29422cf0eccc9c6c",
+          "variant_id": "B"
+        },
+        {
+          "condition": "P2",
+          "pair_id": "large-cpu-pytorch-training",
+          "period": 2,
+          "phase": "measured",
+          "position_in_period": 1,
+          "sequence_index": 5,
+          "task_id": "large-cpu-pytorch-training-b",
+          "trial_id": "T-b688cf1ad0ced48f",
+          "variant_id": "B"
+        },
+        {
+          "condition": "P2",
+          "pair_id": "light-standard-python",
+          "period": 2,
+          "phase": "measured",
+          "position_in_period": 2,
+          "sequence_index": 6,
+          "task_id": "light-standard-python-b",
+          "trial_id": "T-c10b2a039f44e561",
+          "variant_id": "B"
+        },
+        {
+          "condition": "P2",
+          "pair_id": "moderate-tabular-analysis",
+          "period": 2,
+          "phase": "measured",
+          "position_in_period": 3,
+          "sequence_index": 7,
+          "task_id": "moderate-tabular-analysis-b",
+          "trial_id": "T-83ea7d3d28d9fa5d",
+          "variant_id": "B"
+        }
+      ]
+    },
+    {
+      "b0_variant_slot": 1,
+      "condition_order": [
+        "P2",
+        "B0"
+      ],
+      "counterbalance_cell": "C-P2-1-1",
+      "order_row": 1,
+      "participant_id": "P-09d7aa6f9a0a",
+      "session_id": "S-77dff739f61d4fc1",
+      "task_sequence": [
+        {
+          "condition": "P2",
+          "pair_id": "warmup-framework-tutorial",
+          "period": 1,
+          "phase": "warm_up",
+          "position_in_period": 0,
+          "sequence_index": 0,
+          "task_id": "warmup-framework-tutorial-a",
+          "trial_id": "T-baf8ad3d0c4eff1d",
+          "variant_id": "A"
+        },
+        {
+          "condition": "P2",
+          "pair_id": "light-standard-python",
+          "period": 1,
+          "phase": "measured",
+          "position_in_period": 1,
+          "sequence_index": 1,
+          "task_id": "light-standard-python-a",
+          "trial_id": "T-23c0bc8f8d38016a",
+          "variant_id": "A"
+        },
+        {
+          "condition": "P2",
+          "pair_id": "moderate-tabular-analysis",
+          "period": 1,
+          "phase": "measured",
+          "position_in_period": 2,
+          "sequence_index": 2,
+          "task_id": "moderate-tabular-analysis-a",
+          "trial_id": "T-93490b36488be73c",
+          "variant_id": "A"
+        },
+        {
+          "condition": "P2",
+          "pair_id": "large-cpu-pytorch-training",
+          "period": 1,
+          "phase": "measured",
+          "position_in_period": 3,
+          "sequence_index": 3,
+          "task_id": "large-cpu-pytorch-training-a",
+          "trial_id": "T-ecc5d3b0dbc160e0",
+          "variant_id": "A"
+        },
+        {
+          "condition": "B0",
+          "pair_id": "warmup-framework-tutorial",
+          "period": 2,
+          "phase": "warm_up",
+          "position_in_period": 0,
+          "sequence_index": 4,
+          "task_id": "warmup-framework-tutorial-b",
+          "trial_id": "T-1f35a582118a7924",
+          "variant_id": "B"
+        },
+        {
+          "condition": "B0",
+          "pair_id": "light-standard-python",
+          "period": 2,
+          "phase": "measured",
+          "position_in_period": 1,
+          "sequence_index": 5,
+          "task_id": "light-standard-python-b",
+          "trial_id": "T-ade495c8c21bfd7d",
+          "variant_id": "B"
+        },
+        {
+          "condition": "B0",
+          "pair_id": "moderate-tabular-analysis",
+          "period": 2,
+          "phase": "measured",
+          "position_in_period": 2,
+          "sequence_index": 6,
+          "task_id": "moderate-tabular-analysis-b",
+          "trial_id": "T-153e6c62ef21f194",
+          "variant_id": "B"
+        },
+        {
+          "condition": "B0",
+          "pair_id": "large-cpu-pytorch-training",
+          "period": 2,
+          "phase": "measured",
+          "position_in_period": 3,
+          "sequence_index": 7,
+          "task_id": "large-cpu-pytorch-training-b",
+          "trial_id": "T-9cd0bf23e552e2dc",
+          "variant_id": "B"
+        }
+      ]
+    },
+    {
+      "b0_variant_slot": 0,
+      "condition_order": [
+        "B0",
+        "P2"
+      ],
+      "counterbalance_cell": "C-B0-0-2",
+      "order_row": 2,
+      "participant_id": "P-ca06c007e04c",
+      "session_id": "S-be81e0b92cdb3bfa",
+      "task_sequence": [
+        {
+          "condition": "B0",
+          "pair_id": "warmup-framework-tutorial",
+          "period": 1,
+          "phase": "warm_up",
+          "position_in_period": 0,
+          "sequence_index": 0,
+          "task_id": "warmup-framework-tutorial-a",
+          "trial_id": "T-92ce742d4cc206c7",
+          "variant_id": "A"
+        },
+        {
+          "condition": "B0",
+          "pair_id": "moderate-tabular-analysis",
+          "period": 1,
+          "phase": "measured",
+          "position_in_period": 1,
+          "sequence_index": 1,
+          "task_id": "moderate-tabular-analysis-a",
+          "trial_id": "T-486d51ae4c1e5ab5",
+          "variant_id": "A"
+        },
+        {
+          "condition": "B0",
+          "pair_id": "large-cpu-pytorch-training",
+          "period": 1,
+          "phase": "measured",
+          "position_in_period": 2,
+          "sequence_index": 2,
+          "task_id": "large-cpu-pytorch-training-a",
+          "trial_id": "T-eaa40a8b790e71d7",
+          "variant_id": "A"
+        },
+        {
+          "condition": "B0",
+          "pair_id": "light-standard-python",
+          "period": 1,
+          "phase": "measured",
+          "position_in_period": 3,
+          "sequence_index": 3,
+          "task_id": "light-standard-python-a",
+          "trial_id": "T-c072653c1ce79a98",
+          "variant_id": "A"
+        },
+        {
+          "condition": "P2",
+          "pair_id": "warmup-framework-tutorial",
+          "period": 2,
+          "phase": "warm_up",
+          "position_in_period": 0,
+          "sequence_index": 4,
+          "task_id": "warmup-framework-tutorial-b",
+          "trial_id": "T-73ea3efd189e8f06",
+          "variant_id": "B"
+        },
+        {
+          "condition": "P2",
+          "pair_id": "moderate-tabular-analysis",
+          "period": 2,
+          "phase": "measured",
+          "position_in_period": 1,
+          "sequence_index": 5,
+          "task_id": "moderate-tabular-analysis-b",
+          "trial_id": "T-06fcd7f226da141f",
+          "variant_id": "B"
+        },
+        {
+          "condition": "P2",
+          "pair_id": "large-cpu-pytorch-training",
+          "period": 2,
+          "phase": "measured",
+          "position_in_period": 2,
+          "sequence_index": 6,
+          "task_id": "large-cpu-pytorch-training-b",
+          "trial_id": "T-13d4fd88ee1907b1",
+          "variant_id": "B"
+        },
+        {
+          "condition": "P2",
+          "pair_id": "light-standard-python",
+          "period": 2,
+          "phase": "measured",
+          "position_in_period": 3,
+          "sequence_index": 7,
+          "task_id": "light-standard-python-b",
+          "trial_id": "T-c986ea4272fd1110",
+          "variant_id": "B"
+        }
+      ]
+    },
+    {
+      "b0_variant_slot": 1,
+      "condition_order": [
+        "P2",
+        "B0"
+      ],
+      "counterbalance_cell": "C-P2-1-2",
+      "order_row": 2,
+      "participant_id": "P-f184a2f91ce3",
+      "session_id": "S-3b0a582365ba079d",
+      "task_sequence": [
+        {
+          "condition": "P2",
+          "pair_id": "warmup-framework-tutorial",
+          "period": 1,
+          "phase": "warm_up",
+          "position_in_period": 0,
+          "sequence_index": 0,
+          "task_id": "warmup-framework-tutorial-a",
+          "trial_id": "T-9a93bd876aee389a",
+          "variant_id": "A"
+        },
+        {
+          "condition": "P2",
+          "pair_id": "moderate-tabular-analysis",
+          "period": 1,
+          "phase": "measured",
+          "position_in_period": 1,
+          "sequence_index": 1,
+          "task_id": "moderate-tabular-analysis-a",
+          "trial_id": "T-b2e4fc772f40fc36",
+          "variant_id": "A"
+        },
+        {
+          "condition": "P2",
+          "pair_id": "large-cpu-pytorch-training",
+          "period": 1,
+          "phase": "measured",
+          "position_in_period": 2,
+          "sequence_index": 2,
+          "task_id": "large-cpu-pytorch-training-a",
+          "trial_id": "T-f36fa7a9f71f567f",
+          "variant_id": "A"
+        },
+        {
+          "condition": "P2",
+          "pair_id": "light-standard-python",
+          "period": 1,
+          "phase": "measured",
+          "position_in_period": 3,
+          "sequence_index": 3,
+          "task_id": "light-standard-python-a",
+          "trial_id": "T-b2cf73130771b0a3",
+          "variant_id": "A"
+        },
+        {
+          "condition": "B0",
+          "pair_id": "warmup-framework-tutorial",
+          "period": 2,
+          "phase": "warm_up",
+          "position_in_period": 0,
+          "sequence_index": 4,
+          "task_id": "warmup-framework-tutorial-b",
+          "trial_id": "T-8176e9f2d7781666",
+          "variant_id": "B"
+        },
+        {
+          "condition": "B0",
+          "pair_id": "moderate-tabular-analysis",
+          "period": 2,
+          "phase": "measured",
+          "position_in_period": 1,
+          "sequence_index": 5,
+          "task_id": "moderate-tabular-analysis-b",
+          "trial_id": "T-2eaae05349aacfea",
+          "variant_id": "B"
+        },
+        {
+          "condition": "B0",
+          "pair_id": "large-cpu-pytorch-training",
+          "period": 2,
+          "phase": "measured",
+          "position_in_period": 2,
+          "sequence_index": 6,
+          "task_id": "large-cpu-pytorch-training-b",
+          "trial_id": "T-30ef970d69264c40",
+          "variant_id": "B"
+        },
+        {
+          "condition": "B0",
+          "pair_id": "light-standard-python",
+          "period": 2,
+          "phase": "measured",
+          "position_in_period": 3,
+          "sequence_index": 7,
+          "task_id": "light-standard-python-b",
+          "trial_id": "T-273c1f7c0bb11913",
+          "variant_id": "B"
+        }
+      ]
+    },
+    {
+      "b0_variant_slot": 0,
+      "condition_order": [
+        "P2",
+        "B0"
+      ],
+      "counterbalance_cell": "C-P2-0-0",
+      "order_row": 0,
+      "participant_id": "P-b60bd980f0c9",
+      "session_id": "S-24332a074b30e26f",
+      "task_sequence": [
+        {
+          "condition": "P2",
+          "pair_id": "warmup-framework-tutorial",
+          "period": 1,
+          "phase": "warm_up",
+          "position_in_period": 0,
+          "sequence_index": 0,
+          "task_id": "warmup-framework-tutorial-b",
+          "trial_id": "T-7e74ab4b5153fad3",
+          "variant_id": "B"
+        },
+        {
+          "condition": "P2",
+          "pair_id": "large-cpu-pytorch-training",
+          "period": 1,
+          "phase": "measured",
+          "position_in_period": 1,
+          "sequence_index": 1,
+          "task_id": "large-cpu-pytorch-training-b",
+          "trial_id": "T-1191ab9a29040660",
+          "variant_id": "B"
+        },
+        {
+          "condition": "P2",
+          "pair_id": "light-standard-python",
+          "period": 1,
+          "phase": "measured",
+          "position_in_period": 2,
+          "sequence_index": 2,
+          "task_id": "light-standard-python-b",
+          "trial_id": "T-831de918494f6827",
+          "variant_id": "B"
+        },
+        {
+          "condition": "P2",
+          "pair_id": "moderate-tabular-analysis",
+          "period": 1,
+          "phase": "measured",
+          "position_in_period": 3,
+          "sequence_index": 3,
+          "task_id": "moderate-tabular-analysis-b",
+          "trial_id": "T-2a2aa692cacba682",
+          "variant_id": "B"
+        },
+        {
+          "condition": "B0",
+          "pair_id": "warmup-framework-tutorial",
+          "period": 2,
+          "phase": "warm_up",
+          "position_in_period": 0,
+          "sequence_index": 4,
+          "task_id": "warmup-framework-tutorial-a",
+          "trial_id": "T-7d76d2af06e80e7a",
+          "variant_id": "A"
+        },
+        {
+          "condition": "B0",
+          "pair_id": "large-cpu-pytorch-training",
+          "period": 2,
+          "phase": "measured",
+          "position_in_period": 1,
+          "sequence_index": 5,
+          "task_id": "large-cpu-pytorch-training-a",
+          "trial_id": "T-ae1a80f18e206077",
+          "variant_id": "A"
+        },
+        {
+          "condition": "B0",
+          "pair_id": "light-standard-python",
+          "period": 2,
+          "phase": "measured",
+          "position_in_period": 2,
+          "sequence_index": 6,
+          "task_id": "light-standard-python-a",
+          "trial_id": "T-7454d4a7def47820",
+          "variant_id": "A"
+        },
+        {
+          "condition": "B0",
+          "pair_id": "moderate-tabular-analysis",
+          "period": 2,
+          "phase": "measured",
+          "position_in_period": 3,
+          "sequence_index": 7,
+          "task_id": "moderate-tabular-analysis-a",
+          "trial_id": "T-c71917b6aa22e6d2",
+          "variant_id": "A"
+        }
+      ]
+    },
+    {
+      "b0_variant_slot": 1,
+      "condition_order": [
+        "B0",
+        "P2"
+      ],
+      "counterbalance_cell": "C-B0-1-1",
+      "order_row": 1,
+      "participant_id": "P-ed0e079c541f",
+      "session_id": "S-24ebce1b835ca7ee",
+      "task_sequence": [
+        {
+          "condition": "B0",
+          "pair_id": "warmup-framework-tutorial",
+          "period": 1,
+          "phase": "warm_up",
+          "position_in_period": 0,
+          "sequence_index": 0,
+          "task_id": "warmup-framework-tutorial-b",
+          "trial_id": "T-6bf1c31ba45cd09a",
+          "variant_id": "B"
+        },
+        {
+          "condition": "B0",
+          "pair_id": "light-standard-python",
+          "period": 1,
+          "phase": "measured",
+          "position_in_period": 1,
+          "sequence_index": 1,
+          "task_id": "light-standard-python-b",
+          "trial_id": "T-71bd41bc6044963c",
+          "variant_id": "B"
+        },
+        {
+          "condition": "B0",
+          "pair_id": "moderate-tabular-analysis",
+          "period": 1,
+          "phase": "measured",
+          "position_in_period": 2,
+          "sequence_index": 2,
+          "task_id": "moderate-tabular-analysis-b",
+          "trial_id": "T-088c22119b551515",
+          "variant_id": "B"
+        },
+        {
+          "condition": "B0",
+          "pair_id": "large-cpu-pytorch-training",
+          "period": 1,
+          "phase": "measured",
+          "position_in_period": 3,
+          "sequence_index": 3,
+          "task_id": "large-cpu-pytorch-training-b",
+          "trial_id": "T-d0a935e669944d36",
+          "variant_id": "B"
+        },
+        {
+          "condition": "P2",
+          "pair_id": "warmup-framework-tutorial",
+          "period": 2,
+          "phase": "warm_up",
+          "position_in_period": 0,
+          "sequence_index": 4,
+          "task_id": "warmup-framework-tutorial-a",
+          "trial_id": "T-5d0aa627a4c6054a",
+          "variant_id": "A"
+        },
+        {
+          "condition": "P2",
+          "pair_id": "light-standard-python",
+          "period": 2,
+          "phase": "measured",
+          "position_in_period": 1,
+          "sequence_index": 5,
+          "task_id": "light-standard-python-a",
+          "trial_id": "T-f448c0becd0a916c",
+          "variant_id": "A"
+        },
+        {
+          "condition": "P2",
+          "pair_id": "moderate-tabular-analysis",
+          "period": 2,
+          "phase": "measured",
+          "position_in_period": 2,
+          "sequence_index": 6,
+          "task_id": "moderate-tabular-analysis-a",
+          "trial_id": "T-8e588be2a2364ccf",
+          "variant_id": "A"
+        },
+        {
+          "condition": "P2",
+          "pair_id": "large-cpu-pytorch-training",
+          "period": 2,
+          "phase": "measured",
+          "position_in_period": 3,
+          "sequence_index": 7,
+          "task_id": "large-cpu-pytorch-training-a",
+          "trial_id": "T-b9000f5bbe38f97b",
+          "variant_id": "A"
+        }
+      ]
+    },
+    {
+      "b0_variant_slot": 0,
+      "condition_order": [
+        "B0",
+        "P2"
+      ],
+      "counterbalance_cell": "C-B0-0-1",
+      "order_row": 1,
+      "participant_id": "P-3a091e3f64b3",
+      "session_id": "S-3c6dc2cae615c707",
+      "task_sequence": [
+        {
+          "condition": "B0",
+          "pair_id": "warmup-framework-tutorial",
+          "period": 1,
+          "phase": "warm_up",
+          "position_in_period": 0,
+          "sequence_index": 0,
+          "task_id": "warmup-framework-tutorial-a",
+          "trial_id": "T-a44ac03762f0963c",
+          "variant_id": "A"
+        },
+        {
+          "condition": "B0",
+          "pair_id": "light-standard-python",
+          "period": 1,
+          "phase": "measured",
+          "position_in_period": 1,
+          "sequence_index": 1,
+          "task_id": "light-standard-python-a",
+          "trial_id": "T-502ff8dce4497b53",
+          "variant_id": "A"
+        },
+        {
+          "condition": "B0",
+          "pair_id": "moderate-tabular-analysis",
+          "period": 1,
+          "phase": "measured",
+          "position_in_period": 2,
+          "sequence_index": 2,
+          "task_id": "moderate-tabular-analysis-a",
+          "trial_id": "T-aebfe5fd7b99b7f9",
+          "variant_id": "A"
+        },
+        {
+          "condition": "B0",
+          "pair_id": "large-cpu-pytorch-training",
+          "period": 1,
+          "phase": "measured",
+          "position_in_period": 3,
+          "sequence_index": 3,
+          "task_id": "large-cpu-pytorch-training-a",
+          "trial_id": "T-2a3fecfefdec415c",
+          "variant_id": "A"
+        },
+        {
+          "condition": "P2",
+          "pair_id": "warmup-framework-tutorial",
+          "period": 2,
+          "phase": "warm_up",
+          "position_in_period": 0,
+          "sequence_index": 4,
+          "task_id": "warmup-framework-tutorial-b",
+          "trial_id": "T-ab44e884c1d03b2a",
+          "variant_id": "B"
+        },
+        {
+          "condition": "P2",
+          "pair_id": "light-standard-python",
+          "period": 2,
+          "phase": "measured",
+          "position_in_period": 1,
+          "sequence_index": 5,
+          "task_id": "light-standard-python-b",
+          "trial_id": "T-64de8152fcc6a02d",
+          "variant_id": "B"
+        },
+        {
+          "condition": "P2",
+          "pair_id": "moderate-tabular-analysis",
+          "period": 2,
+          "phase": "measured",
+          "position_in_period": 2,
+          "sequence_index": 6,
+          "task_id": "moderate-tabular-analysis-b",
+          "trial_id": "T-17b9c926a99f1082",
+          "variant_id": "B"
+        },
+        {
+          "condition": "P2",
+          "pair_id": "large-cpu-pytorch-training",
+          "period": 2,
+          "phase": "measured",
+          "position_in_period": 3,
+          "sequence_index": 7,
+          "task_id": "large-cpu-pytorch-training-b",
+          "trial_id": "T-c8d061d477a07acd",
+          "variant_id": "B"
+        }
+      ]
+    },
+    {
+      "b0_variant_slot": 1,
+      "condition_order": [
+        "P2",
+        "B0"
+      ],
+      "counterbalance_cell": "C-P2-1-0",
+      "order_row": 0,
+      "participant_id": "P-d54d6a65ee3c",
+      "session_id": "S-2cdecc16c0392b27",
+      "task_sequence": [
+        {
+          "condition": "P2",
+          "pair_id": "warmup-framework-tutorial",
+          "period": 1,
+          "phase": "warm_up",
+          "position_in_period": 0,
+          "sequence_index": 0,
+          "task_id": "warmup-framework-tutorial-a",
+          "trial_id": "T-96e63bb19f5f8985",
+          "variant_id": "A"
+        },
+        {
+          "condition": "P2",
+          "pair_id": "large-cpu-pytorch-training",
+          "period": 1,
+          "phase": "measured",
+          "position_in_period": 1,
+          "sequence_index": 1,
+          "task_id": "large-cpu-pytorch-training-a",
+          "trial_id": "T-75e94168ab8d53d8",
+          "variant_id": "A"
+        },
+        {
+          "condition": "P2",
+          "pair_id": "light-standard-python",
+          "period": 1,
+          "phase": "measured",
+          "position_in_period": 2,
+          "sequence_index": 2,
+          "task_id": "light-standard-python-a",
+          "trial_id": "T-07f38fcf13acaa51",
+          "variant_id": "A"
+        },
+        {
+          "condition": "P2",
+          "pair_id": "moderate-tabular-analysis",
+          "period": 1,
+          "phase": "measured",
+          "position_in_period": 3,
+          "sequence_index": 3,
+          "task_id": "moderate-tabular-analysis-a",
+          "trial_id": "T-09be5de5877039ba",
+          "variant_id": "A"
+        },
+        {
+          "condition": "B0",
+          "pair_id": "warmup-framework-tutorial",
+          "period": 2,
+          "phase": "warm_up",
+          "position_in_period": 0,
+          "sequence_index": 4,
+          "task_id": "warmup-framework-tutorial-b",
+          "trial_id": "T-1e0d712b03519e08",
+          "variant_id": "B"
+        },
+        {
+          "condition": "B0",
+          "pair_id": "large-cpu-pytorch-training",
+          "period": 2,
+          "phase": "measured",
+          "position_in_period": 1,
+          "sequence_index": 5,
+          "task_id": "large-cpu-pytorch-training-b",
+          "trial_id": "T-ddca13eec482c548",
+          "variant_id": "B"
+        },
+        {
+          "condition": "B0",
+          "pair_id": "light-standard-python",
+          "period": 2,
+          "phase": "measured",
+          "position_in_period": 2,
+          "sequence_index": 6,
+          "task_id": "light-standard-python-b",
+          "trial_id": "T-7504e439a473594d",
+          "variant_id": "B"
+        },
+        {
+          "condition": "B0",
+          "pair_id": "moderate-tabular-analysis",
+          "period": 2,
+          "phase": "measured",
+          "position_in_period": 3,
+          "sequence_index": 7,
+          "task_id": "moderate-tabular-analysis-b",
+          "trial_id": "T-9e28328c25a2c885",
+          "variant_id": "B"
+        }
+      ]
+    },
+    {
+      "b0_variant_slot": 0,
+      "condition_order": [
+        "P2",
+        "B0"
+      ],
+      "counterbalance_cell": "C-P2-0-2",
+      "order_row": 2,
+      "participant_id": "P-57a5c39c493c",
+      "session_id": "S-c797d2214d9c4e80",
+      "task_sequence": [
+        {
+          "condition": "P2",
+          "pair_id": "warmup-framework-tutorial",
+          "period": 1,
+          "phase": "warm_up",
+          "position_in_period": 0,
+          "sequence_index": 0,
+          "task_id": "warmup-framework-tutorial-b",
+          "trial_id": "T-b673bb09c2872dab",
+          "variant_id": "B"
+        },
+        {
+          "condition": "P2",
+          "pair_id": "moderate-tabular-analysis",
+          "period": 1,
+          "phase": "measured",
+          "position_in_period": 1,
+          "sequence_index": 1,
+          "task_id": "moderate-tabular-analysis-b",
+          "trial_id": "T-dfbcae1d79701f69",
+          "variant_id": "B"
+        },
+        {
+          "condition": "P2",
+          "pair_id": "large-cpu-pytorch-training",
+          "period": 1,
+          "phase": "measured",
+          "position_in_period": 2,
+          "sequence_index": 2,
+          "task_id": "large-cpu-pytorch-training-b",
+          "trial_id": "T-fbc0259095c2c963",
+          "variant_id": "B"
+        },
+        {
+          "condition": "P2",
+          "pair_id": "light-standard-python",
+          "period": 1,
+          "phase": "measured",
+          "position_in_period": 3,
+          "sequence_index": 3,
+          "task_id": "light-standard-python-b",
+          "trial_id": "T-db5c5b4a7962b829",
+          "variant_id": "B"
+        },
+        {
+          "condition": "B0",
+          "pair_id": "warmup-framework-tutorial",
+          "period": 2,
+          "phase": "warm_up",
+          "position_in_period": 0,
+          "sequence_index": 4,
+          "task_id": "warmup-framework-tutorial-a",
+          "trial_id": "T-99ef1a98eaf77e47",
+          "variant_id": "A"
+        },
+        {
+          "condition": "B0",
+          "pair_id": "moderate-tabular-analysis",
+          "period": 2,
+          "phase": "measured",
+          "position_in_period": 1,
+          "sequence_index": 5,
+          "task_id": "moderate-tabular-analysis-a",
+          "trial_id": "T-023af1059294ea97",
+          "variant_id": "A"
+        },
+        {
+          "condition": "B0",
+          "pair_id": "large-cpu-pytorch-training",
+          "period": 2,
+          "phase": "measured",
+          "position_in_period": 2,
+          "sequence_index": 6,
+          "task_id": "large-cpu-pytorch-training-a",
+          "trial_id": "T-5ce169cc07b7a171",
+          "variant_id": "A"
+        },
+        {
+          "condition": "B0",
+          "pair_id": "light-standard-python",
+          "period": 2,
+          "phase": "measured",
+          "position_in_period": 3,
+          "sequence_index": 7,
+          "task_id": "light-standard-python-a",
+          "trial_id": "T-6a2696b797cd4d95",
+          "variant_id": "A"
+        }
+      ]
+    },
+    {
+      "b0_variant_slot": 1,
+      "condition_order": [
+        "B0",
+        "P2"
+      ],
+      "counterbalance_cell": "C-B0-1-0",
+      "order_row": 0,
+      "participant_id": "P-a13f87feb4c5",
+      "session_id": "S-eee750f9944c4354",
+      "task_sequence": [
+        {
+          "condition": "B0",
+          "pair_id": "warmup-framework-tutorial",
+          "period": 1,
+          "phase": "warm_up",
+          "position_in_period": 0,
+          "sequence_index": 0,
+          "task_id": "warmup-framework-tutorial-b",
+          "trial_id": "T-960361ad3c2a5f3e",
+          "variant_id": "B"
+        },
+        {
+          "condition": "B0",
+          "pair_id": "large-cpu-pytorch-training",
+          "period": 1,
+          "phase": "measured",
+          "position_in_period": 1,
+          "sequence_index": 1,
+          "task_id": "large-cpu-pytorch-training-b",
+          "trial_id": "T-f97a1d732018bbf5",
+          "variant_id": "B"
+        },
+        {
+          "condition": "B0",
+          "pair_id": "light-standard-python",
+          "period": 1,
+          "phase": "measured",
+          "position_in_period": 2,
+          "sequence_index": 2,
+          "task_id": "light-standard-python-b",
+          "trial_id": "T-6e1e3a4d6fec190f",
+          "variant_id": "B"
+        },
+        {
+          "condition": "B0",
+          "pair_id": "moderate-tabular-analysis",
+          "period": 1,
+          "phase": "measured",
+          "position_in_period": 3,
+          "sequence_index": 3,
+          "task_id": "moderate-tabular-analysis-b",
+          "trial_id": "T-d84bc8072de166fc",
+          "variant_id": "B"
+        },
+        {
+          "condition": "P2",
+          "pair_id": "warmup-framework-tutorial",
+          "period": 2,
+          "phase": "warm_up",
+          "position_in_period": 0,
+          "sequence_index": 4,
+          "task_id": "warmup-framework-tutorial-a",
+          "trial_id": "T-d2445c82bcbaad32",
+          "variant_id": "A"
+        },
+        {
+          "condition": "P2",
+          "pair_id": "large-cpu-pytorch-training",
+          "period": 2,
+          "phase": "measured",
+          "position_in_period": 1,
+          "sequence_index": 5,
+          "task_id": "large-cpu-pytorch-training-a",
+          "trial_id": "T-446af6364c35e20d",
+          "variant_id": "A"
+        },
+        {
+          "condition": "P2",
+          "pair_id": "light-standard-python",
+          "period": 2,
+          "phase": "measured",
+          "position_in_period": 2,
+          "sequence_index": 6,
+          "task_id": "light-standard-python-a",
+          "trial_id": "T-b8f0261fda74fabe",
+          "variant_id": "A"
+        },
+        {
+          "condition": "P2",
+          "pair_id": "moderate-tabular-analysis",
+          "period": 2,
+          "phase": "measured",
+          "position_in_period": 3,
+          "sequence_index": 7,
+          "task_id": "moderate-tabular-analysis-a",
+          "trial_id": "T-dd0ebb0e75229306",
+          "variant_id": "A"
+        }
+      ]
+    },
+    {
+      "b0_variant_slot": 1,
+      "condition_order": [
+        "B0",
+        "P2"
+      ],
+      "counterbalance_cell": "C-B0-1-2",
+      "order_row": 2,
+      "participant_id": "P-c3129d7ffdef",
+      "session_id": "S-70990ea4bb497539",
+      "task_sequence": [
+        {
+          "condition": "B0",
+          "pair_id": "warmup-framework-tutorial",
+          "period": 1,
+          "phase": "warm_up",
+          "position_in_period": 0,
+          "sequence_index": 0,
+          "task_id": "warmup-framework-tutorial-b",
+          "trial_id": "T-794ce7c49c697dd7",
+          "variant_id": "B"
+        },
+        {
+          "condition": "B0",
+          "pair_id": "moderate-tabular-analysis",
+          "period": 1,
+          "phase": "measured",
+          "position_in_period": 1,
+          "sequence_index": 1,
+          "task_id": "moderate-tabular-analysis-b",
+          "trial_id": "T-a3eda09084416683",
+          "variant_id": "B"
+        },
+        {
+          "condition": "B0",
+          "pair_id": "large-cpu-pytorch-training",
+          "period": 1,
+          "phase": "measured",
+          "position_in_period": 2,
+          "sequence_index": 2,
+          "task_id": "large-cpu-pytorch-training-b",
+          "trial_id": "T-63f2b54b0804bc8b",
+          "variant_id": "B"
+        },
+        {
+          "condition": "B0",
+          "pair_id": "light-standard-python",
+          "period": 1,
+          "phase": "measured",
+          "position_in_period": 3,
+          "sequence_index": 3,
+          "task_id": "light-standard-python-b",
+          "trial_id": "T-6c90054ae2fb3041",
+          "variant_id": "B"
+        },
+        {
+          "condition": "P2",
+          "pair_id": "warmup-framework-tutorial",
+          "period": 2,
+          "phase": "warm_up",
+          "position_in_period": 0,
+          "sequence_index": 4,
+          "task_id": "warmup-framework-tutorial-a",
+          "trial_id": "T-ba31b2893e93f122",
+          "variant_id": "A"
+        },
+        {
+          "condition": "P2",
+          "pair_id": "moderate-tabular-analysis",
+          "period": 2,
+          "phase": "measured",
+          "position_in_period": 1,
+          "sequence_index": 5,
+          "task_id": "moderate-tabular-analysis-a",
+          "trial_id": "T-f390bceee5c4b36d",
+          "variant_id": "A"
+        },
+        {
+          "condition": "P2",
+          "pair_id": "large-cpu-pytorch-training",
+          "period": 2,
+          "phase": "measured",
+          "position_in_period": 2,
+          "sequence_index": 6,
+          "task_id": "large-cpu-pytorch-training-a",
+          "trial_id": "T-183f4628fbaa5cf4",
+          "variant_id": "A"
+        },
+        {
+          "condition": "P2",
+          "pair_id": "light-standard-python",
+          "period": 2,
+          "phase": "measured",
+          "position_in_period": 3,
+          "sequence_index": 7,
+          "task_id": "light-standard-python-a",
+          "trial_id": "T-7dd96d8e462772a3",
+          "variant_id": "A"
+        }
+      ]
+    },
+    {
+      "b0_variant_slot": 0,
+      "condition_order": [
+        "P2",
+        "B0"
+      ],
+      "counterbalance_cell": "C-P2-0-1",
+      "order_row": 1,
+      "participant_id": "P-cc91b1a3c825",
+      "session_id": "S-82fc422ef50e33d7",
+      "task_sequence": [
+        {
+          "condition": "P2",
+          "pair_id": "warmup-framework-tutorial",
+          "period": 1,
+          "phase": "warm_up",
+          "position_in_period": 0,
+          "sequence_index": 0,
+          "task_id": "warmup-framework-tutorial-b",
+          "trial_id": "T-ea5b55e2531a5047",
+          "variant_id": "B"
+        },
+        {
+          "condition": "P2",
+          "pair_id": "light-standard-python",
+          "period": 1,
+          "phase": "measured",
+          "position_in_period": 1,
+          "sequence_index": 1,
+          "task_id": "light-standard-python-b",
+          "trial_id": "T-007e505d4f352066",
+          "variant_id": "B"
+        },
+        {
+          "condition": "P2",
+          "pair_id": "moderate-tabular-analysis",
+          "period": 1,
+          "phase": "measured",
+          "position_in_period": 2,
+          "sequence_index": 2,
+          "task_id": "moderate-tabular-analysis-b",
+          "trial_id": "T-ae1ef0690dcc3156",
+          "variant_id": "B"
+        },
+        {
+          "condition": "P2",
+          "pair_id": "large-cpu-pytorch-training",
+          "period": 1,
+          "phase": "measured",
+          "position_in_period": 3,
+          "sequence_index": 3,
+          "task_id": "large-cpu-pytorch-training-b",
+          "trial_id": "T-2bd6b0c5724fa7ec",
+          "variant_id": "B"
+        },
+        {
+          "condition": "B0",
+          "pair_id": "warmup-framework-tutorial",
+          "period": 2,
+          "phase": "warm_up",
+          "position_in_period": 0,
+          "sequence_index": 4,
+          "task_id": "warmup-framework-tutorial-a",
+          "trial_id": "T-836f8a1509b5e38b",
+          "variant_id": "A"
+        },
+        {
+          "condition": "B0",
+          "pair_id": "light-standard-python",
+          "period": 2,
+          "phase": "measured",
+          "position_in_period": 1,
+          "sequence_index": 5,
+          "task_id": "light-standard-python-a",
+          "trial_id": "T-6b56a6f375c127d6",
+          "variant_id": "A"
+        },
+        {
+          "condition": "B0",
+          "pair_id": "moderate-tabular-analysis",
+          "period": 2,
+          "phase": "measured",
+          "position_in_period": 2,
+          "sequence_index": 6,
+          "task_id": "moderate-tabular-analysis-a",
+          "trial_id": "T-413d3827901d2883",
+          "variant_id": "A"
+        },
+        {
+          "condition": "B0",
+          "pair_id": "large-cpu-pytorch-training",
+          "period": 2,
+          "phase": "measured",
+          "position_in_period": 3,
+          "sequence_index": 7,
+          "task_id": "large-cpu-pytorch-training-a",
+          "trial_id": "T-3bda300ff9360bc1",
+          "variant_id": "A"
+        }
+      ]
+    },
+    {
+      "b0_variant_slot": 0,
+      "condition_order": [
+        "B0",
+        "P2"
+      ],
+      "counterbalance_cell": "C-B0-0-0",
+      "order_row": 0,
+      "participant_id": "P-235cad1bc5d5",
+      "session_id": "S-485403da3d77b1ff",
+      "task_sequence": [
+        {
+          "condition": "B0",
+          "pair_id": "warmup-framework-tutorial",
+          "period": 1,
+          "phase": "warm_up",
+          "position_in_period": 0,
+          "sequence_index": 0,
+          "task_id": "warmup-framework-tutorial-a",
+          "trial_id": "T-322eaead2842a2f9",
+          "variant_id": "A"
+        },
+        {
+          "condition": "B0",
+          "pair_id": "large-cpu-pytorch-training",
+          "period": 1,
+          "phase": "measured",
+          "position_in_period": 1,
+          "sequence_index": 1,
+          "task_id": "large-cpu-pytorch-training-a",
+          "trial_id": "T-8a999e99d0d37ce3",
+          "variant_id": "A"
+        },
+        {
+          "condition": "B0",
+          "pair_id": "light-standard-python",
+          "period": 1,
+          "phase": "measured",
+          "position_in_period": 2,
+          "sequence_index": 2,
+          "task_id": "light-standard-python-a",
+          "trial_id": "T-1fdc411b14e7a715",
+          "variant_id": "A"
+        },
+        {
+          "condition": "B0",
+          "pair_id": "moderate-tabular-analysis",
+          "period": 1,
+          "phase": "measured",
+          "position_in_period": 3,
+          "sequence_index": 3,
+          "task_id": "moderate-tabular-analysis-a",
+          "trial_id": "T-d196ac286aa48314",
+          "variant_id": "A"
+        },
+        {
+          "condition": "P2",
+          "pair_id": "warmup-framework-tutorial",
+          "period": 2,
+          "phase": "warm_up",
+          "position_in_period": 0,
+          "sequence_index": 4,
+          "task_id": "warmup-framework-tutorial-b",
+          "trial_id": "T-852faef4eeb3b1f8",
+          "variant_id": "B"
+        },
+        {
+          "condition": "P2",
+          "pair_id": "large-cpu-pytorch-training",
+          "period": 2,
+          "phase": "measured",
+          "position_in_period": 1,
+          "sequence_index": 5,
+          "task_id": "large-cpu-pytorch-training-b",
+          "trial_id": "T-b0d28e48989057ba",
+          "variant_id": "B"
+        },
+        {
+          "condition": "P2",
+          "pair_id": "light-standard-python",
+          "period": 2,
+          "phase": "measured",
+          "position_in_period": 2,
+          "sequence_index": 6,
+          "task_id": "light-standard-python-b",
+          "trial_id": "T-790aa87797861736",
+          "variant_id": "B"
+        },
+        {
+          "condition": "P2",
+          "pair_id": "moderate-tabular-analysis",
+          "period": 2,
+          "phase": "measured",
+          "position_in_period": 3,
+          "sequence_index": 7,
+          "task_id": "moderate-tabular-analysis-b",
+          "trial_id": "T-26e823a6407e2954",
+          "variant_id": "B"
+        }
+      ]
+    },
+    {
+      "b0_variant_slot": 1,
+      "condition_order": [
+        "P2",
+        "B0"
+      ],
+      "counterbalance_cell": "C-P2-1-1",
+      "order_row": 1,
+      "participant_id": "P-8076d2b5d210",
+      "session_id": "S-789479df549e23b7",
+      "task_sequence": [
+        {
+          "condition": "P2",
+          "pair_id": "warmup-framework-tutorial",
+          "period": 1,
+          "phase": "warm_up",
+          "position_in_period": 0,
+          "sequence_index": 0,
+          "task_id": "warmup-framework-tutorial-a",
+          "trial_id": "T-99559034758e42ea",
+          "variant_id": "A"
+        },
+        {
+          "condition": "P2",
+          "pair_id": "light-standard-python",
+          "period": 1,
+          "phase": "measured",
+          "position_in_period": 1,
+          "sequence_index": 1,
+          "task_id": "light-standard-python-a",
+          "trial_id": "T-5dbbedb3632525b8",
+          "variant_id": "A"
+        },
+        {
+          "condition": "P2",
+          "pair_id": "moderate-tabular-analysis",
+          "period": 1,
+          "phase": "measured",
+          "position_in_period": 2,
+          "sequence_index": 2,
+          "task_id": "moderate-tabular-analysis-a",
+          "trial_id": "T-6869c3ff27384682",
+          "variant_id": "A"
+        },
+        {
+          "condition": "P2",
+          "pair_id": "large-cpu-pytorch-training",
+          "period": 1,
+          "phase": "measured",
+          "position_in_period": 3,
+          "sequence_index": 3,
+          "task_id": "large-cpu-pytorch-training-a",
+          "trial_id": "T-67195a05c093ee00",
+          "variant_id": "A"
+        },
+        {
+          "condition": "B0",
+          "pair_id": "warmup-framework-tutorial",
+          "period": 2,
+          "phase": "warm_up",
+          "position_in_period": 0,
+          "sequence_index": 4,
+          "task_id": "warmup-framework-tutorial-b",
+          "trial_id": "T-f6b98fbfe8ebe2d4",
+          "variant_id": "B"
+        },
+        {
+          "condition": "B0",
+          "pair_id": "light-standard-python",
+          "period": 2,
+          "phase": "measured",
+          "position_in_period": 1,
+          "sequence_index": 5,
+          "task_id": "light-standard-python-b",
+          "trial_id": "T-de6c7283f7c9fc25",
+          "variant_id": "B"
+        },
+        {
+          "condition": "B0",
+          "pair_id": "moderate-tabular-analysis",
+          "period": 2,
+          "phase": "measured",
+          "position_in_period": 2,
+          "sequence_index": 6,
+          "task_id": "moderate-tabular-analysis-b",
+          "trial_id": "T-74017123c3237ee7",
+          "variant_id": "B"
+        },
+        {
+          "condition": "B0",
+          "pair_id": "large-cpu-pytorch-training",
+          "period": 2,
+          "phase": "measured",
+          "position_in_period": 3,
+          "sequence_index": 7,
+          "task_id": "large-cpu-pytorch-training-b",
+          "trial_id": "T-bc3724dce3c583d4",
+          "variant_id": "B"
+        }
+      ]
+    },
+    {
+      "b0_variant_slot": 0,
+      "condition_order": [
+        "B0",
+        "P2"
+      ],
+      "counterbalance_cell": "C-B0-0-2",
+      "order_row": 2,
+      "participant_id": "P-6c4eca875eba",
+      "session_id": "S-b1b10a1fa71859cf",
+      "task_sequence": [
+        {
+          "condition": "B0",
+          "pair_id": "warmup-framework-tutorial",
+          "period": 1,
+          "phase": "warm_up",
+          "position_in_period": 0,
+          "sequence_index": 0,
+          "task_id": "warmup-framework-tutorial-a",
+          "trial_id": "T-1cf60c94301d6b73",
+          "variant_id": "A"
+        },
+        {
+          "condition": "B0",
+          "pair_id": "moderate-tabular-analysis",
+          "period": 1,
+          "phase": "measured",
+          "position_in_period": 1,
+          "sequence_index": 1,
+          "task_id": "moderate-tabular-analysis-a",
+          "trial_id": "T-1b1021d8c96a9837",
+          "variant_id": "A"
+        },
+        {
+          "condition": "B0",
+          "pair_id": "large-cpu-pytorch-training",
+          "period": 1,
+          "phase": "measured",
+          "position_in_period": 2,
+          "sequence_index": 2,
+          "task_id": "large-cpu-pytorch-training-a",
+          "trial_id": "T-17f44d8389218c60",
+          "variant_id": "A"
+        },
+        {
+          "condition": "B0",
+          "pair_id": "light-standard-python",
+          "period": 1,
+          "phase": "measured",
+          "position_in_period": 3,
+          "sequence_index": 3,
+          "task_id": "light-standard-python-a",
+          "trial_id": "T-7cd96ee4c902de26",
+          "variant_id": "A"
+        },
+        {
+          "condition": "P2",
+          "pair_id": "warmup-framework-tutorial",
+          "period": 2,
+          "phase": "warm_up",
+          "position_in_period": 0,
+          "sequence_index": 4,
+          "task_id": "warmup-framework-tutorial-b",
+          "trial_id": "T-fbe412db73709eea",
+          "variant_id": "B"
+        },
+        {
+          "condition": "P2",
+          "pair_id": "moderate-tabular-analysis",
+          "period": 2,
+          "phase": "measured",
+          "position_in_period": 1,
+          "sequence_index": 5,
+          "task_id": "moderate-tabular-analysis-b",
+          "trial_id": "T-196418d7acf666ae",
+          "variant_id": "B"
+        },
+        {
+          "condition": "P2",
+          "pair_id": "large-cpu-pytorch-training",
+          "period": 2,
+          "phase": "measured",
+          "position_in_period": 2,
+          "sequence_index": 6,
+          "task_id": "large-cpu-pytorch-training-b",
+          "trial_id": "T-0f908905e5e61baf",
+          "variant_id": "B"
+        },
+        {
+          "condition": "P2",
+          "pair_id": "light-standard-python",
+          "period": 2,
+          "phase": "measured",
+          "position_in_period": 3,
+          "sequence_index": 7,
+          "task_id": "light-standard-python-b",
+          "trial_id": "T-af7bf7b123c99c57",
+          "variant_id": "B"
+        }
+      ]
+    },
+    {
+      "b0_variant_slot": 1,
+      "condition_order": [
+        "P2",
+        "B0"
+      ],
+      "counterbalance_cell": "C-P2-1-2",
+      "order_row": 2,
+      "participant_id": "P-1a734aacd89e",
+      "session_id": "S-96a211d15019fa65",
+      "task_sequence": [
+        {
+          "condition": "P2",
+          "pair_id": "warmup-framework-tutorial",
+          "period": 1,
+          "phase": "warm_up",
+          "position_in_period": 0,
+          "sequence_index": 0,
+          "task_id": "warmup-framework-tutorial-a",
+          "trial_id": "T-f4aeafcd06c9b2a7",
+          "variant_id": "A"
+        },
+        {
+          "condition": "P2",
+          "pair_id": "moderate-tabular-analysis",
+          "period": 1,
+          "phase": "measured",
+          "position_in_period": 1,
+          "sequence_index": 1,
+          "task_id": "moderate-tabular-analysis-a",
+          "trial_id": "T-4a06dc21e505f37b",
+          "variant_id": "A"
+        },
+        {
+          "condition": "P2",
+          "pair_id": "large-cpu-pytorch-training",
+          "period": 1,
+          "phase": "measured",
+          "position_in_period": 2,
+          "sequence_index": 2,
+          "task_id": "large-cpu-pytorch-training-a",
+          "trial_id": "T-5b947a5f3238a364",
+          "variant_id": "A"
+        },
+        {
+          "condition": "P2",
+          "pair_id": "light-standard-python",
+          "period": 1,
+          "phase": "measured",
+          "position_in_period": 3,
+          "sequence_index": 3,
+          "task_id": "light-standard-python-a",
+          "trial_id": "T-9449645ad2bf4157",
+          "variant_id": "A"
+        },
+        {
+          "condition": "B0",
+          "pair_id": "warmup-framework-tutorial",
+          "period": 2,
+          "phase": "warm_up",
+          "position_in_period": 0,
+          "sequence_index": 4,
+          "task_id": "warmup-framework-tutorial-b",
+          "trial_id": "T-d2ab4810c93782ff",
+          "variant_id": "B"
+        },
+        {
+          "condition": "B0",
+          "pair_id": "moderate-tabular-analysis",
+          "period": 2,
+          "phase": "measured",
+          "position_in_period": 1,
+          "sequence_index": 5,
+          "task_id": "moderate-tabular-analysis-b",
+          "trial_id": "T-ed666e775c15fd8a",
+          "variant_id": "B"
+        },
+        {
+          "condition": "B0",
+          "pair_id": "large-cpu-pytorch-training",
+          "period": 2,
+          "phase": "measured",
+          "position_in_period": 2,
+          "sequence_index": 6,
+          "task_id": "large-cpu-pytorch-training-b",
+          "trial_id": "T-e1668383894fba8d",
+          "variant_id": "B"
+        },
+        {
+          "condition": "B0",
+          "pair_id": "light-standard-python",
+          "period": 2,
+          "phase": "measured",
+          "position_in_period": 3,
+          "sequence_index": 7,
+          "task_id": "light-standard-python-b",
+          "trial_id": "T-f245244efe336d3f",
+          "variant_id": "B"
+        }
+      ]
+    },
+    {
+      "b0_variant_slot": 0,
+      "condition_order": [
+        "P2",
+        "B0"
+      ],
+      "counterbalance_cell": "C-P2-0-0",
+      "order_row": 0,
+      "participant_id": "P-6281a91e9f4b",
+      "session_id": "S-b1047da6c70336af",
+      "task_sequence": [
+        {
+          "condition": "P2",
+          "pair_id": "warmup-framework-tutorial",
+          "period": 1,
+          "phase": "warm_up",
+          "position_in_period": 0,
+          "sequence_index": 0,
+          "task_id": "warmup-framework-tutorial-b",
+          "trial_id": "T-bec82578c9844920",
+          "variant_id": "B"
+        },
+        {
+          "condition": "P2",
+          "pair_id": "large-cpu-pytorch-training",
+          "period": 1,
+          "phase": "measured",
+          "position_in_period": 1,
+          "sequence_index": 1,
+          "task_id": "large-cpu-pytorch-training-b",
+          "trial_id": "T-7c0815dcc4e9cbdf",
+          "variant_id": "B"
+        },
+        {
+          "condition": "P2",
+          "pair_id": "light-standard-python",
+          "period": 1,
+          "phase": "measured",
+          "position_in_period": 2,
+          "sequence_index": 2,
+          "task_id": "light-standard-python-b",
+          "trial_id": "T-410ed3d78bb6a8e2",
+          "variant_id": "B"
+        },
+        {
+          "condition": "P2",
+          "pair_id": "moderate-tabular-analysis",
+          "period": 1,
+          "phase": "measured",
+          "position_in_period": 3,
+          "sequence_index": 3,
+          "task_id": "moderate-tabular-analysis-b",
+          "trial_id": "T-70ebe0c128004722",
+          "variant_id": "B"
+        },
+        {
+          "condition": "B0",
+          "pair_id": "warmup-framework-tutorial",
+          "period": 2,
+          "phase": "warm_up",
+          "position_in_period": 0,
+          "sequence_index": 4,
+          "task_id": "warmup-framework-tutorial-a",
+          "trial_id": "T-7abdefb2acb08909",
+          "variant_id": "A"
+        },
+        {
+          "condition": "B0",
+          "pair_id": "large-cpu-pytorch-training",
+          "period": 2,
+          "phase": "measured",
+          "position_in_period": 1,
+          "sequence_index": 5,
+          "task_id": "large-cpu-pytorch-training-a",
+          "trial_id": "T-84f8e7578fc82750",
+          "variant_id": "A"
+        },
+        {
+          "condition": "B0",
+          "pair_id": "light-standard-python",
+          "period": 2,
+          "phase": "measured",
+          "position_in_period": 2,
+          "sequence_index": 6,
+          "task_id": "light-standard-python-a",
+          "trial_id": "T-40f0ff1141266d01",
+          "variant_id": "A"
+        },
+        {
+          "condition": "B0",
+          "pair_id": "moderate-tabular-analysis",
+          "period": 2,
+          "phase": "measured",
+          "position_in_period": 3,
+          "sequence_index": 7,
+          "task_id": "moderate-tabular-analysis-a",
+          "trial_id": "T-680f5e01e4fec2a4",
+          "variant_id": "A"
+        }
+      ]
+    },
+    {
+      "b0_variant_slot": 1,
+      "condition_order": [
+        "B0",
+        "P2"
+      ],
+      "counterbalance_cell": "C-B0-1-1",
+      "order_row": 1,
+      "participant_id": "P-167d10b27097",
+      "session_id": "S-ae3f92a86d065f2c",
+      "task_sequence": [
+        {
+          "condition": "B0",
+          "pair_id": "warmup-framework-tutorial",
+          "period": 1,
+          "phase": "warm_up",
+          "position_in_period": 0,
+          "sequence_index": 0,
+          "task_id": "warmup-framework-tutorial-b",
+          "trial_id": "T-ae8beb0e8d816d65",
+          "variant_id": "B"
+        },
+        {
+          "condition": "B0",
+          "pair_id": "light-standard-python",
+          "period": 1,
+          "phase": "measured",
+          "position_in_period": 1,
+          "sequence_index": 1,
+          "task_id": "light-standard-python-b",
+          "trial_id": "T-d1dd0c4dba6a2862",
+          "variant_id": "B"
+        },
+        {
+          "condition": "B0",
+          "pair_id": "moderate-tabular-analysis",
+          "period": 1,
+          "phase": "measured",
+          "position_in_period": 2,
+          "sequence_index": 2,
+          "task_id": "moderate-tabular-analysis-b",
+          "trial_id": "T-8685736638edbc71",
+          "variant_id": "B"
+        },
+        {
+          "condition": "B0",
+          "pair_id": "large-cpu-pytorch-training",
+          "period": 1,
+          "phase": "measured",
+          "position_in_period": 3,
+          "sequence_index": 3,
+          "task_id": "large-cpu-pytorch-training-b",
+          "trial_id": "T-fad2e62eb26522ff",
+          "variant_id": "B"
+        },
+        {
+          "condition": "P2",
+          "pair_id": "warmup-framework-tutorial",
+          "period": 2,
+          "phase": "warm_up",
+          "position_in_period": 0,
+          "sequence_index": 4,
+          "task_id": "warmup-framework-tutorial-a",
+          "trial_id": "T-87e6fbf7aafec521",
+          "variant_id": "A"
+        },
+        {
+          "condition": "P2",
+          "pair_id": "light-standard-python",
+          "period": 2,
+          "phase": "measured",
+          "position_in_period": 1,
+          "sequence_index": 5,
+          "task_id": "light-standard-python-a",
+          "trial_id": "T-bc57b37055ebce13",
+          "variant_id": "A"
+        },
+        {
+          "condition": "P2",
+          "pair_id": "moderate-tabular-analysis",
+          "period": 2,
+          "phase": "measured",
+          "position_in_period": 2,
+          "sequence_index": 6,
+          "task_id": "moderate-tabular-analysis-a",
+          "trial_id": "T-0c8defb1d61226ba",
+          "variant_id": "A"
+        },
+        {
+          "condition": "P2",
+          "pair_id": "large-cpu-pytorch-training",
+          "period": 2,
+          "phase": "measured",
+          "position_in_period": 3,
+          "sequence_index": 7,
+          "task_id": "large-cpu-pytorch-training-a",
+          "trial_id": "T-d877a565b36bc3b1",
+          "variant_id": "A"
+        }
+      ]
+    }
+  ],
+  "balance_audit": {
+    "cell_count": 12,
+    "condition_first": {
+      "B0": 18,
+      "P2": 18
+    },
+    "counterbalance_cells": {
+      "C-B0-0-0": 3,
+      "C-B0-0-1": 3,
+      "C-B0-0-2": 3,
+      "C-B0-1-0": 3,
+      "C-B0-1-1": 3,
+      "C-B0-1-2": 3,
+      "C-P2-0-0": 3,
+      "C-P2-0-1": 3,
+      "C-P2-0-2": 3,
+      "C-P2-1-0": 3,
+      "C-P2-1-1": 3,
+      "C-P2-1-2": 3
+    },
+    "exact_target_balance": true,
+    "measured_pair_ids": [
+      "large-cpu-pytorch-training",
+      "light-standard-python",
+      "moderate-tabular-analysis"
+    ],
+    "measured_pair_positions": {
+      "large-cpu-pytorch-training:1": 24,
+      "large-cpu-pytorch-training:2": 24,
+      "large-cpu-pytorch-training:3": 24,
+      "light-standard-python:1": 24,
+      "light-standard-python:2": 24,
+      "light-standard-python:3": 24,
+      "moderate-tabular-analysis:1": 24,
+      "moderate-tabular-analysis:2": 24,
+      "moderate-tabular-analysis:3": 24
+    },
+    "variant_by_condition": {
+      "large-cpu-pytorch-training:A:B0": 18,
+      "large-cpu-pytorch-training:A:P2": 18,
+      "large-cpu-pytorch-training:B:B0": 18,
+      "large-cpu-pytorch-training:B:P2": 18,
+      "light-standard-python:A:B0": 18,
+      "light-standard-python:A:P2": 18,
+      "light-standard-python:B:B0": 18,
+      "light-standard-python:B:P2": 18,
+      "moderate-tabular-analysis:A:B0": 18,
+      "moderate-tabular-analysis:A:P2": 18,
+      "moderate-tabular-analysis:B:B0": 18,
+      "moderate-tabular-analysis:B:P2": 18
+    }
+  },
+  "browser_task_set_sha256": "a96da566ecc8d0fd958bc39bcb0cdf85110cba134428acfa4e0a9939b7c9a350",
+  "catalog_version": "2026-08-06.1",
+  "config_identity": "config-0f8fbd76d2b1603a2f9d6dd7",
+  "consent_version": "consent-v1.0.0",
+  "corpus_version": "environment-candidate-corpus-v1",
+  "environment_identity": {
+    "config_identity_sha256": "0f8fbd76d2b1603a2f9d6dd7097a5bb0c26b652dd4d225c12d08dce4dd5e6b98",
+    "environment_id": "protocol-v5-e3-study-environment",
+    "fairness_manifest": {
+      "b0_environment_sha256": "40b62d0593087aa6b442d650adc3f17314ab2d6ba4244fc3f0c150d9ad088d8a",
+      "configuration_sha256": "deaa769826add4542116366e1f60a9e1c1665b3b8eea14b064b9f30cdcdc04a6",
+      "deployment_revision": "2cf206773e63f7086e3c9716a5077793b189fa6d",
+      "description_config_sha256": "ef34be7dbc4d9b196a344c65531af30dfd779787ebd46684aca74f7f1d896ac6",
+      "freeze_id": "development-unfrozen",
+      "image_catalog_sha256": "bd2211d5fd769b5addec3c41e8cbd48bb0d9cd1c958aa554ada9bf88c29509f3",
+      "kubernetes_environment_id": "protocol-v5-e3-cluster",
+      "p2_environment_sha256": "40b62d0593087aa6b442d650adc3f17314ab2d6ba4244fc3f0c150d9ad088d8a",
+      "policy_sha256": "dbd0b1f1e71b29cfa5e099bd3eca4b564cdbb030ecd9bbbbf5dcf9426d16d89f",
+      "profile_catalog_sha256": "c8f797b9c4d30459da99dad8d6d1c28e07e6803d76fab7cf88cdcd0f6c679348",
+      "schema_version": "protocol-v5-user-study-environment-fairness-v1.0.0",
+      "shared_environment_sha256": "40b62d0593087aa6b442d650adc3f17314ab2d6ba4244fc3f0c150d9ad088d8a"
+    },
+    "mode": "development_unfrozen"
+  },
+  "event_schema_version": "protocol-v5-user-study-event-v1.0.0",
+  "freeze_id": "development-unfrozen",
+  "generated_at_utc": "2026-08-26T00:00:00Z",
+  "generator_version": "protocol-v5-user-study-counterbalance-v1.2.0",
+  "git_revision": "2cf206773e63f7086e3c9716a5077793b189fa6d",
+  "participant_count": 36,
+  "policy_version": "resource-image-policy-v1",
+  "protocol_version": "5.0.0",
+  "questionnaire_instrument_sha256": "5b651d19628d15ef2afa4365cad9eaab5ab2196ea86f84389b09d5d24a000db5",
+  "questionnaire_instrument_version": "protocol-v5-user-study-questionnaire-instrument-v1.1.0",
+  "questionnaire_schema_sha256": "7c2f5950644f16a26f24bec5939646dd4c4a21d6fd1723797c70b29748dbea56",
+  "questionnaire_schema_version": "protocol-v5-user-study-questionnaire-v1.1.0",
+  "schema_version": "protocol-v5-user-study-assignment-v1.1.0",
+  "seed": 20260827,
+  "selection_scoring_version": "protocol-v5-user-study-final-selection-scoring-v1.0.0",
+  "study_id": "protocol-v5-e3-user-study",
+  "task_set_id": "protocol-v5-e3-draft-v1",
+  "task_set_sha256": "7a1009669359cc87dc510c3e8a85a2c0f318f5b2a4ab5c04a1de221b517604cf"
+}

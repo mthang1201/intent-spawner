@@ -1,0 +1,11 @@
+{
+  "bootstrap_replicates": 2000,
+  "capacity_evidence_label": "SIMULATED_DETERMINISTIC_REQUEST_PACKING",
+  "capacity_evidence_type": "SIMULATED_CAPACITY",
+  "created_at": "2026-09-15T08:56:43.897907Z",
+  "oracle_package_sha256": "aa8acc05f04bb979cf9ac7392c2f0dfac6dc3f8a87c07a1f70c02298ec3904e7",
+  "protocol_version": "5.0.0",
+  "raw_package_sha256": "781994d33d51e419a30bcb152374c18e62a14217a71c434eb56c81802c12d9f0",
+  "raw_plan_sha256": "3a87a01fc07aaaf17abc667c0a73de12c9b368cca05350ab1a73d525862f5454",
+  "schema_version": "protocol-v5-resource-efficiency-analysis-package-v1.0.0"
+}

@@ -1,0 +1,41 @@
+{
+  "schema_version": "protocol-v5-p3-final-inclusion-decision-v1.0.0",
+  "protocol_version": "5.0.0",
+  "decision": "not_retained",
+  "p3_active": false,
+  "claim_eligible": false,
+  "evidence_classification": "HISTORICAL_FORMATIVE",
+  "confirmatory_data_used": false,
+  "decision_basis": "The preserved formative paired evaluation did not justify retaining P3. This conservative exclusion is not a Protocol-v5 efficacy claim and does not promote historical evidence to confirmatory evidence.",
+  "source_artifacts": [
+    {
+      "path": "docs/evaluation/P3_INCREMENTAL_EVALUATION_V1.md",
+      "sha256": "3ed59ae76bd79e5e86cb08f63f86d7a49c8c5632f578b74f8ee51a1f8c4b8d9f"
+    },
+    {
+      "path": "evaluation_p3/results/20260821T-observed-p2-p3-ollama-llama3-v1/manifest.json",
+      "sha256": "86b3c276549f688755cb013edc70803495a63dec6fc573492897c44d1ff0b4ec"
+    },
+    {
+      "path": "evaluation_p3/results/20260821T-observed-p2-p3-ollama-llama3-v1/raw/predictions.jsonl",
+      "sha256": "581388c1e5fd144d10791ac9ef5c191cc0e4a7af9c1257d7575239e4a535de95"
+    },
+    {
+      "path": "evaluation_p3/results/20260821T-observed-p2-p3-ollama-llama3-v1/corrections/20260821T-transition-definition-v1.1/correction-manifest.json",
+      "sha256": "ba7e216f50b714e9a274821c687462970aa49e52fc64409906ddfa414cb62802"
+    },
+    {
+      "path": "evaluation_p3/results/20260821T-observed-p2-p3-ollama-llama3-v1/corrections/20260821T-transition-definition-v1.1/metrics.json",
+      "sha256": "418c9ac6f2a84cf343f1942f66820b37b5737350517a1eb663e7c4496e66c8ca"
+    },
+    {
+      "path": "evaluation_p3/results/20260821T-observed-p2-p3-ollama-llama3-v1/corrections/20260821T-transition-definition-v1.1/paired_changes.json",
+      "sha256": "98914a0961a780d7d78032dc9271fb3e84c2a4b1a12215b4b227a7dd0a1d8a42"
+    },
+    {
+      "path": "evaluation_p3/results/20260821T-observed-p2-p3-ollama-llama3-v1/corrections/20260821T-transition-definition-v1.1/error_transitions.json",
+      "sha256": "afc56436d6b81eb9d83898a543db1aa81800fe49891d3965f54a739807de9c95"
+    }
+  ],
+  "future_retention_rule": "requires_strict_source_recomputed_protocol_v5_development_gate"
+}

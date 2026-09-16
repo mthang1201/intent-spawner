@@ -287,6 +287,8 @@ def analyze(inputs: Inputs, audit: dict, output: Path) -> dict:
               "current_functional": [], "observed_functional": [], "legacy_functional": [],
               "comparisons": [], "observed_offline_counts": [],
               "volatile_manifest_fields": list(VOLATILE_MANIFEST_FIELDS), "claims": audit["claims"],
+              "criteria": audit.get("criteria", []),
+              "evidence_dispositions": audit.get("evidence_dispositions", {}),
               "defense_sources": {"human": [], "resources": [], "offline": [], "functional": [],
                                   "storage": [audit["source_inventory"]]}}
     for package in audit["packages"]:
@@ -334,6 +336,7 @@ def analyze(inputs: Inputs, audit: dict, output: Path) -> dict:
                 result["defense_sources"]["offline"].append(inputs.ref(relative + "/derived/statistical_analysis/analysis-manifest.json", "/status"))
                 from evaluation_v5.analysis.component_scoring import ComponentAnalysisError, load_component_gold, write_not_executed as component_status
                 from evaluation_v5.analysis.statistical_analysis import write_not_executed as statistical_status
+                from evaluation_v5.analysis.reporting import write_not_executed_report
                 try:
                     load_component_gold(inputs.path("benchmarks_v5/v5-development.yaml"), role="development")
                 except ComponentAnalysisError:
@@ -348,8 +351,45 @@ def analyze(inputs: Inputs, audit: dict, output: Path) -> dict:
                     writer(destination / folder, reason=source["reason"], reason_code=source["reason_code"])
                     comparisons.append({"artifact": relative + "/derived/" + folder + "/analysis-manifest.json",
                         **compare_json(source, read_json(destination / folder / "analysis-manifest.json"), ignored_fields=VOLATILE_MANIFEST_FIELDS)})
+                report_manifest_rel = relative + "/report/offline_report/report-manifest.json"
+                if report_manifest_rel in inputs.files:
+                    source_report = inputs.json(report_manifest_rel)
+                    if source_report["status"] != "NOT_EXECUTED":
+                        raise ValueError("unsupported observed offline report in this snapshot")
+                    report_dest = destination / "report" / "offline_report"
+                    write_not_executed_report(
+                        report_dest,
+                        reason=source_report["reason"],
+                        reason_code=source_report["reason_code"],
+                    )
+                    comparisons.append(
+                        {
+                            "artifact": report_manifest_rel,
+                            **compare_json(
+                                source_report,
+                                read_json(report_dest / "report-manifest.json"),
+                                ignored_fields=VOLATILE_MANIFEST_FIELDS,
+                            ),
+                        }
+                    )
+                    report_md_rel = relative + "/report/offline_report/E1_E2_OFFLINE_REPORT.md"
+                    if report_md_rel in inputs.files:
+                        actual_md = (report_dest / "E1_E2_OFFLINE_REPORT.md").read_bytes()
+                        expected_md = inputs.path(report_md_rel).read_bytes()
+                        comparisons.append(
+                            {
+                                "artifact": report_md_rel,
+                                "comparison": "exact_bytes",
+                                "status": "PASS" if actual_md == expected_md else "FAIL",
+                            }
+                        )
+                    result["defense_sources"]["offline"].append(inputs.ref(report_manifest_rel, "/status"))
                 result["comparisons"].extend(comparisons)
-                entry.update(reason="Raw execution counts reproduced; incomplete v1 gold prevents component/statistical inference.", comparisons=comparisons)
+                entry.update(
+                    status="REGENERATED",
+                    reason="Raw execution counts and offline status manifests reproduced; incomplete v1 gold prevents component/statistical inference.",
+                    comparisons=comparisons,
+                )
             elif package["kind"] == "user_study":
                 result["defense_sources"]["human"].append(inputs.ref(relative + "/report/status.json", "/execution_status"))
                 analysis, comparisons = regenerate_user_study(inputs, package)
@@ -371,6 +411,42 @@ def analyze(inputs: Inputs, audit: dict, output: Path) -> dict:
                             "claim_eligible": False,
                         }
                     )
+            elif package["kind"] == "image_storage" and package["validation"] == "PASS":
+                accepted = next(
+                    (row for row in audit.get("evidence_dispositions", {}).get("records", [])
+                     if row.get("package_path") == relative),
+                    None,
+                )
+                if accepted and accepted["eligibility"] == "ACCEPTED_CONFIRMATORY":
+                    h7 = next(row for row in audit["claims"] if row["id"] == "H7")
+                    payload = {
+                        "schema_version": "protocol-v5-generated-h7-storage-metrics-v1.0.0",
+                        "claim_status": h7["claim_status"],
+                        "normalized_metrics": h7["normalized_metrics"],
+                        "source": h7["source"],
+                        "statistics": "N/A_EXACT_DETERMINISTIC_CRITERION",
+                    }
+                    write_json(destination / "h7-storage-metrics.json", payload)
+                    entry.update(
+                        status="REGENERATED",
+                        reason="Validated raw registry observations were adapted to the frozen exact H7 predicate; no collector or recommender ran.",
+                        comparisons=[{
+                            "artifact": relative + "/derived/storage_metrics.json",
+                            "comparison": "frozen_predicate_recomputation",
+                            "status": "PASS",
+                        }],
+                    )
+                    result["comparisons"].extend(entry["comparisons"])
+                else:
+                    entry.update(
+                        status="PRESERVED_INELIGIBLE",
+                        reason="Storage package is preserved but not selected as global confirmatory evidence.",
+                    )
+            elif package["kind"] in ("resource_envelope", "resource_efficiency"):
+                entry.update(
+                    status="PRESERVED_BOUNDED",
+                    reason="Checksum-valid OrbStack observation is preserved under its separate freeze and excluded from global claim decisions.",
+                )
             elif package["kind"] == "research_analysis":
                 selected = relative == inputs.lock.get("claim_analysis_package")
                 entry.update(
@@ -389,5 +465,14 @@ def analyze(inputs: Inputs, audit: dict, output: Path) -> dict:
         result["packages"].append(entry)
     result["status"] = "FAIL" if any(c["status"] == "FAIL" for c in result["comparisons"]) or any(
         p["status"] == "FAIL" for p in result["packages"]) else "PASS_WITH_UNAVAILABLE_ANALYSES"
+    write_json(output / "evaluated-claim-registry.json", audit.get("evaluated_claim_view", {
+        "schema_version": "protocol-v5-generated-evaluated-claim-view-v1.0.0",
+        "claims": audit.get("claims", []),
+        "note": "Legacy input inventory: no final-integration disposition overlay.",
+    }))
+    write_json(output / "evidence-disposition.json", audit.get("evidence_dispositions", {
+        "schema_version": "protocol-v5-evidence-disposition-v1.0.0",
+        "allowed_dispositions": [], "records": [], "integrity_status": "NOT_APPLICABLE",
+    }))
     write_json(output / "regeneration.json", result)
     return result

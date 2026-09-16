@@ -847,13 +847,14 @@ def test_reproducibility_provenance_manifest_completeness(tmp_path: Path):
 
 def test_validate_evidence_tool_and_corruption_detection(tmp_path: Path):
     """Test the evaluation_v4 validate_evidence tool on valid and corrupted evidence."""
-    # 1. Existing audit demo evidence passes validation
-    audit_res = validate_evaluation_v4_evidence(Path("results/offline-audit-demo"))
+    # 1. Tracked portable historical evidence passes validation.  Do not
+    # depend on the developer-local, gitignored results/offline-audit-demo.
+    demo_dir = Path("results/v4-revised-test-20260812T095453Z")
+    audit_res = validate_evaluation_v4_evidence(demo_dir)
     assert audit_res["status"] == "pass"
-    assert audit_res["records_validated"] == 96
+    assert audit_res["records_validated"] == 960
 
     # 2. Test disposable copy mutation detection
-    demo_dir = Path("results/offline-audit-demo")
     test_evidence = tmp_path / "test_evidence"
     test_evidence.mkdir()
     (test_evidence / "run-manifest.json").write_text((demo_dir / "run-manifest.json").read_text(encoding="utf-8"), encoding="utf-8")

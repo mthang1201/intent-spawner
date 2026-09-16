@@ -74,6 +74,8 @@ def evaluate_cluster_eligibility(
     failures: list[str] = []
     if current_context != policy["expected_context"]:
         failures.append("WRONG_KUBERNETES_CONTEXT")
+    if current_context and any(tok in current_context.lower() for tok in ("prod", "production", "live", "main")):
+        failures.append("PRODUCTION_CLUSTER_FORBIDDEN")
     namespace_labels = ((namespace or {}).get("metadata") or {}).get("labels") or {}
     for field, code in (
         ("cluster_identity_label", "WRONG_CLUSTER_FINGERPRINT"),

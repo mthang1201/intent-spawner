@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 from pathlib import Path
 import re
 from typing import Any
@@ -14,7 +15,7 @@ from typing import Any
 from evaluation_v4.dataset import file_sha256
 
 ROOT = Path(__file__).resolve().parents[2]
-LOCK = "benchmarks_v5/protocol-v5-final-audit-inputs-v3.json"
+LOCK = "benchmarks_v5/protocol-v5-final-audit-inputs-v4.json"
 RESULTS = "results_v5/protocol-v5.0.0"
 REGISTRY = "benchmarks_v5/protocol-v5-claim-registry-v1.1.yaml"
 
@@ -48,6 +49,19 @@ def write_bytes(path: Path, value: bytes) -> None:
         handle.write(value)
 
 
+def publish_bytes(path: Path, value: bytes) -> None:
+    """Atomically replace an explicitly selected publication artifact."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temporary = path.with_name(path.name + ".tmp")
+    if temporary.exists():
+        raise FileExistsError("stale publication temporary exists: " + temporary.name)
+    with temporary.open("xb") as handle:
+        handle.write(value)
+        handle.flush()
+        os.fsync(handle.fileno())
+    os.replace(temporary, path)
+
+
 def safe_path(root: Path, relative: str) -> Path:
     candidate = Path(relative)
     if candidate.is_absolute() or ".." in candidate.parts or not candidate.parts:
@@ -68,6 +82,7 @@ class Inputs:
             "protocol-v5-final-audit-inputs-v1.0.0",
             "protocol-v5-final-audit-inputs-v1.1.0",
             "protocol-v5-final-audit-inputs-v1.2.0",
+            "protocol-v5-final-audit-inputs-v1.3.0",
         }:
             raise ValueError("unsupported final-audit input inventory")
         self.files = self.lock["files"]

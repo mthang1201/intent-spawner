@@ -115,11 +115,14 @@ def _registry_manifest_from_raw(
         if not isinstance(item, Mapping):
             continue
         descriptor = item.get("Descriptor") or {}
-        platform_data = descriptor.get("platform") or {}
-        if (
-            platform_data.get("architecture") != expected_platform.get("architecture")
-            or platform_data.get("os") != expected_platform.get("os")
-        ):
+        platform_data = descriptor.get("platform") or item.get("platform") or {}
+        if platform_data:
+            if (
+                platform_data.get("architecture") != expected_platform.get("architecture")
+                or platform_data.get("os") != expected_platform.get("os")
+            ):
+                continue
+        elif len(entries) > 1:
             continue
         manifest = item.get("OCIManifest") or item.get("SchemaV2Manifest")
         if manifest is None and item.get("Raw") is not None:
@@ -1475,16 +1478,35 @@ def validate_e5_storage_evidence(
                 "Derived storage prefixes are not recomputable from raw layer descriptors"
             )
 
-        expected_marginal = [
-            row.to_dict() for row in compute_marginal_storage(reconstructed_images)
-        ]
+        if reconstructed_images:
+            base_domain = reconstructed_images[0].size_domain
+            for img_meta in reconstructed_images[1:]:
+                if img_meta.size_domain != base_domain:
+                    raise EvidenceValidationError(
+                        f"Inconsistent size domain across images: {base_domain} vs {img_meta.size_domain}"
+                    )
+
+        try:
+            expected_marginal = [
+                row.to_dict() for row in compute_marginal_storage(reconstructed_images)
+            ]
+        except ValueError as exc:
+            raise EvidenceValidationError(
+                f"Derived marginal storage validation failed: {exc}"
+            ) from exc
         if marginal_data != expected_marginal:
             raise EvidenceValidationError(
                 "Derived marginal storage is not recomputable from raw layer descriptors"
             )
-        expected_pairwise = compute_pairwise_layer_reuse(
-            reconstructed_images
-        ).to_dict()
+
+        try:
+            expected_pairwise = compute_pairwise_layer_reuse(
+                reconstructed_images
+            ).to_dict()
+        except ValueError as exc:
+            raise EvidenceValidationError(
+                f"Derived pairwise reuse validation failed: {exc}"
+            ) from exc
         if pairwise_data != expected_pairwise:
             raise EvidenceValidationError(
                 "Derived pairwise reuse is not recomputable from raw layer descriptors"

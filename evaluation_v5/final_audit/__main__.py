@@ -13,7 +13,7 @@ import sys
 
 from . import SCHEMA_VERSION
 from .checks import inspect
-from .common import Inputs, ROOT, RESULTS, file_sha256, read_json, seal, verify_seal, write_json, write_bytes
+from .common import Inputs, ROOT, RESULTS, file_sha256, publish_bytes, read_json, seal, verify_seal, write_json, write_bytes
 from .reproduce import analyze
 from .reporting import figures, render_report
 
@@ -84,6 +84,7 @@ def run_workflow(inputs: Inputs, command: str, run_id: str, output_root: Path,
         audit = inspect(inputs)
         validation_dir.mkdir()
         write_json(validation_dir / "audit.json", audit)
+        write_json(validation_dir / "evidence-disposition.json", audit["evidence_dispositions"])
         seal(validation_dir, stage_metadata(run, "validate"))
     if command == "validate":
         return {"run_id": run_id, "output": str(target), "audit_status": audit["audit_status"],
@@ -136,7 +137,10 @@ def run_workflow(inputs: Inputs, command: str, run_id: str, output_root: Path,
         if any((inputs.root / relative) == report_path or (inputs.root / relative) in report_path.parents
                for relative in inputs.lock["packages"]):
             raise ValueError("report publication must not modify a source evidence package")
-        write_bytes(report_path, render_report(inputs, final, derived, rendered, report_path).encode())
+        canonical_report = (inputs.root / "docs/evaluation/PROTOCOL_V5_FINAL_REPORT.md").resolve()
+        if report_path != canonical_report:
+            raise ValueError("publication path must be docs/evaluation/PROTOCOL_V5_FINAL_REPORT.md")
+        publish_bytes(report_path, render_report(inputs, final, derived, rendered, report_path).encode())
     if inputs.verify() and not audit.get("input_integrity_blocked"):
         raise ValueError("source input hashes changed during reproduction")
     return {"run_id": run_id, "output": str(target), "audit_status": final["audit_status"],
@@ -148,7 +152,7 @@ def main(argv=None):
     parser.add_argument("command", choices=("validate", "analyze", "figures", "audit", "verify"))
     parser.add_argument("--run-id", default=None)
     parser.add_argument("--output-root", type=Path, default=ROOT / RESULTS / "final-audit")
-    parser.add_argument("--report", type=Path, help="Also exclusively create a report at this path (audit only).")
+    parser.add_argument("--report", type=Path, help="Atomically publish the canonical report at docs/evaluation/PROTOCOL_V5_FINAL_REPORT.md (audit only).")
     parser.add_argument("--package", type=Path, help="Sealed stage to verify without creating outputs.")
     args = parser.parse_args(argv)
     try:

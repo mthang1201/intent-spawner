@@ -1,0 +1,140 @@
+{
+  "admission_or_scheduling_reason": "UNKNOWN",
+  "cgroup_metrics": {
+    "cgroup_version": "v2",
+    "controllers": [
+      "cpuset",
+      "cpu",
+      "io",
+      "memory",
+      "pids"
+    ],
+    "cpu_full_window_average_m": 1009.839842,
+    "cpu_interval_sample_max_m": null,
+    "cpu_max": "150000 100000",
+    "cpu_nr_periods_delta": 1,
+    "cpu_nr_throttled_delta": 0,
+    "cpu_throttled_usec_delta": 0,
+    "cpu_usage_usec_delta": 75911,
+    "memory_current_sample_max_mib": 11.109375,
+    "memory_events_delta": {
+      "high": 0,
+      "low": 0,
+      "max": 0,
+      "oom": 0,
+      "oom_group_kill": 0,
+      "oom_kill": 0,
+      "sock_throttled": 0
+    },
+    "memory_high": "max",
+    "memory_max": "1610612736",
+    "memory_peak_mib": 24.375,
+    "sample_count": 0,
+    "sample_interval_seconds": 0.1,
+    "source": "cgroup_v2_in_container"
+  },
+  "collector_origin": "REAL_KUBERNETES_COLLECTOR",
+  "condition": "P2_DYNAMIC",
+  "container_runtime_seconds": 0.0,
+  "correctness": true,
+  "correctness_details": {
+    "all_invariants_match": true,
+    "checker_version": "frozen-invariant-checker-v1.0.0",
+    "expected_invariants": {
+      "checksum": 2200938190,
+      "documents": 25000
+    },
+    "observed_invariants": {
+      "checksum": 2200938190,
+      "documents": 25000
+    }
+  },
+  "correctness_invariants_ok": true,
+  "deterministic_seed": 8110,
+  "exclusion_reason": null,
+  "expected_marker_sha256": "ab3dcc6fe71c4f218ea46631e30d61a7bfc2b53a8477c40f469b5654e2cfbf7b",
+  "family_id": "json_normalization",
+  "infrastructure_invalid": false,
+  "kubernetes": {
+    "cleanup_status": "succeeded",
+    "events": [
+      {
+        "count": 1,
+        "first_timestamp": "2026-09-15T08:51:59Z",
+        "last_timestamp": "2026-09-15T08:51:59Z",
+        "message": "Container image \"intent-spawner-resource-v5:e4-ffebc19805a6\" already present on machine",
+        "reason": "Pulled",
+        "type": "Normal"
+      },
+      {
+        "count": 1,
+        "first_timestamp": "2026-09-15T08:51:59Z",
+        "last_timestamp": "2026-09-15T08:51:59Z",
+        "message": "Created container: workload",
+        "reason": "Created",
+        "type": "Normal"
+      },
+      {
+        "count": 1,
+        "first_timestamp": "2026-09-15T08:51:59Z",
+        "last_timestamp": "2026-09-15T08:51:59Z",
+        "message": "Started container workload",
+        "reason": "Started",
+        "type": "Normal"
+      }
+    ],
+    "exit_code": 0,
+    "finished_at": "2026-09-15T08:51:59Z",
+    "image_id": "docker://sha256:1b7702f073b094eb3f5ced5fadd33d6f3e0346481b15ed8de998fd3a4e8a3bdd",
+    "image_reference": "intent-spawner-resource-v5:e4-ffebc19805a6",
+    "node_name": "orbstack",
+    "phase": "Succeeded",
+    "pod_name": "e4e-c060c0b6ae9e897750b58df6",
+    "pod_uid": "5f6fae0f-1d39-4848-a988-dee706a2d06e",
+    "reason": "Completed",
+    "restart_count": 0,
+    "started_at": "2026-09-15T08:51:59Z",
+    "terminated_reason": "Completed",
+    "waiting_reason": null
+  },
+  "observed_marker_sha256": "ab3dcc6fe71c4f218ea46631e30d61a7bfc2b53a8477c40f469b5654e2cfbf7b",
+  "observed_resources": {
+    "cpu_limit_m": 1500,
+    "cpu_request_m": 1100,
+    "gpu_count": 0,
+    "gpu_resource": null,
+    "memory_limit_mib": 1536,
+    "memory_request_mib": 1280
+  },
+  "oom": false,
+  "pending_or_admission_failure": false,
+  "plan_index": 586,
+  "planned_resources": {
+    "cpu_limit_m": 1500,
+    "cpu_request_m": 1100,
+    "gpu_count": 0,
+    "gpu_resource": null,
+    "memory_limit_mib": 1536,
+    "memory_request_mib": 1280
+  },
+  "pod_created": true,
+  "primary_outcome": "SUCCESS",
+  "primary_trial_id": "e4-eff-10-json_normalization-p2-dynamic",
+  "recorded_at_utc": "2026-09-15T08:52:02.328842Z",
+  "repetition": 10,
+  "replacement_of": null,
+  "runtime_error": false,
+  "scheduled": true,
+  "schema_version": "protocol-v5-resource-efficiency-trial-v1.0.0",
+  "sidecar_paths": {
+    "record": "raw/runs/e4-eff-10-json_normalization-p2-dynamic/record.json"
+  },
+  "success": true,
+  "timeout": false,
+  "timeout_seconds": 120,
+  "trial_id": "e4-eff-10-json_normalization-p2-dynamic",
+  "workload_fingerprint": "113c0b454e5a751fd3c847bcd709e4dabbe2206f43f308044517653bb600771f",
+  "workload_instance_id": "json-normalization-v1-docs-25000-seed-8110",
+  "workload_output_exists": true,
+  "workload_runtime_seconds": 0.0754
+}

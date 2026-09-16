@@ -1492,104 +1492,127 @@ def generate_offline_report(
 ) -> Path:
     """Read evidence, derive component & statistical metrics, and write complete reporting layer."""
     _check_output_dir_safety(output_dir)
-    _prevalidate_completed_evidence_envelope(evidence_dir)
-    gold = load_component_gold(
-        gold_path,
-        role=role,
-        freeze_path=freeze_path,
-        split_id=split_id,
-    )
-    _require_v2_gold(gold)
-    provenance, records = load_validated_evidence(
-        evidence_dir,
-        gold,
-        systems=("P1", "P2", "P3"),
-        require_systems=False,
-    )
-
-    # Validate provenance and split binding
-    prov_split = provenance.get("split", {})
-    valid_dataset_shas = {gold.source_file_sha256, gold.canonical_sha256}
-    valid_bundle_shas = {gold.canonical_sha256, gold.source_file_sha256}
-    if gold.split is not None:
-        valid_dataset_shas.add(gold.split.source_file_sha256)
-        valid_dataset_shas.add(gold.split.manifest.checksum)
-        valid_bundle_shas.add(gold.split.manifest.checksum)
-        valid_bundle_shas.add(gold.split.source_file_sha256)
-
-    if prov_split.get("dataset_sha256") and prov_split["dataset_sha256"] not in valid_dataset_shas:
-        raise ReportingError(
-            f"evidence dataset checksum mismatch: evidence has {prov_split['dataset_sha256']} but gold has source={gold.source_file_sha256}, canonical={gold.canonical_sha256}"
+    try:
+        _prevalidate_completed_evidence_envelope(evidence_dir)
+        gold = load_component_gold(
+            gold_path,
+            role=role,
+            freeze_path=freeze_path,
+            split_id=split_id,
         )
-    if prov_split.get("bundle_checksum") and prov_split["bundle_checksum"] not in valid_bundle_shas:
-        raise ReportingError(
-            f"evidence bundle checksum mismatch: evidence has {prov_split['bundle_checksum']} but gold has {gold.canonical_sha256}"
-        )
-    if prov_split.get("role") and prov_split["role"] != gold.role:
-        raise ReportingError(
-            f"evidence split role mismatch: evidence has {prov_split['role']} but gold has {gold.role}"
+        _require_v2_gold(gold)
+        provenance, records = load_validated_evidence(
+            evidence_dir,
+            gold,
+            systems=("P1", "P2", "P3"),
+            require_systems=False,
         )
 
-    # Validate completion JSON
-    raw_completion_path = evidence_dir / REPORT_DIRECTORY_NAME / COMPLETION_FILENAME
-    raw_status = "OBSERVED"
-    if raw_completion_path.is_file():
-        try:
-            raw_comp = json.loads(raw_completion_path.read_text(encoding="utf-8"))
-            raw_status = raw_comp.get("status", "OBSERVED")
-            if raw_comp.get("provenance_fingerprint") != provenance.get("provenance_fingerprint"):
-                raise ReportingError("completion provenance fingerprint does not match offline run provenance")
-            records_file = evidence_dir / RAW_DIRECTORY_NAME / RECORDS_FILENAME
-            if records_file.is_file():
-                if raw_comp.get("recommendations_jsonl_sha256") != file_sha256(records_file):
-                    raise ReportingError("completion records sha256 does not match recommendations.jsonl")
-        except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
-            raise ReportingError("unreadable completion metadata in evidence directory") from exc
+        # Validate provenance and split binding
+        prov_split = provenance.get("split", {})
+        valid_dataset_shas = {gold.source_file_sha256, gold.canonical_sha256}
+        valid_bundle_shas = {gold.canonical_sha256, gold.source_file_sha256}
+        if gold.split is not None:
+            valid_dataset_shas.add(gold.split.source_file_sha256)
+            valid_dataset_shas.add(gold.split.manifest.checksum)
+            valid_bundle_shas.add(gold.split.manifest.checksum)
+            valid_bundle_shas.add(gold.split.source_file_sha256)
 
-    systems = {str(rec.get("system_id")) for rec in records}
-    if not {"P1", "P2"}.issubset(systems):
-        raise ReportingError("validated evidence does not contain both P1 and P2")
+        if prov_split.get("dataset_sha256") and prov_split["dataset_sha256"] not in valid_dataset_shas:
+            raise ReportingError(
+                f"evidence dataset checksum mismatch: evidence has {prov_split['dataset_sha256']} but gold has source={gold.source_file_sha256}, canonical={gold.canonical_sha256}"
+            )
+        if prov_split.get("bundle_checksum") and prov_split["bundle_checksum"] not in valid_bundle_shas:
+            raise ReportingError(
+                f"evidence bundle checksum mismatch: evidence has {prov_split['bundle_checksum']} but gold has {gold.canonical_sha256}"
+            )
+        if prov_split.get("role") and prov_split["role"] != gold.role:
+            raise ReportingError(
+                f"evidence split role mismatch: evidence has {prov_split['role']} but gold has {gold.role}"
+            )
 
-    ks = _validate_retrieval_ks(retrieval_ks)
+        # Validate completion JSON
+        raw_completion_path = evidence_dir / REPORT_DIRECTORY_NAME / COMPLETION_FILENAME
+        raw_status = "OBSERVED"
+        if raw_completion_path.is_file():
+            try:
+                raw_comp = json.loads(raw_completion_path.read_text(encoding="utf-8"))
+                raw_status = raw_comp.get("status", "OBSERVED")
+                if raw_comp.get("provenance_fingerprint") != provenance.get("provenance_fingerprint"):
+                    raise ReportingError("completion provenance fingerprint does not match offline run provenance")
+                records_file = evidence_dir / RAW_DIRECTORY_NAME / RECORDS_FILENAME
+                if records_file.is_file():
+                    if raw_comp.get("recommendations_jsonl_sha256") != file_sha256(records_file):
+                        raise ReportingError("completion records sha256 does not match recommendations.jsonl")
+            except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+                raise ReportingError("unreadable completion metadata in evidence directory") from exc
 
-    # 1. Run statistical analysis
-    stat_result = analyze_statistical_records(
-        gold,
-        records,
-        retrieval_ks=ks,
-        bootstrap_replicates=bootstrap_replicates,
-        bootstrap_seed=bootstrap_seed,
-    )
+        systems = {str(rec.get("system_id")) for rec in records}
+        if not {"P1", "P2"}.issubset(systems):
+            raise ReportingError("validated evidence does not contain both P1 and P2")
 
-    # 2. Run component scoring (scoped to P2 / P3 structured pipelines)
-    p2_p3_records = tuple(r for r in records if r.get("system_id") in {"P2", "P3"})
-    comp_result = score_component_records(
-        gold,
-        p2_p3_records,
-        retrieval_ks=ks,
-    )
+        ks = _validate_retrieval_ks(retrieval_ks)
 
-    # 3. Compute derived reporting datasets
-    quality_data = compute_recommendation_quality_data(stat_result, comp_result, records)
-    robustness_data = compute_robustness_table_data(stat_result, records, gold)
-    retrieval_data = compute_retrieval_ablation_data(records, gold, ks)
-    error_data = compute_error_taxonomy_data(comp_result)
-    paired_data = compute_paired_family_outcomes_data(stat_result, gold)
-    ci_data = compute_confidence_intervals_data(stat_result)
-    p3_decision = compute_p3_development_decision(
-        comp_result,
-        gold,
-        p3_development_decision=p3_development_decision,
-    )
+        # 1. Run statistical analysis
+        stat_result = analyze_statistical_records(
+            gold,
+            records,
+            retrieval_ks=ks,
+            bootstrap_replicates=bootstrap_replicates,
+            bootstrap_seed=bootstrap_seed,
+        )
 
-    limitations = compute_limitations_block(
-        stat_result,
-        comp_result,
-        gold,
-        provenance,
-        raw_status,
-        missing_evidence=missing_evidence,
-    )
+        # 2. Run component scoring (scoped to P2 / P3 structured pipelines)
+        p2_p3_records = tuple(r for r in records if r.get("system_id") in {"P2", "P3"})
+        comp_result = score_component_records(
+            gold,
+            p2_p3_records,
+            retrieval_ks=ks,
+        )
+
+        # 3. Compute derived reporting datasets
+        quality_data = compute_recommendation_quality_data(stat_result, comp_result, records)
+        robustness_data = compute_robustness_table_data(stat_result, records, gold)
+        retrieval_data = compute_retrieval_ablation_data(records, gold, ks)
+        error_data = compute_error_taxonomy_data(comp_result)
+        paired_data = compute_paired_family_outcomes_data(stat_result, gold)
+        ci_data = compute_confidence_intervals_data(stat_result)
+        p3_decision = compute_p3_development_decision(
+            comp_result,
+            gold,
+            p3_development_decision=p3_development_decision,
+        )
+
+        limitations = compute_limitations_block(
+            stat_result,
+            comp_result,
+            gold,
+            provenance,
+            raw_status,
+            missing_evidence=missing_evidence,
+        )
+    except OfflineEvidenceValidationError as exc:
+        if "provenance does not match" in str(exc) or "checksum mismatch" in str(exc):
+            raise
+        return write_not_executed_report(
+            output_dir,
+            reason=f"Offline inputs unavailable or invalid: {exc}",
+            reason_code="INPUTS_UNAVAILABLE_OR_INVALID",
+            created_at_utc=created_at_utc,
+        )
+    except (
+        ComponentAnalysisError,
+        ContractValidationError,
+        GoldDatasetValidationError,
+        SplitBundleValidationError,
+        StatisticalAnalysisError,
+    ) as exc:
+        return write_not_executed_report(
+            output_dir,
+            reason=f"Offline inputs unavailable or invalid: {exc}",
+            reason_code="INPUTS_UNAVAILABLE_OR_INVALID",
+            created_at_utc=created_at_utc,
+        )
 
     canonical_time = created_at_utc or provenance.get("completed_utc") or provenance.get("created_utc") or _utc_now()
     manifest_info = {

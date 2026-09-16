@@ -74,10 +74,12 @@ class ProbeSpec:
     cpu_limit: str = "1000m"
     memory_limit: str = "1Gi"
     expected_metadata_keys: tuple[str, ...] = ()
+    probe_version: str = "v1.0.0"
 
     def to_dict(self) -> dict[str, Any]:
         return {
             "probe_id": self.probe_id,
+            "probe_version": self.probe_version,
             "capability": self.capability,
             "description": self.description,
             "script": self.script,
@@ -91,6 +93,7 @@ class ProbeSpec:
     def from_dict(cls, data: Mapping[str, Any]) -> "ProbeSpec":
         return cls(
             probe_id=str(data["probe_id"]),
+            probe_version=str(data.get("probe_version", "v1.0.0")),
             capability=str(data["capability"]),
             description=str(data["description"]),
             script=str(data["script"]),
@@ -186,6 +189,7 @@ class ImageProbeResult:
     stdout: str | None = None
     execution_mode: str = "dry_run"
     timestamp_utc: str = ""
+    probe_version: str = "v1.0.0"
     schema_version: str = IMAGE_PROBE_RECORD_SCHEMA_VERSION
 
     @property
@@ -225,6 +229,7 @@ class ImageProbeResult:
         return {
             "schema_version": self.schema_version,
             "probe_id": self.probe_id,
+            "probe_version": self.probe_version,
             "image_id": self.image_id,
             "image_reference": self.image_reference,
             "image_digest": self.image_digest,
@@ -272,6 +277,7 @@ class ImageProbeResult:
         return cls(
             schema_version=str(data.get("schema_version", IMAGE_PROBE_RECORD_SCHEMA_VERSION)),
             probe_id=str(data["probe_id"]),
+            probe_version=str(data.get("probe_version", "v1.0.0")),
             image_id=str(data["image_id"]),
             image_reference=str(data["image_reference"]),
             image_digest=str(data["image_digest"]),

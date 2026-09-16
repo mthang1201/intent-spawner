@@ -1515,14 +1515,14 @@ def _csv_text(rows: Sequence[Mapping[str, Any]]) -> str:
             if field not in fields:
                 fields.append(field)
     buffer = io.StringIO(newline="")
-    writer = csv.DictWriter(buffer, fieldnames=fields)
+    writer = csv.DictWriter(buffer, fieldnames=fields, lineterminator="\n")
     writer.writeheader()
     for row in rows:
         writer.writerow(
             {
                 field: json.dumps(value, separators=(",", ":"))
                 if isinstance(value, (list, dict))
-                else value
+                else (value.replace("\r\n", "\n") if isinstance(value, str) else value)
                 for field, value in row.items()
             }
         )

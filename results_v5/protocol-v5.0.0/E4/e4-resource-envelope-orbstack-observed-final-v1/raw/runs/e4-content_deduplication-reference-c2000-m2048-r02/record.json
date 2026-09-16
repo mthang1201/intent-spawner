@@ -1,0 +1,92 @@
+{
+  "cgroup_metrics": {
+    "cgroup_version": "v2",
+    "controllers": [
+      "cpuset",
+      "cpu",
+      "io",
+      "memory",
+      "pids"
+    ],
+    "cpu_full_window_average_m": 1010.22474,
+    "cpu_interval_sample_max_m": null,
+    "cpu_max": "200000 100000",
+    "cpu_nr_periods_delta": 0,
+    "cpu_nr_throttled_delta": 0,
+    "cpu_throttled_usec_delta": 0,
+    "cpu_usage_usec_delta": 49434,
+    "memory_current_sample_max_mib": 11.515625,
+    "memory_events_delta": {
+      "high": 0,
+      "low": 0,
+      "max": 0,
+      "oom": 0,
+      "oom_group_kill": 0,
+      "oom_kill": 0,
+      "sock_throttled": 0
+    },
+    "memory_high": "max",
+    "memory_max": "2147483648",
+    "memory_peak_mib": 17.777344,
+    "sample_count": 0,
+    "sample_interval_seconds": 0.1,
+    "source": "cgroup_v2_in_container"
+  },
+  "cgroup_version": "v2",
+  "collector_origin": "REAL_KUBERNETES_COLLECTOR",
+  "correctness_details": {
+    "all_invariants_match": true,
+    "checker_version": "frozen-invariant-checker-v1.0.0",
+    "expected_invariants": {
+      "checksum": 634764227352,
+      "items": 100000,
+      "unique": 70000
+    },
+    "observed_invariants": {
+      "checksum": 634764227352,
+      "items": 100000,
+      "unique": 70000
+    }
+  },
+  "correctness_invariants_ok": true,
+  "correctness_marker_ok": true,
+  "cpu_m": 2000,
+  "deterministic_seed": 8115,
+  "exclusion_reason": null,
+  "exit_code": 0,
+  "exit_reason": "Completed",
+  "expected_marker_sha256": "d8dab26f0b9d239df9c1c44b87a9c6286551caadc8f2f675d16b4aea54eb1602",
+  "family_id": "content_deduplication",
+  "infrastructure_invalid": false,
+  "kubernetes": {
+    "adapter_monitor_grace_seconds": 5,
+    "cleanup_status": "succeeded",
+    "collector_origin": "REAL_KUBERNETES_COLLECTOR",
+    "finished_at": "2026-09-15T08:03:11Z",
+    "image_id": "docker://sha256:1b7702f073b094eb3f5ced5fadd33d6f3e0346481b15ed8de998fd3a4e8a3bdd",
+    "image_reference": "intent-spawner-resource-v5:e4-ffebc19805a6",
+    "node_name": "orbstack",
+    "phase": "Succeeded",
+    "pod_active_deadline_seconds": 150,
+    "pod_lifecycle_grace_seconds": 30,
+    "pod_name": "e4-0721dd9bca21fda6dd680256",
+    "pod_uid": "5c8d8746-5f29-4c91-8c38-8a320c21ee3c",
+    "restart_count": 0,
+    "started_at": "2026-09-15T08:03:11Z",
+    "workload_timeout_seconds": 120
+  },
+  "memory_mib": 2048,
+  "observed_marker_sha256": "d8dab26f0b9d239df9c1c44b87a9c6286551caadc8f2f675d16b4aea54eb1602",
+  "oom_killed": false,
+  "phase": "reference",
+  "recorded_at_utc": "2026-09-15T08:03:13.819912Z",
+  "repeat_index": 2,
+  "replacement_of": null,
+  "run_id": "e4-content_deduplication-reference-c2000-m2048-r02",
+  "runtime_seconds": 0.049089,
+  "schema_version": "protocol-v5-resource-trial-v1.1.0",
+  "timeout": false,
+  "workload_fingerprint": "ea7ab7e06f5c1f31ef06fba707ece7645c76cd3bb3a44c96a7d0a4966551e3d2",
+  "workload_instance_id": "content-dedup-v1-items-100000-space-70000-seed-8115",
+  "workload_timeout_seconds": 120
+}

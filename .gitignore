@@ -84,6 +84,9 @@ results_v5/protocol-v5.0.0/E5/*
 results_v5/protocol-v5.0.0/analysis/*
 !results_v5/protocol-v5.0.0/freezes/
 results_v5/protocol-v5.0.0/freezes/*
+!results_v5/protocol-v5.0.0/freezes/v5-final-execution-freeze/
+results_v5/protocol-v5.0.0/freezes/v5-final-execution-freeze/*
+!results_v5/protocol-v5.0.0/freezes/v5-final-execution-freeze/freeze-manifest.json
 !results_v5/protocol-v5.0.0/E1/20260825T-observed-p1-p2-development-v1/
 results_v5/protocol-v5.0.0/E1/20260825T-observed-p1-p2-development-v1/*
 !results_v5/protocol-v5.0.0/E3/b0-p2-user-study-readiness/

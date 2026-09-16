@@ -13,14 +13,16 @@ import sys
 import pytest
 
 from evaluation_v5.final_audit.common import (
-    Inputs, LOCK, REGISTRY, ROOT, file_sha256, read_json, safe_path, seal, verify_seal, write_bytes, write_json,
+    Inputs, LOCK, REGISTRY, ROOT, file_sha256, publish_bytes, read_json, safe_path, seal, verify_seal, write_bytes, write_json,
 )
 from evaluation_v5.final_audit.checks import (
     CHECKS, b0_ranking_findings, cluster_findings, execution_findings, inference_findings,
-    inspect, load_isolation_diagnostic, p3_findings, placeholder_findings,
+    inspect, isolation_audit_summary, load_isolation_diagnostic, p3_findings, placeholder_findings,
     storage_identity_findings,
 )
 from evaluation_v5.final_audit.claims import load_claim_evidence, synthetic_origin_scan
+from evaluation_v5.final_audit import disposition as disposition_module
+from evaluation_v5.final_audit.disposition import ALLOWED_DISPOSITIONS, build_dispositions
 from evaluation_v5.final_audit import completion as completion_module
 from evaluation_v5.final_audit.completion import (
     _load_evidence_records, _remaining_execution_requirements, _validate_command_outcomes,
@@ -29,7 +31,7 @@ from evaluation_v5.final_audit.completion import (
 from evaluation_v5.final_audit.evidence import capture, junit_details, verify_command_evidence
 from evaluation_v5.final_audit.publication import build_attestation, verify_attestation
 from evaluation_v5.final_audit.reproduce import analyze, compare_json, regenerate_functional
-from evaluation_v5.final_audit.reporting import figures, render_report
+from evaluation_v5.final_audit.reporting import defense_rows, figures, render_report
 
 
 @pytest.fixture(scope="module")
@@ -37,14 +39,15 @@ def current_audit():
     return inspect(Inputs(), isolation=False, historical=False)
 
 
-def test_all_seventeen_checks_and_missing_freeze_are_explicit(current_audit):
+def test_all_seventeen_checks_and_authoritative_freeze_are_explicit(current_audit):
     assert set(CHECKS) == set(range(1, 18))
     assert {c["id"] for c in current_audit["checks"]} == set(CHECKS)
-    assert current_audit["checks"][0]["verdict"] == "UNVERIFIED"
+    assert current_audit["checks"][0]["verdict"] == "PASS"
     assert current_audit["checks"][1]["verdict"] == "UNVERIFIED"
     assert current_audit["audit_status"] == "FAIL"
-    assert all(c["claim_status"] == "NOT_EXECUTED" for c in current_audit["claims"])
-    assert all(c["estimate"] is None and c["effect_size"] is None for c in current_audit["claims"])
+    assert next(c for c in current_audit["claims"] if c["id"] == "H7")["claim_status"] == "SUPPORTED"
+    assert all(c["claim_status"] == "NOT_EXECUTED" for c in current_audit["claims"] if c["id"] != "H7")
+    assert all(c["estimate"] is None and c["effect_size"] is None for c in current_audit["claims"] if c["id"] != "H7")
     assert len(current_audit["evaluated_claims"]) == 9
 
 
@@ -80,6 +83,23 @@ def test_isolation_failure_is_exactly_classified_and_repaired():
     assert isolation_check["verdict"] == "UNVERIFIED"
     assert isolation_check["details"][0]["repository_scan"] == "PASS"
     assert isolation_check["details"][1]["prior_failure_diagnostic"]["repair"]["status"] == "REPAIRED"
+
+
+def test_isolation_summary_excludes_run_dependent_scan_counts():
+    class Report:
+        clean = True
+        findings = ()
+        repository_documents_scanned = 10
+        archives_scanned = 1
+
+    first = isolation_audit_summary(Report())
+    Report.repository_documents_scanned = 999
+    Report.archives_scanned = 20
+    assert isolation_audit_summary(Report()) == first == {
+        "repository_scan": "PASS",
+        "scope": "repository_and_discovered_archives",
+        "findings": [],
+    }
 
 
 def test_command_evidence_captures_revision_command_exit_and_hashes(tmp_path):
@@ -229,7 +249,7 @@ def test_post_publication_delta_verifier_rejects_disallowed_path_class(tmp_path)
 
 def test_existing_failures_are_preserved_and_not_selected_away(current_audit):
     packages = current_audit["packages"]
-    assert len(packages) == 34
+    assert len(packages) == 37
     study = next(p for p in packages if p["kind"] == "user_study")
     mismatch = next(e for e in study["errors"] if e["code"] == "ORIGINAL_CHECKSUM_MISMATCH")
     assert mismatch["crlf_reconstruction_matches_recorded_hash"] is True
@@ -252,20 +272,22 @@ def test_final_audit_consumes_explicit_authenticated_claim_package(current_audit
         configured + "/derived/evidence-selection.json"
     )
     assert current_audit["claim_counts"] == {
-        "SUPPORTED": 0,
+        "SUPPORTED": 1,
         "NOT_SUPPORTED": 0,
-        "NOT_EXECUTED": 9,
+        "NOT_EXECUTED": 8,
     }
     source = (ROOT / "evaluation_v5/final_audit/checks.py").read_text()
     assert "selected={}" not in source
     assert 'confirmatory_status": "NOT_EXECUTED"' not in source
 
 
-def test_p16_case_a_no_authenticated_real_evidence_has_no_fabricated_results(
+def test_p16_missing_evidence_stays_missing_while_valid_storage_is_decided(
     current_audit, tmp_path
 ):
-    assert current_audit["confirmatory_status"] == "NOT_EXECUTED"
-    for claim in current_audit["claims"]:
+    assert current_audit["confirmatory_status"] == "EXECUTED_INCOMPLETE"
+    h7 = next(claim for claim in current_audit["claims"] if claim["id"] == "H7")
+    assert h7["claim_status"] == "SUPPORTED" and h7["claimable"] is True
+    for claim in (row for row in current_audit["claims"] if row["id"] != "H7"):
         assert claim["claim_status"] == "NOT_EXECUTED"
         assert claim["claimable"] is False
         assert claim["estimate"] is None
@@ -293,8 +315,123 @@ def test_p16_case_a_no_authenticated_real_evidence_has_no_fabricated_results(
     assert "**H1 — SUPPORTED**" not in report
     propagation = claim_flow_attestation(current_audit)
     assert propagation["status"] == "PASS"
-    assert propagation["genuinely_empty_authenticated_selection"] is True
+    assert propagation["genuinely_empty_authenticated_selection"] is False
     assert propagation["selection_was_silently_discarded"] is False
+
+
+def test_candidate_dispositions_are_checksum_bound_and_fail_closed(current_audit):
+    result = current_audit["evidence_dispositions"]
+    assert tuple(result["allowed_dispositions"]) == ALLOWED_DISPOSITIONS
+    assert result["integrity_status"] == "PASS"
+    records = {row["candidate_id"]: row for row in result["records"]}
+    assert records["E5_STORAGE_RERUN"]["eligibility"] == "ACCEPTED_CONFIRMATORY"
+    assert records["E5_STORAGE_OLD"]["eligibility"] == "SUPERSEDED"
+    assert records["E5_FUNCTIONAL_DEVELOPMENT"]["eligibility"] == "ACCEPTED_OBSERVED_NON_CONFIRMATORY"
+    assert records["E4_ORBSTACK_EFFICIENCY"]["eligibility"] == "INCOMPATIBLE_FREEZE"
+    assert records["E4_ORBSTACK_EFFICIENCY"]["execution_status"] == "OBSERVED_INCOMPLETE"
+    assert all(records[name]["eligibility"] == "NOT_EXECUTED" for name in (
+        "E1_CONFIRMATORY", "E2_CONFIRMATORY", "E3_FINAL_ANALYSIS", "E4_GLOBAL_FINAL"
+    ))
+    assert records["E5_STORAGE_RERUN"]["counts"]["observed_scales"] == [4]
+
+
+def test_generated_view_projects_selected_storage_evidence_consistently(current_audit):
+    storage = next(
+        row for row in current_audit["experiment_states"]
+        if row["requirement_id"] == "image_storage"
+    )
+    assert storage["status"] == "OBSERVED"
+    assert storage["candidate_count"] == 2
+    assert storage["eligible_candidate_count"] == 1
+    assert storage["selected_package"].endswith(
+        "E5/e5-storage-scalability-20260914T012024Z"
+    )
+    assert len(storage["selected_manifest_sha256"]) == 64
+    generated = current_audit["evaluated_claim_view"]
+    assert generated["experiment_states"] == current_audit["experiment_states"]
+    assert generated["criteria"] == current_audit["criteria"]
+    assert next(row for row in generated["claims"] if row["id"] == "H7")[
+        "claim_status"
+    ] == "SUPPORTED"
+
+
+def test_old_storage_supersession_is_conditional(monkeypatch):
+    original = disposition_module._candidate_integrity
+
+    def fail_rerun(inputs, inventory, row):
+        result = original(inputs, inventory, row)
+        if row["candidate_id"] == "E5_STORAGE_RERUN":
+            result = {**result, "status": "FAIL", "errors": ["TEST_RERUN_FAILURE"]}
+        return result
+
+    monkeypatch.setattr(disposition_module, "_candidate_integrity", fail_rerun)
+    records = {row["candidate_id"]: row for row in build_dispositions(Inputs())["records"]}
+    assert records["E5_STORAGE_RERUN"]["eligibility"] == "REJECTED_INTEGRITY"
+    assert records["E5_STORAGE_OLD"]["eligibility"] == "INCOMPATIBLE_FREEZE"
+
+
+def test_generated_criterion_view_keeps_nonconfirmatory_contradiction_descriptive(current_audit):
+    h7f = next(row for row in current_audit["claims"] if row["id"] == "H7F")
+    criterion = next(row for row in current_audit["criteria"] if row["hypothesis"] == "H7F")
+    assert h7f["claim_status"] == "NOT_EXECUTED"
+    assert criterion["descriptive_relationship"] == "CONTRADICTS_FROZEN_CRITERION_NONCONFIRMATORY"
+    assert criterion["global_decision"] == "NOT_EXECUTED"
+
+
+def test_reporting_counts_do_not_promote_repetitions_or_storage_prefixes(current_audit):
+    criteria = {row["hypothesis"]: row for row in current_audit["criteria"]}
+    for claim_id in ("H5", "H6"):
+        row = criteria[claim_id]
+        assert row["independent_sample_count"] == 16
+        assert row["semantic_family_count"] == 16
+        assert row["condition_count"] == 4
+        assert row["repetitions_per_family_condition"] == 10
+        assert row["total_trial_or_observation_rows"] == 640
+    h7 = criteria["H7"]
+    assert h7["independent_sample_count"] is None
+    assert h7["observed_scale_points_or_prefixes"] == 4
+    assert h7["independent_runs"] == 1
+    assert h7["configured_scales"] == [4, 8, 16]
+    assert h7["observed_scales"] == [4]
+    assert h7["global_decision"] == "SUPPORTED"
+    summary = defense_rows(current_audit)
+    assert any("16 independent families; 4 conditions × 10 repetitions = 640 trial rows" in row[2] for row in summary)
+    assert any("4 observed prefixes from 1 bounded run" in row[2] for row in summary)
+
+
+def test_check_five_and_six_have_distinct_failure_explanations(current_audit):
+    checks = {row["id"]: row for row in current_audit["checks"]}
+    assert checks[5]["verdict"] == checks[6]["verdict"] == "FAIL"
+    assert "confirmatory provenance or authority" in checks[5]["reason"]
+    assert "independently certify" in checks[5]["reason"]
+    assert "not rewritten to produce a green audit" in checks[6]["reason"]
+    assert "Historical failed package and integrity findings" in checks[6]["reason"]
+    assert checks[5]["reason"] != checks[6]["reason"]
+
+
+def test_reporting_repair_preserves_scientific_decisions_and_dispositions(current_audit):
+    assert {row["id"]: row["claim_status"] for row in current_audit["claims"]} == {
+        "H1": "NOT_EXECUTED", "H2": "NOT_EXECUTED", "H3": "NOT_EXECUTED",
+        "H4": "NOT_EXECUTED", "H5": "NOT_EXECUTED", "H6": "NOT_EXECUTED",
+        "H7": "SUPPORTED", "H7F": "NOT_EXECUTED", "H8": "NOT_EXECUTED",
+    }
+    assert {
+        row["candidate_id"]: row["eligibility"]
+        for row in current_audit["evidence_dispositions"]["records"]
+    } == {
+        "E1_CONFIRMATORY": "NOT_EXECUTED",
+        "E2_CONFIRMATORY": "NOT_EXECUTED",
+        "E3_FINAL_ANALYSIS": "NOT_EXECUTED",
+        "E5_FUNCTIONAL_DEVELOPMENT": "ACCEPTED_OBSERVED_NON_CONFIRMATORY",
+        "E5_STORAGE_OLD": "SUPERSEDED",
+        "E5_STORAGE_RERUN": "ACCEPTED_CONFIRMATORY",
+        "E4_GLOBAL_FINAL": "NOT_EXECUTED",
+        "E4_ORBSTACK_ORACLE": "INCOMPATIBLE_FREEZE",
+        "E4_ORBSTACK_EFFICIENCY": "INCOMPATIBLE_FREEZE",
+        "E4_PROVENANCE_AUDIT": "INCOMPATIBLE_FREEZE",
+    }
+    assert current_audit["audit_status"] == "FAIL"
+    assert current_audit["confirmatory_status"] == "EXECUTED_INCOMPLETE"
 
 
 def test_report_renders_changed_validated_claim_state_instead_of_snapshot_prose(
@@ -530,6 +667,14 @@ def test_exclusive_publication_and_sealed_output_tampering(tmp_path):
     (tmp_path / "derived.json").write_text("{}")
     with pytest.raises(ValueError, match="checksum"):
         verify_seal(tmp_path)
+
+
+def test_atomic_publication_replaces_only_the_selected_artifact(tmp_path):
+    report = tmp_path / "PROTOCOL_V5_FINAL_REPORT.md"
+    report.write_bytes(b"old\n")
+    publish_bytes(report, b"new\n")
+    assert report.read_bytes() == b"new\n"
+    assert not report.with_name(report.name + ".tmp").exists()
 
 
 def test_input_paths_cannot_escape_or_follow_symlinks(tmp_path):
@@ -773,7 +918,9 @@ def test_current_raw_analysis_and_figures_reproduce_without_collectors(tmp_path,
     before = {p: file_sha256(inputs.root / p) for p in inputs.files}
     a = analyze(inputs, current_audit, tmp_path / "analysis")
     assert a["status"] == "PASS_WITH_UNAVAILABLE_ANALYSES"
-    assert a["observed_functional"] == []
+    assert len(a["observed_functional"]) == 1
+    assert a["observed_functional"][0]["stage"] == "development"
+    assert a["observed_functional"][0]["claim_eligible"] is False
     assert len(a["legacy_functional"]) == 9
     assert all(not row["claim_eligible"] for row in a["legacy_functional"])
     assert a["observed_offline_counts"][0]["families"] == 10
@@ -789,13 +936,15 @@ def test_current_raw_analysis_and_figures_reproduce_without_collectors(tmp_path,
         inputs.lock["e3_readiness_regeneration_package"]
     )
     assert participant_flow["preserved_original_sha256"] == "bee024512c5b6f407a9f1d273d2abbdfe2be640322b05d06f9a641404e8dd73c"
-    assert not (tmp_path / "figures1/functional-development.svg").exists()
+    assert (tmp_path / "figures1/functional-development.svg").exists()
+    svg_lines = (tmp_path / "figures1/functional-development.svg").read_bytes().splitlines()
+    assert all(line == line.rstrip() for line in svg_lines)
     assert file_sha256(tmp_path / "figures1/tables/functional-results.json") == file_sha256(tmp_path / "figures2/tables/functional-results.json")
     assert all(file_sha256(inputs.root / p) == digest for p, digest in before.items())
     report = render_report(inputs, current_audit, a, first, tmp_path / "REPORT.md")
-    assert "NOT EXECUTED" in report and "Threats to validity" in report
-    assert "Current v1.4 functional observations" in report and "SHA-256" in report
-    assert "MISSING_RECOMMENDATION_RECORD_JOIN" in report
+    assert "NOT_EXECUTED" in report and "Threats to validity" in report
+    assert "development observations" in report and "SHA-256" in report
+    assert "CONTRADICTS_FROZEN_CRITERION_NONCONFIRMATORY" in json.dumps(a["criteria"])
     assert "participant-flow CSV" in report
 
 

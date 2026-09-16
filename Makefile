@@ -1,10 +1,10 @@
 E4_RESOURCE_DRY_RUN_ID := e4-resource-envelope-dry-run-$(shell date -u +%Y%m%dT%H%M%SZ)
 E4_RESOURCE_EFFICIENCY_DRY_RUN_ID := e4-resource-efficiency-dry-run-$(shell date -u +%Y%m%dT%H%M%SZ)
-V5_PYTHON ?= .venv/bin/python
+V5_PYTHON ?= $(shell if [ -x .venv/bin/python ]; then echo .venv/bin/python; elif [ -x ../intent-spawner/.venv/bin/python ]; then echo ../intent-spawner/.venv/bin/python; else echo python3; fi)
 V5_AUDIT_ARGS = $(if $(V5_RUN_ID),--run-id "$(V5_RUN_ID)",)
 
 .PHONY: check validate-cluster-results validate-raw-integrity capacity-dry-run v3-validate v3-dry-run v3-image-policy v4-validate v4-test v5-test v5-resource-validate v5-resource-test v5-resource-dry-run v5-resource-efficiency-validate v5-resource-efficiency-test v5-resource-efficiency-dry-run v5-user-study-test v5-user-study-smoke v5-isolation-check regenerate-cluster-results
-.PHONY: v5-validate v5-analyze v5-figures v5-audit v5-audit-test
+.PHONY: v5-validate v5-analyze v5-figures v5-audit v5-audit-test v5-e4-preflight v5-resource-preflight v5-resource-efficiency-preflight
 
 # These stages never execute recommenders, participant sessions, or cluster jobs.
 # The Python orchestrator collects findings before returning audit exit code 2.
@@ -72,31 +72,40 @@ v5-test:
 		tests/test_evaluation_v5_user_study.py \
 		tests/test_evaluation_v5_user_study_analysis.py
 
+v5-resource-preflight:
+	PYTHONPATH=. $(V5_PYTHON) -m evaluation_v5.resource preflight --target envelope
+
 v5-resource-validate:
-	PYTHONPATH=. .venv/bin/python -m evaluation_v5.resource validate-manifest
+	PYTHONPATH=. $(V5_PYTHON) -m evaluation_v5.resource validate-manifest
 
 v5-resource-test: v5-resource-validate
-	PYTHONPATH=. .venv/bin/python -m pytest -q tests/test_resource_envelope_v5.py
+	PYTHONPATH=. $(V5_PYTHON) -m pytest -q tests/test_resource_envelope_v5.py
 
 v5-resource-dry-run: v5-resource-validate
-	PYTHONPATH=. .venv/bin/python -m evaluation_v5.resource dry-run \
+	PYTHONPATH=. $(V5_PYTHON) -m evaluation_v5.resource dry-run \
 		--result-dir results_v5/protocol-v5.0.0/E4/$(E4_RESOURCE_DRY_RUN_ID) \
 		--run-id $(E4_RESOURCE_DRY_RUN_ID) \
 		--image example.invalid/intent-spawner-resource-v5@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa \
 		--reason "Current context is not the required disposable intent-spawner-eval-v5 cluster."
 
+v5-resource-efficiency-preflight:
+	PYTHONPATH=. $(V5_PYTHON) -m evaluation_v5.resource.efficiency_runner preflight
+
 v5-resource-efficiency-validate:
-	PYTHONPATH=. .venv/bin/python -m evaluation_v5.resource.efficiency_runner validate
+	PYTHONPATH=. $(V5_PYTHON) -m evaluation_v5.resource.efficiency_runner validate
 
 v5-resource-efficiency-test: v5-resource-efficiency-validate
-	PYTHONPATH=. .venv/bin/python -m pytest -q tests/test_resource_efficiency_v5.py
+	PYTHONPATH=. $(V5_PYTHON) -m pytest -q tests/test_resource_efficiency_v5.py
 
 v5-resource-efficiency-dry-run: v5-resource-efficiency-validate
-	PYTHONPATH=. .venv/bin/python -m evaluation_v5.resource.efficiency_runner dry-run \
+	PYTHONPATH=. $(V5_PYTHON) -m evaluation_v5.resource.efficiency_runner dry-run \
 		--result-dir results_v5/protocol-v5.0.0/E4/$(E4_RESOURCE_EFFICIENCY_DRY_RUN_ID) \
 		--run-id $(E4_RESOURCE_EFFICIENCY_DRY_RUN_ID) \
 		--image example.invalid/intent-spawner-resource-v5@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa \
 		--reason "Confirmatory freeze, approved oracle, verified image, and frozen node capacity are unavailable."
+
+v5-e4-preflight:
+	PYTHONPATH=. $(V5_PYTHON) -m evaluation_v5.resource preflight --target all
 
 v5-user-study-test:
 	PYTHONPATH=. .venv/bin/python -m pytest -q \

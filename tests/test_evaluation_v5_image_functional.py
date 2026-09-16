@@ -2042,3 +2042,62 @@ def test_e5_r7_validator_detects_derived_metrics_disagreement(tmp_path):
     metrics_path.write_text(orig_content, encoding="utf-8")
     recompute_sha256sums()
     assert validate_e5_evidence(pkg_dir)["status"] == "PASS"
+
+
+def test_probe_spec_and_result_version_tracking():
+    """Test probe_id and probe_version tracking on ProbeSpec and ImageProbeResult with backwards compatibility."""
+    from evaluation_v5.image_storage.contracts import ImageProbeResult, ProbeSpec
+
+    spec = ProbeSpec(
+        probe_id="probe:test:python",
+        capability="python",
+        description="Test python probe",
+        script="print(1)",
+        probe_version="v1.2.0",
+    )
+    data = spec.to_dict()
+    assert data["probe_version"] == "v1.2.0"
+    reconstructed = ProbeSpec.from_dict(data)
+    assert reconstructed.probe_version == "v1.2.0"
+
+    # Backwards compatibility: older dict without probe_version defaults to v1.0.0
+    legacy_data = {
+        "probe_id": "probe:legacy:python",
+        "capability": "python",
+        "description": "Legacy",
+        "script": "print(1)",
+    }
+    legacy_spec = ProbeSpec.from_dict(legacy_data)
+    assert legacy_spec.probe_version == "v1.0.0"
+
+    res = ImageProbeResult(
+        probe_id="probe:test:python",
+        probe_version="v1.2.0",
+        image_id="test-img",
+        image_reference="test@sha256:" + "a" * 64,
+        image_digest="sha256:" + "a" * 64,
+        capability="python",
+        execution_status="EXECUTED",
+        success=True,
+    )
+    res_data = res.to_dict()
+    assert res_data["probe_version"] == "v1.2.0"
+    reconstructed_res = ImageProbeResult.from_dict(res_data)
+    assert reconstructed_res.probe_version == "v1.2.0"
+
+    # Backwards compatibility for ImageProbeResult
+    legacy_res_data = dict(res_data)
+    del legacy_res_data["probe_version"]
+    legacy_res = ImageProbeResult.from_dict(legacy_res_data)
+    assert legacy_res.probe_version == "v1.0.0"
+
+
+def test_create_probe_runner_local_mode(catalog_data):
+    """Test create_probe_runner supports 'local' and 'docker-local' modes."""
+    from evaluation_v5.image_storage.runner import DockerProbeRunner, create_probe_runner
+
+    runner = create_probe_runner(catalog_data, mode="local")
+    assert isinstance(runner, DockerProbeRunner)
+
+    runner_docker_local = create_probe_runner(catalog_data, mode="docker-local")
+    assert isinstance(runner_docker_local, DockerProbeRunner)

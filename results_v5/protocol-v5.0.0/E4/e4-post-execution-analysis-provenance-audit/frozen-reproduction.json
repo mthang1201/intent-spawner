@@ -1,0 +1,10 @@
+{
+  "classification": "POST_FREEZE_ANALYSIS_IMPLEMENTATION_DEFECT",
+  "command": "PYTHONPATH=. .venv/bin/python -m evaluation_v5.resource.efficiency_runner analyze --raw-result <immutable-raw> --analysis-dir /tmp/e4-analysis-frozen-reproduction --oracle <immutable-oracle>",
+  "execution_commit": "3d9a777390ae50cac266ceee0a58c718a34d6725",
+  "exit_code": 1,
+  "file_inventory": [],
+  "output_directory_created": false,
+  "stderr": "Traceback (most recent call last):\n  File \"<frozen runpy>\", line 203, in _run_module_as_main\n  File \"<frozen runpy>\", line 88, in _run_code\n  File \"/private/tmp/intent-spawner-wt-v5-e4-frozen-reproduction/evaluation_v5/resource/efficiency_runner.py\", line 510, in <module>\n    raise SystemExit(main())\n                     ~~~~^^\n  File \"/private/tmp/intent-spawner-wt-v5-e4-frozen-reproduction/evaluation_v5/resource/efficiency_runner.py\", line 502, in main\n    value = write_analysis_package(raw_root=args.raw_result, analysis_root=args.analysis_dir, oracle_root=args.oracle, bootstrap_replicates=args.bootstrap_replicates)\n  File \"/private/tmp/intent-spawner-wt-v5-e4-frozen-reproduction/evaluation_v5/resource/efficiency_runner.py\", line 378, in write_analysis_package\n    capacity = simulate_capacity(result[\"derived_trials\"], load_capacity_contract(require_frozen=True))\n                                                           ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^\n  File \"/private/tmp/intent-spawner-wt-v5-e4-frozen-reproduction/evaluation_v5/resource/efficiency_contracts.py\", line 198, in load_capacity_contract\n    raise ValueError(\"node capacity contract is NOT_FROZEN\")\nValueError: node capacity contract is NOT_FROZEN\n",
+  "stdout": ""
+}

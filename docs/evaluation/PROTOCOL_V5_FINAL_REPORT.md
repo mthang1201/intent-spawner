@@ -1,14 +1,18 @@
 # Protocol-v5 Final Reproducibility and Evidence Report
 
-**Audit verdict: FAIL. Confirmatory experiments: NOT EXECUTED. Primary proposed method: P2.**
+**Audit verdict: FAIL. Confirmatory evidence: EXECUTED_INCOMPLETE. Primary proposed method: P2.**
 
-This report closes the reviewed repository evidence snapshot. Audit completion does not certify that every requirement passed. Design, genuine development execution, historical evidence and confirmatory evidence are separated below.
+This report is rendered from the checksum-bound input inventory and the explicitly selected evaluated-claim package. It does not rerun claim evaluation or infer a result from a filename, timestamp, or missing value.
 
-Input inventory: [benchmarks_v5/protocol-v5-final-audit-inputs-v1.json](../../benchmarks_v5/protocol-v5-final-audit-inputs-v1.json); SHA-256 `8898df1187694e6a3e185d7ba23b253c23377ef2f05aba2f69378f3c1bf70f62`
+Input inventory: [benchmarks_v5/protocol-v5-final-audit-inputs-v4.json](../../benchmarks_v5/protocol-v5-final-audit-inputs-v4.json); SHA-256 `8fdeaa5f4880e4b3f58d05b832c5359d6fe991b324b0fc7faabb74d6c3db25da`
 
-Archived audit outputs: [all findings](../../results_v5/protocol-v5.0.0/final-audit/final-audit-20260907-v2/report/audit.json), [run provenance](../../results_v5/protocol-v5.0.0/final-audit/final-audit-20260907-v2/run.json), [regeneration comparisons](../../results_v5/protocol-v5.0.0/final-audit/final-audit-20260907-v2/analysis/regeneration.json).
+Archived audit outputs: [all findings](../../results_v5/protocol-v5.0.0/final-audit/final-audit-20260916T070444Z-reporting-repair-v1/report/audit.json), [run provenance](../../results_v5/protocol-v5.0.0/final-audit/final-audit-20260916T070444Z-reporting-repair-v1/run.json), [regeneration comparisons](../../results_v5/protocol-v5.0.0/final-audit/final-audit-20260916T070444Z-reporting-repair-v1/analysis/regeneration.json).
 
-The inventory was captured at `2026-09-07T01:42:29.953662+00:00` from Git revision `ca2ab18ec410c8765f921683241b3f3433d5e118`. It preserves the bytes found, including damaged or incomplete packages; it is not a retroactive experiment freeze. Each source manifest records its own collection revision, timestamp, dataset and environment. Audit implementation/runtime provenance is recorded in the generated run and stage manifests.
+The reviewed inventory was captured at `2026-09-16T00:00:00Z` from source revision `75611764c2d5d18960d3f08256fb9134a37b2810`. Historical bytes remain unchanged; current audit runtime provenance is recorded separately in run.json and the sealed stage manifests.
+
+Authenticated claim-analysis package: [results_v5/protocol-v5.0.0/analysis/research-analysis-20260905T-final/manifest.json](../../results_v5/protocol-v5.0.0/analysis/research-analysis-20260905T-final/manifest.json); SHA-256 `b614f527da9d12c8f9d06a102eb933d17d42b64b7c72749083c15deacb681669`
+Evidence selection: [results_v5/protocol-v5.0.0/analysis/research-analysis-20260905T-final/derived/evidence-selection.json](../../results_v5/protocol-v5.0.0/analysis/research-analysis-20260905T-final/derived/evidence-selection.json); SHA-256 `dc36cd5fadd936a81641d4eabd251b27fdb722281ffed0a85103ee6227641d12`
+Evaluated registry: [results_v5/protocol-v5.0.0/analysis/research-analysis-20260905T-final/derived/evaluated-claim-registry.json](../../results_v5/protocol-v5.0.0/analysis/research-analysis-20260905T-final/derived/evaluated-claim-registry.json); SHA-256 `d98c4453da7583a9c6c695ec13cfac940b249a318023c72bf2e8c244adee6cad`
 
 ## Research questions and hypotheses
 
@@ -21,19 +25,19 @@ The inventory was captured at `2026-09-07T01:42:29.953662+00:00` from Git revisi
 | RQ5 | Are P2 image selections functionally correct and is shared-layer storage lower than naive catalog storage? |
 | RQ6 | If retained, does P3 improve recommendation quality enough to remain within its frozen practical-overhead budget? |
 
-| Hypothesis | RQ | Predeclared statement | Confirmatory decision |
-| --- | --- | --- | --- |
-| H1 | RQ1 | P2 has higher JointAccept@1 than P1. | NOT_EXECUTED |
-| H2 | RQ2 | P2 loses less JointAccept@1 under reviewed-equivalent surface-form changes than P1. | NOT_EXECUTED |
-| H3 | RQ3 | Users achieve acceptable selections more often and faster with P2 than B0. | NOT_EXECUTED |
-| H4 | RQ3 | Users report greater task ease and usability with P2 than B0. | NOT_EXECUTED |
-| H5 | RQ4 | P2 Catalog reduces requested-resource cost per successful workload while preserving reliability relative to Static Large. | NOT_EXECUTED |
-| H6 | RQ4 | P2 Dynamic has lower CPU-request and memory-request absolute oracle error than P2 Catalog. | NOT_EXECUTED |
-| H7F | RQ5 | P2 recommended images satisfy every required functional capability probe at immutable digests. | NOT_EXECUTED |
-| H7 | RQ5 | UniqueLayerBytes grows more slowly than naive LogicalImageBytes over the frozen ordered catalog expansion. | NOT_EXECUTED |
-| H8 | RQ6 | Retained P3 improves JointAccept@1 over P2 while remaining within a separately frozen practical-overhead budget. | NOT_EXECUTED |
+| Hypothesis | RQ | Predeclared statement | Decision | Validated result | Reason codes |
+| --- | --- | --- | --- | --- | --- |
+| H1 | RQ1 | P2 has higher JointAccept@1 than P1. | NOT_EXECUTED | N/A | CLAIMS_NOT_PERMITTED; EVIDENCE_NOT_OBSERVED_COMPLETE; NON_CONFIRMATORY_EVIDENCE; NO_ELIGIBLE_CONFIRMATORY_EVIDENCE; REQUIRED_METRIC_OR_TEST_UNAVAILABLE |
+| H2 | RQ2 | P2 loses less JointAccept@1 under reviewed-equivalent surface-form changes than P1. | NOT_EXECUTED | N/A | CLAIMS_NOT_PERMITTED; EVIDENCE_NOT_OBSERVED_COMPLETE; NON_CONFIRMATORY_EVIDENCE; NO_ELIGIBLE_CONFIRMATORY_EVIDENCE; REQUIRED_METRIC_OR_TEST_UNAVAILABLE |
+| H3 | RQ3 | Users achieve acceptable selections more often and faster with P2 than B0. | NOT_EXECUTED | N/A | NO_ELIGIBLE_CONFIRMATORY_EVIDENCE; REQUIRED_METRIC_OR_TEST_UNAVAILABLE |
+| H4 | RQ3 | Users report greater task ease and usability with P2 than B0. | NOT_EXECUTED | N/A | NO_ELIGIBLE_CONFIRMATORY_EVIDENCE; REQUIRED_METRIC_OR_TEST_UNAVAILABLE |
+| H5 | RQ4 | P2 Catalog reduces requested-resource cost per successful workload while preserving reliability relative to Static Large. | NOT_EXECUTED | N/A | CLAIMS_NOT_PERMITTED; DERIVED_ANALYSIS_PACKAGE_REQUIRED; EVIDENCE_NOT_OBSERVED_COMPLETE; EVIDENCE_VALIDATION_FAILED; NON_CONFIRMATORY_EVIDENCE; NO_ELIGIBLE_CONFIRMATORY_EVIDENCE; REQUIRED_METRIC_OR_TEST_UNAVAILABLE |
+| H6 | RQ4 | P2 Dynamic has lower CPU-request and memory-request absolute oracle error than P2 Catalog. | NOT_EXECUTED | N/A | CLAIMS_NOT_PERMITTED; DERIVED_ANALYSIS_PACKAGE_REQUIRED; EVIDENCE_NOT_OBSERVED_COMPLETE; EVIDENCE_VALIDATION_FAILED; NON_CONFIRMATORY_EVIDENCE; NO_ELIGIBLE_CONFIRMATORY_EVIDENCE; REQUIRED_METRIC_OR_TEST_UNAVAILABLE |
+| H7F | RQ5 | P2 recommended images satisfy every required functional capability probe at immutable digests. | NOT_EXECUTED | N/A | CLAIMS_NOT_PERMITTED; EVIDENCE_NOT_OBSERVED_COMPLETE; EVIDENCE_VALIDATION_FAILED; LEGACY_E5_SCHEMA; NON_CONFIRMATORY_EVIDENCE; NO_ELIGIBLE_CONFIRMATORY_EVIDENCE; REQUIRED_METRIC_OR_TEST_UNAVAILABLE |
+| H7 | RQ5 | Shared image layers require less cumulative storage than a naive logical sum as the frozen catalog grows. | SUPPORTED | {"all_prefixes_nonexpanding":true,"catalog_prefix_count":4,"expansion_growth_difference":-3181589642,"expansion_naive_bytes":11494906506,"final_savings_bytes":3181589930,"prefix_order_valid":true,"strictly_slower_catalog_expansion":true} | — |
+| H8 | RQ6 | Retained P3 improves JointAccept@1 over P2 while remaining within a separately frozen practical-overhead budget. | NOT_EXECUTED | N/A | NO_ELIGIBLE_CONFIRMATORY_EVIDENCE; P3_NOT_RETAINED_OR_NOT_PRESENT; REQUIRED_METRIC_OR_TEST_UNAVAILABLE |
 
-Hypotheses and decision predicates are reused from the checksum-bound claim registry. None has sufficient authenticated confirmatory evidence for SUPPORTED or NOT_SUPPORTED. Missing results do not contradict a hypothesis.
+Authenticated decision counts: SUPPORTED=1, NOT_SUPPORTED=0, NOT_EXECUTED=8. A NOT_EXECUTED decision is neither a zero effect nor evidence against the hypothesis.
 
 ## Systems
 
@@ -42,107 +46,146 @@ Hypotheses and decision predicates are reused from the checksum-bound claim regi
 | B0 | Ordinary/manual JupyterHub selection; no recommendation ranking. |
 | P1 | Frozen existing rule-based recommender. |
 | P2 | Structured Intent + hybrid retrieval + deterministic constraints/ranking; main proposed method. |
-| P3 | P2 plus grounded LLM reranking; not retained by the development decision. |
+| P3 | P2 plus grounded LLM reranking; authenticated state: NOT_RETAINED_OR_NOT_PRESENT. |
 
 B0 has no MRR, nDCG or Hit@K outcome. Artifact names containing 'observed-run' do not determine execution status.
 
+## Candidate evidence dispositions
+
+| Candidate | Experiment | Source commit | Disposition | Integrity | Reason |
+| --- | --- | --- | --- | --- | --- |
+| E1_CONFIRMATORY | E1 | 0f73c0a2da34916df1ef6134cc898ce01512acff | NOT_EXECUTED | PASS | The fetched ref is the frozen execution commit and contains no E1 observed evidence package. |
+| E2_CONFIRMATORY | E2 | 0f73c0a2da34916df1ef6134cc898ce01512acff | NOT_EXECUTED | PASS | The fetched ref is the frozen execution commit and contains no E2 observed evidence package. |
+| E3_FINAL_ANALYSIS | E3 | N/A | NOT_EXECUTED | PASS | The final E3 analysis ref and package are absent; no custody branch was opened. |
+| E5_FUNCTIONAL_DEVELOPMENT | E5_FUNCTIONAL | 6df0bcf92559ba43124f11bef57898ccd2c8dcdb | ACCEPTED_OBSERVED_NON_CONFIRMATORY | PASS | Checksum-valid development-split observation; descriptive only and unable to decide global H7F. |
+| E5_STORAGE_OLD | E5_STORAGE | f2a3720529cde0c04a59eaa2d97bf0864def8dd0 | SUPERSEDED | PASS | Checksum/provenance-valid compatible rerun selected; this older package records the freeze-artifact commit and is never global confirmatory evidence. |
+| E5_STORAGE_RERUN | E5_STORAGE | 6ae13486b2979f56e454b63eaa7eacddcbe49927 | ACCEPTED_CONFIRMATORY | PASS | Checksum-valid real-registry observation bound to the global frozen execution SHA; 8/16-image scales remain NOT_EXECUTED. |
+| E4_GLOBAL_FINAL | E4 | ddbf44cc6cb27435b3852d8a99cee489f4b9b43c | NOT_EXECUTED | PASS | The ref contains readiness/source-test changes but no global E4 observed evidence package; active changes were not imported. |
+| E4_ORBSTACK_ORACLE | E4_ORACLE | 687a785544eb99ccda0f77fd24e98ec99c8d473f | INCOMPATIBLE_FREEZE | PASS | Bound to the separate OrbStack frozen execution SHA, not the authoritative global Protocol-v5 execution SHA. |
+| E4_ORBSTACK_EFFICIENCY | E4 | 3f332254db477105ce669898812f2c191609239a | INCOMPATIBLE_FREEZE | PASS | Real bounded observations exist, but the lineage uses the separate OrbStack freeze and the analysis remains OBSERVED_INCOMPLETE for global claims. |
+| E4_PROVENANCE_AUDIT | E4_PROVENANCE | b4566d7996e41b76147bc39e38534b7804bda619 | INCOMPATIBLE_FREEZE | PASS | The provenance repair is reproducible but remains bound to the separate OrbStack freeze and cannot certify a global claim. |
+
+The older E5 storage package is SUPERSEDED only because the compatible rerun passed checksum and provenance validation. If that rerun fails, the rule resolves the older package to INCOMPATIBLE_FREEZE; it is never selected as global confirmatory evidence.
+
 ## Experiment matrix and sample boundaries
 
-| Experiment | Comparison | Evidence status |
-| --- | --- | --- |
-| E1 | P1 vs P2 | Development raw outputs available; component/statistical analysis NOT EXECUTED |
-| E2 | P1 vs P2 natural-language variants | Formal robustness analysis NOT EXECUTED |
-| E3 | B0 vs P2 human crossover | NOT EXECUTED; zero participant sessions |
-| E4 | Static Large, P1 Catalog, P2 Catalog, P2 Dynamic | NOT EXECUTED; planning/readiness packages only |
-| E5 functional | Image labels, catalog capabilities, container probes | Development observations; unresolved manifest provenance |
-| E5 storage | Shared-layer reuse and catalog expansion | NOT EXECUTED |
-| E6 | Optional P2 vs P3 confirmation | NOT EXECUTED; P3 not retained |
+| Experiment | Evidence requirement | Derived state | Candidates | Eligible | Reason codes |
+| --- | --- | --- | --- | --- | --- |
+| E1 | offline_recommendation | NOT_EXECUTED | 1 | 0 | CLAIMS_NOT_PERMITTED; EVIDENCE_NOT_OBSERVED_COMPLETE; NON_CONFIRMATORY_EVIDENCE; NO_ELIGIBLE_CONFIRMATORY_EVIDENCE |
+| E2 | natural_language_robustness | NOT_EXECUTED | 1 | 0 | CLAIMS_NOT_PERMITTED; EVIDENCE_NOT_OBSERVED_COMPLETE; NON_CONFIRMATORY_EVIDENCE; NO_ELIGIBLE_CONFIRMATORY_EVIDENCE |
+| E3 | user_study | NOT_EXECUTED | 0 | 0 | NO_ELIGIBLE_CONFIRMATORY_EVIDENCE |
+| E4 | resource_efficiency | NOT_EXECUTED | 5 | 0 | CLAIMS_NOT_PERMITTED; DERIVED_ANALYSIS_PACKAGE_REQUIRED; EVIDENCE_NOT_OBSERVED_COMPLETE; EVIDENCE_VALIDATION_FAILED; NON_CONFIRMATORY_EVIDENCE; NO_ELIGIBLE_CONFIRMATORY_EVIDENCE |
+| E5_FUNCTIONAL | image_functional | DEVELOPMENT_ONLY | 10 | 0 | CLAIMS_NOT_PERMITTED; EVIDENCE_NOT_OBSERVED_COMPLETE; EVIDENCE_VALIDATION_FAILED; LEGACY_E5_SCHEMA; NON_CONFIRMATORY_EVIDENCE; NO_ELIGIBLE_CONFIRMATORY_EVIDENCE |
+| E5_STORAGE | image_storage | OBSERVED | 2 | 1 | — |
+| E6 | p2_p3 | NOT_EXECUTED | 0 | 0 | NO_ELIGIBLE_CONFIRMATORY_EVIDENCE; P3_NOT_RETAINED_OR_NOT_PRESENT |
 
 E1 raw execution: **36 records**, **18 cases**, **10 workload families**; P1: 18 records, P2: 18 records. These are development observations, not confirmatory accuracy samples. [results_v5/protocol-v5.0.0/E1/20260825T-observed-p1-p2-development-v1/raw/recommendations.jsonl](../../results_v5/protocol-v5.0.0/E1/20260825T-observed-p1-p2-development-v1/raw/recommendations.jsonl); SHA-256 `25868752054231fa271e540210aad0845113ba3974722376029b18184959daf8`
 
 E4 **design only**: 16 workload families × 4 conditions × 10 repetition blocks = 640 planned trials. Zero observed hardware trials. [results_v5/protocol-v5.0.0/E4/e4-resource-efficiency-plan-20260905T082000Z/plan.json](../../results_v5/protocol-v5.0.0/E4/e4-resource-efficiency-plan-20260905T082000Z/plan.json) `/trials`; SHA-256 `5260288122847397f2ec7d1db80f20044be2a7fa39e8dab7a885847e38d6db81`
 
-E3 target enrollment is 36 participants in the readiness design; observed enrollment and measured outcomes are zero. Assignments and synthetic smoke actions are not participant observations.
-
 ## Methods and statistical boundaries
 
-E1 preserves paired outputs from frozen P1/P2 on the visible development split. The raw validator recomputes matrix coverage, checksums and case bindings. The current complete component/statistical pipeline requires frozen family gold or compiled split v2; the visible v1 bundle is insufficient. The audit does not fill its missing labels.
+Only eligible checksum/provenance-valid confirmatory evidence evaluated against the frozen predicate can produce SUPPORTED or NOT_SUPPORTED. Nonconfirmatory, historical, incompatible, incomplete, or unverified evidence may descriptively support or contradict a criterion but cannot change the frozen global decision.
 
-E5 regeneration rejoins original recommendations, visible gold, catalog metadata and preserved immutable-image probe outcomes. It independently recomputes functional evaluation rows and aggregate metrics. Gold-label agreement, catalog capability declarations and in-container functional success are different constructs. A passing import probe is not proof of GPU hardware, workload success, correct resource allocation, image storage savings or overall recommendation quality.
+The workload family is the semantic unit for offline and resource inference. Variants and repeated executions describe within-family robustness or stability, not additional independent accuracy samples. E3 uses its frozen participant/task pairing contract. B0 never produces ranking metrics.
 
-The workload family is the semantic unit for offline/resource inference. Variants and repeated calls describe within-family variation. Human study analysis follows its participant/task pairing and crossover contract. Image probes share digests across recommendations and are not independent human or semantic samples. The two current E5 runs are reported separately and never pooled.
+Development, historical, synthetic, dry-run, incomplete, and invalid packages may remain visible for traceability, but they cannot be promoted to confirmatory claim evidence.
 
 ## Exact available development observations
 
 | Run | System | Image-label matches | Functional passes / eligible cases | Cases with undefined required probe |
 | --- | --- | --- | --- | --- |
-| e5-image-validation-20260905T040730Z | P1 | 13/18 | 16/16 | 2 |
-| e5-image-validation-20260905T040730Z | P2 | 13/18 | 17/17 | 1 |
-| e5-image-validation-20260905T071910Z | P1 | 13/18 | 16/16 | 2 |
-| e5-image-validation-20260905T071910Z | P2 | 13/18 | 17/17 | 1 |
+| e5-image-validation-20260912T124154Z | P1 | 13/18 | 17/17 | 1 |
+| e5-image-validation-20260912T124154Z | P2 | 13/18 | 18/18 | 0 |
 
-`e5-image-validation-20260905T040730Z`: 17/17 configured probes passed, 0 failed, 0 unavailable. These probes are reused when evaluating recommendations. [results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T040730Z/derived/functional_metrics.json](../../results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T040730Z/derived/functional_metrics.json) `/probe_summary`; SHA-256 `ca2ac88bf9d89e94c7df8b472e284652bacd662e612607730371e7c7921dafea`
+`e5-image-validation-20260912T124154Z`: 16/17 configured probes passed, 0 failed, 1 unavailable. These probes are reused when evaluating recommendations. [results_v5/protocol-v5.0.0/E5/e5-image-validation-20260912T124154Z/derived/functional_metrics.json](../../results_v5/protocol-v5.0.0/E5/e5-image-validation-20260912T124154Z/derived/functional_metrics.json) `/probe_summary`; SHA-256 `601bd6dc1a7c91d64f9e995fe4856d814bc4f64473db83da8c270c9bceb387c3`
 
-P1: conservative functional success 16/18 (recorded rate 0.8889); catalog-underclaim cases 0; label-fail/functional-pass cases 3. [results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T040730Z/derived/functional_metrics.json](../../results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T040730Z/derived/functional_metrics.json) `/systems/P1`; SHA-256 `ca2ac88bf9d89e94c7df8b472e284652bacd662e612607730371e7c7921dafea`
+P1: conservative functional success 17/18 (recorded rate 0.9444); catalog-underclaim cases 0; label-fail/functional-pass cases 4. [results_v5/protocol-v5.0.0/E5/e5-image-validation-20260912T124154Z/derived/functional_metrics.json](../../results_v5/protocol-v5.0.0/E5/e5-image-validation-20260912T124154Z/derived/functional_metrics.json) `/systems/P1`; SHA-256 `601bd6dc1a7c91d64f9e995fe4856d814bc4f64473db83da8c270c9bceb387c3`
 
-P2: conservative functional success 17/18 (recorded rate 0.9444); catalog-underclaim cases 1; label-fail/functional-pass cases 3. [results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T040730Z/derived/functional_metrics.json](../../results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T040730Z/derived/functional_metrics.json) `/systems/P2`; SHA-256 `ca2ac88bf9d89e94c7df8b472e284652bacd662e612607730371e7c7921dafea`
+P2: conservative functional success 18/18 (recorded rate 1.0); catalog-underclaim cases 1; label-fail/functional-pass cases 4. [results_v5/protocol-v5.0.0/E5/e5-image-validation-20260912T124154Z/derived/functional_metrics.json](../../results_v5/protocol-v5.0.0/E5/e5-image-validation-20260912T124154Z/derived/functional_metrics.json) `/systems/P2`; SHA-256 `601bd6dc1a7c91d64f9e995fe4856d814bc4f64473db83da8c270c9bceb387c3`
 
-`e5-image-validation-20260905T071910Z`: 17/17 configured probes passed, 0 failed, 0 unavailable. These probes are reused when evaluating recommendations. [results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T071910Z/derived/functional_metrics.json](../../results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T071910Z/derived/functional_metrics.json) `/probe_summary`; SHA-256 `ca2ac88bf9d89e94c7df8b472e284652bacd662e612607730371e7c7921dafea`
+These development observations are descriptive only. Their presence cannot change the authenticated confirmatory decisions above.
 
-P1: conservative functional success 16/18 (recorded rate 0.8889); catalog-underclaim cases 0; label-fail/functional-pass cases 3. [results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T071910Z/derived/functional_metrics.json](../../results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T071910Z/derived/functional_metrics.json) `/systems/P1`; SHA-256 `ca2ac88bf9d89e94c7df8b472e284652bacd662e612607730371e7c7921dafea`
+### Evidence-driven claim conclusions
 
-P2: conservative functional success 17/18 (recorded rate 0.9444); catalog-underclaim cases 1; label-fail/functional-pass cases 3. [results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T071910Z/derived/functional_metrics.json](../../results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T071910Z/derived/functional_metrics.json) `/systems/P2`; SHA-256 `ca2ac88bf9d89e94c7df8b472e284652bacd662e612607730371e7c7921dafea`
+**H1 — NOT_EXECUTED**. Validated metrics: `N/A`. Confidence intervals: `N/A`. Counts: `N/A`. Effect sizes: `N/A`. Reason codes: `CLAIMS_NOT_PERMITTED; EVIDENCE_NOT_OBSERVED_COMPLETE; NON_CONFIRMATORY_EVIDENCE; NO_ELIGIBLE_CONFIRMATORY_EVIDENCE; REQUIRED_METRIC_OR_TEST_UNAVAILABLE`. [results_v5/protocol-v5.0.0/analysis/research-analysis-20260905T-final/derived/evaluated-claim-registry.json](../../results_v5/protocol-v5.0.0/analysis/research-analysis-20260905T-final/derived/evaluated-claim-registry.json) `/claims/0`; SHA-256 `d98c4453da7583a9c6c695ec13cfac940b249a318023c72bf2e8c244adee6cad`
 
-The image-label match counts do not show an advantage for P2 in these runs. This is a bounded descriptive observation, not a family-level hypothesis test. The extractor provenance mismatch blocks claims that the complete pipeline matched a final freeze.
+**H2 — NOT_EXECUTED**. Validated metrics: `N/A`. Confidence intervals: `N/A`. Counts: `N/A`. Effect sizes: `N/A`. Reason codes: `CLAIMS_NOT_PERMITTED; EVIDENCE_NOT_OBSERVED_COMPLETE; NON_CONFIRMATORY_EVIDENCE; NO_ELIGIBLE_CONFIRMATORY_EVIDENCE; REQUIRED_METRIC_OR_TEST_UNAVAILABLE`. [results_v5/protocol-v5.0.0/analysis/research-analysis-20260905T-final/derived/evaluated-claim-registry.json](../../results_v5/protocol-v5.0.0/analysis/research-analysis-20260905T-final/derived/evaluated-claim-registry.json) `/claims/1`; SHA-256 `d98c4453da7583a9c6c695ec13cfac940b249a318023c72bf2e8c244adee6cad`
 
-### Confidence intervals and effect sizes
+**H3 — NOT_EXECUTED**. Validated metrics: `N/A`. Confidence intervals: `N/A`. Counts: `N/A`. Effect sizes: `N/A`. Reason codes: `NO_ELIGIBLE_CONFIRMATORY_EVIDENCE; REQUIRED_METRIC_OR_TEST_UNAVAILABLE`. [results_v5/protocol-v5.0.0/analysis/research-analysis-20260905T-final/derived/evaluated-claim-registry.json](../../results_v5/protocol-v5.0.0/analysis/research-analysis-20260905T-final/derived/evaluated-claim-registry.json) `/claims/2`; SHA-256 `d98c4453da7583a9c6c695ec13cfac940b249a318023c72bf2e8c244adee6cad`
 
-Protocol-v5 inferential confidence intervals, p-values and standardized effect sizes: **N/A — NOT EXECUTED**. Complete offline gold is unavailable; human, resource and storage experiments were not executed. No interval is inferred from repetitions or recycled probes.
+**H4 — NOT_EXECUTED**. Validated metrics: `N/A`. Confidence intervals: `N/A`. Counts: `N/A`. Effect sizes: `N/A`. Reason codes: `NO_ELIGIBLE_CONFIRMATORY_EVIDENCE; REQUIRED_METRIC_OR_TEST_UNAVAILABLE`. [results_v5/protocol-v5.0.0/analysis/research-analysis-20260905T-final/derived/evaluated-claim-registry.json](../../results_v5/protocol-v5.0.0/analysis/research-analysis-20260905T-final/derived/evaluated-claim-registry.json) `/claims/3`; SHA-256 `d98c4453da7583a9c6c695ec13cfac940b249a318023c72bf2e8c244adee6cad`
 
-### Failure analysis and P3 decision
+**H5 — NOT_EXECUTED**. Validated metrics: `N/A`. Confidence intervals: `N/A`. Counts: `N/A`. Effect sizes: `N/A`. Reason codes: `CLAIMS_NOT_PERMITTED; DERIVED_ANALYSIS_PACKAGE_REQUIRED; EVIDENCE_NOT_OBSERVED_COMPLETE; EVIDENCE_VALIDATION_FAILED; NON_CONFIRMATORY_EVIDENCE; NO_ELIGIBLE_CONFIRMATORY_EVIDENCE; REQUIRED_METRIC_OR_TEST_UNAVAILABLE`. [results_v5/protocol-v5.0.0/analysis/research-analysis-20260905T-final/derived/evaluated-claim-registry.json](../../results_v5/protocol-v5.0.0/analysis/research-analysis-20260905T-final/derived/evaluated-claim-registry.json) `/claims/4`; SHA-256 `d98c4453da7583a9c6c695ec13cfac940b249a318023c72bf2e8c244adee6cad`
 
-The E3 participant-flow CSV no longer matches its recorded checksum. In-memory LF→CRLF reconstruction matches the historical digest, consistent with the repository CSV newline policy. Original bytes and checksums are preserved; regeneration creates a separate corrected artifact. Older E4 contracts fail current validators and remain historical development packages. An older E5 OBSERVED package lacks required retrieval provenance. Its v1.0 probe records predate execution_status and must be interpreted with the legacy error-category adapter; missing fields do not mean missing executions. These are audit limitations and failures, not inferred performance effects.
+**H6 — NOT_EXECUTED**. Validated metrics: `N/A`. Confidence intervals: `N/A`. Counts: `N/A`. Effect sizes: `N/A`. Reason codes: `CLAIMS_NOT_PERMITTED; DERIVED_ANALYSIS_PACKAGE_REQUIRED; EVIDENCE_NOT_OBSERVED_COMPLETE; EVIDENCE_VALIDATION_FAILED; NON_CONFIRMATORY_EVIDENCE; NO_ELIGIBLE_CONFIRMATORY_EVIDENCE; REQUIRED_METRIC_OR_TEST_UNAVAILABLE`. [results_v5/protocol-v5.0.0/analysis/research-analysis-20260905T-final/derived/evaluated-claim-registry.json](../../results_v5/protocol-v5.0.0/analysis/research-analysis-20260905T-final/derived/evaluated-claim-registry.json) `/claims/5`; SHA-256 `d98c4453da7583a9c6c695ec13cfac940b249a318023c72bf2e8c244adee6cad`
 
-The preserved P3 development/formative decision excludes P3 from the main contribution: its historical evaluation reported no wrong-to-correct transitions, one regression, and substantial reranking overhead. This audit does not relabel that earlier evaluation as Protocol-v5 confirmation. [docs/evaluation/P3_INCREMENTAL_EVALUATION_V1.md](P3_INCREMENTAL_EVALUATION_V1.md); SHA-256 `3ed59ae76bd79e5e86cb08f63f86d7a49c8c5632f578b74f8ee51a1f8c4b8d9f`
+**H7F — NOT_EXECUTED**. Validated metrics: `N/A`. Confidence intervals: `N/A`. Counts: `N/A`. Effect sizes: `N/A`. Reason codes: `CLAIMS_NOT_PERMITTED; EVIDENCE_NOT_OBSERVED_COMPLETE; EVIDENCE_VALIDATION_FAILED; LEGACY_E5_SCHEMA; NON_CONFIRMATORY_EVIDENCE; NO_ELIGIBLE_CONFIRMATORY_EVIDENCE; REQUIRED_METRIC_OR_TEST_UNAVAILABLE`. [results_v5/protocol-v5.0.0/analysis/research-analysis-20260905T-final/derived/evaluated-claim-registry.json](../../results_v5/protocol-v5.0.0/analysis/research-analysis-20260905T-final/derived/evaluated-claim-registry.json) `/claims/6`; SHA-256 `d98c4453da7583a9c6c695ec13cfac940b249a318023c72bf2e8c244adee6cad`
 
-## Human, resource and image-storage outcomes
+**H7 — SUPPORTED**. Validated metrics: `{"all_prefixes_nonexpanding":true,"catalog_prefix_count":4,"expansion_growth_difference":-3181589642,"expansion_naive_bytes":11494906506,"final_savings_bytes":3181589930,"prefix_order_valid":true,"strictly_slower_catalog_expansion":true}`. Confidence intervals: `N/A`. Counts: `{"catalog_prefix_count":4}`. Effect sizes: `N/A`. Reason codes: `none`. [results_v5/protocol-v5.0.0/E5/e5-storage-scalability-20260914T012024Z/derived/storage_metrics.json](../../results_v5/protocol-v5.0.0/E5/e5-storage-scalability-20260914T012024Z/derived/storage_metrics.json) `/prefixes`; SHA-256 `7d5fb90720ad8aae992320bd44fa008bd9a96145ec25fa71ad54dc51970f6a61`
 
-Human study: **NOT EXECUTED**. Satisfaction, usability, decision-time saving and participant selection outcomes are unavailable. Resource study: **NOT EXECUTED**. CPU/memory savings, capacity, OOM and runtime effects are unavailable. Image storage study: **NOT EXECUTED**. No measured logical bytes, unique layer bytes, node storage use or expansion savings exist. The functional image manifests record digests, but host metadata alone does not establish container platform identity.
+**H8 — NOT_EXECUTED**. Validated metrics: `N/A`. Confidence intervals: `N/A`. Counts: `N/A`. Effect sizes: `N/A`. Reason codes: `NO_ELIGIBLE_CONFIRMATORY_EVIDENCE; P3_NOT_RETAINED_OR_NOT_PRESENT; REQUIRED_METRIC_OR_TEST_UNAVAILABLE`. [results_v5/protocol-v5.0.0/analysis/research-analysis-20260905T-final/derived/evaluated-claim-registry.json](../../results_v5/protocol-v5.0.0/analysis/research-analysis-20260905T-final/derived/evaluated-claim-registry.json) `/claims/8`; SHA-256 `d98c4453da7583a9c6c695ec13cfac940b249a318023c72bf2e8c244adee6cad`
+
+### Historical E3 newline compatibility
+
+The preserved E3 participant-flow CSV and its historical manifest identity were not rewritten. A versioned package records the current regenerated table under the LF policy plus both preserved identities: [results_v5/protocol-v5.0.0/compatibility/E3/b0-p2-user-study-readiness-regeneration-v2/manifest.json](../../results_v5/protocol-v5.0.0/compatibility/E3/b0-p2-user-study-readiness-regeneration-v2/manifest.json); SHA-256 `aa5607bb7099f55fe3b0401dea09256e219864dadbc28dcea8d52eaa21aeb5bd`.
+
+### Synthetic-origin scan
+
+Collector-origin scan: **PASS** across 17 discovered candidates; synthetic candidates=0, promoted synthetic candidates=0, unauthenticated exposed candidates=0. The scan uses collector provenance and claim eligibility, not filenames.
+
+### Isolation parser diagnostic
+
+Prior failure classification: **REMAINING_IMPLEMENTATION_DEFECT**; repair status: **REPAIRED**. Artifact `tests/test_evaluation_v5_gold_dataset.py` at observed SHA-256 `3e978556fa831877c959ee1dc3824315f9933d2f8d12d993cc78019842acc918` was a `synthetic_adversarial_test_source` / `python_source`. Parser `evaluation_v5.isolation_audit._contains_embedded_confirmatory_bundle` encountered schema signature `protocol-v5-gold-family-v1.0.0` and produced `SOURCE_LITERAL_FRAGMENT_FALSE_POSITIVE`. Historical=false, immutable-preserved-evidence=false, confirmatory-eligible=false, thesis-claim-eligible=false. [benchmarks_v5/protocol-v5-isolation-diagnostic-v1.json](../../benchmarks_v5/protocol-v5-isolation-diagnostic-v1.json); SHA-256 `ed271f8dfc5ea13f01093f62d692f93e6e41000fc82ee043e1455c96875d7917`
+
+### P3 state
+
+Authenticated P3 state: **NOT_RETAINED_OR_NOT_PRESENT**. Historical P3 material remains formative unless the selected claim package contains a validated retained-gate confirmatory decision. [docs/evaluation/P3_INCREMENTAL_EVALUATION_V1.md](P3_INCREMENTAL_EVALUATION_V1.md); SHA-256 `3ed59ae76bd79e5e86cb08f63f86d7a49c8c5632f578b74f8ee51a1f8c4b8d9f`
 
 ## Defense-summary table
 
 | Professor criterion | Experiment | Metric | Observed result | Evidence reference |
 | --- | --- | --- | --- | --- |
-| satisfaction | E3 | SEQ ease; SUS usability | NOT EXECUTED | [results_v5/protocol-v5.0.0/E3/b0-p2-user-study-readiness/report/status.json](../../results_v5/protocol-v5.0.0/E3/b0-p2-user-study-readiness/report/status.json) `/execution_status`; SHA-256 `de94e53ae14942647411e1e9033dbc9d1ca0b6880e38c7cc5c33e39dc2fb08e2` |
-| time saving | E3 | Paired decision time | NOT EXECUTED | [results_v5/protocol-v5.0.0/E3/b0-p2-user-study-readiness/report/status.json](../../results_v5/protocol-v5.0.0/E3/b0-p2-user-study-readiness/report/status.json) `/execution_status`; SHA-256 `de94e53ae14942647411e1e9033dbc9d1ca0b6880e38c7cc5c33e39dc2fb08e2` |
-| correct image | E5 functional | Gold image match; required functional probes | e5-image-validation-20260905T040730Z: P1 13/18 image-label matches; e5-image-validation-20260905T040730Z: P2 13/18 image-label matches; e5-image-validation-20260905T071910Z: P1 13/18 image-label matches; e5-image-validation-20260905T071910Z: P2 13/18 image-label matches; development only; provenance limitations apply | [results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T040730Z/derived/functional_metrics.json](../../results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T040730Z/derived/functional_metrics.json) `/systems`; SHA-256 `ca2ac88bf9d89e94c7df8b472e284652bacd662e612607730371e7c7921dafea`; [results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T071910Z/derived/functional_metrics.json](../../results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T071910Z/derived/functional_metrics.json) `/systems`; SHA-256 `ca2ac88bf9d89e94c7df8b472e284652bacd662e612607730371e7c7921dafea` |
-| image storage reuse | E5 storage | LogicalImageBytes; UniqueLayerBytes; marginal reuse | NOT EXECUTED | [benchmarks_v5/protocol-v5-final-audit-inputs-v1.json](../../benchmarks_v5/protocol-v5-final-audit-inputs-v1.json); SHA-256 `8898df1187694e6a3e185d7ba23b253c23377ef2f05aba2f69378f3c1bf70f62` |
-| additional/fine-grained profiles | E4 | Dynamic CPU/memory oracle error; allocation coverage | NOT EXECUTED | [results_v5/protocol-v5.0.0/E4/e4-resource-efficiency-plan-20260905T082000Z/plan.json](../../results_v5/protocol-v5.0.0/E4/e4-resource-efficiency-plan-20260905T082000Z/plan.json) `/primary_trial_count`; SHA-256 `5260288122847397f2ec7d1db80f20044be2a7fa39e8dab7a885847e38d6db81` |
-| resource saving | E4 | CPU/memory request cost per successful workload; reliability | NOT EXECUTED | [results_v5/protocol-v5.0.0/E4/e4-resource-efficiency-plan-20260905T082000Z/plan.json](../../results_v5/protocol-v5.0.0/E4/e4-resource-efficiency-plan-20260905T082000Z/plan.json) `/primary_trial_count`; SHA-256 `5260288122847397f2ec7d1db80f20044be2a7fa39e8dab7a885847e38d6db81` |
-| flexible natural-language interaction | E2 | Family-level robustness across equivalent variants | NOT EXECUTED | [results_v5/protocol-v5.0.0/E1/20260825T-observed-p1-p2-development-v1/derived/statistical_analysis/analysis-manifest.json](../../results_v5/protocol-v5.0.0/E1/20260825T-observed-p1-p2-development-v1/derived/statistical_analysis/analysis-manifest.json) `/status`; SHA-256 `772422aa46e8ae19ffb77cc1c0f395fca4e26919a21e78417603dd35c6c81e93` |
+| satisfaction | E3 | SEQ ease; SUS usability | NOT_EXECUTED | [results_v5/protocol-v5.0.0/analysis/research-analysis-20260905T-final/derived/evaluated-claim-registry.json](../../results_v5/protocol-v5.0.0/analysis/research-analysis-20260905T-final/derived/evaluated-claim-registry.json) `/claims/3`; SHA-256 `d98c4453da7583a9c6c695ec13cfac940b249a318023c72bf2e8c244adee6cad` |
+| time saving | E3 | Paired decision time and selection effectiveness | NOT_EXECUTED | [results_v5/protocol-v5.0.0/analysis/research-analysis-20260905T-final/derived/evaluated-claim-registry.json](../../results_v5/protocol-v5.0.0/analysis/research-analysis-20260905T-final/derived/evaluated-claim-registry.json) `/claims/2`; SHA-256 `d98c4453da7583a9c6c695ec13cfac940b249a318023c72bf2e8c244adee6cad` |
+| correct image | E5 functional | Gold image match; required functional probes | NOT_EXECUTED | [results_v5/protocol-v5.0.0/analysis/research-analysis-20260905T-final/derived/evaluated-claim-registry.json](../../results_v5/protocol-v5.0.0/analysis/research-analysis-20260905T-final/derived/evaluated-claim-registry.json) `/claims/6`; SHA-256 `d98c4453da7583a9c6c695ec13cfac940b249a318023c72bf2e8c244adee6cad` |
+| image storage reuse | E5 storage | LogicalImageBytes; UniqueLayerBytes; marginal reuse; 4 observed prefixes from 1 bounded run | SUPPORTED; {"all_prefixes_nonexpanding":true,"catalog_prefix_count":4,"expansion_growth_difference":-3181589642,"expansion_naive_bytes":11494906506,"final_savings_bytes":3181589930,"prefix_order_valid":true,"strictly_slower_catalog_expansion":true} | [results_v5/protocol-v5.0.0/E5/e5-storage-scalability-20260914T012024Z/derived/storage_metrics.json](../../results_v5/protocol-v5.0.0/E5/e5-storage-scalability-20260914T012024Z/derived/storage_metrics.json) `/prefixes`; SHA-256 `7d5fb90720ad8aae992320bd44fa008bd9a96145ec25fa71ad54dc51970f6a61` |
+| additional/fine-grained profiles | E4 | Dynamic CPU/memory oracle error; allocation coverage; 16 independent families; 4 conditions × 10 repetitions = 640 trial rows | NOT_EXECUTED | [results_v5/protocol-v5.0.0/analysis/research-analysis-20260905T-final/derived/evaluated-claim-registry.json](../../results_v5/protocol-v5.0.0/analysis/research-analysis-20260905T-final/derived/evaluated-claim-registry.json) `/claims/5`; SHA-256 `d98c4453da7583a9c6c695ec13cfac940b249a318023c72bf2e8c244adee6cad` |
+| resource saving | E4 | CPU/memory request cost per successful workload; reliability; 16 independent families; 4 conditions × 10 repetitions = 640 trial rows | NOT_EXECUTED | [results_v5/protocol-v5.0.0/analysis/research-analysis-20260905T-final/derived/evaluated-claim-registry.json](../../results_v5/protocol-v5.0.0/analysis/research-analysis-20260905T-final/derived/evaluated-claim-registry.json) `/claims/4`; SHA-256 `d98c4453da7583a9c6c695ec13cfac940b249a318023c72bf2e8c244adee6cad` |
+| flexible natural-language interaction | E2 | Family-level robustness across equivalent variants | NOT_EXECUTED | [results_v5/protocol-v5.0.0/analysis/research-analysis-20260905T-final/derived/evaluated-claim-registry.json](../../results_v5/protocol-v5.0.0/analysis/research-analysis-20260905T-final/derived/evaluated-claim-registry.json) `/claims/1`; SHA-256 `d98c4453da7583a9c6c695ec13cfac940b249a318023c72bf2e8c244adee6cad` |
 
-All non-E5 rows point to the exact source packages in the inventory below; the correct-image rows point to the checksum-and-locator references above. Planned profile flexibility is design evidence only.
+## Detailed criterion audit
+
+| Criterion | Experiment | Hypothesis | Metric definition | Independent N | Family N | Conditions | Repetitions / family-condition | Total trial / observation rows | Observed scale points / prefixes | Independent runs | Estimate / CI / effect | Global decision | Evidence class | Execution status | Artifact / checksum | Source commit | Frozen SHA | Limitation |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| satisfaction | E3 | H4 | SEQ ease; SUS usability | N/A | N/A | N/A | N/A | N/A | N/A | N/A | N/A | NOT_EXECUTED | NOT_EXECUTED | NOT_EXECUTED | N/A | N/A | N/A | The final E3 analysis ref and package are absent; no custody branch was opened. |
+| time saving | E3 | H3 | Paired decision time and selection effectiveness | N/A | N/A | N/A | N/A | N/A | N/A | N/A | N/A | NOT_EXECUTED | NOT_EXECUTED | NOT_EXECUTED | N/A | N/A | N/A | The final E3 analysis ref and package are absent; no custody branch was opened. |
+| correct image | E5 | H7F | Conservative functional success and operational adequacy | 18 | 18 | N/A | N/A | 18 | N/A | N/A | N/A | NOT_EXECUTED | ACCEPTED_OBSERVED_NON_CONFIRMATORY | OBSERVED | results_v5/protocol-v5.0.0/E5/e5-image-validation-20260912T124154Z; SHA-256 fd1b103bfb000cdf4583e43d357e633acd508410fcca746f143af73bd0fb27cb | 6df0bcf92559ba43124f11bef57898ccd2c8dcdb | 0f73c0a2da34916df1ef6134cc898ce01512acff | Checksum-valid development-split observation; descriptive only and unable to decide global H7F. |
+| image storage reuse | E5 | H7 | Ordered-prefix unique-layer versus logical-byte growth | N/A | N/A | N/A | N/A | 4 | 4 | 1 | {"all_prefixes_nonexpanding":true,"catalog_prefix_count":4,"expansion_growth_difference":-3181589642,"expansion_naive_bytes":11494906506,"final_savings_bytes":3181589930,"prefix_order_valid":true,"strictly_slower_catalog_expansion":true} | SUPPORTED | ACCEPTED_CONFIRMATORY | OBSERVED | results_v5/protocol-v5.0.0/E5/e5-storage-scalability-20260914T012024Z; SHA-256 b2584b57ccc90448e755f61907b34a49c07c47b573de69a9b5e0d0617ca9949c | 6ae13486b2979f56e454b63eaa7eacddcbe49927 | 0f73c0a2da34916df1ef6134cc898ce01512acff | Checksum-valid real-registry observation bound to the global frozen execution SHA; 8/16-image scales remain NOT_EXECUTED. |
+| additional/fine-grained profiles | E4 | H6 | Dynamic CPU/memory oracle error and allocation coverage | 16 | 16 | 4 | 10 | 640 | N/A | N/A | N/A | NOT_EXECUTED | INCOMPATIBLE_FREEZE | OBSERVED_INCOMPLETE | results_v5/protocol-v5.0.0/E4/e4-resource-efficiency-orbstack-observed-final-v1; SHA-256 e0574c34885edcb8a5ba24127cce17b9e4f6dba317f756480f360fff5e4a1974 | 3f332254db477105ce669898812f2c191609239a | 3d9a777390ae50cac266ceee0a58c718a34d6725 | Real bounded observations exist, but the lineage uses the separate OrbStack freeze and the analysis remains OBSERVED_INCOMPLETE for global claims. |
+| resource saving | E4 | H5 | CPU/memory request cost per successful workload and reliability | 16 | 16 | 4 | 10 | 640 | N/A | N/A | N/A | NOT_EXECUTED | INCOMPATIBLE_FREEZE | OBSERVED_INCOMPLETE | results_v5/protocol-v5.0.0/E4/e4-resource-efficiency-orbstack-observed-final-v1; SHA-256 e0574c34885edcb8a5ba24127cce17b9e4f6dba317f756480f360fff5e4a1974 | 3f332254db477105ce669898812f2c191609239a | 3d9a777390ae50cac266ceee0a58c718a34d6725 | Real bounded observations exist, but the lineage uses the separate OrbStack freeze and the analysis remains OBSERVED_INCOMPLETE for global claims. |
+| flexible natural-language interaction | E2 | H2 | Family-level robustness across equivalent variants | N/A | 0 | N/A | N/A | N/A | N/A | N/A | N/A | NOT_EXECUTED | NOT_EXECUTED | NOT_EXECUTED | N/A | 0f73c0a2da34916df1ef6134cc898ce01512acff | 0f73c0a2da34916df1ef6134cc898ce01512acff | The fetched ref is the frozen execution commit and contains no E2 observed evidence package. |
 
 ## Seventeen audit checks
 
 | ID | Requirement | Verdict | Evidence boundary |
 | --- | --- | --- | --- |
-| 1 | Authoritative final experiment freeze | UNVERIFIED | No authoritative final freeze exists. frozen-configuration.json is a design snapshot, not a FROZEN envelope. |
+| 1 | Authoritative final experiment freeze | PASS | The inventory-selected global production freeze validates; separately governed freezes remain explicitly incompatible. |
 | 2 | Confirmatory dataset checksum and split manifest | UNVERIFIED | Confirmatory split and safe custodian checksum attestation are unavailable; no sealed file was opened. |
-| 3 | Development/confirmatory isolation | UNVERIFIED | Repository/archive isolation scan completed. External custody and semantic independence cannot be proven without custodian evidence. |
+| 3 | Development/confirmatory isolation | UNVERIFIED | Repository/archive isolation scan completed. The prior source-literal parser false positive is classified and repaired; external custody remains unavailable and is not inferred from this scan. |
 | 4 | Frozen P1/P2/P3 implementation identities | UNVERIFIED | Recommender bytes checked against audit-start inventory. No final authority exists to certify confirmatory revisions; audit revision is separate from collection revision. |
-| 5 | Catalog, corpus, index, prompt and configuration provenance | FAIL | Recorded metadata compared with the design snapshot without rebuilding indexes or invoking recommenders. Snapshot agreement alone cannot certify confirmation. |
-| 6 | Raw evidence preservation and package integrity | FAIL | Original seals and reviewed input bytes checked; failed packages remain preserved. |
+| 5 | Catalog, corpus, index, prompt and configuration provenance | FAIL | Recorded catalog/corpus/index/prompt/configuration provenance was compared with the design snapshot, but snapshot agreement alone does not independently certify confirmatory provenance or authority. |
+| 6 | Raw evidence preservation and package integrity | FAIL | Historical failed package and integrity findings are intentionally preserved and are not rewritten to produce a green audit; original seals, reviewed input bytes, candidate package digests, grouped artifact digests, and conditional supersession were checked. |
 | 7 | Raw-to-derived regeneration | UNVERIFIED | Available current-schema raw-to-derived outputs regenerated; unavailable and legacy analyses remain explicitly bounded. |
-| 8 | Derived-to-figures/tables regeneration | FAIL | Current derived tables/figures regenerated; differences from preserved historical artifacts are retained. |
+| 8 | Derived-to-figures/tables regeneration | PASS | Current derived tables/figures regenerated; differences from preserved historical artifacts are retained. |
 | 9 | Historical Protocol-v4 preservation | PASS | Protocol-v4 portable checksums and reproduced headline values; external deep sidecars remain a separate boundary. |
 | 10 | Human-study direct-identifier exclusion | PASS | Direct-identifier checks applied to available human-study files. No participant sessions were observed; public aggregate reports exclude pseudonyms. |
-| 11 | Kubernetes environment identity | NOT_APPLICABLE | No observed Kubernetes trials exist; readiness identities are not hardware measurements. |
-| 12 | Image-storage immutable digests and platforms | NOT_APPLICABLE | No storage measurements exist. Functional-probe host metadata does not establish an image platform or storage reuse. |
-| 13 | Observed execution versus synthetic fixtures | PASS | Available records checked for missing observations and synthetic/mock origins; v1.0 probes use the existing legacy error-category adapter. This is artifact consistency, not independent attestation of collection. |
+| 11 | Kubernetes environment identity | PASS | Observed cluster identities and original package seals were validated where applicable; the OrbStack packages remain separately governed and globally incompatible. |
+| 12 | Image-storage immutable digests and platforms | PASS | Observed storage image references, immutable digests, platforms, and source manifests were validated where present. |
+| 13 | Observed execution versus synthetic fixtures | PASS | Raw records and every discovered claim candidate were checked for collector origin and claim eligibility; path names do not establish authenticity. |
 | 14 | Independent statistical units | PASS | No available v5 inferential p-value was found using repetitions as semantic samples. Family/participant contracts are also checked by the existing claim-registry validator. |
 | 15 | No B0 ranking metrics | PASS | Result-bearing JSON, JSONL and CSV artifacts checked for B0 ranking metrics. |
-| 16 | P3 development gate and primary-system boundary | PASS | P2 remains primary; recorded P3 development decision is not_retained. No v5 confirmatory P3 conclusion is authorized. |
+| 16 | P3 development gate and primary-system boundary | PASS | P3 state is derived from the authenticated evaluated-claim package: NOT_RETAINED_OR_NOT_PRESENT. |
 | 17 | Missing experiments and placeholder values | PASS | Unavailable experiments remain NOT_EXECUTED with null estimates; planned counts and fixture image identifiers are design only. |
 
 Detailed per-file errors, source hashes, privacy results and provenance differences are in the generated validation/audit JSON. An INCOMPLETE or FAIL audit does not authorize empirical claims.
@@ -153,17 +196,17 @@ Detailed per-file errors, source hashes, privacy results and provenance differen
 | --- | --- | --- | --- | --- | --- |
 | 20260825T-observed-p1-p2-development-v1 | offline | OBSERVED | development | PASS | — |
 | b0-p2-user-study-readiness | user_study | NOT_EXECUTED | development | FAIL | ORIGINAL_CHECKSUM_MISMATCH; output checksum mismatch: report/tables/participant-flow.csv |
-| e4-resource-efficiency-dry-run-20260904T093503Z | resource_efficiency | NOT_EXECUTED | development | FAIL | resource-efficiency design-size or execution-order invariant differs |
-| e4-resource-efficiency-dry-run-20260904T094050Z | resource_efficiency | NOT_EXECUTED | development | FAIL | resource-efficiency design-size or execution-order invariant differs |
-| e4-resource-efficiency-dry-run-20260904T094316Z | resource_efficiency | NOT_EXECUTED | development | FAIL | resource-efficiency design-size or execution-order invariant differs |
+| e4-resource-efficiency-dry-run-20260904T093503Z | resource_efficiency | NOT_EXECUTED | development | PASS | — |
+| e4-resource-efficiency-dry-run-20260904T094050Z | resource_efficiency | NOT_EXECUTED | development | PASS | — |
+| e4-resource-efficiency-dry-run-20260904T094316Z | resource_efficiency | NOT_EXECUTED | development | PASS | — |
 | e4-resource-efficiency-dry-run-20260905T013330Z | resource_efficiency | NOT_EXECUTED | development | PASS | — |
 | e4-resource-efficiency-dry-run-20260905T013619Z | resource_efficiency | NOT_EXECUTED | development | PASS | — |
 | e4-resource-efficiency-observed-run-20260905T081825Z | resource_efficiency | NOT_EXECUTED | development | PASS | — |
 | e4-resource-efficiency-plan-20260905T082000Z | resource_plan | PLANNED | development | PASS | — |
-| e4-resource-envelope-dry-run-20260828 | resource_envelope | DRY_RUN | development | FAIL | unsupported resource run manifest |
-| e4-resource-envelope-dry-run-20260828T065331Z | resource_envelope | DRY_RUN | development | FAIL | unsupported resource run manifest |
-| e4-resource-envelope-dry-run-20260904T075658Z | resource_envelope | DRY_RUN | development | FAIL | resource run manifest has an incompatible trial observation schema |
-| e4-resource-envelope-dry-run-20260904T081412Z | resource_envelope | DRY_RUN | development | FAIL | resource run manifest has an incompatible trial observation schema |
+| e4-resource-envelope-dry-run-20260828 | resource_envelope | DRY_RUN | development | PASS | — |
+| e4-resource-envelope-dry-run-20260828T065331Z | resource_envelope | DRY_RUN | development | PASS | — |
+| e4-resource-envelope-dry-run-20260904T075658Z | resource_envelope | DRY_RUN | development | PASS | — |
+| e4-resource-envelope-dry-run-20260904T081412Z | resource_envelope | DRY_RUN | development | PASS | — |
 | e4-resource-envelope-dry-run-20260904T081601Z | resource_envelope | DRY_RUN | development | PASS | — |
 | e4-resource-envelope-dry-run-20260904T081753Z | resource_envelope | DRY_RUN | development | PASS | — |
 | e4-resource-envelope-dry-run-20260904T081907Z | resource_envelope | DRY_RUN | development | PASS | — |
@@ -172,7 +215,7 @@ Detailed per-file errors, source hashes, privacy results and provenance differen
 | e4-resource-envelope-dry-run-20260904T083119Z | resource_envelope | DRY_RUN | development | PASS | — |
 | e4-resource-envelope-dry-run-20260904T083327Z | resource_envelope | DRY_RUN | development | PASS | — |
 | e4-resource-envelope-observed-run-20260905T081833Z | resource_envelope | DRY_RUN | development | PASS | — |
-| e4-resource-envelope-readiness-dry-run-20260828T074359Z | resource_envelope | DRY_RUN | development | FAIL | unsupported resource run manifest |
+| e4-resource-envelope-readiness-dry-run-20260828T074359Z | resource_envelope | DRY_RUN | development | PASS | — |
 | e5-image-validation-20260905T015905Z | image_functional | DRY_RUN | development | PASS | — |
 | e5-image-validation-20260905T020014Z | image_functional | OBSERVED | development | FAIL | Invalid manifest in results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T020014Z: OBSERVED manifest requires retrieval_configuration |
 | e5-image-validation-20260905T021913Z | image_functional | INCOMPLETE | development | PASS | — |
@@ -185,20 +228,35 @@ Detailed per-file errors, source hashes, privacy results and provenance differen
 | e5-image-validation-20260905T071910Z | image_functional | OBSERVED | development | PASS | — |
 | research-analysis-20260905T-final | research_analysis | INCOMPLETE | analysis | PASS | — |
 | research-analysis-20260905T-implementation | research_analysis | INCOMPLETE | analysis | PASS | — |
+| e5-image-validation-20260912T124154Z | image_functional | OBSERVED | development | PASS | — |
+| e5-storage-scalability-20260912T124502Z | image_storage | OBSERVED | confirmatory | PASS | — |
+| e5-storage-scalability-20260914T012024Z | image_storage | OBSERVED | confirmatory | PASS | — |
 
-Package names above are unambiguous entries in the reviewed input inventory; every constituent file has a SHA-256. No timestamp ordering selected the reported runs: both currently valid v1.3 functional packages are shown, and every legacy/invalid package remains listed.
+Package names above are entries in the reviewed input inventory; every constituent file has a SHA-256. Filesystem ordering and timestamps never select claim evidence.
 
 ## Threats to validity and evidence boundaries
 
-Construct validity: image gold agreement, catalog capability descriptions, functional probes, user satisfaction and workload success measure different things. Undefined probes and label/operational discrepancies are retained.
+Claim-specific limitations are copied from the authenticated evaluated registry. No narrative sentence can override a machine-readable status, decision predicate, or reason code.
 
-Internal validity: no final freeze/custody record establishes confirmatory isolation or frozen execution revisions. Several E5 extractor fields disagree with the recommendation source. Integrity failures cannot be repaired by accepting a new inventory checksum.
+| Claim | Limitation | Severity | Recorded statement |
+| --- | --- | --- | --- |
+| H1 | REQUIRED_EVIDENCE_UNAVAILABLE | blocking | The required confirmatory evidence was unavailable or unselected, so the linked claim cannot be decided. |
+| H1 | NON_CONFIRMATORY_EVIDENCE_PRESENT | boundary | Development, historical, or unknown-stage packages are inventoried but excluded from confirmatory claim decisions. |
+| H2 | REQUIRED_EVIDENCE_UNAVAILABLE | blocking | The required confirmatory evidence was unavailable or unselected, so the linked claim cannot be decided. |
+| H2 | NON_CONFIRMATORY_EVIDENCE_PRESENT | boundary | Development, historical, or unknown-stage packages are inventoried but excluded from confirmatory claim decisions. |
+| H3 | REQUIRED_EVIDENCE_UNAVAILABLE | blocking | The required confirmatory evidence was unavailable or unselected, so the linked claim cannot be decided. |
+| H4 | REQUIRED_EVIDENCE_UNAVAILABLE | blocking | The required confirmatory evidence was unavailable or unselected, so the linked claim cannot be decided. |
+| H5 | REQUIRED_EVIDENCE_UNAVAILABLE | blocking | The required confirmatory evidence was unavailable or unselected, so the linked claim cannot be decided. |
+| H5 | NON_CONFIRMATORY_EVIDENCE_PRESENT | boundary | Development, historical, or unknown-stage packages are inventoried but excluded from confirmatory claim decisions. |
+| H6 | REQUIRED_EVIDENCE_UNAVAILABLE | blocking | The required confirmatory evidence was unavailable or unselected, so the linked claim cannot be decided. |
+| H6 | NON_CONFIRMATORY_EVIDENCE_PRESENT | boundary | Development, historical, or unknown-stage packages are inventoried but excluded from confirmatory claim decisions. |
+| H7F | REQUIRED_EVIDENCE_UNAVAILABLE | blocking | The required confirmatory evidence was unavailable or unselected, so the linked claim cannot be decided. |
+| H7F | NON_CONFIRMATORY_EVIDENCE_PRESENT | boundary | Development, historical, or unknown-stage packages are inventoried but excluded from confirmatory claim decisions. |
+| H7 | CATALOG_AND_PLATFORM_SCOPE | LIMITATION | Exact result is limited to the four-image frozen catalog prefix and linux/amd64 registry manifests; configured 8/16-image scales were not executed. |
+| H8 | REQUIRED_EVIDENCE_UNAVAILABLE | blocking | The required confirmatory evidence was unavailable or unselected, so the linked claim cannot be decided. |
 
-External validity: ten visible development families, a small administrator catalog, developer-machine container probes and repeated use of the same image digests do not establish general performance. There is no participant population or measured eligible Kubernetes environment to generalize from.
 
-Statistical validity: cases/variants/repeats are not independent families; probes are reused. No new p-values, intervals, effect sizes or causal improvements are claimed. Failure to execute a hypothesis test is neither support nor contradiction.
-
-Custody/privacy: repository/archive scanning detects visible contamination patterns, not undisclosed external access or semantic overlap. Private confirmatory data was not opened. Human-study files are empty of participant observations. Future real human/cluster/storage collection requires a separately authorized, preregistered execution package.
+Repository/archive isolation scanning cannot replace external custody attestation. Functional image checks, storage measurements, user outcomes, resource outcomes, and recommendation quality remain distinct constructs.
 
 Historical Protocol-v4 evidence remains historical/formative. Its portable checksum/headline reproduction passes independently of the v5 verdict; external deep-archive sidecars are not required for the portable workflow. Raw observations, derived metrics and report interpretation remain separate.
 
@@ -222,11 +280,11 @@ make v5-figures
 make v5-audit
 ```
 
-Each command creates only missing stages under `results_v5/protocol-v5.0.0/final-audit/<run-id>/`; completed stages are checksum-verified before reuse. A changed input lock or implementation requires a new ID. `make v5-audit` runs every stage and writes the report before returning nonzero for integrity failures. On this snapshot nonzero is expected; do not suppress it as a success. Valid NOT_EXECUTED evidence does not itself cause a nonzero exit.
+Each command creates only missing stages under `results_v5/protocol-v5.0.0/final-audit/<run-id>/`; completed stages are checksum-verified before reuse. A changed input lock or implementation requires a new ID. `make v5-audit` writes the report before returning nonzero for integrity failures. Valid NOT_EXECUTED evidence does not itself cause a nonzero exit.
 
 No reproduction command runs recommenders, LLM providers, container probes, registry pulls or Kubernetes jobs. All raw inputs are the privacy-reviewed allowlisted files. Legacy absolute references resolve only through checksum-bound mappings; they are never edited. Missing external evidence remains unavailable.
 
-The run contains validation findings, regenerated derived artifacts, JSON/CSV tables, deterministic SVGs, exact reproduction comparisons, manifests and SHA256SUMS. Stage manifests bind input inventory, code hashes and runtime. Regeneration ignores only `created_at_utc` and `git_revision` when comparing status-manifest semantics; all empirical values and other fields must match. Figures use deterministic SVG metadata and fresh output directories.
+The run contains validation findings, regenerated derived artifacts, JSON/CSV tables, deterministic SVGs, exact reproduction comparisons, manifests and SHA256SUMS. Deterministic artifacts are compared byte-for-byte. Intentionally nondeterministic provenance fields—including run IDs, timestamps, checkout revision metadata, environment identity, and stage manifests containing them—are enumerated and compared separately rather than being claimed byte-identical. Empirical values and all other deterministic fields must match.
 
 Read-only historical validation and focused tests:
 

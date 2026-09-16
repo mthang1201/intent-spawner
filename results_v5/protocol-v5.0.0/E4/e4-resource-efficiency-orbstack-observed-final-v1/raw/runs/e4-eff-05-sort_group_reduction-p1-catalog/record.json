@@ -1,0 +1,144 @@
+{
+  "admission_or_scheduling_reason": "UNKNOWN",
+  "cgroup_metrics": {
+    "cgroup_version": "v2",
+    "controllers": [
+      "cpuset",
+      "cpu",
+      "io",
+      "memory",
+      "pids"
+    ],
+    "cpu_full_window_average_m": 592.900771,
+    "cpu_interval_sample_max_m": 597.484807,
+    "cpu_max": "50000 100000",
+    "cpu_nr_periods_delta": 1,
+    "cpu_nr_throttled_delta": 1,
+    "cpu_throttled_usec_delta": 48095,
+    "cpu_usage_usec_delta": 78726,
+    "memory_current_sample_max_mib": 20.816406,
+    "memory_events_delta": {
+      "high": 0,
+      "low": 0,
+      "max": 0,
+      "oom": 0,
+      "oom_group_kill": 0,
+      "oom_kill": 0,
+      "sock_throttled": 0
+    },
+    "memory_high": "max",
+    "memory_max": "402653184",
+    "memory_peak_mib": 21.9375,
+    "sample_count": 1,
+    "sample_interval_seconds": 0.1,
+    "source": "cgroup_v2_in_container"
+  },
+  "collector_origin": "REAL_KUBERNETES_COLLECTOR",
+  "condition": "P1_CATALOG",
+  "container_runtime_seconds": 0.0,
+  "correctness": true,
+  "correctness_details": {
+    "all_invariants_match": true,
+    "checker_version": "frozen-invariant-checker-v1.0.0",
+    "expected_invariants": {
+      "checksum": 3266360558,
+      "groups": 257,
+      "leader": 60,
+      "rows": 100000
+    },
+    "observed_invariants": {
+      "checksum": 3266360558,
+      "groups": 257,
+      "leader": 60,
+      "rows": 100000
+    }
+  },
+  "correctness_invariants_ok": true,
+  "deterministic_seed": 8104,
+  "exclusion_reason": null,
+  "expected_marker_sha256": "a21d922592d3e6e5365c69e89c45f6def899fc903ce3d33b7f8e2134e1bd08d5",
+  "family_id": "sort_group_reduction",
+  "infrastructure_invalid": false,
+  "kubernetes": {
+    "cleanup_status": "succeeded",
+    "events": [
+      {
+        "count": 1,
+        "first_timestamp": "2026-09-15T08:37:29Z",
+        "last_timestamp": "2026-09-15T08:37:29Z",
+        "message": "Container image \"intent-spawner-resource-v5:e4-ffebc19805a6\" already present on machine",
+        "reason": "Pulled",
+        "type": "Normal"
+      },
+      {
+        "count": 1,
+        "first_timestamp": "2026-09-15T08:37:29Z",
+        "last_timestamp": "2026-09-15T08:37:29Z",
+        "message": "Created container: workload",
+        "reason": "Created",
+        "type": "Normal"
+      },
+      {
+        "count": 1,
+        "first_timestamp": "2026-09-15T08:37:29Z",
+        "last_timestamp": "2026-09-15T08:37:29Z",
+        "message": "Started container workload",
+        "reason": "Started",
+        "type": "Normal"
+      }
+    ],
+    "exit_code": 0,
+    "finished_at": "2026-09-15T08:37:29Z",
+    "image_id": "docker://sha256:1b7702f073b094eb3f5ced5fadd33d6f3e0346481b15ed8de998fd3a4e8a3bdd",
+    "image_reference": "intent-spawner-resource-v5:e4-ffebc19805a6",
+    "node_name": "orbstack",
+    "phase": "Succeeded",
+    "pod_name": "e4e-079fbfdfa73109a9a61e031a",
+    "pod_uid": "b881ad32-d222-4b82-97e3-279475e6ce5e",
+    "reason": "Completed",
+    "restart_count": 0,
+    "started_at": "2026-09-15T08:37:29Z",
+    "terminated_reason": "Completed",
+    "waiting_reason": null
+  },
+  "observed_marker_sha256": "a21d922592d3e6e5365c69e89c45f6def899fc903ce3d33b7f8e2134e1bd08d5",
+  "observed_resources": {
+    "cpu_limit_m": 500,
+    "cpu_request_m": 100,
+    "gpu_count": 0,
+    "gpu_resource": null,
+    "memory_limit_mib": 384,
+    "memory_request_mib": 256
+  },
+  "oom": false,
+  "pending_or_admission_failure": false,
+  "plan_index": 301,
+  "planned_resources": {
+    "cpu_limit_m": 500,
+    "cpu_request_m": 100,
+    "gpu_count": 0,
+    "gpu_resource": null,
+    "memory_limit_mib": 384,
+    "memory_request_mib": 256
+  },
+  "pod_created": true,
+  "primary_outcome": "SUCCESS",
+  "primary_trial_id": "e4-eff-05-sort_group_reduction-p1-catalog",
+  "recorded_at_utc": "2026-09-15T08:37:32.146486Z",
+  "repetition": 5,
+  "replacement_of": null,
+  "runtime_error": false,
+  "scheduled": true,
+  "schema_version": "protocol-v5-resource-efficiency-trial-v1.0.0",
+  "sidecar_paths": {
+    "record": "raw/runs/e4-eff-05-sort_group_reduction-p1-catalog/record.json"
+  },
+  "success": true,
+  "timeout": false,
+  "timeout_seconds": 120,
+  "trial_id": "e4-eff-05-sort_group_reduction-p1-catalog",
+  "workload_fingerprint": "afcb3ccdf68987814f90f794719d28a15695392fa85251f7616f949505966d69",
+  "workload_instance_id": "sort-group-v1-rows-100000-groups-257-seed-8104",
+  "workload_output_exists": true,
+  "workload_runtime_seconds": 0.132963
+}

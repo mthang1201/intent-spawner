@@ -1,0 +1,57 @@
+{
+  "collector_origin": "REAL_REGISTRY",
+  "scale_evaluations": [
+    {
+      "aggregation_unit": "workload_family",
+      "case_records": [],
+      "catalog_id": "frozen-catalog-scale-4",
+      "catalog_size": 4,
+      "confirmatory_provenance": null,
+      "dataset_id": "none",
+      "dataset_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+      "family_estimates": [],
+      "family_summary": {},
+      "reason": "confirmatory_dataset_not_provided: sealed confirmatory split required for confirmatory stage",
+      "schema_version": "protocol-v5-catalog-scale-recommendation-run-v1.0.0",
+      "split_role": "none",
+      "split_schema_version": "none",
+      "split_stage": "confirmatory",
+      "status": "NOT_EXECUTED"
+    },
+    {
+      "aggregation_unit": "workload_family",
+      "case_records": [],
+      "catalog_id": "frozen-catalog-scale-8",
+      "catalog_size": 8,
+      "confirmatory_provenance": null,
+      "dataset_id": "none",
+      "dataset_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+      "family_estimates": [],
+      "family_summary": {},
+      "reason": "insufficient_approved_images: catalog defines 4 approved image(s), 8 required",
+      "schema_version": "protocol-v5-catalog-scale-recommendation-run-v1.0.0",
+      "split_role": "none",
+      "split_schema_version": "none",
+      "split_stage": "confirmatory",
+      "status": "NOT_EXECUTED"
+    },
+    {
+      "aggregation_unit": "workload_family",
+      "case_records": [],
+      "catalog_id": "frozen-catalog-scale-16",
+      "catalog_size": 16,
+      "confirmatory_provenance": null,
+      "dataset_id": "none",
+      "dataset_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+      "family_estimates": [],
+      "family_summary": {},
+      "reason": "insufficient_approved_images: catalog defines 4 approved image(s), 16 required",
+      "schema_version": "protocol-v5-catalog-scale-recommendation-run-v1.0.0",
+      "split_role": "none",
+      "split_schema_version": "none",
+      "split_stage": "confirmatory",
+      "status": "NOT_EXECUTED"
+    }
+  ],
+  "schema_version": "protocol-v5-catalog-scale-recommendations-v1.0.0"
+}

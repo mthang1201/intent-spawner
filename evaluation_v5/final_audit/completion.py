@@ -451,24 +451,28 @@ def claim_flow_attestation(final_audit: Mapping[str, Any]) -> dict[str, Any]:
     """Prove selection-derived evaluated claims survive into completion input."""
 
     claims = final_audit.get("claims") or []
-    evaluated = final_audit.get("evaluated_claims") or []
+    generated_view = (final_audit.get("evaluated_claim_view") or {}).get("claims") or []
+    evaluated = generated_view or final_audit.get("evaluated_claims") or []
     summary_by_id = {str(row.get("id")): row for row in claims}
-    evaluated_by_id = {str(row.get("claim_id")): row for row in evaluated}
+    evaluated_by_id = {str(row.get("id", row.get("claim_id"))): row for row in evaluated}
     if set(summary_by_id) != set(evaluated_by_id):
         raise ValueError("final-audit claim summaries differ from evaluated registry IDs")
     propagation = []
     selected_requirements = set()
     for claim_id, raw in sorted(evaluated_by_id.items()):
         summary = summary_by_id[claim_id]
-        metrics = (raw.get("result") or {}).get("normalized_metrics") or {}
+        metrics = raw.get("normalized_metrics") if generated_view else (raw.get("result") or {}).get("normalized_metrics")
+        metrics = metrics or {}
         if (
             summary.get("claim_status") != raw.get("claim_status")
             or summary.get("normalized_metrics") != metrics
             or summary.get("reason_codes") != list(raw.get("reason_codes") or [])
         ):
             raise ValueError(claim_id + ": final-audit projection discarded evaluated claim state")
-        for evidence in raw.get("evidence") or []:
-            selected_requirements.add(str(evidence.get("requirement_id")))
+        evidence_rows = raw.get("evidence_status") if generated_view else raw.get("evidence")
+        for evidence in evidence_rows or []:
+            if evidence.get("claim_eligibility") in (None, "ELIGIBLE_CONFIRMATORY"):
+                selected_requirements.add(str(evidence.get("requirement_id")))
         propagation.append(
             {
                 "claim_id": claim_id,
@@ -477,14 +481,18 @@ def claim_flow_attestation(final_audit: Mapping[str, Any]) -> dict[str, Any]:
                     json.dumps(metrics, sort_keys=True, separators=(",", ":"), allow_nan=False).encode()
                 ).hexdigest(),
                 "reason_codes": list(raw.get("reason_codes") or []),
-                "evidence_requirement_count": len(raw.get("evidence") or []),
+                "evidence_requirement_count": len(evidence_rows or []),
             }
         )
     return {
         "schema_version": "protocol-v5-claim-flow-attestation-v1.0.0",
         "status": "PASS",
         "authenticated_selection_source": (final_audit.get("claim_evidence_sources") or {}).get("selection"),
-        "evaluated_claim_source": (final_audit.get("claim_evidence_sources") or {}).get("evaluated_claims"),
+        "evaluated_claim_source": (
+            "generated_evaluated_claim_view"
+            if generated_view
+            else (final_audit.get("claim_evidence_sources") or {}).get("evaluated_claims")
+        ),
         "selected_requirement_count": len(selected_requirements),
         "genuinely_empty_authenticated_selection": not selected_requirements,
         "selection_was_silently_discarded": False,
