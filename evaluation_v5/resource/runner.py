@@ -91,15 +91,35 @@ def _comparison_provenance(
     else:
         # Compatibility is intentionally confined to non-observed test/dry-run
         # paths. It grants no production capability.
-        from evaluation_v5.freeze import DEFAULT_DESIGN_SNAPSHOT, load_design_snapshot
+        from evaluation_v5.freeze import (
+            DEFAULT_DESIGN_SNAPSHOT,
+            FreezeValidationError,
+            load_design_snapshot,
+            parse_production_freeze,
+        )
 
         selected = freeze_path if freeze_path.is_file() else DEFAULT_DESIGN_SNAPSHOT
-        payload = load_design_snapshot(selected).to_dict()
-        freeze_identity = {
-            "freeze_id": None,
-            "freeze_manifest_sha256": file_sha256(selected),
-            "source": "non_authoritative_design_snapshot",
-        }
+        try:
+            payload = load_design_snapshot(selected).to_dict()
+            freeze_identity = {
+                "freeze_id": None,
+                "freeze_manifest_sha256": file_sha256(selected),
+                "source": "non_authoritative_design_snapshot",
+            }
+        except FreezeValidationError:
+            # The frozen integration base now points DEFAULT_FREEZE at a
+            # production envelope. Dry-run/test code consumes only its already
+            # frozen comparison snapshot and gains no execution authority.
+            envelope = parse_production_freeze(
+                json.loads(selected.read_text(encoding="utf-8")),
+                require_production=False,
+            )
+            payload = dict(envelope["configuration_snapshot"])
+            freeze_identity = {
+                "freeze_id": envelope.freeze_id,
+                "freeze_manifest_sha256": file_sha256(selected),
+                "source": "production_envelope_snapshot_non_authorizing",
+            }
         recorded_path = selected
     systems = payload.get("systems", {})
     p3 = payload.get("p3_gate", {})
