@@ -49,6 +49,7 @@ def _claim_result(claim: dict) -> str:
 
 def defense_rows(analysis: dict, format_source=None) -> list[list]:
     claims = {row["id"]: row for row in analysis.get("claims", [])}
+    criteria = {row["hypothesis"]: row for row in analysis.get("criteria", [])}
 
     def outcome(claim_id: str) -> str:
         return _claim_result(claims[claim_id]) if claim_id in claims else "UNSUPPORTED"
@@ -62,13 +63,33 @@ def defense_rows(analysis: dict, format_source=None) -> list[list]:
         )
         return formatter(ref)
 
+    def metric_scope(claim_id: str) -> str:
+        row = criteria.get(claim_id) or {}
+        if claim_id in {"H5", "H6"} and row.get("condition_count") is not None:
+            return (
+                f"{row['independent_sample_count']} independent families; "
+                f"{row['condition_count']} conditions × "
+                f"{row['repetitions_per_family_condition']} repetitions = "
+                f"{row['total_trial_or_observation_rows']} trial rows"
+            )
+        if claim_id == "H7" and row.get("observed_scale_points_or_prefixes") is not None:
+            return (
+                f"{row['observed_scale_points_or_prefixes']} observed prefixes from "
+                f"{row['independent_runs']} bounded run"
+            )
+        return ""
+
+    def metric(label: str, claim_id: str) -> str:
+        scope = metric_scope(claim_id)
+        return label + (("; " + scope) if scope else "")
+
     return [
         ["satisfaction", "E3", "SEQ ease; SUS usability", outcome("H4"), claim_ref("H4")],
         ["time saving", "E3", "Paired decision time and selection effectiveness", outcome("H3"), claim_ref("H3")],
         ["correct image", "E5 functional", "Gold image match; required functional probes", outcome("H7F"), claim_ref("H7F")],
-        ["image storage reuse", "E5 storage", "LogicalImageBytes; UniqueLayerBytes; marginal reuse", outcome("H7"), claim_ref("H7")],
-        ["additional/fine-grained profiles", "E4", "Dynamic CPU/memory oracle error; allocation coverage", outcome("H6"), claim_ref("H6")],
-        ["resource saving", "E4", "CPU/memory request cost per successful workload; reliability", outcome("H5"), claim_ref("H5")],
+        ["image storage reuse", "E5 storage", metric("LogicalImageBytes; UniqueLayerBytes; marginal reuse", "H7"), outcome("H7"), claim_ref("H7")],
+        ["additional/fine-grained profiles", "E4", metric("Dynamic CPU/memory oracle error; allocation coverage", "H6"), outcome("H6"), claim_ref("H6")],
+        ["resource saving", "E4", metric("CPU/memory request cost per successful workload; reliability", "H5"), outcome("H5"), claim_ref("H5")],
         ["flexible natural-language interaction", "E2", "Family-level robustness across equivalent variants", outcome("H2"), claim_ref("H2")],
     ]
 
@@ -78,7 +99,11 @@ def criterion_audit_rows(analysis: dict) -> list[list]:
         row["criterion"], row["experiment"], row["hypothesis"], row["metric_definition"],
         row["independent_sample_count"] if row["independent_sample_count"] is not None else "N/A",
         row["semantic_family_count"] if row["semantic_family_count"] is not None else "N/A",
-        row["repetitions"] if row["repetitions"] is not None else "N/A",
+        row["condition_count"] if row["condition_count"] is not None else "N/A",
+        row["repetitions_per_family_condition"] if row["repetitions_per_family_condition"] is not None else "N/A",
+        row["total_trial_or_observation_rows"] if row["total_trial_or_observation_rows"] is not None else "N/A",
+        row["observed_scale_points_or_prefixes"] if row["observed_scale_points_or_prefixes"] is not None else "N/A",
+        row["independent_runs"] if row["independent_runs"] is not None else "N/A",
         _compact(row["estimate_ci_effect"]), row["global_decision"],
         row["evidence_classification"], row["execution_status"],
         (row["artifact"] or "N/A") + ("; SHA-256 " + row["package_checksum"] if row["package_checksum"] else ""),
@@ -222,7 +247,7 @@ def render_report(inputs: Inputs, audit: dict, analysis: dict, figures: dict, ta
         "Authenticated P3 state: **" + audit.get("p3_state", "UNSUPPORTED") + "**. Historical P3 material remains formative unless the selected claim package contains a validated retained-gate confirmatory decision. " + source(inputs.ref("docs/evaluation/P3_INCREMENTAL_EVALUATION_V1.md")), "",
         "## Defense-summary table", "", table(defense_rows(analysis, source), ["Professor criterion", "Experiment", "Metric", "Observed result", "Evidence reference"]),
         "## Detailed criterion audit", "",
-        table(criterion_audit_rows(analysis), ["Criterion", "Experiment", "Hypothesis", "Metric definition", "Independent N", "Family N", "Repetitions", "Estimate / CI / effect", "Global decision", "Evidence class", "Execution status", "Artifact / checksum", "Source commit", "Frozen SHA", "Limitation"]),
+        table(criterion_audit_rows(analysis), ["Criterion", "Experiment", "Hypothesis", "Metric definition", "Independent N", "Family N", "Conditions", "Repetitions / family-condition", "Total trial / observation rows", "Observed scale points / prefixes", "Independent runs", "Estimate / CI / effect", "Global decision", "Evidence class", "Execution status", "Artifact / checksum", "Source commit", "Frozen SHA", "Limitation"]),
         "## Seventeen audit checks", "",
         table([[c["id"], c["title"], c["verdict"], c["reason"]] for c in audit["checks"]], ["ID", "Requirement", "Verdict", "Evidence boundary"]),
         "Detailed per-file errors, source hashes, privacy results and provenance differences are in the generated validation/audit JSON. An INCOMPLETE or FAIL audit does not authorize empirical claims.", "",
@@ -267,7 +292,7 @@ def figures(inputs: Inputs, analysis: dict, analysis_root: Path, output: Path) -
     write_bytes(output / "tables/defense-summary.md", table(defense, ["Professor criterion", "Experiment", "Metric", "Observed result", "Evidence reference"]).encode())
     detailed = criterion_audit_rows(analysis)
     write_json(output / "tables/criterion-audit.json", analysis.get("criteria", []))
-    write_bytes(output / "tables/criterion-audit.md", table(detailed, ["Criterion", "Experiment", "Hypothesis", "Metric definition", "Independent N", "Family N", "Repetitions", "Estimate / CI / effect", "Global decision", "Evidence class", "Execution status", "Artifact / checksum", "Source commit", "Frozen SHA", "Limitation"]).encode())
+    write_bytes(output / "tables/criterion-audit.md", table(detailed, ["Criterion", "Experiment", "Hypothesis", "Metric definition", "Independent N", "Family N", "Conditions", "Repetitions / family-condition", "Total trial / observation rows", "Observed scale points / prefixes", "Independent runs", "Estimate / CI / effect", "Global decision", "Evidence class", "Execution status", "Artifact / checksum", "Source commit", "Frozen SHA", "Limitation"]).encode())
     comparisons = []
     for entry in analysis["packages"]:
         if entry.get("generated_analysis"):

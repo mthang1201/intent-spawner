@@ -31,7 +31,7 @@ from evaluation_v5.final_audit.completion import (
 from evaluation_v5.final_audit.evidence import capture, junit_details, verify_command_evidence
 from evaluation_v5.final_audit.publication import build_attestation, verify_attestation
 from evaluation_v5.final_audit.reproduce import analyze, compare_json, regenerate_functional
-from evaluation_v5.final_audit.reporting import figures, render_report
+from evaluation_v5.final_audit.reporting import defense_rows, figures, render_report
 
 
 @pytest.fixture(scope="module")
@@ -376,6 +376,62 @@ def test_generated_criterion_view_keeps_nonconfirmatory_contradiction_descriptiv
     assert h7f["claim_status"] == "NOT_EXECUTED"
     assert criterion["descriptive_relationship"] == "CONTRADICTS_FROZEN_CRITERION_NONCONFIRMATORY"
     assert criterion["global_decision"] == "NOT_EXECUTED"
+
+
+def test_reporting_counts_do_not_promote_repetitions_or_storage_prefixes(current_audit):
+    criteria = {row["hypothesis"]: row for row in current_audit["criteria"]}
+    for claim_id in ("H5", "H6"):
+        row = criteria[claim_id]
+        assert row["independent_sample_count"] == 16
+        assert row["semantic_family_count"] == 16
+        assert row["condition_count"] == 4
+        assert row["repetitions_per_family_condition"] == 10
+        assert row["total_trial_or_observation_rows"] == 640
+    h7 = criteria["H7"]
+    assert h7["independent_sample_count"] is None
+    assert h7["observed_scale_points_or_prefixes"] == 4
+    assert h7["independent_runs"] == 1
+    assert h7["configured_scales"] == [4, 8, 16]
+    assert h7["observed_scales"] == [4]
+    assert h7["global_decision"] == "SUPPORTED"
+    summary = defense_rows(current_audit)
+    assert any("16 independent families; 4 conditions × 10 repetitions = 640 trial rows" in row[2] for row in summary)
+    assert any("4 observed prefixes from 1 bounded run" in row[2] for row in summary)
+
+
+def test_check_five_and_six_have_distinct_failure_explanations(current_audit):
+    checks = {row["id"]: row for row in current_audit["checks"]}
+    assert checks[5]["verdict"] == checks[6]["verdict"] == "FAIL"
+    assert "confirmatory provenance or authority" in checks[5]["reason"]
+    assert "independently certify" in checks[5]["reason"]
+    assert "not rewritten to produce a green audit" in checks[6]["reason"]
+    assert "Historical failed package and integrity findings" in checks[6]["reason"]
+    assert checks[5]["reason"] != checks[6]["reason"]
+
+
+def test_reporting_repair_preserves_scientific_decisions_and_dispositions(current_audit):
+    assert {row["id"]: row["claim_status"] for row in current_audit["claims"]} == {
+        "H1": "NOT_EXECUTED", "H2": "NOT_EXECUTED", "H3": "NOT_EXECUTED",
+        "H4": "NOT_EXECUTED", "H5": "NOT_EXECUTED", "H6": "NOT_EXECUTED",
+        "H7": "SUPPORTED", "H7F": "NOT_EXECUTED", "H8": "NOT_EXECUTED",
+    }
+    assert {
+        row["candidate_id"]: row["eligibility"]
+        for row in current_audit["evidence_dispositions"]["records"]
+    } == {
+        "E1_CONFIRMATORY": "NOT_EXECUTED",
+        "E2_CONFIRMATORY": "NOT_EXECUTED",
+        "E3_FINAL_ANALYSIS": "NOT_EXECUTED",
+        "E5_FUNCTIONAL_DEVELOPMENT": "ACCEPTED_OBSERVED_NON_CONFIRMATORY",
+        "E5_STORAGE_OLD": "SUPERSEDED",
+        "E5_STORAGE_RERUN": "ACCEPTED_CONFIRMATORY",
+        "E4_GLOBAL_FINAL": "NOT_EXECUTED",
+        "E4_ORBSTACK_ORACLE": "INCOMPATIBLE_FREEZE",
+        "E4_ORBSTACK_EFFICIENCY": "INCOMPATIBLE_FREEZE",
+        "E4_PROVENANCE_AUDIT": "INCOMPATIBLE_FREEZE",
+    }
+    assert current_audit["audit_status"] == "FAIL"
+    assert current_audit["confirmatory_status"] == "EXECUTED_INCOMPLETE"
 
 
 def test_report_renders_changed_validated_claim_state_instead_of_snapshot_prose(

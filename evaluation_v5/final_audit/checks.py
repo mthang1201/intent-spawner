@@ -461,7 +461,7 @@ def inspect(inputs: Inputs, *, isolation: bool = True, historical: bool = True) 
     if claim_evidence_error:
         failures.append(claim_evidence_error)
     set_check(6, "FAIL" if failures else "PASS",
-              "Original seals, reviewed input bytes, candidate package digests, grouped artifact digests, and conditional supersession were checked; failed packages remain preserved.",
+              "Historical failed package and integrity findings are intentionally preserved and are not rewritten to produce a green audit; original seals, reviewed input bytes, candidate package digests, grouped artifact digests, and conditional supersession were checked.",
               failures, [dispositions["candidate_inventory"]] if dispositions is not None else [])
 
     freeze = inputs.lock.get("authoritative_freeze")
@@ -520,7 +520,7 @@ def inspect(inputs: Inputs, *, isolation: bool = True, historical: bool = True) 
     set_check(4, "FAIL" if protected_errors else "UNVERIFIED",
               "Recommender bytes checked against audit-start inventory. No final authority exists to certify confirmatory revisions; audit revision is separate from collection revision.", protected_errors)
     set_check(5, "FAIL" if semantic_differences else "UNVERIFIED",
-              "Recorded metadata compared with the design snapshot without rebuilding indexes or invoking recommenders. Snapshot agreement alone cannot certify confirmation.", semantic_differences)
+              "Recorded catalog/corpus/index/prompt/configuration provenance was compared with the design snapshot, but snapshot agreement alone does not independently certify confirmatory provenance or authority.", semantic_differences)
     set_check(7, "UNVERIFIED", "Run analyze to verify raw-to-derived reproduction.")
     set_check(8, "UNVERIFIED", "Run figures to verify derived-to-report reproduction.")
 

@@ -343,6 +343,33 @@ def criterion_rows(audit: Mapping[str, Any], disposition: Mapping[str, Any]) -> 
     for criterion, experiment, claim_id, metric, candidate_id in definitions:
         claim = claims.get(claim_id) or {}
         candidate = candidates[candidate_id]
+        counts = candidate["counts"]
+        sample_count = counts.get("sample_count")
+        family_count = counts.get("semantic_family_count")
+        repetitions = counts.get("repetitions")
+        independent_sample_count = (
+            family_count
+            if candidate_id == "E4_ORBSTACK_EFFICIENCY"
+            else None
+            if candidate_id == "E5_STORAGE_RERUN"
+            or candidate["execution_status"] == "NOT_EXECUTED"
+            else sample_count
+        )
+        condition_count = None
+        repetitions_per_family_condition = None
+        total_trial_or_observation_rows = (
+            sample_count if candidate["execution_status"] != "NOT_EXECUTED" else None
+        )
+        if candidate_id == "E4_ORBSTACK_EFFICIENCY":
+            if not all(isinstance(value, int) and value > 0 for value in (
+                sample_count, family_count, repetitions,
+            )):
+                raise ValueError("E4 reporting counts are incomplete")
+            denominator = family_count * repetitions
+            condition_count, remainder = divmod(sample_count, denominator)
+            if remainder or condition_count < 1:
+                raise ValueError("E4 trial rows do not match family/condition/repetition design")
+            repetitions_per_family_condition = repetitions
         descriptive = "N/A"
         if candidate_id == "E5_FUNCTIONAL_DEVELOPMENT":
             descriptive = "CONTRADICTS_FROZEN_CRITERION_NONCONFIRMATORY"
@@ -351,9 +378,19 @@ def criterion_rows(audit: Mapping[str, Any], disposition: Mapping[str, Any]) -> 
             "experiment": experiment,
             "hypothesis": claim_id,
             "metric_definition": metric,
-            "independent_sample_count": candidate["counts"].get("sample_count"),
-            "semantic_family_count": candidate["counts"].get("semantic_family_count"),
-            "repetitions": candidate["counts"].get("repetitions"),
+            "independent_sample_count": independent_sample_count,
+            "semantic_family_count": family_count,
+            "condition_count": condition_count,
+            "repetitions_per_family_condition": repetitions_per_family_condition,
+            "total_trial_or_observation_rows": total_trial_or_observation_rows,
+            "observed_scale_points_or_prefixes": (
+                sample_count if candidate_id == "E5_STORAGE_RERUN" else None
+            ),
+            "independent_runs": (
+                repetitions if candidate_id == "E5_STORAGE_RERUN" else None
+            ),
+            "configured_scales": counts.get("configured_scales"),
+            "observed_scales": counts.get("observed_scales"),
             "estimate_ci_effect": claim.get("normalized_metrics") or "N/A",
             "global_decision": claim.get("claim_status", "NOT_EXECUTED"),
             "descriptive_relationship": descriptive,
