@@ -1,0 +1,36 @@
+[
+  {
+    "configured_probes": 17,
+    "eligible_functional_cases": 17,
+    "functional_passes": 17,
+    "gold_image_matches": 13,
+    "probe_passes": 16,
+    "recommendations": 18,
+    "run": "e5-image-validation-20260912T124154Z",
+    "source": {
+      "locator": "",
+      "path": "results_v5/protocol-v5.0.0/E5/e5-image-validation-20260912T124154Z/derived/functional_metrics.json",
+      "sha256": "601bd6dc1a7c91d64f9e995fe4856d814bc4f64473db83da8c270c9bceb387c3"
+    },
+    "stage": "development",
+    "system": "P1",
+    "undefined_required_probe_cases": 1
+  },
+  {
+    "configured_probes": 17,
+    "eligible_functional_cases": 18,
+    "functional_passes": 18,
+    "gold_image_matches": 13,
+    "probe_passes": 16,
+    "recommendations": 18,
+    "run": "e5-image-validation-20260912T124154Z",
+    "source": {
+      "locator": "",
+      "path": "results_v5/protocol-v5.0.0/E5/e5-image-validation-20260912T124154Z/derived/functional_metrics.json",
+      "sha256": "601bd6dc1a7c91d64f9e995fe4856d814bc4f64473db83da8c270c9bceb387c3"
+    },
+    "stage": "development",
+    "system": "P2",
+    "undefined_required_probe_cases": 0
+  }
+]
