@@ -17,6 +17,7 @@ from evaluation_v5.isolation_audit import audit_repository
 from . import SCHEMA_VERSION
 from .common import Inputs, RESULTS, file_sha256, read_json, read_rows, safe_path
 from .claims import load_claim_evidence
+from .disposition import apply_confirmatory_dispositions, build_dispositions
 
 CHECKS = {
     1: "Authoritative final experiment freeze",
@@ -208,8 +209,9 @@ def cluster_findings(status: str, environment: dict) -> list[str]:
 def storage_identity_findings(images: list[dict]) -> list[str]:
     findings = []
     for image in images:
-        reference = image.get("immutable_reference", image.get("image_reference", ""))
-        digest = image.get("manifest_digest", image.get("image_digest", ""))
+        reference = (image.get("immutable_reference") or image.get("canonical_resolved_reference")
+                     or image.get("image_reference", ""))
+        digest = image.get("image_digest") or image.get("manifest_digest", "")
         platform = image.get("platform")
         if not re.fullmatch(r"sha256:[0-9a-f]{64}", str(digest)) or not reference.endswith("@" + str(digest)):
             findings.append("MUTABLE_OR_MISSING_IMAGE_DIGEST")
@@ -400,8 +402,24 @@ def inspect(inputs: Inputs, *, isolation: bool = True, historical: bool = True) 
                 "packages": [], "claims": [], "evaluated_claims": [], "research_questions": [],
                 "primary_system": "P2", "confirmatory_status": "UNVERIFIED", "audit_status": "FAIL",
                 "input_integrity_blocked": True,
+                "claim_counts": {"SUPPORTED": 0, "NOT_SUPPORTED": 0, "NOT_EXECUTED": 0},
+                "evidence_dispositions": {
+                    "schema_version": "protocol-v5-evidence-disposition-v1.0.0",
+                    "allowed_dispositions": [], "records": [], "integrity_status": "BLOCKED",
+                    "reason": "Reviewed input integrity failed before candidate content was opened.",
+                },
+                "evaluated_claim_view": {
+                    "schema_version": "protocol-v5-generated-evaluated-claim-view-v1.0.0",
+                    "claims": [], "note": "Input integrity blocked evaluation.",
+                },
+                "criteria": [],
                 "source_inventory": {"path": inputs.lock_path, "sha256": file_sha256(inputs.root / inputs.lock_path)}}
     packages = [validate_package(inputs, p) for p in inputs.lock["packages"]]
+    dispositions = (
+        build_dispositions(inputs)
+        if inputs.lock.get("schema_version") == "protocol-v5-final-audit-inputs-v1.3.0"
+        else None
+    )
     isolation_diagnostic = load_isolation_diagnostic(inputs)
     claim_evidence = None
     claim_evidence_error = None
@@ -421,23 +439,28 @@ def inspect(inputs: Inputs, *, isolation: bool = True, historical: bool = True) 
                                 if p.is_file() and str(p.relative_to(inputs.root)) not in inputs.files)
     failures = input_failures + [{"path": p["path"], "errors": p["errors"]}
                                  for p in packages if p["validation"] != "PASS"]
+    if dispositions is not None:
+        failures.extend(
+            {"candidate_id": row["candidate_id"], "errors": row["integrity"]["errors"]}
+            for row in dispositions["records"] if row["integrity"]["status"] != "PASS"
+        )
     failures.extend({"path": p, "reason": "UNREGISTERED_EVIDENCE"} for p in sorted(unregistered))
     if claim_evidence_error:
         failures.append(claim_evidence_error)
-    set_check(6, "FAIL" if failures else "PASS", "Original seals and reviewed input bytes checked; failed packages remain preserved.", failures)
+    set_check(6, "FAIL" if failures else "PASS",
+              "Original seals, reviewed input bytes, candidate package digests, grouped artifact digests, and conditional supersession were checked; failed packages remain preserved.",
+              failures, [dispositions["candidate_inventory"]] if dispositions is not None else [])
 
-    freezes = [p for p in inputs.files if p.startswith(RESULTS + "/freezes/") and p.endswith("/freeze-manifest.json")]
+    freeze = inputs.lock.get("authoritative_freeze")
     authority = None
-    if not freezes:
-        set_check(1, "UNVERIFIED", "No authoritative final freeze exists. frozen-configuration.json is a design snapshot, not a FROZEN envelope.")
-    elif len(freezes) != 1:
-        set_check(1, "FAIL", "Multiple final freezes require an explicit reviewed authority selection.")
+    if not isinstance(freeze, str):
+        set_check(1, "UNVERIFIED", "No explicit authoritative final freeze is selected in the reviewed inventory.")
     else:
         try:
-            authority = validate_freeze_manifest(inputs.json(freezes[0]))
-            if Path(freezes[0]).parent.name != authority["freeze_id"]:
+            authority = validate_freeze_manifest(inputs.json(freeze))
+            if Path(freeze).parent.name != authority["freeze_id"]:
                 raise ValueError("freeze directory identity mismatch")
-            set_check(1, "PASS", "Production freeze envelope validates; collection chronology still requires custody records.", sources=[inputs.ref(freezes[0])])
+            set_check(1, "PASS", "The inventory-selected global production freeze validates; separately governed freezes remain explicitly incompatible.", sources=[inputs.ref(freeze)])
         except Exception as exc:
             set_check(1, "FAIL", _safe_error(exc, inputs.root))
     set_check(2, "UNVERIFIED", "Confirmatory split and safe custodian checksum attestation are unavailable; no sealed file was opened.")
@@ -562,10 +585,23 @@ def inspect(inputs: Inputs, *, isolation: bool = True, historical: bool = True) 
             placeholder_errors.extend({"path": ref, "locator": c} for c in placeholder_findings(data))
     set_check(10, "FAIL" if any(p["status"] == "FAIL" for p in privacy) else "PASS",
               "Direct-identifier checks applied to available human-study files. No participant sessions were observed; public aggregate reports exclude pseudonyms.", privacy)
-    set_check(11, "FAIL" if cluster_errors else "NOT_APPLICABLE",
-              "No observed Kubernetes trials exist; readiness identities are not hardware measurements.", cluster_errors)
-    set_check(12, "FAIL" if storage_errors else "NOT_APPLICABLE",
-              "No storage measurements exist. Functional-probe host metadata does not establish an image platform or storage reuse.", storage_errors)
+    observed_cluster = any(
+        p["kind"] in ("resource_envelope", "resource_efficiency") and p["status"] == "OBSERVED"
+        for p in packages
+    )
+    bounded_cluster = dispositions is not None and any(
+        row["candidate_id"].startswith("E4_ORBSTACK")
+        and row["eligibility"] == "INCOMPATIBLE_FREEZE"
+        and row["integrity"]["status"] == "PASS"
+        for row in dispositions["records"]
+    )
+    observed_storage = any(
+        p["kind"] == "image_storage" and p["status"] == "OBSERVED" for p in packages
+    )
+    set_check(11, "FAIL" if cluster_errors else "PASS" if observed_cluster or bounded_cluster else "NOT_APPLICABLE",
+              "Observed cluster identities and original package seals were validated where applicable; the OrbStack packages remain separately governed and globally incompatible.", cluster_errors)
+    set_check(12, "FAIL" if storage_errors else "PASS" if observed_storage else "NOT_APPLICABLE",
+              "Observed storage image references, immutable digests, platforms, and source manifests were validated where present.", storage_errors)
     synthetic_scan = (
         claim_evidence["synthetic_origin_scan"]
         if claim_evidence is not None
@@ -620,7 +656,7 @@ def inspect(inputs: Inputs, *, isolation: bool = True, historical: bool = True) 
         experiment_states = projected["experiment_states"]
         claim_counts = projected["claim_counts"]
         claim_sources = projected["claim_evidence_sources"]
-    return {"schema_version": SCHEMA_VERSION, "protocol_version": "5.0.0", "checks": list(checks.values()),
+    result = {"schema_version": SCHEMA_VERSION, "protocol_version": "5.0.0", "checks": list(checks.values()),
             "packages": packages, "claims": claims, "evaluated_claims": evaluated, "research_questions": research_questions,
             "primary_system": "P2", "confirmatory_status": confirmatory_status,
             "experiment_states": experiment_states, "claim_counts": claim_counts,
@@ -630,3 +666,8 @@ def inspect(inputs: Inputs, *, isolation: bool = True, historical: bool = True) 
             "source_inventory": inputs.ref(inputs.lock_path) if inputs.lock_path in inputs.files else
             {"path": inputs.lock_path, "sha256": file_sha256(inputs.root / inputs.lock_path)},
             "audit_status": "FAIL" if any(c["verdict"] == "FAIL" for c in checks.values()) else "INCOMPLETE"}
+    return (
+        apply_confirmatory_dispositions(inputs, result, dispositions)
+        if dispositions is not None
+        else result
+    )

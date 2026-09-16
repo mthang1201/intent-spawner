@@ -73,6 +73,19 @@ def defense_rows(analysis: dict, format_source=None) -> list[list]:
     ]
 
 
+def criterion_audit_rows(analysis: dict) -> list[list]:
+    return [[
+        row["criterion"], row["experiment"], row["hypothesis"], row["metric_definition"],
+        row["independent_sample_count"] if row["independent_sample_count"] is not None else "N/A",
+        row["semantic_family_count"] if row["semantic_family_count"] is not None else "N/A",
+        row["repetitions"] if row["repetitions"] is not None else "N/A",
+        _compact(row["estimate_ci_effect"]), row["global_decision"],
+        row["evidence_classification"], row["execution_status"],
+        (row["artifact"] or "N/A") + ("; SHA-256 " + row["package_checksum"] if row["package_checksum"] else ""),
+        row["source_commit"] or "N/A", row["frozen_execution_sha"] or "N/A", row["limitations"],
+    ] for row in analysis.get("criteria", [])]
+
+
 def render_report(inputs: Inputs, audit: dict, analysis: dict, figures: dict, target: Path) -> str:
     def source(ref):
         relative = ref["path"]
@@ -120,6 +133,12 @@ def render_report(inputs: Inputs, audit: dict, analysis: dict, figures: dict, ta
                ["P2", "Structured Intent + hybrid retrieval + deterministic constraints/ranking; main proposed method."],
                ["P3", "P2 plus grounded LLM reranking; authenticated state: " + audit.get("p3_state", "UNSUPPORTED") + "."]], ["System", "Definition"]),
         "B0 has no MRR, nDCG or Hit@K outcome. Artifact names containing 'observed-run' do not determine execution status.", "",
+        "## Candidate evidence dispositions", "",
+        table([[row["candidate_id"], row["experiment"], row["source_commit"] or "N/A",
+                row["eligibility"], row["integrity"]["status"], row["reason"]]
+               for row in audit.get("evidence_dispositions", {}).get("records", [])],
+              ["Candidate", "Experiment", "Source commit", "Disposition", "Integrity", "Reason"]),
+        "The older E5 storage package is SUPERSEDED only because the compatible rerun passed checksum and provenance validation. If that rerun fails, the rule resolves the older package to INCOMPATIBLE_FREEZE; it is never selected as global confirmatory evidence.", "",
         "## Experiment matrix and sample boundaries", "",
         table([[row["experiment"], row["requirement_id"], row["status"], row["candidate_count"],
                 row["eligible_candidate_count"], "; ".join(row["reason_codes"]) or "—"]
@@ -133,7 +152,7 @@ def render_report(inputs: Inputs, audit: dict, analysis: dict, figures: dict, ta
             plan = inputs.json(p["path"] + "/plan.json")
             lines += [f"E4 **design only**: {plan['family_count']} workload families × {len(plan['conditions'])} conditions × {plan['repetitions']} repetition blocks = {plan['primary_trial_count']} planned trials. Zero observed hardware trials. " + source(inputs.ref(p["path"] + "/plan.json", "/trials")), ""]
     lines += ["## Methods and statistical boundaries", "",
-        "Only a validated claim package can produce SUPPORTED or NOT_SUPPORTED. Its exact metric values, confidence intervals, counts, effect sizes, tests, reason codes, and lineage are retained in the evaluated registry linked above.", "",
+        "Only eligible checksum/provenance-valid confirmatory evidence evaluated against the frozen predicate can produce SUPPORTED or NOT_SUPPORTED. Nonconfirmatory, historical, incompatible, incomplete, or unverified evidence may descriptively support or contradict a criterion but cannot change the frozen global decision.", "",
         "The workload family is the semantic unit for offline and resource inference. Variants and repeated executions describe within-family robustness or stability, not additional independent accuracy samples. E3 uses its frozen participant/task pairing contract. B0 never produces ranking metrics.", "",
         "Development, historical, synthetic, dry-run, incomplete, and invalid packages may remain visible for traceability, but they cannot be promoted to confirmatory claim evidence.", "",
         "## Exact available development observations", ""]
@@ -202,6 +221,8 @@ def render_report(inputs: Inputs, audit: dict, analysis: dict, figures: dict, ta
         "### P3 state", "",
         "Authenticated P3 state: **" + audit.get("p3_state", "UNSUPPORTED") + "**. Historical P3 material remains formative unless the selected claim package contains a validated retained-gate confirmatory decision. " + source(inputs.ref("docs/evaluation/P3_INCREMENTAL_EVALUATION_V1.md")), "",
         "## Defense-summary table", "", table(defense_rows(analysis, source), ["Professor criterion", "Experiment", "Metric", "Observed result", "Evidence reference"]),
+        "## Detailed criterion audit", "",
+        table(criterion_audit_rows(analysis), ["Criterion", "Experiment", "Hypothesis", "Metric definition", "Independent N", "Family N", "Repetitions", "Estimate / CI / effect", "Global decision", "Evidence class", "Execution status", "Artifact / checksum", "Source commit", "Frozen SHA", "Limitation"]),
         "## Seventeen audit checks", "",
         table([[c["id"], c["title"], c["verdict"], c["reason"]] for c in audit["checks"]], ["ID", "Requirement", "Verdict", "Evidence boundary"]),
         "Detailed per-file errors, source hashes, privacy results and provenance differences are in the generated validation/audit JSON. An INCOMPLETE or FAIL audit does not authorize empirical claims.", "",
@@ -224,7 +245,7 @@ def render_report(inputs: Inputs, audit: dict, analysis: dict, figures: dict, ta
         "```bash\nexport V5_RUN_ID=review-20260907-01\nmake v5-validate\nmake v5-analyze\nmake v5-figures\nmake v5-audit\n```", "",
         "Each command creates only missing stages under `results_v5/protocol-v5.0.0/final-audit/<run-id>/`; completed stages are checksum-verified before reuse. A changed input lock or implementation requires a new ID. `make v5-audit` writes the report before returning nonzero for integrity failures. Valid NOT_EXECUTED evidence does not itself cause a nonzero exit.", "",
         "No reproduction command runs recommenders, LLM providers, container probes, registry pulls or Kubernetes jobs. All raw inputs are the privacy-reviewed allowlisted files. Legacy absolute references resolve only through checksum-bound mappings; they are never edited. Missing external evidence remains unavailable.", "",
-        "The run contains validation findings, regenerated derived artifacts, JSON/CSV tables, deterministic SVGs, exact reproduction comparisons, manifests and SHA256SUMS. Stage manifests bind input inventory, code hashes and runtime. Regeneration ignores only `created_at_utc` and `git_revision` when comparing status-manifest semantics; all empirical values and other fields must match. Figures use deterministic SVG metadata and fresh output directories.", "",
+        "The run contains validation findings, regenerated derived artifacts, JSON/CSV tables, deterministic SVGs, exact reproduction comparisons, manifests and SHA256SUMS. Deterministic artifacts are compared byte-for-byte. Intentionally nondeterministic provenance fields—including run IDs, timestamps, checkout revision metadata, environment identity, and stage manifests containing them—are enumerated and compared separately rather than being claimed byte-identical. Empirical values and all other deterministic fields must match.", "",
         "Read-only historical validation and focused tests:", "",
         "```bash\n.venv/bin/python scripts/validate-portable-evidence.py\n.venv/bin/python -m evaluation_v5.isolation_audit\n.venv/bin/python -m pytest -q tests/test_protocol_v5_final_audit.py\n```", ""]
     return "\n".join(lines)
@@ -244,6 +265,9 @@ def figures(inputs: Inputs, analysis: dict, analysis_root: Path, output: Path) -
     defense = defense_rows(analysis)
     write_json(output / "tables/defense-summary.json", defense)
     write_bytes(output / "tables/defense-summary.md", table(defense, ["Professor criterion", "Experiment", "Metric", "Observed result", "Evidence reference"]).encode())
+    detailed = criterion_audit_rows(analysis)
+    write_json(output / "tables/criterion-audit.json", analysis.get("criteria", []))
+    write_bytes(output / "tables/criterion-audit.md", table(detailed, ["Criterion", "Experiment", "Hypothesis", "Metric definition", "Independent N", "Family N", "Repetitions", "Estimate / CI / effect", "Global decision", "Evidence class", "Execution status", "Artifact / checksum", "Source commit", "Frozen SHA", "Limitation"]).encode())
     comparisons = []
     for entry in analysis["packages"]:
         if entry.get("generated_analysis"):
@@ -303,7 +327,7 @@ def figures(inputs: Inputs, analysis: dict, analysis_root: Path, output: Path) -
             plt.close(figure)
     result = {"schema_version": "protocol-v5-final-figures-v1.0.0", "comparisons": comparisons,
               "status": "FAIL" if any(c["status"] == "FAIL" for c in comparisons) else "PASS",
-              "generated_tables": ["functional-results.json", "defense-summary.json"],
+              "generated_tables": ["functional-results.json", "defense-summary.json", "criterion-audit.json"],
               "source": "Authenticated regenerated derived artifacts; no raw observation or collector access by renderers."}
     write_json(output / "figure-regeneration.json", result)
     return result

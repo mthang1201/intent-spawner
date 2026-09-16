@@ -1,0 +1,65 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "protocol-v5-evidence-disposition-v1.schema.json",
+  "title": "Protocol-v5 final evidence disposition",
+  "type": "object",
+  "required": ["schema_version", "allowed_dispositions", "records"],
+  "properties": {
+    "schema_version": {"const": "protocol-v5-evidence-disposition-v1.0.0"},
+    "allowed_dispositions": {
+      "type": "array",
+      "minItems": 9,
+      "maxItems": 9,
+      "uniqueItems": true,
+      "items": {
+        "enum": [
+          "ACCEPTED_CONFIRMATORY",
+          "ACCEPTED_OBSERVED_NON_CONFIRMATORY",
+          "HISTORICAL_FORMATIVE",
+          "INCOMPATIBLE_FREEZE",
+          "SUPERSEDED",
+          "INCOMPLETE",
+          "NOT_EXECUTED",
+          "REJECTED_INTEGRITY",
+          "UNVERIFIED"
+        ]
+      }
+    },
+    "records": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "candidate_id", "experiment", "source_ref", "source_commit",
+          "package_path", "package_checksum", "artifact_checksums",
+          "recorded_execution_sha", "freeze_identity", "dataset_identity",
+          "configuration_identity", "environment_identity", "timestamps",
+          "counts", "custody_status", "execution_status", "stage",
+          "eligibility", "reason", "integrity"
+        ],
+        "properties": {
+          "eligibility": {"$ref": "#/$defs/disposition"},
+          "package_checksum": {"type": ["string", "null"]},
+          "package_path": {"type": ["string", "null"]},
+          "reason": {"type": "string", "minLength": 1}
+        }
+      }
+    }
+  },
+  "$defs": {
+    "disposition": {
+      "enum": [
+        "ACCEPTED_CONFIRMATORY",
+        "ACCEPTED_OBSERVED_NON_CONFIRMATORY",
+        "HISTORICAL_FORMATIVE",
+        "INCOMPATIBLE_FREEZE",
+        "SUPERSEDED",
+        "INCOMPLETE",
+        "NOT_EXECUTED",
+        "REJECTED_INTEGRITY",
+        "UNVERIFIED"
+      ]
+    }
+  },
+  "additionalProperties": true
+}
