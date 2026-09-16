@@ -15,7 +15,7 @@ from typing import Any
 from evaluation_v4.dataset import file_sha256
 
 ROOT = Path(__file__).resolve().parents[2]
-LOCK = "benchmarks_v5/protocol-v5-final-audit-inputs-v4.json"
+LOCK = "benchmarks_v5/protocol-v5-final-audit-inputs-v5.json"
 RESULTS = "results_v5/protocol-v5.0.0"
 REGISTRY = "benchmarks_v5/protocol-v5-claim-registry-v1.1.yaml"
 
