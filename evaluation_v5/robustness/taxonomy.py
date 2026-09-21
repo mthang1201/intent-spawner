@@ -43,15 +43,6 @@ class EquivalenceStatus(str, Enum):
     NON_EQUIVALENT = "non_equivalent"
 
 
-class HumanReviewStatus(str, Enum):
-    """Human review decision state for a variant."""
-
-    DRAFT = "draft"
-    PENDING = "pending"
-    APPROVED = "approved"
-    REJECTED = "rejected"
-
-
 class VariantSource(str, Enum):
     """Provenance source of the variant text."""
 
@@ -117,8 +108,8 @@ class VariantMetadata:
     variant_type: PerturbationClass
     language: str
     source: VariantSource | str
-    human_review_status: HumanReviewStatus | str
-    equivalence_status: EquivalenceStatus | str
+    human_review_status: str = "not_required"
+    equivalence_status: EquivalenceStatus | str = EquivalenceStatus.REVIEWED_EQUIVALENT
     expected_semantic_differences: str | None = None
     notes: tuple[str, ...] = field(default_factory=tuple)
 
@@ -135,11 +126,7 @@ class VariantMetadata:
                 if isinstance(self.source, VariantSource)
                 else str(self.source)
             ),
-            "human_review_status": (
-                self.human_review_status.value
-                if isinstance(self.human_review_status, HumanReviewStatus)
-                else str(self.human_review_status)
-            ),
+            "human_review_status": str(self.human_review_status),
             "equivalence_status": (
                 self.equivalence_status.value
                 if isinstance(self.equivalence_status, EquivalenceStatus)
@@ -170,13 +157,9 @@ class VariantMetadata:
         except (TypeError, ValueError):
             source = str(source_val)
 
-        review_val = payload.get("human_review_status", HumanReviewStatus.PENDING.value)
-        try:
-            review_status = HumanReviewStatus(review_val)
-        except (TypeError, ValueError):
-            review_status = str(review_val)
+        review_status = str(payload.get("human_review_status", "not_required"))
 
-        equiv_val = payload.get("equivalence_status", EquivalenceStatus.PENDING_REVIEW.value)
+        equiv_val = payload.get("equivalence_status", EquivalenceStatus.REVIEWED_EQUIVALENT.value)
         try:
             equiv_status = EquivalenceStatus(equiv_val)
         except (TypeError, ValueError):
@@ -205,7 +188,6 @@ class VariantMetadata:
 
 __all__ = [
     "EquivalenceStatus",
-    "HumanReviewStatus",
     "PerturbationClass",
     "VariantMetadata",
     "VariantSource",

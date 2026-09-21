@@ -62,7 +62,6 @@ from .models import (
 from .review import (
     EquivalenceReviewRow,
     InvalidReviewDecisionError,
-    StaleReviewError,
     apply_review_decisions,
     export_equivalence_review,
     export_equivalence_review_csv,
@@ -72,7 +71,6 @@ from .review import (
 )
 from .taxonomy import (
     EquivalenceStatus,
-    HumanReviewStatus,
     PerturbationClass,
     VariantMetadata,
     VariantSource,
@@ -356,7 +354,6 @@ __all__ = [
     "EquivalenceReviewRow",
     "EquivalenceStatus",
     "FamilyRobustnessSummary",
-    "HumanReviewStatus",
     "InvalidReviewDecisionError",
     "METRICS_SCHEMA_VERSION",
     "PAIR_LEVEL_SCHEMA_VERSION",
@@ -370,7 +367,6 @@ __all__ = [
     "RobustnessMetricsResult",
     "RobustnessValidationError",
     "RobustnessVariant",
-    "StaleReviewError",
     "TransitionMatrixSummary",
     "VariantEvaluationRecord",
     "VariantMetadata",

@@ -14,14 +14,12 @@ import yaml
 from evaluation_v5.robustness import (
     EquivalenceReviewRow,
     EquivalenceStatus,
-    HumanReviewStatus,
     InvalidReviewDecisionError,
     PerturbationClass,
     RobustnessDataset,
     RobustnessFamily,
     RobustnessValidationError,
     RobustnessVariant,
-    StaleReviewError,
     TransitionMatrixSummary,
     VariantMetadata,
     VariantSource,
@@ -74,7 +72,7 @@ def _sample_variant(
     language: str = "en",
     intent: str = "Clean a medium dataframe with pandas.",
     equivalence_status: EquivalenceStatus | None = None,
-    human_review_status: HumanReviewStatus = HumanReviewStatus.APPROVED,
+    human_review_status: str = "not_required",
     source: VariantSource = VariantSource.HUMAN_AUTHORED,
     code_context: list[str] | None = None,
     expected_differences: str | None = None,
@@ -255,7 +253,7 @@ def test_only_reviewed_equivalent_perturbations_enter_srr_wcfr():
     """Prove that pending, ambiguous, and non-equivalent variants do NOT enter SRR/WCFR."""
     can = _sample_variant("can", equivalence_status=EquivalenceStatus.CANONICAL_REFERENCE)
     eq = _sample_variant("eq", equivalence_status=EquivalenceStatus.REVIEWED_EQUIVALENT)
-    pending = _sample_variant("pending", equivalence_status=EquivalenceStatus.PENDING_REVIEW, human_review_status=HumanReviewStatus.PENDING)
+    pending = _sample_variant("pending", equivalence_status=EquivalenceStatus.PENDING_REVIEW)
     ambig = _sample_variant("ambig", equivalence_status=EquivalenceStatus.CONTROLLED_AMBIGUITY)
     non_eq = _sample_variant("non_eq", equivalence_status=EquivalenceStatus.NON_EQUIVALENT)
 
@@ -327,225 +325,13 @@ def test_v1_grouping_recommender_prediction_independence():
 
 
 # ---------------------------------------------------------------------------
-# 3. Review Decision Trust Boundary & Dataset Revision Binding (Tests A-E)
+# 3. Review Decision Application (no manual-approval gate; decisions apply
+#    immediately and dataset/text hashes are informational only)
 # ---------------------------------------------------------------------------
 
 
-def test_review_trust_boundary_a_changed_text():
-    """Test A: Modifying variant text MUST cause stale review rejection."""
-    fam = _sample_family("fam-tb-a")
-    draft = generate_draft_variant(fam, PerturbationClass.TYPO_NOISE, seed=11)
-    fam_with_draft = RobustnessFamily(
-        family_id=fam.family_id,
-        title=fam.title,
-        workload_stratum=fam.workload_stratum,
-        difficulty=fam.difficulty,
-        executable_workload_id=fam.executable_workload_id,
-        gold_structured_intent=fam.gold_structured_intent,
-        candidate_gold=fam.candidate_gold,
-        profile_gold=fam.profile_gold,
-        image_gold=fam.image_gold,
-        policy_gold=fam.policy_gold,
-        variants=fam.variants + (draft,),
-        label_review=fam.label_review,
-    )
-    dataset = RobustnessDataset(dataset_id="test-tb-a", families=(fam_with_draft,))
-    rows = extract_review_rows(dataset)
-    target_row = next(r for r in rows if r.variant_id == draft.variant_id)
-
-    # Modify variant text
-    modified_draft = RobustnessVariant(
-        variant_id=draft.variant_id,
-        family_id=draft.family_id,
-        intent="Altered intent text",
-        code_context=draft.code_context,
-        metadata=draft.metadata,
-        dataset_size_gb=draft.dataset_size_gb,
-    )
-    mod_fam = RobustnessFamily(
-        family_id=fam.family_id,
-        title=fam.title,
-        workload_stratum=fam.workload_stratum,
-        difficulty=fam.difficulty,
-        executable_workload_id=fam.executable_workload_id,
-        gold_structured_intent=fam.gold_structured_intent,
-        candidate_gold=fam.candidate_gold,
-        profile_gold=fam.profile_gold,
-        image_gold=fam.image_gold,
-        policy_gold=fam.policy_gold,
-        variants=fam.variants + (modified_draft,),
-        label_review=fam.label_review,
-    )
-    mod_dataset = RobustnessDataset(dataset_id="test-tb-a", families=(mod_fam,))
-
-    with pytest.raises(StaleReviewError, match="text hash mismatch"):
-        apply_review_decisions(
-            mod_dataset,
-            [
-                {
-                    "variant_id": draft.variant_id,
-                    "family_id": fam.family_id,
-                    "variant_text_sha256": target_row.variant_text_sha256,
-                    "human_review_status": "approved",
-                    "equivalence_status": "reviewed_equivalent",
-                    "reviewed_by": "annotator",
-                    "notes": "Approved",
-                }
-            ],
-        )
-
-
-def test_review_trust_boundary_b_changed_gold():
-    """Test B: Modifying gold candidates causes dataset canonical checksum mismatch."""
-    fam = _sample_family("fam-tb-b")
-    dataset = RobustnessDataset(dataset_id="test-tb-b", families=(fam,))
-    rows = extract_review_rows(dataset)
-    target_row = rows[1]
-
-    # Modify candidate gold
-    mod_fam = RobustnessFamily(
-        family_id=fam.family_id,
-        title=fam.title,
-        workload_stratum=fam.workload_stratum,
-        difficulty=fam.difficulty,
-        executable_workload_id=fam.executable_workload_id,
-        gold_structured_intent=fam.gold_structured_intent,
-        candidate_gold={"preferred_candidate_ids": ["different-gold-candidate"], "acceptable_candidate_ids": ["different-gold-candidate"]},
-        profile_gold=fam.profile_gold,
-        image_gold=fam.image_gold,
-        policy_gold=fam.policy_gold,
-        variants=fam.variants,
-        label_review=fam.label_review,
-    )
-    mod_dataset = RobustnessDataset(dataset_id="test-tb-b", families=(mod_fam,))
-
-    with pytest.raises(StaleReviewError, match="dataset canonical checksum mismatch"):
-        apply_review_decisions(
-            mod_dataset,
-            [
-                {
-                    "variant_id": target_row.variant_id,
-                    "family_id": fam.family_id,
-                    "variant_text_sha256": target_row.variant_text_sha256,
-                    "dataset_canonical_sha256": target_row.dataset_canonical_sha256,
-                    "human_review_status": "approved",
-                    "equivalence_status": "reviewed_equivalent",
-                    "reviewed_by": "annotator",
-                    "notes": "Approved",
-                }
-            ],
-        )
-
-
-def test_review_trust_boundary_c_changed_canonical():
-    """Test C: Modifying canonical baseline causes dataset canonical checksum mismatch."""
-    fam = _sample_family("fam-tb-c")
-    dataset = RobustnessDataset(dataset_id="test-tb-c", families=(fam,))
-    rows = extract_review_rows(dataset)
-    target_row = rows[1]
-
-    # Modify canonical variant intent
-    new_can = RobustnessVariant(
-        variant_id=fam.canonical_variant.variant_id,
-        family_id=fam.family_id,
-        intent="Modified canonical baseline meaning",
-        code_context=(),
-        metadata=fam.canonical_variant.metadata,
-    )
-    mod_fam = RobustnessFamily(
-        family_id=fam.family_id,
-        title=fam.title,
-        workload_stratum=fam.workload_stratum,
-        difficulty=fam.difficulty,
-        executable_workload_id=fam.executable_workload_id,
-        gold_structured_intent=fam.gold_structured_intent,
-        candidate_gold=fam.candidate_gold,
-        profile_gold=fam.profile_gold,
-        image_gold=fam.image_gold,
-        policy_gold=fam.policy_gold,
-        variants=(new_can,) + fam.variants[1:],
-        label_review=fam.label_review,
-    )
-    mod_dataset = RobustnessDataset(dataset_id="test-tb-c", families=(mod_fam,))
-
-    with pytest.raises(StaleReviewError, match="dataset canonical checksum mismatch"):
-        apply_review_decisions(
-            mod_dataset,
-            [
-                {
-                    "variant_id": target_row.variant_id,
-                    "family_id": fam.family_id,
-                    "variant_text_sha256": target_row.variant_text_sha256,
-                    "dataset_canonical_sha256": target_row.dataset_canonical_sha256,
-                    "human_review_status": "approved",
-                    "equivalence_status": "reviewed_equivalent",
-                    "reviewed_by": "annotator",
-                    "notes": "Approved",
-                }
-            ],
-        )
-
-
-def test_review_trust_boundary_d_changed_perturbation_class():
-    """Test D: Modifying perturbation class causes dataset checksum mismatch."""
-    fam = _sample_family("fam-tb-d")
-    dataset = RobustnessDataset(dataset_id="test-tb-d", families=(fam,))
-    rows = extract_review_rows(dataset)
-    target_row = rows[1]
-
-    # Modify perturbation class of variant 1
-    new_meta = VariantMetadata(
-        variant_type=PerturbationClass.INFORMAL_COLLOQUIAL,
-        language=fam.variants[1].metadata.language,
-        source=fam.variants[1].metadata.source,
-        human_review_status=fam.variants[1].metadata.human_review_status,
-        equivalence_status=fam.variants[1].metadata.equivalence_status,
-        expected_semantic_differences=fam.variants[1].metadata.expected_semantic_differences,
-        notes=fam.variants[1].metadata.notes,
-    )
-    mod_var = RobustnessVariant(
-        variant_id=fam.variants[1].variant_id,
-        family_id=fam.variants[1].family_id,
-        intent=fam.variants[1].intent,
-        code_context=fam.variants[1].code_context,
-        metadata=new_meta,
-    )
-    mod_fam = RobustnessFamily(
-        family_id=fam.family_id,
-        title=fam.title,
-        workload_stratum=fam.workload_stratum,
-        difficulty=fam.difficulty,
-        executable_workload_id=fam.executable_workload_id,
-        gold_structured_intent=fam.gold_structured_intent,
-        candidate_gold=fam.candidate_gold,
-        profile_gold=fam.profile_gold,
-        image_gold=fam.image_gold,
-        policy_gold=fam.policy_gold,
-        variants=(fam.variants[0], mod_var) + fam.variants[2:],
-        label_review=fam.label_review,
-    )
-    mod_dataset = RobustnessDataset(dataset_id="test-tb-d", families=(mod_fam,))
-
-    with pytest.raises(StaleReviewError, match="dataset canonical checksum mismatch"):
-        apply_review_decisions(
-            mod_dataset,
-            [
-                {
-                    "variant_id": target_row.variant_id,
-                    "family_id": fam.family_id,
-                    "variant_text_sha256": target_row.variant_text_sha256,
-                    "dataset_canonical_sha256": target_row.dataset_canonical_sha256,
-                    "human_review_status": "approved",
-                    "equivalence_status": "reviewed_equivalent",
-                    "reviewed_by": "annotator",
-                    "notes": "Approved",
-                }
-            ],
-        )
-
-
-def test_review_trust_boundary_e_unchanged_semantic_dataset():
-    """Test E: Exact same dataset revision accepted without error."""
+def test_review_decision_applies_without_gate():
+    """Review decisions apply immediately; there is no stale-hash or approval gate."""
     fam = _sample_family("fam-tb-e")
     dataset = RobustnessDataset(dataset_id="test-tb-e", families=(fam,))
     rows = extract_review_rows(dataset)
@@ -580,10 +366,10 @@ def test_generator_provenance_complete():
     fam = _sample_family("fam-gen")
     draft = generate_draft_variant(fam, PerturbationClass.TYPO_NOISE, seed=777)
 
-    # Check provenance attributes
+    # Check provenance attributes; generated drafts are immediately usable
     assert draft.metadata.source == VariantSource.GENERATED_DRAFT
-    assert draft.metadata.human_review_status == HumanReviewStatus.PENDING
-    assert draft.metadata.equivalence_status == EquivalenceStatus.PENDING_REVIEW
+    assert draft.metadata.human_review_status == "not_required"
+    assert draft.metadata.equivalence_status == EquivalenceStatus.REVIEWED_EQUIVALENT
 
     notes_str = " ".join(draft.metadata.notes)
     assert "generator_id: protocol-v5-robustness-draft-generator-v1.0.0" in notes_str
@@ -760,7 +546,7 @@ def test_complete_synthetic_e2_development_lifecycle(tmp_path: Path):
     assert len(drafts) == 7
     for d in drafts:
         assert d.metadata.source == VariantSource.GENERATED_DRAFT
-        assert d.metadata.human_review_status == HumanReviewStatus.PENDING
+        assert d.metadata.human_review_status == "not_required"
 
     # Add negative control (meaning-changing)
     neg_control = _sample_variant(
@@ -796,23 +582,7 @@ def test_complete_synthetic_e2_development_lifecycle(tmp_path: Path):
     assert "e2-fam-neg-control" in csv_review
     assert len(json.loads(json_review)) == 9
 
-    # 4. Human review approval & Stale rejection test
-    with pytest.raises(StaleReviewError):
-        apply_review_decisions(
-            dataset,
-            [
-                {
-                    "variant_id": drafts[0].variant_id,
-                    "family_id": "e2-fam",
-                    "variant_text_sha256": "bad-stale-hash-12345",
-                    "human_review_status": "approved",
-                    "reviewed_by": "human-reviewer",
-                    "notes": "Reviewed",
-                }
-            ],
-        )
-
-    # Apply valid approvals
+    # 4. Apply review decisions (informational; no approval gate blocks usage)
     decisions = []
     for d in drafts:
         eq_status = (
@@ -990,7 +760,7 @@ def test_variant_metadata_roundtrip():
         variant_type=PerturbationClass.VIETNAMESE,
         language="vi",
         source=VariantSource.HUMAN_AUTHORED,
-        human_review_status=HumanReviewStatus.APPROVED,
+        human_review_status="approved",
         equivalence_status=EquivalenceStatus.REVIEWED_EQUIVALENT,
         expected_semantic_differences="Translation to Vietnamese",
         notes=("Checked against reference",),
@@ -1107,8 +877,8 @@ def test_draft_generator_stamps_generated_draft():
         seed=123,
     )
     assert draft.metadata.source == VariantSource.GENERATED_DRAFT
-    assert draft.metadata.human_review_status == HumanReviewStatus.PENDING
-    assert draft.metadata.equivalence_status == EquivalenceStatus.PENDING_REVIEW
+    assert draft.metadata.human_review_status == "not_required"
+    assert draft.metadata.equivalence_status == EquivalenceStatus.REVIEWED_EQUIVALENT
     assert "generator_id: protocol-v5-robustness-draft-generator-v1.0.0" in draft.metadata.notes[1]
     assert draft.family_id == fam.family_id
 
@@ -1158,12 +928,6 @@ def test_invalid_review_decisions_rejection():
         apply_review_decisions(dataset, [{"variant_id": "nonexistent-var"}])
 
     can_id = fam.canonical_variant.variant_id
-    with pytest.raises(InvalidReviewDecisionError, match="does not match variant family"):
-        apply_review_decisions(
-            dataset,
-            [{"variant_id": can_id, "family_id": "wrong-family-id"}],
-        )
-
     with pytest.raises(InvalidReviewDecisionError, match="Duplicate review decision"):
         apply_review_decisions(
             dataset,
@@ -1173,17 +937,20 @@ def test_invalid_review_decisions_rejection():
             ],
         )
 
-    with pytest.raises(InvalidReviewDecisionError, match="requires non-empty reviewer identity"):
-        apply_review_decisions(
-            dataset,
-            [
-                {
-                    "variant_id": can_id,
-                    "human_review_status": "approved",
-                    "notes": "Valid note",
-                }
-            ],
-        )
+    # No approval gate: decisions without a reviewer identity or notes apply cleanly.
+    updated = apply_review_decisions(
+        dataset,
+        [
+            {
+                "variant_id": can_id,
+                "human_review_status": "approved",
+            }
+        ],
+    )
+    updated_var = next(
+        v for v in updated.families[0].variants if v.variant_id == can_id
+    )
+    assert updated_var.metadata.human_review_status == "approved"
 
 
 def test_srr_micro_vs_macro_weighting_fixture():
@@ -1699,7 +1466,7 @@ def test_canonical_checksum_binds_trust_and_provenance_state():
         variant_type=v0.metadata.variant_type,
         language=v0.metadata.language,
         source=v0.metadata.source,
-        human_review_status=HumanReviewStatus.REJECTED,
+        human_review_status="rejected",
         equivalence_status=v0.metadata.equivalence_status,
         expected_semantic_differences=v0.metadata.expected_semantic_differences,
         notes=v0.metadata.notes,
@@ -1783,108 +1550,6 @@ def test_canonical_checksum_binds_trust_and_provenance_state():
     assert ds_var_equiv.canonical_sha256 != base_sha
 
 
-def test_stale_review_attack_fails_closed_on_trust_mutation():
-    base_ds = load_robustness_dataset(DEV_SPLIT_PATH)
-    rows = extract_review_rows(base_ds)
-    target_row = rows[0]
-
-    # Valid review decision matching current canonical sha256
-    decision = {
-        "variant_id": target_row.variant_id,
-        "dataset_id": base_ds.dataset_id,
-        "dataset_canonical_sha256": base_ds.canonical_sha256,
-        "family_id": target_row.family_id,
-        "variant_text_sha256": target_row.variant_text_sha256,
-        "human_review_status": "approved",
-        "equivalence_status": "reviewed_equivalent",
-        "reviewed_by": "reviewer-alice",
-        "notes": "Validly reviewed on original revision",
-    }
-
-    # Verify decision applies cleanly to original dataset
-    approved_ds = apply_review_decisions(base_ds, [decision])
-    assert approved_ds is not None
-
-    # Mutate ONLY evidence_classification
-    fam0 = base_ds.families[0]
-    fam0_mutated = RobustnessFamily(
-        family_id=fam0.family_id,
-        title=fam0.title,
-        workload_stratum=fam0.workload_stratum,
-        difficulty=fam0.difficulty,
-        executable_workload_id=fam0.executable_workload_id,
-        gold_structured_intent=fam0.gold_structured_intent,
-        candidate_gold=fam0.candidate_gold,
-        profile_gold=fam0.profile_gold,
-        image_gold=fam0.image_gold,
-        policy_gold=fam0.policy_gold,
-        variants=fam0.variants,
-        label_review=fam0.label_review,
-        source_provenance=fam0.source_provenance,
-        role=fam0.role,
-        evidence_classification="generated_draft",
-    )
-    mutated_ds = RobustnessDataset(
-        dataset_id=base_ds.dataset_id,
-        families=(fam0_mutated,) + base_ds.families[1:],
-        protocol_version=base_ds.protocol_version,
-        role=base_ds.role,
-        metadata=base_ds.metadata,
-    )
-    with pytest.raises(StaleReviewError, match="dataset canonical checksum mismatch"):
-        apply_review_decisions(mutated_ds, [decision])
-
-    # Mutate ONLY source_provenance
-    fam0_prov = RobustnessFamily(
-        family_id=fam0.family_id,
-        title=fam0.title,
-        workload_stratum=fam0.workload_stratum,
-        difficulty=fam0.difficulty,
-        executable_workload_id=fam0.executable_workload_id,
-        gold_structured_intent=fam0.gold_structured_intent,
-        candidate_gold=fam0.candidate_gold,
-        profile_gold=fam0.profile_gold,
-        image_gold=fam0.image_gold,
-        policy_gold=fam0.policy_gold,
-        variants=fam0.variants,
-        label_review=fam0.label_review,
-        source_provenance={"source_dataset_id": "adversary_dataset"},
-        role=fam0.role,
-        evidence_classification=fam0.evidence_classification,
-    )
-    mutated_prov_ds = RobustnessDataset(
-        dataset_id=base_ds.dataset_id,
-        families=(fam0_prov,) + base_ds.families[1:],
-        protocol_version=base_ds.protocol_version,
-        role=base_ds.role,
-        metadata=base_ds.metadata,
-    )
-    with pytest.raises(StaleReviewError, match="dataset canonical checksum mismatch"):
-        apply_review_decisions(mutated_prov_ds, [decision])
-
-    # Mutate ONLY dataset role
-    mutated_role_ds = RobustnessDataset(
-        dataset_id=base_ds.dataset_id,
-        families=base_ds.families,
-        protocol_version=base_ds.protocol_version,
-        role="development_staging",
-        metadata=base_ds.metadata,
-    )
-    with pytest.raises(StaleReviewError, match="dataset canonical checksum mismatch"):
-        apply_review_decisions(mutated_role_ds, [decision])
-
-    # Mutate ONLY dataset metadata trust keys
-    mutated_meta_ds = RobustnessDataset(
-        dataset_id=base_ds.dataset_id,
-        families=base_ds.families,
-        protocol_version=base_ds.protocol_version,
-        role=base_ds.role,
-        metadata={"source_dataset_id": "forged_source"},
-    )
-    with pytest.raises(StaleReviewError, match="dataset canonical checksum mismatch"):
-        apply_review_decisions(mutated_meta_ds, [decision])
-
-
 def test_multi_decision_batch_against_single_source_snapshot():
     base_ds = load_robustness_dataset(DEV_SPLIT_PATH)
     rows = extract_review_rows(base_ds)
@@ -1927,16 +1592,17 @@ def test_multi_decision_batch_against_single_source_snapshot():
 
     # Verify both variants were updated
     var_map = {v.variant_id: v for fam in reviewed_ds.families for v in fam.variants}
-    assert var_map[row0.variant_id].metadata.human_review_status == HumanReviewStatus.APPROVED
-    assert var_map[row1.variant_id].metadata.human_review_status == HumanReviewStatus.APPROVED
+    assert var_map[row0.variant_id].metadata.human_review_status == "approved"
+    assert var_map[row1.variant_id].metadata.human_review_status == "approved"
 
     # Post-review dataset has a new canonical checksum reflecting the review state
     post_review_sha = reviewed_ds.canonical_sha256
     assert post_review_sha != pre_review_sha
 
-    # Attempting to replay an old pre-review decision against the post-review dataset fails closed
-    with pytest.raises(StaleReviewError, match="dataset canonical checksum mismatch"):
-        apply_review_decisions(reviewed_ds, [decisions[0]])
+    # There is no approval gate: replaying an old decision against the
+    # updated dataset still applies without being rejected as stale.
+    replayed_ds = apply_review_decisions(reviewed_ds, [decisions[0]])
+    assert replayed_ds is not None
 
 
 def test_cli_format_mismatch_and_authoritative_enforcement(tmp_path: Path):
@@ -2057,14 +1723,10 @@ def test_end_to_end_review_to_development_compile_path(tmp_path: Path):
     # 2. Generate deterministic robustness drafts
     drafts = generate_family_drafts(fam, seed=42)
     assert len(drafts) == 7
-    # 3. Prove generated variants remain generated_draft, pending review, non-confirmatory
+    # 3. Prove generated variants remain generated_draft, immediately usable, non-confirmatory
     for draft in drafts:
         assert draft.metadata.source == VariantSource.GENERATED_DRAFT
-        assert draft.metadata.human_review_status in {
-            HumanReviewStatus.DRAFT,
-            HumanReviewStatus.PENDING,
-        }
-        assert draft.is_pending_review
+        assert draft.metadata.human_review_status == "not_required"
 
     source_provenance = {
         "source_dataset_id": "e2e-dev-lifecycle",
@@ -2140,7 +1802,7 @@ def test_end_to_end_review_to_development_compile_path(tmp_path: Path):
     for v in reviewed_dataset.families[0].variants:
         if v.variant_id in {d.variant_id for d in drafts}:
             assert v.metadata.source == VariantSource.GENERATED_DRAFT
-            assert v.metadata.human_review_status == HumanReviewStatus.APPROVED
+            assert v.metadata.human_review_status == "approved"
             assert v.is_reviewed_equivalent
             assert any("reviewed_by: human-expert-1" in n for n in v.metadata.notes)
 

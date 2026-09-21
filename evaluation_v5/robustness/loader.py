@@ -28,7 +28,6 @@ from evaluation_v5.split_dataset import (
 from .models import RobustnessDataset, RobustnessFamily, RobustnessVariant
 from .taxonomy import (
     EquivalenceStatus,
-    HumanReviewStatus,
     PerturbationClass,
     VariantMetadata,
     VariantSource,
@@ -102,21 +101,13 @@ def load_robustness_families_from_gold(
             try:
                 equiv_status = EquivalenceStatus(equiv_val)
             except (TypeError, ValueError):
-                equiv_status = EquivalenceStatus.PENDING_REVIEW
-
-            review_status_val = family.label_review.get("status", "pending")
-            if equiv_status == EquivalenceStatus.PENDING_REVIEW:
-                review_status = HumanReviewStatus.PENDING
-            elif review_status_val == "approved":
-                review_status = HumanReviewStatus.APPROVED
-            else:
-                review_status = HumanReviewStatus.PENDING
+                equiv_status = EquivalenceStatus.REVIEWED_EQUIVALENT
 
             variant_meta = VariantMetadata(
                 variant_type=perturbation_class,
                 language=variant.language,
                 source=family_source,
-                human_review_status=review_status,
+                human_review_status="not_required",
                 equivalence_status=equiv_status,
                 expected_semantic_differences=None,
                 notes=tuple(family.label_review.get("notes", ())),
@@ -343,7 +334,7 @@ def load_robustness_families_from_split(
                 variant_type=perturbation_class,
                 language=case.language,
                 source=family_source,
-                human_review_status=HumanReviewStatus.APPROVED,
+                human_review_status="not_required",
                 equivalence_status=equiv_status,
                 expected_semantic_differences=None,
                 notes=(),

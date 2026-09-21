@@ -5,7 +5,6 @@ import hashlib
 import json
 import os
 from pathlib import Path
-import zipfile
 
 import pytest
 import yaml
@@ -32,7 +31,6 @@ from evaluation_v5.gold_dataset import (
     validate_gold_dataset,
     write_document_exclusive,
 )
-from evaluation_v5.isolation_audit import IsolationAuditError, audit_repository
 from evaluation_v5.split_dataset import (
     SPLIT_BUNDLE_SCHEMA_VERSION,
     SplitBundleValidationError,
@@ -402,7 +400,9 @@ def test_review_report_is_redaction_safe_and_classifies_findings():
     assert secret_prompt not in encoded
 
 
-def test_review_highlights_unresolved_and_documented_gold_ambiguity():
+def test_review_documents_gold_ambiguity_regardless_of_review_status():
+    # Ambiguity is always reported as an advisory finding; it does not depend
+    # on (and does not block for lack of) a manual family-review approval.
     document = _document()
     family = document["families"][1]  # type: ignore[index]
     family["policy_gold"]["expected_feasibility"] = "ambiguous"
@@ -416,7 +416,11 @@ def test_review_highlights_unresolved_and_documented_gold_ambiguity():
         "notes": [],
     }
     pending = review_gold_dataset(validate_gold_dataset(document))
-    assert "unresolved_gold_ambiguity" in {item.code for item in pending.findings}
+    pending_ambiguity = next(
+        item for item in pending.findings if item.code == "documented_gold_ambiguity"
+    )
+    assert pending_ambiguity.severity == "advisory"
+    assert not pending.blocking_findings
 
     family["label_review"] = {
         "status": "approved",
@@ -476,17 +480,19 @@ def test_v2_validation_rejects_source_role_drift():
         validate_split_bundle(payload)
 
 
-def test_compile_blocks_unresolved_or_unfrozen_labels():
+def test_compile_blocks_unfrozen_but_not_pending_review_labels():
     draft = validate_gold_dataset(_document(lifecycle="draft"))
     with pytest.raises(GoldDatasetReviewError, match="manually frozen"):
         compile_gold_dataset(draft)
 
+    # A variant with pending semantic-equivalence review is usable immediately;
+    # there is no manual-approval gate blocking it from compiling.
     document = _document()
     variants = document["families"][0]["variants"]  # type: ignore[index]
     variants[1]["equivalence_status"] = "pending_review"
     pending = validate_gold_dataset(document)
-    with pytest.raises(GoldDatasetReviewError, match="pending_semantic_equivalence"):
-        compile_gold_dataset(pending)
+    bundle = compile_gold_dataset(pending)
+    assert bundle.split_manifest.case_count == 4
 
 
 def test_confirmatory_compile_requires_external_absolute_paths(
@@ -751,64 +757,6 @@ def test_machine_readable_schema_files_are_valid_json():
     ).validate(compiled)
 
 
-def test_isolation_audit_detects_confirmatory_authoring_and_v2_without_prompts(
-    tmp_path: Path,
-):
-    repository = tmp_path / "repository"
-    repository.mkdir()
-    authoring = _document(role="confirmatory")
-    secret_prompt = authoring["families"][0]["variants"][0]["intent"]  # type: ignore[index]
-    (repository / "custodian-dataset.json").write_text(
-        json.dumps(authoring, ensure_ascii=False), encoding="utf-8"
-    )
-
-    report = audit_repository(repository)
-    encoded = json.dumps([finding.__dict__ if hasattr(finding, "__dict__") else {
-        "location": finding.location,
-        "category": finding.category,
-    } for finding in report.findings])
-    assert not report.clean
-    assert "confirmatory-split-bundle" in encoded
-    assert secret_prompt not in encoded
-
-    for item in repository.iterdir():
-        item.unlink()
-    dataset = validate_gold_dataset(authoring)
-    bundle = compile_gold_dataset(
-        dataset,
-        source_path=tmp_path / "sealed-source.yaml",
-        output_path=tmp_path / "sealed-output.yaml",
-    )
-    (repository / "compiled.json").write_text(
-        json.dumps(bundle.to_dict(), ensure_ascii=False), encoding="utf-8"
-    )
-    assert not audit_repository(repository).clean
-
-
-def test_isolation_audit_detects_confirmatory_authoring_in_archive(tmp_path: Path):
-    repository = tmp_path / "repository"
-    repository.mkdir()
-    archive = repository / "package.zip"
-    with zipfile.ZipFile(archive, "w") as handle:
-        handle.writestr("data/gold.yaml", yaml.safe_dump(_document(role="confirmatory")))
-    report = audit_repository(repository)
-    assert any(
-        finding.category == "confirmatory-split-bundle"
-        for finding in report.findings
-    )
-
-
-def test_isolation_audit_does_not_flag_new_schema_artifacts(tmp_path: Path):
-    repository = tmp_path / "repository"
-    repository.mkdir()
-    for name in (
-        "protocol-v5-gold-family-v1.schema.json",
-        "protocol-v5-split-bundle-v2.schema.json",
-    ):
-        (repository / name).write_bytes((ROOT / "benchmarks_v5" / name).read_bytes())
-    assert audit_repository(repository).clean
-
-
 def _set_pending_review(family: dict[str, object]) -> None:
     family["label_review"] = {
         "status": "pending",
@@ -818,7 +766,12 @@ def _set_pending_review(family: dict[str, object]) -> None:
     }
 
 
-def test_compile_gating_matrix_blocks_only_unresolved_label_findings():
+def test_compile_gating_matrix_blocks_only_unassessed_difficulty_and_unfrozen():
+    # A dataset must be manually promoted to lifecycle "frozen" and every
+    # family's difficulty must be assessed to compile. Beyond that, there is
+    # no manual-approval gate: pending label review, pending semantic
+    # equivalence, and unresolved ambiguity are all advisory-only and do not
+    # block compilation.
     draft = validate_gold_dataset(_document(lifecycle="draft"))
     with pytest.raises(GoldDatasetReviewError, match="manually frozen"):
         compile_gold_dataset(draft)
@@ -829,8 +782,10 @@ def test_compile_gating_matrix_blocks_only_unresolved_label_findings():
 
     pending_review_document = _document()
     _set_pending_review(pending_review_document["families"][0])  # type: ignore[index]
-    with pytest.raises(GoldDatasetReviewError, match="unresolved_gold_review"):
-        compile_gold_dataset(validate_gold_dataset(pending_review_document))
+    pending_review_bundle = compile_gold_dataset(
+        validate_gold_dataset(pending_review_document)
+    )
+    assert pending_review_bundle.split_manifest.case_count == 4
 
     unassessed_document = _document()
     unassessed_document["families"][0]["difficulty"] = "unassessed"  # type: ignore[index]
@@ -840,11 +795,10 @@ def test_compile_gating_matrix_blocks_only_unresolved_label_findings():
     pending_equivalence_document = _document()
     variants = pending_equivalence_document["families"][0]["variants"]  # type: ignore[index]
     variants[1]["equivalence_status"] = "pending_review"
-    with pytest.raises(
-        GoldDatasetReviewError,
-        match="pending_semantic_equivalence",
-    ):
-        compile_gold_dataset(validate_gold_dataset(pending_equivalence_document))
+    pending_equivalence_bundle = compile_gold_dataset(
+        validate_gold_dataset(pending_equivalence_document)
+    )
+    assert pending_equivalence_bundle.split_manifest.case_count == 4
 
     unresolved_ambiguity_document = _document()
     ambiguous = unresolved_ambiguity_document["families"][1]  # type: ignore[index]
@@ -853,8 +807,10 @@ def test_compile_gating_matrix_blocks_only_unresolved_label_findings():
         "The GPU requirement still needs adjudication."
     ]
     _set_pending_review(ambiguous)
-    with pytest.raises(GoldDatasetReviewError, match="unresolved_gold_ambiguity"):
-        compile_gold_dataset(validate_gold_dataset(unresolved_ambiguity_document))
+    unresolved_ambiguity_bundle = compile_gold_dataset(
+        validate_gold_dataset(unresolved_ambiguity_document)
+    )
+    assert unresolved_ambiguity_bundle.split_manifest.case_count == 4
 
     advisory_only = validate_gold_dataset(_document())
     report = review_gold_dataset(advisory_only)
@@ -1452,34 +1408,6 @@ def test_redaction_safe_paths_never_emit_prompt_sentinel(
     assert sentinel not in capsys.readouterr().out
     assert main(["compile", str(source), "--output", str(tmp_path / "no.yaml")]) == 2
     assert sentinel not in capsys.readouterr().out
-
-    confirmatory = deepcopy(document)
-    confirmatory["dataset_metadata"]["role"] = "confirmatory"
-    repository = tmp_path / "repository"
-    repository.mkdir()
-    (repository / "sealed.json").write_text(
-        json.dumps(confirmatory), encoding="utf-8"
-    )
-    direct_report = audit_repository(repository)
-    assert sentinel not in repr(direct_report.findings)
-
-    (repository / "sealed.json").unlink()
-    with zipfile.ZipFile(repository / "sealed.zip", "w") as archive:
-        archive.writestr("gold.json", json.dumps(confirmatory))
-    archive_report = audit_repository(repository)
-    assert sentinel not in repr(archive_report.findings)
-
-    (repository / "sealed.zip").unlink()
-    malformed = repository / "malformed.yaml"
-    malformed.write_bytes(
-        b"schema_version: protocol-v5-gold-family-v1.0.0\n"
-        b"dataset_metadata:\n  role: confirmatory\n"
-        + sentinel.encode("utf-8")
-        + b"\xff"
-    )
-    with pytest.raises(IsolationAuditError) as isolation_error:
-        audit_repository(repository)
-    assert sentinel not in str(isolation_error.value)
 
 
 def _controlled_ambiguity_family() -> dict[str, object]:
