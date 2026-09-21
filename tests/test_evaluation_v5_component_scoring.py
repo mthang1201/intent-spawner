@@ -10,8 +10,6 @@ from types import SimpleNamespace
 import pytest
 
 import evaluation_v5.analysis.component_scoring as component_scoring_module
-import evaluation_v5.freeze as freeze_module
-import evaluation_v5.p3_gate as p3_gate_module
 from evaluation_v5.offline import source_run as source_run_module
 
 from evaluation_v5.analysis.component_scoring import (
@@ -48,13 +46,6 @@ from evaluation_v5.offline.source_run import (
     VerifiedRecommendationRunProvenance,
     reverify_recommendation_run_provenance,
     verify_recommendation_run_provenance,
-)
-from evaluation_v5.p3_gate import (
-    P3GateValidationError,
-    VerifiedP3DevelopmentDecision,
-    build_p3_development_decision,
-    verify_p3_development_decision,
-    write_p3_development_decision,
 )
 from evaluation_v5.split_dataset import SplitRole, _read_split_bundle
 from recommender.candidate_corpus import load_candidate_corpus
@@ -1221,151 +1212,6 @@ def test_validated_evidence_loader_retains_requested_or_all_systems(
     assert validate_statistical_package(statistical_output)["status"] == "PASS"
 
 
-def _write_authenticated_gate_fixture(
-    tmp_path: Path,
-    monkeypatch: pytest.MonkeyPatch,
-):
-    from evaluation_v5.analysis.statistical_analysis import (
-        analyze_statistical_evidence,
-    )
-
-    _, gold_path, evidence_dir, split, _ = _write_cli_inputs(
-        tmp_path,
-        system_ids=("P1", "P2"),
-    )
-    component_output = tmp_path / "component-analysis"
-    statistical_output = tmp_path / "statistical-analysis"
-    analyze_component_evidence(
-        evidence_dir,
-        gold_path,
-        component_output,
-    )
-    analyze_statistical_evidence(
-        evidence_dir,
-        gold_path,
-        statistical_output,
-        bootstrap_replicates=20,
-    )
-    assert validate_analysis_package(component_output)["status"] == "PASS"
-    monkeypatch.setattr(
-        p3_gate_module,
-        "load_development_split",
-        lambda **_kwargs: split,
-    )
-    decision_path = tmp_path / "p3-development-decision.json"
-    write_p3_development_decision(
-        decision_path,
-        evidence_dir=evidence_dir,
-        gold_path=gold_path,
-        component_analysis_dir=component_output,
-        statistical_analysis_dir=statistical_output,
-    )
-    return (
-        decision_path,
-        evidence_dir,
-        split,
-        component_output,
-        statistical_output,
-    )
-
-
-def test_p3_gate_recomputes_decision_and_rejects_forged_retained_status(
-    tmp_path: Path,
-    monkeypatch: pytest.MonkeyPatch,
-):
-    decision_path, _, _, _, _ = _write_authenticated_gate_fixture(
-        tmp_path,
-        monkeypatch,
-    )
-    verified = verify_p3_development_decision(decision_path)
-    assert isinstance(verified, VerifiedP3DevelopmentDecision)
-    assert verified.decision == "not_retained"
-    assert verified["evaluated_inputs"]["criterion_met"] is False
-    assert verified.freeze_snapshot()["verification_status"] == "VERIFIED"
-    with pytest.raises(PermissionError, match="VERIFIED RETAINED"):
-        run_offline_recommendations(
-            p3_gate_module.load_development_split(),
-            result_dir=tmp_path / "not-retained-p3-run",
-            system_ids=("P3",),
-            enable_p3=True,
-            p3_gate=decision_path,
-            dry_run=True,
-        )
-    source = verified["source"]
-    with pytest.raises(P3GateValidationError, match="disagrees"):
-        build_p3_development_decision(
-            evidence_dir=Path(source["raw_evidence"]["path"]),
-            gold_path=Path(source["gold_dataset"]["path"]),
-            component_analysis_dir=Path(source["component_evidence"]["path"]),
-            statistical_analysis_dir=Path(
-                source["statistical_evidence"]["path"]
-            ),
-            supplied_decision="retained",
-        )
-
-    forged = verified.to_dict()
-    forged["decision"] = "retained"
-    forged["integrity"]["source_evidence_revalidated"] = True
-    decision_path.write_text(json.dumps(forged), encoding="utf-8")
-    with pytest.raises(P3GateValidationError, match="decision or authenticated"):
-        verify_p3_development_decision(decision_path)
-
-
-def test_freeze_gate_snapshot_is_derived_from_verified_decision(
-    tmp_path: Path,
-    monkeypatch: pytest.MonkeyPatch,
-):
-    decision_path, _, _, _, _ = _write_authenticated_gate_fixture(
-        tmp_path,
-        monkeypatch,
-    )
-    monkeypatch.setattr(
-        freeze_module,
-        "_require_repository_gate_evidence",
-        lambda _path: decision_path,
-    )
-    snapshot = freeze_module._verified_p3_gate_snapshot(
-        p3_gate_status="not_retained",
-        p3_gate_evidence=decision_path,
-    )
-    assert snapshot["verification_status"] == "VERIFIED"
-    assert snapshot["status"] == "not_retained"
-    with pytest.raises(
-        freeze_module.FreezeValidationError,
-        match="caller-supplied P3 gate status",
-    ):
-        freeze_module._verified_p3_gate_snapshot(
-            p3_gate_status="retained",
-            p3_gate_evidence=decision_path,
-        )
-    with pytest.raises(P3GateValidationError, match="decision or authenticated"):
-        # A relabelled decision artifact remains invalid even when its path is
-        # admitted by this unit fixture.
-        document = json.loads(decision_path.read_text(encoding="utf-8"))
-        document["decision"] = "retained"
-        decision_path.write_text(json.dumps(document), encoding="utf-8")
-        verify_p3_development_decision(decision_path)
-
-
-def test_p3_gate_rejects_tampered_upstream_evidence(
-    tmp_path: Path,
-    monkeypatch: pytest.MonkeyPatch,
-):
-    decision_path, _, _, component_output, _ = _write_authenticated_gate_fixture(
-        tmp_path,
-        monkeypatch,
-    )
-    verified = verify_p3_development_decision(decision_path)
-    aggregates = component_output / "aggregates.json"
-    document = json.loads(aggregates.read_text(encoding="utf-8"))
-    document["synthetic_tamper"] = True
-    aggregates.write_text(json.dumps(document), encoding="utf-8")
-    with pytest.raises((P3GateValidationError, ComponentAnalysisError)):
-        verify_p3_development_decision(decision_path)
-    with pytest.raises((P3GateValidationError, ComponentAnalysisError)):
-        p3_gate_module.reverify_p3_development_decision(verified)
-
-
 def test_source_run_provenance_exports_bound_e5_identities_and_reverifies(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
@@ -1412,9 +1258,16 @@ def test_source_run_capability_cannot_be_caller_constructed(tmp_path: Path):
         )
 
 
-def test_confirmatory_gold_carries_frozen_p3_gate_identity(
+def test_confirmatory_gold_carries_split_provenance_identity(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ):
+    """Confirmatory gold no longer requires a --freeze artifact or P3 gate.
+
+    load_component_gold should simply forward the loaded capability's plain
+    provenance_identity mapping (from evaluation_v5.isolation) as
+    gold.freeze_identity, and keep the capability itself for later
+    reverification.
+    """
     document = _compiled_v2_document()
     bundle = compile_gold_dataset(validate_gold_dataset(document))
     compiled = tmp_path / "synthetic-confirmatory.json"
@@ -1424,22 +1277,24 @@ def test_confirmatory_gold_carries_frozen_p3_gate_identity(
         expected_role=SplitRole.DEVELOPMENT,
         expected_split_id="v5-development",
     )
-    freeze = tmp_path / "synthetic-freeze.json"
-    freeze.write_text("{}\n", encoding="utf-8")
+    provenance_identity = {
+        "schema_version": "protocol-v5-confirmatory-split-provenance-v1.0.0",
+        "protocol_version": "5.0.0",
+        "authority": {
+            "capability_type": "VerifiedConfirmatorySplit",
+            "loader": "evaluation_v5.isolation.load_confirmatory_split",
+            "verifier": "evaluation_v5.isolation.verify_confirmatory_split",
+        },
+        "split": {
+            "schema_version": split.bundle.schema_version,
+            "dataset_id": split.manifest.dataset_id,
+            "split_id": split.manifest.split_id,
+            "role": split.manifest.role.value,
+        },
+    }
     fake_load = SimpleNamespace(
         split=split,
-        freeze_manifest={
-            "freeze_id": "synthetic-freeze",
-            "created_at_utc": "2026-08-24T00:00:00Z",
-            "configuration_snapshot": {
-                "p3_gate": {
-                    "status": "not_retained",
-                    "p3_active": False,
-                    "snapshot_version": "protocol-v5-p3-gate-snapshot-v1",
-                    "evidence_sha256": "a" * 64,
-                }
-            },
-        },
+        provenance_identity=provenance_identity,
     )
     monkeypatch.setattr(
         component_scoring_module,
@@ -1449,13 +1304,7 @@ def test_confirmatory_gold_carries_frozen_p3_gate_identity(
     gold = load_component_gold(
         compiled,
         role="confirmatory",
-        freeze_path=freeze,
         split_id="synthetic-confirmatory",
     )
-    assert gold.p3_gate_identity == {
-        "status": "not_retained",
-        "p3_active": False,
-        "snapshot_version": "protocol-v5-p3-gate-snapshot-v1",
-        "evidence_sha256": "a" * 64,
-        "source": "authoritative_protocol_v5_freeze",
-    }
+    assert gold.freeze_identity == provenance_identity
+    assert gold.confirmatory_capability is fake_load

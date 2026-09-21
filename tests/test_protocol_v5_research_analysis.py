@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import copy
-from collections import Counter
 import json
 from dataclasses import replace
 from pathlib import Path
@@ -40,97 +38,11 @@ from evaluation_v5.analysis.research_contracts import (
     load_claim_registry,
     validate_storage_evidence,
 )
-from evaluation_v5 import freeze as freeze_module
-from evaluation_v5.freeze import (
-    FreezeValidationError,
-    VerifiedProductionFreeze,
-    create_freeze_artifact,
-    verify_production_freeze,
-)
 from evaluation_v5.image_storage.storage_orchestrator import run_storage_evaluation
-from evaluation_v5.final_audit.claims import synthetic_origin_scan
-from evaluation_v5.final_audit.claims import summarize_evaluated_claims
-from evaluation_v5.final_audit.checks import claim_audit_fields
-from evaluation_v5.final_audit.common import Inputs as AuditInputs
-from evaluation_v5.final_audit.completion import claim_flow_attestation
-from evaluation_v5.final_audit.reporting import render_report
-from evaluation_v5.split_dataset import load_development_split
 
 
 ROOT = Path(__file__).resolve().parents[1]
-DESIGN_SNAPSHOT_PATH = (
-    ROOT / "results_v5" / "protocol-v5.0.0" / "freezes" / "frozen-configuration.json"
-)
 CATALOG_PATH = ROOT / "recommender" / "image-catalog.yaml"
-FIXED_REVISION = "1" * 40
-
-
-def _verified_gate_snapshot() -> dict[str, object]:
-    development = load_development_split()
-    artifact = lambda name: {"path": name, "sha256": "d" * 64}
-    analysis = lambda name: {
-        "path": name,
-        "manifest_sha256": "c" * 64,
-        "outputs": {"fixture": artifact("fixture.json")},
-    }
-    return {
-        "snapshot_version": "protocol-v5-p3-gate-snapshot-v2.0.0",
-        "status": "not_retained",
-        "p3_active": False,
-        "verification_status": "VERIFIED",
-        "decision_schema_version": "protocol-v5-p3-development-decision-v1.0.0",
-        "decision_artifact_path": "benchmarks_v5/synthetic-p3-decision.json",
-        "decision_artifact_sha256": "b" * 64,
-        "development_split": {
-            "dataset_id": development.manifest.dataset_id,
-            "split_id": development.manifest.split_id,
-            "role": "development",
-            "bundle_checksum": development.manifest.checksum,
-            "dataset_sha256": development.source_file_sha256,
-            "case_count": development.manifest.case_count,
-            "family_count": development.manifest.family_count,
-        },
-        "raw_evidence": {
-            "path": "results_v5/synthetic-raw",
-            "run_id": "synthetic-test-run",
-            "provenance_fingerprint": "a" * 64,
-            "provenance_sha256": "b" * 64,
-            "recommendations_sha256": "c" * 64,
-            "completion_sha256": "d" * 64,
-            "record_count": 1,
-        },
-        "component_evidence": analysis("results_v5/synthetic-component"),
-        "statistical_evidence": analysis("results_v5/synthetic-statistical"),
-        "predicate_version": "protocol-v5-p3-headroom-predicate-v1.0.0",
-        "computation_version": "protocol-v5-p3-gate-computation-v1.0.0",
-    }
-
-
-@pytest.fixture
-def production_freeze(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> tuple[Path, VerifiedProductionFreeze]:
-    freeze_root = tmp_path / "authoritative" / "freezes"
-    freeze_root.parent.mkdir()
-    monkeypatch.setattr(freeze_module, "DEFAULT_FREEZE_ROOT", freeze_root)
-    monkeypatch.setattr(
-        freeze_module, "FREEZE_CUSTODY_ROOT", tmp_path / "authoritative"
-    )
-    monkeypatch.setattr(
-        freeze_module, "_git_state", lambda: (FIXED_REVISION, True)
-    )
-    gate = _verified_gate_snapshot()
-    monkeypatch.setattr(
-        freeze_module,
-        "_verified_p3_gate_snapshot",
-        lambda **kwargs: copy.deepcopy(gate),
-    )
-    artifact = create_freeze_artifact(
-        freeze_id="research-analysis-fixture",
-        p3_gate_status="not_retained",
-        output_root=freeze_root,
-    )
-    return artifact, verify_production_freeze(artifact)
 
 
 def _candidate(
@@ -289,126 +201,6 @@ def _evaluate_one(registry: dict, candidate: EvidenceCandidate) -> dict:
         selection_report=_selection_report(registry, selected),
     )
     return next(row for row in rows if row["claim_id"] in candidate.metrics)
-
-
-def _freeze_semantics(
-    registry: dict, freeze: VerifiedProductionFreeze, requirement: str
-) -> dict:
-    definition = next(row for row in registry["evidence_requirements"] if row["id"] == requirement)
-    return {
-        field["key"]: freeze.configuration_value(field["freeze_pointer"])
-        for field in definition["semantic_provenance"]
-    }
-
-
-def _p16_projection(
-    tmp_path: Path,
-    *,
-    candidate: EvidenceCandidate,
-    registry: dict,
-    freeze: VerifiedProductionFreeze,
-) -> tuple[dict, str, dict]:
-    """Run authenticated selection/evaluation through audit, report, completion."""
-
-    selected, selection, fatal, provenance, blocked = select_authenticated_evidence(
-        [candidate], registry, freeze=freeze, repository_root=ROOT
-    )
-    assert selected == {candidate.requirement_id: candidate}
-    assert not fatal and not blocked and provenance["semantic_status"] == "PASS"
-    evaluated = evaluate_claims(
-        registry=registry,
-        selected=selected,
-        selection_report=selection,
-    )
-
-    projection_root = tmp_path / "audit-projection"
-    package = "analysis/isolated-observed-fixture"
-    payloads = {
-        package + "/manifest.json": {"status": "INCOMPLETE"},
-        package + "/derived/evaluated-claim-registry.json": {"claims": evaluated},
-        package + "/derived/evidence-selection.json": selection,
-        "benchmarks_v5/protocol-v5-claim-registry-v1.1.yaml": REGISTRY_PATH.read_text(encoding="utf-8"),
-        "docs/evaluation/P3_INCREMENTAL_EVALUATION_V1.md": (
-            ROOT / "docs/evaluation/P3_INCREMENTAL_EVALUATION_V1.md"
-        ).read_text(encoding="utf-8"),
-        "metadata/source-inventory.json": {"fixture": True},
-    }
-    files = {}
-    for relative, value in payloads.items():
-        path = projection_root / relative
-        path.parent.mkdir(parents=True, exist_ok=True)
-        if isinstance(value, str):
-            path.write_text(value, encoding="utf-8")
-        else:
-            path.write_text(json.dumps(value, sort_keys=True) + "\n", encoding="utf-8")
-        files[relative] = file_sha256(path)
-    lock = projection_root / "lock.json"
-    lock.write_text(
-        json.dumps(
-            {
-                "schema_version": "protocol-v5-final-audit-inputs-v1.2.0",
-                "created_at_utc": "2026-09-11T00:00:00Z",
-                "source_git_revision": FIXED_REVISION,
-                "packages": [],
-                "files": files,
-            },
-            sort_keys=True,
-        ) + "\n",
-        encoding="utf-8",
-    )
-    inputs = AuditInputs(projection_root, "lock.json")
-    counts = Counter(row["claim_status"] for row in evaluated)
-    summaries = summarize_evaluated_claims(inputs, package, evaluated)
-    bundle = {
-        "claims": summaries,
-        "evaluated_claims": evaluated,
-        "research_questions": registry["research_questions"],
-        "confirmatory_status": "EXECUTED_INCOMPLETE",
-        "requirement_states": [
-            {
-                "experiment": candidate.evidence_class,
-                "requirement_id": candidate.requirement_id,
-                "status": candidate.execution_status,
-                "candidate_count": 1,
-                "eligible_candidate_count": 1,
-                "reason_codes": [],
-            }
-        ],
-        "claim_counts": {
-            name: counts.get(name, 0)
-            for name in ("SUPPORTED", "NOT_SUPPORTED", "NOT_EXECUTED")
-        },
-        "source": inputs.ref(package + "/manifest.json"),
-        "selection_source": inputs.ref(package + "/derived/evidence-selection.json"),
-        "evaluated_claims_source": inputs.ref(package + "/derived/evaluated-claim-registry.json"),
-        "registry_source": inputs.ref("benchmarks_v5/protocol-v5-claim-registry-v1.1.yaml"),
-    }
-    audit = {
-        **claim_audit_fields(bundle),
-        "audit_status": "INCOMPLETE",
-        "primary_system": "P2",
-        "p3_state": "NOT_RETAINED_OR_NOT_PRESENT",
-        "source_inventory": inputs.ref("metadata/source-inventory.json"),
-        "packages": [],
-        "checks": [],
-        "synthetic_origin_scan": {
-            "status": "PASS", "candidate_count": 1,
-            "synthetic_candidate_count": 0, "promoted_synthetic_count": 0,
-            "unauthenticated_exposed_count": 0,
-        },
-    }
-    report = render_report(
-        inputs,
-        audit,
-        {
-            "observed_offline_counts": [], "observed_functional": [],
-            "legacy_functional": [], "packages": [],
-        },
-        {},
-        projection_root / "report.md",
-    )
-    completion = claim_flow_attestation(audit)
-    return audit, report, completion
 
 
 def _complete_mandatory_candidates(tmp_path: Path) -> list[EvidenceCandidate]:
@@ -1028,41 +820,15 @@ def test_missing_metric_is_absent_not_numeric_zero(tmp_path: Path):
     assert check["observed"] is None and check["passed"] is None
 
 
-def test_semantic_provenance_blocks_but_git_difference_only_discloses(
-    tmp_path: Path,
-    production_freeze: tuple[Path, VerifiedProductionFreeze],
-):
-    registry = load_claim_registry()
-    _, freeze = production_freeze
-    storage = _candidate(tmp_path, "image_storage", "H7", {})
-    storage.semantic_provenance = {
-        "catalog.version": freeze.configuration_value("/candidate_catalog/version"),
-        "catalog.file_sha256": freeze.configuration_value("/candidate_catalog/file_sha256"),
-        "p2.pipeline_version": freeze.configuration_value("/systems/P2/pipeline_version"),
-    }
-    storage.provenance = {"git_revision": "revision-a", "environment": {"id": "one"}}
-    report, blocked = check_provenance({"image_storage": storage}, registry, freeze)
-    assert not blocked and report["semantic_status"] == "PASS"
-    storage.semantic_provenance["catalog.file_sha256"] = "f" * 64
-    report, blocked = check_provenance({"image_storage": storage}, registry, freeze)
-    assert blocked == {"image_storage"}
-    assert any(row["digest_namespace"] == "catalog_file_bytes" for row in report["semantic_comparisons"])
-
-
 def test_authenticated_selection_propagates_valid_metrics_checksums_and_lineage(
     tmp_path: Path,
-    production_freeze: tuple[Path, VerifiedProductionFreeze],
 ):
-    _, freeze = production_freeze
     registry = load_claim_registry()
     candidate = _candidate(
         tmp_path,
         "offline_recommendation",
         "H1",
         {"effect": 0.2, "ci_low": 0.1, "p_value": 0.01, "test_available": True},
-    )
-    candidate.semantic_provenance = _freeze_semantics(
-        registry, freeze, candidate.requirement_id
     )
     candidate.semantic_provenance.update(
         {
@@ -1074,9 +840,8 @@ def test_authenticated_selection_propagates_valid_metrics_checksums_and_lineage(
         "dataset_sha256": "a" * 64,
         "split_id": "confirmatory-a",
     }
-    candidate.provenance["freeze_identity"] = freeze.identity
     selected, report, fatal, provenance, blocked = select_authenticated_evidence(
-        [candidate], registry, freeze=freeze, repository_root=ROOT
+        [candidate], registry, repository_root=ROOT
     )
     assert selected == {"offline_recommendation": candidate}
     assert not fatal and not blocked and provenance["semantic_status"] == "PASS"
@@ -1104,143 +869,11 @@ def test_authenticated_selection_propagates_valid_metrics_checksums_and_lineage(
     ] == candidate.manifest_sha256
 
 
-def test_p16_case_b_observed_fixture_drives_status_metrics_and_report(
-    tmp_path: Path,
-    production_freeze: tuple[Path, VerifiedProductionFreeze],
-):
-    _, freeze = production_freeze
-    registry = load_claim_registry()
-    candidate = _candidate(
-        tmp_path / "observed-fixture",
-        "offline_recommendation",
-        "H1",
-        {
-            "effect": 0.271,
-            "ci_low": 0.111,
-            "ci_high": 0.431,
-            "p_value": 0.009,
-            "test_available": True,
-            "effective_family_n": 12,
-        },
-    )
-    candidate.semantic_provenance = _freeze_semantics(
-        registry, freeze, candidate.requirement_id
-    )
-    candidate.semantic_provenance.update(
-        {"benchmark.dataset_sha256": "a" * 64, "benchmark.split_id": "confirmatory-a"}
-    )
-    candidate.provenance.update(
-        {
-            "dataset": {"dataset_sha256": "a" * 64, "split_id": "confirmatory-a"},
-            "freeze_identity": freeze.identity,
-        }
-    )
-    audit, report, _ = _p16_projection(
-        tmp_path, candidate=candidate, registry=registry, freeze=freeze
-    )
-    h1 = next(row for row in audit["claims"] if row["id"] == "H1")
-    assert h1["claim_status"] == "SUPPORTED"
-    assert h1["estimate"] == 0.271
-    assert h1["confidence_interval"] == {"low": 0.111, "high": 0.431}
-    assert h1["counts"] == {"effective_family_n": 12}
-    assert h1["reason_codes"] == []
-    assert "**H1 — SUPPORTED**" in report
-    assert '"effect":0.271' in report and '"effective_family_n":12' in report
-    assert "Reason codes: `none`" in report
-
-
-def test_p16_case_c_incomplete_evidence_never_becomes_positive(
-    tmp_path: Path,
-    production_freeze: tuple[Path, VerifiedProductionFreeze],
-):
-    _, freeze = production_freeze
-    registry = load_claim_registry()
-    candidate = _candidate(
-        tmp_path / "incomplete-fixture",
-        "offline_recommendation",
-        "H1",
-        {
-            "effect": 0.271,
-            "ci_low": None,
-            "ci_high": 0.431,
-            "p_value": 0.009,
-            "test_available": True,
-            "effective_family_n": 12,
-        },
-    )
-    candidate.semantic_provenance = _freeze_semantics(
-        registry, freeze, candidate.requirement_id
-    )
-    candidate.semantic_provenance.update(
-        {"benchmark.dataset_sha256": "b" * 64, "benchmark.split_id": "confirmatory-b"}
-    )
-    candidate.provenance.update(
-        {
-            "dataset": {"dataset_sha256": "b" * 64, "split_id": "confirmatory-b"},
-            "freeze_identity": freeze.identity,
-        }
-    )
-    audit, report, _ = _p16_projection(
-        tmp_path, candidate=candidate, registry=registry, freeze=freeze
-    )
-    h1 = next(row for row in audit["claims"] if row["id"] == "H1")
-    assert h1["claim_status"] == "NOT_EXECUTED"
-    assert h1["claimable"] is False
-    assert "REQUIRED_METRIC_OR_TEST_UNAVAILABLE" in h1["reason_codes"]
-    assert "**H1 — NOT_EXECUTED**" in report
-    assert "**H1 — SUPPORTED**" not in report
-
-
-def test_p16_case_d_nonempty_authenticated_selection_reaches_completion(
-    tmp_path: Path,
-    production_freeze: tuple[Path, VerifiedProductionFreeze],
-):
-    _, freeze = production_freeze
-    registry = load_claim_registry()
-    candidate = _candidate(
-        tmp_path / "propagation-fixture",
-        "offline_recommendation",
-        "H1",
-        {
-            "effect": 0.2, "ci_low": 0.1, "ci_high": 0.3,
-            "p_value": 0.01, "test_available": True, "effective_family_n": 9,
-        },
-    )
-    candidate.semantic_provenance = _freeze_semantics(
-        registry, freeze, candidate.requirement_id
-    )
-    candidate.semantic_provenance.update(
-        {"benchmark.dataset_sha256": "c" * 64, "benchmark.split_id": "confirmatory-c"}
-    )
-    candidate.provenance.update(
-        {
-            "dataset": {"dataset_sha256": "c" * 64, "split_id": "confirmatory-c"},
-            "freeze_identity": freeze.identity,
-        }
-    )
-    audit, report, completion = _p16_projection(
-        tmp_path, candidate=candidate, registry=registry, freeze=freeze
-    )
-    assert audit["evaluated_claims"][0]["evidence"]
-    assert "Evidence selection:" in report
-    assert completion["status"] == "PASS"
-    assert completion["selected_requirement_count"] == 1
-    assert completion["genuinely_empty_authenticated_selection"] is False
-    assert completion["selection_was_silently_discarded"] is False
-    h1 = next(row for row in completion["claim_propagation"] if row["claim_id"] == "H1")
-    assert h1["status"] == "SUPPORTED" and h1["evidence_requirement_count"] == 1
-
-
 def test_caller_duplicate_source_identity_mismatch_fails_closed(
     tmp_path: Path,
-    production_freeze: tuple[Path, VerifiedProductionFreeze],
 ):
-    _, freeze = production_freeze
     registry = load_claim_registry()
     candidate = _candidate(tmp_path, "offline_recommendation", "H1", {})
-    candidate.semantic_provenance = _freeze_semantics(
-        registry, freeze, candidate.requirement_id
-    )
     candidate.semantic_provenance.update(
         {
             "benchmark.dataset_sha256": "a" * 64,
@@ -1251,9 +884,8 @@ def test_caller_duplicate_source_identity_mismatch_fails_closed(
         "dataset_sha256": "b" * 64,
         "split_id": "confirmatory-a",
     }
-    candidate.provenance["freeze_identity"] = freeze.identity
     selected, report, fatal, provenance, blocked = select_authenticated_evidence(
-        [candidate], registry, freeze=freeze, repository_root=ROOT
+        [candidate], registry, repository_root=ROOT
     )
     assert not selected
     assert fatal == blocked == {"offline_recommendation"}
@@ -1270,60 +902,13 @@ def test_caller_duplicate_source_identity_mismatch_fails_closed(
     )
 
 
-@pytest.mark.parametrize(
-    ("semantic_key", "expected_scope"),
-    [
-        ("p2.pipeline_version", "FREEZE"),
-        ("catalog.version", "FREEZE"),
-        ("indexes.dense.sha256", "FREEZE"),
-        ("extractor.prompt_sha256", "FREEZE"),
-    ],
-)
-def test_semantic_freeze_catalog_index_prompt_and_system_mismatches_block(
-    tmp_path: Path,
-    semantic_key: str,
-    expected_scope: str,
-    production_freeze: tuple[Path, VerifiedProductionFreeze],
-):
-    registry = load_claim_registry()
-    _, freeze = production_freeze
-    candidate = _candidate(tmp_path, "offline_recommendation", "H1", {})
-    candidate.semantic_provenance = _freeze_semantics(
-        registry, freeze, "offline_recommendation"
-    )
-    candidate.semantic_provenance.update({
-        "benchmark.dataset_sha256": "a" * 64,
-        "benchmark.split_id": "confirmatory-split",
-    })
-    candidate.provenance["dataset"] = {
-        "dataset_sha256": "a" * 64,
-        "split_id": "confirmatory-split",
-    }
-    candidate.semantic_provenance[semantic_key] = "mismatch"
-    report, blocked = check_provenance(
-        {"offline_recommendation": candidate}, registry, freeze
-    )
-    assert blocked == {"offline_recommendation"}
-    assert any(
-        row["scope"] == expected_scope
-        and row["semantic_key"] == semantic_key
-        and row["status"] == "MISMATCH"
-        for row in report["semantic_comparisons"]
-    )
-
-
 def test_cross_experiment_dataset_and_split_mismatch_blocks_both_claims(
     tmp_path: Path,
-    production_freeze: tuple[Path, VerifiedProductionFreeze],
 ):
     registry = load_claim_registry()
-    _, freeze = production_freeze
     e1 = _candidate(tmp_path / "e1", "offline_recommendation", "H1", {})
     e2 = _candidate(tmp_path / "e2", "natural_language_robustness", "H2", {})
     for candidate in (e1, e2):
-        candidate.semantic_provenance = _freeze_semantics(
-            registry, freeze, candidate.requirement_id
-        )
         candidate.semantic_provenance.update({
             "benchmark.dataset_sha256": "a" * 64,
             "benchmark.split_id": "confirmatory-a",
@@ -1341,7 +926,6 @@ def test_cross_experiment_dataset_and_split_mismatch_blocks_both_claims(
     report, blocked = check_provenance(
         {"offline_recommendation": e1, "natural_language_robustness": e2},
         registry,
-        freeze,
     )
     assert blocked == {"offline_recommendation", "natural_language_robustness"}
     mismatches = {
@@ -1354,23 +938,17 @@ def test_cross_experiment_dataset_and_split_mismatch_blocks_both_claims(
 
 def test_harness_only_git_revision_difference_is_disclosed_not_blocked(
     tmp_path: Path,
-    production_freeze: tuple[Path, VerifiedProductionFreeze],
 ):
     registry = load_claim_registry()
-    _, freeze = production_freeze
     e1 = _candidate(tmp_path / "e1", "offline_recommendation", "H1", {})
     e2 = _candidate(tmp_path / "e2", "natural_language_robustness", "H2", {})
     for revision, candidate in (("revision-a", e1), ("revision-b", e2)):
-        candidate.semantic_provenance = _freeze_semantics(
-            registry, freeze, candidate.requirement_id
-        )
         candidate.semantic_provenance.update({
             "benchmark.dataset_sha256": "a" * 64,
             "benchmark.split_id": "confirmatory-a",
         })
         candidate.provenance = {
             "git_revision": revision,
-            "freeze_identity": freeze.identity,
             "dataset": {
                 "dataset_sha256": "a" * 64,
                 "split_id": "confirmatory-a",
@@ -1379,7 +957,6 @@ def test_harness_only_git_revision_difference_is_disclosed_not_blocked(
     report, blocked = check_provenance(
         {"offline_recommendation": e1, "natural_language_robustness": e2},
         registry,
-        freeze,
     )
     assert not blocked and report["semantic_status"] == "PASS"
     disclosure = next(row for row in report["disclosures"] if row["type"] == "GIT_REVISION")
@@ -1387,12 +964,15 @@ def test_harness_only_git_revision_difference_is_disclosed_not_blocked(
     assert disclosure["blocking"] is False
 
 
-def test_incompatible_digest_namespaces_never_compare_as_equal(
+def test_incompatible_digest_namespace_registry_is_rejected_at_load(
     tmp_path: Path,
-    production_freeze: tuple[Path, VerifiedProductionFreeze],
 ):
+    """The claim registry itself still refuses incompatible digest-namespace
+    mappings at load time (evaluation_v5.analysis.research_contracts), even
+    though check_provenance no longer re-derives expected digests from a
+    frozen configuration snapshot.
+    """
     registry = load_claim_registry()
-    _, freeze = production_freeze
     altered = json.loads(json.dumps(registry))
     requirement = next(
         row for row in altered["evidence_requirements"] if row["id"] == "offline_recommendation"
@@ -1403,28 +983,6 @@ def test_incompatible_digest_namespaces_never_compare_as_equal(
     altered_path.write_text(yaml.safe_dump(altered, sort_keys=False), encoding="utf-8")
     with pytest.raises(ResearchContractError, match="digest namespaces are incompatible"):
         load_claim_registry(altered_path)
-    candidate = _candidate(tmp_path, "offline_recommendation", "H1", {})
-    candidate.semantic_provenance = _freeze_semantics(
-        altered, freeze, "offline_recommendation"
-    )
-    candidate.semantic_provenance.update({
-        "benchmark.dataset_sha256": "a" * 64,
-        "benchmark.split_id": "confirmatory-a",
-    })
-    candidate.provenance["dataset"] = {
-        "dataset_sha256": "a" * 64,
-        "split_id": "confirmatory-a",
-    }
-    report, blocked = check_provenance(
-        {"offline_recommendation": candidate}, altered, freeze
-    )
-    assert blocked == {"offline_recommendation"}
-    assert any(
-        row["status"] == "INCOMPATIBLE_DIGEST_NAMESPACE"
-        and row["digest_namespace"] == "catalog_file_bytes"
-        and row["freeze_digest_namespace"] == "candidate_corpus_canonical"
-        for row in report["semantic_comparisons"]
-    )
 
 
 def test_threats_are_metadata_triggered_and_cover_required_categories(tmp_path: Path):
@@ -1583,9 +1141,7 @@ def test_storage_adapter_computes_catalog_expansion_growth_not_only_final_saving
 
 def test_synthetic_resource_cannot_enter_authenticated_claim_selection(
     tmp_path: Path,
-    production_freeze: tuple[Path, VerifiedProductionFreeze],
 ):
-    _, freeze = production_freeze
     registry = load_claim_registry()
     candidate = _candidate(
         tmp_path,
@@ -1609,7 +1165,7 @@ def test_synthetic_resource_cannot_enter_authenticated_claim_selection(
         {"collector_origin": "SYNTHETIC", "collector_authentic": False}
     )
     selected, report, fatal, _, _ = select_authenticated_evidence(
-        [candidate], registry, freeze=freeze, repository_root=ROOT
+        [candidate], registry, repository_root=ROOT
     )
     assert not selected and fatal == {"resource_efficiency"}
     claim = next(
@@ -1628,9 +1184,7 @@ def test_synthetic_resource_cannot_enter_authenticated_claim_selection(
 
 def test_controlled_synthetic_storage_reproduction_never_supports_h7(
     tmp_path: Path,
-    production_freeze: tuple[Path, VerifiedProductionFreeze],
 ):
-    _, freeze = production_freeze
     package = run_storage_evaluation(
         catalog_path=CATALOG_PATH,
         mode="synthetic",
@@ -1652,7 +1206,7 @@ def test_controlled_synthetic_storage_reproduction_never_supports_h7(
         claim_eligibility="ELIGIBLE_CONFIRMATORY",
     )
     selected, report, fatal, _, _ = select_authenticated_evidence(
-        [forged], registry, freeze=freeze, repository_root=ROOT
+        [forged], registry, repository_root=ROOT
     )
     assert not selected and fatal == {"image_storage"}
     claim = next(
@@ -1673,11 +1227,9 @@ def test_controlled_synthetic_storage_reproduction_never_supports_h7(
 
 def test_external_normal_layout_synthetic_storage_is_discovered_but_never_selected(
     tmp_path: Path,
-    production_freeze: tuple[Path, VerifiedProductionFreeze],
 ):
     """An innocent external path cannot override collector provenance."""
 
-    _, freeze = production_freeze
     results_root = tmp_path / "external-source" / "results_v5" / "protocol-v5.0.0"
     package = run_storage_evaluation(
         catalog_path=CATALOG_PATH,
@@ -1690,8 +1242,6 @@ def test_external_normal_layout_synthetic_storage_is_discovered_but_never_select
     candidates = discover_evidence(
         results_root,
         registry=registry,
-        freeze=freeze.configuration_snapshot,
-        freeze_path=freeze.artifact_path,
     )
     assert len(candidates) == 1
     candidate = candidates[0]
@@ -1703,7 +1253,7 @@ def test_external_normal_layout_synthetic_storage_is_discovered_but_never_select
     assert "SYNTHETIC_STORAGE_EVIDENCE" in candidate.reason_codes
 
     selected, selection, fatal, _, blocked = select_authenticated_evidence(
-        candidates, registry, freeze=freeze, repository_root=ROOT
+        candidates, registry, repository_root=ROOT
     )
     assert not selected
     assert not blocked
@@ -1726,30 +1276,11 @@ def test_external_normal_layout_synthetic_storage_is_discovered_but_never_select
     assert claim["claim_status"] == "NOT_EXECUTED"
     assert claim["claimable"] is False
     assert "SYNTHETIC_STORAGE_EVIDENCE" in claim["reason_codes"]
-    scan = synthetic_origin_scan(
-        selection, {"candidates": [candidate.to_dict()]}
-    )
-    assert scan["status"] == "PASS"
-    assert scan["findings"] == [
-        {
-            "candidate_index": 0,
-            "requirement_id": "image_storage",
-            "collector_origins": ["SYNTHETIC_TEST"],
-            "synthetic": True,
-            "selected": False,
-            "claim_eligibility": "INELIGIBLE",
-            "claims_permitted": False,
-            "authentication_errors": [],
-            "disposition": "NON_CLAIMABLE",
-        }
-    ]
 
 
 def test_empty_tree_writes_valid_incomplete_package_and_never_overwrites(
     tmp_path: Path,
-    production_freeze: tuple[Path, VerifiedProductionFreeze],
 ):
-    freeze_path, _ = production_freeze
     results = tmp_path / "results"
     results.mkdir()
     output = tmp_path / "analysis"
@@ -1757,7 +1288,6 @@ def test_empty_tree_writes_valid_incomplete_package_and_never_overwrites(
         results_root=results,
         output_root=output,
         run_id="empty",
-        freeze_path=freeze_path,
     )
     assert status == "INCOMPLETE" and exit_code == EXIT_INCOMPLETE
     assert validate_research_analysis_package(package)["status"] == "PASS"
@@ -1768,63 +1298,13 @@ def test_empty_tree_writes_valid_incomplete_package_and_never_overwrites(
             results_root=results,
             output_root=output,
             run_id="empty",
-            freeze_path=freeze_path,
         )
-
-
-def test_flat_design_snapshot_is_rejected_for_claim_evaluation(tmp_path: Path):
-    results = tmp_path / "results"
-    results.mkdir()
-    package, status, exit_code = run_research_analysis(
-        results_root=results,
-        output_root=tmp_path / "analysis",
-        run_id="design-snapshot-rejected",
-        freeze_path=DESIGN_SNAPSHOT_PATH,
-    )
-    assert status == "FAILED" and exit_code == EXIT_FAILED
-    selection = json.loads(
-        (package / "derived" / "evidence-selection.json").read_text()
-    )
-    assert any(
-        error.startswith("PRODUCTION_FREEZE_AUTHENTICATION_FAILED")
-        for error in selection["global_errors"]
-    )
-
-
-def test_tampered_authoritative_freeze_is_rejected_for_claim_evaluation(
-    tmp_path: Path,
-    production_freeze: tuple[Path, VerifiedProductionFreeze],
-):
-    freeze_path, _ = production_freeze
-    tampered = json.loads(freeze_path.read_text(encoding="utf-8"))
-    tampered["configuration_snapshot"]["systems"]["P2"][
-        "pipeline_version"
-    ] = "forged-pipeline"
-    freeze_path.write_text(json.dumps(tampered), encoding="utf-8")
-    with pytest.raises(FreezeValidationError):
-        verify_production_freeze(freeze_path)
-    results = tmp_path / "results"
-    results.mkdir()
-    package, status, exit_code = run_research_analysis(
-        results_root=results,
-        output_root=tmp_path / "analysis",
-        run_id="tampered-freeze-rejected",
-        freeze_path=freeze_path,
-    )
-    assert status == "FAILED" and exit_code == EXIT_FAILED
-    claims = json.loads(
-        (package / "derived" / "evaluated-claim-registry.json").read_text()
-    )["claims"]
-    assert all(row["claim_status"] == "NOT_EXECUTED" for row in claims)
-    assert not any(row["claimable"] for row in claims)
 
 
 def test_complete_mandatory_evidence_exits_zero_while_optional_h8_is_absent(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
-    production_freeze: tuple[Path, VerifiedProductionFreeze],
 ):
-    freeze_path, _ = production_freeze
     candidates = _complete_mandatory_candidates(tmp_path / "evidence")
     monkeypatch.setattr(
         research_module,
@@ -1849,7 +1329,6 @@ def test_complete_mandatory_evidence_exits_zero_while_optional_h8_is_absent(
         results_root=tmp_path / "results",
         output_root=tmp_path / "analysis",
         run_id="complete-without-optional-h8",
-        freeze_path=freeze_path,
     )
     assert status == "COMPLETE" and exit_code == EXIT_SUCCESS
     assert validate_research_analysis_package(package)["status"] == "PASS"
@@ -1864,9 +1343,7 @@ def test_complete_mandatory_evidence_exits_zero_while_optional_h8_is_absent(
 def test_contradictory_claimable_evidence_writes_failed_audit_and_exits_two(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
-    production_freeze: tuple[Path, VerifiedProductionFreeze],
 ):
-    freeze_path, _ = production_freeze
     candidates = [
         _candidate(tmp_path / "positive", "offline_recommendation", "H1", {
             "effect": .2, "ci_low": .1, "p_value": .01, "test_available": True,
@@ -1880,7 +1357,6 @@ def test_contradictory_claimable_evidence_writes_failed_audit_and_exits_two(
         results_root=tmp_path / "results",
         output_root=tmp_path / "analysis",
         run_id="contradictory",
-        freeze_path=freeze_path,
     )
     assert status == "FAILED" and exit_code == EXIT_FAILED
     validation = validate_research_analysis_package(package)
@@ -1922,9 +1398,7 @@ def test_optional_h8_never_controls_required_package_completeness(tmp_path: Path
 
 def test_invalid_selection_writes_failed_nonclaimable_audit_package(
     tmp_path: Path,
-    production_freeze: tuple[Path, VerifiedProductionFreeze],
 ):
-    freeze_path, _ = production_freeze
     results = tmp_path / "results"
     results.mkdir()
     selection = tmp_path / "selection.yaml"
@@ -1949,7 +1423,6 @@ def test_invalid_selection_writes_failed_nonclaimable_audit_package(
         results_root=results,
         output_root=tmp_path / "analysis",
         run_id="failed",
-        freeze_path=freeze_path,
         selection_path=selection,
     )
     assert status == "FAILED" and exit_code == EXIT_FAILED

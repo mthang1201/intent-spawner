@@ -128,7 +128,6 @@ class GoldSource:
     cases: tuple[GoldCase, ...]
     split: LoadedSplit | None = None
     freeze_identity: Mapping[str, Any] | None = None
-    p3_gate_identity: Mapping[str, Any] | None = None
     confirmatory_capability: VerifiedConfirmatorySplit | None = None
 
 
@@ -313,7 +312,6 @@ def _gold_cases_from_split(
     split: LoadedSplit,
     *,
     freeze_identity: Mapping[str, Any] | None,
-    p3_gate_identity: Mapping[str, Any] | None = None,
     confirmatory_capability: VerifiedConfirmatorySplit | None = None,
 ) -> GoldSource:
     if split.bundle.schema_version != SPLIT_BUNDLE_SCHEMA_VERSION_V2:
@@ -346,9 +344,6 @@ def _gold_cases_from_split(
         cases=cases,
         split=split,
         freeze_identity=dict(freeze_identity) if freeze_identity is not None else None,
-        p3_gate_identity=(
-            dict(p3_gate_identity) if p3_gate_identity is not None else None
-        ),
         confirmatory_capability=confirmatory_capability,
     )
 
@@ -357,7 +352,6 @@ def load_component_gold(
     path: Path,
     *,
     role: str = "development",
-    freeze_path: Path | None = None,
     split_id: str | None = None,
 ) -> GoldSource:
     """Load complete component gold without weakening confirmatory isolation."""
@@ -365,41 +359,15 @@ def load_component_gold(
     if role not in {"development", "confirmatory"}:
         raise ComponentAnalysisError("role must be development or confirmatory")
     if role == "confirmatory":
-        if freeze_path is None:
-            raise ComponentAnalysisError(
-                "confirmatory component scoring requires an authoritative freeze"
-            )
         loaded = load_confirmatory_split(
             path,
-            freeze_path,
             expected_split_id=split_id or "v5-confirmatory",
         )
-        freeze_identity = (
-            dict(loaded.freeze_identity)
-            if isinstance(loaded, VerifiedConfirmatorySplit)
-            else {
-                "freeze_id": loaded.freeze_manifest["freeze_id"],
-                "freeze_manifest_sha256": file_sha256(freeze_path),
-                "frozen_at_utc": loaded.freeze_manifest["created_at_utc"],
-                "frozen_by": "authoritative_protocol_v5_freeze",
-                "source": "confirmatory_freeze_manifest",
-            }
-        )
-        gate = loaded.freeze_manifest["configuration_snapshot"]["p3_gate"]
-        p3_gate_identity = {
-            **dict(gate),
-            "source": "authoritative_protocol_v5_freeze",
-        }
         return _gold_cases_from_split(
             loaded.split,
-            freeze_identity=freeze_identity,
-            p3_gate_identity=p3_gate_identity,
-            confirmatory_capability=(
-                loaded if isinstance(loaded, VerifiedConfirmatorySplit) else None
-            ),
+            freeze_identity=dict(loaded.provenance_identity),
+            confirmatory_capability=loaded,
         )
-    if freeze_path is not None:
-        raise ComponentAnalysisError("development scoring prohibits --freeze")
 
     try:
         raw = path.read_bytes()
@@ -2002,7 +1970,6 @@ def analyze_component_evidence(
     output_dir: Path,
     *,
     role: str = "development",
-    freeze_path: Path | None = None,
     split_id: str | None = None,
     retrieval_ks: Sequence[int] = (1, 3, 5),
     gate_minimum_count: int = 3,
@@ -2012,7 +1979,6 @@ def analyze_component_evidence(
         gold = load_component_gold(
             gold_path,
             role=role,
-            freeze_path=freeze_path,
             split_id=split_id,
         )
         provenance, records = load_component_evidence(evidence_dir, gold)
@@ -2065,7 +2031,6 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--gold-dataset", type=Path)
     parser.add_argument("--output-dir", type=Path, required=True)
     parser.add_argument("--role", choices=("development", "confirmatory"), default="development")
-    parser.add_argument("--freeze", type=Path)
     parser.add_argument("--split-id")
     parser.add_argument("--retrieval-k", type=_parse_ks, default=(1, 3, 5))
     parser.add_argument("--gate-minimum-count", type=int, default=3)
@@ -2106,7 +2071,6 @@ def main(argv: Sequence[str] | None = None) -> int:
                     args.gold_dataset,
                     args.output_dir,
                     role=args.role,
-                    freeze_path=args.freeze,
                     split_id=args.split_id,
                     retrieval_ks=args.retrieval_k,
                     gate_minimum_count=args.gate_minimum_count,

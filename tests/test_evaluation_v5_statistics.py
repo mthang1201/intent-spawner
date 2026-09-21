@@ -123,7 +123,6 @@ def _gold(
     cases,
     *,
     schema_version: str = SPLIT_BUNDLE_SCHEMA_VERSION_V2,
-    p3_gate_status: str | None = None,
 ):
     split = SimpleNamespace(
         bundle=SimpleNamespace(
@@ -151,17 +150,6 @@ def _gold(
         cases=(),
         split=split,
         freeze_identity={"synthetic_fixture": True},
-        p3_gate_identity=(
-            {
-                "status": p3_gate_status,
-                "p3_active": p3_gate_status == "retained",
-                "snapshot_version": "synthetic-p3-gate-v1",
-                "evidence_sha256": "5" * 64,
-                "source": "synthetic_fixture",
-            }
-            if p3_gate_status is not None
-            else None
-        ),
     )
 
 
@@ -221,10 +209,9 @@ def _analyze(
     *,
     seed=20260824,
     replicates=80,
-    p3_gate_status: str | None = None,
 ):
     return analyze_statistical_records(
-        _gold(cases, p3_gate_status=p3_gate_status),
+        _gold(cases),
         records,
         bootstrap_seed=seed,
         bootstrap_replicates=replicates,
@@ -395,7 +382,7 @@ def test_record_input_order_does_not_change_estimates_or_effective_seeds():
     assert second == first
 
 
-def test_p3_records_do_not_enable_inference_without_retained_frozen_gate():
+def test_p3_evidence_absence_omits_the_comparison_entirely():
     cases = [_case(f"family-{index}", "canonical") for index in range(3)]
     p1_p2 = [
         _record(case, system, success=(system == "P2" or index == 0))
@@ -406,43 +393,20 @@ def test_p3_records_do_not_enable_inference_without_retained_frozen_gate():
     assert {row["comparison_id"] for row in without_p3.paired_comparisons} == {
         "P2_minus_P1"
     }
-    with_p3 = _analyze(
-        cases,
-        p1_p2 + [_record(case, "P3", success=True) for case in cases],
-        p3_gate_status="not_retained",
-    )
-    assert {row["comparison_id"] for row in with_p3.paired_comparisons} == {
-        "P2_minus_P1",
-        "P3_minus_P2",
-    }
-    assert _comparison_row(
-        with_p3, "P2_minus_P1", "joint_accept_at_1"
-    )["multiplicity_family"] is None
-    blocked = _comparison_row(with_p3, "P3_minus_P2", "joint_accept_at_1")
-    assert blocked["applicability"] == "NOT_RETAINED"
-    assert blocked["hypothesis_status"] == "UNTESTED_NOT_RETAINED"
-    assert blocked["test_method"] is None
-    assert blocked["p_value_raw"] is None
-    assert blocked["p_value_holm"] is None
-    assert blocked["effect_sizes"] is None
-    assert blocked["planned_multiplicity_family"] is None
-    assert blocked["multiplicity_family"] is None
-    assert "P3_minus_P2" not in with_p3.holm_registry["comparison_families"]
-    assert with_p3.holm_registry["ineligible_comparisons"]["P3_minus_P2"][
-        "holm_family_activated"
-    ] is False
-    assert with_p3.p3_inference["inference_permitted"] is False
-    assert _system_row(with_p3, "P3", "joint_accept_at_1")["estimate"] == 1.0
+    assert without_p3.p3_inference["evidence_present"] is False
+    assert without_p3.p3_inference["inference_permitted"] is False
 
 
-def test_retained_p3_gate_enables_nonretrieval_inference_only():
+def test_p3_evidence_enables_nonretrieval_inference_only():
     cases = [_case(f"retained-{index}", "canonical") for index in range(3)]
     records = [
         _record(case, system, success=(system != "P2"))
         for case in cases
         for system in ("P1", "P2", "P3")
     ]
-    result = _analyze(cases, records, p3_gate_status="retained")
+    result = _analyze(cases, records)
+    assert result.p3_inference["evidence_present"] is True
+    assert result.p3_inference["inference_permitted"] is True
     quality = _comparison_row(result, "P3_minus_P2", "joint_accept_at_1")
     assert quality["applicability"] == "AVAILABLE"
     assert quality["hypothesis_status"] == "TESTED"
@@ -673,7 +637,7 @@ def test_metric_direction_and_frozen_holm_registry_are_machine_readable():
         for case in cases
         for system in ("P1", "P2", "P3")
     ]
-    result = _analyze(cases, records, p3_gate_status="retained")
+    result = _analyze(cases, records)
     violation = _comparison_row(
         result, "P3_minus_P2", "hard_constraint_violation_rate"
     )
@@ -693,7 +657,6 @@ def test_metric_direction_and_frozen_holm_registry_are_machine_readable():
     changed_p_values = _analyze(
         cases,
         [_record(case, system, success=True) for case in cases for system in ("P1", "P2", "P3")],
-        p3_gate_status="retained",
     )
     for comparison_id in ("P2_minus_P1", "P3_minus_P2"):
         first_registry = result.holm_registry["comparison_families"][comparison_id]
@@ -779,7 +742,6 @@ def test_confirmatory_raw_prevalidation_failure_occurs_before_gold_loader(
         tmp_path / "sealed-confirmatory-gold.json",
         output,
         role="confirmatory",
-        freeze_path=tmp_path / "freeze.json",
     )
     assert events == ["raw_prevalidation"]
     manifest = json.loads((output / "analysis-manifest.json").read_text())
