@@ -728,3 +728,6 @@ results_v5/protocol-v5.0.0/E1/20260921T-observed-p1-p2-development-v2/report/*
 !results_v5/protocol-v5.0.0/E1/20260921T-observed-p1-p2-development-v2/raw/offline-run-provenance.json
 !results_v5/protocol-v5.0.0/E1/20260921T-observed-p1-p2-development-v2/raw/recommendations.jsonl
 !results_v5/protocol-v5.0.0/E1/20260921T-observed-p1-p2-development-v2/report/offline-run-completion.json
+!results_v5/protocol-v5.0.0/freezes/v5-final-execution-freeze-v3/
+results_v5/protocol-v5.0.0/freezes/v5-final-execution-freeze-v3/*
+!results_v5/protocol-v5.0.0/freezes/v5-final-execution-freeze-v3/freeze-manifest.json
