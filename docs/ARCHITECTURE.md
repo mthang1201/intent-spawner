@@ -186,8 +186,10 @@ and [dynamic sizing](DYNAMIC_PROFILE_GENERATION.md) have dedicated operational g
 ## 6. Evidence Status
 
 The [Protocol-v5 final report](evaluation/PROTOCOL_V5_FINAL_REPORT.md) is the
-current evidence authority. Its audit verdict is **FAIL**, and all confirmatory
-hypothesis decisions remain **NOT EXECUTED**. It reports exact values, provenance,
+current evidence authority. Its audit verdict is **FAIL**, and confirmatory
+evidence overall is **EXECUTED_INCOMPLETE**: one hypothesis, H7 (image storage
+reuse), is **SUPPORTED**; the remaining confirmatory hypothesis decisions
+(H1–H6, H8, plus H7F) remain **NOT_EXECUTED**. It reports exact values, provenance,
 uncertainty where supported, and missing evidence without substituting fixtures.
 
 - **E1:** 36 development recommendation records across 18 cases and 10 families.
@@ -197,8 +199,10 @@ uncertainty where supported, and missing evidence without substituting fixtures.
 - **E4:** resource-efficiency and calibration evidence consists of readiness/planning
   packages; hardware outcomes are **NOT EXECUTED**.
 - **E5:** development container functional observations exist. Two packages pass
-  current validation but retain pipeline-provenance limitations. Each run is
-  reported separately. Image storage measurements are **NOT EXECUTED**.
+  current validation but retain pipeline-provenance limitations (H7F, functional
+  correctness, remains **NOT_EXECUTED**). Each run is reported separately. Image
+  storage measurements are **OBSERVED / ACCEPTED_CONFIRMATORY**; H7 is **SUPPORTED**,
+  limited to the 4-image frozen catalog prefix (8/16-image scales remain **NOT_EXECUTED**).
 
 The [Protocol-v4 combined report](evaluation/PROTOCOL_V4_REVISED_EVALUATION_REPORT.md)
 and [P2 integration evaluation](evaluation/P2_BACKEND_EVALUATION_V1.md) remain
@@ -229,8 +233,9 @@ current repository does not supply:
   sealed cases must never enter implementation or tuning.
 - Real B0-versus-P2 sessions under the [E3 study contract](evaluation/PROTOCOL_V5_USER_STUDY.md),
   retaining privacy and declared crossover pairing. E3 corresponds to v5 RQ3.
-- Eligible, frozen cluster and approved oracle evidence for E4, plus actual
-  image-layer measurements with immutable digest/platform identity for E5 storage.
+- Eligible, frozen cluster and approved oracle evidence for E4. E5 storage
+  already has confirmatory 4-image evidence (H7 **SUPPORTED**); the 8/16-image
+  catalog scales remain **NOT_EXECUTED**.
 - Authenticated inputs for unavailable analyses and documented resolution of
   integrity/provenance failures. Any correction must be a separate linked artifact;
   original source evidence and contradictory results stay preserved.

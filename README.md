@@ -20,9 +20,11 @@ Protocol-v5 evaluation of P2.
 
 ## Current evidence
 
-**Final Protocol-v5 audit: FAIL. Confirmatory experiments: NOT EXECUTED.**
+**Final Protocol-v5 audit: FAIL. Confirmatory evidence: EXECUTED_INCOMPLETE.**
 The [final report](docs/evaluation/PROTOCOL_V5_FINAL_REPORT.md) records exact
 observations, checksums, unresolved findings, and the defense-summary table.
+One hypothesis, H7 (image storage reuse), is **SUPPORTED**; the remaining
+seven confirmatory hypothesis decisions (H1–H6, H8, plus H7F) are **NOT_EXECUTED**.
 
 | Evidence stream | Available evidence |
 | --- | --- |
@@ -30,9 +32,9 @@ observations, checksums, unresolved findings, and the defense-summary table.
 | E2 natural-language robustness | Formal robustness analysis is **NOT EXECUTED**. |
 | E3 human outcomes | **NOT EXECUTED**; zero participant sessions. |
 | E4 resource efficiency | **NOT EXECUTED**; planning/readiness evidence only. |
-| E5 image functionality | Archived development observations remain valid legacy evidence with explicit recommendation-provenance limitations; no current v1.4 observation has been collected. |
-| E5 image storage | **NOT EXECUTED**. |
-| Protocol-v5 confirmation | **NOT EXECUTED**; no authoritative final freeze or supplied confirmatory evidence. |
+| E5 image functionality | Archived development observations remain valid legacy evidence with explicit recommendation-provenance limitations; disposition **DEVELOPMENT_ONLY**; H7F is **NOT_EXECUTED**. |
+| E5 image storage | **OBSERVED / ACCEPTED_CONFIRMATORY**; H7 is **SUPPORTED** (shared layers reduce cumulative storage across the 4-image frozen catalog prefix; 8/16-image scales remain **NOT_EXECUTED**). |
+| Protocol-v5 confirmation | **EXECUTED_INCOMPLETE**; audit verdict **FAIL**; no authoritative final freeze covering the remaining confirmatory evidence. |
 
 The audit preserves checksum/provenance defects and unavailable analyses.
 Passing software tests or container probes does not establish user satisfaction,

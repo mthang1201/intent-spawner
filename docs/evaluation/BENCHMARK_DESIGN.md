@@ -108,6 +108,13 @@ consume user history.
 
 ## Mapping To Research Questions
 
+> **Numbering note:** RQ1–RQ5 below are this benchmark suite's own research
+> questions, distinct from the Protocol-v5 RQ1–RQ6 defined in
+> [PROTOCOL_V5_FINAL_REPORT.md](PROTOCOL_V5_FINAL_REPORT.md). The two schemes
+> share numbers but not meanings; do not conflate e.g. this document's RQ4
+> (context value beyond intent-only) with Protocol-v5's RQ4 (resource
+> efficiency and oracle calibration).
+
 RQ1 asks whether intent and lightweight context can be mapped to approved
 profiles before spawn. Every workload provides intent text, dataset-size hint,
 code-context hints, expected acceptable profiles, and a rationale.
