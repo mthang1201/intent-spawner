@@ -47,11 +47,22 @@ _RUN_ID_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$")
 # Recorded before P3 implementation changes. The evaluation aborts if any
 # frozen comparator, dataset, catalog, prompt/parser, retrieval, or ranking
 # implementation differs.
+#
+# Refreshed for `v5-final-execution-freeze-v2`: the entries for
+# recommender/p2_backend.py and recommender/constraint_evaluator.py were
+# re-recorded from the post-842109c ("Core algorithm fix") bytes, which
+# corrected a deterministic-ranking defect and bumped
+# DETERMINISTIC_RANKER_VERSION to p2-deterministic-ranker-v2.0.0,
+# CONSTRAINT_EVALUATOR_VERSION to v1.1.0 and P2Config.config_version to
+# p2-config-v1.1.0. Every other entry is byte-identical to the
+# v5-final-execution-freeze identity. P1 (recommender/rule_based.py) is
+# unchanged and remains frozen. Evidence collected under
+# v5-final-execution-freeze describes the retired pre-fix ranker.
 FROZEN_INPUT_SHA256 = {
     "recommender/rule_based.py": "063d70244a59d261101e286f6c0fcff5f92f8c7d906072d305b5a2c328e3c581",
-    "recommender/p2_backend.py": "3ca68ea72f7010c671684021ca3172dbc58c76408f6d31fb0900e88beb78e2ff",
+    "recommender/p2_backend.py": "9c7e7913d56060568af8ab40220d2ef0f17e76c5f9f3d14f9b1520dcbe0f2042",
     "recommender/candidate_corpus.py": "aac2c918ddf4345f82ebcb526f29c9b8e60f934fdb1ab3b014e3f4844e28d4af",
-    "recommender/constraint_evaluator.py": "bb28299f8cd07ae7d85667c7166dbf4d04722bd4156b42f609b0ca916d8146d9",
+    "recommender/constraint_evaluator.py": "06e79314145f584c2a94f4b59032ac6b9bfc082c55c9c561d192bdeb6f122ab7",
     "recommender/dense_retrieval.py": "5c5a63120cea5baed7f8e72f94281724cb18073f7b36410dcdc650a6f78a1d8b",
     "recommender/hybrid_retrieval.py": "59a550e8f42214c13b284d4a59c99e28aa9d8db0f6456af60ad3adedd6b544b3",
     "recommender/local_embeddings.py": "70bc2de0dd1423268e10618308e63264aa6298ca16e00dc63c3545500136adf6",
