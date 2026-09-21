@@ -365,9 +365,17 @@ def validate_package(inputs: Inputs, relative: str) -> dict:
             record["kind"] = "image_storage"
             result = validate_e5_storage_evidence(root)
         elif manifest_path.name == "plan.json":
+            from evaluation_v5.resource.efficiency_contracts import CURRENT_DESIGN_ID
             from evaluation_v5.resource.efficiency_plan import validate_efficiency_plan
-            validate_efficiency_plan(manifest)
+            design = validate_efficiency_plan(manifest)
             record.update(kind="resource_plan", status="PLANNED", raw_records=0)
+            result = {
+                "status": "PASS",
+                "validator_status": "CURRENT_VALID" if design["current"] else "LEGACY_VALID",
+                "design_generation": design["design_id"],
+                "current_design_generation": CURRENT_DESIGN_ID,
+                "eligible_as_current_e4_evidence": design["current"],
+            }
         else:
             raise ValueError("unsupported package schema; cannot certify this evidence")
         record["validator_result"] = {k: v for k, v in result.items() if k != "evidence_dir"}

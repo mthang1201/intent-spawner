@@ -23,9 +23,9 @@ load_resource_policy = _dynamic_resources.load_resource_policy
 resource_policy_hash = _dynamic_resources.resource_policy_hash
 
 from .efficiency_contracts import (
-    CATALOG_PROFILES, CONDITIONS, EXECUTION_ORDER_ALGORITHM, FAMILY_COUNT,
-    FREEZE_PATH, INPUT_PATH, PRIMARY_TRIAL_COUNT, REPETITIONS,
-    load_condition_inputs, load_efficiency_freeze,
+    CATALOG_PROFILES, CONDITIONS, CURRENT_DESIGN_ID, EXECUTION_ORDER_ALGORITHM,
+    FAMILY_COUNT, FREEZE_PATH, INPUT_PATH, PRIMARY_TRIAL_COUNT, REPETITIONS,
+    load_condition_inputs, load_efficiency_freeze, resolve_design_generation,
 )
 from .efficiency_models import DECISION_SCHEMA_VERSION, PLAN_SCHEMA_VERSION, EfficiencyTrialSpec, ResourceAllocation
 from .evidence import canonical_sha256, file_sha256, verify_integrity, write_integrity_manifest
@@ -68,15 +68,20 @@ def _counterbalanced_trial_order(
 ) -> list[tuple[int, str, str]]:
     """Seed family order and Latin-rotate condition positions in every block.
 
-    Every repeat contains four adjacent trials for each family. Across the 16
+    Every repeat contains four adjacent trials for each family. Across the
     family blocks, each condition occupies each within-family temporal position
-    exactly four times. The family-specific rotation advances each repetition,
+    equally often. The family-specific rotation advances each repetition,
     preventing one condition from systematically receiving a warm-cache or
     early/late position while retaining deterministic pairing.
+
+    The family count is taken from `family_ids` rather than the current
+    FAMILY_COUNT so that a plan from a recognized superseded design generation
+    can be re-derived and re-verified. The caller resolves and pins the
+    generation; see resolve_design_generation().
     """
 
-    if len(family_ids) != FAMILY_COUNT or len(set(family_ids)) != FAMILY_COUNT:
-        raise ValueError(f"execution order requires exactly {FAMILY_COUNT} unique families")
+    if len(set(family_ids)) != len(family_ids) or not family_ids:
+        raise ValueError("execution order requires a non-empty set of unique families")
     stable_rank = {family: index for index, family in enumerate(sorted(family_ids))}
     rng = random.Random(seed)
     order: list[tuple[int, str, str]] = []
@@ -218,38 +223,65 @@ def build_efficiency_plan(
     return plan
 
 
-def validate_efficiency_plan(plan: Mapping[str, Any], *, allow_legacy: bool = False) -> None:
+def validate_efficiency_plan(
+    plan: Mapping[str, Any],
+    *,
+    allow_legacy: bool = False,
+    require_current_design: bool = False,
+) -> dict[str, Any]:
+    """Validate a plan and return its recognized design generation.
+
+    The design size is resolved against the closed RESOURCE_EFFICIENCY_DESIGNS
+    registry rather than compared to the single current FAMILY_COUNT, so that
+    packages planned under a superseded generation keep validating as evidence
+    about that generation. Pass `require_current_design=True` on any path that
+    plans or executes new work: new evidence must use the current design.
+    """
+
     if plan.get("schema_version") != PLAN_SCHEMA_VERSION or plan.get("conditions") != list(CONDITIONS):
         raise ValueError("unsupported resource-efficiency plan")
+    design = resolve_design_generation(
+        plan.get("family_count"), plan.get("repetitions"), plan.get("primary_trial_count")
+    )
+    if design is None:
+        raise ValueError(
+            "resource-efficiency plan declares an unrecognized design generation: "
+            f"family_count={plan.get('family_count')!r}, "
+            f"repetitions={plan.get('repetitions')!r}, "
+            f"primary_trial_count={plan.get('primary_trial_count')!r}; "
+            f"current design requires {FAMILY_COUNT} families x {len(CONDITIONS)} "
+            f"conditions x {REPETITIONS} repetitions = {PRIMARY_TRIAL_COUNT} trials"
+        )
+    if require_current_design and not design["current"]:
+        raise ValueError(
+            "new resource-efficiency work requires the current design "
+            f"{CURRENT_DESIGN_ID}; this plan declares {design['design_id']}"
+        )
+    families = design["family_count"]
+    trial_count = design["family_count"] * len(CONDITIONS) * design["repetitions"]
     decisions = plan.get("decisions")
     trials = plan.get("trials")
-    if not isinstance(decisions, list) or len(decisions) != FAMILY_COUNT or not isinstance(trials, list) or len(trials) != PRIMARY_TRIAL_COUNT:
+    if not isinstance(decisions, list) or len(decisions) != families or not isinstance(trials, list) or len(trials) != trial_count:
         raise ValueError(
-            f"resource-efficiency plan must contain {FAMILY_COUNT} decisions and {PRIMARY_TRIAL_COUNT} trials"
+            f"resource-efficiency plan must contain {families} decisions and {trial_count} trials"
         )
     if not allow_legacy:
-        if "independent_semantic_n" not in plan or plan.get("independent_semantic_n") != FAMILY_COUNT:
+        if "independent_semantic_n" not in plan or plan.get("independent_semantic_n") != families:
             raise ValueError("resource-efficiency plan lacks required independent_semantic_n")
         if "execution_order_algorithm" not in plan or plan.get("execution_order_algorithm") != EXECUTION_ORDER_ALGORITHM:
             raise ValueError("resource-efficiency plan lacks required execution_order_algorithm")
     else:
-        if plan.get("independent_semantic_n") is not None and plan.get("independent_semantic_n") != FAMILY_COUNT:
+        if plan.get("independent_semantic_n") is not None and plan.get("independent_semantic_n") != families:
             raise ValueError("resource-efficiency design-size invariant differs")
         if plan.get("execution_order_algorithm") is not None and plan.get("execution_order_algorithm") != EXECUTION_ORDER_ALGORITHM:
             raise ValueError("resource-efficiency execution-order invariant differs")
-    if (
-        plan.get("family_count") != FAMILY_COUNT
-        or plan.get("repetitions") != REPETITIONS
-        or plan.get("primary_trial_count") != PRIMARY_TRIAL_COUNT
-    ):
-        raise ValueError("resource-efficiency design-size invariant differs")
     if plan.get("decision_sha256") != canonical_sha256({"decisions": decisions}) or plan.get("trial_order_sha256") != canonical_sha256({"trials": trials}):
         raise ValueError("resource-efficiency decision or trial-order hash mismatch")
     expected_plan = canonical_sha256({key: value for key, value in plan.items() if key not in {"created_at", "plan_sha256"}})
     if plan.get("plan_sha256") != expected_plan:
         raise ValueError("resource-efficiency plan hash mismatch")
     by_family = {row.get("family_id"): row for row in decisions}
-    if len(by_family) != FAMILY_COUNT or len({row.get("decision_id") for row in decisions}) != FAMILY_COUNT or any(row.get("schema_version") != DECISION_SCHEMA_VERSION for row in decisions):
+    if len(by_family) != families or len({row.get("decision_id") for row in decisions}) != families or any(row.get("schema_version") != DECISION_SCHEMA_VERSION for row in decisions):
         raise ValueError("resource-efficiency decision ledger is invalid")
     inputs = {row["family_id"]: row for row in load_condition_inputs()["inputs"]}
     current_policy_hash = resource_policy_hash(load_resource_policy())
@@ -295,20 +327,22 @@ def validate_efficiency_plan(plan: Mapping[str, Any], *, allow_legacy: bool = Fa
         decision = by_family.get(spec.family_id)
         if decision is None or spec.allocation.to_dict() != decision["allocations"].get(spec.condition):
             raise ValueError("trial allocation differs from the sealed family decision")
-    expected_cells = {(family, condition, repetition) for family in by_family for condition in CONDITIONS for repetition in range(1, REPETITIONS + 1)}
+    repetitions = design["repetitions"]
+    expected_cells = {(family, condition, repetition) for family in by_family for condition in CONDITIONS for repetition in range(1, repetitions + 1)}
     if cells != expected_cells:
         raise ValueError("resource-efficiency pairing matrix is incomplete")
     if plan.get("execution_order_algorithm") is not None:
         observed_order = [(row["repetition"], row["family_id"], row["condition"]) for row in trials]
         expected_order = _counterbalanced_trial_order(
-            list(by_family), repetitions=REPETITIONS, seed=int(plan["plan_seed"]),
+            list(by_family), repetitions=repetitions, seed=int(plan["plan_seed"]),
         )
         if observed_order != expected_order:
             raise ValueError("trial execution order differs from the frozen counterbalanced algorithm")
+    return design
 
 
 def write_plan_package(root: Path, plan: Mapping[str, Any]) -> Path:
-    validate_efficiency_plan(plan)
+    validate_efficiency_plan(plan, require_current_design=True)
     root.mkdir(parents=True, exist_ok=False)
     (root / "plan.json").write_text(json.dumps(plan, indent=2, sort_keys=True, allow_nan=False) + "\n", encoding="utf-8")
     write_integrity_manifest(root)

@@ -119,7 +119,7 @@ def execute_plan(
     freeze_path: Path = DEFAULT_PRODUCTION_FREEZE,
     readiness_attestation_path: Path | None = None,
 ) -> dict[str, Any]:
-    validate_efficiency_plan(plan)
+    validate_efficiency_plan(plan, require_current_design=True)
     auth = validate_collector_implementation(adapter)
     if not enforce_readiness and auth.is_production_implementation:
         raise ValueError("readiness gates cannot be disabled for the Kubernetes adapter")

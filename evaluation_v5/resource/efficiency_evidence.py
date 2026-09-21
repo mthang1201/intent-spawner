@@ -156,7 +156,7 @@ def validate_raw_package(root: Path, *, allow_unsealed: bool = False) -> dict[st
         raise ValueError("unsupported comparative raw package")
     plan = json.loads((root / "plan.json").read_text(encoding="utf-8"))
     from .efficiency_plan import validate_efficiency_plan
-    validate_efficiency_plan(plan, allow_legacy=is_legacy)
+    design = validate_efficiency_plan(plan, allow_legacy=is_legacy)
     if plan.get("schema_version") != PLAN_SCHEMA_VERSION or plan.get("plan_sha256") != meta.get("plan_sha256"):
         raise ValueError("raw package plan binding mismatch")
     decisions_path = root / "raw" / "decisions.jsonl"
@@ -232,7 +232,16 @@ def validate_raw_package(root: Path, *, allow_unsealed: bool = False) -> dict[st
         if environment_path.is_file():
             environment = json.loads(environment_path.read_text(encoding="utf-8"))
             validate_resource_authenticity(meta, environment, trials, is_efficiency=True)
-    return {"status": "pass", "sealed": integrity is not None, "execution_status": meta.get("execution_status"), "trials": len(trials), "plan_sha256": meta.get("plan_sha256")}
+    from .efficiency_contracts import CURRENT_DESIGN_ID
+    return {
+        "status": "pass", "sealed": integrity is not None,
+        "execution_status": meta.get("execution_status"), "trials": len(trials),
+        "plan_sha256": meta.get("plan_sha256"),
+        "validator_status": "CURRENT_VALID" if design["current"] else "LEGACY_VALID",
+        "design_generation": design["design_id"],
+        "current_design_generation": CURRENT_DESIGN_ID,
+        "eligible_as_current_e4_evidence": design["current"],
+    }
 
 
 def seal_package(root: Path) -> Path:

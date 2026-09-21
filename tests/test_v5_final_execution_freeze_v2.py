@@ -11,7 +11,11 @@ that a later drift is reported rather than absorbed:
 4. the fresh E1 development run is bound to v2, is complete, and is separate
    from the original pre-fix run, which stays byte-for-byte intact;
 5. the recomputed development-split numbers are exactly what the raw evidence
-   supports - and in particular that P2 still trails P1 on this split.
+   supports - and in particular that P2 still trails P1 on this split;
+6. the paired P2/P3 harness is anchored to a P2 reference collected under the
+   v2 identity, with the pre-fix reference preserved;
+7. the E4 efficiency design-generation registry keeps pre-3f896eb packages
+   validating without letting them count as current-design evidence.
 """
 from __future__ import annotations
 
@@ -21,10 +25,23 @@ from pathlib import Path
 
 import pytest
 
-from evaluation_p3.runner import FROZEN_INPUT_SHA256, verify_frozen_inputs
+from evaluation_p3.runner import (
+    DEFAULT_REFERENCE_RUN,
+    FROZEN_INPUT_SHA256,
+    RETIRED_REFERENCE_RUNS,
+    verify_frozen_inputs,
+)
 from evaluation_v4.dataset import file_sha256
 from evaluation_v5.freeze import validate_freeze_manifest
 from evaluation_v5.offline.validate_evidence import validate_offline_evidence
+from evaluation_v5.resource.efficiency_contracts import (
+    CONDITIONS,
+    CURRENT_DESIGN_ID,
+    FAMILY_COUNT,
+    RESOURCE_EFFICIENCY_DESIGNS,
+    resolve_design_generation,
+)
+from evaluation_v5.resource.efficiency_plan import validate_efficiency_plan
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -259,3 +276,148 @@ def test_new_evidence_is_registered_in_the_reviewed_inventory():
 
     # The fresh development-split run is not promoted into the package set.
     assert not any("20260921T" in package for package in inventory["packages"])
+
+
+# ---------------------------------------------------------------------------
+# Paired P2/P3 reference identity
+# ---------------------------------------------------------------------------
+
+
+def test_paired_p3_reference_is_collected_under_the_v2_p2_identity():
+    """The P2/P3 pairing invariant is re-anchored, not relaxed."""
+    manifest = json.loads((DEFAULT_REFERENCE_RUN / "manifest.json").read_text(encoding="utf-8"))
+    frozen = _manifest(CURRENT)["configuration_snapshot"]
+    assert manifest["runtime_package_checksum"] == frozen["runtime_package"]["sha256"]
+    assert manifest["sample_count"] == 66
+
+    retired = json.loads(
+        (RETIRED_REFERENCE_RUNS[0] / "manifest.json").read_text(encoding="utf-8")
+    )
+    # Same frozen dataset, so the two references are directly comparable.
+    assert retired["dataset_sha256"] == manifest["dataset_sha256"]
+    assert retired["sample_count"] == manifest["sample_count"]
+    # ...but a different P2 runtime, which is exactly why a new one was needed.
+    assert retired["runtime_package_checksum"] != manifest["runtime_package_checksum"]
+
+
+def test_retired_p2_reference_runs_are_preserved():
+    for run in RETIRED_REFERENCE_RUNS:
+        assert (run / "manifest.json").is_file()
+        assert (run / "raw/predictions.jsonl").is_file()
+        assert run != DEFAULT_REFERENCE_RUN
+
+
+def test_p1_is_bit_identical_between_the_two_p2_reference_runs():
+    """P1 is frozen, so the Protocol-v4 lane must reproduce it exactly."""
+    def predictions(run: Path) -> dict[str, dict]:
+        rows = (run / "raw/predictions.jsonl").read_text(encoding="utf-8").splitlines()
+        parsed = [json.loads(line) for line in rows if line.strip()]
+        return {r["sample_id"]: r for r in parsed if r["system"] == "p1"}
+
+    fields = (
+        "final_candidate_id", "ranked_candidate_ids", "retrieved_candidate_ids",
+        "feasible_candidate_ids", "detected_infeasible", "constraint_violated",
+        "policy_compliant", "fallback_category",
+    )
+    before = predictions(RETIRED_REFERENCE_RUNS[0])
+    after = predictions(DEFAULT_REFERENCE_RUN)
+    assert before.keys() == after.keys()
+    assert [s for s in before if any(before[s].get(f) != after[s].get(f) for f in fields)] == []
+
+
+def test_ranking_fix_traded_top1_accuracy_for_constraint_compliance():
+    """Honest record of a mixed outcome on the Protocol-v4 formative dataset.
+
+    The fix improves the Protocol-v5 development split by one case, but on this
+    older 66-sample dataset top-1 ranking quality drops while constraint
+    violations fall. Pinned so the trade-off cannot be quietly reversed or
+    reported as a uniform improvement.
+    """
+    def p2_metrics(run: Path) -> dict:
+        return json.loads(
+            (run / "aggregates/metrics.json").read_text(encoding="utf-8")
+        )["systems"]["p2"]
+
+    before = p2_metrics(RETIRED_REFERENCE_RUNS[0])
+    after = p2_metrics(DEFAULT_REFERENCE_RUN)
+
+    # Worse at rank 1.
+    assert before["top1_accuracy"]["numerator"] == 32
+    assert after["top1_accuracy"]["numerator"] == 30
+    assert before["acceptable_candidate_hit_at_k"]["1"]["numerator"] == 42
+    assert after["acceptable_candidate_hit_at_k"]["1"]["numerator"] == 36
+    assert after["mrr"]["value"] < before["mrr"]["value"]
+    assert after["ndcg_at_5"]["value"] < before["ndcg_at_5"]["value"]
+
+    # Better deeper in the ranking, and fewer constraint violations.
+    assert before["acceptable_candidate_hit_at_k"]["5"]["numerator"] == 57
+    assert after["acceptable_candidate_hit_at_k"]["5"]["numerator"] == 59
+    assert before["constraint_violation_rate"]["numerator"] == 7
+    assert after["constraint_violation_rate"]["numerator"] == 5
+
+
+# ---------------------------------------------------------------------------
+# E4 efficiency design generations
+# ---------------------------------------------------------------------------
+
+
+def test_design_generation_registry_is_closed_and_self_consistent():
+    assert CURRENT_DESIGN_ID == RESOURCE_EFFICIENCY_DESIGNS[0]["design_id"]
+    assert [d["current"] for d in RESOURCE_EFFICIENCY_DESIGNS] == [True, False]
+    assert RESOURCE_EFFICIENCY_DESIGNS[0]["family_count"] == FAMILY_COUNT
+
+    for design in RESOURCE_EFFICIENCY_DESIGNS:
+        trials = design["family_count"] * len(CONDITIONS) * design["repetitions"]
+        resolved = resolve_design_generation(
+            design["family_count"], design["repetitions"], trials
+        )
+        assert resolved is not None
+        assert resolved["design_id"] == design["design_id"]
+
+    # An unregistered size is still rejected, so the gate stays fail-closed.
+    assert resolve_design_generation(18, 10, 18 * len(CONDITIONS) * 10) is None
+    # A registered size with an inconsistent trial count is rejected too.
+    assert resolve_design_generation(16, 10, 800) is None
+
+
+def test_superseded_e4_plan_validates_but_is_not_current_evidence():
+    """AGENTS.md rule 13: pre-3f896eb E4 packages must keep validating."""
+    plan_path = (
+        ROOT
+        / "results_v5/protocol-v5.0.0/E4/e4-resource-efficiency-plan-20260905T082000Z/plan.json"
+    )
+    plan = json.loads(plan_path.read_text(encoding="utf-8"))
+    assert plan["family_count"] == 16
+    assert len(plan["trials"]) == 640
+
+    design = validate_efficiency_plan(plan)
+    assert design["design_id"] == "e4-efficiency-design-v1-16-families"
+    assert design["current"] is False
+
+    # New work may not be planned or executed against a superseded design.
+    with pytest.raises(ValueError, match="requires the current design"):
+        validate_efficiency_plan(plan, require_current_design=True)
+
+
+def test_audit_marks_superseded_e4_packages_legacy_valid():
+    from evaluation_v5.final_audit.checks import inspect
+    from evaluation_v5.final_audit.common import Inputs
+
+    audit = inspect(Inputs(), isolation=False, historical=False)
+    efficiency = [
+        p for p in audit["packages"]
+        if p["kind"] in ("resource_efficiency", "resource_plan")
+    ]
+    assert efficiency
+    assert all(p["validation"] == "PASS" for p in efficiency)
+    statuses = {
+        p["validator_result"].get("validator_status")
+        for p in efficiency
+        if p["validator_result"].get("design_generation")
+    }
+    assert statuses == {"LEGACY_VALID"}
+    assert all(
+        p["validator_result"]["eligible_as_current_e4_evidence"] is False
+        for p in efficiency
+        if p["validator_result"].get("design_generation")
+    )

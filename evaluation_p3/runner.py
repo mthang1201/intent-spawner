@@ -35,9 +35,19 @@ from .metrics import aggregate_metrics
 
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_OUTPUT_ROOT = Path(__file__).resolve().parent / "results"
+# The paired P2/P3 comparison holds P2 exactly fixed, so this must be an
+# observed P2 run collected under the *same* P2 identity as the live tree.
+# Commit 842109c changed P2's deterministic ranking, so
+# 20260821T-observed-p1-p2-v1-4 (p2-deterministic-ranker-v1.0.0) can no longer
+# be reproduced and is retained unmodified as the retired reference. This
+# points at the equivalent run under p2-deterministic-ranker-v2.0.0: same
+# frozen dataset (6c92e7ec…), same 66 samples, same evaluation code.
+RETIRED_REFERENCE_RUNS = (
+    ROOT / "evaluation_p2/results/20260821T-observed-p1-p2-v1-4",
+)
 DEFAULT_REFERENCE_RUN = (
     ROOT
-    / "evaluation_p2/results/20260821T-observed-p1-p2-v1-4"
+    / "evaluation_p2/results/20260921T-observed-p1-p2-v2-ranker-v2"
 )
 RUN_SCHEMA_VERSION = "p2-p3-paired-offline-run-v1.0.0"
 PREDICTION_SCHEMA_VERSION = "p2-p3-raw-prediction-v1.0.0"

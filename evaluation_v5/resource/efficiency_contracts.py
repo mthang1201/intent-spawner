@@ -26,6 +26,63 @@ FAMILY_COUNT = 20
 REPETITIONS = 10
 PRIMARY_TRIAL_COUNT = FAMILY_COUNT * len(CONDITIONS) * REPETITIONS
 EXECUTION_ORDER_ALGORITHM = "seeded-family-shuffle-with-balanced-latin-condition-rotation-v1"
+
+# Recognized E4 resource-efficiency design generations, current first.
+#
+# Commit 3f896eb ("Add failure-inducing workloads to E4") raised FAMILY_COUNT
+# from 16 to 20. Every E4 efficiency package collected before that declares a
+# self-consistent 16-family / 640-trial design. Those packages are immutable
+# (AGENTS.md rule 11) and must keep validating (rule 13), so a superseded
+# generation is recognized here rather than rejected. Recognition is not
+# eligibility: only `current` evidence may be cited as describing the current
+# E4 design, exactly as E5 separates LEGACY_VALID from CURRENT_VALID.
+#
+# This is a closed registry. A plan whose declared design matches no entry is
+# still rejected, so an arbitrary or truncated design cannot slip through.
+RESOURCE_EFFICIENCY_DESIGNS: tuple[dict[str, Any], ...] = (
+    {
+        "design_id": "e4-efficiency-design-v2-20-families",
+        "family_count": 20,
+        "repetitions": 10,
+        "current": True,
+        "introduced_by": "3f896eb",
+        "reason": "Adds failure-inducing workloads to the E4 family set.",
+    },
+    {
+        "design_id": "e4-efficiency-design-v1-16-families",
+        "family_count": 16,
+        "repetitions": 10,
+        "current": False,
+        "superseded_by": "e4-efficiency-design-v2-20-families",
+        "reason": (
+            "Original E4 efficiency design. Preserved so that packages planned "
+            "before 3f896eb continue to validate as evidence about this design."
+        ),
+    },
+)
+
+
+def resolve_design_generation(
+    family_count: object, repetitions: object, primary_trial_count: object
+) -> dict[str, Any] | None:
+    """Return the recognized design generation, or None if unrecognized.
+
+    A generation matches only when the declared design is internally
+    consistent: family_count x len(CONDITIONS) x repetitions must equal the
+    declared primary_trial_count.
+    """
+
+    for design in RESOURCE_EFFICIENCY_DESIGNS:
+        if family_count != design["family_count"] or repetitions != design["repetitions"]:
+            continue
+        expected = design["family_count"] * len(CONDITIONS) * design["repetitions"]
+        if primary_trial_count != expected:
+            return None
+        return dict(design)
+    return None
+
+
+CURRENT_DESIGN_ID = RESOURCE_EFFICIENCY_DESIGNS[0]["design_id"]
 CATALOG_PROFILES = {
     "small": {"cpu_request_m": 100, "cpu_limit_m": 500, "memory_request_mib": 256, "memory_limit_mib": 384, "gpu_count": 0},
     "medium": {"cpu_request_m": 500, "cpu_limit_m": 1000, "memory_request_mib": 768, "memory_limit_mib": 1024, "gpu_count": 0},
@@ -233,8 +290,10 @@ def confirmatory_readiness(freeze: Mapping[str, Any], capacity: Mapping[str, Any
 
 __all__ = [
     "CAPACITY_PATH", "CATALOG_PROFILES", "CONDITIONS", "CONTRASTS",
-    "EXECUTION_ORDER_ALGORITHM", "FAMILY_COUNT", "FREEZE_PATH", "INPUT_PATH",
-    "PARETO_OBJECTIVES", "PRIMARY_TRIAL_COUNT", "REPETITIONS",
+    "CURRENT_DESIGN_ID", "EXECUTION_ORDER_ALGORITHM", "FAMILY_COUNT",
+    "FREEZE_PATH", "INPUT_PATH", "PARETO_OBJECTIVES", "PRIMARY_TRIAL_COUNT",
+    "REPETITIONS", "RESOURCE_EFFICIENCY_DESIGNS",
     "confirmatory_readiness", "load_capacity_contract", "load_condition_inputs",
-    "load_efficiency_freeze", "mechanical_prompt", "validate_efficiency_contracts",
+    "load_efficiency_freeze", "mechanical_prompt", "resolve_design_generation",
+    "validate_efficiency_contracts",
 ]

@@ -1,0 +1,148 @@
+{
+  "dataset_sha256": "6c92e7ecc4c7de5cf8de0cc514d0e12801b97582b89c93c330f495dc012741e9",
+  "metric_definition_notes": {
+    "constraint_violation_denominator": "Requests labeled feasible only; infeasible detection is reported separately.",
+    "p1_ranked_list": "P1 emits one decision, so its ranked list contains only that candidate.",
+    "relevance": "Binary relevance over the gold acceptable-candidate set."
+  },
+  "primary_systems": [
+    "p1",
+    "p2"
+  ],
+  "run_id": "20260921T-observed-p1-p2-v2-ranker-v2",
+  "schema_version": "p1-p2-aggregate-metrics-v1.0.0",
+  "systems": {
+    "p1": {
+      "acceptable_candidate_hit_at_k": {
+        "1": {
+          "denominator": 62,
+          "numerator": 46,
+          "value": 0.7419354838709677
+        },
+        "3": {
+          "denominator": 62,
+          "numerator": 46,
+          "value": 0.7419354838709677
+        },
+        "5": {
+          "denominator": 62,
+          "numerator": 46,
+          "value": 0.7419354838709677
+        }
+      },
+      "constraint_violation_rate": {
+        "denominator": 62,
+        "numerator": 6,
+        "value": 0.0967741935483871
+      },
+      "fallback_rate": {
+        "denominator": 66,
+        "numerator": 0,
+        "value": 0.0
+      },
+      "infeasible_request_detection": {
+        "accuracy": 0.9393939393939394,
+        "f1": null,
+        "false_negative": 4,
+        "false_positive": 0,
+        "precision": null,
+        "recall": 0.0,
+        "true_negative": 62,
+        "true_positive": 0
+      },
+      "latency_seconds": {
+        "count": 66,
+        "maximum": 0.0007778750732541084,
+        "mean": 8.459092879837209e-05,
+        "median": 8.33333469927311e-05,
+        "minimum": 1.9832979887723923e-05,
+        "p95": 0.000108291395008564
+      },
+      "mrr": {
+        "denominator": 62,
+        "value": 0.7419354838709677
+      },
+      "ndcg_at_5": {
+        "denominator": 62,
+        "value": 0.5485090802536969
+      },
+      "policy_compliance_rate": {
+        "denominator": 66,
+        "numerator": 66,
+        "value": 1.0
+      },
+      "sample_count": 66,
+      "top1_accuracy": {
+        "denominator": 62,
+        "numerator": 39,
+        "value": 0.6290322580645161
+      }
+    },
+    "p2": {
+      "acceptable_candidate_hit_at_k": {
+        "1": {
+          "denominator": 62,
+          "numerator": 36,
+          "value": 0.5806451612903226
+        },
+        "3": {
+          "denominator": 62,
+          "numerator": 55,
+          "value": 0.8870967741935484
+        },
+        "5": {
+          "denominator": 62,
+          "numerator": 59,
+          "value": 0.9516129032258065
+        }
+      },
+      "constraint_violation_rate": {
+        "denominator": 62,
+        "numerator": 5,
+        "value": 0.08064516129032258
+      },
+      "fallback_rate": {
+        "denominator": 66,
+        "numerator": 4,
+        "value": 0.06060606060606061
+      },
+      "infeasible_request_detection": {
+        "accuracy": 1.0,
+        "f1": 1.0,
+        "false_negative": 0,
+        "false_positive": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "true_negative": 62,
+        "true_positive": 4
+      },
+      "latency_seconds": {
+        "count": 66,
+        "maximum": 0.002432500012218952,
+        "mean": 0.0021590504611870556,
+        "median": 0.0021581663750112057,
+        "minimum": 0.0020135832019150257,
+        "p95": 0.002243697294034064
+      },
+      "mrr": {
+        "denominator": 62,
+        "value": 0.7456285202252945
+      },
+      "ndcg_at_5": {
+        "denominator": 62,
+        "value": 0.7749226500657782
+      },
+      "policy_compliance_rate": {
+        "denominator": 66,
+        "numerator": 66,
+        "value": 1.0
+      },
+      "sample_count": 66,
+      "top1_accuracy": {
+        "denominator": 62,
+        "numerator": 30,
+        "value": 0.4838709677419355
+      }
+    }
+  }
+}
