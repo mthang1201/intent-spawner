@@ -1,0 +1,861 @@
+schema_version: protocol-v5-gold-family-v1.0.0
+dataset_metadata:
+  dataset_id: v5-development-reconstructed-v1
+  protocol_version: 5.0.0
+  role: development
+  lifecycle: reviewed
+  created_at_utc: '2026-09-21T06:38:01Z'
+  created_by: protocol-v5-v4-importer+agent-authored-p2-supplement
+  git_revision: 3f896eb251c9715ede1c9db12de2c91d2d37aacd
+  evidence_classification: historical_formative_development_only
+  freeze_metadata: null
+  source_datasets:
+  - dataset_id: intent-gold-en-vi-2026-08-08
+    schema_version: intent-gold-v4.0.0
+    source_file_sha256: a0f23920e90c6f4b338b51ec4517a4ba49216940bf041729c8c7b0db452afc4d
+    source_split: development
+  - dataset_id: p2-infeasible-and-constraint-diagnostics-2026-08-21
+    schema_version: p2-infeasible-supplement-v1.0.0
+    source_file_sha256: c030c6f7b3bf6e08ab06ff1c449b4e7b0707283f75c7c2c1acfd5a2ce60e32be
+    source_split: development
+    evidence_classification: development_only
+catalog_identity:
+  candidate_corpus_version: environment-candidate-corpus-v1
+  candidate_corpus_sha256: 987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444
+  image_catalog_version: 2026-08-06.1
+  image_catalog_sha256: bd2211d5fd769b5addec3c41e8cbd48bb0d9cd1c958aa554ada9bf88c29509f3
+  profile_catalog_sha256: c8f797b9c4d30459da99dad8d6d1c28e07e6803d76fab7cf88cdcd0f6c679348
+review_policy:
+  required_workload_strata:
+  - boundary
+  - data_processing
+  - deep_learning
+  - light
+  - machine_learning
+  - numerical_computing
+  - policy
+  max_preferred_profile_share: 0.5
+  max_preferred_image_share: 0.5
+families:
+- family_id: basic-python
+  title: Basic Python
+  workload_stratum: light
+  difficulty: easy
+  executable_workload_id: null
+  gold_structured_intent:
+    task_types: []
+    required_features:
+    - python
+    preferred_features: []
+    forbidden_features: []
+    required_frameworks: []
+    preferred_frameworks: []
+    gpu_semantics: unspecified
+    minimum_cpu_cores: null
+    minimum_memory_gb: null
+    dataset_size_gb: 0.01
+    ambiguities: []
+  candidate_gold:
+    preferred_candidate_ids:
+    - small-minimal-python
+    acceptable_candidate_ids:
+    - small-minimal-python
+  profile_gold:
+    preferred_profile_ids:
+    - small
+    acceptable_profile_ids:
+    - small
+  image_gold:
+    preferred_image_ids:
+    - minimal-python
+    acceptable_image_ids:
+    - minimal-python
+    required_capabilities:
+    - python
+  policy_gold:
+    required_constraints:
+    - allowed_profiles=small,medium,large
+    - gpu_allowed=false
+    explicitly_unsupported_requirements: []
+    expected_feasibility: feasible
+  variants:
+  - variant_id: basic-python-canonical-en
+    variant_class: canonical_en
+    language: en
+    intent: I only need a notebook for a few basic Python calculations.
+    code_context: []
+    equivalence_status: canonical_reference
+  - variant_id: basic-python-paraphrase-en
+    variant_class: paraphrase_en
+    language: en
+    intent: Give me a lightweight session to check some arithmetic and short scripts.
+    code_context: []
+    equivalence_status: reviewed_equivalent
+  - variant_id: basic-python-vi
+    variant_class: vietnamese
+    language: vi
+    intent: Tôi chỉ cần chạy vài phép tính và đoạn mã Python ngắn.
+    code_context: []
+    equivalence_status: reviewed_equivalent
+  label_review:
+    status: approved
+    reviewed_by: agent-claude-opus-5-assisted
+    reviewed_at_utc: '2026-09-21T06:42:30Z'
+    notes:
+    - Review performed by an automated agent (Claude Opus 5), not a human domain reviewer. Equivalence
+      and difficulty judgements below are agent assessments and require human custodian countersignature
+      before this dataset is treated as reviewed evidence.
+    - Imported Protocol-v4 labels re-checked against Protocol-v5 gold fields. Smallest sufficient profile
+      and Python-only capability are consistent with a 0.01 GB arithmetic/scripting workload.
+    - 'basic-python-paraphrase-en: Paraphrase preserves intent: lightweight interactive session for basic
+      Python arithmetic/short scripts. Maps to identical gold (small / minimal-python / python).'
+    - 'basic-python-vi: Vietnamese ''Toi chi can chay vai phep tinh va doan ma Python ngan'' = ''I only
+      need to run a few calculations and short Python snippets''. Faithful translation of the canonical
+      intent.'
+  source_provenance:
+    source_dataset_id: intent-gold-en-vi-2026-08-08
+    source_schema_version: intent-gold-v4.0.0
+    source_family_id: basic-python
+    source_case_ids:
+    - basic-python-canonical-en
+    - basic-python-paraphrase-en
+    - basic-python-vi
+    source_split: development
+    source_file_sha256: a0f23920e90c6f4b338b51ec4517a4ba49216940bf041729c8c7b0db452afc4d
+    evidence_classification: historical_formative_development_only
+    original_label_sha256: bac795bbe336f2abd497321d9bed7845d9907cc62cff073475bb43867426e204
+- family_id: p2-cpu-only-pandas-feasible
+  title: P2 Cpu Only Pandas Feasible
+  workload_stratum: data_processing
+  difficulty: easy
+  executable_workload_id: null
+  gold_structured_intent:
+    task_types: []
+    required_features:
+    - pandas
+    preferred_features: []
+    forbidden_features: []
+    required_frameworks:
+    - pandas
+    preferred_frameworks: []
+    gpu_semantics: forbidden
+    minimum_cpu_cores: null
+    minimum_memory_gb: null
+    dataset_size_gb: 0.8
+    ambiguities: []
+  candidate_gold:
+    preferred_candidate_ids:
+    - medium-scipy-data-science
+    acceptable_candidate_ids:
+    - large-scipy-data-science
+    - medium-scipy-data-science
+  profile_gold:
+    preferred_profile_ids:
+    - medium
+    acceptable_profile_ids:
+    - large
+    - medium
+  image_gold:
+    preferred_image_ids:
+    - scipy-data-science
+    acceptable_image_ids:
+    - scipy-data-science
+    required_capabilities:
+    - pandas
+  policy_gold:
+    required_constraints:
+    - allowed_profiles=medium,large
+    - gpu_allowed=false
+    explicitly_unsupported_requirements: []
+    expected_feasibility: feasible
+  variants:
+  - variant_id: p2-cpu-only-pandas-feasible-en
+    variant_class: canonical_en
+    language: en
+    intent: Analyze a moderate table with pandas without a GPU.
+    code_context:
+    - import pandas as pd
+    equivalence_status: canonical_reference
+  label_review:
+    status: approved
+    reviewed_by: agent-claude-opus-5-assisted
+    reviewed_at_utc: '2026-09-21T06:46:14Z'
+    notes:
+    - Review performed by an automated agent (Claude Opus 5), not a human domain reviewer. Judgements
+      below are agent assessments and require human custodian countersignature.
+    - Transcribed from benchmarks/p2-infeasible-supplement-v1.yaml (p2-infeasible-supplement-v1.0.0),
+      sample p2-cpu-only-pandas-feasible-en. Gold labels carried over unchanged; adjudication_status in
+      the source is 'protocol_locked'.
+    - 'Stratum ''data_processing'': 0.8 GB tabular analysis with pandas, GPU explicitly declined.'
+    - 'Difficulty easy: named library and explicit GPU refusal map directly onto the SciPy image at medium/large.'
+    - workload_stratum and difficulty are not present in the supplement schema and are agent-assigned
+      here.
+    - Single human-authored English variant; no paraphrase or Vietnamese variant exists in the source,
+      so none was generated.
+  source_provenance:
+    source_dataset_id: p2-infeasible-and-constraint-diagnostics-2026-08-21
+    source_schema_version: p2-infeasible-supplement-v1.0.0
+    source_family_id: p2-cpu-only-pandas-feasible
+    source_case_ids:
+    - p2-cpu-only-pandas-feasible-en
+    source_split: development
+    source_file_sha256: c030c6f7b3bf6e08ab06ff1c449b4e7b0707283f75c7c2c1acfd5a2ce60e32be
+    evidence_classification: development_only
+    original_label_sha256: 8523ad08136f6d775bdc810c6c5725f6d5bcb8e487462dea4ba3c79f7de49d30
+- family_id: p2-minimum-eight-cpu
+  title: P2 Minimum Eight Cpu
+  workload_stratum: numerical_computing
+  difficulty: medium
+  executable_workload_id: null
+  gold_structured_intent:
+    task_types: []
+    required_features:
+    - python
+    preferred_features: []
+    forbidden_features: []
+    required_frameworks: []
+    preferred_frameworks: []
+    gpu_semantics: unspecified
+    minimum_cpu_cores: 8.0
+    minimum_memory_gb: null
+    dataset_size_gb: 0.1
+    ambiguities: []
+  candidate_gold:
+    preferred_candidate_ids: []
+    acceptable_candidate_ids: []
+  profile_gold:
+    preferred_profile_ids: &id001 []
+    acceptable_profile_ids: *id001
+  image_gold:
+    preferred_image_ids: *id001
+    acceptable_image_ids: *id001
+    required_capabilities:
+    - python
+  policy_gold:
+    required_constraints:
+    - allowed_profiles=small,medium,large
+    - gpu_allowed=false
+    explicitly_unsupported_requirements:
+    - The largest catalog profile has a 2-core CPU limit.
+    expected_feasibility: infeasible
+  variants:
+  - variant_id: p2-minimum-eight-cpu-en
+    variant_class: canonical_en
+    language: en
+    intent: I need at least 8 CPU cores for this parallel simulation.
+    code_context: []
+    equivalence_status: canonical_reference
+  label_review:
+    status: approved
+    reviewed_by: agent-claude-opus-5-assisted
+    reviewed_at_utc: '2026-09-21T06:46:14Z'
+    notes:
+    - Review performed by an automated agent (Claude Opus 5), not a human domain reviewer. Judgements
+      below are agent assessments and require human custodian countersignature.
+    - Transcribed from benchmarks/p2-infeasible-supplement-v1.yaml (p2-infeasible-supplement-v1.0.0),
+      sample p2-minimum-eight-cpu-en. Gold labels carried over unchanged; adjudication_status in the source
+      is 'protocol_locked'.
+    - 'Stratum ''numerical_computing'': the request is an explicitly parallel simulation; infeasibility
+      is a hard CPU-count constraint.'
+    - 'Difficulty medium: requires comparing an explicit 8-core floor against the 2-core catalog ceiling.'
+    - workload_stratum and difficulty are not present in the supplement schema and are agent-assigned
+      here.
+    - Single human-authored English variant; no paraphrase or Vietnamese variant exists in the source,
+      so none was generated.
+  source_provenance:
+    source_dataset_id: p2-infeasible-and-constraint-diagnostics-2026-08-21
+    source_schema_version: p2-infeasible-supplement-v1.0.0
+    source_family_id: p2-minimum-eight-cpu
+    source_case_ids:
+    - p2-minimum-eight-cpu-en
+    source_split: development
+    source_file_sha256: c030c6f7b3bf6e08ab06ff1c449b4e7b0707283f75c7c2c1acfd5a2ce60e32be
+    evidence_classification: development_only
+    original_label_sha256: 2dc100c972517e5d4db4d10ae82719a9c64292435a6d743047486da780641920
+- family_id: p2-minimum-eight-memory
+  title: P2 Minimum Eight Memory
+  workload_stratum: policy
+  difficulty: medium
+  executable_workload_id: null
+  gold_structured_intent:
+    task_types: []
+    required_features:
+    - pandas
+    preferred_features: []
+    forbidden_features: []
+    required_frameworks:
+    - pandas
+    preferred_frameworks: []
+    gpu_semantics: unspecified
+    minimum_cpu_cores: null
+    minimum_memory_gb: 8.0
+    dataset_size_gb: 1.0
+    ambiguities: []
+  candidate_gold:
+    preferred_candidate_ids: []
+    acceptable_candidate_ids: []
+  profile_gold:
+    preferred_profile_ids: &id002 []
+    acceptable_profile_ids: *id002
+  image_gold:
+    preferred_image_ids: *id002
+    acceptable_image_ids: *id002
+    required_capabilities:
+    - pandas
+  policy_gold:
+    required_constraints:
+    - allowed_profiles=small,medium,large
+    - gpu_allowed=false
+    explicitly_unsupported_requirements:
+    - The largest catalog profile has a 2 GiB memory limit.
+    expected_feasibility: infeasible
+  variants:
+  - variant_id: p2-minimum-eight-memory-en
+    variant_class: canonical_en
+    language: en
+    intent: This analysis requires at least 8 GB memory.
+    code_context:
+    - import pandas as pd
+    equivalence_status: canonical_reference
+  label_review:
+    status: approved
+    reviewed_by: agent-claude-opus-5-assisted
+    reviewed_at_utc: '2026-09-21T06:46:14Z'
+    notes:
+    - Review performed by an automated agent (Claude Opus 5), not a human domain reviewer. Judgements
+      below are agent assessments and require human custodian countersignature.
+    - Transcribed from benchmarks/p2-infeasible-supplement-v1.yaml (p2-infeasible-supplement-v1.0.0),
+      sample p2-minimum-eight-memory-en. Gold labels carried over unchanged; adjudication_status in the
+      source is 'protocol_locked'.
+    - 'Stratum ''policy'': infeasibility arises from the catalog memory ceiling rather than the pandas
+      analysis itself.'
+    - 'Difficulty medium: requires comparing an explicit 8 GB floor against the 2 GiB catalog ceiling.'
+    - workload_stratum and difficulty are not present in the supplement schema and are agent-assigned
+      here.
+    - Single human-authored English variant; no paraphrase or Vietnamese variant exists in the source,
+      so none was generated.
+  source_provenance:
+    source_dataset_id: p2-infeasible-and-constraint-diagnostics-2026-08-21
+    source_schema_version: p2-infeasible-supplement-v1.0.0
+    source_family_id: p2-minimum-eight-memory
+    source_case_ids:
+    - p2-minimum-eight-memory-en
+    source_split: development
+    source_file_sha256: c030c6f7b3bf6e08ab06ff1c449b4e7b0707283f75c7c2c1acfd5a2ce60e32be
+    evidence_classification: development_only
+    original_label_sha256: cc7f6c97c40cb73032ab4d4c708303a9568a6aa47a86bfcb3b589267ba5d4e6d
+- family_id: p2-required-gpu-unavailable
+  title: P2 Required Gpu Unavailable
+  workload_stratum: policy
+  difficulty: easy
+  executable_workload_id: null
+  gold_structured_intent:
+    task_types: []
+    required_features:
+    - pytorch
+    preferred_features: []
+    forbidden_features: []
+    required_frameworks:
+    - torch
+    preferred_frameworks: []
+    gpu_semantics: required
+    minimum_cpu_cores: null
+    minimum_memory_gb: null
+    dataset_size_gb: 0.5
+    ambiguities: []
+  candidate_gold:
+    preferred_candidate_ids: []
+    acceptable_candidate_ids: []
+  profile_gold:
+    preferred_profile_ids: &id003 []
+    acceptable_profile_ids: *id003
+  image_gold:
+    preferred_image_ids: *id003
+    acceptable_image_ids: *id003
+    required_capabilities:
+    - pytorch
+  policy_gold:
+    required_constraints:
+    - allowed_profiles=small,medium,large
+    - gpu_allowed=true
+    explicitly_unsupported_requirements:
+    - No catalog profile grants a GPU device.
+    expected_feasibility: infeasible
+  variants:
+  - variant_id: p2-required-gpu-unavailable-en
+    variant_class: canonical_en
+    language: en
+    intent: This workload requires a GPU device for CUDA training.
+    code_context:
+    - import torch
+    equivalence_status: canonical_reference
+  label_review:
+    status: approved
+    reviewed_by: agent-claude-opus-5-assisted
+    reviewed_at_utc: '2026-09-21T06:46:14Z'
+    notes:
+    - Review performed by an automated agent (Claude Opus 5), not a human domain reviewer. Judgements
+      below are agent assessments and require human custodian countersignature.
+    - Transcribed from benchmarks/p2-infeasible-supplement-v1.yaml (p2-infeasible-supplement-v1.0.0),
+      sample p2-required-gpu-unavailable-en. Gold labels carried over unchanged; adjudication_status in
+      the source is 'protocol_locked'.
+    - 'Stratum ''policy'': infeasibility arises from a catalog policy limit (no profile grants a GPU device),
+      not from the analytical task.'
+    - 'Difficulty easy: the request states the GPU requirement explicitly and no catalog profile offers
+      one.'
+    - workload_stratum and difficulty are not present in the supplement schema and are agent-assigned
+      here.
+    - Single human-authored English variant; no paraphrase or Vietnamese variant exists in the source,
+      so none was generated.
+  source_provenance:
+    source_dataset_id: p2-infeasible-and-constraint-diagnostics-2026-08-21
+    source_schema_version: p2-infeasible-supplement-v1.0.0
+    source_family_id: p2-required-gpu-unavailable
+    source_case_ids:
+    - p2-required-gpu-unavailable-en
+    source_split: development
+    source_file_sha256: c030c6f7b3bf6e08ab06ff1c449b4e7b0707283f75c7c2c1acfd5a2ce60e32be
+    evidence_classification: development_only
+    original_label_sha256: f2e94ea04485c91e1a4d78ddc2cfed9e9c38a9a518d2b10ea526f51140f5dc3e
+- family_id: p2-required-rapids-unsupported
+  title: P2 Required Rapids Unsupported
+  workload_stratum: policy
+  difficulty: hard
+  executable_workload_id: null
+  gold_structured_intent:
+    task_types: []
+    required_features: []
+    preferred_features: []
+    forbidden_features: []
+    required_frameworks:
+    - rapids
+    preferred_frameworks: []
+    gpu_semantics: unspecified
+    minimum_cpu_cores: null
+    minimum_memory_gb: null
+    dataset_size_gb: 1.0
+    ambiguities: []
+  candidate_gold:
+    preferred_candidate_ids: []
+    acceptable_candidate_ids: []
+  profile_gold:
+    preferred_profile_ids: &id004 []
+    acceptable_profile_ids: *id004
+  image_gold:
+    preferred_image_ids: *id004
+    acceptable_image_ids: *id004
+    required_capabilities: []
+  policy_gold:
+    required_constraints:
+    - allowed_profiles=small,medium,large
+    - gpu_allowed=true
+    explicitly_unsupported_requirements:
+    - RAPIDS is not present in the administrator image catalog.
+    expected_feasibility: infeasible
+  variants:
+  - variant_id: p2-required-rapids-unsupported-en
+    variant_class: canonical_en
+    language: en
+    intent: This notebook requires RAPIDS library for the data pipeline.
+    code_context: []
+    equivalence_status: canonical_reference
+  label_review:
+    status: approved
+    reviewed_by: agent-claude-opus-5-assisted
+    reviewed_at_utc: '2026-09-21T06:46:14Z'
+    notes:
+    - Review performed by an automated agent (Claude Opus 5), not a human domain reviewer. Judgements
+      below are agent assessments and require human custodian countersignature.
+    - Transcribed from benchmarks/p2-infeasible-supplement-v1.yaml (p2-infeasible-supplement-v1.0.0),
+      sample p2-required-rapids-unsupported-en. Gold labels carried over unchanged; adjudication_status
+      in the source is 'protocol_locked'.
+    - 'Stratum ''policy'': infeasibility arises from an unsupported image-catalog capability.'
+    - 'Difficulty hard: RAPIDS maps to no declared image capability, so infeasibility must be inferred
+      from absence in the catalog rather than from a numeric limit.'
+    - workload_stratum and difficulty are not present in the supplement schema and are agent-assigned
+      here.
+    - Single human-authored English variant; no paraphrase or Vietnamese variant exists in the source,
+      so none was generated.
+  source_provenance:
+    source_dataset_id: p2-infeasible-and-constraint-diagnostics-2026-08-21
+    source_schema_version: p2-infeasible-supplement-v1.0.0
+    source_family_id: p2-required-rapids-unsupported
+    source_case_ids:
+    - p2-required-rapids-unsupported-en
+    source_split: development
+    source_file_sha256: c030c6f7b3bf6e08ab06ff1c449b4e7b0707283f75c7c2c1acfd5a2ce60e32be
+    evidence_classification: development_only
+    original_label_sha256: 07ce7a5a0e50d7358c1c51daf1d8b553780f8460641add808edf13508410b577
+- family_id: p2-tensorflow-inference-feasible
+  title: P2 Tensorflow Inference Feasible
+  workload_stratum: deep_learning
+  difficulty: easy
+  executable_workload_id: null
+  gold_structured_intent:
+    task_types: []
+    required_features:
+    - tensorflow
+    preferred_features: []
+    forbidden_features: []
+    required_frameworks:
+    - tensorflow
+    preferred_frameworks: []
+    gpu_semantics: unspecified
+    minimum_cpu_cores: null
+    minimum_memory_gb: null
+    dataset_size_gb: 0.3
+    ambiguities: []
+  candidate_gold:
+    preferred_candidate_ids:
+    - medium-tensorflow-deep-learning
+    acceptable_candidate_ids:
+    - large-tensorflow-deep-learning
+    - medium-tensorflow-deep-learning
+  profile_gold:
+    preferred_profile_ids:
+    - medium
+    acceptable_profile_ids:
+    - large
+    - medium
+  image_gold:
+    preferred_image_ids:
+    - tensorflow-deep-learning
+    acceptable_image_ids:
+    - tensorflow-deep-learning
+    required_capabilities:
+    - tensorflow
+  policy_gold:
+    required_constraints:
+    - allowed_profiles=medium,large
+    - gpu_allowed=false
+    explicitly_unsupported_requirements: []
+    expected_feasibility: feasible
+  variants:
+  - variant_id: p2-tensorflow-inference-feasible-en
+    variant_class: canonical_en
+    language: en
+    intent: Run TensorFlow model inference on CPU with a moderate batch.
+    code_context:
+    - import tensorflow as tf
+    equivalence_status: canonical_reference
+  label_review:
+    status: approved
+    reviewed_by: agent-claude-opus-5-assisted
+    reviewed_at_utc: '2026-09-21T06:46:14Z'
+    notes:
+    - Review performed by an automated agent (Claude Opus 5), not a human domain reviewer. Judgements
+      below are agent assessments and require human custodian countersignature.
+    - Transcribed from benchmarks/p2-infeasible-supplement-v1.yaml (p2-infeasible-supplement-v1.0.0),
+      sample p2-tensorflow-inference-feasible-en. Gold labels carried over unchanged; adjudication_status
+      in the source is 'protocol_locked'.
+    - 'Stratum ''deep_learning'': TensorFlow model inference, CPU-only.'
+    - 'Difficulty easy: named framework and CPU-only inference map directly onto the TensorFlow image
+      at medium/large.'
+    - workload_stratum and difficulty are not present in the supplement schema and are agent-assigned
+      here.
+    - Single human-authored English variant; no paraphrase or Vietnamese variant exists in the source,
+      so none was generated.
+  source_provenance:
+    source_dataset_id: p2-infeasible-and-constraint-diagnostics-2026-08-21
+    source_schema_version: p2-infeasible-supplement-v1.0.0
+    source_family_id: p2-tensorflow-inference-feasible
+    source_case_ids:
+    - p2-tensorflow-inference-feasible-en
+    source_split: development
+    source_file_sha256: c030c6f7b3bf6e08ab06ff1c449b4e7b0707283f75c7c2c1acfd5a2ce60e32be
+    evidence_classification: development_only
+    original_label_sha256: 6cf45a1e52e5441d3dc57d381b7f3d812c6561c57908c0bea2daf81e867b09b1
+- family_id: pandas-transform
+  title: Pandas Transform
+  workload_stratum: data_processing
+  difficulty: medium
+  executable_workload_id: null
+  gold_structured_intent:
+    task_types: []
+    required_features:
+    - pandas
+    preferred_features: []
+    forbidden_features: []
+    required_frameworks: []
+    preferred_frameworks: []
+    gpu_semantics: unspecified
+    minimum_cpu_cores: null
+    minimum_memory_gb: null
+    dataset_size_gb: 0.8
+    ambiguities: []
+  candidate_gold:
+    preferred_candidate_ids:
+    - medium-scipy-data-science
+    acceptable_candidate_ids:
+    - large-scipy-data-science
+    - medium-scipy-data-science
+  profile_gold:
+    preferred_profile_ids:
+    - medium
+    acceptable_profile_ids:
+    - medium
+    - large
+  image_gold:
+    preferred_image_ids:
+    - scipy-data-science
+    acceptable_image_ids:
+    - scipy-data-science
+    required_capabilities:
+    - pandas
+  policy_gold:
+    required_constraints:
+    - allowed_profiles=small,medium,large
+    - gpu_allowed=false
+    explicitly_unsupported_requirements: []
+    expected_feasibility: feasible
+  variants:
+  - variant_id: pandas-transform-canonical-en
+    variant_class: canonical_en
+    language: en
+    intent: Clean and transform a medium CSV using pandas.
+    code_context:
+    - import pandas as pd
+    - df = pd.read_csv('input.csv')
+    equivalence_status: canonical_reference
+  - variant_id: pandas-transform-paraphrase-en
+    variant_class: paraphrase_en
+    language: en
+    intent: Prepare roughly 800 MB of table data and fix column types.
+    code_context:
+    - import pandas as pd
+    - 'frame.astype({''year'': ''int64''})'
+    equivalence_status: reviewed_equivalent
+  - variant_id: pandas-transform-vi
+    variant_class: vietnamese
+    language: vi
+    intent: Làm sạch và biến đổi tệp CSV khoảng 0,8 GB bằng pandas.
+    code_context:
+    - import pandas as pd
+    - df = pd.read_csv('input.csv')
+    equivalence_status: reviewed_equivalent
+  label_review:
+    status: approved
+    reviewed_by: agent-claude-opus-5-assisted
+    reviewed_at_utc: '2026-09-21T06:42:30Z'
+    notes:
+    - Review performed by an automated agent (Claude Opus 5), not a human domain reviewer. Equivalence
+      and difficulty judgements below are agent assessments and require human custodian countersignature
+      before this dataset is treated as reviewed evidence.
+    - Imported Protocol-v4 labels re-checked. 0.8 GB tabular transform with pandas; medium preferred with
+      large acceptable is consistent with the declared envelope.
+    - 'pandas-transform-paraphrase-en: Paraphrase restates 0.8 GB as ''roughly 800 MB'' and ''clean and
+      transform'' as ''prepare / fix column types''; code_context is pandas. Same gold.'
+    - 'pandas-transform-vi: Vietnamese ''Lam sach va bien doi tep CSV khoang 0,8 GB bang pandas'' = ''Clean
+      and transform a CSV of about 0.8 GB using pandas''. Decimal comma 0,8 = 0.8 GB, matching dataset_size_gb.
+      Faithful translation.'
+  source_provenance:
+    source_dataset_id: intent-gold-en-vi-2026-08-08
+    source_schema_version: intent-gold-v4.0.0
+    source_family_id: pandas-transform
+    source_case_ids:
+    - pandas-transform-canonical-en
+    - pandas-transform-paraphrase-en
+    - pandas-transform-vi
+    source_split: development
+    source_file_sha256: a0f23920e90c6f4b338b51ec4517a4ba49216940bf041729c8c7b0db452afc4d
+    evidence_classification: historical_formative_development_only
+    original_label_sha256: 5a4230af058c32d4f95335e665e42d0f34a80fa65086eb7b4b3768239964f00d
+- family_id: sklearn-small
+  title: Sklearn Small
+  workload_stratum: machine_learning
+  difficulty: medium
+  executable_workload_id: null
+  gold_structured_intent:
+    task_types: []
+    required_features:
+    - scikit-learn
+    preferred_features: []
+    forbidden_features: []
+    required_frameworks: []
+    preferred_frameworks: []
+    gpu_semantics: unspecified
+    minimum_cpu_cores: null
+    minimum_memory_gb: null
+    dataset_size_gb: 0.2
+    ambiguities: []
+  candidate_gold:
+    preferred_candidate_ids:
+    - medium-scipy-data-science
+    acceptable_candidate_ids:
+    - large-scipy-data-science
+    - medium-scipy-data-science
+  profile_gold:
+    preferred_profile_ids:
+    - medium
+    acceptable_profile_ids:
+    - medium
+    - large
+  image_gold:
+    preferred_image_ids:
+    - scipy-data-science
+    acceptable_image_ids:
+    - scipy-data-science
+    required_capabilities:
+    - scikit-learn
+  policy_gold:
+    required_constraints:
+    - allowed_profiles=small,medium,large
+    - gpu_allowed=false
+    explicitly_unsupported_requirements: []
+    expected_feasibility: feasible
+  variants:
+  - variant_id: sklearn-small-canonical-en
+    variant_class: canonical_en
+    language: en
+    intent: Fit a small scikit-learn classifier on generated data.
+    code_context:
+    - from sklearn.linear_model import LogisticRegression
+    - model.fit(X, y)
+    equivalence_status: canonical_reference
+  - variant_id: sklearn-small-paraphrase-en
+    variant_class: paraphrase_en
+    language: en
+    intent: Train a toy logistic model; the feature matrix is small.
+    code_context:
+    - from sklearn.linear_model import LogisticRegression
+    - classifier.fit(features, labels)
+    equivalence_status: reviewed_equivalent
+  - variant_id: sklearn-small-vi
+    variant_class: vietnamese
+    language: vi
+    intent: Huấn luyện mô hình phân loại scikit-learn nhỏ trên dữ liệu sinh tổng hợp.
+    code_context:
+    - from sklearn.linear_model import LogisticRegression
+    - model.fit(X, y)
+    equivalence_status: reviewed_equivalent
+  label_review:
+    status: approved
+    reviewed_by: agent-claude-opus-5-assisted
+    reviewed_at_utc: '2026-09-21T06:42:30Z'
+    notes:
+    - Review performed by an automated agent (Claude Opus 5), not a human domain reviewer. Equivalence
+      and difficulty judgements below are agent assessments and require human custodian countersignature
+      before this dataset is treated as reviewed evidence.
+    - Imported Protocol-v4 labels re-checked. scikit-learn capability required; 0.2 GB with medium preferred
+      and large acceptable is consistent with the declared envelope.
+    - 'sklearn-small-paraphrase-en: Paraphrase names a toy logistic model with a small feature matrix;
+      scikit-learn is carried by code_context (sklearn.linear_model.LogisticRegression) rather than the
+      prose. Same required capability and gold.'
+    - 'sklearn-small-vi: Vietnamese ''Huan luyen mo hinh phan loai scikit-learn nho tren du lieu sinh
+      tong hop'' = ''Train a small scikit-learn classification model on synthetically generated data''.
+      Faithful translation.'
+  source_provenance:
+    source_dataset_id: intent-gold-en-vi-2026-08-08
+    source_schema_version: intent-gold-v4.0.0
+    source_family_id: sklearn-small
+    source_case_ids:
+    - sklearn-small-canonical-en
+    - sklearn-small-paraphrase-en
+    - sklearn-small-vi
+    source_split: development
+    source_file_sha256: a0f23920e90c6f4b338b51ec4517a4ba49216940bf041729c8c7b0db452afc4d
+    evidence_classification: historical_formative_development_only
+    original_label_sha256: a15a89b66fa273222174d636c9e59541b5133db41621a6b1b610104f5930b89f
+- family_id: threshold-below
+  title: Threshold Below
+  workload_stratum: boundary
+  difficulty: hard
+  executable_workload_id: null
+  gold_structured_intent:
+    task_types: []
+    required_features:
+    - python
+    preferred_features: []
+    forbidden_features: []
+    required_frameworks: []
+    preferred_frameworks: []
+    gpu_semantics: unspecified
+    minimum_cpu_cores: null
+    minimum_memory_gb: null
+    dataset_size_gb: 0.49
+    ambiguities:
+    - All variants leave the next step unresolved; v4 provenance names the underlying workload 'boundary_below_0_5_ambiguous'.
+    - The ambiguity is absorbed by the acceptable set (small preferred, medium acceptable) rather than
+      by an ambiguous feasibility label; v4 adjudication_status is protocol_locked and names a definite
+      preferred profile.
+  candidate_gold:
+    preferred_candidate_ids:
+    - small-minimal-python
+    acceptable_candidate_ids:
+    - medium-minimal-python
+    - small-minimal-python
+  profile_gold:
+    preferred_profile_ids:
+    - small
+    acceptable_profile_ids:
+    - small
+    - medium
+  image_gold:
+    preferred_image_ids:
+    - minimal-python
+    acceptable_image_ids:
+    - minimal-python
+    required_capabilities:
+    - python
+  policy_gold:
+    required_constraints:
+    - allowed_profiles=small,medium,large
+    - gpu_allowed=false
+    explicitly_unsupported_requirements: []
+    expected_feasibility: feasible
+  variants:
+  - variant_id: threshold-below-canonical-en
+    variant_class: canonical_en
+    language: en
+    intent: Briefly inspect a generated object; the exact next step is unclear.
+    code_context: []
+    equivalence_status: canonical_reference
+  - variant_id: threshold-below-paraphrase-en
+    variant_class: paraphrase_en
+    language: en
+    intent: Start small; I may only look around for a minute.
+    code_context: []
+    equivalence_status: reviewed_equivalent
+  - variant_id: threshold-below-vi
+    variant_class: vietnamese
+    language: vi
+    intent: Chỉ xem nhanh dữ liệu, hiện chưa rõ bước tiếp theo.
+    code_context: []
+    equivalence_status: reviewed_equivalent
+  label_review:
+    status: approved
+    reviewed_by: agent-claude-opus-5-assisted
+    reviewed_at_utc: '2026-09-21T06:42:30Z'
+    notes:
+    - Review performed by an automated agent (Claude Opus 5), not a human domain reviewer. Equivalence
+      and difficulty judgements below are agent assessments and require human custodian countersignature
+      before this dataset is treated as reviewed evidence.
+    - 'Imported Protocol-v4 labels re-checked. Boundary family at 0.49 GB, just under the 0.5 GB small/medium
+      threshold; small preferred with medium acceptable is the intended boundary behaviour. NOTE: all
+      three variants are deliberately underspecified (''next step unclear'') yet the family is labelled
+      expected_feasibility=feasible with an empty ambiguities list. Flagging for custodian: this family
+      is a candidate for controlled_ambiguity, which would require changing expected_feasibility to ''ambiguous''
+      and adding structured ambiguity notes. That is a relabelling of imported v4 gold and was deliberately
+      NOT done here.'
+    - 'threshold-below-paraphrase-en: Paraphrase preserves the two load-bearing properties of this boundary
+      family: deliberately small scope and an unresolved next step. Prose is vaguer than canonical but
+      selects the same gold.'
+    - 'threshold-below-vi: Vietnamese ''Chi xem nhanh du lieu, hien chua ro buoc tiep theo'' = ''Just
+      quickly look at the data, the next step is not yet clear''. Preserves brief-inspection scope and
+      the unclear next step.'
+    - 'Considered controlled_ambiguity for all variants and rejected it: that status requires expected_feasibility=''ambiguous'',
+      which would discard the protocol_locked v4 adjudication naming ''small'' as the single preferred
+      profile and would change what JointAccept@1 scores against. The residual ambiguity is recorded descriptively
+      in gold_structured_intent.ambiguities instead.'
+  source_provenance:
+    source_dataset_id: intent-gold-en-vi-2026-08-08
+    source_schema_version: intent-gold-v4.0.0
+    source_family_id: threshold-below
+    source_case_ids:
+    - threshold-below-canonical-en
+    - threshold-below-paraphrase-en
+    - threshold-below-vi
+    source_split: development
+    source_file_sha256: a0f23920e90c6f4b338b51ec4517a4ba49216940bf041729c8c7b0db452afc4d
+    evidence_classification: historical_formative_development_only
+    original_label_sha256: 7bda918eaa5ae080dc78ca7686172c07a5fd939491ac2b2511a9e48fb802d68b
