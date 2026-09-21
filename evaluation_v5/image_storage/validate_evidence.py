@@ -1809,7 +1809,7 @@ def validate_e5_storage_evidence(
                 ):
                     raise EvidenceValidationError(
                         f"Scale {size} confirmatory recommendation provenance does not "
-                        "match the authoritative split/freeze capability"
+                        "match the authoritative confirmatory split capability"
                     )
                 expected_split_identity = expected_confirmatory_provenance["split"]
                 if (
@@ -2392,11 +2392,6 @@ def main() -> None:
         help="External sealed confirmatory dataset for positive storage-evidence validation.",
     )
     parser.add_argument(
-        "--freeze",
-        type=Path,
-        help="Authoritative production freeze for positive storage-evidence validation.",
-    )
-    parser.add_argument(
         "--split-id",
         help="Expected confirmatory split ID (default: v5-confirmatory).",
     )
@@ -2412,16 +2407,11 @@ def main() -> None:
 
         if pkg_type == "storage":
             confirmatory_split = None
-            if args.dataset is not None or args.freeze is not None:
-                if args.dataset is None or args.freeze is None:
-                    raise EvidenceValidationError(
-                        "confirmatory storage validation requires both --dataset and --freeze"
-                    )
+            if args.dataset is not None:
                 from evaluation_v5.isolation import load_confirmatory_split
 
                 confirmatory_split = load_confirmatory_split(
                     args.dataset,
-                    args.freeze,
                     expected_split_id=args.split_id or "v5-confirmatory",
                 )
             res = validate_e5_storage_evidence(

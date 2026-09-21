@@ -24,8 +24,8 @@ resource_policy_hash = _dynamic_resources.resource_policy_hash
 
 from .efficiency_contracts import (
     CATALOG_PROFILES, CONDITIONS, CURRENT_DESIGN_ID, EXECUTION_ORDER_ALGORITHM,
-    FAMILY_COUNT, FREEZE_PATH, INPUT_PATH, PRIMARY_TRIAL_COUNT, REPETITIONS,
-    load_condition_inputs, load_efficiency_freeze, resolve_design_generation,
+    FAMILY_COUNT, INPUT_PATH, PLAN_SEED, PRIMARY_TRIAL_COUNT, REPETITIONS,
+    load_condition_inputs, resolve_design_generation,
 )
 from .efficiency_models import DECISION_SCHEMA_VERSION, PLAN_SCHEMA_VERSION, EfficiencyTrialSpec, ResourceAllocation
 from .evidence import canonical_sha256, file_sha256, verify_integrity, write_integrity_manifest
@@ -106,7 +106,7 @@ def generate_allocation_decisions(
     input_contract = dict(inputs or load_condition_inputs())
     # The seed is registered independently of calibration results. No oracle
     # path, package, envelope, or approval object enters this function.
-    seed = 20260904 if master_seed is None else master_seed
+    seed = PLAN_SEED if master_seed is None else master_seed
     selected_adapters = dict(adapters or default_adapters(enable_p3=False))
     if set(selected_adapters) != {"P1", "P2"}:
         raise ValueError("resource-efficiency planning permits only frozen P1 and P2 adapters")
@@ -168,19 +168,18 @@ def build_efficiency_plan(
     *, adapters: Mapping[str, OfflineSystemAdapter] | None = None,
 ) -> dict[str, Any]:
     inputs = load_condition_inputs()
-    freeze = load_efficiency_freeze()
     workloads = {row["family_id"]: row for row in load_resource_manifest()["workloads"]}
     decisions = generate_allocation_decisions(
         inputs=inputs, adapters=adapters,
-        master_seed=freeze["experiment"]["plan_seed"],
+        master_seed=PLAN_SEED,
     )
     by_family = {row["family_id"]: row for row in decisions}
     trials: list[EfficiencyTrialSpec] = []
     plan_index = 0
     order = _counterbalanced_trial_order(
         [item["family_id"] for item in inputs["inputs"]],
-        repetitions=freeze["experiment"]["repetitions"],
-        seed=freeze["experiment"]["plan_seed"],
+        repetitions=REPETITIONS,
+        seed=PLAN_SEED,
     )
     for repetition, family_id, condition in order:
         workload = workloads[family_id]
@@ -208,8 +207,8 @@ def build_efficiency_plan(
         "family_count": FAMILY_COUNT, "repetitions": REPETITIONS,
         "primary_trial_count": PRIMARY_TRIAL_COUNT,
         "independent_semantic_n": FAMILY_COUNT,
-        "plan_seed": freeze["experiment"]["plan_seed"],
-        "condition_input_sha256": file_sha256(INPUT_PATH), "freeze_contract_sha256": file_sha256(FREEZE_PATH),
+        "plan_seed": PLAN_SEED,
+        "condition_input_sha256": file_sha256(INPUT_PATH),
         "decision_sha256": decision_hash, "trial_order_sha256": canonical_sha256({"trials": trial_payload}),
         "execution_order_algorithm": EXECUTION_ORDER_ALGORITHM,
         "randomization": (

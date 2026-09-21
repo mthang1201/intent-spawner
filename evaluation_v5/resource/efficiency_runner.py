@@ -21,8 +21,8 @@ from .contracts import load_cluster_policy, load_image_state
 from .efficiency_analysis import analyze_trials, load_approved_oracle, summarize_dynamic_allocations
 from .efficiency_capacity import simulate_capacity
 from .efficiency_contracts import (
-    FAMILY_COUNT, PRIMARY_TRIAL_COUNT, REPETITIONS, confirmatory_readiness,
-    load_capacity_contract, load_efficiency_freeze, validate_efficiency_contracts,
+    FAMILY_COUNT, INPUT_PATH, PRIMARY_TRIAL_COUNT, REPETITIONS,
+    load_capacity_contract, node_capacity_readiness, validate_efficiency_contracts,
 )
 from .efficiency_evidence import ANALYSIS_MANIFEST_VERSION, RAW_MANIFEST_VERSION, append_jsonl, load_jsonl, seal_package, validate_analysis_package, validate_raw_package, validate_trial_against_spec, validate_trial_record, write_sidecar
 from .efficiency_models import EfficiencyTrialSpec
@@ -31,7 +31,6 @@ from .evidence import canonical_sha256, file_sha256
 
 
 ROOT = Path(__file__).resolve().parents[2]
-DEFAULT_PRODUCTION_FREEZE = ROOT / "results_v5" / "protocol-v5.0.0" / "freezes" / "v5-final-execution-freeze" / "freeze-manifest.json"
 
 
 class EfficiencyAdapter(Protocol):
@@ -116,7 +115,6 @@ def _replacement_spec(spec: EfficiencyTrialSpec, prior_id: str) -> EfficiencyTri
 def execute_plan(
     *, root: Path, run_id: str, plan: Mapping[str, Any], adapter: EfficiencyAdapter,
     resume: bool = False, enforce_readiness: bool = True,
-    freeze_path: Path = DEFAULT_PRODUCTION_FREEZE,
     readiness_attestation_path: Path | None = None,
 ) -> dict[str, Any]:
     validate_efficiency_plan(plan, require_current_design=True)
@@ -145,9 +143,7 @@ def execute_plan(
                     raise ValueError("cannot resume dry-run or synthetic package as real execution")
             except (json.JSONDecodeError, OSError):
                 pass
-    freeze = load_efficiency_freeze()
-    capacity = load_capacity_contract()
-    blockers = [] if enforce_readiness else confirmatory_readiness(freeze, capacity)
+    blockers: list[str] = []
     if enforce_readiness and not git_is_clean():
         blockers.append("GIT_TREE_NOT_CLEAN")
     if enforce_readiness:
@@ -162,16 +158,14 @@ def execute_plan(
             image=getattr(adapter, "image", "") or "",
             result_dir=root,
             resume=resume,
-            freeze_path=freeze_path,
             readiness_attestation_path=readiness_attestation_path,
         )
-        _, external_readiness = verify_e4_readiness_inputs(
-            freeze_path=freeze_path,
+        external_readiness = verify_e4_readiness_inputs(
             readiness_attestation_path=readiness_attestation_path,
         )
         if not auth.is_production_implementation:
             blockers.append("AUTHENTICATED_REAL_KUBERNETES_COLLECTOR_REQUIRED")
-        if plan.get("condition_input_sha256") != freeze["experiment"]["workload_input_sha256"] or plan.get("freeze_contract_sha256") != file_sha256(Path(__file__).resolve().parents[2] / "benchmarks_v5" / "resource-efficiency-freeze-contract-v1.yaml"):
+        if plan.get("condition_input_sha256") != file_sha256(INPUT_PATH):
             blockers.append("PLAN_CONTRACT_BINDING_MISMATCH")
         if plan.get("git_revision") != _git_revision():
             blockers.append("PLAN_GIT_REVISION_MISMATCH")
@@ -321,9 +315,8 @@ def write_not_executed(*, root: Path, run_id: str, image: str, reason: str) -> d
     from cluster_evaluation.resource_adapter_v5 import collect_read_only_preflight
 
     plan = build_efficiency_plan()
-    freeze = load_efficiency_freeze()
     capacity = load_capacity_contract()
-    blockers = confirmatory_readiness(freeze, capacity)
+    blockers = node_capacity_readiness(capacity)
     if not git_is_clean():
         blockers.append("GIT_TREE_NOT_CLEAN")
     preflight = collect_read_only_preflight(image=image, policy=load_cluster_policy(), image_state=load_image_state())
@@ -353,8 +346,7 @@ def write_analysis_package(*, raw_root: Path, analysis_root: Path, oracle_root: 
     raw_status = validate_raw_package(raw_root)
     if raw_status["execution_status"] != "OBSERVED":
         raise ValueError("analysis requires an observed raw package")
-    freeze = load_efficiency_freeze()
-    oracle = load_approved_oracle(oracle_root, expected_sha256=freeze["oracle_package"]["sha256"])
+    oracle = load_approved_oracle(oracle_root)
     rows = load_jsonl(raw_root / "raw" / "trials.jsonl")
     plan = json.loads((raw_root / "plan.json").read_text(encoding="utf-8"))
     decisions = plan["decisions"]
@@ -435,7 +427,6 @@ def _parser() -> argparse.ArgumentParser:
     preflight.add_argument("--result-dir", type=Path, default=None)
     preflight.add_argument("--resume", action="store_true")
     preflight.add_argument("--format", choices=("json", "text"), default="json")
-    preflight.add_argument("--freeze", type=Path, default=DEFAULT_PRODUCTION_FREEZE)
     preflight.add_argument("--readiness-attestation", type=Path, default=None)
     commands.add_parser("validate")
     plan = commands.add_parser("plan"); plan.add_argument("--result-dir", type=Path, required=True)
@@ -443,7 +434,7 @@ def _parser() -> argparse.ArgumentParser:
     dry.add_argument("--result-dir", type=Path, required=True); dry.add_argument("--run-id", required=True); dry.add_argument("--image", required=True); dry.add_argument("--reason", required=True)
     check = commands.add_parser("validate-package"); check.add_argument("path", type=Path)
     execute = commands.add_parser("execute")
-    execute.add_argument("--result-dir", type=Path, required=True); execute.add_argument("--run-id", required=True); execute.add_argument("--plan-dir", type=Path, required=True); execute.add_argument("--image", required=True); execute.add_argument("--resume", action="store_true"); execute.add_argument("--freeze", type=Path, default=DEFAULT_PRODUCTION_FREEZE); execute.add_argument("--readiness-attestation", type=Path, required=True)
+    execute.add_argument("--result-dir", type=Path, required=True); execute.add_argument("--run-id", required=True); execute.add_argument("--plan-dir", type=Path, required=True); execute.add_argument("--image", required=True); execute.add_argument("--resume", action="store_true"); execute.add_argument("--readiness-attestation", type=Path, required=True)
     analyze = commands.add_parser("analyze")
     analyze.add_argument("--raw-result", type=Path, required=True); analyze.add_argument("--analysis-dir", type=Path, required=True); analyze.add_argument("--oracle", type=Path, required=True); analyze.add_argument("--bootstrap-replicates", type=int, default=2000)
     check_analysis = commands.add_parser("validate-analysis"); check_analysis.add_argument("path", type=Path)
@@ -459,7 +450,6 @@ def main(argv: list[str] | None = None) -> int:
             image=args.image,
             result_dir=args.result_dir,
             resume=args.resume,
-            freeze_path=args.freeze,
             readiness_attestation_path=args.readiness_attestation,
         )
         if getattr(args, "format", "json") == "json":
@@ -483,7 +473,7 @@ def main(argv: list[str] | None = None) -> int:
         print(json.dumps(write_not_executed(root=args.result_dir, run_id=args.run_id, image=args.image, reason=args.reason), sort_keys=True)); return 0
     if args.command == "execute":
         from cluster_evaluation.resource_efficiency_adapter_v5 import KubernetesResourceEfficiencyAdapter
-        value = execute_plan(root=args.result_dir, run_id=args.run_id, plan=load_plan_package(args.plan_dir), adapter=KubernetesResourceEfficiencyAdapter(image=args.image), resume=args.resume, freeze_path=args.freeze, readiness_attestation_path=args.readiness_attestation)
+        value = execute_plan(root=args.result_dir, run_id=args.run_id, plan=load_plan_package(args.plan_dir), adapter=KubernetesResourceEfficiencyAdapter(image=args.image), resume=args.resume, readiness_attestation_path=args.readiness_attestation)
         print(json.dumps(value, sort_keys=True)); return 0
     if args.command == "analyze":
         value = write_analysis_package(raw_root=args.raw_result, analysis_root=args.analysis_dir, oracle_root=args.oracle, bootstrap_replicates=args.bootstrap_replicates)

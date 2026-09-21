@@ -27,9 +27,9 @@ from .derive import (
     trial_basic_success,
 )
 from .contracts import (
-    COMPARISON_SCHEMA_PATH, CROSSWALK_PATH, ELIGIBILITY_PATH, FREEZE_CONTRACT_PATH, IMAGE_STATE_PATH,
-    SEMANTIC_PATH, freeze_is_confirmatory, image_state_is_verified,
-    load_cluster_policy, load_crosswalk, load_freeze_contract, load_image_state,
+    COMPARISON_SCHEMA_PATH, CROSSWALK_PATH, ELIGIBILITY_PATH, IMAGE_STATE_PATH,
+    SEMANTIC_PATH, image_state_is_verified,
+    load_cluster_policy, load_crosswalk, load_image_state,
     load_semantic_independence, static_independence_scan,
 )
 from .evidence import (
@@ -55,7 +55,6 @@ from .planner import build_calibration_plan, make_trial_spec
 
 
 ROOT = Path(__file__).resolve().parents[2]
-DEFAULT_FREEZE = ROOT / "results_v5" / "protocol-v5.0.0" / "freezes" / "v5-final-execution-freeze" / "freeze-manifest.json"
 RUN_SCHEMA_VERSION = "protocol-v5-resource-calibration-run-v1.1.0"
 RUNNER_VERSION = "protocol-v5-resource-calibration-runner-v1.2.0"
 
@@ -78,85 +77,18 @@ def _git_identity() -> dict[str, Any]:
     return {"git_revision": revision, "git_dirty": dirty}
 
 
-def _comparison_provenance(
-    freeze_path: Path, *, require_production: bool
-) -> dict[str, Any]:
-    if require_production:
-        from evaluation_v5.freeze import verify_production_freeze
-
-        verified = verify_production_freeze(freeze_path)
-        payload = verified.configuration_snapshot.to_dict()
-        freeze_identity = verified.identity
-        recorded_path = verified.artifact_path
-    else:
-        # Compatibility is intentionally confined to non-observed test/dry-run
-        # paths. It grants no production capability.
-        from evaluation_v5.freeze import (
-            DEFAULT_DESIGN_SNAPSHOT,
-            FreezeValidationError,
-            load_design_snapshot,
-            parse_production_freeze,
-        )
-
-        selected = freeze_path if freeze_path.is_file() else DEFAULT_DESIGN_SNAPSHOT
-        try:
-            payload = load_design_snapshot(selected).to_dict()
-            freeze_identity = {
-                "freeze_id": None,
-                "freeze_manifest_sha256": file_sha256(selected),
-                "source": "non_authoritative_design_snapshot",
-            }
-        except FreezeValidationError:
-            # The frozen integration base now points DEFAULT_FREEZE at a
-            # production envelope. Dry-run/test code consumes only its already
-            # frozen comparison snapshot and gains no execution authority.
-            envelope = parse_production_freeze(
-                json.loads(selected.read_text(encoding="utf-8")),
-                require_production=False,
-            )
-            payload = dict(envelope["configuration_snapshot"])
-            freeze_identity = {
-                "freeze_id": envelope.freeze_id,
-                "freeze_manifest_sha256": file_sha256(selected),
-                "source": "production_envelope_snapshot_non_authorizing",
-            }
-        recorded_path = selected
-    systems = payload.get("systems", {})
-    p3 = payload.get("p3_gate", {})
-    if not isinstance(systems, dict) or "P1" not in systems or "P2" not in systems:
-        raise ValueError("frozen comparison snapshot lacks P1/P2 identities")
-    if p3.get("status") != "not_retained" or p3.get("p3_active") is not False:
-        raise ValueError("E4 calibration requires the frozen not-retained P3 gate")
-    return {
-        "role": "comparison_provenance_only_not_calibration_input",
-        "freeze_path": str(recorded_path.relative_to(ROOT)),
-        "freeze_sha256": file_sha256(recorded_path),
-        "freeze_identity": freeze_identity,
-        "systems": {"P1": systems["P1"], "P2": systems["P2"]},
-        "candidate_catalog": payload.get("candidate_catalog"),
-        "indexes": payload.get("indexes"),
-        "p3_gate": {"status": "not_retained", "p3_active": False},
-    }
-
-
 def _base_provenance(
     manifest_path: Path,
     manifest: Mapping[str, Any],
-    freeze_path: Path,
     *,
     run_id: str,
     image: str,
     adapter_version: str,
-    require_production_freeze: bool,
 ) -> dict[str, Any]:
     plan = build_calibration_plan(manifest)
-    comparison = _comparison_provenance(
-        freeze_path, require_production=require_production_freeze
-    )
     semantic = load_semantic_independence(manifest_path=manifest_path)
     policy = load_cluster_policy()
     image_state = load_image_state()
-    freeze_contract = load_freeze_contract()
     crosswalk = load_crosswalk(manifest_path=manifest_path)
     static_guard = static_independence_scan()
     contracts = {
@@ -176,12 +108,6 @@ def _base_provenance(
             "sha256": file_sha256(IMAGE_STATE_PATH),
             "status": image_state["status"],
         },
-        "freeze_contract": {
-            "path": str(FREEZE_CONTRACT_PATH.relative_to(ROOT)),
-            "schema_version": freeze_contract["schema_version"],
-            "sha256": file_sha256(FREEZE_CONTRACT_PATH),
-            "status": freeze_contract["confirmatory_freeze_status"],
-        },
         "allocation_comparison": {
             "version": crosswalk["comparison_contract_version"],
             "schema_path": str(COMPARISON_SCHEMA_PATH.relative_to(ROOT)),
@@ -193,7 +119,6 @@ def _base_provenance(
     identity = {
         "run_id": run_id,
         "manifest_sha256": file_sha256(manifest_path),
-        "freeze_sha256": comparison["freeze_sha256"],
         "image": image,
         "adapter_version": adapter_version,
         "plan_sha256": canonical_sha256(plan),
@@ -219,7 +144,6 @@ def _base_provenance(
             "trial_observation_schema_version": TRIAL_SCHEMA_VERSION,
         },
         "frozen_contracts": contracts,
-        "comparison_provenance": comparison,
         "container_image": image,
         "adapter_version": adapter_version,
         "plan_fingerprint": canonical_sha256(identity),
@@ -261,19 +185,16 @@ def create_dry_run_package(
     result_dir: Path,
     run_id: str,
     manifest_path: Path = DEFAULT_MANIFEST,
-    freeze_path: Path = DEFAULT_FREEZE,
     image: str,
     unavailable_reason: str,
 ) -> dict[str, Any]:
     manifest_path = manifest_path.resolve()
-    freeze_path = freeze_path.resolve()
     manifest = load_resource_manifest(manifest_path)
     _make_directories(result_dir, resume=False)
     plan = build_calibration_plan(manifest)
     provenance = _base_provenance(
-        manifest_path, manifest, freeze_path, run_id=run_id, image=image,
+        manifest_path, manifest, run_id=run_id, image=image,
         adapter_version="dry-run-adapter-v1",
-        require_production_freeze=False,
     )
     from cluster_evaluation.resource_adapter_v5 import (
         ADAPTER_MONITOR_GRACE_SECONDS, IMAGE_RE, POD_LIFECYCLE_GRACE_SECONDS,
@@ -283,7 +204,6 @@ def create_dry_run_package(
     policy = load_cluster_policy()
     declared_image_state = load_image_state()
     preflight = collect_read_only_preflight(image=image, policy=policy, image_state=declared_image_state)
-    freeze_contract = load_freeze_contract()
     image_state = {
         "reference_configured": bool(image),
         "digest_syntactically_pinned": bool(IMAGE_RE.fullmatch(image)),
@@ -297,8 +217,6 @@ def create_dry_run_package(
     readiness_failures = list(preflight["failure_codes"])
     if provenance["git_dirty"]:
         readiness_failures.append("DIRTY_GIT_TREE")
-    if not freeze_is_confirmatory(freeze_contract):
-        readiness_failures.append("CONFIRMATORY_FREEZE_NOT_ACTIVE")
     if not image_state_is_verified(declared_image_state, image):
         readiness_failures.append("IMAGE_DIGEST_UNVERIFIED")
     readiness_failures = sorted(set(readiness_failures))
@@ -340,7 +258,6 @@ def create_dry_run_package(
         "git_revision": provenance["git_revision"],
         "git_dirty": provenance["git_dirty"],
         "workload_manifest_sha256": provenance["workload_manifest"]["sha256"],
-        "frozen_comparison_sha256": provenance["comparison_provenance"]["freeze_sha256"],
         "semantic_independence_sha256": provenance["frozen_contracts"]["semantic_independence"]["sha256"],
         "comparison_crosswalk_sha256": provenance["frozen_contracts"]["allocation_comparison"]["crosswalk_sha256"],
         "comparison_contract_version": provenance["frozen_contracts"]["allocation_comparison"]["version"],
@@ -351,7 +268,6 @@ def create_dry_run_package(
         "cluster_eligibility_policy_version": policy["schema_version"],
         "cluster_eligibility_policy_sha256": provenance["frozen_contracts"]["cluster_eligibility"]["sha256"],
         "image_state_sha256": provenance["frozen_contracts"]["image_state"]["sha256"],
-        "freeze_contract_sha256": provenance["frozen_contracts"]["freeze_contract"]["sha256"],
         "container_image": image,
         "environment_identity": environment["environment_id"],
         "manual_review_status": "NOT_APPLICABLE",
@@ -516,14 +432,12 @@ def run_calibration(
     run_id: str,
     adapter: TrialAdapter,
     manifest_path: Path = DEFAULT_MANIFEST,
-    freeze_path: Path = DEFAULT_FREEZE,
     image: str,
     resume: bool = False,
     enforce_readiness: bool = True,
     readiness_attestation_path: Path | None = None,
 ) -> dict[str, Any]:
     manifest_path = manifest_path.resolve()
-    freeze_path = freeze_path.resolve()
     if not resume and result_dir.exists():
         raise FileExistsError(result_dir)
     if resume and (
@@ -556,16 +470,14 @@ def run_calibration(
             result_dir=result_dir,
             resume=resume,
             manifest_path=manifest_path,
-            freeze_path=freeze_path,
             readiness_attestation_path=readiness_attestation_path,
         )
         environment_snapshot = adapter.environment_provenance()
         if environment_snapshot.get("eligibility_status") != "ELIGIBLE":
             raise RuntimeError("OBSERVED_E4_EXECUTION_BLOCKED: CLUSTER_INELIGIBLE")
     provenance = _base_provenance(
-        manifest_path, manifest, freeze_path, run_id=run_id, image=image,
+        manifest_path, manifest, run_id=run_id, image=image,
         adapter_version=adapter.adapter_version,
-        require_production_freeze=enforce_readiness,
     )
     _make_directories(result_dir, resume=resume)
     provenance_path = result_dir / "raw" / "run-provenance.json"
@@ -764,7 +676,6 @@ def run_calibration(
         "git_revision": provenance["git_revision"],
         "git_dirty": False,
         "workload_manifest_sha256": provenance["workload_manifest"]["sha256"],
-        "frozen_comparison_sha256": provenance["comparison_provenance"]["freeze_sha256"],
         "semantic_independence_sha256": provenance["frozen_contracts"]["semantic_independence"]["sha256"],
         "comparison_contract_version": provenance["frozen_contracts"]["allocation_comparison"]["version"],
         "comparison_contract_sha256": provenance["frozen_contracts"]["allocation_comparison"]["schema_sha256"],
@@ -775,7 +686,6 @@ def run_calibration(
         "cluster_eligibility_policy_version": provenance["frozen_contracts"]["cluster_eligibility"]["schema_version"],
         "cluster_eligibility_policy_sha256": provenance["frozen_contracts"]["cluster_eligibility"]["sha256"],
         "image_state_sha256": provenance["frozen_contracts"]["image_state"]["sha256"],
-        "freeze_contract_sha256": provenance["frozen_contracts"]["freeze_contract"]["sha256"],
         "container_image": image,
         "environment_identity": outcome.environment_identity or dict(adapter.environment_provenance()).get("environment_id"),
         "manual_review_status": manual,
@@ -874,7 +784,6 @@ def _parse_args(argv: Sequence[str]) -> argparse.Namespace:
     preflight.add_argument("--result-dir", type=Path, default=None)
     preflight.add_argument("--resume", action="store_true")
     preflight.add_argument("--format", choices=("json", "text"), default="json")
-    preflight.add_argument("--freeze", type=Path, default=DEFAULT_FREEZE)
     preflight.add_argument("--readiness-attestation", type=Path, default=None)
     validate = sub.add_parser("validate-manifest")
     validate.add_argument("--manifest", type=Path, default=DEFAULT_MANIFEST)
@@ -882,14 +791,12 @@ def _parse_args(argv: Sequence[str]) -> argparse.Namespace:
     dry.add_argument("--result-dir", type=Path, required=True)
     dry.add_argument("--run-id", required=True)
     dry.add_argument("--manifest", type=Path, default=DEFAULT_MANIFEST)
-    dry.add_argument("--freeze", type=Path, default=DEFAULT_FREEZE)
     dry.add_argument("--image", required=True)
     dry.add_argument("--reason", required=True)
     execute = sub.add_parser("execute")
     execute.add_argument("--result-dir", type=Path, required=True)
     execute.add_argument("--run-id", required=True)
     execute.add_argument("--manifest", type=Path, default=DEFAULT_MANIFEST)
-    execute.add_argument("--freeze", type=Path, default=DEFAULT_FREEZE)
     execute.add_argument("--image", required=True)
     execute.add_argument("--resume", action="store_true")
     execute.add_argument("--readiness-attestation", type=Path, required=True)
@@ -916,7 +823,6 @@ def main(argv: Sequence[str] | None = None) -> int:
             image=args.image,
             result_dir=args.result_dir,
             resume=args.resume,
-            freeze_path=args.freeze,
             readiness_attestation_path=args.readiness_attestation,
         )
         if getattr(args, "format", "json") == "json":
@@ -944,7 +850,6 @@ def main(argv: Sequence[str] | None = None) -> int:
             "schema_version": manifest["schema_version"], **marker_report,
             "semantic_independence_version": semantic["schema_version"],
             "cluster_eligibility_version": load_cluster_policy()["schema_version"],
-            "freeze_contract_version": load_freeze_contract()["schema_version"],
             "image_state_version": load_image_state()["schema_version"],
             "comparison_contract_version": crosswalk["comparison_contract_version"],
             "static_independence": guard,
@@ -953,7 +858,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     if args.command == "dry-run":
         report = create_dry_run_package(
             result_dir=args.result_dir.resolve(), run_id=args.run_id,
-            manifest_path=args.manifest, freeze_path=args.freeze,
+            manifest_path=args.manifest,
             image=args.image, unavailable_reason=args.reason,
         )
     elif args.command == "execute":
@@ -962,7 +867,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         report = run_calibration(
             result_dir=args.result_dir.resolve(), run_id=args.run_id,
             adapter=adapter, manifest_path=args.manifest,
-            freeze_path=args.freeze, image=args.image, resume=args.resume,
+            image=args.image, resume=args.resume,
             readiness_attestation_path=args.readiness_attestation,
         )
     elif args.command == "validate-evidence":

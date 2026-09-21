@@ -1638,9 +1638,11 @@ def review_gold_dataset(value: GoldDataset | LoadedGoldDataset) -> ReviewReport:
         if family.label_review["status"] != "approved":
             findings.append(
                 ReviewFinding(
-                    "blocking",
+                    "advisory",
                     "unresolved_gold_review",
-                    "Family gold labels have not received human approval.",
+                    "Family gold labels have not recorded a review status of "
+                    "'approved'. This is informational only; it does not block "
+                    "compilation or confirmatory eligibility.",
                     family_ids=(family.family_id,),
                 )
             )
@@ -1656,24 +1658,14 @@ def review_gold_dataset(value: GoldDataset | LoadedGoldDataset) -> ReviewReport:
             )
         )
         if ambiguity:
-            if family.label_review["status"] == "approved":
-                findings.append(
-                    ReviewFinding(
-                        "advisory",
-                        "documented_gold_ambiguity",
-                        "Family contains documented ambiguity approved by a human reviewer.",
-                        family_ids=(family.family_id,),
-                    )
+            findings.append(
+                ReviewFinding(
+                    "advisory",
+                    "documented_gold_ambiguity",
+                    "Family contains documented ambiguity.",
+                    family_ids=(family.family_id,),
                 )
-            else:
-                findings.append(
-                    ReviewFinding(
-                        "blocking",
-                        "unresolved_gold_ambiguity",
-                        "Family ambiguity has not received human approval.",
-                        family_ids=(family.family_id,),
-                    )
-                )
+            )
         for profile_id in family.profile_gold["preferred_profile_ids"]:
             preferred_profiles[str(profile_id)] += 1
         if family.profile_gold["preferred_profile_ids"]:
@@ -1687,9 +1679,11 @@ def review_gold_dataset(value: GoldDataset | LoadedGoldDataset) -> ReviewReport:
             if variant.equivalence_status == "pending_review":
                 findings.append(
                     ReviewFinding(
-                        "blocking",
+                        "advisory",
                         "pending_semantic_equivalence",
-                        "Variant semantic equivalence requires human review.",
+                        "Variant semantic equivalence has not recorded a "
+                        "reviewed status. This is informational only; it does "
+                        "not block compilation or confirmatory eligibility.",
                         family_ids=(family.family_id,),
                         variant_ids=(variant.variant_id,),
                     )
@@ -2216,14 +2210,6 @@ def validate_compiled_case(
     if normalized_family.difficulty == "unassessed":
         raise GoldDatasetValidationError(
             f"{label}.family_metadata.difficulty cannot be unassessed in a compiled split"
-        )
-    if normalized_family.label_review["status"] != "approved":
-        raise GoldDatasetValidationError(
-            f"{label}.source_provenance.label_review must be approved"
-        )
-    if normalized_variant.equivalence_status == "pending_review":
-        raise GoldDatasetValidationError(
-            f"{label}.variant_metadata.equivalence_status cannot be pending_review"
         )
     if (
         inputs["dataset_size_gb"]

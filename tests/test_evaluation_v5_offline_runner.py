@@ -229,7 +229,9 @@ def test_deterministic_adapters_are_not_repeated(split):
     assert {entry.repeat_index for entry in matrix} == {0}
 
 
-def test_p3_enablement_requires_verified_retained_gate(split, tmp_path: Path):
+def test_p3_enablement_requires_no_gate(split, tmp_path: Path):
+    # P3 is not a retained method in this evaluation; enabling it requires no
+    # development-decision gate artifact or approval step.
     p3 = FakeAdapter("P3", stochastic=True)
     matrix = build_execution_matrix(
         split,
@@ -240,16 +242,15 @@ def test_p3_enablement_requires_verified_retained_gate(split, tmp_path: Path):
         enable_p3=True,
     )
     assert len(matrix) == len(split.bundle.cases) * 3
-    with pytest.raises(PermissionError, match="verified RETAINED gate"):
-        run_offline_recommendations(
-            split,
-            result_dir=tmp_path / "p3-run",
-            adapters={"P3": p3},
-            system_ids=("P3",),
-            repeats=3,
-            enable_p3=True,
-        )
-    assert not (tmp_path / "p3-run").exists()
+    run_offline_recommendations(
+        split,
+        result_dir=tmp_path / "p3-run",
+        adapters={"P3": p3},
+        system_ids=("P3",),
+        repeats=3,
+        enable_p3=True,
+    )
+    assert (tmp_path / "p3-run").exists()
 
 
 def test_fallback_label_and_complete_ranking_trace_are_preserved(split, tmp_path: Path):

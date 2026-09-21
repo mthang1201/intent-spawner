@@ -345,7 +345,6 @@ def evaluate_catalog_scale_recommendation(
     *,
     stage: str = "confirmatory",
     dataset_path: Path | str | None = None,
-    freeze_path: Path | str | None = None,
     split_bundle: LoadedSplit | VerifiedConfirmatorySplit | None = None,
     k: int = DEFAULT_RECALL_K,
 ) -> dict[str, Any]:
@@ -531,11 +530,8 @@ def evaluate_catalog_scale_recommendation(
 
             try:
                 ds_p = Path(dataset_path) if dataset_path else None
-                fr_p = Path(freeze_path) if freeze_path else None
-                ds_src, fr_src = resolve_confirmatory_sources(
-                    dataset_path=ds_p, freeze_path=fr_p
-                )
-                loaded_conf = load_confirmatory_split(ds_src, fr_src)
+                ds_src = resolve_confirmatory_sources(dataset_path=ds_p)
+                loaded_conf = load_confirmatory_split(ds_src)
                 verified = verify_confirmatory_split(loaded_conf)
                 split_bundle = verified.split
                 split_role = "confirmatory"

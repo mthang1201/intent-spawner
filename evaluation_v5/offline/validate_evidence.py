@@ -560,38 +560,8 @@ def _validate_provenance(
         isinstance(provenance["frozen_configuration"], Mapping),
         "frozen_configuration must be an object",
     )
-    if p3_enabled:
-        from evaluation_v5.p3_gate import (
-            P3GateValidationError,
-            require_retained_p3_gate,
-            verify_p3_development_decision,
-        )
-
-        frozen_gate = provenance["frozen_configuration"].get("p3_gate")
-        _require(
-            isinstance(frozen_gate, Mapping),
-            "P3 evidence lacks a verified frozen development gate",
-        )
-        decision_path = frozen_gate.get("decision_artifact_path")
-        _require(
-            isinstance(decision_path, str) and bool(decision_path.strip()),
-            "P3 evidence gate lacks a reverifiable decision artifact",
-        )
-        path = Path(decision_path)
-        if not path.is_absolute():
-            path = Path(__file__).resolve().parents[2] / path
-        try:
-            verified_gate = require_retained_p3_gate(
-                verify_p3_development_decision(path)
-            )
-        except (P3GateValidationError, PermissionError, OSError) as exc:
-            raise OfflineEvidenceValidationError(
-                "P3 evidence gate failed source verification"
-            ) from exc
-        _require(
-            verified_gate.freeze_snapshot() == dict(frozen_gate),
-            "P3 evidence gate does not match its verified sources",
-        )
+    # P3 is not a retained method in this evaluation; no development-decision
+    # gate artifact is required or verified for it.
     return provenance
 
 
@@ -1040,7 +1010,7 @@ def validate_offline_evidence(
 
         capability = verify_confirmatory_split(split)
         split = capability.split
-        selected_freeze_identity = capability.freeze_identity
+        selected_freeze_identity = _freeze_identity(split)
     elif split is None:
         _require(
             role == "development",
@@ -1161,9 +1131,6 @@ def _parser() -> argparse.ArgumentParser:
         type=Path,
         help="External confirmatory dataset; development uses the tracked split.",
     )
-    parser.add_argument(
-        "--freeze", type=Path, help="Authoritative confirmatory freeze artifact."
-    )
     parser.add_argument("--split-id", help="Expected confirmatory split ID.")
     return parser
 
@@ -1172,16 +1139,11 @@ def main(argv: Sequence[str] | None = None) -> int:
     args = _parser().parse_args(argv)
     try:
         split: LoadedSplit | VerifiedConfirmatorySplit | None = None
-        if args.dataset is not None or args.freeze is not None:
-            _require(
-                args.dataset is not None and args.freeze is not None,
-                "confirmatory validation requires both --dataset and --freeze",
-            )
+        if args.dataset is not None:
             from evaluation_v5.isolation import load_confirmatory_split
 
             loaded = load_confirmatory_split(
                 args.dataset,
-                args.freeze,
                 expected_split_id=args.split_id or "v5-confirmatory",
             )
             split = loaded

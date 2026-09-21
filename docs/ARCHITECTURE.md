@@ -7,8 +7,7 @@ This document explains the system architecture, component contracts, security bo
 ## 1. Primary Thesis Systems & Research Taxonomy
 
 The thesis registry defines B0, P1, P2, and optional P3. P2 is the main proposed
-method; P3 is not retained for primary evaluation. Implemented backend contracts
-do not establish that the final Protocol-v5 comparator freeze exists.
+method; P3 is not retained for primary evaluation.
 
 | System ID | Name / Description | Pipeline Summary | Research Role |
 | :--- | :--- | :--- | :--- |
@@ -185,24 +184,12 @@ and [dynamic sizing](DYNAMIC_PROFILE_GENERATION.md) have dedicated operational g
 
 ## 6. Evidence Status
 
-The [Protocol-v5 final report](evaluation/PROTOCOL_V5_FINAL_REPORT.md) is the
-current evidence authority. Its audit verdict is **FAIL**, and confirmatory
-evidence overall is **EXECUTED_INCOMPLETE**: one hypothesis, H7 (image storage
-reuse), is **SUPPORTED**; the remaining confirmatory hypothesis decisions
-(H1–H6, H8, plus H7F) remain **NOT_EXECUTED**. It reports exact values, provenance,
-uncertainty where supported, and missing evidence without substituting fixtures.
-
-- **E1:** 36 development recommendation records across 18 cases and 10 families.
-  Complete component/statistical analyses are **NOT EXECUTED**.
-- **E2:** formal natural-language robustness analysis is **NOT EXECUTED**.
-- **E3:** B0-versus-P2 human crossover study is **NOT EXECUTED**; zero participant sessions.
-- **E4:** resource-efficiency and calibration evidence consists of readiness/planning
-  packages; hardware outcomes are **NOT EXECUTED**.
-- **E5:** development container functional observations exist. Two packages pass
-  current validation but retain pipeline-provenance limitations (H7F, functional
-  correctness, remains **NOT_EXECUTED**). Each run is reported separately. Image
-  storage measurements are **OBSERVED / ACCEPTED_CONFIRMATORY**; H7 is **SUPPORTED**,
-  limited to the 4-image frozen catalog prefix (8/16-image scales remain **NOT_EXECUTED**).
+Experiments E1-E5 are being re-run after removing the freeze/audit/human-review
+layer that previously sat on top of the evaluation harness under
+`evaluation_v5/`. Each experiment now just runs and writes a plain run manifest
+under `results_v5/` — no separate freeze/audit step and no manual approval gate.
+No results currently exist for any of E1-E5; previously collected evidence was
+wiped ahead of this cleanup and no experiment has been re-executed yet.
 
 The [Protocol-v4 combined report](evaluation/PROTOCOL_V4_REVISED_EVALUATION_REPORT.md)
 and [P2 integration evaluation](evaluation/P2_BACKEND_EVALUATION_V1.md) remain
@@ -225,19 +212,17 @@ analysis follows its participant/task pairing; B0 has no ranking metrics.
 The backend is implemented. Research completion requires evidence that the
 current repository does not supply:
 
-- An authoritative final Protocol-v5 freeze binding comparator revisions,
-  configuration, catalog/index/prompt identities, and split checksums before
-  confirmation, with safe custodian attestation. The existing configuration
-  snapshot and historical `evaluation_final` freeze do not establish this.
-  Follow the [v5 isolation contract](evaluation/PROTOCOL_V5_DATA_ISOLATION.md);
-  sealed cases must never enter implementation or tuning.
+- Executed E1-E5 evidence. The evaluation harness under `evaluation_v5/` is
+  implemented and its data-leakage protection (train/confirmatory split
+  isolation, contamination checks) is enforced at runtime, but no experiment
+  has produced results yet. Follow the
+  [v5 isolation contract](evaluation/PROTOCOL_V5_DATA_ISOLATION.md); sealed
+  cases must never enter implementation or tuning.
 - Real B0-versus-P2 sessions under the [E3 study contract](evaluation/PROTOCOL_V5_USER_STUDY.md),
   retaining privacy and declared crossover pairing. E3 corresponds to v5 RQ3.
-- Eligible, frozen cluster and approved oracle evidence for E4. E5 storage
-  already has confirmatory 4-image evidence (H7 **SUPPORTED**); the 8/16-image
-  catalog scales remain **NOT_EXECUTED**.
-- Authenticated inputs for unavailable analyses and documented resolution of
-  integrity/provenance failures. Any correction must be a separate linked artifact;
+- Eligible cluster and oracle evidence for E4/E5.
+- Documented resolution of any integrity/provenance issues found once
+  experiments are executed. Any correction must be a separate linked artifact;
   original source evidence and contradictory results stay preserved.
 
 Production multi-node and multi-tenant validation remains outside the observed
@@ -247,6 +232,6 @@ per-user usage, or node headroom; Kubernetes admission remains authoritative.
 Monetary cost and energy savings are not established by the available evidence.
 
 The [artifact index](ARTIFACT_MANIFEST.md) identifies portable cores and external
-archive boundaries. Manuscript results should cite the final report’s precise
-metrics and evidence class, keeping design, development, and historical outcomes
-separate from confirmation.
+archive boundaries. Manuscript results should cite each experiment run's exact
+metrics and evidence class once produced, keeping design, development, and
+historical outcomes separate from confirmation.

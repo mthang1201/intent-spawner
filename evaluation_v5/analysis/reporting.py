@@ -25,10 +25,7 @@ from pathlib import Path
 import platform
 import statistics as std_statistics
 import subprocess
-from typing import TYPE_CHECKING, Any
-
-if TYPE_CHECKING:
-    from evaluation_v5.p3_gate import VerifiedP3DevelopmentDecision
+from typing import Any
 
 from evaluation_v4.dataset import file_sha256
 from evaluation_v5.analysis.component_scoring import (
@@ -46,8 +43,6 @@ from evaluation_v5.analysis.statistical_analysis import (
     DEFAULT_RETRIEVAL_KS,
     HOLM_REGISTRY_VERSION,
     LATENCY_POPULATION,
-    P3_NOT_RETAINED,
-    P3_RETAINED,
     StatisticalAnalysisError,
     StatisticalAnalysisResult,
     _prevalidate_completed_evidence_envelope,
@@ -1065,114 +1060,13 @@ def render_confidence_intervals_svg(data: dict[str, Any], width: int = 760, heig
 def compute_p3_development_decision(
     component_result: AnalysisResult,
     gold: GoldSource,
-    *,
-    p3_development_decision: Path | VerifiedP3DevelopmentDecision | None = None,
 ) -> dict[str, Any]:
-    """Render the predefined P3 gate without trusting serialized status fields.
+    """Report the predefined P3 reranking-headroom gate from observed evidence.
 
-    A development report may show an advisory recomputation from its in-memory
-    component result. Any artifact or confirmatory report crosses the strict
-    source-verification boundary and reopens every recorded development source.
+    This is a plain, automatic threshold computed from the component result
+    at hand; it is advisory reporting, not a blocking human-review gate, and
+    it runs the same way regardless of split role.
     """
-    from evaluation_v5.p3_gate import (
-        P3GateValidationError,
-        VerifiedP3DevelopmentDecision,
-        reverify_p3_development_decision,
-        verify_p3_development_decision,
-    )
-
-    verified_decision = None
-    if p3_development_decision is not None:
-        try:
-            if isinstance(p3_development_decision, (str, Path)):
-                verified_decision = verify_p3_development_decision(
-                    Path(p3_development_decision)
-                )
-            elif type(p3_development_decision) is VerifiedP3DevelopmentDecision:
-                verified_decision = reverify_p3_development_decision(
-                    p3_development_decision
-                )
-            else:
-                raise ReportingError(
-                    "caller-supplied P3 decision mappings are prohibited; "
-                    "provide a source-verified decision artifact"
-                )
-        except P3GateValidationError as exc:
-            raise ReportingError(
-                "P3 development decision failed source verification"
-            ) from exc
-
-    if gold.role == "confirmatory":
-        if gold.confirmatory_capability is None:
-            raise ReportingError(
-                "confirmatory P3 reporting requires an isolation-verified split "
-                "and production freeze"
-            )
-        from evaluation_v5.isolation import verify_confirmatory_split
-
-        capability = verify_confirmatory_split(gold.confirmatory_capability)
-        frozen_gate = capability.freeze_manifest["configuration_snapshot"][
-            "p3_gate"
-        ]
-        recorded_path = frozen_gate.get("decision_artifact_path")
-        if not isinstance(recorded_path, str) or not recorded_path.strip():
-            raise ReportingError(
-                "confirmatory production freeze lacks a reverifiable P3 gate"
-            )
-        gate_path = Path(recorded_path)
-        if not gate_path.is_absolute():
-            gate_path = Path(__file__).resolve().parents[2] / gate_path
-        try:
-            frozen_decision = verify_p3_development_decision(gate_path)
-        except P3GateValidationError as exc:
-            raise ReportingError(
-                "confirmatory production-freeze P3 gate failed verification"
-            ) from exc
-        if frozen_decision.freeze_snapshot() != dict(frozen_gate):
-            raise ReportingError(
-                "confirmatory production-freeze P3 gate does not match its sources"
-            )
-        if (
-            verified_decision is not None
-            and verified_decision.to_dict() != frozen_decision.to_dict()
-        ):
-            raise ReportingError(
-                "supplied P3 decision does not match the confirmatory production freeze"
-            )
-        verified_decision = frozen_decision
-
-    if verified_decision is not None:
-        dec_data = verified_decision.to_dict()
-        norm_gate_status = (
-            "RETAINED"
-            if verified_decision.decision == "retained"
-            else "NOT_RETAINED"
-        )
-        return {
-            "schema_version": REPORTING_SCHEMA_VERSION,
-            "gate_status": norm_gate_status,
-            "decision": norm_gate_status,
-            "source_split_role": "development",
-            "source_type": "verified_development_decision_artifact",
-            "p3_gate_identity": verified_decision.freeze_snapshot(),
-            "confirmatory_inspection": "PROHIBITED",
-            "claims_permitted": False,
-            "headroom_gate_definition": {
-                "rule": dec_data["predicate"]["criterion"],
-                "min_ranking_error_families": dec_data["predicate"][
-                    "minimum_absolute_ranking_errors"
-                ],
-                "min_ranking_error_fraction": dec_data["predicate"][
-                    "minimum_ranking_error_fraction"
-                ],
-                "predicate_version": dec_data["predicate"]["version"],
-                "computation_version": dec_data["computation_version"],
-            },
-            "observed_development_evidence": dict(dec_data["evaluated_inputs"]),
-            "rationale": dec_data["rationale"],
-        }
-
-    # Development split
     headroom = component_result.p3_headroom
     p2_aggregates = component_result.aggregates.get("P2", {})
     ranking_errors = p2_aggregates.get("primary_categories", {}).get("RANKING_ERROR", 0)
@@ -1204,9 +1098,8 @@ def compute_p3_development_decision(
         "schema_version": REPORTING_SCHEMA_VERSION,
         "gate_status": decision,
         "decision": decision,
-        "source_split_role": "development",
-        "source_type": "evaluated_development_split",
-        "confirmatory_inspection": "PROHIBITED",
+        "source_split_role": gold.role,
+        "source_type": "evaluated_split",
         "claims_permitted": False,
         "headroom_gate_definition": {
             "rule": "P3 is retained only if development evidence exhibits sufficient ranking headroom.",
@@ -1481,9 +1374,7 @@ def generate_offline_report(
     output_dir: Path,
     *,
     role: str = "development",
-    freeze_path: Path | None = None,
     split_id: str | None = None,
-    p3_development_decision: Path | VerifiedP3DevelopmentDecision | None = None,
     missing_evidence: Sequence[str] | None = None,
     retrieval_ks: Sequence[int] = DEFAULT_RETRIEVAL_KS,
     bootstrap_replicates: int = DEFAULT_BOOTSTRAP_REPLICATES,
@@ -1497,7 +1388,6 @@ def generate_offline_report(
         gold = load_component_gold(
             gold_path,
             role=role,
-            freeze_path=freeze_path,
             split_id=split_id,
         )
         _require_v2_gold(gold)
@@ -1577,11 +1467,7 @@ def generate_offline_report(
         error_data = compute_error_taxonomy_data(comp_result)
         paired_data = compute_paired_family_outcomes_data(stat_result, gold)
         ci_data = compute_confidence_intervals_data(stat_result)
-        p3_decision = compute_p3_development_decision(
-            comp_result,
-            gold,
-            p3_development_decision=p3_development_decision,
-        )
+        p3_decision = compute_p3_development_decision(comp_result, gold)
 
         limitations = compute_limitations_block(
             stat_result,
@@ -1802,9 +1688,7 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--gold-dataset", type=Path)
     parser.add_argument("--output-dir", type=Path, required=True)
     parser.add_argument("--role", choices=("development", "confirmatory"), default="development")
-    parser.add_argument("--freeze", type=Path)
     parser.add_argument("--split-id")
-    parser.add_argument("--p3-development-decision", type=Path)
     parser.add_argument("--created-at-utc", type=str)
     parser.add_argument("--retrieval-k", type=_parse_ks, default=DEFAULT_RETRIEVAL_KS)
     parser.add_argument("--bootstrap-replicates", type=int, default=DEFAULT_BOOTSTRAP_REPLICATES)
@@ -1841,9 +1725,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                 args.gold_dataset,
                 args.output_dir,
                 role=args.role,
-                freeze_path=args.freeze,
                 split_id=args.split_id,
-                p3_development_decision=args.p3_development_decision,
                 retrieval_ks=args.retrieval_k,
                 bootstrap_replicates=args.bootstrap_replicates,
                 bootstrap_seed=args.bootstrap_seed,

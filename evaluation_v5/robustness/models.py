@@ -11,7 +11,6 @@ from typing import Any
 from evaluation_v5.gold_dataset import CONFIRMATORY_ELIGIBLE_CLASSIFICATIONS
 from .taxonomy import (
     EquivalenceStatus,
-    HumanReviewStatus,
     PerturbationClass,
     VariantMetadata,
     VariantSource,
@@ -76,15 +75,6 @@ class RobustnessVariant:
     def is_non_equivalent(self) -> bool:
         """Return True if this variant is explicitly non-equivalent to the canonical workload."""
         return self.metadata.equivalence_status == EquivalenceStatus.NON_EQUIVALENT
-
-    @property
-    def is_pending_review(self) -> bool:
-        """Return True if this variant is untrusted / awaiting human review."""
-        return (
-            self.metadata.equivalence_status == EquivalenceStatus.PENDING_REVIEW
-            or self.metadata.human_review_status
-            in {HumanReviewStatus.PENDING, HumanReviewStatus.DRAFT}
-        )
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -204,13 +194,6 @@ class RobustnessFamily:
         """All explicitly non-equivalent variants."""
         return tuple(
             variant for variant in self.variants if variant.is_non_equivalent
-        )
-
-    @property
-    def pending_variants(self) -> tuple[RobustnessVariant, ...]:
-        """All variants awaiting human review."""
-        return tuple(
-            variant for variant in self.variants if variant.is_pending_review
         )
 
     def to_dict(self) -> dict[str, Any]:
@@ -501,11 +484,7 @@ def compute_dataset_canonical_sha256(dataset: RobustnessDataset) -> str:
                         if isinstance(v.metadata.equivalence_status, EquivalenceStatus)
                         else str(v.metadata.equivalence_status)
                     ),
-                    "human_review_status": (
-                        v.metadata.human_review_status.value
-                        if isinstance(v.metadata.human_review_status, HumanReviewStatus)
-                        else str(v.metadata.human_review_status)
-                    ),
+                    "human_review_status": str(v.metadata.human_review_status),
                     "source": (
                         v.metadata.source.value
                         if isinstance(v.metadata.source, VariantSource)

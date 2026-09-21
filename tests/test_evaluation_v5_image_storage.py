@@ -15,12 +15,10 @@ from unittest.mock import MagicMock, patch
 import pytest
 import yaml
 
-from evaluation_v5 import freeze as freeze_module
 from evaluation_v5.analysis.research_contracts import (
     ResearchContractError,
     validate_storage_evidence,
 )
-from evaluation_v5.freeze import create_freeze_artifact
 from evaluation_v5.isolation import (
     CONFIRMATORY_SPLIT_PROVENANCE_SCHEMA_VERSION,
     VerifiedConfirmatorySplit,
@@ -159,71 +157,10 @@ def _confirmatory_document(
     return document
 
 
-def _verified_gate_snapshot() -> dict[str, object]:
-    development = load_development_split()
-
-    def artifact(name: str) -> dict[str, str]:
-        return {"path": name, "sha256": "d" * 64}
-
-    def analysis(name: str) -> dict[str, object]:
-        return {
-            "path": name,
-            "manifest_sha256": "c" * 64,
-            "outputs": {"fixture": artifact("fixture.json")},
-        }
-
-    return {
-        "snapshot_version": "protocol-v5-p3-gate-snapshot-v2.0.0",
-        "status": "not_retained",
-        "p3_active": False,
-        "verification_status": "VERIFIED",
-        "decision_schema_version": "protocol-v5-p3-development-decision-v1.0.0",
-        "decision_artifact_path": "benchmarks_v5/synthetic-p3-decision.json",
-        "decision_artifact_sha256": "b" * 64,
-        "development_split": {
-            "dataset_id": development.manifest.dataset_id,
-            "split_id": development.manifest.split_id,
-            "role": "development",
-            "bundle_checksum": development.manifest.checksum,
-            "dataset_sha256": development.source_file_sha256,
-            "case_count": development.manifest.case_count,
-            "family_count": development.manifest.family_count,
-        },
-        "raw_evidence": {
-            "path": "results_v5/synthetic-raw",
-            "run_id": "synthetic-test-run",
-            "provenance_fingerprint": "a" * 64,
-            "provenance_sha256": "b" * 64,
-            "recommendations_sha256": "c" * 64,
-            "completion_sha256": "d" * 64,
-            "record_count": 1,
-        },
-        "component_evidence": analysis("results_v5/synthetic-component"),
-        "statistical_evidence": analysis("results_v5/synthetic-statistical"),
-        "predicate_version": "protocol-v5-p3-headroom-predicate-v1.0.0",
-        "computation_version": "protocol-v5-p3-gate-computation-v1.0.0",
-    }
-
-
 def _authoritative_confirmatory_split(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> tuple[VerifiedConfirmatorySplit, Path, Path]:
+) -> tuple[VerifiedConfirmatorySplit, Path]:
     monkeypatch.delenv("PROTOCOL_V5_CONFIRMATORY_DATASET", raising=False)
-    monkeypatch.setattr(freeze_module, "_git_state", lambda: (FIXED_REVISION, True))
-    freeze_root = tmp_path / "freezes"
-    monkeypatch.setattr(freeze_module, "DEFAULT_FREEZE_ROOT", freeze_root)
-    monkeypatch.setattr(freeze_module, "FREEZE_CUSTODY_ROOT", tmp_path)
-    snapshot = _verified_gate_snapshot()
-    monkeypatch.setattr(
-        freeze_module,
-        "_verified_p3_gate_snapshot",
-        lambda **_kwargs: copy.deepcopy(snapshot),
-    )
-    freeze_path = create_freeze_artifact(
-        freeze_id="storage-confirmatory-fixture",
-        p3_gate_status="not_retained",
-        output_root=freeze_root,
-    )
     dataset_path = tmp_path / "sealed-storage-confirmatory.yaml"
     dataset_path.write_text(
         yaml.safe_dump(
@@ -232,9 +169,8 @@ def _authoritative_confirmatory_split(
         encoding="utf-8",
     )
     return (
-        load_confirmatory_split(dataset_path, freeze_path),
+        load_confirmatory_split(dataset_path),
         dataset_path,
-        freeze_path,
     )
 
 
@@ -688,7 +624,7 @@ def test_fake_confirmatory_dataset_id_and_sha_cannot_authorize_catalog_scale(cat
 def test_copied_confirmatory_metadata_without_capability_is_rejected(
     catalog, tmp_path, monkeypatch
 ):
-    capability, _, _ = _authoritative_confirmatory_split(tmp_path, monkeypatch)
+    capability, _ = _authoritative_confirmatory_split(tmp_path, monkeypatch)
     copied = LoadedSplit(
         bundle=capability.split.bundle,
         source_file_sha256=capability.split.source_file_sha256,
@@ -708,7 +644,7 @@ def test_copied_confirmatory_metadata_without_capability_is_rejected(
 def test_mismatched_confirmatory_source_sha_fails_reverification(
     catalog, tmp_path, monkeypatch
 ):
-    capability, _, _ = _authoritative_confirmatory_split(tmp_path, monkeypatch)
+    capability, _ = _authoritative_confirmatory_split(tmp_path, monkeypatch)
     object.__setattr__(
         capability,
         "_split",
@@ -729,31 +665,10 @@ def test_mismatched_confirmatory_source_sha_fails_reverification(
     assert "reverification_failed" in result["reason"]
 
 
-def test_stale_freeze_manifest_fails_catalog_scale_reverification(
-    catalog, tmp_path, monkeypatch
-):
-    capability, _, freeze_path = _authoritative_confirmatory_split(
-        tmp_path, monkeypatch
-    )
-    freeze_document = json.loads(freeze_path.read_text(encoding="utf-8"))
-    freeze_document["freeze_id"] = "incorrect-freeze-id"
-    freeze_path.write_text(json.dumps(freeze_document), encoding="utf-8")
-
-    result = evaluate_catalog_scale_recommendation(
-        base_catalog=catalog,
-        scale_images=get_experimental_catalog_config(catalog).get_scale_images(4),
-        stage="confirmatory",
-        split_bundle=capability,
-    )
-
-    assert result["status"] == "NOT_EXECUTED"
-    assert "reverification_failed" in result["reason"]
-
-
 def test_authoritative_confirmatory_loader_path_succeeds(
     catalog, tmp_path, monkeypatch
 ):
-    capability, dataset_path, freeze_path = _authoritative_confirmatory_split(
+    capability, dataset_path = _authoritative_confirmatory_split(
         tmp_path, monkeypatch
     )
 
@@ -762,7 +677,6 @@ def test_authoritative_confirmatory_loader_path_succeeds(
         scale_images=get_experimental_catalog_config(catalog).get_scale_images(4),
         stage="confirmatory",
         dataset_path=dataset_path,
-        freeze_path=freeze_path,
     )
 
     assert result["status"] == "OBSERVED"
@@ -773,7 +687,6 @@ def test_authoritative_confirmatory_loader_path_succeeds(
         CONFIRMATORY_SPLIT_PROVENANCE_SCHEMA_VERSION
     )
     assert provenance == capability.provenance_identity
-    assert provenance["freeze_identity"]["freeze_manifest_sha256"]
     assert all(
         record["source_identity"]["confirmatory_provenance_sha256"]
         for record in result["case_records"]
@@ -783,7 +696,7 @@ def test_authoritative_confirmatory_loader_path_succeeds(
 def test_validator_requires_live_capability_for_observed_confirmatory_recommendation(
     catalog, tmp_path, monkeypatch
 ):
-    capability, dataset_path, freeze_path = _authoritative_confirmatory_split(
+    capability, dataset_path = _authoritative_confirmatory_split(
         tmp_path, monkeypatch
     )
     output = run_storage_evaluation(
@@ -793,7 +706,6 @@ def test_validator_requires_live_capability_for_observed_confirmatory_recommenda
         stage="confirmatory",
         scales=(4,),
         dataset_path=dataset_path,
-        freeze_path=freeze_path,
     )
 
     validated = validate_e5_storage_evidence(
@@ -811,7 +723,7 @@ def test_validator_requires_live_capability_for_observed_confirmatory_recommenda
     forged = copy.deepcopy(
         raw["scale_evaluations"][0]["confirmatory_provenance"]
     )
-    forged["freeze_identity"]["freeze_manifest_sha256"] = "f" * 64
+    forged["split"]["bundle_checksum"] = "f" * 64
     raw["scale_evaluations"][0]["confirmatory_provenance"] = forged
     raw_path.write_text(json.dumps(raw, indent=2), encoding="utf-8")
 
@@ -823,7 +735,7 @@ def test_validator_requires_live_capability_for_observed_confirmatory_recommenda
 
     with pytest.raises(
         EvidenceValidationError,
-        match="does not match the authoritative split/freeze capability",
+        match="does not match the authoritative confirmatory split capability",
     ):
         validate_e5_storage_evidence(output, confirmatory_split=capability)
 

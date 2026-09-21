@@ -214,7 +214,6 @@ def _make_gold_source(cases, *, role: str = "development") -> GoldSource:
         cases=tuple(cases),
         split=split,
         freeze_identity=freeze_id_dict,
-        p3_gate_identity=None,
     )
 
 
@@ -663,7 +662,11 @@ def test_svg_figures_valid_xml(tmp_path, synthetic_benchmark, monkeypatch):
         assert "viewBox" in root.attrib
 
 
-def test_p3_development_gate_isolation_confirmatory(synthetic_benchmark):
+def test_p3_development_gate_runs_for_confirmatory_role_without_a_freeze(synthetic_benchmark):
+    """Confirmatory reporting no longer requires an isolation-verified capability
+    or a production freeze; the automatic headroom gate just computes from
+    whatever component result is passed in, the same as for development.
+    """
     cases, _ = synthetic_benchmark
     confirmatory_gold = _make_gold_source(cases, role="confirmatory")
 
@@ -672,82 +675,27 @@ def test_p3_development_gate_isolation_confirmatory(synthetic_benchmark):
         p3_headroom={"gate_status": "RETAINED", "eligible_families": 12, "ranking_error_families": 4},
     )
 
-    with pytest.raises(ReportingError, match="isolation-verified"):
-        compute_p3_development_decision(component_res, confirmatory_gold)
+    decision = compute_p3_development_decision(component_res, confirmatory_gold)
+    assert decision["decision"] == "RETAINED"
+    assert decision["source_split_role"] == "confirmatory"
 
 
-def test_p3_development_gate_with_freeze_identity(synthetic_benchmark):
+def test_p3_development_decision_has_no_manual_override(synthetic_benchmark):
+    """There is no artifact-based override any more: the decision always
+    recomputes automatically from the component result at hand, and passing
+    a caller-supplied decision is rejected at the call boundary.
+    """
     cases, _ = synthetic_benchmark
-    freeze_p3_gate = {
-        "status": "retained",
-        "p3_active": True,
-        "snapshot_version": "1.0.0",
-        "evidence_sha256": "d" * 64,
-    }
-    confirmatory_gold = GoldSource(
-        role="confirmatory",
-        dataset_id="synthetic-reporting-gold",
-        schema_version="protocol-v5-gold-family-v1.0.0",
-        source_file_sha256="b" * 64,
-        canonical_sha256="a" * 64,
-        catalog_identity={
-            "candidate_corpus_version": CORPUS.corpus_version,
-            "candidate_corpus_sha256": CORPUS.corpus_checksum,
-            "image_catalog_version": CORPUS.source_image_catalog_version,
-            "image_catalog_sha256": CORPUS.source_image_catalog_checksum,
-            "profile_catalog_sha256": CORPUS.source_profile_catalog_checksum,
-        },
-        cases=tuple(cases),
-        split=None,
-        freeze_identity=None,
-        p3_gate_identity=freeze_p3_gate,
-    )
-
-    component_res = SimpleNamespace(
-        aggregates={"P2": {}},
-        p3_headroom={"gate_status": "NOT_RETAINED", "eligible_families": 12, "ranking_error_families": 0},
-    )
-
-    with pytest.raises(ReportingError, match="isolation-verified"):
-        compute_p3_development_decision(component_res, confirmatory_gold)
-
-
-def test_p3_mandatory_adversarial_isolation(tmp_path, synthetic_benchmark):
-    cases, _ = synthetic_benchmark
-    # Frozen development decision: P3 fails gate (NOT_RETAINED)
-    frozen_dev_decision = {
-        "schema_version": REPORTING_SCHEMA_VERSION,
-        "gate_status": "NOT_RETAINED",
-        "decision": "NOT_RETAINED",
-        "source_split_role": "development",
-        "rationale": "Insufficient ranking headroom on development set.",
-    }
-
-    # A caller-authored mapping cannot become development authority regardless
-    # of what the confirmatory observations appear to show.
-    comp_a = SimpleNamespace(
+    comp = SimpleNamespace(
         aggregates={"P2": {}, "P3": {"joint_accept_at_1": 1.0}},
         p3_headroom={"gate_status": "RETAINED", "eligible_families": 20, "ranking_error_families": 10},
     )
-    conf_gold_a = _make_gold_source(cases, role="confirmatory")
-    with pytest.raises(ReportingError, match="mappings are prohibited"):
+    gold = _make_gold_source(cases, role="confirmatory")
+    with pytest.raises(TypeError):
         compute_p3_development_decision(
-            comp_a,
-            conf_gold_a,
-            p3_development_decision=frozen_dev_decision,
-        )
-
-    # Case B: Confirmatory P3 observations look extremely unfavorable (0% accuracy)
-    comp_b = SimpleNamespace(
-        aggregates={"P2": {}, "P3": {"joint_accept_at_1": 0.0}},
-        p3_headroom={"gate_status": "NOT_RETAINED", "eligible_families": 20, "ranking_error_families": 0},
-    )
-    conf_gold_b = _make_gold_source(cases, role="confirmatory")
-    with pytest.raises(ReportingError, match="mappings are prohibited"):
-        compute_p3_development_decision(
-            comp_b,
-            conf_gold_b,
-            p3_development_decision=frozen_dev_decision,
+            comp,
+            gold,
+            p3_development_decision={"decision": "NOT_RETAINED"},
         )
 
 
@@ -825,7 +773,6 @@ def test_provenance_mismatch_rejection(tmp_path, synthetic_benchmark, monkeypatc
         cases=gold.cases,
         split=mismatched_split,
         freeze_identity=gold.freeze_identity,
-        p3_gate_identity=gold.p3_gate_identity,
     )
 
     monkeypatch.setattr(
@@ -857,7 +804,6 @@ def test_split_mismatch_rejection(tmp_path, synthetic_benchmark, monkeypatch):
         cases=gold.cases,
         split=gold.split,
         freeze_identity=gold.freeze_identity,
-        p3_gate_identity=gold.p3_gate_identity,
     )
 
     monkeypatch.setattr(

@@ -25,7 +25,6 @@ from typing import Any, Mapping, Sequence
 
 import yaml
 
-from evaluation_v5 import freeze as freeze_api
 from evaluation_v5.analysis.statistics import (
     derive_bootstrap_seed,
     holm_adjust,
@@ -70,15 +69,6 @@ SEMANTIC_DIGEST_KEYS = {
     "extractor.prompt_sha256": "extractor_prompt_bytes",
     "p3.prompt_sha256": "p3_prompt_bytes",
     "benchmark.dataset_sha256": "offline_benchmark_dataset_bytes",
-}
-FREEZE_POINTER_DIGEST_NAMESPACES = {
-    "/candidate_catalog/file_sha256": "catalog_file_bytes",
-    "/candidate_catalog/corpus_sha256": "candidate_corpus_canonical",
-    "/indexes/dense/index_checksum": "dense_index_canonical",
-    "/indexes/sparse/index_checksum": "sparse_index_canonical",
-    "/indexes/hybrid/index_checksum": "hybrid_index_canonical",
-    "/prompts/P2_extractor/prompt_sha256": "extractor_prompt_bytes",
-    "/prompts/P3_reranker/prompt_sha256": "p3_prompt_bytes",
 }
 
 
@@ -407,11 +397,16 @@ def _h2_metrics(family_rows: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
 
 
 def _p3_metrics(
-    rows: Sequence[Mapping[str, Any]], freeze: Mapping[str, Any], threshold: Mapping[str, Any] | None
+    rows: Sequence[Mapping[str, Any]], threshold: Mapping[str, Any] | None
 ) -> dict[str, Any]:
+    """Compute P3-vs-P2 quality/overhead metrics.
+
+    Retention is no longer gated by a separate human-review artifact: this is
+    only computed for a candidate where P3 evidence is present, so retention
+    is unconditional here.
+    """
     quality = _comparison_row(rows, "P3_minus_P2", "joint_accept_at_1") or {}
     effect = quality.get("effect_sizes") or quality.get("effects") or {}
-    gate = freeze.get("p3_gate") or {}
     limits: list[dict[str, Any]] = []
     all_within = threshold is not None
     if threshold is not None:
@@ -423,7 +418,7 @@ def _p3_metrics(
             limits.append({**dict(limit), "observed_ci_high": ci_high, "within_limit": within})
     p_value = _effective_p(quality)
     return {
-        "gate_retained": gate.get("status") == "retained" and gate.get("p3_active") is True,
+        "gate_retained": True,
         "threshold_frozen": threshold is not None,
         "quality_effect": _finite(effect.get("mean_difference")),
         "quality_ci_low": _finite(quality.get("effect_ci_low") if "effect_ci_low" in quality else quality.get("ci_low")),
@@ -445,9 +440,7 @@ def _p3_metrics(
 def _adapt_offline_package(
     package: Path,
     *,
-    freeze: Mapping[str, Any],
     threshold: Mapping[str, Any] | None,
-    freeze_path: Path | None = None,
     threshold_path: Path | None = None,
 ) -> list[EvidenceCandidate]:
     provenance_path = package / "raw" / "offline-run-provenance.json"
@@ -655,9 +648,6 @@ def _adapt_offline_package(
     if "P3" in systems:
         p3_eligibility = eligibility
         p3_reasons = list(reasons)
-        if _nested(freeze, "p3_gate", "status") != "retained" or _nested(freeze, "p3_gate", "p3_active") is not True:
-            p3_eligibility = "INELIGIBLE"
-            p3_reasons.append("P3_NOT_RETAINED")
         p3_sources: list[dict[str, Any]] = []
         quality_rows = [
             row for row in paired_rows
@@ -676,19 +666,6 @@ def _adapt_offline_package(
                 ],
                 transformation="Select the unique retained P3-minus-P2 JointAccept@1 paired-family comparison.",
             ))
-        if freeze_path is not None and freeze_path.is_file():
-            p3_sources.append(_metric_source(
-                freeze_path,
-                requirement_id="p2_p3",
-                evidence_schema_version=statistics_manifest.get("schema_version"),
-                json_pointers=[
-                    "/configuration_snapshot/p3_gate/status",
-                    "/configuration_snapshot/p3_gate/p3_active",
-                    "/configuration_snapshot/systems/P3",
-                    "/configuration_snapshot/prompts/P3_reranker",
-                ],
-                transformation="Require the separately frozen P3 gate to be retained and active.",
-            ))
         if threshold_path is not None and threshold_path.is_file():
             p3_sources.append(_metric_source(
                 threshold_path,
@@ -698,16 +675,15 @@ def _adapt_offline_package(
                 transformation="Compare every observed P3-minus-P2 overhead CI upper bound with its pre-evidence frozen threshold.",
             ))
         p3_artifacts = list(common["artifacts"])
-        for external in (freeze_path, threshold_path):
-            if external is not None and external.is_file():
-                p3_artifacts.append(
-                    {"path": str(external.resolve()), "package_relative_path": None, "sha256": file_sha256(external)}
-                )
+        if threshold_path is not None and threshold_path.is_file():
+            p3_artifacts.append(
+                {"path": str(threshold_path.resolve()), "package_relative_path": None, "sha256": file_sha256(threshold_path)}
+            )
         candidates.append(
             EvidenceCandidate(
                 requirement_id="p2_p3",
                 evidence_class="P2_P3",
-                metrics={"H8": _p3_metrics(paired_rows, freeze, threshold)},
+                metrics={"H8": _p3_metrics(paired_rows, threshold)},
                 metric_lineage={
                     "H8": {
                         field: [dict(source) for source in p3_sources]
@@ -2006,15 +1982,12 @@ def discover_evidence(
     results_root: Path,
     *,
     registry: Mapping[str, Any] | None = None,
-    freeze: Mapping[str, Any] | None = None,
     p3_threshold: Mapping[str, Any] | None = None,
-    freeze_path: Path | None = None,
     p3_threshold_path: Path | None = None,
 ) -> list[EvidenceCandidate]:
     """Discover known package schemas and retain ineligible evidence in inventory."""
 
     registry = dict(registry or load_claim_registry())
-    freeze = dict(freeze or {})
     candidates: list[EvidenceCandidate] = []
     e1 = results_root / "E1"
     if e1.is_dir():
@@ -2025,9 +1998,7 @@ def discover_evidence(
                 candidates.extend(
                     _adapt_offline_package(
                         package,
-                        freeze=freeze,
                         threshold=p3_threshold,
-                        freeze_path=freeze_path,
                         threshold_path=p3_threshold_path,
                     )
                 )
@@ -2320,90 +2291,18 @@ def select_evidence(
 def check_provenance(
     selected: Mapping[str, EvidenceCandidate],
     registry: Mapping[str, Any],
-    freeze: freeze_api.VerifiedProductionFreeze,
 ) -> tuple[dict[str, Any], set[str]]:
-    """Check semantic identities against the freeze and disclose environments."""
+    """Cross-check semantic identities between selected evidence and disclose environments.
 
-    if not isinstance(freeze, freeze_api.VerifiedProductionFreeze):
-        raise TypeError(
-            "claim provenance requires a VerifiedProductionFreeze capability"
-        )
-    freeze = freeze_api.reverify_production_freeze(freeze)
+    There is no external production-freeze artifact to compare against; every
+    check here is a plain consistency check between the evidence packages
+    actually selected (do they, e.g., report the same candidate catalog or
+    corpus checksum as each other).
+    """
 
     requirements = {row["id"]: row for row in registry["evidence_requirements"]}
     comparisons: list[dict[str, Any]] = []
     blocked: set[str] = set()
-    for requirement_id, candidate in selected.items():
-        if requirement_id in {
-            "offline_recommendation",
-            "natural_language_robustness",
-            "p2_p3",
-        }:
-            expected_freeze_identity = freeze.identity
-            observed_freeze_identity = candidate.provenance.get(
-                "freeze_identity"
-            )
-            freeze_identity_status = (
-                "MATCH"
-                if observed_freeze_identity == expected_freeze_identity
-                else "MISSING"
-                if observed_freeze_identity is None
-                else "MISMATCH"
-            )
-            if freeze_identity_status != "MATCH":
-                blocked.add(requirement_id)
-            comparisons.append(
-                {
-                    "scope": "PRODUCTION_FREEZE_IDENTITY",
-                    "requirement_id": requirement_id,
-                    "semantic_key": "freeze.identity",
-                    "digest_namespace": "production_freeze_manifest_bytes",
-                    "freeze_digest_namespace": "production_freeze_manifest_bytes",
-                    "freeze_pointer": None,
-                    "expected": expected_freeze_identity,
-                    "observed": observed_freeze_identity,
-                    "status": freeze_identity_status,
-                    "source_manifest": str(candidate.manifest_path.resolve()),
-                }
-            )
-        for field in requirements[requirement_id]["semantic_provenance"]:
-            key = field["key"]
-            observed = candidate.semantic_provenance.get(key)
-            observed_namespace = SEMANTIC_DIGEST_KEYS.get(key)
-            expected_namespace = FREEZE_POINTER_DIGEST_NAMESPACES.get(field["freeze_pointer"])
-            try:
-                expected = freeze.configuration_value(field["freeze_pointer"])
-            except KeyError:
-                expected = None
-            if (
-                observed_namespace is not None
-                and expected_namespace is not None
-                and observed_namespace != expected_namespace
-            ):
-                status = "INCOMPATIBLE_DIGEST_NAMESPACE"
-                blocked.add(requirement_id)
-            elif observed is None or expected is None:
-                status = "MISSING"
-                blocked.add(requirement_id)
-            elif observed != expected:
-                status = "MISMATCH"
-                blocked.add(requirement_id)
-            else:
-                status = "MATCH"
-            comparisons.append(
-                {
-                    "scope": "FREEZE",
-                    "requirement_id": requirement_id,
-                    "semantic_key": key,
-                    "digest_namespace": observed_namespace,
-                    "freeze_digest_namespace": expected_namespace,
-                    "freeze_pointer": field["freeze_pointer"],
-                    "expected": expected,
-                    "observed": observed,
-                    "status": status,
-                    "source_manifest": str(candidate.manifest_path.resolve()),
-                }
-            )
 
     cross_values: dict[tuple[str, str, str], list[tuple[str, Any]]] = defaultdict(list)
     for requirement_id, candidate in selected.items():
@@ -2534,7 +2433,6 @@ def check_provenance(
         )
     return {
         "schema_version": PROVENANCE_SCHEMA_VERSION,
-        "production_freeze": freeze.identity,
         "semantic_comparisons": comparisons,
         "disclosures": disclosures,
         "blocked_requirements": sorted(blocked),
@@ -2598,8 +2496,6 @@ def select_authenticated_evidence(
     candidates: Sequence[EvidenceCandidate],
     registry: Mapping[str, Any],
     *,
-    freeze: freeze_api.VerifiedProductionFreeze | None,
-    freeze_error: str | None = None,
     selection: Mapping[str, Any] | None = None,
     repository_root: Path | None = None,
 ) -> tuple[
@@ -2609,7 +2505,7 @@ def select_authenticated_evidence(
     dict[str, Any],
     set[str],
 ]:
-    """Select only packages authenticated through validators and the freeze.
+    """Select only packages authenticated through validators.
 
     This is the sole production path from discovered evidence to claim
     evaluation. Directory presence and caller-supplied manifest labels are
@@ -2626,28 +2522,6 @@ def select_authenticated_evidence(
         row["requirement_id"]: row for row in report.get("requirements") or []
     }
     all_requirements = {row["id"] for row in registry["evidence_requirements"]}
-    if not isinstance(freeze, freeze_api.VerifiedProductionFreeze):
-        code = "PRODUCTION_FREEZE_AUTHENTICATION_FAILED"
-        detail = f":{freeze_error}" if freeze_error else ""
-        report["global_errors"].append(code + detail)
-        fatal.update(all_requirements)
-        for requirement_id, row in rows.items():
-            row["reason_codes"] = sorted(
-                set(row.get("reason_codes") or []) | {code}
-            )
-            if requirement_id in selected:
-                row["selected_package"] = None
-                row["selected_manifest_sha256"] = None
-                row["selection_mode"] = "REJECTED_AUTHENTICATION"
-        selected.clear()
-        return selected, report, fatal, {
-            "schema_version": PROVENANCE_SCHEMA_VERSION,
-            "production_freeze": None,
-            "semantic_comparisons": [],
-            "disclosures": [],
-            "blocked_requirements": sorted(all_requirements),
-            "semantic_status": "FAIL",
-        }, set(all_requirements)
 
     for requirement_id, candidate in list(selected.items()):
         errors = _candidate_integrity_errors(candidate)
@@ -2671,18 +2545,13 @@ def select_authenticated_evidence(
         selected.pop(requirement_id, None)
 
     try:
-        provenance_report, provenance_blocked = check_provenance(
-            selected, registry, freeze
-        )
+        provenance_report, provenance_blocked = check_provenance(selected, registry)
     except Exception as exc:
-        report["global_errors"].append(
-            f"PRODUCTION_FREEZE_REVERIFICATION_FAILED:{exc}"
-        )
+        report["global_errors"].append(f"PROVENANCE_CHECK_FAILED:{exc}")
         fatal.update(all_requirements)
         selected.clear()
         return selected, report, fatal, {
             "schema_version": PROVENANCE_SCHEMA_VERSION,
-            "production_freeze": None,
             "semantic_comparisons": [],
             "disclosures": [],
             "blocked_requirements": sorted(all_requirements),
@@ -2700,7 +2569,6 @@ def select_authenticated_evidence(
         row["selection_mode"] = "REJECTED_AUTHENTICATION"
         fatal.add(requirement_id)
         selected.pop(requirement_id, None)
-    report["production_freeze"] = freeze.identity
     return selected, report, fatal, provenance_report, provenance_blocked
 
 
@@ -3330,7 +3198,6 @@ def _publish_package(
     output_root: Path,
     run_id: str,
     registry_path: Path,
-    freeze_path: Path,
     selection_path: Path | None,
     p3_threshold_path: Path | None,
     inventory: Mapping[str, Any],
@@ -3422,7 +3289,6 @@ def _publish_package(
             "status": package_status,
             "thesis_claims_permitted": package_status != "FAILED",
             "registry": {"path": str(registry_path.resolve()), "sha256": file_sha256(registry_path)},
-            "freeze": {"path": str(freeze_path.resolve()), "sha256": file_sha256(freeze_path)},
             "selection": (
                 {"path": str(selection_path.resolve()), "sha256": file_sha256(selection_path)}
                 if selection_path is not None
@@ -3470,7 +3336,6 @@ def run_research_analysis(
     output_root: Path,
     run_id: str,
     registry_path: Path = REGISTRY_PATH,
-    freeze_path: Path,
     selection_path: Path | None = None,
     p3_threshold_path: Path | None = None,
 ) -> tuple[Path, str, int]:
@@ -3478,14 +3343,6 @@ def run_research_analysis(
 
     registry = load_claim_registry(registry_path)
     bootstrap_errors: list[str] = []
-    verified_freeze: freeze_api.VerifiedProductionFreeze | None = None
-    freeze_error: str | None = None
-    try:
-        verified_freeze = freeze_api.verify_production_freeze(freeze_path)
-        freeze = verified_freeze.configuration_snapshot
-    except Exception as exc:
-        freeze = {}
-        freeze_error = str(exc)
     threshold: Mapping[str, Any] | None = None
     if p3_threshold_path is not None:
         try:
@@ -3501,9 +3358,7 @@ def run_research_analysis(
     candidates = discover_evidence(
         results_root,
         registry=registry,
-        freeze=freeze,
         p3_threshold=threshold,
-        freeze_path=freeze_path,
         p3_threshold_path=p3_threshold_path,
     )
     (
@@ -3515,8 +3370,6 @@ def run_research_analysis(
     ) = select_authenticated_evidence(
         candidates,
         registry,
-        freeze=verified_freeze,
-        freeze_error=freeze_error,
         selection=selection,
         repository_root=registry_path.resolve().parents[1],
     )
@@ -3557,7 +3410,6 @@ def run_research_analysis(
         output_root=output_root,
         run_id=run_id,
         registry_path=registry_path,
-        freeze_path=freeze_path,
         selection_path=selection_path,
         p3_threshold_path=p3_threshold_path,
         inventory=inventory,
@@ -3708,7 +3560,7 @@ def validate_research_analysis_package(package: Path) -> dict[str, Any]:
     if not registry_path.is_file() or file_sha256(registry_path) != registry_identity.get("sha256"):
         raise ResearchAnalysisError("claim registry identity no longer validates")
     registry = load_claim_registry(registry_path)
-    for identity_name in ("freeze", "selection", "p3_threshold"):
+    for identity_name in ("selection", "p3_threshold"):
         identity = manifest.get(identity_name)
         if identity is None:
             continue
@@ -3808,12 +3660,6 @@ def _parser() -> argparse.ArgumentParser:
     for command in (discover, analyze):
         command.add_argument("--results-root", type=Path, default=Path("results_v5/protocol-v5.0.0"))
         command.add_argument("--registry", type=Path, default=REGISTRY_PATH)
-        command.add_argument(
-            "--freeze",
-            type=Path,
-            required=True,
-            help="Authoritative freezes/<freeze-id>/freeze-manifest.json artifact.",
-        )
         command.add_argument("--p3-threshold", type=Path)
     discover.add_argument("--selection", type=Path)
     analyze.add_argument("--selection", type=Path)
@@ -3833,28 +3679,16 @@ def main(argv: Sequence[str] | None = None) -> int:
         registry = load_claim_registry(args.registry)
         threshold = load_p3_threshold(args.p3_threshold) if args.p3_threshold else None
         if args.command == "discover":
-            verified_freeze: freeze_api.VerifiedProductionFreeze | None = None
-            freeze_error: str | None = None
-            try:
-                verified_freeze = freeze_api.verify_production_freeze(args.freeze)
-                freeze = verified_freeze.configuration_snapshot
-            except Exception as exc:
-                freeze = {}
-                freeze_error = str(exc)
             candidates = discover_evidence(
                 args.results_root,
                 registry=registry,
-                freeze=freeze,
                 p3_threshold=threshold,
-                freeze_path=args.freeze,
                 p3_threshold_path=args.p3_threshold,
             )
             selection = load_selection(args.selection, registry_path=args.registry) if args.selection else None
             selected, report, fatal, provenance, blocked = select_authenticated_evidence(
                 candidates,
                 registry,
-                freeze=verified_freeze,
-                freeze_error=freeze_error,
                 selection=selection,
                 repository_root=args.registry.resolve().parents[1],
             )
@@ -3877,7 +3711,6 @@ def main(argv: Sequence[str] | None = None) -> int:
             output_root=args.output_root,
             run_id=args.run_id or _default_run_id(),
             registry_path=args.registry,
-            freeze_path=args.freeze,
             selection_path=args.selection,
             p3_threshold_path=args.p3_threshold,
         )

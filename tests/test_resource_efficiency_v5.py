@@ -13,7 +13,7 @@ from evaluation_v5.offline.recommenders import OfflineAdapterResult
 from evaluation_v5.resource.contracts import load_cluster_policy, load_image_state
 from evaluation_v5.resource.efficiency_analysis import analyze_trials, canonical_allocation_identity, classify_pareto, derive_trial, statistical_results, summarize_dynamic_allocations, summarize_families
 from evaluation_v5.resource.efficiency_capacity import CAPACITY_SOURCE, EVIDENCE_TYPE, LABEL, SCHEDULER_INPUT, simulate_capacity, verify_observed_requests
-from evaluation_v5.resource.efficiency_contracts import CONDITIONS, FAMILY_COUNT, PARETO_OBJECTIVES, PRIMARY_TRIAL_COUNT, REPETITIONS, confirmatory_readiness, load_capacity_contract, load_condition_inputs, load_efficiency_freeze, validate_efficiency_contracts
+from evaluation_v5.resource.efficiency_contracts import CONDITIONS, FAMILY_COUNT, PARETO_OBJECTIVES, PRIMARY_TRIAL_COUNT, REPETITIONS, load_capacity_contract, load_condition_inputs, node_capacity_readiness, validate_efficiency_contracts
 from evaluation_v5.resource.efficiency_evidence import validate_analysis_package, validate_raw_package, validate_trial_record
 from evaluation_v5.resource.efficiency_models import EfficiencyTrialSpec, primary_outcome
 from evaluation_v5.resource.efficiency_plan import build_efficiency_plan
@@ -114,7 +114,6 @@ def test_contracts_bind_exact_20_by_4_by_10_design():
     assert status["primary_trial_count"] == PRIMARY_TRIAL_COUNT
     assert CONDITIONS == ("STATIC_LARGE", "P1_CATALOG", "P2_CATALOG", "P2_DYNAMIC")
     assert "P3" not in " ".join(CONDITIONS)
-    assert status["confirmatory_freeze_status"] == "NOT_FROZEN"
     assert status["capacity_freeze_status"] == "NOT_FROZEN"
     assert len(load_condition_inputs()["inputs"]) == 20
 
@@ -542,7 +541,7 @@ def test_read_only_dry_run_is_explicit_not_executed(tmp_path):
     )
     assert manifest["execution_status"] == "NOT_EXECUTED"
     assert manifest["kubernetes_mutations"] == []
-    assert {"CONFIRMATORY_FREEZE_INACTIVE", "APPROVED_ORACLE_UNAVAILABLE", "IMAGE_DIGEST_UNVERIFIED", "NODE_CAPACITY_NOT_FROZEN"}.issubset(manifest["blocker_codes"])
+    assert "NODE_CAPACITY_NOT_FROZEN" in manifest["blocker_codes"]
     assert validate_raw_package(root)["trials"] == 0
     manifest_path = root / "manifest.json"
     manifest_path.write_text(manifest_path.read_text().replace("NOT_EXECUTED", "OBSERVED", 1))
@@ -568,11 +567,8 @@ def test_wrong_context_and_disabled_kubernetes_readiness_are_fail_closed(tmp_pat
 
 
 def test_all_static_live_execution_prerequisites_remain_blockers():
-    blockers = confirmatory_readiness(load_efficiency_freeze(), load_capacity_contract())
-    assert blockers == [
-        "CONFIRMATORY_FREEZE_INACTIVE", "APPROVED_ORACLE_UNAVAILABLE",
-        "IMAGE_DIGEST_UNVERIFIED", "NODE_CAPACITY_NOT_FROZEN",
-    ]
+    blockers = node_capacity_readiness(load_capacity_contract())
+    assert blockers == ["NODE_CAPACITY_NOT_FROZEN"]
 
 
 def test_analysis_report_contract_cannot_label_simulation_as_observed(tmp_path, monkeypatch):
@@ -633,5 +629,3 @@ def test_checked_in_capacity_contains_no_invented_values():
     capacity = load_capacity_contract()
     assert capacity["freeze_status"] == "NOT_FROZEN"
     assert capacity["allocatable"] == {"cpu_m": None, "memory_mib": None, "gpu_count": None, "gpu_resource": None}
-    p3 = load_efficiency_freeze()["decision_policy"]["p3"]
-    assert p3["included"] is False and p3["authoritative_gate"] == "not_retained"

@@ -333,9 +333,186 @@ def verify_manifest_checksums(
     return verified
 
 
+class EvidenceOverwriteError(PermissionError):
+    """A development override attempted to replace claim-sensitive evidence.
+
+    This is a data-safety guard, not an approval gate: it exists so that
+    passing ``development_override=True`` to the manifest/provenance writers
+    (to let iterative local development reuse a result directory) can never
+    silently clobber evidence that has already been marked OBSERVED,
+    confirmatory, or otherwise claim-sensitive. There is no human sign-off
+    involved; the check is a pure function of the JSON already on disk.
+    """
+
+
+def _claim_sensitive_markers(value: object) -> tuple[str, ...]:
+    """Return explicit claim-sensitive markers found in JSON-like data."""
+
+    markers: set[str] = set()
+    active: set[int] = set()
+
+    def visit(selected: object, path: str) -> None:
+        if isinstance(selected, Mapping):
+            identity = id(selected)
+            if identity in active:
+                raise ValueError("evidence identity cannot contain recursive data")
+            active.add(identity)
+            try:
+                for raw_key, item in selected.items():
+                    if not isinstance(raw_key, str) or not raw_key:
+                        raise ValueError("evidence identity keys must be non-blank strings")
+                    key = raw_key.casefold()
+                    item_path = f"{path}.{raw_key}" if path else raw_key
+                    normalized = item.strip().casefold() if isinstance(item, str) else item
+                    if key in {
+                        "execution_status",
+                        "evidence_status",
+                        "cluster_measurement_status",
+                        "measurement_status",
+                    } and normalized == "observed":
+                        markers.add(f"{item_path}=OBSERVED")
+                    if key == "status" and normalized in {
+                        "observed",
+                        "frozen",
+                        "sealed",
+                        "production",
+                    }:
+                        markers.add(f"{item_path}={item}")
+                    if key in {
+                        "role",
+                        "split_role",
+                        "evidence_role",
+                        "stage",
+                        "current_phase",
+                    } and isinstance(normalized, str) and (
+                        normalized == "production"
+                        or normalized.startswith("confirmatory")
+                    ):
+                        markers.add(f"{item_path}={item}")
+                    if key in {
+                        "sealed",
+                        "frozen",
+                        "claim_eligible",
+                        "claims_eligible",
+                        "eligible_for_claims",
+                        "production_evidence",
+                    } and item is True:
+                        markers.add(f"{item_path}=true")
+                    if key == "claims_permitted" and item is True:
+                        markers.add(f"{item_path}=true")
+                    if key in {"evidence_classification", "evidence_class"} and isinstance(
+                        normalized, str
+                    ) and any(
+                        token in normalized
+                        for token in ("confirmatory", "production", "claim_eligible")
+                    ):
+                        markers.add(f"{item_path}={item}")
+                    visit(item, item_path)
+            finally:
+                active.remove(identity)
+            return
+        if isinstance(selected, (list, tuple)):
+            identity = id(selected)
+            if identity in active:
+                raise ValueError("evidence identity cannot contain recursive data")
+            active.add(identity)
+            try:
+                for index, item in enumerate(selected):
+                    visit(item, f"{path}[{index}]")
+            finally:
+                active.remove(identity)
+
+    visit(value, "")
+    return tuple(sorted(markers))
+
+
+def _manifest_markers(manifest: ProtocolV5Manifest) -> tuple[str, ...]:
+    validate_manifest(manifest)
+    markers = set(_claim_sensitive_markers(manifest.to_dict()))
+    if manifest.execution_status is EvidenceStatus.OBSERVED:
+        markers.add("manifest.execution_status=OBSERVED")
+    if manifest.split_identity.stage is SplitStage.CONFIRMATORY:
+        markers.add("manifest.split_identity.stage=confirmatory")
+    return tuple(sorted(markers))
+
+
+def _require_mutable(markers: tuple[str, ...], *, label: str) -> None:
+    if markers:
+        raise EvidenceOverwriteError(
+            f"development override prohibited because {label} is immutable or "
+            "claim-sensitive: " + ", ".join(markers)
+        )
+
+
+def require_incoming_development_override(
+    manifest: ProtocolV5Manifest,
+    *,
+    payload: Mapping[str, Any] | None = None,
+) -> None:
+    """Require both the incoming manifest and payload to be replaceable."""
+
+    _require_mutable(_manifest_markers(manifest), label="incoming manifest")
+    if payload is not None:
+        _require_mutable(
+            _claim_sensitive_markers(payload), label="incoming evidence"
+        )
+
+
+def inspect_existing_override_target(
+    *,
+    root: Path,
+    target: Path | None = None,
+) -> None:
+    """Reject an override target whose existing on-disk state is claim-sensitive."""
+
+    manifest_path = root / "manifest.json"
+    if root.exists() and not root.is_dir():
+        raise EvidenceOverwriteError("existing evidence root is not a directory")
+    root_has_evidence = root.exists() and any(
+        candidate.is_file() or candidate.is_symlink()
+        for candidate in root.rglob("*")
+    )
+    if manifest_path.is_file():
+        if manifest_path.is_symlink():
+            raise EvidenceOverwriteError("existing manifest cannot be a symbolic link")
+        raw_manifest = manifest_path.read_bytes()
+        manifest = ProtocolV5Manifest.from_dict(json.loads(raw_manifest.decode("utf-8")))
+        _require_mutable(_manifest_markers(manifest), label="existing manifest")
+    elif root_has_evidence:
+        raise EvidenceOverwriteError(
+            "existing evidence cannot be overridden without a validated manifest"
+        )
+
+    if target is not None and target.is_file():
+        if target.is_symlink():
+            raise EvidenceOverwriteError("existing target evidence cannot be a symbolic link")
+        raw_target = target.read_bytes()
+        target_payload = json.loads(raw_target.decode("utf-8"))
+        _require_mutable(
+            _claim_sensitive_markers(target_payload), label="existing target evidence"
+        )
+
+
+def authorize_development_override(
+    manifest: ProtocolV5Manifest,
+    *,
+    root: Path,
+    target: Path | None = None,
+    payload: Mapping[str, Any] | None = None,
+) -> None:
+    """Fail closed unless incoming and existing states are development-mutable."""
+
+    require_incoming_development_override(manifest, payload=payload)
+    inspect_existing_override_target(root=root, target=target)
+
+
 __all__ = [
     "ChecksumMismatchError",
+    "EvidenceOverwriteError",
     "ManifestValidationError",
+    "authorize_development_override",
+    "inspect_existing_override_target",
+    "require_incoming_development_override",
     "validate_manifest",
     "verify_file_checksum",
     "verify_manifest_checksums",

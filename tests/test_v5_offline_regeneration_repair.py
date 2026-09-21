@@ -3,19 +3,17 @@
 Covers:
 1. Unavailable gold handling across offline pipeline modules.
 2. Incomplete current-schema evidence handling.
-3. Legacy input handling (v1 split bundle and legacy functional evidence).
-4. Deterministic regeneration of raw -> derived -> report artifacts.
-5. Provenance mismatch detection and tamper fail-closed behavior.
-6. Stale outputs rejection and directory safety invariants.
-7. Explicit NOT_EXECUTED package semantics and CLI behavior.
-8. Deterministic figure and table regeneration.
+3. Legacy v1 split-bundle input handling.
+4. Provenance mismatch detection and tamper fail-closed behavior.
+5. Stale outputs rejection and directory safety invariants.
+6. Explicit NOT_EXECUTED package semantics and CLI behavior.
+7. Deterministic figure rendering.
 """
 from __future__ import annotations
 
 import json
 from pathlib import Path
 import shutil
-import tempfile
 import pytest
 
 from evaluation_v4.dataset import file_sha256
@@ -43,11 +41,29 @@ from evaluation_v5.analysis.reporting import (
     render_retrieval_recall_svg,
     write_not_executed_report,
 )
-from evaluation_v5.final_audit.common import Inputs, ROOT, LOCK
-from evaluation_v5.final_audit.checks import inspect
-from evaluation_v5.final_audit.reproduce import analyze, VOLATILE_MANIFEST_FIELDS, compare_json
-from evaluation_v5.final_audit.reporting import figures
+from evaluation_v5.offline.runner import run_offline_recommendations
 from evaluation_v5.offline.validate_evidence import OfflineEvidenceValidationError
+from evaluation_v5.paths import ROOT
+from evaluation_v5.split_dataset import load_development_split
+
+
+@pytest.fixture(scope="module")
+def valid_e1_evidence(tmp_path_factory: pytest.TempPathFactory) -> Path:
+    """A real, schema-valid E1 development-split offline evidence directory.
+
+    Built at test time with the default P1/P2 adapters against the tracked
+    development split, rather than depending on any previously-collected
+    results_v5/ evidence (which is intentionally not present on disk)."""
+
+    result_dir = tmp_path_factory.mktemp("v5-offline-regen") / "run"
+    run_offline_recommendations(
+        load_development_split(),
+        result_dir=result_dir,
+        system_ids=("P1", "P2"),
+        seed=20260824,
+        frozen_configuration={"snapshot": "regeneration-repair-test-v1"},
+    )
+    return result_dir
 
 
 # ---------------------------------------------------------------------------
@@ -55,9 +71,9 @@ from evaluation_v5.offline.validate_evidence import OfflineEvidenceValidationErr
 # ---------------------------------------------------------------------------
 
 
-def test_unavailable_gold_produces_not_executed(tmp_path: Path):
+def test_unavailable_gold_produces_not_executed(tmp_path: Path, valid_e1_evidence: Path):
     """Missing or corrupted gold produces an explicit NOT_EXECUTED package."""
-    evidence_dir = ROOT / "results_v5/protocol-v5.0.0/E1/20260825T-observed-p1-p2-development-v1"
+    evidence_dir = valid_e1_evidence
 
     # Non-existent gold file
     missing_gold = tmp_path / "non_existent_gold.yaml"
@@ -129,9 +145,13 @@ def test_incomplete_current_schema_input(tmp_path: Path):
 # ---------------------------------------------------------------------------
 
 
-def test_legacy_v1_split_input_handling(tmp_path: Path, capsys: pytest.CaptureFixture[str]):
+def test_legacy_v1_split_input_handling(
+    tmp_path: Path,
+    valid_e1_evidence: Path,
+    capsys: pytest.CaptureFixture[str],
+):
     """V1 development split cannot complete v2 scoring and emits NOT_EXECUTED."""
-    evidence_dir = ROOT / "results_v5/protocol-v5.0.0/E1/20260825T-observed-p1-p2-development-v1"
+    evidence_dir = valid_e1_evidence
     gold_path = ROOT / "benchmarks_v5/v5-development.yaml"
     output_dir = tmp_path / "legacy_v1_report"
 
@@ -153,57 +173,16 @@ def test_legacy_v1_split_input_handling(tmp_path: Path, capsys: pytest.CaptureFi
     assert "complete gold must be a frozen family dataset or compiled split v2" in manifest["reason"]
 
 
-def test_legacy_functional_packages_not_reinterpreted():
-    """Legacy E5 functional packages are bounded as UNVERIFIED rather than reinterpreted."""
-    inputs = Inputs(ROOT, LOCK)
-    audit = inspect(inputs)
-    legacy_pkgs = [p for p in audit["packages"] if p["kind"] == "image_functional" and p.get("validator_result", {}).get("validator_status") == "LEGACY_VALID"]
-    assert len(legacy_pkgs) == 9
-
-    with tempfile.TemporaryDirectory() as tmpdir:
-        res = analyze(inputs, audit, Path(tmpdir) / "analysis")
-        # Every legacy package is marked UNVERIFIED in reproduction
-        legacy_entries = [p for p in res["packages"] if p["path"] in {lp["path"] for lp in legacy_pkgs}]
-        assert all(entry["status"] == "UNVERIFIED" for entry in legacy_entries)
-        assert all("Legacy or invalid functional package retained" in entry["reason"] for entry in legacy_entries)
-
-
 # ---------------------------------------------------------------------------
 # 4. Deterministic Regeneration
 # ---------------------------------------------------------------------------
-
-
-def test_deterministic_offline_regeneration():
-    """Offline E1 evidence reproduces raw counts, manifests, and reports bit-for-bit."""
-    inputs = Inputs(ROOT, LOCK)
-    audit = inspect(inputs)
-
-    with tempfile.TemporaryDirectory() as tmpdir1, tempfile.TemporaryDirectory() as tmpdir2:
-        res1 = analyze(inputs, audit, Path(tmpdir1) / "analysis")
-        res2 = analyze(inputs, audit, Path(tmpdir2) / "analysis")
-
-        # Package status is REGENERATED
-        e1_entry1 = next(p for p in res1["packages"] if "E1" in p["path"])
-        e1_entry2 = next(p for p in res2["packages"] if "E1" in p["path"])
-        assert e1_entry1["status"] == "REGENERATED"
-        assert e1_entry2["status"] == "REGENERATED"
-        assert all(c["status"] == "PASS" for c in e1_entry1["comparisons"])
-
-        # Generated artifacts match bit-for-bit between independent runs
-        path1 = Path(tmpdir1) / "analysis/E1/20260825T-observed-p1-p2-development-v1"
-        path2 = Path(tmpdir2) / "analysis/E1/20260825T-observed-p1-p2-development-v1"
-
-        assert (path1 / "raw_counts.json").read_bytes() == (path2 / "raw_counts.json").read_bytes()
-        assert (path1 / "report/offline_report/E1_E2_OFFLINE_REPORT.md").read_bytes() == (
-            path2 / "report/offline_report/E1_E2_OFFLINE_REPORT.md"
-        ).read_bytes()
-
-        # Check raw counts match exactly
-        counts = json.loads((path1 / "raw_counts.json").read_text(encoding="utf-8"))
-        assert counts["records"] == 36
-        assert counts["cases"] == 18
-        assert counts["families"] == 10
-        assert counts["per_system"] == {"P1": 18, "P2": 18}
+#
+# Deterministic raw -> derived -> report regeneration and legacy-functional-
+# package handling were previously exercised through evaluation_v5.final_audit
+# (Inputs/inspect/analyze), which has been deleted along with the freeze/audit
+# governance layer it implemented. The underlying analysis/reporting modules
+# (evaluation_v5.analysis.*) are still covered directly by the tests above and
+# below; there is no remaining final_audit-specific behavior to test here.
 
 
 # ---------------------------------------------------------------------------
@@ -211,11 +190,10 @@ def test_deterministic_offline_regeneration():
 # ---------------------------------------------------------------------------
 
 
-def test_provenance_mismatch_fails_closed(tmp_path: Path):
+def test_provenance_mismatch_fails_closed(tmp_path: Path, valid_e1_evidence: Path):
     """Perturbed completion provenance fingerprint raises ReportingError."""
-    src_evidence = ROOT / "results_v5/protocol-v5.0.0/E1/20260825T-observed-p1-p2-development-v1"
     evidence_dir = tmp_path / "tampered_e1"
-    shutil.copytree(src_evidence, evidence_dir)
+    shutil.copytree(valid_e1_evidence, evidence_dir)
 
     # Tamper with the completion provenance fingerprint
     comp_file = evidence_dir / "report" / "offline-run-completion.json"
@@ -232,28 +210,18 @@ def test_provenance_mismatch_fails_closed(tmp_path: Path):
         )
 
 
-def test_authentic_provenance_mismatch_retained_in_audit():
-    """Historical prompt hash mismatch in Check 5 is detected and retained as FAIL."""
-    inputs = Inputs(ROOT, LOCK)
-    audit = inspect(inputs)
-    check5 = audit["checks"][4]
-    assert check5["verdict"] == "FAIL"
-    fields = {item["field"] for item in check5["details"]}
-    assert "/extractor/extractor_prompt_sha256" in fields
-
-
 # ---------------------------------------------------------------------------
 # 6. Stale Outputs Rejection
 # ---------------------------------------------------------------------------
 
 
-def test_stale_output_directory_rejected(tmp_path: Path):
+def test_stale_output_directory_rejected(tmp_path: Path, valid_e1_evidence: Path):
     """Output directory safety prevents overwriting an existing directory."""
     existing_dir = tmp_path / "already_exists"
     existing_dir.mkdir()
     (existing_dir / "stale_file.txt").write_text("old data", encoding="utf-8")
 
-    evidence_dir = ROOT / "results_v5/protocol-v5.0.0/E1/20260825T-observed-p1-p2-development-v1"
+    evidence_dir = valid_e1_evidence
     gold_path = ROOT / "benchmarks_v5/v5-development.yaml"
 
     with pytest.raises(FileExistsError):
@@ -345,21 +313,6 @@ def test_svg_figures_deterministic():
     assert "JointAccept@1" in svg1
 
 
-def test_derived_figures_and_tables_regeneration():
-    """Final audit figures command deterministically regenerates tables and SVGs."""
-    inputs = Inputs(ROOT, LOCK)
-    audit = inspect(inputs)
-
-    with tempfile.TemporaryDirectory() as tmpdir:
-        analysis_dir = Path(tmpdir) / "analysis"
-        figures_dir = Path(tmpdir) / "figures"
-        derived = analyze(inputs, audit, analysis_dir)
-        fig_result = figures(inputs, derived, analysis_dir, figures_dir)
-
-        assert fig_result["status"] == "PASS"
-        assert all(c["status"] == "PASS" for c in fig_result["comparisons"])
-
-        # Tables are created and valid
-        assert (figures_dir / "tables/functional-results.json").is_file()
-        assert (figures_dir / "tables/defense-summary.json").is_file()
-        assert (figures_dir / "tables/defense-summary.md").is_file()
+# Table/figure regeneration through evaluation_v5.final_audit's figures()
+# command was removed along with that deleted module; render_*_svg coverage
+# above is the remaining figure-rendering behavior.

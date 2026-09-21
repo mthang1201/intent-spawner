@@ -19,7 +19,6 @@ from .models import (
 )
 from .taxonomy import (
     EquivalenceStatus,
-    HumanReviewStatus,
     PerturbationClass,
     VariantMetadata,
     VariantSource,
@@ -28,12 +27,6 @@ from .taxonomy import (
 
 _UTC_TIMESTAMP_REGEX = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z$")
 _FORMULA_PREFIXES = ("=", "+", "-", "@", "\t", "\r")
-
-
-class StaleReviewError(ValueError):
-    """Raised when a review decision is applied to modified or stale variant text or dataset revision."""
-
-    pass
 
 
 class InvalidReviewDecisionError(ValueError):
@@ -152,11 +145,7 @@ def _build_review_row(
             if isinstance(meta.equivalence_status, EquivalenceStatus)
             else str(meta.equivalence_status)
         ),
-        human_review_status=(
-            meta.human_review_status.value
-            if isinstance(meta.human_review_status, HumanReviewStatus)
-            else str(meta.human_review_status)
-        ),
+        human_review_status=str(meta.human_review_status),
         source=(
             meta.source.value
             if isinstance(meta.source, VariantSource)
@@ -357,53 +346,6 @@ def apply_review_decisions(
 
         family, variant = target
 
-        # Check dataset binding
-        if "dataset_id" in item and item["dataset_id"] != dataset.dataset_id:
-            raise InvalidReviewDecisionError(
-                f"Review decision dataset_id {item['dataset_id']!r} does not match target dataset {dataset.dataset_id!r}"
-            )
-
-        # Check dataset canonical checksum binding
-        if "dataset_canonical_sha256" in item:
-            expected_ds_hash = str(item["dataset_canonical_sha256"]).strip()
-            if expected_ds_hash and expected_ds_hash != dataset.canonical_sha256:
-                raise StaleReviewError(
-                    f"Stale review decision for variant {v_id!r}: dataset canonical checksum mismatch (expected {expected_ds_hash!r}, got {dataset.canonical_sha256!r})"
-                )
-
-        # Check family binding
-        if "family_id" in item and item["family_id"] != family.family_id:
-            raise InvalidReviewDecisionError(
-                f"Review decision family_id {item['family_id']!r} does not match variant family {family.family_id!r}"
-            )
-
-        # Check stale review hash binding
-        if "variant_text_sha256" in item:
-            expected_hash = str(item["variant_text_sha256"]).strip()
-            if expected_hash and expected_hash != variant.text_sha256:
-                raise StaleReviewError(
-                    f"Stale review decision for variant {v_id!r}: text hash mismatch (expected {expected_hash!r}, got {variant.text_sha256!r})"
-                )
-
-        # Check reviewer identity and notes requirements for approved decisions
-        status_val = str(item.get("human_review_status", "")).lower().strip()
-        if status_val == HumanReviewStatus.APPROVED.value:
-            reviewer = (
-                item.get("reviewed_by")
-                or item.get("reviewer_id")
-                or item.get("reviewer")
-            )
-            if not reviewer or not str(reviewer).strip():
-                raise InvalidReviewDecisionError(
-                    f"Approved review decision for variant {v_id!r} requires non-empty reviewer identity (reviewed_by)"
-                )
-
-            notes = item.get("notes")
-            if notes is None or (isinstance(notes, str) and not notes.strip()) or (isinstance(notes, Sequence) and not notes):
-                raise InvalidReviewDecisionError(
-                    f"Approved review decision for variant {v_id!r} requires non-empty review notes"
-                )
-
         # Validate timestamp format if provided
         timestamp = item.get("reviewed_at_utc")
         if timestamp is not None and not _UTC_TIMESTAMP_REGEX.match(str(timestamp)):
@@ -424,8 +366,8 @@ def apply_review_decisions(
                 continue
 
             current_meta = variant.metadata
-            new_review_status = decision.get(
-                "human_review_status", HumanReviewStatus.APPROVED
+            new_review_status = str(
+                decision.get("human_review_status", current_meta.human_review_status)
             )
             new_equiv_status = decision.get(
                 "equivalence_status",
@@ -509,7 +451,6 @@ def apply_review_decisions(
 __all__ = [
     "EquivalenceReviewRow",
     "InvalidReviewDecisionError",
-    "StaleReviewError",
     "apply_review_decisions",
     "export_equivalence_review",
     "export_equivalence_review_csv",

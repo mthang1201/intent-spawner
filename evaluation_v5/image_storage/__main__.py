@@ -552,7 +552,6 @@ def main() -> None:
         help="Skip joint recommendation evaluation for catalog scales.",
     )
     parser.add_argument("--dataset", type=Path, default=None, help="Path to sealed confirmatory dataset YAML.")
-    parser.add_argument("--freeze", type=Path, default=None, help="Path to frozen configuration/freeze artifact.")
 
     args = parser.parse_args()
 
@@ -560,12 +559,10 @@ def main() -> None:
         if args.recommendation_run is None:
             parser.error("--recommendation-run is required for functional E5")
         confirmatory_split = None
-        if (args.dataset is None) != (args.freeze is None):
-            parser.error("functional confirmatory verification requires both --dataset and --freeze")
-        if args.dataset is not None and args.freeze is not None:
+        if args.dataset is not None:
             from evaluation_v5.isolation import load_confirmatory_split
 
-            confirmatory_split = load_confirmatory_split(args.dataset, args.freeze)
+            confirmatory_split = load_confirmatory_split(args.dataset)
         recommendation_capability = verify_recommendation_run_provenance(
             args.recommendation_run,
             confirmatory_split=confirmatory_split,
@@ -596,7 +593,6 @@ def main() -> None:
             eval_recommendation=not args.no_recommendation_eval,
             dataset_path=args.dataset,
             split_path=args.split if args.stage == "development" else None,
-            freeze_path=args.freeze,
         )
         print(f"E5 storage scalability evaluation completed successfully. Output in: {out_storage}")
 

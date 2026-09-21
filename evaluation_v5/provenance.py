@@ -110,7 +110,7 @@ def write_provenance_json(
     validate_manifest(manifest)
     target = _safe_target(paths, relative_path)
     if development_override:
-        from .evidence_trust import authorize_development_override
+        from .validation import authorize_development_override
 
         authorize_development_override(
             manifest,

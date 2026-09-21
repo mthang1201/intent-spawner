@@ -68,7 +68,6 @@ def test_evaluate_operator_preflight_fails_closed_in_dev_env():
     checks = report["checks"]
     expected_checks = [
         "frozen_git_revision",
-        "authoritative_final_freeze",
         "workload_manifest",
         "approved_independent_resource_oracle",
         "collector_implementation_authenticity",
@@ -202,7 +201,7 @@ def test_image_pinning_check():
     assert not res_unpinned.passed
     assert "IMAGE_REFERENCE_UNPINNED" in res_unpinned.blocker_codes
 
-    # Pinned image but not matching active freeze image state fails with IMAGE_DIGEST_UNVERIFIED
+    # Pinned image but not matching the registered image state fails with IMAGE_DIGEST_UNVERIFIED
     res_pinned = check_pinned_image_digest(image=IMAGE_PINNED)
     assert not res_pinned.passed
     assert "IMAGE_DIGEST_UNVERIFIED" in res_pinned.blocker_codes

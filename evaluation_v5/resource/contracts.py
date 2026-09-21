@@ -20,7 +20,6 @@ SEMANTIC_PATH = ROOT / "benchmarks_v5" / "resource-envelope-semantic-independenc
 SEMANTIC_SCHEMA_PATH = ROOT / "benchmarks_v5" / "protocol-v5-resource-semantic-independence-v1.schema.json"
 ELIGIBILITY_PATH = ROOT / "benchmarks_v5" / "resource-envelope-cluster-eligibility-v1.yaml"
 IMAGE_STATE_PATH = ROOT / "cluster_evaluation" / "resource-v5-image-state.yaml"
-FREEZE_CONTRACT_PATH = ROOT / "benchmarks_v5" / "resource-envelope-freeze-contract-v1.yaml"
 CROSSWALK_PATH = ROOT / "benchmarks_v5" / "resource-allocation-crosswalk-v1.yaml"
 COMPARISON_SCHEMA_PATH = ROOT / "benchmarks_v5" / "protocol-v5-resource-allocation-comparison-v1.schema.json"
 SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
@@ -102,17 +101,6 @@ def image_state_is_verified(value: Mapping[str, Any], image: str) -> bool:
         and isinstance(value.get("resolved_digest"), str)
         and image.endswith("@" + value["resolved_digest"])
     )
-
-
-def load_freeze_contract(path: Path = FREEZE_CONTRACT_PATH) -> dict[str, Any]:
-    value = _load_yaml(path)
-    if value.get("schema_version") != "protocol-v5-resource-freeze-contract-v1.0.0":
-        raise ValueError("unsupported freeze contract")
-    return value
-
-
-def freeze_is_confirmatory(value: Mapping[str, Any]) -> bool:
-    return value.get("current_phase") == "confirmatory" and value.get("confirmatory_freeze_status") == "FROZEN"
 
 
 def load_crosswalk(path: Path = CROSSWALK_PATH, *, manifest_path: Path = DEFAULT_MANIFEST) -> dict[str, Any]:
@@ -203,8 +191,8 @@ def static_independence_scan(directory: Path | None = None) -> dict[str, Any]:
 
 
 __all__ = [
-    "COMPARISON_SCHEMA_PATH", "CROSSWALK_PATH", "ELIGIBILITY_PATH", "FREEZE_CONTRACT_PATH", "IMAGE_STATE_PATH",
-    "SEMANTIC_PATH", "freeze_is_confirmatory", "image_state_is_verified",
-    "load_cluster_policy", "load_crosswalk", "load_freeze_contract", "load_image_state",
+    "COMPARISON_SCHEMA_PATH", "CROSSWALK_PATH", "ELIGIBILITY_PATH", "IMAGE_STATE_PATH",
+    "SEMANTIC_PATH", "image_state_is_verified",
+    "load_cluster_policy", "load_crosswalk", "load_image_state",
     "load_semantic_independence", "static_independence_scan",
 ]

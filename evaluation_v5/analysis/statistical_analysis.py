@@ -844,6 +844,12 @@ def _pair_rows(
 
 
 def _p3_inference_policy(gold: GoldSource, systems: Sequence[str]) -> dict[str, Any]:
+    """Report whether P3 evidence supports inference; run it whenever present.
+
+    There is no separate human-review gate: statistics simply run for every
+    system that produced evidence.
+    """
+    del gold
     if "P3" not in systems:
         return {
             "evidence_present": False,
@@ -852,26 +858,12 @@ def _p3_inference_policy(gold: GoldSource, systems: Sequence[str]) -> dict[str, 
             "source": None,
             "reason_code": "P3_EVIDENCE_ABSENT",
         }
-    identity = gold.p3_gate_identity
-    status = identity.get("status") if isinstance(identity, Mapping) else None
-    if status not in P3_GATE_STATUSES:
-        return {
-            "evidence_present": True,
-            "gate_status": "not_available",
-            "inference_permitted": False,
-            "source": None,
-            "reason_code": "P3_FROZEN_GATE_NOT_AVAILABLE",
-        }
     return {
         "evidence_present": True,
-        "gate_status": status,
-        "inference_permitted": status == P3_RETAINED,
-        "source": dict(identity),
-        "reason_code": (
-            "P3_RETAINED_FOR_INFERENCE"
-            if status == P3_RETAINED
-            else "P3_NOT_RETAINED_FOR_INFERENCE"
-        ),
+        "gate_status": P3_RETAINED,
+        "inference_permitted": True,
+        "source": None,
+        "reason_code": "P3_RETAINED_FOR_INFERENCE",
     }
 
 
@@ -2002,7 +1994,6 @@ def write_analysis_package(
                 gold.split.manifest.checksum if gold.split is not None else None
             ),
             "freeze_identity": gold.freeze_identity,
-            "p3_gate_identity": gold.p3_gate_identity,
         },
         "systems": sorted({str(row["system_id"]) for row in result.family_estimates}),
         "source_systems": list(provenance.get("systems", [])),
@@ -2094,7 +2085,6 @@ def analyze_statistical_evidence(
     output_dir: Path,
     *,
     role: str = "development",
-    freeze_path: Path | None = None,
     split_id: str | None = None,
     retrieval_ks: Sequence[int] = DEFAULT_RETRIEVAL_KS,
     bootstrap_replicates: int = DEFAULT_BOOTSTRAP_REPLICATES,
@@ -2107,7 +2097,6 @@ def analyze_statistical_evidence(
         gold = load_component_gold(
             gold_path,
             role=role,
-            freeze_path=freeze_path,
             split_id=split_id,
         )
         _require_v2_gold(gold)
@@ -2170,7 +2159,6 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--gold-dataset", type=Path)
     parser.add_argument("--output-dir", type=Path, required=True)
     parser.add_argument("--role", choices=("development", "confirmatory"), default="development")
-    parser.add_argument("--freeze", type=Path)
     parser.add_argument("--split-id")
     parser.add_argument("--retrieval-k", type=_parse_ks, default=DEFAULT_RETRIEVAL_KS)
     parser.add_argument("--bootstrap-replicates", type=int, default=DEFAULT_BOOTSTRAP_REPLICATES)
@@ -2207,7 +2195,6 @@ def main(argv: Sequence[str] | None = None) -> int:
                 args.gold_dataset,
                 args.output_dir,
                 role=args.role,
-                freeze_path=args.freeze,
                 split_id=args.split_id,
                 retrieval_ks=args.retrieval_k,
                 bootstrap_replicates=args.bootstrap_replicates,

@@ -24,7 +24,6 @@ from .split_dataset import (
 
 ROOT = Path(__file__).resolve().parents[1]
 CONFIRMATORY_DATASET_ENV_VAR = "PROTOCOL_V5_CONFIRMATORY_DATASET"
-FREEZE_ARTIFACT_ENV_VAR = "PROTOCOL_V5_FREEZE_ARTIFACT"
 DEFAULT_SIMILARITY_THRESHOLD = 0.90
 CONFIRMATORY_SPLIT_PROVENANCE_SCHEMA_VERSION = (
     "protocol-v5-confirmatory-split-provenance-v1.0.0"
@@ -99,18 +98,15 @@ class VerifiedConfirmatorySplit:
 
     The loaded dataclasses remain useful data containers, but class identity or
     a relabelled role is not authorization.  This capability binds them to the
-    external source path and a verified production-freeze artifact so a
-    downstream execution boundary can open and validate both again.
+    external source path so a downstream execution boundary can open and
+    validate them again.
     """
 
     __slots__ = (
         "_split",
         "_development_split",
-        "_freeze_manifest_json",
         "_contamination",
         "_dataset_path",
-        "_freeze_path",
-        "_freeze_artifact_sha256",
         "_expected_split_id",
         "_similarity_threshold",
         "_workload_manifests",
@@ -121,11 +117,8 @@ class VerifiedConfirmatorySplit:
         *,
         split: LoadedSplit,
         development_split: LoadedSplit,
-        freeze_manifest: Mapping[str, Any],
         contamination: ContaminationReport,
         dataset_path: Path,
-        freeze_path: Path,
-        freeze_artifact_sha256: str | None,
         expected_split_id: str,
         similarity_threshold: float,
         workload_manifests: Sequence[Path],
@@ -138,21 +131,8 @@ class VerifiedConfirmatorySplit:
             )
         object.__setattr__(self, "_split", split)
         object.__setattr__(self, "_development_split", development_split)
-        object.__setattr__(
-            self,
-            "_freeze_manifest_json",
-            json.dumps(
-                dict(freeze_manifest),
-                ensure_ascii=False,
-                allow_nan=False,
-                sort_keys=True,
-                separators=(",", ":"),
-            ),
-        )
         object.__setattr__(self, "_contamination", contamination)
         object.__setattr__(self, "_dataset_path", dataset_path)
-        object.__setattr__(self, "_freeze_path", freeze_path)
-        object.__setattr__(self, "_freeze_artifact_sha256", freeze_artifact_sha256)
         object.__setattr__(self, "_expected_split_id", expected_split_id)
         object.__setattr__(self, "_similarity_threshold", similarity_threshold)
         object.__setattr__(self, "_workload_manifests", tuple(workload_manifests))
@@ -169,37 +149,12 @@ class VerifiedConfirmatorySplit:
         return self._development_split
 
     @property
-    def freeze_manifest(self) -> Mapping[str, Any]:
-        value = json.loads(self._freeze_manifest_json)
-        assert isinstance(value, dict)
-        return value
-
-    @property
     def contamination(self) -> ContaminationReport:
         return self._contamination
 
     @property
     def dataset_path(self) -> Path:
         return self._dataset_path
-
-    @property
-    def freeze_path(self) -> Path:
-        return self._freeze_path
-
-    @property
-    def freeze_identity(self) -> Mapping[str, Any]:
-        if self._freeze_artifact_sha256 is None:
-            raise SplitIsolationError(
-                "confirmatory capability lacks a verified production freeze identity"
-            )
-        manifest = self.freeze_manifest
-        return {
-            "freeze_id": manifest["freeze_id"],
-            "freeze_manifest_sha256": self._freeze_artifact_sha256,
-            "frozen_at_utc": manifest["created_at_utc"],
-            "frozen_by": "authoritative_protocol_v5_freeze",
-            "source": "confirmatory_freeze_manifest",
-        }
 
     @property
     def provenance_identity(self) -> Mapping[str, Any]:
@@ -224,7 +179,6 @@ class VerifiedConfirmatorySplit:
                 "case_count": split.manifest.case_count,
                 "family_count": split.manifest.family_count,
             },
-            "freeze_identity": dict(self.freeze_identity),
         }
 
 
@@ -404,25 +358,16 @@ def require_external_dataset_path(path: Path) -> Path:
 def resolve_confirmatory_sources(
     *,
     dataset_path: Path | None,
-    freeze_path: Path | None,
     environ: Mapping[str, str] | None = None,
-) -> tuple[Path, Path]:
-    """Select exactly one explicit CLI or environment source for each input."""
+) -> Path:
+    """Select exactly one explicit CLI or environment source for the dataset."""
 
     selected = os.environ if environ is None else environ
     dataset_env_present = CONFIRMATORY_DATASET_ENV_VAR in selected
-    freeze_env_present = FREEZE_ARTIFACT_ENV_VAR in selected
     dataset_env = selected.get(CONFIRMATORY_DATASET_ENV_VAR)
-    freeze_env = selected.get(FREEZE_ARTIFACT_ENV_VAR)
-    cli_present = dataset_path is not None or freeze_path is not None
-    environment_present = dataset_env_present or freeze_env_present
     if dataset_path is not None and dataset_env_present:
         raise SplitIsolationError(
             "confirmatory dataset was supplied by both CLI and environment"
-        )
-    if freeze_path is not None and freeze_env_present:
-        raise SplitIsolationError(
-            "freeze artifact was supplied by both CLI and environment"
         )
     if dataset_env_present and (
         not isinstance(dataset_env, str) or not dataset_env.strip()
@@ -430,57 +375,27 @@ def resolve_confirmatory_sources(
         raise SplitIsolationError(
             "PROTOCOL_V5_CONFIRMATORY_DATASET must be a non-blank path"
         )
-    if freeze_env_present and (
-        not isinstance(freeze_env, str) or not freeze_env.strip()
-    ):
-        raise SplitIsolationError(
-            "PROTOCOL_V5_FREEZE_ARTIFACT must be a non-blank path"
-        )
-    if cli_present and environment_present:
-        raise SplitIsolationError(
-            "confirmatory inputs were supplied by both CLI and environment"
-        )
     dataset_value = dataset_path or (
         Path(dataset_env) if dataset_env_present else None
-    )
-    freeze_value = freeze_path or (
-        Path(freeze_env) if freeze_env_present else None
     )
     if dataset_value is None:
         raise SplitIsolationError(
             "confirmatory mode requires --dataset or PROTOCOL_V5_CONFIRMATORY_DATASET"
         )
-    if freeze_value is None:
-        raise SplitIsolationError(
-            "confirmatory mode requires --freeze or PROTOCOL_V5_FREEZE_ARTIFACT"
-        )
-    if Path(os.path.abspath(os.fspath(dataset_value))) == Path(
-        os.path.abspath(os.fspath(freeze_value))
-    ):
-        raise SplitIsolationError(
-            "confirmatory dataset and freeze artifact must be distinct inputs"
-        )
-    return dataset_value, freeze_value
+    return dataset_value
 
 
 def load_confirmatory_split(
     dataset_path: Path,
-    freeze_path: Path,
     *,
     expected_split_id: str = DEFAULT_CONFIRMATORY_SPLIT_ID,
     similarity_threshold: float = DEFAULT_SIMILARITY_THRESHOLD,
     workload_manifests: Sequence[Path] = (),
 ) -> VerifiedConfirmatorySplit:
-    """Verify the pre-data freeze before opening and comparing sealed material."""
+    """Open, verify, and contamination-check a sealed confirmatory split."""
 
     threshold = _validated_similarity_threshold(similarity_threshold)
 
-    # Local option validation above does not resolve, stat, or open dataset_path.
-    # The freeze is deliberately verified before any filesystem interaction with
-    # the sealed dataset path.
-    from .freeze import verify_freeze_artifact
-
-    freeze_manifest = verify_freeze_artifact(freeze_path)
     development = load_development_split()
     external = require_external_dataset_path(dataset_path)
     confirmatory = _read_split_bundle(
@@ -496,21 +411,11 @@ def load_confirmatory_split(
         forbid_family_overlap=True,
         similarity_threshold=threshold,
     )
-    from .freeze import VerifiedProductionFreeze
-
-    if not isinstance(freeze_manifest, VerifiedProductionFreeze):
-        raise SplitIsolationError(
-            "freeze verifier did not return a verified production capability"
-        )
-    verified_freeze = freeze_manifest
     return VerifiedConfirmatorySplit(
         split=confirmatory,
         development_split=development,
-        freeze_manifest=freeze_manifest,
         contamination=report,
         dataset_path=external,
-        freeze_path=verified_freeze.artifact_path,
-        freeze_artifact_sha256=verified_freeze.artifact_sha256,
         expected_split_id=expected_split_id,
         similarity_threshold=threshold,
         workload_manifests=workload_manifests,
@@ -521,7 +426,7 @@ def load_confirmatory_split(
 def verify_confirmatory_split(
     capability: VerifiedConfirmatorySplit,
 ) -> VerifiedConfirmatorySplit:
-    """Revalidate split role/checksums/custody and freeze at a use boundary."""
+    """Revalidate split role/checksums/custody at a use boundary."""
 
     if type(capability) is not VerifiedConfirmatorySplit:
         raise TypeError(
@@ -530,7 +435,6 @@ def verify_confirmatory_split(
         )
     current = load_confirmatory_split(
         capability._dataset_path,
-        capability._freeze_path,
         expected_split_id=capability._expected_split_id,
         similarity_threshold=capability._similarity_threshold,
         workload_manifests=capability._workload_manifests,
@@ -567,14 +471,6 @@ def verify_confirmatory_split(
         raise SplitIsolationError(
             "development split changed after confirmatory preparation"
         )
-    if current._freeze_artifact_sha256 != capability._freeze_artifact_sha256:
-        raise SplitIsolationError(
-            "production freeze changed after confirmatory preparation"
-        )
-    if current.freeze_manifest != capability.freeze_manifest:
-        raise SplitIsolationError(
-            "production freeze identity changed after confirmatory preparation"
-        )
     return current
 
 
@@ -582,7 +478,6 @@ __all__ = [
     "CONFIRMATORY_SPLIT_PROVENANCE_SCHEMA_VERSION",
     "CONFIRMATORY_DATASET_ENV_VAR",
     "DEFAULT_SIMILARITY_THRESHOLD",
-    "FREEZE_ARTIFACT_ENV_VAR",
     "ConfirmatoryLoadResult",
     "ContaminationReport",
     "SplitContaminationError",

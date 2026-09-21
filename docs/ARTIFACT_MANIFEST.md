@@ -1,15 +1,14 @@
 # Artifact and Documentation Index
 
-Start with the [project overview](../README.md), [Getting Started](GETTING_STARTED.md),
-and the [current Protocol-v5 evidence-driven final report](../results_v5/protocol-v5.0.0/final-audit/final-audit-20260911-final5/report/PROTOCOL_V5_FINAL_REPORT.md).
+Start with the [project overview](../README.md) and [Getting Started](GETTING_STARTED.md).
 This index describes current navigation; historical reports retain the facts and
-identities of the repository snapshots they audited.
+identities of the repository snapshots they describe.
 
 ## Current Guides
 
 | Document | Purpose |
 | --- | --- |
-| [Getting Started](GETTING_STARTED.md) | Offline audit reproduction, software checks, and optional demo deployment. |
+| [Getting Started](GETTING_STARTED.md) | Running the Protocol-v5 experiments, software checks, and optional demo deployment. |
 | [Architecture](ARCHITECTURE.md) | B0/P1/P2/P3 contracts, implemented capabilities, and remaining research/production boundaries. |
 | [Demo script](../DEMO_SCRIPT.md) | Interactive presentation scenes; demonstrations are separate from confirmatory evidence. |
 | [Helm backend deployment](HELM_BACKEND_DEPLOYMENT.md) | Runtime packaging, backend overlays, Secret references, and rollout identities. |
@@ -23,43 +22,30 @@ identities of the repository snapshots they audited.
 
 ## Protocol-v5 Evidence and Contracts
 
-**Current scientific audit: FAIL. Confirmatory evidence: NOT_EXECUTED. Software
-completion audit: 16/16 SATISFIED.** The latter is an adversarial software and
-evidence-boundary result, not experiment evidence. E1 is development-only;
-archived E5 functional observations remain legacy-valid with explicit
-source-provenance limitations. E3, E4, E5 storage, and all confirmatory claim
-decisions remain **NOT_EXECUTED**.
+The freeze/final-audit system and the manual human-review approval gate that
+previously sat on top of the Protocol-v5 evaluation harness have been removed.
+Each experiment (E1-E5) is now just "run it, get results": it executes and
+writes a plain run manifest, with no separate immutable-freeze step and no
+approval gate blocking it. No results currently exist for any experiment —
+previously collected evidence was wiped ahead of this cleanup, and no
+experiment has been re-executed yet.
 
 | Document or artifact | Purpose and evidence boundary |
 | --- | --- |
-| [Current evidence-driven final report](../results_v5/protocol-v5.0.0/final-audit/final-audit-20260911-final5/report/PROTOCOL_V5_FINAL_REPORT.md) | Authenticated claim decisions, counts, experiment states, audit failures, and defense table. |
-| [16-issue completion audit](../results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final5/COMPLETION_AUDIT.md) and [machine-readable form](../results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final5/completion-audit.json) | Revision-bound issue dispositions, JUnit-derived test counts, validator and Make exits, superseded-artifact provenance, and scientific gates; not experiment evidence. |
-| [Adversarial traceability matrix](../results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final5/ADVERSARIAL_TRACEABILITY.md) and [machine-readable form](../results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final5/adversarial-traceability.json) | Exact exploit, test node, fixture, expected/actual behavior, evidence identity, and disposition for every original issue. |
-| [Tested-to-prior-publication attestation](../results_v5/protocol-v5.0.0/final-audit/completion-audit-20260911-final5/evidence/publication-delta-attestation.json) | Fail-closed classification of every path between tested revision `007542f` and prior publication revision `7ce1e9c`; this historical gap contains no executable or validation-semantic change. |
-| [Independent canonical reproduction](../results_v5/protocol-v5.0.0/final-audit/final-audit-20260911-canonical-repro/report/PROTOCOL_V5_FINAL_REPORT.md) | A separate `make v5-audit` run at the tested code revision with recorded argv, clean-tree state, environment, configuration hashes, exact nonzero reasons, and sealed outputs. |
-| [Historical final report](evaluation/PROTOCOL_V5_FINAL_REPORT.md) | Preserved report for the earlier reviewed snapshot. |
-| [Historical final-audit verification](evaluation/PROTOCOL_V5_FINAL_AUDIT_VERIFICATION.md) | Recorded software/reproduction checks and reviewed output identity for that snapshot. |
-| [Evidence packaging](../results_v5/README.md) | Portable allowlist, immutable outputs, and offline workflow. |
-| [Current input inventory](../benchmarks_v5/protocol-v5-final-audit-inputs-v3.json) | 424 source/dependency hashes, 34 source packages, the explicit claim authority, E3 compatibility package, and content-free isolation diagnostic. |
-| [Current machine-readable audit](../results_v5/protocol-v5.0.0/final-audit/final-audit-20260911-final5/report/audit.json) | Evidence-driven findings and exact nonzero reason taxonomy for the current implementation snapshot. |
-| [Historical input inventory](../benchmarks_v5/protocol-v5-final-audit-inputs-v1.json) and [audit output](../results_v5/protocol-v5.0.0/final-audit/final-audit-20260907-v2/report/audit.json) | Preserved identities and findings for the earlier snapshot. |
-| [Claim registry](../benchmarks_v5/protocol-v5-claim-registry-v1.2.yaml) | Predeclared RQ1–RQ6, hypotheses, metrics, decision predicates, and (v1.2+) an `amendments:` log for post-hoc, clearly non-confirmatory additions such as H5's exploratory P1_CATALOG comparator. |
+| [Evidence packaging](../results_v5/README.md) | Portable allowlist and offline workflow for whatever a run produces. |
 | [Experiment architecture](evaluation/PROTOCOL_V5_ARCHITECTURE.md) | Protocol design and manifest contracts; historical status statements are not current execution results. |
-| [Data isolation](evaluation/PROTOCOL_V5_DATA_ISOLATION.md) | Development/confirmatory split, custody, loader, and freeze boundaries. |
+| [Data isolation](evaluation/PROTOCOL_V5_DATA_ISOLATION.md) | Development/confirmatory split, custody, and loader boundaries enforced by `evaluation_v5/isolation.py`. |
 | [Isolation verification](evaluation/PROTOCOL_V5_ISOLATION_VERIFICATION.md) | Adversarial software checks; no proof of external custody. |
 | [Offline runner](evaluation/PROTOCOL_V5_OFFLINE_RUNNER.md) | E1 raw execution, provenance, and validation interface. |
 | [E5 image functional contract](evaluation/PROTOCOL_V5_IMAGE_FUNCTIONAL.md) | Bounded runtime semantics, cleanup, source-run provenance binding, and legacy evidence classification. |
 | [Component scoring](evaluation/PROTOCOL_V5_COMPONENT_SCORING.md) | Component metric definitions and required gold inputs. |
 | [Statistical analysis](evaluation/PROTOCOL_V5_STATISTICAL_ANALYSIS.md) | Family aggregation, estimands, pairing, and inferential gates. |
-| [Research analysis](evaluation/PROTOCOL_V5_RESEARCH_ANALYSIS.md) | Claim-aware analysis interface; use the final audit for current evidence selection. |
+| [Research analysis](evaluation/PROTOCOL_V5_RESEARCH_ANALYSIS.md) | Claim-aware analysis interface. |
 | [E3 human study](evaluation/PROTOCOL_V5_USER_STUDY.md) | B0-versus-P2 crossover design, participant pairing, privacy, and readiness. |
 | [E3 smoke verification](evaluation/PROTOCOL_V5_USER_STUDY_SMOKE_TEST.md) | Synthetic application checks; no observed participant outcomes. |
 | [E4 resource envelope](evaluation/PROTOCOL_V5_RESOURCE_ENVELOPE.md) | Independent calibration and oracle contracts. |
-| [E4 execution/readiness record](evaluation/PROTOCOL_V5_E4_OBSERVED_EXECUTION_REPORT.md) | Preserved blocked execution record; zero observed hardware trials despite the filename. |
 | [Development benchmark guide](../benchmarks_v5/README.md) and [gold authoring](../benchmarks_v5/GOLD_AUTHORING.md) | Checksum-bound dataset documentation; no sealed confirmatory cases are supplied to tuning. |
 
-The visible `freezes/frozen-configuration.json` in the v5 evidence tree is a
-configuration snapshot, not an authoritative final confirmatory freeze.
 Passing a package validator does not certify pipeline provenance or establish
 its hypothesis. Workload families, rather than repeated calls, are the semantic
 independent unit for offline/resource inference; B0 has no ranking metrics.
@@ -71,7 +57,7 @@ independent unit for offline/resource inference; B0 has no ranking metrics.
 | `recommender/` | P1 rules, P2 structured extraction/hybrid retrieval/constraints, optional P3 reranker, policy validation, preview integration, image catalog, and direct LLM adapters. |
 | `helm/` | B0 values; proposed preview/reprovisioning form; explicit P1/P2/P3 and reference LLM overlays; opt-in dynamic resources and E3 study overlay. |
 | `evaluation_v5/offline/`, `evaluation_v5/robustness/` | E1 recommendation evidence and E2 variant harnesses. |
-| `evaluation_v5/analysis/`, `evaluation_v5/final_audit/` | Derived metrics/statistics and offline validation → analysis → figures → final report. |
+| `evaluation_v5/analysis/` | Derived metrics/statistics and offline validation → analysis → reporting. |
 | `evaluation_v5/user_study/` | E3 assignment, event/privacy validation, paired analysis, and reporting. |
 | `evaluation_v5/resource/` | E4 independent calibration, readiness checks, and resource-efficiency harnesses. |
 | `evaluation_v5/image_storage/` | E5 image functionality and storage evidence/validation. |
@@ -84,7 +70,7 @@ independent unit for offline/resource inference; B0 has no ranking metrics.
 | `tests/`, `recommender/test_*.py` | Software validation; synthetic tests do not count as observed experiments. |
 
 [`scripts/setup.sh`](../scripts/setup.sh) installs the repository dependencies.
-[`Makefile`](../Makefile) defines the offline v5 workflow and focused test targets.
+[`Makefile`](../Makefile) defines the v5 experiment/test targets.
 [`scripts/check.sh`](../scripts/check.sh) adds broad tests, smoke checks, and
 optional Helm/Kubernetes validation. The supported demo installers are
 [`install-baseline.sh`](../scripts/install-baseline.sh),
@@ -100,27 +86,22 @@ those historical protocols, never to newly observed Protocol-v5 confirmation.
 
 | Evidence family | Entry points |
 | --- | --- |
-| P1 implementation freeze | [P1 architecture freeze](P1_ARCHITECTURE_FREEZE.md) |
 | P2 integration and P3 development gate | [P2 evaluation](evaluation/P2_BACKEND_EVALUATION_V1.md), [P3 negative decision](evaluation/P3_INCREMENTAL_EVALUATION_V1.md) |
 | Earlier final-evaluation design | [Final Evaluation Protocol v1](evaluation/FINAL_EVALUATION_PROTOCOL_V1.md) |
 | Protocol-v4 methods and reproduction | [Protocol](evaluation/EVALUATION_V4_PROTOCOL.md), [four-method specification](evaluation/PROTOCOL_V4_FOUR_METHOD_EVALUATION.md), [reproduction](evaluation/PROTOCOL_V4_REPRODUCIBILITY.md), [collection contract](evaluation/EVIDENCE_COLLECTION_V4.md) |
 | Protocol-v4 results | [Combined report](evaluation/PROTOCOL_V4_REVISED_EVALUATION_REPORT.md), [external LLM results](evaluation/PROTOCOL_V4_EXTERNAL_LLM_LIVE_REPORT.md), [Stage C results](evaluation/STAGE_C_CONFIRMATORY_REPORT.md) |
-| Protocol-v4 audits | [Statistical audit](evaluation/METHODOLOGY_STATISTICAL_AUDIT.md), [integrity audit](evaluation/EVIDENCE_INTEGRITY_AUDIT.md), [August 16 audit](evaluation/AUDIT_2026-08-16.md), [threats](evaluation/THREATS_TO_VALIDITY.md) |
+| Protocol-v4 threats to validity | [Threats](evaluation/THREATS_TO_VALIDITY.md) |
 | Local and earlier cluster experiments | [Local protocol](evaluation/EXPERIMENT_PROTOCOL.md), [local results](evaluation/RESULTS.md), [cluster protocol](evaluation/CLUSTER_EXPERIMENT_PROTOCOL.md), [cluster provenance](evaluation/CLUSTER_PROVENANCE.md), [cluster results](evaluation/CLUSTER_RESULTS.md) |
 | Resource-envelope v3 | [Protocol](evaluation/RESOURCE_ENVELOPE_PROTOCOL_V3.md), [implementation audit](evaluation/RESOURCE_ENVELOPE_V3_IMPLEMENTATION_AUDIT.md) |
-| Historical integration and handoffs | [Branch integration](evaluation/BRANCH_INTEGRATION_REPORT.md), [earlier final audit](evaluation/FINAL_AUDIT.md), [handoff log](evaluation/NEXT_AGENT_CONTEXT.md) |
+| Historical integration and handoffs | [Branch integration](evaluation/BRANCH_INTEGRATION_REPORT.md), [handoff log](evaluation/NEXT_AGENT_CONTEXT.md) |
 
 ## Portable Evidence and Preservation
 
-Protocol-v5’s reviewed core preserves 34 original packages and separately
-publishes the sealed `final-audit-20260911-final5`, independent
-`final-audit-20260911-canonical-repro`, and
-`completion-audit-20260911-final5` outputs. The v3 inventory adds
-a content-free isolation diagnostic to the v2 authenticated claim package and
-versioned E3 LF compatibility artifact without rewriting historical evidence. It authenticates
-the bytes present, including invalid historical packages and E5 provenance
-omissions; it does not promote them. Missing private human/cluster/storage evidence
-is not a dependency for the offline audit.
+The final-audit sealed packages and completion-audit outputs previously
+published here belonged to the now-deleted freeze/final-audit system and no
+longer exist. Whatever a Protocol-v5 experiment run produces going forward is
+a plain run manifest under `results_v5/`, without a separate sealed/audit
+package layer.
 
 The Protocol-v4 portable core contains 13 files, including three recommendation
 matrices and the Stage C summary/plan/manifests. Validate it with
