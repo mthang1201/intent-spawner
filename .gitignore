@@ -711,3 +711,20 @@ results_v5/protocol-v5.0.0/final-audit/final-audit-20260907-v2/figures/E3/b0-p2-
 !results_v5/protocol-v5.0.0/final-audit/final-audit-20260907-v2/validation/SHA256SUMS
 !results_v5/protocol-v5.0.0/final-audit/final-audit-20260907-v2/validation/audit.json
 !results_v5/protocol-v5.0.0/final-audit/final-audit-20260907-v2/validation/manifest.json
+
+# Protocol-v5 v5-final-execution-freeze-v2 identity and its fresh E1 evidence
+# (added to benchmarks_v5/protocol-v5-final-audit-inputs-v7.json).
+!results_v5/protocol-v5.0.0/freezes/v5-final-execution-freeze-v2/
+results_v5/protocol-v5.0.0/freezes/v5-final-execution-freeze-v2/*
+!results_v5/protocol-v5.0.0/freezes/v5-final-execution-freeze-v2/SUPERSESSION.md
+!results_v5/protocol-v5.0.0/freezes/v5-final-execution-freeze-v2/freeze-manifest.json
+!results_v5/protocol-v5.0.0/freezes/frozen-configuration-v2.json
+!results_v5/protocol-v5.0.0/E1/20260921T-observed-p1-p2-development-v2/
+results_v5/protocol-v5.0.0/E1/20260921T-observed-p1-p2-development-v2/*
+!results_v5/protocol-v5.0.0/E1/20260921T-observed-p1-p2-development-v2/raw/
+results_v5/protocol-v5.0.0/E1/20260921T-observed-p1-p2-development-v2/raw/*
+!results_v5/protocol-v5.0.0/E1/20260921T-observed-p1-p2-development-v2/report/
+results_v5/protocol-v5.0.0/E1/20260921T-observed-p1-p2-development-v2/report/*
+!results_v5/protocol-v5.0.0/E1/20260921T-observed-p1-p2-development-v2/raw/offline-run-provenance.json
+!results_v5/protocol-v5.0.0/E1/20260921T-observed-p1-p2-development-v2/raw/recommendations.jsonl
+!results_v5/protocol-v5.0.0/E1/20260921T-observed-p1-p2-development-v2/report/offline-run-completion.json

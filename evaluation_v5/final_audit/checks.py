@@ -39,6 +39,16 @@ CHECKS = {
     17: "Missing experiments and placeholder values",
 }
 
+# Inventory schemas that carry the candidate inventory and disposition schema
+# that build_dispositions() needs. v1.4.0 and v1.5.0 are supersets of v1.3.0 in
+# these fields and were previously omitted here, which silently dropped
+# evidence_dispositions from the audit when the inventory was bumped.
+DISPOSITION_CAPABLE_INVENTORIES = frozenset({
+    "protocol-v5-final-audit-inputs-v1.3.0",
+    "protocol-v5-final-audit-inputs-v1.4.0",
+    "protocol-v5-final-audit-inputs-v1.5.0",
+})
+
 ISOLATION_CLASSIFICATIONS = {
     "REMAINING_IMPLEMENTATION_DEFECT",
     "IMMUTABLE_HISTORICAL_COMPATIBILITY_BOUNDARY",
@@ -430,7 +440,7 @@ def inspect(inputs: Inputs, *, isolation: bool = True, historical: bool = True) 
     packages = [validate_package(inputs, p) for p in inputs.lock["packages"]]
     dispositions = (
         build_dispositions(inputs)
-        if inputs.lock.get("schema_version") == "protocol-v5-final-audit-inputs-v1.3.0"
+        if inputs.lock.get("schema_version") in DISPOSITION_CAPABLE_INVENTORIES
         else None
     )
     isolation_diagnostic = load_isolation_diagnostic(inputs)
