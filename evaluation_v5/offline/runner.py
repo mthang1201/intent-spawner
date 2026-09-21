@@ -429,7 +429,7 @@ def _freeze_identity(split: LoadedSplit) -> dict[str, Any]:
         "freeze_id": None,
         "frozen_at_utc": split.manifest.freeze_metadata.frozen_at_utc,
         "frozen_by": split.manifest.freeze_metadata.frozen_by,
-        "source": "split_manifest",
+        "source": "development_split_manifest",
     }
 
 
