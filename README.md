@@ -28,7 +28,7 @@ seven confirmatory hypothesis decisions (H1–H6, H8, plus H7F) are **NOT_EXECUT
 
 | Evidence stream | Available evidence |
 | --- | --- |
-| E1 recommendation quality | 36 development records: P1/P2 on 18 cases across 10 families. Complete component/statistical analysis is **NOT EXECUTED**. |
+| E1 recommendation quality | 36 development records: P1/P2 on 18 cases across 10 families. Complete component/statistical analysis is **NOT EXECUTED**. The archived run describes the **retired** pre-fix P2; a second development run exists under the current P2 identity (see comparator identity below). |
 | E2 natural-language robustness | Formal robustness analysis is **NOT EXECUTED**. |
 | E3 human outcomes | **NOT EXECUTED**; zero participant sessions. |
 | E4 resource efficiency | **NOT EXECUTED**; planning/readiness evidence only. |
@@ -40,6 +40,27 @@ The audit preserves checksum/provenance defects and unavailable analyses.
 Passing software tests or container probes does not establish user satisfaction,
 resource savings, storage reuse, or confirmatory recommendation quality.
 Protocol-v4 results remain [historical/formative evidence](docs/evaluation/PROTOCOL_V4_REVISED_EVALUATION_REPORT.md).
+
+### Comparator identity
+
+P2's deterministic constraint/ranking stage was corrected after the evidence
+above was collected, so the frozen comparator identity moved:
+
+| Freeze | Status | P2 ranker |
+| --- | --- | --- |
+| `v5-final-execution-freeze` | retired; governs every archived package above | `p2-deterministic-ranker-v1.0.0` |
+| `v5-final-execution-freeze-v2` | retired | `p2-deterministic-ranker-v2.0.0` |
+| [`v5-final-execution-freeze-v3`](results_v5/protocol-v5.0.0/freezes/v5-final-execution-freeze-v3/SUPERSESSION.md) | **current** | `p2-deterministic-ranker-v2.0.0` |
+
+All three are immutable; none is withdrawn. **Archived E1/E4/E5 evidence and the
+analyses derived from it describe the retired pre-fix P2 and must not be cited
+as describing current P2 behaviour.** P1 is byte-identical across all three and
+remains a frozen comparator. Evidence collected so far under the corrected P2 is
+development-split and formative only, and is listed in the
+[v3 supersession note](results_v5/protocol-v5.0.0/freezes/v5-final-execution-freeze-v3/SUPERSESSION.md).
+On the Protocol-v4 formative dataset the correction is a **trade-off, not a
+uniform improvement**: top-1 ranking quality falls while deeper recall and
+constraint compliance improve.
 
 ## Quickstart and reproduction
 

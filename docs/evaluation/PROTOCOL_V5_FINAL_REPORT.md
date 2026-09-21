@@ -4,15 +4,40 @@
 
 This report is rendered from the checksum-bound input inventory and the explicitly selected evaluated-claim package. It does not rerun claim evaluation or infer a result from a filename, timestamp, or missing value.
 
-Input inventory: [benchmarks_v5/protocol-v5-final-audit-inputs-v5.json](../../benchmarks_v5/protocol-v5-final-audit-inputs-v5.json); SHA-256 `aae1d083cdd7add03fd317200612bcf4a46ca3789c29642640f39071b7ad320c`
+Input inventory: [benchmarks_v5/protocol-v5-final-audit-inputs-v8.json](../../benchmarks_v5/protocol-v5-final-audit-inputs-v8.json); SHA-256 `93a496d0ffc75b813b7ed7c05a3d45c1095603c398a8e8882b9a24c32a08135c`
 
-Archived audit outputs: [all findings](../../results_v5/protocol-v5.0.0/final-audit/final-audit-20260916T091417Z-postmerge-v1/report/audit.json), [run provenance](../../results_v5/protocol-v5.0.0/final-audit/final-audit-20260916T091417Z-postmerge-v1/run.json), [regeneration comparisons](../../results_v5/protocol-v5.0.0/final-audit/final-audit-20260916T091417Z-postmerge-v1/analysis/regeneration.json).
+Archived audit outputs: [all findings](../../results_v5/protocol-v5.0.0/final-audit/final-audit-20260921T-freeze-v3-r3/report/audit.json), [run provenance](../../results_v5/protocol-v5.0.0/final-audit/final-audit-20260921T-freeze-v3-r3/run.json), [regeneration comparisons](../../results_v5/protocol-v5.0.0/final-audit/final-audit-20260921T-freeze-v3-r3/analysis/regeneration.json).
 
-The reviewed inventory was captured at `2026-09-16T09:11:11Z` from source revision `06bdaf87ee7184ba83de6d46b89bead284080347`. Historical bytes remain unchanged; current audit runtime provenance is recorded separately in run.json and the sealed stage manifests.
+The reviewed inventory was captured at `2026-09-21T00:00:00Z` from source revision `06bdaf87ee7184ba83de6d46b89bead284080347`. Historical bytes remain unchanged; current audit runtime provenance is recorded separately in run.json and the sealed stage manifests.
 
 Authenticated claim-analysis package: [results_v5/protocol-v5.0.0/analysis/research-analysis-20260905T-final/manifest.json](../../results_v5/protocol-v5.0.0/analysis/research-analysis-20260905T-final/manifest.json); SHA-256 `b614f527da9d12c8f9d06a102eb933d17d42b64b7c72749083c15deacb681669`
 Evidence selection: [results_v5/protocol-v5.0.0/analysis/research-analysis-20260905T-final/derived/evidence-selection.json](../../results_v5/protocol-v5.0.0/analysis/research-analysis-20260905T-final/derived/evidence-selection.json); SHA-256 `dc36cd5fadd936a81641d4eabd251b27fdb722281ffed0a85103ee6227641d12`
 Evaluated registry: [results_v5/protocol-v5.0.0/analysis/research-analysis-20260905T-final/derived/evaluated-claim-registry.json](../../results_v5/protocol-v5.0.0/analysis/research-analysis-20260905T-final/derived/evaluated-claim-registry.json); SHA-256 `d98c4453da7583a9c6c695ec13cfac940b249a318023c72bf2e8c244adee6cad`
+
+## Comparator identity and superseded evidence
+
+The recommender implementation has been re-frozen since the evidence in this report was collected, so comparator identity and evidence identity are not the same thing here.
+
+Authoritative freeze (governs every package below): [results_v5/protocol-v5.0.0/freezes/v5-final-execution-freeze/freeze-manifest.json](../../results_v5/protocol-v5.0.0/freezes/v5-final-execution-freeze/freeze-manifest.json); SHA-256 `6228673d9459ab2f447c342adb17e0f3f60867c55a74ff98dac2291a01811b8b`
+
+Current freeze (governs current and future P2 execution): [results_v5/protocol-v5.0.0/freezes/v5-final-execution-freeze-v3/freeze-manifest.json](../../results_v5/protocol-v5.0.0/freezes/v5-final-execution-freeze-v3/freeze-manifest.json); SHA-256 `f87a9a5fd22df2fed5ad09f5ee5fdfc77b2975c7e8c1d3719697e0d183705ef4`
+
+Freeze chain, oldest first. Each link is immutable and none is withdrawn:
+
+| # | Freeze ID | Status | Manifest SHA-256 |
+| --- | --- | --- | --- |
+| 1 | v5-final-execution-freeze | retired | 6228673d9459ab2f447c342adb17e0f3f60867c55a74ff98dac2291a01811b8b |
+| 2 | v5-final-execution-freeze-v2 | retired | 86377d02a68e9e5dc4f3747ae07575abcd19dc4c6789be56a6643d9872397827 |
+| 3 | v5-final-execution-freeze-v3 | current | f87a9a5fd22df2fed5ad09f5ee5fdfc77b2975c7e8c1d3719697e0d183705ef4 |
+
+
+Supersession rationale, including what changed between links and where evidence collected under the current identity lives: [results_v5/protocol-v5.0.0/freezes/v5-final-execution-freeze-v3/SUPERSESSION.md](../../results_v5/protocol-v5.0.0/freezes/v5-final-execution-freeze-v3/SUPERSESSION.md); SHA-256 `4a6f91fe74424bae15b6f459bf8b8e14c4732894d177cce65f9b73ba2683f878`
+
+**Every package listed elsewhere in this report was collected under the authoritative freeze and describes that retired implementation.** It remains valid evidence about the identity it was collected under, and it is not evidence about the current implementation. Re-collection under the current freeze is required before any of it can speak to current behaviour.
+
+The current freeze does not govern any package in this inventory's `packages` list; every one of those was collected under the freeze named by `authoritative_freeze` and describes that retired identity.
+
+The authoritative selection was deliberately left unchanged. `authoritative_freeze` must equal the candidate inventory's authoritative_freeze.manifest_path (see evaluation_v5/final_audit/disposition.py::build_dispositions). Promoting a newer identity here without rebuilding benchmarks_v5/protocol-v5-final-evidence-candidates-v1.json would raise AUTHORITATIVE_EXECUTION_SHA_MISMATCH on the E5 candidates, and rebuilding that inventory against it would make E5_STORAGE_RERUN INCOMPATIBLE_GLOBAL_EXECUTION_SHA -> REJECTED_INTEGRITY and flip claim H7 off SUPPORTED. That is a scientific re-disposition of E4/E5 evidence, not an inventory refresh, and is deliberately left undone here.
 
 ## Research questions and hypotheses
 
@@ -31,7 +56,7 @@ Evaluated registry: [results_v5/protocol-v5.0.0/analysis/research-analysis-20260
 | H2 | RQ2 | P2 loses less JointAccept@1 under reviewed-equivalent surface-form changes than P1. | NOT_EXECUTED | N/A | CLAIMS_NOT_PERMITTED; EVIDENCE_NOT_OBSERVED_COMPLETE; NON_CONFIRMATORY_EVIDENCE; NO_ELIGIBLE_CONFIRMATORY_EVIDENCE; REQUIRED_METRIC_OR_TEST_UNAVAILABLE |
 | H3 | RQ3 | Users achieve acceptable selections more often and faster with P2 than B0. | NOT_EXECUTED | N/A | NO_ELIGIBLE_CONFIRMATORY_EVIDENCE; REQUIRED_METRIC_OR_TEST_UNAVAILABLE |
 | H4 | RQ3 | Users report greater task ease and usability with P2 than B0. | NOT_EXECUTED | N/A | NO_ELIGIBLE_CONFIRMATORY_EVIDENCE; REQUIRED_METRIC_OR_TEST_UNAVAILABLE |
-| H5 | RQ4 | P2 Catalog reduces requested-resource cost per successful workload while preserving reliability relative to Static Large.[^h5-p1-amendment] | NOT_EXECUTED | N/A | CLAIMS_NOT_PERMITTED; DERIVED_ANALYSIS_PACKAGE_REQUIRED; EVIDENCE_NOT_OBSERVED_COMPLETE; EVIDENCE_VALIDATION_FAILED; NON_CONFIRMATORY_EVIDENCE; NO_ELIGIBLE_CONFIRMATORY_EVIDENCE; REQUIRED_METRIC_OR_TEST_UNAVAILABLE |
+| H5 | RQ4 | P2 Catalog reduces requested-resource cost per successful workload while preserving reliability relative to Static Large. | NOT_EXECUTED | N/A | CLAIMS_NOT_PERMITTED; DERIVED_ANALYSIS_PACKAGE_REQUIRED; EVIDENCE_NOT_OBSERVED_COMPLETE; EVIDENCE_VALIDATION_FAILED; NON_CONFIRMATORY_EVIDENCE; NO_ELIGIBLE_CONFIRMATORY_EVIDENCE; REQUIRED_METRIC_OR_TEST_UNAVAILABLE |
 | H6 | RQ4 | P2 Dynamic has lower CPU-request and memory-request absolute oracle error than P2 Catalog. | NOT_EXECUTED | N/A | CLAIMS_NOT_PERMITTED; DERIVED_ANALYSIS_PACKAGE_REQUIRED; EVIDENCE_NOT_OBSERVED_COMPLETE; EVIDENCE_VALIDATION_FAILED; NON_CONFIRMATORY_EVIDENCE; NO_ELIGIBLE_CONFIRMATORY_EVIDENCE; REQUIRED_METRIC_OR_TEST_UNAVAILABLE |
 | H7F | RQ5 | P2 recommended images satisfy every required functional capability probe at immutable digests. | NOT_EXECUTED | N/A | CLAIMS_NOT_PERMITTED; EVIDENCE_NOT_OBSERVED_COMPLETE; EVIDENCE_VALIDATION_FAILED; LEGACY_E5_SCHEMA; NON_CONFIRMATORY_EVIDENCE; NO_ELIGIBLE_CONFIRMATORY_EVIDENCE; REQUIRED_METRIC_OR_TEST_UNAVAILABLE |
 | H7 | RQ5 | Shared image layers require less cumulative storage than a naive logical sum as the frozen catalog grows. | SUPPORTED | {"all_prefixes_nonexpanding":true,"catalog_prefix_count":4,"expansion_growth_difference":-3181589642,"expansion_naive_bytes":11494906506,"final_savings_bytes":3181589930,"prefix_order_valid":true,"strictly_slower_catalog_expansion":true} | — |
@@ -116,7 +141,7 @@ These development observations are descriptive only. Their presence cannot chang
 
 **H4 — NOT_EXECUTED**. Validated metrics: `N/A`. Confidence intervals: `N/A`. Counts: `N/A`. Effect sizes: `N/A`. Reason codes: `NO_ELIGIBLE_CONFIRMATORY_EVIDENCE; REQUIRED_METRIC_OR_TEST_UNAVAILABLE`. [results_v5/protocol-v5.0.0/analysis/research-analysis-20260905T-final/derived/evaluated-claim-registry.json](../../results_v5/protocol-v5.0.0/analysis/research-analysis-20260905T-final/derived/evaluated-claim-registry.json) `/claims/3`; SHA-256 `d98c4453da7583a9c6c695ec13cfac940b249a318023c72bf2e8c244adee6cad`
 
-**H5 — NOT_EXECUTED**. Validated metrics: `N/A`. Confidence intervals: `N/A`. Counts: `N/A`. Effect sizes: `N/A`. Reason codes: `CLAIMS_NOT_PERMITTED; DERIVED_ANALYSIS_PACKAGE_REQUIRED; EVIDENCE_NOT_OBSERVED_COMPLETE; EVIDENCE_VALIDATION_FAILED; NON_CONFIRMATORY_EVIDENCE; NO_ELIGIBLE_CONFIRMATORY_EVIDENCE; REQUIRED_METRIC_OR_TEST_UNAVAILABLE`. [results_v5/protocol-v5.0.0/analysis/research-analysis-20260905T-final/derived/evaluated-claim-registry.json](../../results_v5/protocol-v5.0.0/analysis/research-analysis-20260905T-final/derived/evaluated-claim-registry.json) `/claims/4`; SHA-256 `d98c4453da7583a9c6c695ec13cfac940b249a318023c72bf2e8c244adee6cad`. This NOT_EXECUTED verdict is against the original, predeclared Static-Large comparator only; it is unchanged by the v1.2 amendment below.[^h5-p1-amendment]
+**H5 — NOT_EXECUTED**. Validated metrics: `N/A`. Confidence intervals: `N/A`. Counts: `N/A`. Effect sizes: `N/A`. Reason codes: `CLAIMS_NOT_PERMITTED; DERIVED_ANALYSIS_PACKAGE_REQUIRED; EVIDENCE_NOT_OBSERVED_COMPLETE; EVIDENCE_VALIDATION_FAILED; NON_CONFIRMATORY_EVIDENCE; NO_ELIGIBLE_CONFIRMATORY_EVIDENCE; REQUIRED_METRIC_OR_TEST_UNAVAILABLE`. [results_v5/protocol-v5.0.0/analysis/research-analysis-20260905T-final/derived/evaluated-claim-registry.json](../../results_v5/protocol-v5.0.0/analysis/research-analysis-20260905T-final/derived/evaluated-claim-registry.json) `/claims/4`; SHA-256 `d98c4453da7583a9c6c695ec13cfac940b249a318023c72bf2e8c244adee6cad`
 
 **H6 — NOT_EXECUTED**. Validated metrics: `N/A`. Confidence intervals: `N/A`. Counts: `N/A`. Effect sizes: `N/A`. Reason codes: `CLAIMS_NOT_PERMITTED; DERIVED_ANALYSIS_PACKAGE_REQUIRED; EVIDENCE_NOT_OBSERVED_COMPLETE; EVIDENCE_VALIDATION_FAILED; NON_CONFIRMATORY_EVIDENCE; NO_ELIGIBLE_CONFIRMATORY_EVIDENCE; REQUIRED_METRIC_OR_TEST_UNAVAILABLE`. [results_v5/protocol-v5.0.0/analysis/research-analysis-20260905T-final/derived/evaluated-claim-registry.json](../../results_v5/protocol-v5.0.0/analysis/research-analysis-20260905T-final/derived/evaluated-claim-registry.json) `/claims/5`; SHA-256 `d98c4453da7583a9c6c695ec13cfac940b249a318023c72bf2e8c244adee6cad`
 
@@ -293,5 +318,3 @@ Read-only historical validation and focused tests:
 .venv/bin/python -m evaluation_v5.isolation_audit
 .venv/bin/python -m pytest -q tests/test_protocol_v5_final_audit.py
 ```
-
-[^h5-p1-amendment]: **v1.2 predeclaration amendment (2026-09-21).** H5's original comparator (Static Large) never compared P2 Catalog against P1 — the thesis's actual frozen rule-based baseline recommender (see `AGENTS.md`). `benchmarks_v5/protocol-v5-claim-registry-v1.2.yaml` adds P2 Catalog vs P1 Catalog CPU/memory-cost-per-success metrics to H5, but strictly as **descriptive/exploratory** additions (`confirmatory: false`), not as confirmatory support conditions. Because trial data containing the `P1_CATALOG` condition already existed at the time of this amendment, this addition is inherently post-hoc with respect to the data and must not be read as if it were part of the original predeclaration; it does not change H5's STATIC_LARGE-based confirmatory verdict above. The amendment also records that H6 was reviewed for the same gap and found not to need one, since H6 never used STATIC_LARGE/P1_CATALOG as a comparator. See the `amendments:` log in the v1.2 registry file for the full rationale.

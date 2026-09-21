@@ -111,6 +111,62 @@ def criterion_audit_rows(analysis: dict) -> list[list]:
     ] for row in analysis.get("criteria", [])]
 
 
+def _comparator_identity_section(inputs: Inputs, source) -> list[str]:
+    """Render the freeze chain when the inventory records a superseding freeze.
+
+    Derived entirely from checksum-bound inventory fields. No metric is
+    recomputed here: evidence collected under the current identity is named and
+    bounded, and any accuracy number for it belongs in a derived analysis
+    package, not in this report.
+    """
+
+    superseding = inputs.lock.get("superseding_freeze")
+    if not isinstance(superseding, dict):
+        return []
+    lines = ["## Comparator identity and superseded evidence", ""]
+    lines += [
+        "The recommender implementation has been re-frozen since the evidence in "
+        "this report was collected, so comparator identity and evidence identity "
+        "are not the same thing here.", "",
+        f"Authoritative freeze (governs every package below): "
+        + source(inputs.ref(inputs.lock["authoritative_freeze"])), "",
+        f"Current freeze (governs {superseding.get('governs', 'current and future execution')}): "
+        + source(inputs.ref(superseding["manifest_path"])), "",
+    ]
+    chain = superseding.get("chain")
+    if isinstance(chain, list) and chain:
+        lines += ["Freeze chain, oldest first. Each link is immutable and none is withdrawn:", ""]
+        lines += [table(
+            [[index + 1, Path(entry).parent.name,
+              "current" if entry == superseding["manifest_path"] else "retired",
+              inputs.files.get(entry, "—")]
+             for index, entry in enumerate(chain)],
+            ["#", "Freeze ID", "Status", "Manifest SHA-256"])]
+        lines.append("")
+    if superseding.get("supersession_note"):
+        lines += [
+            "Supersession rationale, including what changed between links and "
+            "where evidence collected under the current identity lives: "
+            + source(inputs.ref(superseding["supersession_note"])), "",
+        ]
+    lines += [
+        "**Every package listed elsewhere in this report was collected under the "
+        "authoritative freeze and describes that retired implementation.** It "
+        "remains valid evidence about the identity it was collected under, and it "
+        "is not evidence about the current implementation. Re-collection under "
+        "the current freeze is required before any of it can speak to current "
+        "behaviour.", "",
+    ]
+    if superseding.get("does_not_govern"):
+        lines += ["The current freeze does not govern " + superseding["does_not_govern"] + ".", ""]
+    if superseding.get("promotion_blocked_because"):
+        lines += [
+            "The authoritative selection was deliberately left unchanged. "
+            + superseding["promotion_blocked_because"], "",
+        ]
+    return lines
+
+
 def render_report(inputs: Inputs, audit: dict, analysis: dict, figures: dict, target: Path) -> str:
     def source(ref):
         relative = ref["path"]
@@ -139,6 +195,7 @@ def render_report(inputs: Inputs, audit: dict, analysis: dict, figures: dict, ta
                   "Evaluated registry: " + source(claim_sources["evaluated_claims"]), ""]
     else:
         lines += ["Claim evidence status: **UNSUPPORTED**. " + _compact(claim_sources.get("error")), ""]
+    lines += _comparator_identity_section(inputs, source)
     lines += ["## Research questions and hypotheses", ""]
     if audit.get("audit_output_relative_path"):
         base = inputs.root / audit["audit_output_relative_path"]

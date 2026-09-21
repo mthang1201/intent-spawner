@@ -1,25 +1,37 @@
-"""Focused tests for the `v5-final-execution-freeze-v2` identity and its E1 evidence.
+"""Focused tests for the `v5-final-execution-freeze` chain and its evidence.
 
 Commit 842109c ("Core algorithm fix") corrected a P2 deterministic
-constraint/ranking defect. These tests pin the resulting frozen identity so
-that a later drift is reported rather than absorbed:
+constraint/ranking defect, which moved the frozen comparator identity:
 
-1. the predecessor freeze is still present, unmodified and truthful about the
-   retired pre-fix algorithm;
-2. the v2 freeze records the corrected P2 identity and leaves P1 untouched;
-3. `evaluation_p3.runner.verify_frozen_inputs()` agrees with the v2 identity;
-4. the fresh E1 development run is bound to v2, is complete, and is separate
-   from the original pre-fix run, which stays byte-for-byte intact;
+    v5-final-execution-freeze      retired  (pre-fix P2)
+      -> v5-final-execution-freeze-v2   retired  (fixed P2, stale E4 harness)
+           -> v5-final-execution-freeze-v3   current
+
+These tests pin that chain and its consequences so a later drift is reported
+rather than absorbed:
+
+1. every link is preserved, frozen and truthful about the algorithm it
+   describes; the predecessor is never rewritten;
+2. v3 keeps v2's P2 identity and moves only the E4 experiment contract, and
+   its manifest satisfies verify_production_freeze's git-custody chain;
+3. `evaluation_p3.runner.verify_frozen_inputs()` agrees with the current
+   identity, and P1 is byte-identical across all three links;
+4. the fresh E1 development run is bound to the fixed P2, is complete, and is
+   separate from the original pre-fix run, which stays byte-for-byte intact;
 5. the recomputed development-split numbers are exactly what the raw evidence
    supports - and in particular that P2 still trails P1 on this split;
 6. the paired P2/P3 harness is anchored to a P2 reference collected under the
-   v2 identity, with the pre-fix reference preserved;
+   fixed identity, with the pre-fix reference preserved, and the fix's mixed
+   outcome on the Protocol-v4 dataset is recorded rather than smoothed over;
 7. the E4 efficiency design-generation registry keeps pre-3f896eb packages
-   validating without letting them count as current-design evidence.
+   validating without letting them count as current-design evidence;
+8. the published report and README disclose the comparator identity instead of
+   leaving the retirement caveat to a hand edit.
 """
 from __future__ import annotations
 
 import collections
+import copy
 import json
 from pathlib import Path
 
@@ -353,6 +365,35 @@ def test_new_evidence_is_registered_in_the_reviewed_inventory():
 
     # The fresh development-split run is not promoted into the package set.
     assert not any("20260921T" in package for package in inventory["packages"])
+
+
+def test_published_report_and_readme_disclose_the_comparator_identity():
+    """The retirement caveat must be rendered, not left to a hand edit."""
+    report = (ROOT / "docs/evaluation/PROTOCOL_V5_FINAL_REPORT.md").read_text(encoding="utf-8")
+    assert "## Comparator identity and superseded evidence" in report
+    assert "benchmarks_v5/protocol-v5-final-audit-inputs-v8.json" in report
+    for directory in FREEZE_CHAIN:
+        assert directory.name in report
+    assert "describes that retired implementation" in report
+    assert "flip claim H7 off SUPPORTED" in report
+
+    readme = (ROOT / "README.md").read_text(encoding="utf-8")
+    assert "### Comparator identity" in readme
+    assert "p2-deterministic-ranker-v1.0.0" in readme
+    assert "p2-deterministic-ranker-v2.0.0" in readme
+    assert "trade-off, not a\nuniform improvement" in readme
+
+
+def test_report_section_is_omitted_when_no_freeze_supersession_is_recorded():
+    """Older inventories have no superseding_freeze; the section must not appear."""
+    from evaluation_v5.final_audit.common import Inputs
+    from evaluation_v5.final_audit.reporting import _comparator_identity_section
+
+    inputs = Inputs()
+    assert _comparator_identity_section(inputs, lambda ref: "")
+    stripped = copy.copy(inputs)
+    stripped.lock = {k: v for k, v in inputs.lock.items() if k != "superseding_freeze"}
+    assert _comparator_identity_section(stripped, lambda ref: "") == []
 
 
 # ---------------------------------------------------------------------------
