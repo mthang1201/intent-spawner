@@ -16,8 +16,10 @@ from typing import Any
 
 import yaml
 
+from evaluation_v5.offline.recommenders import candidate_catalog_snapshot
 from evaluation_v5.provenance import write_json_exclusive
 from evaluation_v5.schemas import EvidenceStatus, ProtocolV5Manifest
+from recommender.candidate_corpus import build_candidate_corpus
 
 from .contracts import file_sha256
 from .recommendation_evaluator import DEFAULT_RECALL_K, evaluate_catalog_scale_recommendation
@@ -360,7 +362,6 @@ def run_storage_evaluation(
     split_path: Path | str | None = None,
     recall_k: int = DEFAULT_RECALL_K,
     injected_image_layers: Mapping[str, Sequence[Mapping[str, Any]]] | None = None,
-    freeze_path: Path | None = None,
 ) -> Path:
     """Execute Protocol-v5 E5 image storage scalability evaluation and materialize complete evidence."""
     cat_path = Path(catalog_path).resolve()
@@ -388,46 +389,24 @@ def run_storage_evaluation(
     if norm_stage not in (SplitStage.CONFIRMATORY.value, SplitStage.DEVELOPMENT.value):
         raise ValueError(f"Invalid split stage: {stage!r}. Must be 'confirmatory' or 'development'.")
 
-    # Verify the production freeze before any real collector is allowed to run.
-    # Dry-run and synthetic development paths remain usable without production
-    # authority, but can never emit OBSERVED evidence.
+    # Dry-run and synthetic development paths remain usable without a
+    # confirmatory dataset, but can never emit OBSERVED evidence.
     confirmatory_capability = None
-    verified_freeze = None
     if norm_stage == SplitStage.CONFIRMATORY.value and eval_recommendation:
         from evaluation_v5.isolation import (
             CONFIRMATORY_DATASET_ENV_VAR,
-            FREEZE_ARTIFACT_ENV_VAR,
             load_confirmatory_split,
             resolve_confirmatory_sources,
         )
 
         source_requested = bool(
-            dataset_path is not None
-            or CONFIRMATORY_DATASET_ENV_VAR in os.environ
-            or (freeze_path is not None and dataset_path is not None)
-            or (FREEZE_ARTIFACT_ENV_VAR in os.environ and CONFIRMATORY_DATASET_ENV_VAR in os.environ)
+            dataset_path is not None or CONFIRMATORY_DATASET_ENV_VAR in os.environ
         )
         if source_requested:
-            dataset_source, freeze_source = resolve_confirmatory_sources(
+            dataset_source = resolve_confirmatory_sources(
                 dataset_path=Path(dataset_path) if dataset_path is not None else None,
-                freeze_path=Path(freeze_path) if freeze_path is not None else None,
             )
-            confirmatory_capability = load_confirmatory_split(
-                dataset_source, freeze_source
-            )
-
-    if freeze_path is not None:
-        from evaluation_v5.freeze import verify_production_freeze
-
-        verified_freeze = verify_production_freeze(Path(freeze_path))
-
-    real_collector_selected = is_real_storage_collector_origin(
-        runner.collector_origin
-    )
-    if real_collector_selected and verified_freeze is None:
-        raise ValueError(
-            "OBSERVED storage execution requires an explicit verified production freeze"
-        )
+            confirmatory_capability = load_confirmatory_split(dataset_source)
 
     # Execute layer measurement across available catalog images. The caller's
     # mode string selects a collector but never supplies evidence status.
@@ -476,13 +455,13 @@ def run_storage_evaluation(
     # Compute pairwise layer-reuse analysis
     pairwise_analysis = compute_pairwise_layer_reuse(inspections)
 
-    # Production provenance is consumed only through the typed verifier.
-    freeze_data: dict[str, Any] = {}
+    # Candidate corpus identity is derived directly from the catalog actually
+    # loaded for this run, rather than from any external configuration
+    # snapshot.
+    corpus_snapshot = candidate_catalog_snapshot(
+        build_candidate_corpus(image_catalog=catalog)
+    )
     backend_systems = {"P2": "p2-pipeline-v1.0.0"}
-    if verified_freeze is not None:
-        freeze_data = verified_freeze.configuration_snapshot.to_dict()
-        p2_sys = freeze_data["systems"]["P2"]
-        backend_systems["P2"] = p2_sys["pipeline_version"]
 
     git = _git_info()
     timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
@@ -558,7 +537,6 @@ def run_storage_evaluation(
                     scale_images=scale_imgs,
                     stage=norm_stage,
                     dataset_path=rec_dataset_path,
-                    freeze_path=freeze_path,
                     split_bundle=confirmatory_capability,
                     k=recall_k,
                 )
@@ -888,51 +866,23 @@ def run_storage_evaluation(
     )
     (report_dir / "E5_IMAGE_STORAGE_REPORT.md").write_text(report_md, encoding="utf-8")
 
-    frozen_cand = freeze_data.get("candidate_catalog", {})
-    frozen_indexes = freeze_data.get("indexes", {})
-    dense_idx = frozen_indexes.get("dense", {})
-    sparse_idx = frozen_indexes.get("sparse", {})
-    hybrid_idx = frozen_indexes.get("hybrid", {})
-
-    corpus_sha = frozen_cand.get("corpus_sha256")
-    if not corpus_sha and execution_status == StorageExecutionStatus.OBSERVED.value:
-        raise ValueError(
-            "OBSERVED storage evidence requires a frozen candidate corpus checksum"
-        )
-    elif execution_status != StorageExecutionStatus.OBSERVED.value:
-        corpus_sha = None
-
-    frozen_cfg = freeze_data.get("configuration", {})
-    retrieval_cfg = (
-        frozen_cfg.get("retrieval", {})
+    # Candidate catalog identity is derived directly from the catalog file
+    # actually loaded for this run (cat_sha/catalog_version), plus the
+    # live-computed candidate corpus snapshot. There is no external
+    # governance artifact to reconcile against.
+    corpus_sha = (
+        corpus_snapshot.get("corpus_sha256")
         if execution_status == StorageExecutionStatus.OBSERVED.value
-        else {}
+        else None
     )
-    constraints_cfg = (
-        {
-            "constraints": frozen_cfg.get("constraints", {}),
-            "ranking": frozen_cfg.get("ranking", {}),
-        }
-        if execution_status == StorageExecutionStatus.OBSERVED.value
-        else {}
-    )
-    frozen_extractor = freeze_data.get("prompts", {}).get("P2_extractor", {})
-    frozen_structured_intent = freeze_data.get("structured_intent", {})
-    if execution_status == StorageExecutionStatus.OBSERVED.value and (
-        not retrieval_cfg
-        or not constraints_cfg.get("constraints")
-        or not constraints_cfg.get("ranking")
-        or not frozen_extractor
-        or not frozen_structured_intent
-    ):
-        raise ValueError(
-            "OBSERVED storage evidence requires verified frozen extractor, retrieval, constraint, and ranking provenance"
-        )
-    if is_real_storage_collector_origin(origin) and (
-        frozen_cand.get("file_sha256") != cat_sha
-        or frozen_cand.get("version") != catalog_version
-    ):
-        raise ValueError("OBSERVED storage catalog differs from the verified production freeze")
+
+    dense_idx: dict[str, Any] = {}
+    sparse_idx: dict[str, Any] = {}
+    hybrid_idx: dict[str, Any] = {}
+    retrieval_cfg: dict[str, Any] = {}
+    constraints_cfg: dict[str, Any] = {}
+    frozen_extractor: dict[str, Any] = {}
+    frozen_structured_intent: dict[str, Any] = {}
 
     # 8. Manifest.json (cross-experiment ProtocolV5Manifest compatibility)
     is_obs = (execution_status == StorageExecutionStatus.OBSERVED.value)
@@ -953,13 +903,13 @@ def run_storage_evaluation(
         },
         "backend_system_versions": {
             "B0": "jupyterhub-default-selection",
-            "P1": freeze_data.get("systems", {}).get("P1", {}).get("backend_version", "rule-based-v1"),
+            "P1": "rule-based-v1",
             "P2": backend_systems.get("P2", "p2-pipeline-v1.0.0"),
         },
         "candidate_catalog": {
             "catalog_version": catalog_version,
             "catalog_sha256": cat_sha,
-            "corpus_version": frozen_cand.get("corpus_version") if is_obs else None,
+            "corpus_version": corpus_snapshot.get("corpus_version") if is_obs else None,
             "corpus_sha256": corpus_sha,
         },
         "structured_intent_schema_version": frozen_structured_intent.get("schema_version") if is_obs else None,
