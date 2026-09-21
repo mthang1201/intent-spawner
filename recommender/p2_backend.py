@@ -96,7 +96,7 @@ class P2Config:
     dense_weight: float = 1.0
     total_timeout: float = 30.0
     max_concurrent_recommendations: int = 4
-    config_version: str = "p2-config-v1.0.0"
+    config_version: str = "p2-config-v1.1.0"
 
     def __post_init__(self) -> None:
         if self.extractor_mode not in {"local", "llm"}:

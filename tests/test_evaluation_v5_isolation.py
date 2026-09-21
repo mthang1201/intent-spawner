@@ -1012,8 +1012,14 @@ def test_production_freeze_is_complete_immutable_and_contains_no_sealed_data(
     assert snapshot["systems"]["P3"]["reranker_model_id"] == "frozen-p3-model"
     assert snapshot["configuration"]["P2"]["top_k"] == 10
     assert snapshot["configuration"]["P3"]["total_timeout"] == 30.0
-    assert snapshot["configuration"]["constraints"]["retrieval_rank_weight"] == 0.75
+    assert snapshot["configuration"]["constraints"]["retrieval_rank_weight"] == 0.60
     assert snapshot["configuration"]["constraints"]["soft_preference_weight"] == 0.25
+    assert snapshot["configuration"]["constraints"]["resource_fit_weight"] == 0.15
+    assert snapshot["configuration"]["ranking"]["retrieval_rank_decay"] == 0.10
+    assert (
+        snapshot["configuration"]["ranking"]["tie_breaker"]
+        == "resource_cost,retrieval_rank,candidate_id"
+    )
     assert _is_sha256(snapshot["development_dataset"]["canonical_sha256"])
     assert _is_sha256(snapshot["development_dataset"]["file_sha256"])
     assert "confirmatory" not in encoded

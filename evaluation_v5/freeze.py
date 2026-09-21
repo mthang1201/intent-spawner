@@ -26,6 +26,10 @@ from recommender.constraint_evaluator import (
     CONSTRAINT_EVALUATOR_VERSION,
     CONSTRAINT_POLICY_VERSION,
     DETERMINISTIC_RANKER_VERSION,
+    RESOURCE_COST_POLICY_VERSION,
+    RESOURCE_FIT_WEIGHT,
+    RETRIEVAL_RANK_DECAY,
+    RETRIEVAL_RANK_HORIZON,
     RETRIEVAL_RANK_WEIGHT,
     SOFT_PREFERENCE_WEIGHT,
 )
@@ -1353,15 +1357,21 @@ def build_configuration_snapshot(
             "constraints": {
                 "evaluator_version": CONSTRAINT_EVALUATOR_VERSION,
                 "policy_version": CONSTRAINT_POLICY_VERSION,
+                "resource_cost_policy_version": RESOURCE_COST_POLICY_VERSION,
                 "ranker_version": DETERMINISTIC_RANKER_VERSION,
                 "retrieval_rank_weight": RETRIEVAL_RANK_WEIGHT,
                 "soft_preference_weight": SOFT_PREFERENCE_WEIGHT,
+                "resource_fit_weight": RESOURCE_FIT_WEIGHT,
             },
             "ranking": {
                 "ranker_version": DETERMINISTIC_RANKER_VERSION,
+                "resource_cost_policy_version": RESOURCE_COST_POLICY_VERSION,
                 "retrieval_rank_weight": RETRIEVAL_RANK_WEIGHT,
                 "soft_preference_weight": SOFT_PREFERENCE_WEIGHT,
-                "tie_breaker": "candidate_id",
+                "resource_fit_weight": RESOURCE_FIT_WEIGHT,
+                "retrieval_rank_decay": RETRIEVAL_RANK_DECAY,
+                "retrieval_rank_horizon": RETRIEVAL_RANK_HORIZON,
+                "tie_breaker": "resource_cost,retrieval_rank,candidate_id",
             },
         },
         "dynamic_resource_policy": {

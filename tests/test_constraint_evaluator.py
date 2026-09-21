@@ -276,15 +276,18 @@ def test_multiple_feasible_candidates_use_retrieval_and_soft_preferences(
 
     assert result.no_feasible_candidate is False
     assert len(result.ranked_candidates) == 3
+    # Every candidate shares the medium footprint, so the resource-fit term is
+    # constant and the matched preference alone lifts the retrieval rank-2
+    # candidate above rank 1.
     assert [item.candidate_id for item in result.ranked_candidates] == [
-        "medium-minimal-python",
         "medium-scipy-data-science",
+        "medium-minimal-python",
         "medium-pytorch-deep-learning",
     ]
     scores = {item.candidate_id: item.score for item in result.ranked_candidates}
-    assert scores["medium-minimal-python"] == 0.75
-    assert scores["medium-scipy-data-science"] == 0.625
-    assert scores["medium-pytorch-deep-learning"] == 0.25
+    assert scores["medium-scipy-data-science"] == pytest.approx(0.865)
+    assert scores["medium-minimal-python"] == pytest.approx(0.675)
+    assert scores["medium-pytorch-deep-learning"] == pytest.approx(0.555)
 
 
 def test_deterministic_tie_breaker_and_input_order_invariance(evaluator, corpus):
@@ -300,11 +303,176 @@ def test_deterministic_tie_breaker_and_input_order_invariance(evaluator, corpus)
     )
 
     assert forward.to_json() == reverse.to_json()
-    assert [item.score for item in forward.ranked_candidates] == [0.375, 0.375]
-    assert [item.candidate_id for item in forward.ranked_candidates] == [
-        first_id,
-        second_id,
+    assert [item.score for item in forward.ranked_candidates] == [
+        pytest.approx(0.68),
+        pytest.approx(0.615),
     ]
+    assert [item.candidate_id for item in forward.ranked_candidates] == [
+        second_id,
+        first_id,
+    ]
+
+
+def test_resource_cost_is_normalized_against_the_catalog_maximum(evaluator):
+    costs = {
+        profile: evaluator.resource_cost_score(f"{profile}-minimal-python")
+        for profile in ("small", "medium", "large")
+    }
+
+    # Catalog maxima are 2 CPU cores and 2 GiB, the catalog offers no GPU, so
+    # the cost is the even CPU/memory mean of each candidate's limits.
+    assert costs["small"] == pytest.approx(0.5 * (0.5 / 2.0) + 0.5 * (0.375 / 2.0))
+    assert costs["medium"] == pytest.approx(0.5)
+    assert costs["large"] == pytest.approx(1.0)
+    assert costs["small"] < costs["medium"] < costs["large"]
+    assert evaluator.resource_fit_score("large-minimal-python") == pytest.approx(0.0)
+    assert all(0.0 <= value <= 1.0 for value in costs.values())
+
+
+def test_unknown_candidate_has_no_resource_cost(evaluator):
+    with pytest.raises(ContractValidationError, match="trusted corpus"):
+        evaluator.resource_cost_score("small-quantum-python")
+
+
+def test_smaller_sufficient_profile_outranks_a_larger_sufficient_profile(
+    evaluator, corpus
+):
+    """A Large profile must not tie a Medium one that clears the same floor."""
+
+    candidate_ids = (
+        "large-minimal-python",
+        "medium-minimal-python",
+        "small-minimal-python",
+    )
+    candidates = tuple(_candidate(corpus, item) for item in candidate_ids)
+    # Adverse retrieval order: the largest footprint is retrieved first.
+    hits = tuple(
+        _hit(candidate_id, rank) for rank, candidate_id in enumerate(candidate_ids, 1)
+    )
+
+    result = evaluator.evaluate_and_rank(StructuredIntent(), candidates, hits)
+
+    scores = {item.candidate_id: item.score for item in result.ranked_candidates}
+    assert scores["medium-minimal-python"] == pytest.approx(0.615)
+    assert scores["large-minimal-python"] == pytest.approx(0.60)
+    assert result.ranked_candidates[0].candidate_id == "medium-minimal-python"
+    assert scores["large-minimal-python"] != scores["medium-minimal-python"]
+    assert any(
+        reason == "resource_fit_score:0.5"
+        for reason in result.ranked_candidates[0].ranking_reasons
+    )
+
+
+def test_smallest_sufficient_profile_wins_once_the_floor_excludes_smaller_ones(
+    evaluator, corpus
+):
+    """Hard floors establish sufficiency; the fit term then picks the smallest."""
+
+    intent = StructuredIntent(
+        resource_constraints=ResourceConstraints(minimum_memory_gb=0.75)
+    )
+    candidate_ids = (
+        "large-minimal-python",
+        "medium-minimal-python",
+        "small-minimal-python",
+    )
+    candidates = tuple(_candidate(corpus, item) for item in candidate_ids)
+    hits = tuple(
+        _hit(candidate_id, rank) for rank, candidate_id in enumerate(candidate_ids, 1)
+    )
+
+    result = evaluator.evaluate_and_rank(intent, candidates, hits)
+
+    # Small (0.375 GiB) is filtered out by the floor and never reaches ranking.
+    assert [item.candidate_id for item in result.ranked_candidates] == [
+        "medium-minimal-python",
+        "large-minimal-python",
+    ]
+    infeasible = {
+        item.candidate_id for item in result.evaluations if not item.feasible
+    }
+    assert infeasible == {"small-minimal-python"}
+
+
+def test_small_profile_can_take_top_one_from_an_adjacent_larger_profile(
+    evaluator, corpus
+):
+    candidate_ids = ("large-minimal-python", "small-minimal-python")
+    candidates = tuple(_candidate(corpus, item) for item in candidate_ids)
+    hits = tuple(
+        _hit(candidate_id, rank) for rank, candidate_id in enumerate(candidate_ids, 1)
+    )
+
+    result = evaluator.evaluate_and_rank(StructuredIntent(), candidates, hits)
+
+    assert result.ranked_candidates[0].candidate_id == "small-minimal-python"
+    assert result.ranked_candidates[0].score == pytest.approx(0.6571875)
+    assert result.ranked_candidates[1].score == pytest.approx(0.60)
+
+
+def test_soft_preference_alone_changes_the_top_one_candidate(evaluator, corpus):
+    """The ranker must not be inert for JointAccept@1."""
+
+    preferred_id = "medium-scipy-data-science"
+    retrieved_first_id = "medium-minimal-python"
+    candidates = (
+        _candidate(corpus, retrieved_first_id),
+        _candidate(corpus, preferred_id),
+    )
+    hits = (_hit(retrieved_first_id, 1), _hit(preferred_id, 2))
+
+    without_preference = evaluator.evaluate_and_rank(
+        StructuredIntent(), candidates, hits
+    )
+    with_preference = evaluator.evaluate_and_rank(
+        StructuredIntent(preferred_libraries=("pandas",)), candidates, hits
+    )
+
+    # Identical footprints and identical retrieval ranks in both runs: the only
+    # difference is the soft preference, and it moves the top-1 candidate.
+    assert without_preference.ranked_candidates[0].candidate_id == retrieved_first_id
+    assert with_preference.ranked_candidates[0].candidate_id == preferred_id
+    assert with_preference.evaluations[
+        [item.candidate_id for item in with_preference.evaluations].index(preferred_id)
+    ].soft_preference_score == 1.0
+
+
+def test_retrieval_rank_stays_dominant_beyond_the_documented_override_horizon(
+    evaluator, corpus
+):
+    """Soft preferences and footprint may override rank, but only bounded so."""
+
+    intent = StructuredIntent(preferred_libraries=("pandas",))
+    top_id = "large-minimal-python"
+    distant_id = "small-scipy-data-science"
+    candidates = (_candidate(corpus, top_id), _candidate(corpus, distant_id))
+    hits = (_hit(top_id, 1), _hit(distant_id, 9))
+
+    result = evaluator.evaluate_and_rank(intent, candidates, hits)
+
+    # The distant candidate has the maximum possible soft score and the
+    # smallest footprint, yet 8 retrieval ranks still outweigh it.
+    assert result.ranked_candidates[0].candidate_id == top_id
+    assert result.ranked_candidates[1].candidate_id == distant_id
+    assert all(0.0 <= item.score <= 1.0 for item in result.ranked_candidates)
+
+
+def test_every_ranking_score_stays_within_the_normalized_unit_interval(
+    evaluator, corpus
+):
+    intent = StructuredIntent(preferred_features=("visualization",))
+    candidates = tuple(document.to_environment_candidate() for document in corpus)
+    hits = tuple(
+        _hit(candidate.candidate_id, rank)
+        for rank, candidate in enumerate(candidates, 1)
+    )
+
+    result = evaluator.evaluate_and_rank(intent, candidates, hits)
+
+    assert len(result.ranked_candidates) == 12
+    assert all(0.0 <= item.score <= 1.0 for item in result.ranked_candidates)
+    scores = [item.score for item in result.ranked_candidates]
+    assert scores == sorted(scores, reverse=True)
 
 
 def test_all_configured_profile_image_combinations_are_evaluable(evaluator, corpus):

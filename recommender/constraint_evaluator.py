@@ -35,14 +35,63 @@ from .models import (
 )
 
 
-CONSTRAINT_EVALUATOR_VERSION = "p2-deterministic-constraint-evaluator-v1.0.0"
+CONSTRAINT_EVALUATOR_VERSION = "p2-deterministic-constraint-evaluator-v1.1.0"
 CONSTRAINT_POLICY_VERSION = "p2-constraint-policy-v1.0.0"
-DETERMINISTIC_RANKER_VERSION = "p2-deterministic-ranker-v1.0.0"
+RESOURCE_COST_POLICY_VERSION = "p2-resource-cost-policy-v1.0.0"
+DETERMINISTIC_RANKER_VERSION = "p2-deterministic-ranker-v2.0.0"
 CONSTRAINT_RANKING_RESULT_SCHEMA_VERSION = "constraint-ranking-result-v1"
 
-RETRIEVAL_RANK_WEIGHT = 0.75
+# Ranking score = RETRIEVAL_RANK_WEIGHT * retrieval rank utility
+#               + SOFT_PREFERENCE_WEIGHT * normalized soft preference score
+#               + RESOURCE_FIT_WEIGHT * catalog resource fit score.
+#
+# All three terms are in [0, 1] and the weights sum to 1, so the score is in
+# [0, 1].  Ranker v1 used ``0.75 * (1 / rank) + 0.25 * soft``, whose rank-1
+# floor (0.75) exceeded its rank-2 ceiling (0.625); no non-retrieval evidence
+# could ever change the top-1 candidate.  v2 replaces reciprocal rank with a
+# linear decay so that one retrieval rank costs a *fixed* amount of score, and
+# the override budget of the other two terms is therefore statable in ranks:
+#
+#   one retrieval rank      = RETRIEVAL_RANK_WEIGHT * RETRIEVAL_RANK_DECAY = 0.06
+#   soft preferences alone  = 0.25 / 0.06  -> promotes from rank <= 5 to rank 1
+#   resource fit alone      = 0.15 / 0.06  -> promotes from rank <= 3 to rank 1
+#   both together           = 0.40 / 0.06  -> promotes from rank <= 7 to rank 1
+#
+# Retrieval therefore remains the dominant prior over long distances while
+# deterministic constraint evidence stays decisive inside a documented
+# neighbourhood.
+RETRIEVAL_RANK_WEIGHT = 0.60
 SOFT_PREFERENCE_WEIGHT = 0.25
+RESOURCE_FIT_WEIGHT = 0.15
+
+# Retrieval rank utility decays linearly and reaches zero at the horizon.  P2's
+# configured ``top_k`` is 10, so every retrieved candidate keeps a non-zero
+# retrieval utility; beyond the horizon the ranking degrades gracefully to the
+# explicit tie-break chain rather than inverting.
+RETRIEVAL_RANK_DECAY = 0.10
+RETRIEVAL_RANK_HORIZON = 11
+
+# Relative cost of one fully-consumed catalog maximum per resource dimension.
+# GPUs are weighted higher than CPU/memory because they are the scarcest
+# cluster resource, not because of any measured price.  Dimensions the catalog
+# does not offer at all are dropped and the remaining weights renormalized, so
+# a GPU-free catalog yields an even CPU/memory split.
+RESOURCE_COST_DIMENSION_WEIGHTS = (("cpu", 1.0), ("memory", 1.0), ("gpu", 2.0))
+
+RANKING_FORMULA_CODE = (
+    "ranking_formula:0.6_rank_utility_plus_0.25_soft_plus_0.15_resource_fit"
+)
+RANKING_TIE_BREAKER_CODE = (
+    "tie_break:resource_cost_then_retrieval_rank_then_candidate_id"
+)
+
 _SEPARATOR_PATTERN = re.compile(r"[-_]+")
+
+
+def retrieval_rank_utility(rank: int) -> float:
+    """Linear, strictly decreasing rank prior that is zero past the horizon."""
+
+    return max(0.0, 1.0 - RETRIEVAL_RANK_DECAY * (rank - 1))
 
 
 def _semantic_fact(value: str) -> str:
@@ -75,6 +124,55 @@ def _task_facts(candidate: CandidateDocument) -> frozenset[str]:
 def _constraint_label(kind: str, value: str | float) -> str:
     rendered = f"{value:g}" if isinstance(value, float) else str(value)
     return f"{kind}:{rendered}"
+
+
+def _resource_cost_table(corpus: CandidateCorpus) -> dict[str, float]:
+    """Normalize every candidate's footprint against the catalog maximum.
+
+    The cost is a pure function of the administrator-owned catalog, not of the
+    query or of the surviving candidate set, so a candidate's footprint score
+    is stable across requests and is fully determined by the recorded catalog
+    and corpus checksums.
+    """
+
+    dimensions = {
+        "cpu": {
+            candidate.candidate_id: candidate.resource_metadata.cpu_limit_cores
+            for candidate in corpus.candidates
+        },
+        "memory": {
+            candidate.candidate_id: candidate.resource_metadata.memory_limit_gb
+            for candidate in corpus.candidates
+        },
+        "gpu": {
+            candidate.candidate_id: float(candidate.resource_metadata.gpu_count)
+            for candidate in corpus.candidates
+        },
+    }
+    active = [
+        (name, weight, max(dimensions[name].values(), default=0.0))
+        for name, weight in RESOURCE_COST_DIMENSION_WEIGHTS
+        if max(dimensions[name].values(), default=0.0) > 0.0
+    ]
+    total_weight = sum(weight for _, weight, _ in active)
+    if not active or total_weight <= 0.0:
+        # A catalog that advertises no CPU, memory or GPU at all carries no
+        # discriminating footprint evidence; every candidate costs the same.
+        return {candidate.candidate_id: 0.0 for candidate in corpus.candidates}
+    return {
+        candidate.candidate_id: min(
+            1.0,
+            max(
+                0.0,
+                sum(
+                    weight * (dimensions[name][candidate.candidate_id] / maximum)
+                    for name, weight, maximum in active
+                )
+                / total_weight,
+            ),
+        )
+        for candidate in corpus.candidates
+    }
 
 
 def _component(
@@ -204,12 +302,14 @@ class ConstraintEvaluator:
 
     evaluator_version = CONSTRAINT_EVALUATOR_VERSION
     constraint_policy_version = CONSTRAINT_POLICY_VERSION
+    resource_cost_policy_version = RESOURCE_COST_POLICY_VERSION
     ranker_version = DETERMINISTIC_RANKER_VERSION
 
     def __init__(self, corpus: CandidateCorpus) -> None:
         if not isinstance(corpus, CandidateCorpus):
             raise ContractValidationError("corpus must be a CandidateCorpus")
         self.corpus = corpus
+        self._resource_cost = _resource_cost_table(corpus)
         self._supported_features = frozenset().union(
             *(_feature_facts(candidate) for candidate in corpus.candidates)
         )
@@ -223,6 +323,26 @@ class ConstraintEvaluator:
             candidate.resource_metadata.gpu_count > 0
             for candidate in corpus.candidates
         )
+
+    def resource_cost_score(self, candidate_id: str) -> float:
+        """Catalog-normalized resource footprint of a trusted candidate."""
+
+        try:
+            return self._resource_cost[candidate_id]
+        except KeyError:
+            raise ContractValidationError(
+                f"candidate_id {candidate_id!r} is not in the trusted corpus"
+            ) from None
+
+    def resource_fit_score(self, candidate_id: str) -> float:
+        """Reward for a smaller footprint: ``1 - resource_cost_score``.
+
+        Feasibility already establishes that the candidate clears every hard
+        floor, so among feasible candidates a lower cost means *smaller
+        sufficient*, which is the preference the gold labels encode.
+        """
+
+        return 1.0 - self.resource_cost_score(candidate_id)
 
     def _resolve(self, candidate: EnvironmentCandidate) -> CandidateDocument:
         if not isinstance(candidate, EnvironmentCandidate):
@@ -468,8 +588,16 @@ class ConstraintEvaluator:
     ) -> ConstraintRankingResult:
         """Hard-filter candidates, then rank feasible IDs reproducibly.
 
-        The frozen score is ``0.75 * (1 / fused_rank) + 0.25 * soft_score``.
-        Candidate ID ascending is the final total-order tie breaker.
+        The frozen score is ``0.60 * retrieval_rank_utility(fused_rank)
+        + 0.25 * soft_score + 0.15 * resource_fit_score``.  Hard constraints
+        establish sufficiency; the resource-fit term then makes the *smallest
+        sufficient* candidate the preferred one, and the soft-preference term
+        carries enough weight to change the top-1 candidate (see the weight
+        commentary at the top of this module).
+
+        Exact score ties are broken by ascending resource cost — the explicit
+        minimal-sufficient rule — then by ascending fused retrieval rank, then
+        by ascending candidate ID for a total deterministic order.
         """
 
         if isinstance(candidates, (str, bytes)) or not isinstance(candidates, Sequence):
@@ -508,33 +636,41 @@ class ConstraintEvaluator:
         )
         evaluation_by_id = {item.candidate_id: item for item in evaluations}
         hit_by_id = {item.candidate_id: item for item in hit_items}
-        scored: list[tuple[float, str]] = []
+        scored: list[tuple[float, float, int, str]] = []
         for candidate_id, evaluation in evaluation_by_id.items():
             if not evaluation.feasible:
                 continue
             hit = hit_by_id[candidate_id]
+            cost = self.resource_cost_score(candidate_id)
             score = round(
-                RETRIEVAL_RANK_WEIGHT * (1.0 / hit.rank)
-                + SOFT_PREFERENCE_WEIGHT * evaluation.soft_preference_score,
+                RETRIEVAL_RANK_WEIGHT * retrieval_rank_utility(hit.rank)
+                + SOFT_PREFERENCE_WEIGHT * evaluation.soft_preference_score
+                + RESOURCE_FIT_WEIGHT * (1.0 - cost),
                 12,
             )
-            scored.append((score, candidate_id))
+            scored.append((score, cost, hit.rank, candidate_id))
 
-        scored.sort(key=lambda item: (-item[0], item[1]))
+        scored.sort(key=lambda item: (-item[0], item[1], item[2], item[3]))
         ranked = tuple(
             RankedCandidate(
                 candidate_id=candidate_id,
                 rank=rank,
                 score=score,
                 ranking_reasons=(
-                    "ranking_formula:0.75_reciprocal_rank_plus_0.25_soft",
-                    f"retrieval_rank:{hit_by_id[candidate_id].rank}",
+                    RANKING_FORMULA_CODE,
+                    RANKING_TIE_BREAKER_CODE,
+                    f"retrieval_rank:{retrieval_rank}",
+                    f"retrieval_rank_utility:{retrieval_rank_utility(retrieval_rank):.12g}",
                     "soft_preference_score:"
                     f"{evaluation_by_id[candidate_id].soft_preference_score:.12g}",
+                    f"resource_cost_score:{cost:.12g}",
+                    f"resource_fit_score:{1.0 - cost:.12g}",
                 ),
                 ranker_version=self.ranker_version,
             )
-            for rank, (score, candidate_id) in enumerate(scored, start=1)
+            for rank, (score, cost, retrieval_rank, candidate_id) in enumerate(
+                scored, start=1
+            )
         )
 
         no_feasible = not ranked
