@@ -49,7 +49,7 @@ def result_paths(
 def require_development_override(manifest: ProtocolV5Manifest) -> None:
     """Reject override use outside non-observed development work."""
 
-    from .evidence_trust import require_incoming_development_override
+    from .validation import require_incoming_development_override
 
     require_incoming_development_override(manifest)
 
@@ -64,7 +64,7 @@ def create_result_directory(
 
     paths = result_paths(manifest, results_root=results_root)
     if development_override:
-        from .evidence_trust import authorize_development_override
+        from .validation import authorize_development_override
 
         authorize_development_override(manifest, root=paths.root)
     if paths.root.exists() and not development_override:
