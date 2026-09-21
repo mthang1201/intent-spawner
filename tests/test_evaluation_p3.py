@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import json
 
+import pytest
+
 from evaluation_p3 import runner
 from evaluation_p3.metrics import aggregate_metrics
 from recommender.external_llm import ExternalLLMConfig
@@ -64,6 +66,12 @@ class IdentityEvaluationReranker:
 
 
 def test_frozen_inputs_and_paired_runner_match_reference_p2(tmp_path, monkeypatch):
+    if not runner.DEFAULT_REFERENCE_RUN.is_dir():
+        pytest.skip(
+            "evaluation_p2/results/ was intentionally deleted in the "
+            "repo-wide evidence reset; no frozen P2 reference run to pair "
+            "against until E1 is re-run"
+        )
     monkeypatch.setattr(runner, "P3Reranker", IdentityEvaluationReranker)
     target = runner.run_evaluation(
         llm_config=ExternalLLMConfig(

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+import subprocess
 
 import pytest
 
@@ -652,16 +653,27 @@ _EXPECTED_E4_PACKAGE_DIRECTORIES = frozenset(
 
 
 def test_all_e4_directories_in_repository_validate():
+    # This is an exhaustive whitelist audit of specific, real preserved E4
+    # evidence directories (27 distinct historical dry-run/analysis packages
+    # with varied real content) - not something a synthetic fixture can
+    # stand in for. All previously-collected results_v5/ evidence, including
+    # these, was intentionally deleted so the 5 experiments can be re-run
+    # clean, so there is nothing committed to audit here until E4 is
+    # re-executed and produces new evidence. Check git's tracked tree rather
+    # than the filesystem: other tests in the same pytest session legitimately
+    # write fresh (untracked, gitignored) run output under
+    # results_v5/protocol-v5.0.0/E4/, which must not make this audit try to
+    # validate them as if they were the committed historical set.
+    tracked = subprocess.run(
+        ["git", "ls-tree", "-d", "--name-only", "HEAD", "results_v5/protocol-v5.0.0/E4"],
+        cwd=Path(__file__).resolve().parents[1],
+        capture_output=True,
+        text=True,
+        check=True,
+    ).stdout
+    if not tracked.strip():
+        pytest.skip("results_v5/protocol-v5.0.0/E4 has no committed evidence to audit")
     base = Path("results_v5/protocol-v5.0.0/E4")
-    if not base.is_dir():
-        # This is an exhaustive whitelist audit of specific, real preserved
-        # E4 evidence directories (27 distinct historical dry-run/analysis
-        # packages with varied real content) - not something a synthetic
-        # fixture can stand in for. All previously-collected results_v5/
-        # evidence, including these, was intentionally deleted so the 5
-        # experiments can be re-run clean; there is nothing to audit here
-        # until E4 is re-executed and produces new evidence.
-        pytest.skip("results_v5/protocol-v5.0.0/E4 has no preserved evidence to audit")
     directories = sorted(p for p in base.iterdir() if p.is_dir())
 
     actual_names = {p.name for p in directories}
