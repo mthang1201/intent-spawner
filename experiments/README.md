@@ -9,11 +9,12 @@ See [Architecture](../docs/ARCHITECTURE.md) for the complete data flow.
 
 ## Why This Guide Is Outside `raw/`
 
-`experiments/raw/README.md` documents the raw-record layout in place, next to
-where runs are written. This file is the maintained newcomer guide.
-Previously committed local snapshot run directories were removed as part of
-resetting the evaluation harness for a clean re-run; `experiments/raw/` is
-currently empty aside from its own `README.md`.
+`experiments/raw/README.md` is included in both the current raw SHA-256 manifest
+and the historical pre-audit manifest. It remains byte-for-byte unchanged so
+the audit baseline stays valid.
+
+This file is the maintained newcomer guide. The actual preserved experiment
+records are also unchanged.
 
 ## What Creates an Experiment Directory
 
@@ -85,6 +86,16 @@ It skips only combinations already represented in `results.jsonl`. Do not
 change the manifest, matrix, method definitions, or environment identity
 mid-run.
 
+## Preserved Local Snapshots
+
+| Snapshot | Purpose |
+| --- | --- |
+| `20260719T140417Z-smoke-171688c0` | One local smoke result |
+| `20260719T140423Z-matrix-783b4141` | Full-matrix dry-run planning evidence |
+| `20260719T140431Z-matrix-aed48949` | 180-record local synthetic matrix used for the committed analysis |
+
+These directories are committed evidence, not disposable output.
+
 ## Inspect a Run
 
 Count planned and completed records:
@@ -126,6 +137,17 @@ For a new run:
   --experiment-dir experiments/raw/<experiment-id> \
   --results-dir /tmp/intent-spawner-results \
   --results-md /tmp/intent-spawner-results/RESULTS.md \
+  --overwrite
+```
+
+To reproduce the committed local analysis:
+
+```bash
+.venv/bin/python -m experiments.analyze_results \
+  --experiment-dir experiments/raw/20260719T140431Z-matrix-aed48949 \
+  --results-dir /tmp/intent-spawner-results \
+  --results-md /tmp/intent-spawner-results/RESULTS.md \
+  --environment-report results/environment-capability.json \
   --overwrite
 ```
 
