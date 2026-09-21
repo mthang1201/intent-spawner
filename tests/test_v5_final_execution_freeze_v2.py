@@ -47,7 +47,11 @@ from evaluation_v5.resource.efficiency_plan import validate_efficiency_plan
 ROOT = Path(__file__).resolve().parents[1]
 FREEZES = ROOT / "results_v5/protocol-v5.0.0/freezes"
 RETIRED = FREEZES / "v5-final-execution-freeze"
-CURRENT = FREEZES / "v5-final-execution-freeze-v2"
+# v2 froze the corrected P2; v3 supersedes it without changing P2's identity,
+# after the E4 harness that v2's E4 contract hashes was repaired.
+FIXED_P2 = FREEZES / "v5-final-execution-freeze-v2"
+CURRENT = FREEZES / "v5-final-execution-freeze-v3"
+FREEZE_CHAIN = (RETIRED, FIXED_P2, CURRENT)
 E1 = ROOT / "results_v5/protocol-v5.0.0/E1"
 E1_PREFIX = E1 / "20260825T-observed-p1-p2-development-v1"
 E1_CURRENT = E1 / "20260921T-observed-p1-p2-development-v2"
@@ -104,10 +108,41 @@ def test_retired_freeze_is_preserved_and_still_describes_the_prefix_ranker():
     assert configuration["P2"]["config_version"] == "p2-config-v1.0.0"
 
 
-def test_v2_freeze_records_the_corrected_p2_and_leaves_p1_frozen():
+def test_freeze_chain_is_complete_and_each_link_is_frozen():
+    """All three identities are preserved; none is rewritten or withdrawn."""
+    ids = []
+    for directory in FREEZE_CHAIN:
+        manifest = _manifest(directory)
+        validate_freeze_manifest(manifest)
+        assert manifest["status"] == "FROZEN"
+        assert manifest["freeze_id"] == directory.name
+        ids.append(manifest["freeze_id"])
+    assert ids == [
+        "v5-final-execution-freeze",
+        "v5-final-execution-freeze-v2",
+        "v5-final-execution-freeze-v3",
+    ]
+
+
+def test_v3_keeps_the_v2_p2_identity_and_only_moves_the_e4_harness():
+    """v3 is a harness/custody re-freeze, not a new algorithm."""
+    fixed, current = _manifest(FIXED_P2)["configuration_snapshot"], _manifest(CURRENT)["configuration_snapshot"]
+    for key in ("systems", "configuration", "runtime_package", "candidate_catalog",
+                "development_dataset", "indexes", "prompts", "p3_gate"):
+        assert current[key] == fixed[key], key
+    # The only moving part is the E4 experiment contract.
+    differing = [k for k in set(current) | set(fixed) if current.get(k) != fixed.get(k)]
+    assert differing == ["experiment_contracts"]
+    assert current["experiment_contracts"]["E4"] != fixed["experiment_contracts"]["E4"]
+    for other in ("E1", "E2", "E3", "E5"):
+        if other in current["experiment_contracts"]:
+            assert current["experiment_contracts"][other] == fixed["experiment_contracts"][other]
+
+
+def test_current_freeze_records_the_corrected_p2_and_leaves_p1_frozen():
     current = _manifest(CURRENT)
     validate_freeze_manifest(current)
-    assert current["freeze_id"] == "v5-final-execution-freeze-v2"
+    assert current["freeze_id"] == "v5-final-execution-freeze-v3"
     assert current["status"] == "FROZEN"
 
     retired = _manifest(RETIRED)
@@ -143,6 +178,41 @@ def test_v2_freeze_records_the_corrected_p2_and_leaves_p1_frozen():
     rules = current["integrity_rules"]
     assert rules["sealed_data_not_read_by_freeze"] is True
     assert rules["created_before_sealed_data_supply"] is True
+
+
+def test_v3_artifact_commit_contains_only_the_manifest():
+    """verify_production_freeze's git-custody chain must hold for v3.
+
+    The manifest has to be introduced by a commit containing nothing else,
+    whose parent is the recorded frozen_execution_sha. That makes the freeze
+    permanently verifiable at that commit, which is how
+    v5-final-execution-freeze was recorded in 38877fa. Registering the freeze
+    afterwards is itself a post-freeze change, so verification at later
+    revisions is expected to report post-freeze drift instead.
+    """
+    import subprocess
+
+    manifest_relative = str((CURRENT / "freeze-manifest.json").relative_to(ROOT))
+    inventory = json.loads(
+        (ROOT / "benchmarks_v5/protocol-v5-final-audit-inputs-v8.json").read_text(encoding="utf-8")
+    )
+    artifact_commit = inventory["superseding_freeze"]["freeze_artifact_commit_sha"]
+
+    def git(*args: str) -> str:
+        return subprocess.run(
+            ["git", *args], cwd=ROOT, check=True, capture_output=True, text=True
+        ).stdout.strip()
+
+    introductions = git(
+        "log", "--format=%H", "--diff-filter=A", "--", manifest_relative
+    ).splitlines()
+    assert introductions == [artifact_commit]
+    changed = git(
+        "diff-tree", "--no-commit-id", "--name-only", "-r", artifact_commit
+    ).splitlines()
+    assert changed == [manifest_relative]
+    recorded = _manifest(CURRENT)["source_control"]["frozen_execution_sha"]
+    assert git("rev-parse", artifact_commit + "^") == recorded
 
 
 def test_supersession_note_names_the_retired_evidence():
@@ -255,17 +325,24 @@ def test_new_evidence_is_registered_in_the_reviewed_inventory():
     from evaluation_v5.final_audit.common import LOCK
 
     inventory = json.loads((ROOT / LOCK).read_text(encoding="utf-8"))
-    assert inventory["schema_version"] == "protocol-v5-final-audit-inputs-v1.5.0"
-    assert inventory["superseding_freeze"]["freeze_id"] == "v5-final-execution-freeze-v2"
+    assert inventory["schema_version"] == "protocol-v5-final-audit-inputs-v1.6.0"
+    assert inventory["superseding_freeze"]["freeze_id"] == "v5-final-execution-freeze-v3"
+    assert inventory["superseding_freeze"]["chain"] == [
+        str(directory.relative_to(ROOT)) + "/freeze-manifest.json"
+        for directory in FREEZE_CHAIN
+    ]
     # The retired freeze still governs the registered packages.
     assert inventory["authoritative_freeze"].endswith(
         "v5-final-execution-freeze/freeze-manifest.json"
     )
 
     expected = [
+        FIXED_P2 / "freeze-manifest.json",
+        FIXED_P2 / "SUPERSESSION.md",
         CURRENT / "freeze-manifest.json",
         CURRENT / "SUPERSESSION.md",
         FREEZES / "frozen-configuration-v2.json",
+        FREEZES / "frozen-configuration-v3.json",
         E1_CURRENT / "raw/offline-run-provenance.json",
         E1_CURRENT / "raw/recommendations.jsonl",
         E1_CURRENT / "report/offline-run-completion.json",

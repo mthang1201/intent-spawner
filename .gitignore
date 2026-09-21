@@ -731,3 +731,5 @@ results_v5/protocol-v5.0.0/E1/20260921T-observed-p1-p2-development-v2/report/*
 !results_v5/protocol-v5.0.0/freezes/v5-final-execution-freeze-v3/
 results_v5/protocol-v5.0.0/freezes/v5-final-execution-freeze-v3/*
 !results_v5/protocol-v5.0.0/freezes/v5-final-execution-freeze-v3/freeze-manifest.json
+!results_v5/protocol-v5.0.0/freezes/v5-final-execution-freeze-v3/SUPERSESSION.md
+!results_v5/protocol-v5.0.0/freezes/frozen-configuration-v3.json

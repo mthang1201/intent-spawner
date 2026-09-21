@@ -9,6 +9,7 @@ from pathlib import Path
 import re
 import subprocess
 import sys
+from collections.abc import Mapping
 from typing import Any
 
 from evaluation_v5.freeze import validate_freeze_manifest
@@ -39,15 +40,21 @@ CHECKS = {
     17: "Missing experiments and placeholder values",
 }
 
-# Inventory schemas that carry the candidate inventory and disposition schema
-# that build_dispositions() needs. v1.4.0 and v1.5.0 are supersets of v1.3.0 in
-# these fields and were previously omitted here, which silently dropped
-# evidence_dispositions from the audit when the inventory was bumped.
-DISPOSITION_CAPABLE_INVENTORIES = frozenset({
-    "protocol-v5-final-audit-inputs-v1.3.0",
-    "protocol-v5-final-audit-inputs-v1.4.0",
-    "protocol-v5-final-audit-inputs-v1.5.0",
-})
+# Inputs build_dispositions() needs. This is detected from the inventory's own
+# fields rather than from an allowlist of schema versions: the previous
+# version allowlist silently dropped evidence_dispositions from the audit
+# whenever the inventory was bumped (v1.3.0 -> v1.4.0 in commit 435f543), and
+# the omission was invisible while the audit was input-blocked. Every
+# inventory up to v1.2.0 lacks both keys and every one from v1.3.0 carries
+# both, so this is behaviour-preserving as well as bump-proof. Presence is
+# only a routing condition; build_dispositions() still authenticates every
+# byte it reads and fails closed on disagreement.
+DISPOSITION_INPUT_KEYS = ("candidate_inventory", "disposition_schema")
+
+
+def _supports_dispositions(lock: Mapping[str, Any]) -> bool:
+    return all(isinstance(lock.get(key), str) for key in DISPOSITION_INPUT_KEYS)
+
 
 ISOLATION_CLASSIFICATIONS = {
     "REMAINING_IMPLEMENTATION_DEFECT",
@@ -448,7 +455,7 @@ def inspect(inputs: Inputs, *, isolation: bool = True, historical: bool = True) 
     packages = [validate_package(inputs, p) for p in inputs.lock["packages"]]
     dispositions = (
         build_dispositions(inputs)
-        if inputs.lock.get("schema_version") in DISPOSITION_CAPABLE_INVENTORIES
+        if _supports_dispositions(inputs.lock)
         else None
     )
     isolation_diagnostic = load_isolation_diagnostic(inputs)
