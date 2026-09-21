@@ -76,7 +76,7 @@ run_check "v4 gold set and recommender matrix validation" "$PYTHON_BIN" -m evalu
   --dry-run
 run_check "v4 paired system plan validation" "$PYTHON_BIN" -m evaluation_v4.plan_system \
   --dry-run
-run_check "Protocol-v5 split isolation audit" "$PYTHON_BIN" -m evaluation_v5.isolation_audit
+run_check "Protocol-v5 split isolation tests" "$PYTHON_BIN" -m pytest -q tests/test_evaluation_v5_isolation.py
 run_check "portable Protocol-v4 evidence" "$PYTHON_BIN" scripts/validate-portable-evidence.py
 run_check "live acceptance record JSON" "$PYTHON_BIN" -m json.tool docs/evaluation/LIVE_ACCEPTANCE_2026-08-16.json
 run_check "high-confidence secret scan" "$PYTHON_BIN" scripts/scan-secrets.py

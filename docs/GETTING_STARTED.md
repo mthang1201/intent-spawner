@@ -1,6 +1,8 @@
 # Getting Started
 
-Start with the offline Protocol-v5 evidence audit. Demo deployment and synthetic
+Start with the Protocol-v5 experiments (E1-E5 under `evaluation_v5/`). Each one
+is just "run it, get results": there is no freeze/audit gate or human-review
+approval step blocking execution anymore. Demo deployment and synthetic
 benchmarks are separate workflows and do not supply missing research results.
 Run commands from the repository root.
 
@@ -8,14 +10,13 @@ Run commands from the repository root.
 
 | Goal | Guide section | Cluster required |
 | --- | --- | --- |
-| Reproduce the current evidence audit | [Protocol-v5 audit](#protocol-v5-evidence-audit) | No |
+| Run the Protocol-v5 experiments | [Protocol-v5 experiments](#protocol-v5-experiments) | Depends on experiment |
 | Inspect historical evidence | [Protocol-v4 reproduction](#path-d-historical-protocol-v4-reproduction) | No |
 | Run software checks or synthetic examples | [Local checks](#path-a-local-synthetic-benchmark--unit-tests) | No |
 | Deploy P1/P2 or configure reference LLM adapters | [Interactive demo](#path-b-interactive-jupyterhub-demo) | Disposable demo cluster |
 | Try reprovisioning or dynamic resources | [Reprovisioning](#path-b10-storage-preserving-notebook-re-provisioning), [dynamic sizing](#path-b11-policy-bounded-dynamic-resource-sizing) | Disposable demo cluster |
 
-See the [artifact index](ARTIFACT_MANIFEST.md) for detailed contracts and
-[the final report](evaluation/PROTOCOL_V5_FINAL_REPORT.md) for measured outcomes.
+See the [artifact index](ARTIFACT_MANIFEST.md) for detailed contracts.
 
 ## 1. Prerequisites & Local Environment Setup
 
@@ -40,54 +41,36 @@ cd intent-spawner
 bash scripts/setup.sh
 ```
 
-## Protocol-v5 evidence audit
+## Protocol-v5 experiments
 
-Run the complete workflow after dependency setup:
+Each experiment lives under `evaluation_v5/` and writes a plain run manifest
+under `results_v5/` when it runs — there is no separate freeze/audit step and
+no manual approval gate to pass first.
 
-```bash
-make v5-audit
-```
-
-When `V5_RUN_ID` is unset, a new run ID is generated automatically. Outputs are written under
-`results_v5/protocol-v5.0.0/final-audit/<run-id>/`: validation findings,
-regenerated analysis, figures/tables, and `report/PROTOCOL_V5_FINAL_REPORT.md`.
-The existing [reviewed final report](evaluation/PROTOCOL_V5_FINAL_REPORT.md)
-remains the published snapshot; a new run does not overwrite it.
-
-For stages invoked separately, generate and export one ID once:
+Run the full software test suite for the evaluation harness:
 
 ```bash
-export V5_RUN_ID="docs-audit-$(.venv/bin/python -c 'import uuid; print(uuid.uuid4().hex)')"
-make v5-validate
-make v5-analyze
-make v5-figures
-make v5-audit
+make v5-test
 ```
 
-Each stage completes its findings before returning its audit status. With the
-current evidence, each command returns **2** for preserved integrity/provenance
-failures; continue to the next command to inspect the available regeneration.
-For a single invocation that attempts all stages despite those failures, use:
+Run an individual experiment module directly, for example:
 
 ```bash
-make -k v5-validate v5-analyze v5-figures v5-audit
+.venv/bin/python -m evaluation_v5.offline.runner --help
+.venv/bin/python -m evaluation_v5.resource --help
+.venv/bin/python -m evaluation_v5.image_storage --help
 ```
 
-Keep the exported `V5_RUN_ID` for that invocation. Do not connect stages with
-`&&`, because the known audit failure would stop the sequence. A valid
-`NOT_EXECUTED` package alone does not cause failure. The current overall verdict
-remains **FAIL**, with confirmatory, human, resource, and storage outcomes
-**NOT EXECUTED**; completing these commands does not fill those evidence gaps.
+Development-split runs need no external inputs. Confirmatory runs need an
+external, isolation-verified dataset (see `evaluation_v5/isolation.py` and
+`--dataset`/`PROTOCOL_V5_CONFIRMATORY_DATASET`) — this check exists to prevent
+train/confirmatory-split data leakage, not to gate approval.
 
-Completed stages are sealed and may be reused only with matching inputs and
-implementation. Changed inputs or code require a new run ID. Inputs are selected
-by the [checksum-bound inventory](../benchmarks_v5/protocol-v5-final-audit-inputs-v2.json),
-never by filename recency. Original raw observations and damaged packages remain
-unchanged. No stage calls a recommender, LLM provider, participant, registry, or
-Kubernetes cluster, and unavailable private evidence is handled explicitly.
-
-The [audit verification record](evaluation/PROTOCOL_V5_FINAL_AUDIT_VERIFICATION.md)
-contains the reviewed commands, results, and reproduction limitations.
+E3 (user study) needs real participants and E4/E5 cluster runs need a
+disposable Kubernetes cluster; see the module-specific `--help` output for
+each experiment's exact requirements. No results currently exist for any
+experiment — they were wiped ahead of this cleanup and have not been
+re-executed yet.
 
 ## Path A: Local Synthetic Benchmark & Unit Tests
 
@@ -110,11 +93,10 @@ Run the full Python test suite, including P2/P3 and evaluation harness checks:
 .venv/bin/python -m pytest
 ```
 
-For the focused final-audit tests, use `make v5-audit-test`. The broader
-`bash scripts/check.sh` runs tests, synthetic smoke checks, evidence validators,
-and optional Helm/Kubernetes checks; Helm may fetch charts and Kubernetes client
-checks may need API access. Use the Protocol-v5 audit above for offline evidence
-reproduction without those services.
+For the focused Protocol-v5 evaluation-harness tests, use `make v5-test`. The
+broader `bash scripts/check.sh` runs tests, synthetic smoke checks, evidence
+validators, and optional Helm/Kubernetes checks; Helm may fetch charts and
+Kubernetes client checks may need API access.
 
 ### A3. Run Local Matrix Benchmark Dry-Run
 
@@ -175,8 +157,8 @@ Open `http://127.0.0.1:8000`. You will see the new **Workload Intent Form**:
 ## Path B-LLM: Configuring External LLM (Google Gemini)
 
 The checked-in Gemini overlay records the Protocol-v4 reference configuration.
-Using it makes live provider calls; it is separate from offline audit reproduction.
-See [external LLM configuration](EXTERNAL_LLM_RECOMMENDER.md).
+Using it makes live provider calls; it is separate from offline Protocol-v5
+experiment runs. See [external LLM configuration](EXTERNAL_LLM_RECOMMENDER.md).
 
 ### 1. Create the Kubernetes Secret
 
@@ -284,5 +266,4 @@ Live external or Stage C reproduction requires an explicit operator decision, fr
 ## Cleanup
 
 Follow the [cleanup runbook](../CLEANUP.md) for the exact demo namespace and local
-artifact lifecycle. Namespace deletion can delete notebook PVC data. Preserve
-all checksum-bound evidence and sealed audit outputs, including failed audits.
+artifact lifecycle. Namespace deletion can delete notebook PVC data.

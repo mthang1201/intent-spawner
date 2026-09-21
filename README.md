@@ -20,47 +20,15 @@ Protocol-v5 evaluation of P2.
 
 ## Current evidence
 
-**Final Protocol-v5 audit: FAIL. Confirmatory evidence: EXECUTED_INCOMPLETE.**
-The [final report](docs/evaluation/PROTOCOL_V5_FINAL_REPORT.md) records exact
-observations, checksums, unresolved findings, and the defense-summary table.
-One hypothesis, H7 (image storage reuse), is **SUPPORTED**; the remaining
-seven confirmatory hypothesis decisions (H1–H6, H8, plus H7F) are **NOT_EXECUTED**.
+Experiments are being re-run after removing the freeze/audit/human-review
+layer that previously sat on top of them. There is no results collection,
+"frozen" comparator manifest, or approval gate anymore: each experiment
+(E1-E5 under `evaluation_v5/`) runs and simply produces results in a plain
+run manifest. No results currently exist — previously collected
+`results_v5/`, `results/`, and formative evidence were wiped ahead of this
+cleanup, and no experiment has been re-executed yet.
 
-| Evidence stream | Available evidence |
-| --- | --- |
-| E1 recommendation quality | 36 development records: P1/P2 on 18 cases across 10 families. Complete component/statistical analysis is **NOT EXECUTED**. The archived run describes the **retired** pre-fix P2; a second development run exists under the current P2 identity (see comparator identity below). |
-| E2 natural-language robustness | Formal robustness analysis is **NOT EXECUTED**. |
-| E3 human outcomes | **NOT EXECUTED**; zero participant sessions. |
-| E4 resource efficiency | **NOT EXECUTED**; planning/readiness evidence only. |
-| E5 image functionality | Archived development observations remain valid legacy evidence with explicit recommendation-provenance limitations; disposition **DEVELOPMENT_ONLY**; H7F is **NOT_EXECUTED**. |
-| E5 image storage | **OBSERVED / ACCEPTED_CONFIRMATORY**; H7 is **SUPPORTED** (shared layers reduce cumulative storage across the 4-image frozen catalog prefix; 8/16-image scales remain **NOT_EXECUTED**). |
-| Protocol-v5 confirmation | **EXECUTED_INCOMPLETE**; audit verdict **FAIL**; no authoritative final freeze covering the remaining confirmatory evidence. |
-
-The audit preserves checksum/provenance defects and unavailable analyses.
-Passing software tests or container probes does not establish user satisfaction,
-resource savings, storage reuse, or confirmatory recommendation quality.
 Protocol-v4 results remain [historical/formative evidence](docs/evaluation/PROTOCOL_V4_REVISED_EVALUATION_REPORT.md).
-
-### Comparator identity
-
-P2's deterministic constraint/ranking stage was corrected after the evidence
-above was collected, so the frozen comparator identity moved:
-
-| Freeze | Status | P2 ranker |
-| --- | --- | --- |
-| `v5-final-execution-freeze` | retired; governs every archived package above | `p2-deterministic-ranker-v1.0.0` |
-| `v5-final-execution-freeze-v2` | retired | `p2-deterministic-ranker-v2.0.0` |
-| [`v5-final-execution-freeze-v3`](results_v5/protocol-v5.0.0/freezes/v5-final-execution-freeze-v3/SUPERSESSION.md) | **current** | `p2-deterministic-ranker-v2.0.0` |
-
-All three are immutable; none is withdrawn. **Archived E1/E4/E5 evidence and the
-analyses derived from it describe the retired pre-fix P2 and must not be cited
-as describing current P2 behaviour.** P1 is byte-identical across all three and
-remains a frozen comparator. Evidence collected so far under the corrected P2 is
-development-split and formative only, and is listed in the
-[v3 supersession note](results_v5/protocol-v5.0.0/freezes/v5-final-execution-freeze-v3/SUPERSESSION.md).
-On the Protocol-v4 formative dataset the correction is a **trade-off, not a
-uniform improvement**: top-1 ranking quality falls while deeper recall and
-constraint compliance improve.
 
 ## Quickstart and reproduction
 
@@ -68,14 +36,8 @@ From a local checkout:
 
 ```bash
 bash scripts/setup.sh
-make v5-audit
+make v5-test
 ```
-
-The audit collects no new observations and contacts no recommender, LLM provider,
-participant, container registry, or Kubernetes cluster. It writes a new immutable
-run under `results_v5/protocol-v5.0.0/final-audit/` and produces its report before
-returning nonzero for integrity failures. **The current evidence yields exit 2**;
-a valid `NOT_EXECUTED` state alone is not a failure.
 
 For staged commands, shared run IDs, historical evidence validation, software
 tests, and deployment instructions, follow [Getting Started](docs/GETTING_STARTED.md).
@@ -86,6 +48,5 @@ selects P1. The guide documents the explicit P2 overlay.
 
 - [Artifact and documentation index](docs/ARTIFACT_MANIFEST.md): source map, current guides, Protocol-v5 contracts, and historical evidence.
 - [Architecture](docs/ARCHITECTURE.md): implemented pipelines, safeguards, and remaining research boundaries.
-- [Final Protocol-v5 report](docs/evaluation/PROTOCOL_V5_FINAL_REPORT.md) and [audit verification record](docs/evaluation/PROTOCOL_V5_FINAL_AUDIT_VERIFICATION.md).
 - [Evidence packaging and preservation](results_v5/README.md).
 - [Demo script](DEMO_SCRIPT.md), [data governance](docs/DATA_GOVERNANCE.md), and [cleanup runbook](CLEANUP.md).

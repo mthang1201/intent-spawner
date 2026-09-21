@@ -142,5 +142,6 @@ record and no draft output is written.
 No confirmatory family source or compiled bundle belongs in this repository,
 its caches, indexes, images, archives, or ordinary results. A custodian may run
 the generic authoring tools against external files. Final confirmatory loading
-still requires the independent pre-data freeze and isolation gate documented
-in `docs/evaluation/PROTOCOL_V5_DATA_ISOLATION.md`.
+still requires the isolation checks (external custody, contamination
+detection) documented in `docs/evaluation/PROTOCOL_V5_DATA_ISOLATION.md`; there
+is no separate freeze-manifest gate.

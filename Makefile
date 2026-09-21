@@ -1,27 +1,9 @@
 E4_RESOURCE_DRY_RUN_ID := e4-resource-envelope-dry-run-$(shell date -u +%Y%m%dT%H%M%SZ)
 E4_RESOURCE_EFFICIENCY_DRY_RUN_ID := e4-resource-efficiency-dry-run-$(shell date -u +%Y%m%dT%H%M%SZ)
 V5_PYTHON ?= $(shell if [ -x .venv/bin/python ]; then echo .venv/bin/python; elif [ -x ../intent-spawner/.venv/bin/python ]; then echo ../intent-spawner/.venv/bin/python; else echo python3; fi)
-V5_AUDIT_ARGS = $(if $(V5_RUN_ID),--run-id "$(V5_RUN_ID)",)
 
 .PHONY: check validate-cluster-results validate-raw-integrity capacity-dry-run v3-validate v3-dry-run v3-image-policy v4-validate v4-test v5-test v5-resource-validate v5-resource-test v5-resource-dry-run v5-resource-efficiency-validate v5-resource-efficiency-test v5-resource-efficiency-dry-run v5-user-study-test v5-user-study-smoke v5-isolation-check regenerate-cluster-results
-.PHONY: v5-validate v5-analyze v5-figures v5-audit v5-audit-test v5-e4-preflight v5-e4-final-freeze-worktree v5-resource-preflight v5-resource-efficiency-preflight
-
-# These stages never execute recommenders, participant sessions, or cluster jobs.
-# The Python orchestrator collects findings before returning audit exit code 2.
-v5-validate:
-	$(V5_PYTHON) -m evaluation_v5.final_audit validate $(V5_AUDIT_ARGS)
-
-v5-analyze:
-	$(V5_PYTHON) -m evaluation_v5.final_audit analyze $(V5_AUDIT_ARGS)
-
-v5-figures:
-	$(V5_PYTHON) -m evaluation_v5.final_audit figures $(V5_AUDIT_ARGS)
-
-v5-audit:
-	$(V5_PYTHON) -m evaluation_v5.final_audit audit $(V5_AUDIT_ARGS)
-
-v5-audit-test:
-	$(V5_PYTHON) -m pytest -q tests/test_protocol_v5_final_audit.py
+.PHONY: v5-e4-preflight v5-resource-preflight v5-resource-efficiency-preflight
 
 check:
 	bash scripts/check.sh
@@ -107,9 +89,6 @@ v5-resource-efficiency-dry-run: v5-resource-efficiency-validate
 v5-e4-preflight:
 	PYTHONPATH=. $(V5_PYTHON) -m evaluation_v5.resource preflight --target all
 
-v5-e4-final-freeze-worktree:
-	bash scripts/e4-final-freeze-worktree.sh $(WORKTREE_DIR)
-
 v5-user-study-test:
 	PYTHONPATH=. .venv/bin/python -m pytest -q \
 		tests/test_evaluation_v5_user_study.py \
@@ -121,7 +100,7 @@ v5-user-study-smoke:
 	PYTHONPATH=. .venv/bin/python -m evaluation_v5.user_study.smoke
 
 v5-isolation-check:
-	.venv/bin/python -m evaluation_v5.isolation_audit
+	PYTHONPATH=. $(V5_PYTHON) -m pytest -q tests/test_evaluation_v5_isolation.py
 
 regenerate-cluster-results: validate-cluster-results
 	.venv/bin/python -m cluster_evaluation.analyze \

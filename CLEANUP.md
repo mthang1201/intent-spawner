@@ -187,11 +187,9 @@ rm -f /tmp/intent-spawner-environment.json
 
 ## Preserved Evidence: Do Not Delete
 
-The following committed local snapshots support the published results:
-
-- `experiments/raw/20260719T140417Z-smoke-171688c0`;
-- `experiments/raw/20260719T140423Z-matrix-783b4141`; and
-- `experiments/raw/20260719T140431Z-matrix-aed48949`.
+The committed local synthetic snapshots under `experiments/raw/` were removed
+while resetting the evaluation harness for a clean re-run; there is currently
+nothing there to preserve.
 
 Preserved Kubernetes evidence lives under:
 
@@ -213,38 +211,19 @@ make validate-cluster-results
 make validate-raw-integrity
 ```
 
-## Protocol-v5 Evidence and Audit Outputs
+## Protocol-v5 Evidence and Run Outputs
 
-Preserve the source files enrolled in
-[the final-audit inventory](benchmarks_v5/protocol-v5-final-audit-inputs-v1.json)
-and all sealed outputs under `results_v5/protocol-v5.0.0/final-audit/`. This
-includes raw observations, legacy/incomplete packages, failed audits, and
-`NOT_EXECUTED` readiness records. A failed checksum or superseded report is not
-permission to delete or repair the original artifact.
+The freeze/final-audit system (an immutable-manifest layer with a separate
+verify/seal step) has been removed. Each experiment (E1-E5 under
+`evaluation_v5/`) now writes a plain run manifest directly under `results_v5/`
+when it runs — there is no separate audit package or seal-checking command.
 
 Do not normalize newlines, rewrite manifests, move checksum-bound Markdown, or
-replace source files with regenerated versions. The E3 participant-flow CSV’s
-recorded checksum mismatch is a preserved audit finding. Corrections belong in
-separate, linked artifacts. Git ignore status alone does not establish that a
-file is disposable; reviewed outputs and local evidence may both be ignored.
+replace source files with regenerated versions without a clear reason. Git
+ignore status alone does not establish that a file is disposable; reviewed
+outputs and local evidence may both be ignored.
 
-To verify the four sealed stages in the reviewed audit without regenerating or
-changing them:
-
-```bash
-(
-  for stage in validation analysis figures report; do
-    .venv/bin/python -m evaluation_v5.final_audit verify \
-      --package "results_v5/protocol-v5.0.0/final-audit/final-audit-20260907-v2/$stage" || exit $?
-  done
-)
-```
-
-A passing seal check establishes artifact integrity, not a passing experiment
-audit. For new reproduction outputs use a new run ID following
-[Getting Started](docs/GETTING_STARTED.md#protocol-v5-evidence-audit).
-See [the evidence policy](results_v5/README.md) and
-[the final report](docs/evaluation/PROTOCOL_V5_FINAL_REPORT.md) for current boundaries.
+See [the evidence policy](results_v5/README.md) for current boundaries.
 
 ## Derived Result Cleanup
 

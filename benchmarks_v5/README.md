@@ -56,22 +56,23 @@ policy, and family metadata in each flat evaluator case.
 
 There is deliberately no `v5-confirmatory` file or test fixture here. A
 confirmatory split must use a supported split-bundle schema but remain under
-external custody; it is supplied only through the explicit, freeze-gated
-confirmatory loader.
+external custody; it is supplied only through `evaluation_v5.isolation`'s
+confirmatory loader, which enforces the external-custody boundary and runs
+contamination checks against the development split. There is no separate
+freeze-manifest gate — the loader's isolation checks are the whole boundary.
 Development code must not copy it into this directory, repository caches,
 candidate indexes, results, wheels, or container images.
 
 ## E4 resource-efficiency contracts
 
 `resource-efficiency-inputs-v1.yaml` mechanically binds recommendation inputs
-to the 16 existing frozen resource workload instances without labels, oracle
-data, or code hints. `resource-efficiency-freeze-contract-v1.yaml` registers the
-four allocation conditions, ten paired repetitions, catalog table, dynamic
-policy, counterbalanced execution-order algorithm, explicit Pareto objectives,
-contrasts, and required oracle/image bindings. No success noninferiority margin
-is registered; one must not be introduced after observing results. The checked-in contract
-is deliberately `NOT_FROZEN`. `resource-efficiency-capacity-v1.yaml` likewise
-contains no invented allocatable capacity and remains `NOT_FROZEN` until it is
-verified against the sole eligible node. It permits only Kubernetes node-status
-`allocatable` values, never raw physical capacity, and labels every result
+to the 16 existing resource workload instances without labels, oracle data, or
+code hints. It registers the four allocation conditions, ten paired
+repetitions, catalog table, dynamic policy, counterbalanced execution-order
+algorithm, explicit Pareto objectives, and contrasts. No success
+noninferiority margin is registered; one must not be introduced after
+observing results. `resource-efficiency-capacity-v1.yaml` contains no invented
+allocatable capacity and remains `NOT_VERIFIED` until it is checked against
+the sole eligible node. It permits only Kubernetes node-status `allocatable`
+values, never raw physical capacity, and labels every result
 `SIMULATED_CAPACITY` / `SIMULATED_DETERMINISTIC_REQUEST_PACKING`.
