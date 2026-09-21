@@ -4,7 +4,7 @@ V5_PYTHON ?= $(shell if [ -x .venv/bin/python ]; then echo .venv/bin/python; eli
 V5_AUDIT_ARGS = $(if $(V5_RUN_ID),--run-id "$(V5_RUN_ID)",)
 
 .PHONY: check validate-cluster-results validate-raw-integrity capacity-dry-run v3-validate v3-dry-run v3-image-policy v4-validate v4-test v5-test v5-resource-validate v5-resource-test v5-resource-dry-run v5-resource-efficiency-validate v5-resource-efficiency-test v5-resource-efficiency-dry-run v5-user-study-test v5-user-study-smoke v5-isolation-check regenerate-cluster-results
-.PHONY: v5-validate v5-analyze v5-figures v5-audit v5-audit-test v5-e4-preflight v5-resource-preflight v5-resource-efficiency-preflight
+.PHONY: v5-validate v5-analyze v5-figures v5-audit v5-audit-test v5-e4-preflight v5-e4-final-freeze-worktree v5-resource-preflight v5-resource-efficiency-preflight
 
 # These stages never execute recommenders, participant sessions, or cluster jobs.
 # The Python orchestrator collects findings before returning audit exit code 2.
@@ -106,6 +106,9 @@ v5-resource-efficiency-dry-run: v5-resource-efficiency-validate
 
 v5-e4-preflight:
 	PYTHONPATH=. $(V5_PYTHON) -m evaluation_v5.resource preflight --target all
+
+v5-e4-final-freeze-worktree:
+	bash scripts/e4-final-freeze-worktree.sh $(WORKTREE_DIR)
 
 v5-user-study-test:
 	PYTHONPATH=. .venv/bin/python -m pytest -q \
