@@ -254,6 +254,106 @@ def _producer_consumer(seed: int, p: Mapping[str, int]) -> dict[str, Any]:
     return {"items": output[0], "checksum": output[1], "tail": state}
 
 
+def _dense_array_allocation(seed: int, p: Mapping[str, int]) -> dict[str, Any]:
+    """Materialize a single contiguous unsigned-64 array sized toward the memory ceiling.
+
+    The array is filled by tiling a small deterministically generated block
+    (avoiding an O(dataset_size) Python-level loop) so that CPU cost stays
+    low while resident memory scales directly with ``dataset_size``.  A
+    bounded number of sample positions are checksummed so verification cost
+    does not grow with the array size.
+    """
+
+    dataset_size = p["dataset_size"]
+    block_elements = 4096
+    state = seed
+    block = array("Q")
+    for _ in range(block_elements):
+        state = _next(state)
+        block.append(state & MASK64)
+    buffer = array("Q", [0]) * dataset_size
+    block_len = len(block)
+    position = 0
+    while position < dataset_size:
+        end = min(position + block_len, dataset_size)
+        buffer[position:end] = block[: end - position]
+        position = end
+    checksum = 0
+    sample_count = 100_000
+    step = max(1, dataset_size // sample_count)
+    for index in range(0, dataset_size, step):
+        checksum = (checksum + buffer[index] * (index + 1)) & MASK64
+    return {
+        "dataset_size": dataset_size,
+        "elements": len(buffer),
+        "checksum": checksum,
+        "tail": buffer[-1],
+    }
+
+
+def _cpu_bound_iteration(seed: int, p: Mapping[str, int]) -> dict[str, Any]:
+    """Run a tight deterministic scalar loop with no early exit.
+
+    Memory footprint is O(1); wall-clock runtime is proportional to
+    ``iterations`` and to the CPU quota available under cgroup throttling,
+    so this family is sized to approach the timeout ceiling under an
+    undersized CPU allocation while finishing well within it at a
+    correctly sized allocation.
+    """
+
+    iterations = p["iterations"]
+    state = seed
+    checksum = 0
+    for index in range(iterations):
+        state = _next(state)
+        checksum = (checksum + state * (index + 1)) & MASK64
+    return {"iterations": iterations, "checksum": checksum, "tail": state}
+
+
+def _large_hash_map_allocation(seed: int, p: Mapping[str, int]) -> dict[str, Any]:
+    """Materialize a large dictionary sized toward the memory ceiling.
+
+    Python's per-entry hash-table/object overhead means far fewer entries
+    are needed than array elements to reach a comparable footprint, giving
+    a second, structurally distinct memory-pressure mechanism alongside
+    ``dense_array_allocation``.  A bounded number of sample keys are
+    checksummed so verification cost does not grow with table size.
+    """
+
+    entries = p["entries"]
+    state = seed
+    table: dict[int, int] = {}
+    for index in range(entries):
+        state = _next(state)
+        table[index] = state & MASK64
+    checksum = 0
+    sample_count = 100_000
+    step = max(1, entries // sample_count)
+    for key in range(0, entries, step):
+        checksum = (checksum + table[key] * (key + 1)) & MASK64
+    return {"entries": len(table), "checksum": checksum, "tail": state}
+
+
+def _bitmix_saturation_sweep(seed: int, p: Mapping[str, int]) -> dict[str, Any]:
+    """Run a heavier two-round bit-mixing loop with no early exit.
+
+    Memory footprint is O(1); each iteration performs two mixing rounds
+    (versus one in ``cpu_bound_iteration``), giving a second CPU-pressure
+    mechanism sized to approach the runtime ceiling under an undersized
+    CPU allocation while finishing well within it at a correctly sized
+    allocation.
+    """
+
+    iterations = p["iterations"]
+    state = seed
+    checksum = 0
+    for index in range(iterations):
+        state = _next(state)
+        state = _next(state ^ (index + 1))
+        checksum = (checksum ^ (state * (index + 3))) & MASK64
+    return {"iterations": iterations, "checksum": checksum, "tail": state}
+
+
 OPERATIONS: dict[str, Callable[[int, Mapping[str, int]], dict[str, Any]]] = {
     "streaming_statistics": _streaming_statistics,
     "relational_transform": _relational_transform,
@@ -271,6 +371,10 @@ OPERATIONS: dict[str, Callable[[int, Mapping[str, int]], dict[str, Any]]] = {
     "monte_carlo": _monte_carlo,
     "content_deduplication": _content_dedup,
     "bounded_producer_consumer": _producer_consumer,
+    "dense_array_allocation": _dense_array_allocation,
+    "cpu_bound_iteration": _cpu_bound_iteration,
+    "large_hash_map_allocation": _large_hash_map_allocation,
+    "bitmix_saturation_sweep": _bitmix_saturation_sweep,
 }
 
 
@@ -291,6 +395,10 @@ PARAMETER_LIMITS: dict[str, dict[str, tuple[int, int]]] = {
     "monte_carlo": {"samples": (1, 5_000_000)},
     "content_deduplication": {"items": (1, 1_000_000), "unique_space": (1, 1_000_000)},
     "bounded_producer_consumer": {"items": (1, 1_000_000), "queue_size": (1, 4096)},
+    "dense_array_allocation": {"dataset_size": (1, 220_000_000)},
+    "cpu_bound_iteration": {"iterations": (1, 100_000_000)},
+    "large_hash_map_allocation": {"entries": (1, 16_000_000)},
+    "bitmix_saturation_sweep": {"iterations": (1, 60_000_000)},
 }
 
 

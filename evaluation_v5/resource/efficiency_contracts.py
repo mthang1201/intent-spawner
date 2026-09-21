@@ -22,7 +22,7 @@ CAPACITY_PATH = ROOT / "benchmarks_v5" / "resource-efficiency-capacity-v1.yaml"
 CAPACITY_SCHEMA_PATH = ROOT / "benchmarks_v5" / "protocol-v5-resource-efficiency-capacity-v1.schema.json"
 
 CONDITIONS = ("STATIC_LARGE", "P1_CATALOG", "P2_CATALOG", "P2_DYNAMIC")
-FAMILY_COUNT = 16
+FAMILY_COUNT = 20
 REPETITIONS = 10
 PRIMARY_TRIAL_COUNT = FAMILY_COUNT * len(CONDITIONS) * REPETITIONS
 EXECUTION_ORDER_ALGORITHM = "seeded-family-shuffle-with-balanced-latin-condition-rotation-v1"
@@ -176,7 +176,7 @@ def load_capacity_contract(path: Path = CAPACITY_PATH, *, require_frozen: bool =
     if value["packing"] != {
         "requests_only": True,
         "homogeneous_formula": "minimum_integer_floor_across_requested_resources",
-        "balanced_mix": "one_session_per_each_of_16_families",
+        "balanced_mix": f"one_session_per_each_of_{FAMILY_COUNT}_families",
         "algorithm": "multidimensional-first-fit-decreasing-v1",
         "sort_keys": ["maximum_normalized_pressure_descending", "total_normalized_pressure_descending", "family_id_ascending"],
         "concurrency_claim_permitted": False,

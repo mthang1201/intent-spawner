@@ -12,7 +12,7 @@
     "source_workload_manifest": {"const": "benchmarks_v5/resource-envelope-workloads-v1.yaml"},
     "prompt_derivation": {"const": "description + ' Parameters: ' + canonical_compact_sorted_parameter_json + '.'"},
     "inputs": {
-      "type": "array", "minItems": 16, "maxItems": 16,
+      "type": "array", "minItems": 20, "maxItems": 20,
       "items": {
         "type": "object", "additionalProperties": false,
         "required": ["case_id", "family_id", "workload_instance_id", "workload_fingerprint", "prompt", "dataset_size_gb", "code_context_hints"],

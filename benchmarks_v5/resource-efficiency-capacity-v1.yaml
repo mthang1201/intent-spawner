@@ -10,7 +10,7 @@ allocatable: {cpu_m: null, memory_mib: null, gpu_count: null, gpu_resource: null
 packing:
   requests_only: true
   homogeneous_formula: minimum_integer_floor_across_requested_resources
-  balanced_mix: one_session_per_each_of_16_families
+  balanced_mix: one_session_per_each_of_20_families
   algorithm: multidimensional-first-fit-decreasing-v1
   sort_keys: [maximum_normalized_pressure_descending, total_normalized_pressure_descending, family_id_ascending]
   concurrency_claim_permitted: false

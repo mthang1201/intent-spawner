@@ -107,29 +107,29 @@ def _frozen_capacity(cpu_m=4000, memory_mib=4096):
     }
 
 
-def test_contracts_bind_exact_16_by_4_by_10_design():
+def test_contracts_bind_exact_20_by_4_by_10_design():
     status = validate_efficiency_contracts()
-    assert FAMILY_COUNT == 16 and len(CONDITIONS) == 4 and REPETITIONS == 10
-    assert PRIMARY_TRIAL_COUNT == FAMILY_COUNT * len(CONDITIONS) * REPETITIONS == 640
+    assert FAMILY_COUNT == 20 and len(CONDITIONS) == 4 and REPETITIONS == 10
+    assert PRIMARY_TRIAL_COUNT == FAMILY_COUNT * len(CONDITIONS) * REPETITIONS == 800
     assert status["primary_trial_count"] == PRIMARY_TRIAL_COUNT
     assert CONDITIONS == ("STATIC_LARGE", "P1_CATALOG", "P2_CATALOG", "P2_DYNAMIC")
     assert "P3" not in " ".join(CONDITIONS)
     assert status["confirmatory_freeze_status"] == "NOT_FROZEN"
     assert status["capacity_freeze_status"] == "NOT_FROZEN"
-    assert len(load_condition_inputs()["inputs"]) == 16
+    assert len(load_condition_inputs()["inputs"]) == 20
 
 
 def test_plan_is_paired_randomized_and_calls_each_recommender_once_per_family():
     plan, p1, p2 = _plan_with_counting_adapters()
     assert len(plan["trials"]) == PRIMARY_TRIAL_COUNT
     assert plan["independent_semantic_n"] == FAMILY_COUNT
-    assert len(p1.calls) == len(p2.calls) == 16
-    assert Counter(row["condition"] for row in plan["trials"]) == {condition: 160 for condition in CONDITIONS}
+    assert len(p1.calls) == len(p2.calls) == 20
+    assert Counter(row["condition"] for row in plan["trials"]) == {condition: 200 for condition in CONDITIONS}
     for repetition in range(1, 11):
         block = [row for row in plan["trials"] if row["repetition"] == repetition]
-        assert len(block) == 64
+        assert len(block) == 80
         assert set(Counter((row["family_id"], row["condition"]) for row in block).values()) == {1}
-    assert [row["trial_id"] for row in plan["trials"][:64]] != [row["trial_id"] for row in plan["trials"][64:128]]
+    assert [row["trial_id"] for row in plan["trials"][:80]] != [row["trial_id"] for row in plan["trials"][80:160]]
 
 
 def test_execution_order_is_reproducible_balanced_and_interleaved():
@@ -163,7 +163,7 @@ def test_p2_catalog_and_dynamic_reuse_one_frozen_p2_result():
 def test_p2_dynamic_unique_allocation_identity_is_global_final_and_canonical():
     plan, _, _ = _plan_with_counting_adapters()
     summary = summarize_dynamic_allocations(plan["decisions"])
-    assert summary["generated_family_count"] == 16
+    assert summary["generated_family_count"] == 20
     assert summary["unique_generated_allocation_count"] == 1
     definition = summary["unique_allocation_definition"]
     assert definition["scope"] == "global_across_generated_P2_DYNAMIC_families"
@@ -443,20 +443,20 @@ def test_pareto_never_calls_cheaper_but_less_reliable_an_improvement():
     assert classify_pareto(candidate, reference) == "EFFICIENCY_RELIABILITY_TRADEOFF"
 
 
-def test_family_first_analysis_has_16_effective_units_not_160_repetitions():
+def test_family_first_analysis_has_20_effective_units_not_200_repetitions():
     plan, _, _ = _plan_with_counting_adapters()
     rows = [_row(EfficiencyTrialSpec.from_dict(item)) for item in plan["trials"]]
     analysis = analyze_trials(rows, bootstrap_replicates=20)
     assert len(analysis["repetition_summaries"]) == PRIMARY_TRIAL_COUNT
-    assert len(analysis["family_condition_summaries"]) == 64
-    assert {row["effective_family_n"] for row in analysis["statistics"] if row["endpoint_role"] == "primary"} == {16}
+    assert len(analysis["family_condition_summaries"]) == 80
+    assert {row["effective_family_n"] for row in analysis["statistics"] if row["endpoint_role"] == "primary"} == {20}
     assert analysis["design_counts"] == {
-        "number_of_families": 16,
+        "number_of_families": 20,
         "repetitions_per_family_condition": 10,
-        "raw_primary_trial_count": 640,
-        "independent_semantic_n": 16,
+        "raw_primary_trial_count": 800,
+        "independent_semantic_n": 20,
     }
-    assert max(row["effective_family_n"] for row in analysis["statistics"]) <= 16
+    assert max(row["effective_family_n"] for row in analysis["statistics"]) <= 20
 
 
 def test_statistics_reject_duplicate_family_condition_rows():
@@ -478,7 +478,7 @@ def test_capacity_packing_is_deterministic_and_separately_labeled():
     assert first["evidence_type"] == "SIMULATED_CAPACITY"
     assert first["capacity_source"] == "KUBERNETES_NODE_STATUS_ALLOCATABLE"
     assert first["scheduler_input"] == "OBSERVED_POD_RESOURCE_REQUESTS"
-    assert len(first["homogeneous_family_density"]) == 64
+    assert len(first["homogeneous_family_density"]) == 80
     assert len(first["balanced_family_mix"]) == 4
     static = next(row for row in first["homogeneous_family_density"] if row["condition"] == "STATIC_LARGE")
     small = next(row for row in first["homogeneous_family_density"] if row["family_id"] == static["family_id"] and row["condition"] == "P1_CATALOG")
@@ -513,7 +513,7 @@ def test_one_infrastructure_replacement_and_sealing(tmp_path):
     root = tmp_path / "raw"
     execute_plan(root=root, run_id="synthetic", plan=plan, adapter=SuccessfulExecutionAdapter(infrastructure_first=primary), enforce_readiness=False)
     status = validate_raw_package(root)
-    assert status["trials"] == 641 and status["sealed"] is True
+    assert status["trials"] == 801 and status["sealed"] is True
     rows = [json.loads(line) for line in (root / "raw" / "trials.jsonl").read_text().splitlines()]
     assert sum(row.get("replacement_of") is not None for row in rows) == 1
     with pytest.raises(ValueError, match="sealed or completed"):
@@ -531,7 +531,7 @@ def test_unsealed_prefix_resume_requires_identical_provenance(tmp_path):
     with pytest.raises(ValueError, match="provenance hash differs"):
         execute_plan(root=root, run_id="synthetic", plan=plan, adapter=changed, resume=True, enforce_readiness=False)
     execute_plan(root=root, run_id="synthetic", plan=plan, adapter=SuccessfulExecutionAdapter(), resume=True, enforce_readiness=False)
-    assert validate_raw_package(root)["trials"] == 640
+    assert validate_raw_package(root)["trials"] == 800
 
 
 def test_read_only_dry_run_is_explicit_not_executed(tmp_path):
@@ -593,10 +593,10 @@ def test_analysis_report_contract_cannot_label_simulation_as_observed(tmp_path, 
                 "family_condition", "paired_cross_family_inference",
             ],
             "design_counts": {
-                "number_of_families": 16, "repetitions_per_family_condition": 10,
-                "raw_primary_trial_count": 640, "independent_semantic_n": 16,
+                "number_of_families": 20, "repetitions_per_family_condition": 10,
+                "raw_primary_trial_count": 800, "independent_semantic_n": 20,
             },
-            "rows": [{"effective_family_n": 16}],
+            "rows": [{"effective_family_n": 20}],
         }),
         "capacity/simulation.json": json.dumps({
             "evidence_label": LABEL, "evidence_type": EVIDENCE_TYPE,

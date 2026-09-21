@@ -72,7 +72,7 @@ PREFLIGHT_REPORT_SCHEMA_VERSION = "protocol-v5-resource-preflight-report-v1.0.0"
 AUTHORITATIVE_FREEZE_PATH = ROOT / "results_v5" / "protocol-v5.0.0" / "freezes" / "v5-final-execution-freeze" / "freeze-manifest.json"
 READINESS_ATTESTATION_SCHEMA_PATH = ROOT / "benchmarks_v5" / "protocol-v5-e4-readiness-attestation-v1.schema.json"
 READINESS_ATTESTATION_ENV_VAR = "PROTOCOL_V5_E4_READINESS_ATTESTATION"
-EXPECTED_EFFICIENCY_INPUT_SHA256 = "dce8d2b65bdfc7e2ce280e05645906b91a5d4bbfa1f089601ff54dbb5ab02e66"
+EXPECTED_EFFICIENCY_INPUT_SHA256 = "ae9e7be5a2054ccf898d8742f6e904db29c2ea47b049c49d14995cad95d6c501"
 IMAGE_RE = re.compile(r"^[a-z0-9._/-]+@sha256:[0-9a-f]{64}$")
 FORBIDDEN_PRODUCTION_CONTEXTS = {
     "prod", "production", "live", "main", "default", "docker-desktop",

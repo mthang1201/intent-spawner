@@ -206,3 +206,47 @@ workloads:
     correctness_oracle: {checker_version: frozen-invariant-checker-v1.0.0, expected_invariants: {checksum: 4537195982250917991, items: 100000, tail: 13963992239895998930}}
     timeout_seconds: 120
     data_source: *synthetic
+  - family_id: dense_array_allocation
+    workload_instance_id: dense-array-allocation-v1-elements-180000000-seed-8117
+    workload_instance_version: 1.0.0
+    operation: dense_array_allocation
+    description: Large contiguous unsigned-64 array materialization sized to approach the 2048 MiB memory ceiling under low memory allocations while completing quickly at a correctly sized allocation.
+    deterministic_seed: 8117
+    parameters: {dataset_size: 180000000}
+    expected_marker_sha256: "75d7473572cf42d67223fe64a28a4a6bba8ae280b385484df30b72f1c1693dcf"
+    correctness_oracle: {checker_version: frozen-invariant-checker-v1.0.0, expected_invariants: {checksum: 3317213468984727290, dataset_size: 180000000, elements: 180000000, tail: 13341076425184216860}}
+    timeout_seconds: 120
+    data_source: *synthetic
+  - family_id: cpu_bound_iteration
+    workload_instance_id: cpu-bound-iteration-v1-iterations-40000000-seed-8118
+    workload_instance_version: 1.0.0
+    operation: cpu_bound_iteration
+    description: Tight deterministic scalar loop with no early exit, sized to approach the 120-second timeout ceiling under low CPU allocations while completing well within it at a correctly sized allocation.
+    deterministic_seed: 8118
+    parameters: {iterations: 40000000}
+    expected_marker_sha256: "009743d1e65e2f1d3f9c29f6300bbff3c2b72ff112d4d31bb4b364fe76a92fef"
+    correctness_oracle: {checker_version: frozen-invariant-checker-v1.0.0, expected_invariants: {checksum: 15349000221093300416, iterations: 40000000, tail: 10453772492315592154}}
+    timeout_seconds: 120
+    data_source: *synthetic
+  - family_id: large_hash_map_allocation
+    workload_instance_id: large-hash-map-v1-entries-14000000-seed-8119
+    workload_instance_version: 1.0.0
+    operation: large_hash_map_allocation
+    description: Large dictionary materialization sized to approach the 2048 MiB memory ceiling under low memory allocations, via per-entry hash-table overhead rather than a contiguous array.
+    deterministic_seed: 8119
+    parameters: {entries: 14000000}
+    expected_marker_sha256: "c800002893b7975cd8076075909cbaea693c6e11bf3afb64ea93676c47f07df3"
+    correctness_oracle: {checker_version: frozen-invariant-checker-v1.0.0, expected_invariants: {checksum: 17896414797551332044, entries: 14000000, tail: 4221874060311090672}}
+    timeout_seconds: 120
+    data_source: *synthetic
+  - family_id: bitmix_saturation_sweep
+    workload_instance_id: bitmix-saturation-v1-iterations-22000000-seed-8120
+    workload_instance_version: 1.0.0
+    operation: bitmix_saturation_sweep
+    description: Two-round deterministic bit-mixing loop with no early exit, sized to approach the 120-second timeout ceiling under low CPU allocations via a heavier per-iteration mechanism than cpu_bound_iteration.
+    deterministic_seed: 8120
+    parameters: {iterations: 22000000}
+    expected_marker_sha256: "9dc6fa6cac809ed06b2b2fa339ddd27bd4b4d95a630c22bb980f1539a5721c23"
+    correctness_oracle: {checker_version: frozen-invariant-checker-v1.0.0, expected_invariants: {checksum: 8571833068596674850, iterations: 22000000, tail: 828146324709760116}}
+    timeout_seconds: 120
+    data_source: *synthetic

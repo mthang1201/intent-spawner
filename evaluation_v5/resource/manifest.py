@@ -82,8 +82,8 @@ def validate_resource_manifest(manifest: Mapping[str, Any]) -> dict[str, Any]:
     if manifest["safe_rule"] != SAFE_RULE:
         raise ValueError("safe rule differs from the frozen E4 contract")
     workloads = manifest["workloads"]
-    if not isinstance(workloads, list) or len(workloads) != 16:
-        raise ValueError("resource workload manifest requires exactly 16 families")
+    if not isinstance(workloads, list) or len(workloads) != len(OPERATIONS):
+        raise ValueError(f"resource workload manifest requires exactly {len(OPERATIONS)} families")
     ids: set[str] = set()
     instance_ids: set[str] = set()
     operations: set[str] = set()

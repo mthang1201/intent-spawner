@@ -8,7 +8,7 @@
     "protocol_version": {"const": "5.0.0"},
     "assertion_scope": {"const": "design_review_not_statistical_inference"},
     "entries": {
-      "type": "array", "minItems": 16, "maxItems": 16,
+      "type": "array", "minItems": 20, "maxItems": 20,
       "items": {
         "type": "object", "additionalProperties": false,
         "required": ["family_id", "description", "primary_kernel", "data_representation", "dominant_resource_mechanism", "major_algorithmic_operation", "distinctness_rationale", "known_overlap_limitations"],

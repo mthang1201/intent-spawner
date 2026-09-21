@@ -5,10 +5,10 @@ confirmatory_freeze_status: NOT_FROZEN
 experiment:
   experiment_id: E4_RESOURCE_EFFICIENCY
   workload_input_path: benchmarks_v5/resource-efficiency-inputs-v1.yaml
-  workload_input_sha256: dce8d2b65bdfc7e2ce280e05645906b91a5d4bbfa1f089601ff54dbb5ab02e66
+  workload_input_sha256: ae9e7be5a2054ccf898d8742f6e904db29c2ea47b049c49d14995cad95d6c501
   repetitions: 10
   plan_seed: 20260904
-  primary_trial_count: 640
+  primary_trial_count: 800
   single_active_pod: true
   infrastructure_replacements_per_primary_trial: 1
   execution_order_algorithm: seeded-family-shuffle-with-balanced-latin-condition-rotation-v1
@@ -58,6 +58,6 @@ statistics:
   bootstrap_replicates: 2000
 capacity:
   contract_path: benchmarks_v5/resource-efficiency-capacity-v1.yaml
-  contract_sha256: 1ab062a085d8cfd5b87d8a8d8c75b9b5630d6b659c154e0cbe81760dbb45f989
+  contract_sha256: 8faab9de81eb557d809b0dd8cb87e25b9820f737be664989d5222cb5c7095d7c
   evidence_label: SIMULATED_DETERMINISTIC_REQUEST_PACKING
 activation: Populate and verify the oracle package, immutable image digest, and node capacity; then freeze only in a clean committed revision before observing comparative outcomes.

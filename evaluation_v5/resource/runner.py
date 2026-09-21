@@ -211,7 +211,7 @@ def _base_provenance(
             "path": str(manifest_path.relative_to(ROOT)),
             "schema_version": manifest["schema_version"],
             "sha256": file_sha256(manifest_path),
-            "family_count": 16,
+            "family_count": len(manifest["workloads"]),
         },
         "safe_rule": {
             "version": manifest["safe_rule"]["version"],
@@ -360,7 +360,7 @@ def create_dry_run_package(
     status = {
         "status": "DRY_RUN",
         "cluster_measurement_status": "NOT_EXECUTED",
-        "planned_families": 16,
+        "planned_families": len(manifest["workloads"]),
         "executed_trials": 0,
         "derived_envelopes": 0,
         "manual_review_status": "NOT_APPLICABLE",

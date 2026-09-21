@@ -212,9 +212,9 @@ def manifest():
 
 
 def test_manifest_has_sixteen_independent_bounded_families(manifest):
-    assert len(manifest["workloads"]) == 16
-    assert len({item["family_id"] for item in manifest["workloads"]}) == 16
-    assert len({item["operation"] for item in manifest["workloads"]}) == 16
+    assert len(manifest["workloads"]) == 20
+    assert len({item["family_id"] for item in manifest["workloads"]}) == 20
+    assert len({item["operation"] for item in manifest["workloads"]}) == 20
     assert manifest["candidate_lattices"] == {
         "memory_mib": MEMORY_LATTICE_MIB,
         "cpu_m": CPU_LATTICE_M,
@@ -222,9 +222,9 @@ def test_manifest_has_sixteen_independent_bounded_families(manifest):
     encoded = json.dumps(manifest).lower()
     for forbidden in ("recommended_profile", "expected_minimum_profile", '"intent"', '"resource_oracle"'):
         assert forbidden not in encoded
-    assert verify_workload_markers(manifest) == {"status": "pass", "verified_markers": 16}
-    assert len({item["workload_instance_id"] for item in manifest["workloads"]}) == 16
-    assert len({workload_fingerprint(item) for item in manifest["workloads"]}) == 16
+    assert verify_workload_markers(manifest) == {"status": "pass", "verified_markers": 20}
+    assert len({item["workload_instance_id"] for item in manifest["workloads"]}) == 20
+    assert len({workload_fingerprint(item) for item in manifest["workloads"]}) == 20
     schema = json.loads((ROOT / "benchmarks_v5/protocol-v5-resource-workloads-v1.schema.json").read_text())
     Draft202012Validator(schema).validate(manifest)
 
@@ -281,7 +281,7 @@ def test_resource_package_has_no_recommender_imports():
 def test_plan_is_deterministic_and_bounded(manifest):
     assert build_calibration_plan(manifest) == build_calibration_plan(manifest)
     plan = build_calibration_plan(manifest)
-    assert plan["maximum_primary_trials"] == 448
+    assert plan["maximum_primary_trials"] == 560
     assert plan["measurement_status"] == "NOT_EXECUTED"
     assert plan["cluster_mutation"] is False
 
@@ -665,7 +665,7 @@ def test_fake_adapter_drives_search_and_manual_review_gate(tmp_path, monkeypatch
     assert report["execution_status"] == "SYNTHETIC"
     assert report["sealed"] is False
     derived = json.loads((result_dir / "derived" / "safe-envelopes.json").read_text())
-    assert len(derived["envelopes"]) == 16
+    assert len(derived["envelopes"]) == 20
     assert all(item["cpu_selected_m"] == 500 for item in derived["envelopes"])
     assert all(item["memory_selected_mib"] == 256 for item in derived["envelopes"])
     decisions = [json.loads(line) for line in (result_dir / "raw" / "decision-ledger.jsonl").read_text().splitlines()]
@@ -958,7 +958,7 @@ def test_comparison_rejects_missing_or_mismatched_crosswalk(tmp_path):
     crosswalk["entries"] = crosswalk["entries"][:-1]
     path = tmp_path / "missing-crosswalk.yaml"
     path.write_text(yaml.safe_dump(crosswalk), encoding="utf-8")
-    with pytest.raises(ValueError, match="16 entries"):
+    with pytest.raises(ValueError, match="20 entries"):
         load_crosswalk(path)
 
 

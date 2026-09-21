@@ -120,9 +120,10 @@ def load_crosswalk(path: Path = CROSSWALK_PATH, *, manifest_path: Path = DEFAULT
     if value.get("schema_version") != "protocol-v5-resource-allocation-crosswalk-v1.0.0":
         raise ValueError("unsupported resource allocation crosswalk")
     entries = value.get("entries")
-    if not isinstance(entries, list) or len(entries) != 16:
-        raise ValueError("resource allocation crosswalk requires 16 entries")
     manifest = load_resource_manifest(manifest_path)
+    manifest_family_count = len(manifest["workloads"])
+    if not isinstance(entries, list) or len(entries) != manifest_family_count:
+        raise ValueError(f"resource allocation crosswalk requires {manifest_family_count} entries")
     expected = {
         item["family_id"]: (item["workload_instance_id"], workload_fingerprint(item))
         for item in manifest["workloads"]

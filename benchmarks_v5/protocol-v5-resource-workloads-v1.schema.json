@@ -46,7 +46,7 @@
       }
     },
     "workloads": {
-      "type": "array", "minItems": 16, "maxItems": 16,
+      "type": "array", "minItems": 20, "maxItems": 20,
       "items": {
         "type": "object", "additionalProperties": false,
         "required": ["family_id", "workload_instance_id", "workload_instance_version", "operation", "description", "deterministic_seed", "parameters", "expected_marker_sha256", "correctness_oracle", "timeout_seconds", "data_source"],
@@ -54,7 +54,7 @@
           "family_id": {"type": "string", "pattern": "^[a-z][a-z0-9_]{2,63}$"},
           "workload_instance_id": {"type": "string", "pattern": "^[a-z][a-z0-9._-]{2,127}$"},
           "workload_instance_version": {"const": "1.0.0"},
-          "operation": {"enum": ["streaming_statistics", "relational_transform", "hash_join", "sort_group_reduction", "categorical_encoding", "iterative_linear_fit", "dense_matrix_computation", "sparse_graph_traversal", "text_tfidf", "json_normalization", "image_convolution", "compression_roundtrip", "rolling_timeseries", "monte_carlo", "content_deduplication", "bounded_producer_consumer"]},
+          "operation": {"enum": ["streaming_statistics", "relational_transform", "hash_join", "sort_group_reduction", "categorical_encoding", "iterative_linear_fit", "dense_matrix_computation", "sparse_graph_traversal", "text_tfidf", "json_normalization", "image_convolution", "compression_roundtrip", "rolling_timeseries", "monte_carlo", "content_deduplication", "bounded_producer_consumer", "dense_array_allocation", "cpu_bound_iteration", "large_hash_map_allocation", "bitmix_saturation_sweep"]},
           "description": {"type": "string", "minLength": 1},
           "deterministic_seed": {"type": "integer"},
           "parameters": {"type": "object"},
