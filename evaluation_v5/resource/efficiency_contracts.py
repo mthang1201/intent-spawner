@@ -16,8 +16,6 @@ from .manifest import DEFAULT_MANIFEST, load_resource_manifest, workload_fingerp
 ROOT = Path(__file__).resolve().parents[2]
 INPUT_PATH = ROOT / "benchmarks_v5" / "resource-efficiency-inputs-v1.yaml"
 INPUT_SCHEMA_PATH = ROOT / "benchmarks_v5" / "protocol-v5-resource-efficiency-inputs-v1.schema.json"
-FREEZE_PATH = ROOT / "benchmarks_v5" / "resource-efficiency-freeze-contract-v1.yaml"
-FREEZE_SCHEMA_PATH = ROOT / "benchmarks_v5" / "protocol-v5-resource-efficiency-freeze-v1.schema.json"
 CAPACITY_PATH = ROOT / "benchmarks_v5" / "resource-efficiency-capacity-v1.yaml"
 CAPACITY_SCHEMA_PATH = ROOT / "benchmarks_v5" / "protocol-v5-resource-efficiency-capacity-v1.schema.json"
 
@@ -26,6 +24,7 @@ FAMILY_COUNT = 20
 REPETITIONS = 10
 PRIMARY_TRIAL_COUNT = FAMILY_COUNT * len(CONDITIONS) * REPETITIONS
 EXECUTION_ORDER_ALGORITHM = "seeded-family-shuffle-with-balanced-latin-condition-rotation-v1"
+PLAN_SEED = 20260904
 
 # Recognized E4 resource-efficiency design generations, current first.
 #
@@ -153,75 +152,6 @@ def load_condition_inputs(path: Path = INPUT_PATH, *, workload_path: Path = DEFA
     return value
 
 
-def load_efficiency_freeze(path: Path = FREEZE_PATH) -> dict[str, Any]:
-    value = _load_yaml(path)
-    _schema_validate(value, FREEZE_SCHEMA_PATH)
-    experiment = value["experiment"]
-    if list(value["conditions"]) != list(CONDITIONS):
-        raise ValueError("comparative condition set or order differs from the registered contract")
-    if experiment != {
-        "experiment_id": "E4_RESOURCE_EFFICIENCY",
-        "workload_input_path": "benchmarks_v5/resource-efficiency-inputs-v1.yaml",
-        "workload_input_sha256": file_sha256(INPUT_PATH),
-        "repetitions": REPETITIONS,
-        "plan_seed": 20260904,
-        "primary_trial_count": PRIMARY_TRIAL_COUNT,
-        "single_active_pod": True,
-        "infrastructure_replacements_per_primary_trial": 1,
-        "execution_order_algorithm": EXECUTION_ORDER_ALGORITHM,
-    }:
-        raise ValueError("comparative experiment design differs from the registered contract")
-    if value["catalog_profiles"] != CATALOG_PROFILES:
-        raise ValueError("catalog resource table differs from the registered contract")
-    decision = value["decision_policy"]
-    if set(decision) != {"static_large_profile", "p1_adapter", "p2_adapter", "dynamic_policy_path", "dynamic_policy_sha256", "oracle_data_permitted", "calls_per_family", "reuse_p2_for_conditions", "policy_clipping_semantics", "p3"}:
-        raise ValueError("decision policy shape differs from the registered contract")
-    dynamic_path = ROOT / str(decision.get("dynamic_policy_path", ""))
-    if not dynamic_path.is_file() or decision.get("dynamic_policy_sha256") != file_sha256(dynamic_path):
-        raise ValueError("dynamic policy content differs from the freeze binding")
-    if decision.get("static_large_profile") != "large" or decision.get("p1_adapter") != "protocol-v5-p1-frozen-adapter-v1" or decision.get("p2_adapter") != "protocol-v5-p2-frozen-adapter-v1":
-        raise ValueError("frozen comparator adapter binding differs")
-    if decision.get("oracle_data_permitted") is not False or decision.get("calls_per_family") != {"P1": 1, "P2": 1} or decision.get("reuse_p2_for_conditions") != ["P2_CATALOG", "P2_DYNAMIC"] or decision.get("policy_clipping_semantics") != "reject_and_catalog_fallback":
-        raise ValueError("decision generation must be oracle-free and once per family")
-    p3 = decision.get("p3") or {}
-    gate_path = ROOT / str(p3.get("gate_path", ""))
-    # This is an immutable compatibility checksum in the registered development
-    # contract, not execution authority.  Live E4 obtains the P3 decision from
-    # VerifiedProductionFreeze in efficiency_runner.py and never parses this
-    # historical design snapshot.
-    if p3 != {"included": False, "authoritative_gate": "not_retained", "gate_path": "results_v5/protocol-v5.0.0/freezes/frozen-configuration.json", "gate_sha256": file_sha256(gate_path) if gate_path.is_file() else None}:
-        raise ValueError("legacy development P3 exclusion binding differs")
-    contrasts = tuple(tuple(item) for item in value["statistics"].get("contrasts", []))
-    statistics = value["statistics"]
-    if set(statistics) != {"family_is_primary_unit", "repetitions_are_independent_families", "primary_endpoints", "secondary_endpoints", "pareto_objectives", "success_noninferiority_margin", "contrasts", "multiplicity", "bootstrap_replicates"}:
-        raise ValueError("statistical contract shape differs")
-    if contrasts != CONTRASTS or statistics.get("family_is_primary_unit") is not True or statistics.get("repetitions_are_independent_families") is not False or statistics.get("multiplicity") != "holm_within_endpoint" or statistics.get("bootstrap_replicates") != 2000:
-        raise ValueError("registered family-first statistical design differs")
-    if statistics.get("primary_endpoints") != ["family_success_rate", "family_oom_rate", "cpu_cost_per_success", "memory_cost_per_success"]:
-        raise ValueError("primary endpoints differ from the registered contract")
-    if statistics.get("secondary_endpoints") != ["timeout_rate", "pending_or_admission_rate", "runtime_error_rate", "correctness_rate", "correct_completion_rate", "incorrect_rate", "runtime_seconds", "cpu_request_ratio", "memory_request_ratio", "oracle_error"]:
-        raise ValueError("secondary endpoints differ from the registered contract")
-    if statistics.get("pareto_objectives") != PARETO_OBJECTIVES:
-        raise ValueError("Pareto objectives differ from the registered contract")
-    if statistics.get("success_noninferiority_margin") is not None:
-        raise ValueError("no post-hoc success noninferiority margin is permitted")
-    oracle = value["oracle_package"]
-    if set(oracle) != {"path", "sha256", "manual_approval_status", "required_envelope_status"} or oracle.get("required_envelope_status") != "APPROVED":
-        raise ValueError("oracle binding shape differs")
-    image = value["image"]
-    if set(image) != {"reference", "digest_verified"}:
-        raise ValueError("image binding shape differs")
-    capacity = value["capacity"]
-    if capacity != {"contract_path": "benchmarks_v5/resource-efficiency-capacity-v1.yaml", "contract_sha256": file_sha256(CAPACITY_PATH), "evidence_label": "SIMULATED_DETERMINISTIC_REQUEST_PACKING"}:
-        raise ValueError("capacity contract binding differs")
-    if value["confirmatory_freeze_status"] == "NOT_FROZEN":
-        if oracle != {"path": None, "sha256": None, "manual_approval_status": "NOT_APPROVED", "required_envelope_status": "APPROVED"} or image != {"reference": None, "digest_verified": False}:
-            raise ValueError("development freeze must not claim oracle or image approval")
-    elif value["current_phase"] != "confirmatory":
-        raise ValueError("a FROZEN comparative contract must be confirmatory")
-    return value
-
-
 def load_capacity_contract(path: Path = CAPACITY_PATH, *, require_frozen: bool = False) -> dict[str, Any]:
     value = _load_yaml(path)
     _schema_validate(value, CAPACITY_SCHEMA_PATH)
@@ -258,31 +188,28 @@ def load_capacity_contract(path: Path = CAPACITY_PATH, *, require_frozen: bool =
 
 def validate_efficiency_contracts() -> dict[str, Any]:
     inputs = load_condition_inputs()
-    freeze = load_efficiency_freeze()
     capacity = load_capacity_contract()
     return {
         "status": "pass",
         "protocol_version": "5.0.0",
         "family_count": len(inputs["inputs"]),
         "condition_count": len(CONDITIONS),
-        "repetitions": freeze["experiment"]["repetitions"],
-        "primary_trial_count": len(inputs["inputs"]) * len(CONDITIONS) * freeze["experiment"]["repetitions"],
-        "confirmatory_freeze_status": freeze["confirmatory_freeze_status"],
+        "repetitions": REPETITIONS,
+        "primary_trial_count": len(inputs["inputs"]) * len(CONDITIONS) * REPETITIONS,
         "capacity_freeze_status": capacity["freeze_status"],
-        "sha256": {"inputs": file_sha256(INPUT_PATH), "freeze": file_sha256(FREEZE_PATH), "capacity": file_sha256(CAPACITY_PATH)},
+        "sha256": {"inputs": file_sha256(INPUT_PATH), "capacity": file_sha256(CAPACITY_PATH)},
     }
 
 
-def confirmatory_readiness(freeze: Mapping[str, Any], capacity: Mapping[str, Any]) -> list[str]:
+def node_capacity_readiness(capacity: Mapping[str, Any]) -> list[str]:
+    """Return real, locally-checkable node-capacity execution blockers.
+
+    This no longer consults a "freeze contract" document (that immutable
+    evidence-governance layer has been removed); it only reports whether the
+    node capacity contract itself has been finalized.
+    """
+
     failures: list[str] = []
-    if freeze.get("current_phase") != "confirmatory" or freeze.get("confirmatory_freeze_status") != "FROZEN":
-        failures.append("CONFIRMATORY_FREEZE_INACTIVE")
-    oracle = freeze.get("oracle_package") or {}
-    if oracle.get("manual_approval_status") != "APPROVED" or not oracle.get("path") or not oracle.get("sha256"):
-        failures.append("APPROVED_ORACLE_UNAVAILABLE")
-    image = freeze.get("image") or {}
-    if not image.get("reference") or image.get("digest_verified") is not True:
-        failures.append("IMAGE_DIGEST_UNVERIFIED")
     if capacity.get("freeze_status") != "FROZEN":
         failures.append("NODE_CAPACITY_NOT_FROZEN")
     return failures
@@ -291,9 +218,9 @@ def confirmatory_readiness(freeze: Mapping[str, Any], capacity: Mapping[str, Any
 __all__ = [
     "CAPACITY_PATH", "CATALOG_PROFILES", "CONDITIONS", "CONTRASTS",
     "CURRENT_DESIGN_ID", "EXECUTION_ORDER_ALGORITHM", "FAMILY_COUNT",
-    "FREEZE_PATH", "INPUT_PATH", "PARETO_OBJECTIVES", "PRIMARY_TRIAL_COUNT",
+    "INPUT_PATH", "PARETO_OBJECTIVES", "PLAN_SEED", "PRIMARY_TRIAL_COUNT",
     "REPETITIONS", "RESOURCE_EFFICIENCY_DESIGNS",
-    "confirmatory_readiness", "load_capacity_contract", "load_condition_inputs",
-    "load_efficiency_freeze", "mechanical_prompt", "resolve_design_generation",
+    "load_capacity_contract", "load_condition_inputs",
+    "mechanical_prompt", "node_capacity_readiness", "resolve_design_generation",
     "validate_efficiency_contracts",
 ]

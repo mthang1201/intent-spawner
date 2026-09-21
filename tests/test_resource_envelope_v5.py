@@ -43,8 +43,6 @@ from evaluation_v5.resource.models import TRIAL_SCHEMA_VERSION, TrialObservation
 from evaluation_v5.resource.planner import build_calibration_plan, make_trial_spec
 from evaluation_v5.resource.pod_runner import _delta
 from evaluation_v5.resource.runner import (
-    DEFAULT_FREEZE,
-    _comparison_provenance,
     create_dry_run_package,
     record_manual_review,
     run_calibration,
@@ -54,14 +52,6 @@ from evaluation_v5.resource.workloads import execute_workload, verify_workload_r
 
 ROOT = Path(__file__).resolve().parents[1]
 IMAGE = "example.invalid/intent-spawner-resource-v5@sha256:" + "a" * 64
-
-
-def test_production_envelope_snapshot_is_non_authorizing_dry_run_compatibility():
-    result = _comparison_provenance(DEFAULT_FREEZE, require_production=False)
-    assert result["freeze_identity"]["freeze_id"] == "v5-final-execution-freeze"
-    assert result["freeze_identity"]["source"] == "production_envelope_snapshot_non_authorizing"
-    assert set(result["systems"]) == {"P1", "P2"}
-    assert result["p3_gate"] == {"status": "not_retained", "p3_active": False}
 
 
 def _now() -> str:

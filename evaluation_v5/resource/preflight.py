@@ -1,25 +1,28 @@
-"""Authoritative preflight verification engine for Protocol-v5 E4 execution.
+"""Operator preflight verification engine for Protocol-v5 E4 execution.
 
 Fails closed unless all required real-execution prerequisites exist:
-1.  exact frozen Git revision;
-2.  authoritative final freeze identity;
-3.  workload manifest checksum;
-4.  approved independent resource oracle identity where required;
-5.  disposable evaluation cluster identity;
-6.  Kubernetes server/environment identity;
-7.  frozen node capacity;
-8.  administrator-approved pinned execution image digest;
-9.  cgroup/telemetry capability;
-10. required namespaces/service account;
-11. workload correctness markers;
-12. timeout contract;
-13. cleanup permissions;
-14. trial ordering/randomization contract;
-15. resume state;
-16. no production/uncontrolled cluster.
+1.  exact expected Git revision (when one is configured);
+2.  workload manifest checksum;
+3.  approved independent resource oracle identity where required;
+4.  disposable evaluation cluster identity;
+5.  Kubernetes server/environment identity;
+6.  frozen node capacity;
+7.  administrator-approved pinned execution image digest;
+8.  cgroup/telemetry capability;
+9.  required namespaces/service account;
+10. workload correctness markers;
+11. timeout contract;
+12. cleanup permissions;
+13. trial ordering/randomization contract;
+14. resume state;
+15. no production/uncontrolled cluster.
 
 OBSERVED status is impossible unless actual real trial observations exist.
 A plan, generated Job YAML, fake adapter or dry-run must never become OBSERVED.
+
+This module no longer binds any check to an immutable "production freeze"
+manifest -- that evidence-governance layer (evaluation_v5.freeze) has been
+removed. Every check here is a directly-verifiable, real precondition.
 """
 
 from __future__ import annotations
@@ -38,38 +41,29 @@ from typing import Any, Mapping, Sequence
 
 from jsonschema import Draft202012Validator
 
-from evaluation_v5.freeze import (
-    VerifiedProductionFreeze,
-    verify_production_freeze,
-)
-
 from .contracts import (
     DEFAULT_MANIFEST,
-    FREEZE_CONTRACT_PATH,
     IMAGE_STATE_PATH,
     ROOT,
-    freeze_is_confirmatory,
     image_state_is_verified,
     load_cluster_policy,
-    load_freeze_contract,
     load_image_state,
 )
 from .efficiency_contracts import (
     CAPACITY_PATH,
+    EXECUTION_ORDER_ALGORITHM,
     FAMILY_COUNT,
-    FREEZE_PATH as EFFICIENCY_FREEZE_PATH,
     INPUT_PATH as EFFICIENCY_INPUT_PATH,
+    PLAN_SEED,
     PRIMARY_TRIAL_COUNT,
     REPETITIONS,
     load_capacity_contract,
     load_condition_inputs,
-    load_efficiency_freeze,
 )
 from .evidence import file_sha256, validate_evidence_package
 from .manifest import load_resource_manifest, verify_workload_markers
 
 PREFLIGHT_REPORT_SCHEMA_VERSION = "protocol-v5-resource-preflight-report-v1.0.0"
-AUTHORITATIVE_FREEZE_PATH = ROOT / "results_v5" / "protocol-v5.0.0" / "freezes" / "v5-final-execution-freeze" / "freeze-manifest.json"
 READINESS_ATTESTATION_SCHEMA_PATH = ROOT / "benchmarks_v5" / "protocol-v5-e4-readiness-attestation-v1.schema.json"
 READINESS_ATTESTATION_ENV_VAR = "PROTOCOL_V5_E4_READINESS_ATTESTATION"
 EXPECTED_EFFICIENCY_INPUT_SHA256 = "ae9e7be5a2054ccf898d8742f6e904db29c2ea47b049c49d14995cad95d6c501"
@@ -139,12 +133,8 @@ class PreflightCheckResult:
     reasons: tuple[str, ...]
 
 
-def _load_readiness_attestation(
-    path: Path,
-    *,
-    freeze: VerifiedProductionFreeze,
-) -> dict[str, Any]:
-    """Load an external, checksum-bound readiness statement and bind its freeze."""
+def _load_readiness_attestation(path: Path) -> dict[str, Any]:
+    """Load and schema-validate an external, checksum-bound readiness statement."""
 
     def reject_duplicate_keys(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
         selected: dict[str, Any] = {}
@@ -180,16 +170,6 @@ def _load_readiness_attestation(
         raise ValueError(
             f"E4 readiness attestation schema violation at {location}: {errors[0].message}"
         )
-    expected = freeze.identity
-    actual = document["freeze"]
-    for key in (
-        "freeze_id",
-        "freeze_manifest_sha256",
-        "frozen_execution_sha",
-        "freeze_artifact_commit_sha",
-    ):
-        if actual.get(key) != expected.get(key):
-            raise ValueError(f"E4 readiness attestation freeze mismatch at {key}")
     document["_attestation_path"] = str(path.resolve())
     document["_attestation_sha256"] = file_sha256(path)
     return document
@@ -212,13 +192,8 @@ def _external_image_state(attestation: Mapping[str, Any]) -> dict[str, Any]:
     }
 
 
-def verify_e4_readiness_inputs(
-    *, freeze_path: Path, readiness_attestation_path: Path
-) -> tuple[VerifiedProductionFreeze, dict[str, Any]]:
-    freeze = verify_production_freeze(freeze_path)
-    return freeze, _load_readiness_attestation(
-        readiness_attestation_path, freeze=freeze
-    )
+def verify_e4_readiness_inputs(*, readiness_attestation_path: Path) -> dict[str, Any]:
+    return _load_readiness_attestation(readiness_attestation_path)
 
 
 def check_adapter_authenticity(adapter: Any | None = None) -> PreflightCheckResult:
@@ -281,39 +256,8 @@ def check_frozen_git_revision(environ: Mapping[str, str] | None = None) -> Prefl
     )
 
 
-def check_authoritative_final_freeze(
-    *, target: str, freeze_path: Path = AUTHORITATIVE_FREEZE_PATH
-) -> PreflightCheckResult:
-    blockers: list[str] = []
-    reasons: list[str] = []
-    details: dict[str, Any] = {}
-
-    if not freeze_path.is_file():
-        blockers.append("AUTHORITATIVE_FREEZE_MISSING")
-        reasons.append(f"Authoritative freeze file missing at {freeze_path}.")
-    else:
-        try:
-            verified = verify_production_freeze(freeze_path)
-            details.update(verified.identity)
-            p3 = verified.configuration_snapshot["p3_gate"]
-            if p3.get("status") != "not_retained" or p3.get("p3_active") is not False:
-                blockers.append("P3_GATE_NOT_EXCLUDED")
-                reasons.append("Authoritative freeze configuration does not exclude P3.")
-        except Exception as exc:
-            blockers.append("AUTHORITATIVE_FREEZE_CORRUPT")
-            reasons.append(f"Authoritative freeze verification failed: {exc}")
-
-    return PreflightCheckResult(
-        check_name="authoritative_final_freeze",
-        passed=not blockers,
-        blocker_codes=tuple(sorted(set(blockers))),
-        details=details,
-        reasons=tuple(reasons),
-    )
-
-
 def check_external_readiness_attestation(
-    *, freeze_path: Path, attestation_path: Path | None
+    *, attestation_path: Path | None
 ) -> tuple[PreflightCheckResult, dict[str, Any] | None]:
     if attestation_path is None:
         return (
@@ -327,8 +271,7 @@ def check_external_readiness_attestation(
             None,
         )
     try:
-        _, attestation = verify_e4_readiness_inputs(
-            freeze_path=freeze_path,
+        attestation = verify_e4_readiness_inputs(
             readiness_attestation_path=attestation_path,
         )
     except Exception as exc:
@@ -719,11 +662,10 @@ def check_trial_ordering_contract(*, target: str) -> PreflightCheckResult:
     }
     if target in ("efficiency", "all"):
         try:
-            eff_freeze = load_efficiency_freeze()
-            details["efficiency_algorithm"] = eff_freeze["experiment"]["execution_order_algorithm"]
-            details["plan_seed"] = eff_freeze["experiment"]["plan_seed"]
-            details["repetitions"] = eff_freeze["experiment"]["repetitions"]
-            details["primary_trials"] = eff_freeze["experiment"]["primary_trial_count"]
+            details["efficiency_algorithm"] = EXECUTION_ORDER_ALGORITHM
+            details["plan_seed"] = PLAN_SEED
+            details["repetitions"] = REPETITIONS
+            details["primary_trials"] = PRIMARY_TRIAL_COUNT
         except Exception as exc:
             return PreflightCheckResult(
                 check_name="trial_ordering_contract",
@@ -811,10 +753,9 @@ def evaluate_operator_preflight(
     resume: bool = False,
     manifest_path: Path | None = None,
     environ: Mapping[str, str] | None = None,
-    freeze_path: Path = AUTHORITATIVE_FREEZE_PATH,
     readiness_attestation_path: Path | None = None,
 ) -> dict[str, Any]:
-    """Evaluate all 16 execution prerequisites and emit authoritative preflight report."""
+    """Evaluate all execution prerequisites and emit an operator preflight report."""
     if target not in ("envelope", "efficiency", "all"):
         raise ValueError(f"Invalid preflight target '{target}'. Must be envelope, efficiency, or all.")
 
@@ -824,12 +765,10 @@ def evaluate_operator_preflight(
         if attestation_value:
             readiness_attestation_path = Path(attestation_value)
     attestation_check, attestation = check_external_readiness_attestation(
-        freeze_path=freeze_path,
         attestation_path=readiness_attestation_path,
     )
     checks: list[PreflightCheckResult] = [
         check_frozen_git_revision(environ=environ),
-        check_authoritative_final_freeze(target=target, freeze_path=freeze_path),
         attestation_check,
         check_workload_manifest(target=target, manifest_path=manifest_path),
         check_approved_resource_oracle(target=target, attestation=attestation),
@@ -892,7 +831,6 @@ def assert_live_execution_ready(
     resume: bool = False,
     manifest_path: Path | None = None,
     environ: Mapping[str, str] | None = None,
-    freeze_path: Path = AUTHORITATIVE_FREEZE_PATH,
     readiness_attestation_path: Path | None = None,
 ) -> dict[str, Any]:
     """Fail closed with descriptive RuntimeError if environment is not READY for real execution."""
@@ -904,7 +842,6 @@ def assert_live_execution_ready(
         resume=resume,
         manifest_path=manifest_path,
         environ=environ,
-        freeze_path=freeze_path,
         readiness_attestation_path=readiness_attestation_path,
     )
     if report["status"] != "READY":
@@ -920,7 +857,6 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument("--image", type=str, default=None, help="Container image reference to check")
     parser.add_argument("--result-dir", type=Path, default=None, help="Target result directory to verify resume/pre-existence")
     parser.add_argument("--resume", action="store_true", help="Whether run is resuming")
-    parser.add_argument("--freeze", type=Path, default=AUTHORITATIVE_FREEZE_PATH, help="Authoritative final freeze manifest")
     parser.add_argument("--readiness-attestation", type=Path, default=None, help="External E4 readiness attestation")
     parser.add_argument("--format", choices=("json", "text"), default="json", help="Output format")
     args = parser.parse_args(argv)
@@ -930,7 +866,6 @@ def main(argv: Sequence[str] | None = None) -> int:
         image=args.image,
         result_dir=args.result_dir,
         resume=args.resume,
-        freeze_path=args.freeze,
         readiness_attestation_path=args.readiness_attestation,
     )
 
