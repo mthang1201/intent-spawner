@@ -97,15 +97,11 @@ those historical protocols, never to newly observed Protocol-v5 confirmation.
 
 ## Portable Evidence and Preservation
 
-Protocol-v5’s reviewed core preserves 34 original packages and separately
-publishes the sealed `final-audit-20260911-final5`, independent
-`final-audit-20260911-canonical-repro`, and
-`completion-audit-20260911-final5` outputs. The v3 inventory adds
-a content-free isolation diagnostic to the v2 authenticated claim package and
-versioned E3 LF compatibility artifact without rewriting historical evidence. It authenticates
-the bytes present, including invalid historical packages and E5 provenance
-omissions; it does not promote them. Missing private human/cluster/storage evidence
-is not a dependency for the offline audit.
+The final-audit sealed packages and completion-audit outputs previously
+published here belonged to the now-deleted freeze/final-audit system and no
+longer exist. Whatever a Protocol-v5 experiment run produces going forward is
+a plain run manifest under `results_v5/`, without a separate sealed/audit
+package layer.
 
 The Protocol-v4 portable core contains 13 files, including three recommendation
 matrices and the Stage C summary/plan/manifests. Validate it with

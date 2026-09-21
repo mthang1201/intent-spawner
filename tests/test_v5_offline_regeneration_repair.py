@@ -3,19 +3,17 @@
 Covers:
 1. Unavailable gold handling across offline pipeline modules.
 2. Incomplete current-schema evidence handling.
-3. Legacy input handling (v1 split bundle and legacy functional evidence).
-4. Deterministic regeneration of raw -> derived -> report artifacts.
-5. Provenance mismatch detection and tamper fail-closed behavior.
-6. Stale outputs rejection and directory safety invariants.
-7. Explicit NOT_EXECUTED package semantics and CLI behavior.
-8. Deterministic figure and table regeneration.
+3. Legacy v1 split-bundle input handling.
+4. Provenance mismatch detection and tamper fail-closed behavior.
+5. Stale outputs rejection and directory safety invariants.
+6. Explicit NOT_EXECUTED package semantics and CLI behavior.
+7. Deterministic figure rendering.
 """
 from __future__ import annotations
 
 import json
 from pathlib import Path
 import shutil
-import tempfile
 import pytest
 
 from evaluation_v4.dataset import file_sha256
@@ -43,11 +41,8 @@ from evaluation_v5.analysis.reporting import (
     render_retrieval_recall_svg,
     write_not_executed_report,
 )
-from evaluation_v5.final_audit.common import Inputs, ROOT, LOCK
-from evaluation_v5.final_audit.checks import inspect
-from evaluation_v5.final_audit.reproduce import analyze, VOLATILE_MANIFEST_FIELDS, compare_json
-from evaluation_v5.final_audit.reporting import figures
 from evaluation_v5.offline.validate_evidence import OfflineEvidenceValidationError
+from evaluation_v5.paths import ROOT
 
 
 # ---------------------------------------------------------------------------
@@ -153,57 +148,16 @@ def test_legacy_v1_split_input_handling(tmp_path: Path, capsys: pytest.CaptureFi
     assert "complete gold must be a frozen family dataset or compiled split v2" in manifest["reason"]
 
 
-def test_legacy_functional_packages_not_reinterpreted():
-    """Legacy E5 functional packages are bounded as UNVERIFIED rather than reinterpreted."""
-    inputs = Inputs(ROOT, LOCK)
-    audit = inspect(inputs)
-    legacy_pkgs = [p for p in audit["packages"] if p["kind"] == "image_functional" and p.get("validator_result", {}).get("validator_status") == "LEGACY_VALID"]
-    assert len(legacy_pkgs) == 9
-
-    with tempfile.TemporaryDirectory() as tmpdir:
-        res = analyze(inputs, audit, Path(tmpdir) / "analysis")
-        # Every legacy package is marked UNVERIFIED in reproduction
-        legacy_entries = [p for p in res["packages"] if p["path"] in {lp["path"] for lp in legacy_pkgs}]
-        assert all(entry["status"] == "UNVERIFIED" for entry in legacy_entries)
-        assert all("Legacy or invalid functional package retained" in entry["reason"] for entry in legacy_entries)
-
-
 # ---------------------------------------------------------------------------
 # 4. Deterministic Regeneration
 # ---------------------------------------------------------------------------
-
-
-def test_deterministic_offline_regeneration():
-    """Offline E1 evidence reproduces raw counts, manifests, and reports bit-for-bit."""
-    inputs = Inputs(ROOT, LOCK)
-    audit = inspect(inputs)
-
-    with tempfile.TemporaryDirectory() as tmpdir1, tempfile.TemporaryDirectory() as tmpdir2:
-        res1 = analyze(inputs, audit, Path(tmpdir1) / "analysis")
-        res2 = analyze(inputs, audit, Path(tmpdir2) / "analysis")
-
-        # Package status is REGENERATED
-        e1_entry1 = next(p for p in res1["packages"] if "E1" in p["path"])
-        e1_entry2 = next(p for p in res2["packages"] if "E1" in p["path"])
-        assert e1_entry1["status"] == "REGENERATED"
-        assert e1_entry2["status"] == "REGENERATED"
-        assert all(c["status"] == "PASS" for c in e1_entry1["comparisons"])
-
-        # Generated artifacts match bit-for-bit between independent runs
-        path1 = Path(tmpdir1) / "analysis/E1/20260825T-observed-p1-p2-development-v1"
-        path2 = Path(tmpdir2) / "analysis/E1/20260825T-observed-p1-p2-development-v1"
-
-        assert (path1 / "raw_counts.json").read_bytes() == (path2 / "raw_counts.json").read_bytes()
-        assert (path1 / "report/offline_report/E1_E2_OFFLINE_REPORT.md").read_bytes() == (
-            path2 / "report/offline_report/E1_E2_OFFLINE_REPORT.md"
-        ).read_bytes()
-
-        # Check raw counts match exactly
-        counts = json.loads((path1 / "raw_counts.json").read_text(encoding="utf-8"))
-        assert counts["records"] == 36
-        assert counts["cases"] == 18
-        assert counts["families"] == 10
-        assert counts["per_system"] == {"P1": 18, "P2": 18}
+#
+# Deterministic raw -> derived -> report regeneration and legacy-functional-
+# package handling were previously exercised through evaluation_v5.final_audit
+# (Inputs/inspect/analyze), which has been deleted along with the freeze/audit
+# governance layer it implemented. The underlying analysis/reporting modules
+# (evaluation_v5.analysis.*) are still covered directly by the tests above and
+# below; there is no remaining final_audit-specific behavior to test here.
 
 
 # ---------------------------------------------------------------------------
@@ -230,16 +184,6 @@ def test_provenance_mismatch_fails_closed(tmp_path: Path):
             gold_path=ROOT / "benchmarks_v5/v5-development.yaml",
             output_dir=out_dir,
         )
-
-
-def test_authentic_provenance_mismatch_retained_in_audit():
-    """Historical prompt hash mismatch in Check 5 is detected and retained as FAIL."""
-    inputs = Inputs(ROOT, LOCK)
-    audit = inspect(inputs)
-    check5 = audit["checks"][4]
-    assert check5["verdict"] == "FAIL"
-    fields = {item["field"] for item in check5["details"]}
-    assert "/extractor/extractor_prompt_sha256" in fields
 
 
 # ---------------------------------------------------------------------------
@@ -345,21 +289,6 @@ def test_svg_figures_deterministic():
     assert "JointAccept@1" in svg1
 
 
-def test_derived_figures_and_tables_regeneration():
-    """Final audit figures command deterministically regenerates tables and SVGs."""
-    inputs = Inputs(ROOT, LOCK)
-    audit = inspect(inputs)
-
-    with tempfile.TemporaryDirectory() as tmpdir:
-        analysis_dir = Path(tmpdir) / "analysis"
-        figures_dir = Path(tmpdir) / "figures"
-        derived = analyze(inputs, audit, analysis_dir)
-        fig_result = figures(inputs, derived, analysis_dir, figures_dir)
-
-        assert fig_result["status"] == "PASS"
-        assert all(c["status"] == "PASS" for c in fig_result["comparisons"])
-
-        # Tables are created and valid
-        assert (figures_dir / "tables/functional-results.json").is_file()
-        assert (figures_dir / "tables/defense-summary.json").is_file()
-        assert (figures_dir / "tables/defense-summary.md").is_file()
+# Table/figure regeneration through evaluation_v5.final_audit's figures()
+# command was removed along with that deleted module; render_*_svg coverage
+# above is the remaining figure-rendering behavior.

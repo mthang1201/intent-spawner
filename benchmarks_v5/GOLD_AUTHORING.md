@@ -30,11 +30,14 @@ Inspect deterministic coverage and the redaction-safe human-review report:
 .venv/bin/python -m evaluation_v5.gold_dataset review /path/to/gold.yaml
 ```
 
-The review command returns exit status `1` when label work remains. Pending
-semantic equivalence, unassessed difficulty, and unapproved family labels are
-blocking. Singleton strata, declared category gaps, duplicate text, and
-profile/image imbalance are advisory. Advisory findings remain in the report
-but do not prevent compilation.
+The review command returns exit status `1` when label work remains. Unassessed
+difficulty is the only blocking finding. Pending semantic equivalence,
+unapproved family review, documented ambiguity, singleton strata, declared
+category gaps, duplicate text, and profile/image imbalance are all advisory —
+there is no manual-approval gate on any of them. A variant or family is usable
+as soon as it is authored; nothing requires someone to have manually cleared a
+pending-review flag first. Advisory findings remain in the report but do not
+prevent compilation.
 
 ### Lifecycle and review state
 
@@ -50,26 +53,30 @@ not promote lifecycle state, invent a timestamp, or identify a reviewer.
 - `frozen` requires non-null `freeze_metadata.frozen_at_utc` and
   `freeze_metadata.frozen_by`, with freezing no earlier than creation.
   Compilation also independently revalidates live catalog identity and
-  requires zero unresolved-label findings.
+  requires every family's difficulty to be assessed; pending label review or
+  semantic-equivalence findings do not block it.
 
-An approved `label_review` requires a nonblank reviewer code, a valid UTC
-timestamp ending in `Z`, and at least one nonblank review note. To freeze a
-reviewed dataset, a custodian manually changes `lifecycle` to `frozen` and
-adds both freeze fields. No separate freeze command exists, and `compile`
-never changes the source document.
+A `label_review` record, when present, has a nonblank reviewer code, a valid
+UTC timestamp ending in `Z`, and at least one nonblank review note — but
+recording one is not required to compile. To freeze a dataset, a custodian
+manually changes `lifecycle` to `frozen` and adds both freeze fields. No
+separate freeze command exists, and `compile` never changes the source
+document.
 
 ### Variant equivalence states
 
 - `canonical_reference` identifies at most one reference variant in a family;
 - `reviewed_equivalent` is a human-reviewed semantic equivalent;
-- `pending_review` is unresolved and always blocks compilation; and
+- `pending_review` is unresolved; it is advisory-only and does not block
+  compilation; and
 - `controlled_ambiguity` is deliberate, reviewed ambiguity. It is valid only
   with `expected_feasibility: ambiguous`, at least one explicit structured
   ambiguity note, and an approved family review. It remains visible as an
   advisory finding but does not block compilation.
 
-An ambiguous feasibility label is therefore not itself an error. Ambiguity
-with pending family review remains blocking.
+An ambiguous feasibility label is therefore not itself an error. Ambiguity is
+reported as an advisory `documented_gold_ambiguity` finding regardless of
+whether the family's own review status is pending or approved.
 
 ### Coverage denominators
 
@@ -87,8 +94,9 @@ Duplicate findings distinguish exact and normalized matches within a family
 from matches across different families. All are advisory coverage/review
 signals and use stable machine-readable finding codes.
 
-After humans approve every family and manually set the dataset lifecycle and
-freeze metadata, compile the flat evaluator projection:
+Once every family's difficulty is assessed and the dataset lifecycle/freeze
+metadata are manually set to `frozen`, compile the flat evaluator projection
+(pending label review or semantic-equivalence findings do not block this):
 
 ```bash
 .venv/bin/python -m evaluation_v5.gold_dataset compile \

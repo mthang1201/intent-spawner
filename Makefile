@@ -84,7 +84,7 @@ v5-resource-efficiency-dry-run: v5-resource-efficiency-validate
 		--result-dir results_v5/protocol-v5.0.0/E4/$(E4_RESOURCE_EFFICIENCY_DRY_RUN_ID) \
 		--run-id $(E4_RESOURCE_EFFICIENCY_DRY_RUN_ID) \
 		--image example.invalid/intent-spawner-resource-v5@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa \
-		--reason "Confirmatory freeze, approved oracle, verified image, and frozen node capacity are unavailable."
+		--reason "Confirmatory dataset, verified image, and node capacity are unavailable."
 
 v5-e4-preflight:
 	PYTHONPATH=. $(V5_PYTHON) -m evaluation_v5.resource preflight --target all
