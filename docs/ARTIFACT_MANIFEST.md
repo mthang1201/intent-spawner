@@ -43,7 +43,7 @@ decisions remain **NOT_EXECUTED**.
 | [Current input inventory](../benchmarks_v5/protocol-v5-final-audit-inputs-v3.json) | 424 source/dependency hashes, 34 source packages, the explicit claim authority, E3 compatibility package, and content-free isolation diagnostic. |
 | [Current machine-readable audit](../results_v5/protocol-v5.0.0/final-audit/final-audit-20260911-final5/report/audit.json) | Evidence-driven findings and exact nonzero reason taxonomy for the current implementation snapshot. |
 | [Historical input inventory](../benchmarks_v5/protocol-v5-final-audit-inputs-v1.json) and [audit output](../results_v5/protocol-v5.0.0/final-audit/final-audit-20260907-v2/report/audit.json) | Preserved identities and findings for the earlier snapshot. |
-| [Claim registry](../benchmarks_v5/protocol-v5-claim-registry-v1.1.yaml) | Predeclared RQ1–RQ6, hypotheses, metrics, and decision predicates. |
+| [Claim registry](../benchmarks_v5/protocol-v5-claim-registry-v1.2.yaml) | Predeclared RQ1–RQ6, hypotheses, metrics, decision predicates, and (v1.2+) an `amendments:` log for post-hoc, clearly non-confirmatory additions such as H5's exploratory P1_CATALOG comparator. |
 | [Experiment architecture](evaluation/PROTOCOL_V5_ARCHITECTURE.md) | Protocol design and manifest contracts; historical status statements are not current execution results. |
 | [Data isolation](evaluation/PROTOCOL_V5_DATA_ISOLATION.md) | Development/confirmatory split, custody, loader, and freeze boundaries. |
 | [Isolation verification](evaluation/PROTOCOL_V5_ISOLATION_VERIFICATION.md) | Adversarial software checks; no proof of external custody. |

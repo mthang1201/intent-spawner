@@ -1038,7 +1038,7 @@ def _h5_metrics(
     conditions = {
         str(row.get("condition")): row
         for row in condition_rows
-        if row.get("condition") in {"P2_CATALOG", "STATIC_LARGE"}
+        if row.get("condition") in {"P2_CATALOG", "STATIC_LARGE", "P1_CATALOG"}
     }
     candidate = conditions.get("P2_CATALOG")
     reference = conditions.get("STATIC_LARGE")
@@ -1064,6 +1064,52 @@ def _h5_metrics(
             else all(candidate[key] <= reference[key] for key in reliability_minimize)
             and all(candidate[key] >= reference[key] for key in PARETO_OBJECTIVES["maximize"])
         )
+    # Exploratory/descriptive comparison against P1_CATALOG (the thesis's
+    # frozen rule-based baseline per AGENTS.md), added post-hoc in the v1.2
+    # claim-registry amendment. This is NOT part of H5's original
+    # STATIC_LARGE-based confirmatory verdict: it is surfaced only as extra,
+    # non-blocking fields and must never feed support_all_of.
+    cpu_vs_p1_catalog = _resource_effect(
+        _resource_row(statistics_rows, "cpu_cost_per_success", "P2_CATALOG", "P1_CATALOG")
+    )
+    memory_vs_p1_catalog = _resource_effect(
+        _resource_row(statistics_rows, "memory_cost_per_success", "P2_CATALOG", "P1_CATALOG")
+    )
+    pareto_vs_p1_catalog = [
+        row
+        for row in pareto_rows
+        if row.get("condition") == "P2_CATALOG" and row.get("reference") == "P1_CATALOG"
+    ]
+    p1_catalog_reference = conditions.get("P1_CATALOG")
+    if candidate is None or p1_catalog_reference is None:
+        recomputed_classification_vs_p1_catalog = None
+    else:
+        recomputed_classification_vs_p1_catalog = classify_pareto(candidate, p1_catalog_reference)
+    reported_classification_vs_p1_catalog = (
+        pareto_vs_p1_catalog[0].get("classification") if len(pareto_vs_p1_catalog) == 1 else None
+    )
+    exploratory_vs_p1_catalog = {
+        "confirmatory": False,
+        "note": "descriptive/exploratory — see claim-registry v1.2 amendment log; not part of H5's original STATIC_LARGE-based confirmatory verdict",
+        "pareto_classification": reported_classification_vs_p1_catalog,
+        "pareto_recomputed_classification": recomputed_classification_vs_p1_catalog,
+        "pareto_report_consistent": (
+            reported_classification_vs_p1_catalog == recomputed_classification_vs_p1_catalog
+            if reported_classification_vs_p1_catalog is not None
+            and recomputed_classification_vs_p1_catalog is not None
+            else None
+        ),
+        "cpu_effect": cpu_vs_p1_catalog["effect"],
+        "cpu_ci_low": cpu_vs_p1_catalog["ci_low"],
+        "cpu_ci_high": cpu_vs_p1_catalog["ci_high"],
+        "cpu_p_holm": cpu_vs_p1_catalog["p_holm"],
+        "memory_effect": memory_vs_p1_catalog["effect"],
+        "memory_ci_low": memory_vs_p1_catalog["ci_low"],
+        "memory_ci_high": memory_vs_p1_catalog["ci_high"],
+        "memory_p_holm": memory_vs_p1_catalog["p_holm"],
+        "cpu": cpu_vs_p1_catalog,
+        "memory": memory_vs_p1_catalog,
+    }
     return {
         "pareto_classification": reported_classification,
         "pareto_recomputed_classification": recomputed_classification,
@@ -1091,6 +1137,7 @@ def _h5_metrics(
         "cpu": cpu,
         "memory": memory,
         "success_noninferiority_margin": None,
+        "exploratory_vs_p1_catalog": exploratory_vs_p1_catalog,
     }
 
 

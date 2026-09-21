@@ -13,8 +13,10 @@ import yaml
 
 
 ROOT = Path(__file__).resolve().parents[2]
-REGISTRY_PATH = ROOT / "benchmarks_v5" / "protocol-v5-claim-registry-v1.1.yaml"
-REGISTRY_SCHEMA_PATH = ROOT / "benchmarks_v5" / "protocol-v5-claim-registry-v1.1.schema.json"
+REGISTRY_PATH = ROOT / "benchmarks_v5" / "protocol-v5-claim-registry-v1.2.yaml"
+REGISTRY_SCHEMA_PATH = ROOT / "benchmarks_v5" / "protocol-v5-claim-registry-v1.2.schema.json"
+PRIOR_REGISTRY_PATH = ROOT / "benchmarks_v5" / "protocol-v5-claim-registry-v1.1.yaml"
+PRIOR_REGISTRY_SCHEMA_PATH = ROOT / "benchmarks_v5" / "protocol-v5-claim-registry-v1.1.schema.json"
 LEGACY_REGISTRY_SCHEMA_PATH = ROOT / "benchmarks_v5" / "protocol-v5-claim-registry-v1.schema.json"
 EVALUATED_CLAIM_SCHEMA_PATH = ROOT / "benchmarks_v5" / "protocol-v5-evaluated-claim-v1.1.schema.json"
 LEGACY_EVALUATED_CLAIM_SCHEMA_PATH = ROOT / "benchmarks_v5" / "protocol-v5-evaluated-claim-v1.schema.json"
@@ -23,7 +25,8 @@ LEGACY_STORAGE_SCHEMA_PATH = ROOT / "benchmarks_v5" / "protocol-v5-image-storage
 STORAGE_SCHEMA_PATH = ROOT / "benchmarks_v5" / "protocol-v5-image-storage-evidence-v1.1.schema.json"
 P3_THRESHOLD_SCHEMA_PATH = ROOT / "benchmarks_v5" / "protocol-v5-p3-overhead-threshold-v1.schema.json"
 
-CLAIM_REGISTRY_SCHEMA_VERSION = "protocol-v5-claim-registry-v1.1.0"
+CLAIM_REGISTRY_SCHEMA_VERSION = "protocol-v5-claim-registry-v1.2.0"
+PRIOR_CLAIM_REGISTRY_SCHEMA_VERSION = "protocol-v5-claim-registry-v1.1.0"
 LEGACY_CLAIM_REGISTRY_SCHEMA_VERSION = "protocol-v5-claim-registry-v1.0.0"
 EVALUATED_CLAIM_SCHEMA_VERSION = "protocol-v5-evaluated-claim-v1.1.0"
 LEGACY_EVALUATED_CLAIM_SCHEMA_VERSION = "protocol-v5-evaluated-claim-v1.0.0"
@@ -145,6 +148,7 @@ def load_claim_registry(path: Path = REGISTRY_PATH) -> dict[str, Any]:
     registry = _yaml(path)
     schema_path = {
         CLAIM_REGISTRY_SCHEMA_VERSION: REGISTRY_SCHEMA_PATH,
+        PRIOR_CLAIM_REGISTRY_SCHEMA_VERSION: PRIOR_REGISTRY_SCHEMA_PATH,
         LEGACY_CLAIM_REGISTRY_SCHEMA_VERSION: LEGACY_REGISTRY_SCHEMA_PATH,
     }.get(registry.get("schema_version"))
     if schema_path is None:
@@ -393,6 +397,9 @@ def evaluate_conditions(
 
 __all__ = [
     "CLAIM_REGISTRY_SCHEMA_VERSION",
+    "PRIOR_CLAIM_REGISTRY_SCHEMA_VERSION",
+    "PRIOR_REGISTRY_PATH",
+    "PRIOR_REGISTRY_SCHEMA_PATH",
     "CLAIM_STATUSES",
     "EVALUATED_CLAIM_SCHEMA_VERSION",
     "EXPECTED_CLAIMS",

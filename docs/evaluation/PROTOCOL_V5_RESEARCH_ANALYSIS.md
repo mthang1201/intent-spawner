@@ -16,7 +16,7 @@ recommender, changes backend behavior, mutates Kubernetes, or rewrites source
 evidence.
 
 The authoritative registry is
-`benchmarks_v5/protocol-v5-claim-registry-v1.1.yaml`. It connects RQ1–RQ6 to H1–H8
+`benchmarks_v5/protocol-v5-claim-registry-v1.2.yaml`. It connects RQ1–RQ6 to H1–H8
 and H7F, their evidence requirements, metrics, tests, directions, exact
 decision predicates, and limitation boundaries. Observed outcomes are not
 stored in the registry. They are materialized only in a versioned analysis
@@ -24,9 +24,17 @@ package.
 
 Registry v1.1 adds frozen source-endpoint and independent-unit contracts, exact
 metric lineage, explicit H5 reliability and H6 oracle-independence conjunctions,
-and an H7 post-baseline catalog-growth criterion. The prior v1.0 registry and
-evaluated-claim schema are retained byte-for-byte for validation of existing
-immutable packages.
+and an H7 post-baseline catalog-growth criterion. Registry v1.2 adds a top-level
+`amendments:` log and, for H5, descriptive/exploratory metrics comparing P2
+Catalog against `P1_CATALOG` — the thesis's actual frozen rule-based
+comparator per `AGENTS.md` — alongside the original Static Large comparator.
+Those new metrics are tagged `confirmatory: false`, are excluded from H5's
+`support_all_of` decision gate, and do not change H5's Static-Large-based
+confirmatory verdict; the amendment is inherently post-hoc since trial data
+containing the `P1_CATALOG` condition already existed when it was added. The
+log also records that H6 was reviewed for the same gap and found not to need
+one. The prior v1.0 and v1.1 registries and evaluated-claim schemas are
+retained byte-for-byte for validation of existing immutable packages.
 
 Only complete, validated, observed **confirmatory** evidence is eligible to
 produce `SUPPORTED` or `NOT_SUPPORTED`. Development, Protocol-v4, dry-run,

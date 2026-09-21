@@ -33,6 +33,7 @@ from evaluation_v5.analysis.research_analysis import (
 )
 from evaluation_v5.analysis.research_contracts import (
     EXPECTED_CLAIMS,
+    PRIOR_REGISTRY_PATH,
     REGISTRY_PATH,
     ResearchContractError,
     file_sha256,
@@ -811,6 +812,104 @@ def test_h5_resource_reduction_without_reliability_preservation_is_not_supported
     assert recomputed["pareto_recomputed_classification"] == "EFFICIENCY_RELIABILITY_TRADEOFF"
     assert recomputed["pareto_report_consistent"] is False
     assert recomputed["reliability_preserved"] is False
+
+
+def test_h5_exploratory_p1_catalog_comparison_is_descriptive_and_non_blocking():
+    # v1.2 amendment: H5 gains a P1_CATALOG comparison surfaced only as extra,
+    # clearly non-confirmatory fields. It must never affect the STATIC_LARGE
+    # confirmatory verdict computed by the top-level _h5_metrics fields.
+    static_large = {
+        "condition": "STATIC_LARGE", "cpu_cost_per_success": 10,
+        "memory_cost_per_success": 10, "oom_rate": 0, "timeout_rate": 0,
+        "pending_or_admission_rate": 0, "runtime_error_rate": 0,
+        "incorrect_rate": 0, "success_rate": 1, "correct_completion_rate": 1,
+    }
+    p1_catalog = {**static_large, "condition": "P1_CATALOG", "cpu_cost_per_success": 8, "memory_cost_per_success": 8}
+    p2_catalog = {**static_large, "condition": "P2_CATALOG", "cpu_cost_per_success": 6, "memory_cost_per_success": 6}
+    statistics_rows = [
+        {
+            "endpoint": "cpu_cost_per_success", "candidate_condition": "P2_CATALOG",
+            "reference_condition": "STATIC_LARGE", "effect": {"mean_difference": -4},
+            "ci_95_candidate_minus_reference": [-5, -3],
+            "test": {"p_value_holm_within_endpoint": 0.001},
+        },
+        {
+            "endpoint": "memory_cost_per_success", "candidate_condition": "P2_CATALOG",
+            "reference_condition": "STATIC_LARGE", "effect": {"mean_difference": -4},
+            "ci_95_candidate_minus_reference": [-5, -3],
+            "test": {"p_value_holm_within_endpoint": 0.001},
+        },
+        {
+            "endpoint": "cpu_cost_per_success", "candidate_condition": "P2_CATALOG",
+            "reference_condition": "P1_CATALOG", "effect": {"mean_difference": -2},
+            "ci_95_candidate_minus_reference": [-3, -1],
+            "test": {"p_value_holm_within_endpoint": 0.01},
+        },
+        {
+            "endpoint": "memory_cost_per_success", "candidate_condition": "P2_CATALOG",
+            "reference_condition": "P1_CATALOG", "effect": {"mean_difference": -2},
+            "ci_95_candidate_minus_reference": [-3, -1],
+            "test": {"p_value_holm_within_endpoint": 0.01},
+        },
+    ]
+    pareto_rows = [
+        {"condition": "P2_CATALOG", "reference": "STATIC_LARGE", "classification": "STRICT_FRONTIER_IMPROVEMENT"},
+        {
+            "condition": "P2_CATALOG", "reference": "P1_CATALOG",
+            "classification": "STRICT_FRONTIER_IMPROVEMENT",
+            "confirmatory": False,
+            "note": "descriptive/exploratory — see claim-registry v1.2 amendment log",
+        },
+    ]
+    result = _h5_metrics(statistics_rows, pareto_rows, [static_large, p1_catalog, p2_catalog])
+    assert result["pareto_classification"] == "STRICT_FRONTIER_IMPROVEMENT"
+    assert result["reliability_preserved"] is True
+    exploratory = result["exploratory_vs_p1_catalog"]
+    assert exploratory["confirmatory"] is False
+    assert "v1.2 amendment" in exploratory["note"]
+    assert exploratory["cpu_effect"] == -2
+    assert exploratory["memory_effect"] == -2
+    assert exploratory["pareto_classification"] == "STRICT_FRONTIER_IMPROVEMENT"
+    assert exploratory["pareto_recomputed_classification"] == "STRICT_FRONTIER_IMPROVEMENT"
+    assert exploratory["pareto_report_consistent"] is True
+    # The exploratory comparison never appears in the support_all_of decision
+    # path: only the STATIC_LARGE-keyed fields feed H5's registry conditions.
+    registry = load_claim_registry()
+    h5 = next(claim for claim in registry["claims"] if claim["id"] == "H5")
+    decision_paths = {row["path"] for row in h5["support_all_of"]}
+    assert not any("exploratory" in path or "p1_catalog" in path.lower() for path in decision_paths)
+
+
+def test_registry_v1_2_amends_h5_with_descriptive_p1_catalog_metrics_only():
+    registry = load_claim_registry()
+    assert registry["schema_version"] == "protocol-v5-claim-registry-v1.2.0"
+    amendments = registry["amendments"]
+    h5_amendment = next(row for row in amendments if row["claim"] == "H5")
+    assert "post-hoc" in h5_amendment["reason"]
+    assert "descriptive/exploratory" in h5_amendment["confirmatory_status"]
+    h6_amendment = next(row for row in amendments if row["claim"] == "H6")
+    assert "not applicable" in h6_amendment["confirmatory_status"]
+
+    h5 = next(claim for claim in registry["claims"] if claim["id"] == "H5")
+    exploratory_metrics = [row for row in h5["metrics"] if row.get("confirmatory") is False]
+    assert len(exploratory_metrics) == 2
+    for metric in exploratory_metrics:
+        assert "P1_CATALOG" in metric["systems"]
+        assert metric["source_endpoints"][0] in {"cpu_cost_per_success", "memory_cost_per_success"}
+    decision_paths = {row["path"] for row in h5["support_all_of"]}
+    assert decision_paths == {
+        "metrics.pareto_classification", "metrics.pareto_report_consistent",
+        "metrics.reliability_preserved", "metrics.cpu_effect", "metrics.cpu_ci_high",
+        "metrics.cpu_p_holm", "metrics.memory_effect", "metrics.memory_ci_high",
+        "metrics.memory_p_holm", "metrics.tests_available",
+    }
+
+    # The prior v1.1 registry remains a valid, unmodified historical schema.
+    prior = load_claim_registry(PRIOR_REGISTRY_PATH)
+    assert prior["schema_version"] == "protocol-v5-claim-registry-v1.1.0"
+    assert "amendments" not in prior
+    prior_h5 = next(claim for claim in prior["claims"] if claim["id"] == "H5")
+    assert all("P1_CATALOG" not in metric["systems"] for metric in prior_h5["metrics"])
 
 
 def test_h6_requires_independently_bound_oracle_provenance(tmp_path: Path):

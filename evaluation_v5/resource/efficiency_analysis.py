@@ -547,6 +547,18 @@ def analyze_trials(
     conditions = summarize_conditions(families)
     by_condition = {row["condition"]: row for row in conditions}
     pareto = [{"condition": condition, "reference": "STATIC_LARGE", "classification": classify_pareto(by_condition[condition], by_condition["STATIC_LARGE"])} for condition in ("P1_CATALOG", "P2_CATALOG", "P2_DYNAMIC") if condition in by_condition and "STATIC_LARGE" in by_condition]
+    # Exploratory/descriptive second reference pass: P2 Catalog vs P1 Catalog
+    # (the thesis's frozen rule-based baseline). This is not part of H5's
+    # original STATIC_LARGE-based confirmatory Pareto safeguard; see the
+    # claim-registry v1.2 amendment log for why it was added post-hoc.
+    if "P2_CATALOG" in by_condition and "P1_CATALOG" in by_condition:
+        pareto.append({
+            "condition": "P2_CATALOG",
+            "reference": "P1_CATALOG",
+            "classification": classify_pareto(by_condition["P2_CATALOG"], by_condition["P1_CATALOG"]),
+            "confirmatory": False,
+            "note": "descriptive/exploratory — see claim-registry v1.2 amendment log",
+        })
     design_counts = {
         "number_of_families": len({str(row["family_id"]) for row in repetitions}),
         "repetitions_per_family_condition": REPETITIONS,
