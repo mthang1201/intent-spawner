@@ -41,8 +41,29 @@ from evaluation_v5.analysis.reporting import (
     render_retrieval_recall_svg,
     write_not_executed_report,
 )
+from evaluation_v5.offline.runner import run_offline_recommendations
 from evaluation_v5.offline.validate_evidence import OfflineEvidenceValidationError
 from evaluation_v5.paths import ROOT
+from evaluation_v5.split_dataset import load_development_split
+
+
+@pytest.fixture(scope="module")
+def valid_e1_evidence(tmp_path_factory: pytest.TempPathFactory) -> Path:
+    """A real, schema-valid E1 development-split offline evidence directory.
+
+    Built at test time with the default P1/P2 adapters against the tracked
+    development split, rather than depending on any previously-collected
+    results_v5/ evidence (which is intentionally not present on disk)."""
+
+    result_dir = tmp_path_factory.mktemp("v5-offline-regen") / "run"
+    run_offline_recommendations(
+        load_development_split(),
+        result_dir=result_dir,
+        system_ids=("P1", "P2"),
+        seed=20260824,
+        frozen_configuration={"snapshot": "regeneration-repair-test-v1"},
+    )
+    return result_dir
 
 
 # ---------------------------------------------------------------------------
@@ -50,9 +71,9 @@ from evaluation_v5.paths import ROOT
 # ---------------------------------------------------------------------------
 
 
-def test_unavailable_gold_produces_not_executed(tmp_path: Path):
+def test_unavailable_gold_produces_not_executed(tmp_path: Path, valid_e1_evidence: Path):
     """Missing or corrupted gold produces an explicit NOT_EXECUTED package."""
-    evidence_dir = ROOT / "results_v5/protocol-v5.0.0/E1/20260825T-observed-p1-p2-development-v1"
+    evidence_dir = valid_e1_evidence
 
     # Non-existent gold file
     missing_gold = tmp_path / "non_existent_gold.yaml"
@@ -124,9 +145,13 @@ def test_incomplete_current_schema_input(tmp_path: Path):
 # ---------------------------------------------------------------------------
 
 
-def test_legacy_v1_split_input_handling(tmp_path: Path, capsys: pytest.CaptureFixture[str]):
+def test_legacy_v1_split_input_handling(
+    tmp_path: Path,
+    valid_e1_evidence: Path,
+    capsys: pytest.CaptureFixture[str],
+):
     """V1 development split cannot complete v2 scoring and emits NOT_EXECUTED."""
-    evidence_dir = ROOT / "results_v5/protocol-v5.0.0/E1/20260825T-observed-p1-p2-development-v1"
+    evidence_dir = valid_e1_evidence
     gold_path = ROOT / "benchmarks_v5/v5-development.yaml"
     output_dir = tmp_path / "legacy_v1_report"
 
@@ -165,11 +190,10 @@ def test_legacy_v1_split_input_handling(tmp_path: Path, capsys: pytest.CaptureFi
 # ---------------------------------------------------------------------------
 
 
-def test_provenance_mismatch_fails_closed(tmp_path: Path):
+def test_provenance_mismatch_fails_closed(tmp_path: Path, valid_e1_evidence: Path):
     """Perturbed completion provenance fingerprint raises ReportingError."""
-    src_evidence = ROOT / "results_v5/protocol-v5.0.0/E1/20260825T-observed-p1-p2-development-v1"
     evidence_dir = tmp_path / "tampered_e1"
-    shutil.copytree(src_evidence, evidence_dir)
+    shutil.copytree(valid_e1_evidence, evidence_dir)
 
     # Tamper with the completion provenance fingerprint
     comp_file = evidence_dir / "report" / "offline-run-completion.json"
@@ -191,13 +215,13 @@ def test_provenance_mismatch_fails_closed(tmp_path: Path):
 # ---------------------------------------------------------------------------
 
 
-def test_stale_output_directory_rejected(tmp_path: Path):
+def test_stale_output_directory_rejected(tmp_path: Path, valid_e1_evidence: Path):
     """Output directory safety prevents overwriting an existing directory."""
     existing_dir = tmp_path / "already_exists"
     existing_dir.mkdir()
     (existing_dir / "stale_file.txt").write_text("old data", encoding="utf-8")
 
-    evidence_dir = ROOT / "results_v5/protocol-v5.0.0/E1/20260825T-observed-p1-p2-development-v1"
+    evidence_dir = valid_e1_evidence
     gold_path = ROOT / "benchmarks_v5/v5-development.yaml"
 
     with pytest.raises(FileExistsError):

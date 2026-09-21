@@ -49,24 +49,19 @@ from evaluation_v5.image_storage import (
 )
 from evaluation_v5.image_storage.__main__ import _format_markdown_report, run_e5_evaluation
 from evaluation_v5.image_storage.runner import RuntimeImageIdentity
+from evaluation_v5.offline.runner import run_offline_recommendations
 from evaluation_v5.offline.source_run import (
     SourceRunProvenanceError,
     VerifiedRecommendationRunProvenance,
     verify_recommendation_run_provenance,
 )
 from evaluation_v5.schemas import EvidenceStatus, ProtocolV5Manifest
+from evaluation_v5.split_dataset import load_development_split
 
 
 ROOT = Path(__file__).resolve().parents[1]
 CATALOG_PATH = ROOT / "recommender" / "image-catalog.yaml"
 SPLIT_PATH = ROOT / "benchmarks_v5" / "v5-development.yaml"
-SOURCE_RUN_DIR = (
-    ROOT
-    / "results_v5"
-    / "protocol-v5.0.0"
-    / "E1"
-    / "20260825T-observed-p1-p2-development-v1"
-)
 
 
 @pytest.fixture
@@ -76,8 +71,29 @@ def catalog_data() -> dict:
 
 
 @pytest.fixture(scope="session")
-def recommendation_run() -> VerifiedRecommendationRunProvenance:
-    return verify_recommendation_run_provenance(SOURCE_RUN_DIR)
+def source_run_dir(tmp_path_factory: pytest.TempPathFactory) -> Path:
+    """A real, schema-valid E1 development-split offline evidence directory.
+
+    Built at test time against the tracked development split rather than
+    depending on any previously-collected results_v5/ evidence (which is
+    intentionally not present on disk)."""
+
+    result_dir = tmp_path_factory.mktemp("v5-image-functional") / "e1-run"
+    run_offline_recommendations(
+        load_development_split(),
+        result_dir=result_dir,
+        system_ids=("P1", "P2"),
+        seed=20260824,
+        frozen_configuration={"snapshot": "image-functional-test-v1"},
+    )
+    return result_dir
+
+
+@pytest.fixture(scope="session")
+def recommendation_run(
+    source_run_dir: Path,
+) -> VerifiedRecommendationRunProvenance:
+    return verify_recommendation_run_provenance(source_run_dir)
 
 
 def _rewrite_checksums(package_dir: Path) -> None:
@@ -1085,7 +1101,9 @@ def test_end_to_end_cli_dry_run(tmp_path, recommendation_run):
     assert manifest.execution_status.value == "DRY_RUN"
 
 
-def test_end_to_end_with_verified_recommendation_run(tmp_path, recommendation_run):
+def test_end_to_end_with_verified_recommendation_run(
+    tmp_path, recommendation_run, source_run_dir: Path
+):
     out_dir = tmp_path / "e5-test-recs"
 
     run_e5_evaluation(
@@ -1102,7 +1120,7 @@ def test_end_to_end_with_verified_recommendation_run(tmp_path, recommendation_ru
     assert "P2" in metrics_raw["systems"]
 
     source_raw = (out_dir / "raw" / "source-recommendations.jsonl").read_bytes()
-    original_raw = (SOURCE_RUN_DIR / "raw" / "recommendations.jsonl").read_bytes()
+    original_raw = (source_run_dir / "raw" / "recommendations.jsonl").read_bytes()
     assert source_raw == original_raw
     evaluations = [
         json.loads(line)
@@ -1116,7 +1134,7 @@ def test_end_to_end_with_verified_recommendation_run(tmp_path, recommendation_ru
 
 
 def test_e5_rejects_wrong_or_stale_source_run_before_execution(
-    tmp_path, catalog_data, monkeypatch
+    tmp_path, catalog_data, monkeypatch, source_run_dir: Path
 ):
     with pytest.raises(TypeError, match="VerifiedRecommendationRunProvenance"):
         run_e5_evaluation(
@@ -1127,7 +1145,7 @@ def test_e5_rejects_wrong_or_stale_source_run_before_execution(
         )
 
     copied_source = tmp_path / "source"
-    shutil.copytree(SOURCE_RUN_DIR, copied_source)
+    shutil.copytree(source_run_dir, copied_source)
     capability = verify_recommendation_run_provenance(copied_source)
     records_path = copied_source / "raw" / "recommendations.jsonl"
     records_path.write_bytes(records_path.read_bytes() + b" ")
@@ -1210,18 +1228,25 @@ def test_e5_validator_rejects_provenance_tampering(
         validate_e5_evidence(package)
 
 
-def test_archived_e5_cannot_be_forged_into_current_evidence(tmp_path):
-    source = Path(
-        "results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T040730Z"
-    )
-    if not source.is_dir():
-        pytest.skip("archived v1.3 E5 package not present")
+def test_archived_e5_cannot_be_forged_into_current_evidence(
+    tmp_path, recommendation_run
+):
+    """A package with a current-schema probe manifest but no sealed source
+    provenance (the shape a forged/legacy package would have) is rejected,
+    rather than trusted just because its probe-manifest schema looks current."""
     package = tmp_path / "forged-current"
-    shutil.copytree(source, package)
-    probe_manifest = package / "raw" / "probe_manifest.json"
-    value = json.loads(probe_manifest.read_text(encoding="utf-8"))
-    value["schema_version"] = "protocol-v5-image-probe-manifest-v1.2.0"
-    probe_manifest.write_text(json.dumps(value), encoding="utf-8")
+    run_e5_evaluation(
+        catalog_path=CATALOG_PATH,
+        recommendation_run=recommendation_run,
+        mode="synthetic",
+        output_dir=package,
+        run_id="forged-current",
+    )
+    # Simulate a legacy/forged package: strip the sealed source provenance
+    # that a genuinely current package always carries, while keeping the
+    # current-schema probe manifest untouched.
+    (package / "raw" / "source-recommendation-run.json").unlink()
+    (package / "raw" / "source-recommendations.jsonl").unlink()
     _rewrite_checksums(package)
 
     with pytest.raises(EvidenceValidationError, match="missing source provenance"):
@@ -1451,11 +1476,11 @@ def test_e5_canonical_image_id_preserves_both_source_and_normalized_values():
     assert d["predicted_image_id"] == "pytorch-deep-learning"
 
 
-def test_e5_same_recommendation_input_yields_deterministic_classification():
+def test_e5_same_recommendation_input_yields_deterministic_classification(
+    source_run_dir: Path,
+):
     """Regression Test 4: Same recommendation input yields deterministic with-image/no-image classification."""
-    recs_path = Path("results_v5/protocol-v5.0.0/E1/20260825T-observed-p1-p2-development-v1/raw/recommendations.jsonl")
-    if not recs_path.is_file():
-        pytest.skip("Frozen E1 recommendations file not present")
+    recs_path = source_run_dir / "raw" / "recommendations.jsonl"
 
     raw_recs = [json.loads(line) for line in recs_path.read_text(encoding="utf-8").splitlines() if line.strip()]
     p1_recs = [r for r in raw_recs if r.get("system_id") == "P1"]
@@ -1473,11 +1498,122 @@ def test_e5_same_recommendation_input_yields_deterministic_classification():
         assert r.get("predicted_image_id") != ""
 
 
-def test_e5_legacy_package_not_mistaken_for_current_v12_valid():
+def _downgrade_functional_schema_version(
+    package: Path,
+    legacy_evaluation_version: str,
+    legacy_metrics_version: str,
+    *,
+    v12_dimension_c_invariant: bool = False,
+) -> None:
+    """Rewrite a real package's schema markers to a self-consistent legacy shape.
+
+    validate_e5_evidence() classifies LEGACY_SCHEMA_V1_x from the "v1.x.0"
+    substring in derived/functional_metrics.json's and the first
+    raw/functional_evaluations.jsonl record's schema_version field, but it
+    also requires the probe manifest and functional-record schema versions
+    (and the presence/absence of sealed source provenance) to agree with each
+    other. Downgrading only the metrics/eval markers on an otherwise current
+    package trips that self-consistency check instead of the legacy path, so
+    this also downgrades raw/probe_manifest.json's schema_version and drops
+    the sealed source-provenance files a genuinely legacy (pre-sealing)
+    package would never have had.
+
+    v1.2's schema additionally forbids Dimension C PASS when Dimension B is
+    unsatisfied (the later CATALOG_UNDERCLAIM_FUNCTIONAL_PASS mismatch type
+    isn't part of that schema); v12_dimension_c_invariant=True normalizes any
+    such record - and the derived counts that describe it - to stay
+    consistent with that older, stricter rule."""
+
+    probe_manifest_path = package / "raw" / "probe_manifest.json"
+    probe_manifest = json.loads(probe_manifest_path.read_text(encoding="utf-8"))
+    probe_manifest["schema_version"] = "protocol-v5-image-probe-manifest-v1.1.0"
+    probe_manifest_path.write_text(json.dumps(probe_manifest), encoding="utf-8")
+
+    evals_path = package / "raw" / "functional_evaluations.jsonl"
+    lines = evals_path.read_text(encoding="utf-8").splitlines()
+    records = [json.loads(line) for line in lines if line.strip()]
+    for record in records:
+        record["schema_version"] = legacy_evaluation_version
+        if v12_dimension_c_invariant and not record.get(
+            "dimension_b_catalog_satisfied"
+        ):
+            mismatches = [
+                item
+                for item in record.get("mismatch_types", [])
+                if item != "CATALOG_UNDERCLAIM_FUNCTIONAL_PASS"
+            ]
+            if record.get("predicted_image_id") and "CAPABILITY_UNSATISFIED" not in mismatches:
+                mismatches.append("CAPABILITY_UNSATISFIED")
+            record["mismatch_types"] = mismatches
+            if record.get("dimension_c_status") == "PASS":
+                record["dimension_c_status"] = "NOT_EXECUTED"
+                record["dimension_c_functional_satisfied"] = None
+                record["dimension_c_execution_coverage"] = False
+    evals_path.write_text(
+        "\n".join(json.dumps(record) for record in records) + "\n",
+        encoding="utf-8",
+    )
+
+    metrics_path = package / "derived" / "functional_metrics.json"
+    metrics = json.loads(metrics_path.read_text(encoding="utf-8"))
+    metrics["schema_version"] = legacy_metrics_version
+    if v12_dimension_c_invariant:
+        for sys_id, summary in metrics.get("systems", {}).items():
+            sys_records = [r for r in records if r["system_id"] == sys_id]
+            eligible = [
+                r
+                for r in sys_records
+                if r.get("predicted_image_id") is not None
+                and r.get("dimension_b_catalog_satisfied")
+            ]
+            summary["functional_validation_eligible_count"] = len(eligible)
+            summary["functional_executed_count"] = sum(
+                1 for r in eligible if r.get("dimension_c_execution_coverage")
+            )
+            summary["functional_passed_count"] = sum(
+                1 for r in eligible if r.get("dimension_c_status") == "PASS"
+            )
+            summary["functional_failed_count"] = sum(
+                1 for r in eligible if r.get("dimension_c_status") == "FAIL"
+            )
+            summary["functional_unavailable_count"] = sum(
+                1 for r in eligible if r.get("dimension_c_status") == "NOT_EXECUTED"
+            )
+            summary["catalog_underclaim_count"] = sum(
+                1
+                for r in sys_records
+                if "CATALOG_UNDERCLAIM_FUNCTIONAL_PASS" in r.get("mismatch_types", [])
+            )
+            executed = summary["functional_executed_count"]
+            summary["functional_success_rate_among_executed"] = (
+                summary["functional_passed_count"] / executed
+                if executed
+                else None
+            )
+    metrics_path.write_text(json.dumps(metrics), encoding="utf-8")
+
+    (package / "raw" / "source-recommendation-run.json").unlink()
+    (package / "raw" / "source-recommendations.jsonl").unlink()
+    _rewrite_checksums(package)
+
+
+def test_e5_legacy_package_not_mistaken_for_current_v12_valid(
+    tmp_path, recommendation_run
+):
     """Regression Test 5: Legacy package cannot be mistaken for current-v1.2-valid evidence."""
-    legacy_dir = Path("results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T024633Z")
-    if not legacy_dir.is_dir():
-        pytest.skip("Historical package 024633Z not present")
+    legacy_dir = tmp_path / "legacy-v11"
+    run_e5_evaluation(
+        catalog_path=CATALOG_PATH,
+        recommendation_run=recommendation_run,
+        mode="synthetic",
+        output_dir=legacy_dir,
+        run_id="legacy-v11",
+    )
+    _downgrade_functional_schema_version(
+        legacy_dir,
+        "protocol-v5-image-functional-evaluation-v1.1.0",
+        "protocol-v5-image-functional-metrics-v1.1.0",
+    )
 
     res = validate_e5_evidence(legacy_dir)
     assert res["status"] == "PASS"
@@ -1485,18 +1621,25 @@ def test_e5_legacy_package_not_mistaken_for_current_v12_valid():
     assert res["eligible_as_current_e5_evidence"] is False
     assert res["validation_profile"] == "LEGACY_SCHEMA_V1_1"
 
-    # Also check invalid package 020014Z
-    invalid_dir = Path("results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T020014Z")
-    if invalid_dir.is_dir():
-        with pytest.raises(EvidenceValidationError):
-            validate_e5_evidence(invalid_dir)
 
-
-def test_e5_legacy_v12_package_validates_under_legacy_profile():
+def test_e5_legacy_v12_package_validates_under_legacy_profile(
+    tmp_path, recommendation_run
+):
     """Regression Test 6: Historical v1.2 package validates as LEGACY_VALID with eligible_as_current_e5_evidence == False."""
-    v12_dir = Path("results_v5/protocol-v5.0.0/E5/e5-image-validation-20260905T032437Z")
-    if not v12_dir.is_dir():
-        pytest.skip("v1.2 package 032437Z not present")
+    v12_dir = tmp_path / "legacy-v12"
+    run_e5_evaluation(
+        catalog_path=CATALOG_PATH,
+        recommendation_run=recommendation_run,
+        mode="synthetic",
+        output_dir=v12_dir,
+        run_id="legacy-v12",
+    )
+    _downgrade_functional_schema_version(
+        v12_dir,
+        "protocol-v5-image-functional-evaluation-v1.2.0",
+        "protocol-v5-image-functional-metrics-v1.2.0",
+        v12_dimension_c_invariant=True,
+    )
 
     res = validate_e5_evidence(v12_dir)
     assert res["status"] == "PASS"
