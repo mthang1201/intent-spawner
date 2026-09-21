@@ -8,11 +8,9 @@ import os
 from pathlib import Path
 from typing import Any, Mapping
 
-from evaluation_v5.freeze import FreezeValidationError
 from evaluation_v5.isolation import (
     CONFIRMATORY_DATASET_ENV_VAR,
     DEFAULT_SIMILARITY_THRESHOLD,
-    FREEZE_ARTIFACT_ENV_VAR,
     SplitContaminationError,
     SplitIsolationError,
     load_confirmatory_split,
@@ -78,40 +76,31 @@ def run_preflight(
     selected = os.environ if environ is None else environ
     mode = _mode(args.split)
     if mode == "development":
-        if args.dataset is not None or args.freeze is not None:
-            raise SplitIsolationError(
-                "development mode prohibits --dataset and --freeze"
-            )
-        if (
-            CONFIRMATORY_DATASET_ENV_VAR in selected
-            or FREEZE_ARTIFACT_ENV_VAR in selected
-        ):
+        if args.dataset is not None:
+            raise SplitIsolationError("development mode prohibits --dataset")
+        if CONFIRMATORY_DATASET_ENV_VAR in selected:
             raise SplitIsolationError(
                 "development mode is prohibited while sealed-data inputs are configured"
             )
         expected = args.split_id or DEFAULT_DEVELOPMENT_SPLIT_ID
         development = load_development_split(expected_split_id=expected)
         result = _base_result(development)
-        result["freeze_id"] = None
         result["contamination"] = {
             "status": "not_applicable_to_development_only_preflight"
         }
         return result
 
-    dataset, freeze = resolve_confirmatory_sources(
+    dataset = resolve_confirmatory_sources(
         dataset_path=args.dataset,
-        freeze_path=args.freeze,
         environ=selected,
     )
     expected = args.split_id or DEFAULT_CONFIRMATORY_SPLIT_ID
     loaded = load_confirmatory_split(
         dataset,
-        freeze,
         expected_split_id=expected,
         similarity_threshold=args.similarity_threshold,
     )
     result = _base_result(loaded.split)
-    result["freeze_id"] = loaded.freeze_manifest["freeze_id"]
     result["contamination"] = loaded.contamination.to_safe_dict()
     return result
 
@@ -124,7 +113,6 @@ def _parser() -> argparse.ArgumentParser:
         help="Expected manifest split ID; defaults to the selected canonical v5 ID.",
     )
     parser.add_argument("--dataset", type=Path)
-    parser.add_argument("--freeze", type=Path)
     parser.add_argument(
         "--similarity-threshold",
         type=float,
@@ -140,7 +128,6 @@ def main(argv: list[str] | None = None) -> int:
         print(json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True))
         return 0
     except (
-        FreezeValidationError,
         SplitBundleValidationError,
         SplitContaminationError,
         SplitIsolationError,
