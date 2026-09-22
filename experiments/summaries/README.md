@@ -120,4 +120,4 @@ rm -f experiments/summaries/<exact-generated-experiment-id>.csv
 ```
 
 Do not remove this README and do not delete the associated raw experiment as
-part of summary cleanup. See [Cleanup](../../CLEANUP.md).
+part of summary cleanup. See [Cleanup](../../docs/CLEANUP.md).

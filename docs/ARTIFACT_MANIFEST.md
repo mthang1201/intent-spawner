@@ -10,7 +10,7 @@ identities of the repository snapshots they describe.
 | --- | --- |
 | [Getting Started](GETTING_STARTED.md) | Running the Protocol-v5 experiments, software checks, and optional demo deployment. |
 | [Architecture](ARCHITECTURE.md) | B0/P1/P2/P3 contracts, implemented capabilities, and remaining research/production boundaries. |
-| [Demo script](../DEMO_SCRIPT.md) | Interactive presentation scenes; demonstrations are separate from confirmatory evidence. |
+| [Demo script](DEMO_SCRIPT.md) | Interactive presentation scenes; demonstrations are separate from confirmatory evidence. |
 | [Helm backend deployment](HELM_BACKEND_DEPLOYMENT.md) | Runtime packaging, backend overlays, Secret references, and rollout identities. |
 | [External LLM adapter](EXTERNAL_LLM_RECOMMENDER.md) | Provider configuration and fallback behavior. |
 | [Self-hosted LLM adapter](SELF_HOSTED_LLM_RECOMMENDER.md) | Local inference configuration and limitations. |
@@ -18,7 +18,8 @@ identities of the repository snapshots they describe.
 | [Dynamic resource sizing](DYNAMIC_PROFILE_GENERATION.md) | Opt-in policy constraints and static per-spawn caps. |
 | [Preview design](evaluation/RECOMMENDATION_PREVIEW_DESIGN.md) | Preview state machine and audit fields. |
 | [Data governance](DATA_GOVERNANCE.md) | Privacy, storage, and retention rules. |
-| [Cleanup](../CLEANUP.md) | Exact demo cleanup and evidence preservation. |
+| [Cleanup](CLEANUP.md) | Exact demo cleanup and evidence preservation. |
+| [Agent rules](AGENTS.md) | Global Protocol-v5 experiment engineering rules. |
 
 ## Protocol-v5 Evidence and Contracts
 

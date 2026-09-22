@@ -261,5 +261,5 @@ Live external or Stage C reproduction requires an explicit operator decision, fr
 
 ## Cleanup
 
-Follow the [cleanup runbook](../CLEANUP.md) for the exact demo namespace and local
+Follow the [cleanup runbook](CLEANUP.md) for the exact demo namespace and local
 artifact lifecycle. Namespace deletion can delete notebook PVC data.

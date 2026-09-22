@@ -181,5 +181,5 @@ git status --short --ignored \
 ```
 
 Remove only exact generated paths that you created. Do not use wildcards and do
-not delete the entire raw directory. Follow [Cleanup](../CLEANUP.md) for
+not delete the entire raw directory. Follow [Cleanup](../docs/CLEANUP.md) for
 target-resolution examples and the complete protected-evidence list.

@@ -4,7 +4,7 @@ This guide separates Kubernetes cleanup from local generated-file cleanup.
 Run commands from the repository root and resolve exact targets before deleting
 anything.
 
-Return to the [main README](README.md), [Getting Started](docs/GETTING_STARTED.md),
+Return to the [main README](../README.md), [Getting Started](GETTING_STARTED.md),
 or [Demo Script](DEMO_SCRIPT.md).
 
 ## Kubernetes Demo Cleanup
@@ -250,7 +250,7 @@ use destructive repository-wide reset commands.
 The Helm demo namespace cleanup does not delete Minikube profiles used by an
 advanced Kubernetes evaluation. Evaluation profiles have their own exact
 cleanup procedures in
-[Kubernetes Cluster Experiment Protocol](docs/evaluation/CLUSTER_EXPERIMENT_PROTOCOL.md).
+[Kubernetes Cluster Experiment Protocol](evaluation/CLUSTER_EXPERIMENT_PROTOCOL.md).
 
 Delete only the named disposable profile created for that experiment. Never
 delete an existing default, shared, or unrelated profile.
