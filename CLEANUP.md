@@ -213,38 +213,18 @@ make validate-cluster-results
 make validate-raw-integrity
 ```
 
-## Protocol-v5 Evidence and Audit Outputs
+## Protocol-v5 Evidence
 
-Preserve the source files enrolled in
-[the final-audit inventory](benchmarks_v5/protocol-v5-final-audit-inputs-v1.json)
-and all sealed outputs under `results_v5/protocol-v5.0.0/final-audit/`. This
-includes raw observations, legacy/incomplete packages, failed audits, and
-`NOT_EXECUTED` readiness records. A failed checksum or superseded report is not
-permission to delete or repair the original artifact.
-
-Do not normalize newlines, rewrite manifests, move checksum-bound Markdown, or
-replace source files with regenerated versions. The E3 participant-flow CSV’s
-recorded checksum mismatch is a preserved audit finding. Corrections belong in
-separate, linked artifacts. Git ignore status alone does not establish that a
-file is disposable; reviewed outputs and local evidence may both be ignored.
-
-To verify the four sealed stages in the reviewed audit without regenerating or
-changing them:
+Protocol-v5 experiment runs (E1-E5) output results directly into run directories
+under `results_v5/`. To clean up generated reproduction runs, delete the
+specific run directory:
 
 ```bash
-(
-  for stage in validation analysis figures report; do
-    .venv/bin/python -m evaluation_v5.final_audit verify \
-      --package "results_v5/protocol-v5.0.0/final-audit/final-audit-20260907-v2/$stage" || exit $?
-  done
-)
+rm -rf results_v5/<exact-run-id>
 ```
 
-A passing seal check establishes artifact integrity, not a passing experiment
-audit. For new reproduction outputs use a new run ID following
-[Getting Started](docs/GETTING_STARTED.md#protocol-v5-evidence-audit).
-See [the evidence policy](results_v5/README.md) and
-[the final report](docs/evaluation/PROTOCOL_V5_FINAL_REPORT.md) for current boundaries.
+Historical Protocol-v4 evidence remains preserved as formative evidence.
+
 
 ## Derived Result Cleanup
 
