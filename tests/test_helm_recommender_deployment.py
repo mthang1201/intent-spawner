@@ -190,13 +190,7 @@ def test_supported_install_flow_has_locked_backend_auth_and_mode_interfaces():
     ("overlays", "backend"),
     [
         (["helm/recommender-rule-based-values.yaml"], "rule_based"),
-        (["helm/recommender-external-llm-values.example.yaml"], "external_llm"),
-        (["helm/recommender-self-hosted-llm-values.example.yaml"], "self_hosted_llm"),
-        (["helm/recommender-external-llm-mock.example.yaml"], "external_llm"),
-        (["helm/recommender-external-llm-mock-fallback.example.yaml"], "external_llm"),
-        (["helm/recommender-self-hosted-llm-mock.example.yaml"], "self_hosted_llm"),
         (["helm/recommender-p2-values.yaml"], "p2"),
-        (["helm/recommender-p3-values.yaml"], "p3"),
     ],
 )
 def test_all_backend_values_render_with_explicit_configuration(
@@ -210,54 +204,23 @@ def test_all_backend_values_render_with_explicit_configuration(
     ] == compute_package_checksum(PACKAGE_DIR)
 
 
-def test_external_secret_reference_is_required_and_no_api_key_is_rendered(tmp_path):
-    deployment, manifest = _render_hub(
-        tmp_path, ["helm/recommender-external-llm-values.example.yaml"]
-    )
-    api_key = _hub_environment(deployment)["EXTERNAL_LLM_API_KEY"]
-    assert api_key == {
-        "name": "EXTERNAL_LLM_API_KEY",
-        "valueFrom": {
-            "secretKeyRef": {
-                "name": "intent-spawner-external-llm",
-                "key": "api-key",
-                "optional": False,
-            }
-        },
-    }
-    assert "Bearer " not in manifest
-    assert "replace-with-api-key" not in manifest
-
-
-def test_self_hosted_auth_overlay_renders_required_secret_reference(tmp_path):
-    deployment, _ = _render_hub(
-        tmp_path,
-        [
-            "helm/recommender-self-hosted-llm-values.example.yaml",
-            "helm/recommender-self-hosted-auth-values.example.yaml",
-        ],
-    )
-    env = _hub_environment(deployment)
-    assert env["SELF_HOSTED_LLM_AUTH_REQUIRED"]["value"] == "true"
-    assert env["SELF_HOSTED_LLM_API_KEY"]["valueFrom"]["secretKeyRef"] == {
-        "name": "intent-spawner-self-hosted-llm",
-        "key": "api-key",
-        "optional": False,
-    }
-
-
-def test_self_hosted_without_auth_does_not_render_credential_environment(tmp_path):
-    deployment, _ = _render_hub(
-        tmp_path, ["helm/recommender-self-hosted-llm-values.example.yaml"]
-    )
-    assert "SELF_HOSTED_LLM_API_KEY" not in _hub_environment(deployment)
-
-
-def test_required_secret_and_key_preflight_fail_clearly(monkeypatch):
+def test_required_secret_and_key_preflight_fail_clearly(tmp_path, monkeypatch):
     module = _load_script_module(
         "validate_secret_refs_test", ROOT / "scripts/validate_secret_refs.py"
     )
-    values = ROOT / "helm/recommender-external-llm-values.example.yaml"
+    values = tmp_path / "mock-secret-values.yaml"
+    values.write_text(
+        """
+hub:
+  extraEnv:
+    MOCK_API_KEY:
+      valueFrom:
+        secretKeyRef:
+          name: intent-spawner-mock
+          key: api-key
+          optional: false
+"""
+    )
 
     def missing_secret(namespace, name):
         raise RuntimeError(f"required Kubernetes Secret {name!r} was not found")

@@ -54,7 +54,7 @@ independent unit for offline/resource inference; B0 has no ranking metrics.
 | Path | Responsibility |
 | --- | --- |
 | `recommender/` | P1 rules, P2 structured extraction/hybrid retrieval/constraints, optional P3 reranker, policy validation, preview integration, image catalog, and direct LLM adapters. |
-| `helm/` | B0 values; proposed preview/reprovisioning form; explicit P1/P2/P3 and reference LLM overlays; opt-in dynamic resources and E3 study overlay. |
+| `helm/` | B0 values; proposed preview/reprovisioning form; explicit P1/P2 overlays; opt-in dynamic resources and E3 study overlay. |
 | `evaluation_v5/offline/`, `evaluation_v5/robustness/` | E1 recommendation evidence and E2 variant harnesses. |
 | `evaluation_v5/analysis/` | Derived metrics/statistics and offline validation → analysis → reporting. |
 | `evaluation_v5/user_study/` | E3 assignment, event/privacy validation, paired analysis, and reporting. |
