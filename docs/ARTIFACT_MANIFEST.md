@@ -63,7 +63,6 @@ independent unit for offline/resource inference; B0 has no ranking metrics.
 | `evaluation_v5/image_storage/` | E5 image functionality and storage evidence/validation. |
 | `benchmarks_v5/` | Versioned development data, schemas, registries, resource/study contracts, and audit inventory. |
 | `evaluation_v4/` | Historical dataset loaders, evidence validators, aggregation/statistics, and renderers reused where applicable. |
-| `evaluation_p2/`, `evaluation_p3/`, `evaluation_final/` | Earlier integration/gate/final-evaluation infrastructure; not substitutes for v5 confirmation. |
 | `benchmarks/`, `experiments/` | Earlier synthetic workload manifests, local runners, raw records, and analysis. |
 | `cluster_evaluation/`, `k8s/`, `workload/` | Cluster harnesses, image/workload specifications, and demo resources. |
 | `results/`, `results_v5/` | Historical and v5 evidence, respectively; raw/derived/report layers remain distinct. |
@@ -114,12 +113,6 @@ Historical reports, raw artifacts, and checksum-bound Markdown stay in place.
 The handoff log records a pre-held-out model amendment referenced by the frozen
 external-LLM configuration. The superseded `IMPLEMENTATION_ROADMAP.md` has been
 removed; its useful capability and future-work boundaries now live in
-[Architecture](ARCHITECTURE.md). Historical records mentioning that filename are
-preserved as descriptions of earlier repository states.
-
-**Known legacy navigation defect:** the checksum-bound
-[evaluation_p3 results README](../evaluation_p3/results/README.md) contains an
-incorrect relative report link. Its bytes are preserved; use this
-[correct P3 report link](evaluation/P3_INCREMENTAL_EVALUATION_V1.md).
-Generated reports and ignored temporary copies are not edited as documentation
+[Architecture](ARCHITECTURE.md). Generated reports and ignored temporary copies are not edited as documentation
 cleanup. Future evidence corrections must be separately linked artifacts.
+
