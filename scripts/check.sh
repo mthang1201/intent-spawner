@@ -45,7 +45,7 @@ skip_check() {
 cd "$ROOT_DIR" || exit 1
 
 run_check "unit and smoke tests" env PYTHONPATH=. "$PYTHON_BIN" -m pytest \
-  recommender/test_recommender.py \
+  tests/test_recommender_backends_integration.py \
   tests/test_config_validation.py \
   tests/test_dynamic_profile_overlay.py \
   tests/test_reprovisioning.py \
