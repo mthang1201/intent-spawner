@@ -76,36 +76,9 @@ optional Helm/Kubernetes validation. The supported demo installers are
 [`install-dynamic.sh`](../scripts/install-dynamic.sh); the proposed installer
 packages the runtime and applies an explicit backend overlay.
 
-## Historical and Formative Evidence
+## Evidence Preservation and Integrity
 
-These documents retain their original protocols, comparator definitions, and
-RQ numbering. Terms such as “final” or “confirmatory” in their titles refer to
-those historical protocols, never to newly observed Protocol-v5 confirmation.
+Whatever a Protocol-v5 experiment run produces going forward is a plain run manifest under `results_v5/`, without a separate sealed/audit package layer.
 
-| Evidence family | Entry points |
-| --- | --- |
-| Protocol-v4 threats to validity | [Threats](evaluation/THREATS_TO_VALIDITY.md) |
-| Local and earlier cluster experiments | [Local protocol](evaluation/EXPERIMENT_PROTOCOL.md), [local results](evaluation/RESULTS.md), [cluster protocol](evaluation/CLUSTER_EXPERIMENT_PROTOCOL.md), [cluster provenance](evaluation/CLUSTER_PROVENANCE.md), [cluster results](evaluation/CLUSTER_RESULTS.md) |
-| Protocol-v4 Stage C results | [Stage C results](evaluation/STAGE_C_CONFIRMATORY_REPORT.md) |
-
-## Portable Evidence and Preservation
-
-The final-audit sealed packages and completion-audit outputs previously
-published here belonged to the now-deleted freeze/final-audit system and no
-longer exist. Whatever a Protocol-v5 experiment run produces going forward is
-a plain run manifest under `results_v5/`, without a separate sealed/audit
-package layer.
-
-The Protocol-v4 portable core contains 13 files, including three recommendation
-matrices and the Stage C summary/plan/manifests. Validate it with
-`.venv/bin/python scripts/validate-portable-evidence.py`. Its 2,244 Stage C
-sidecars belong to the optional deep archive and are not guaranteed in a clean
-checkout. The historical [external checksum manifest](evaluation/PROTOCOL_V4_EXTERNAL_SHA256SUMS.txt)
-and [raw evidence manifest](evaluation/RAW_EVIDENCE_SHA256SUMS.txt) remain intact.
-
-Historical raw artifacts and checksum manifests stay in place.
-The superseded `IMPLEMENTATION_ROADMAP.md` has been
-removed; its useful capability and future-work boundaries now live in
-[Architecture](ARCHITECTURE.md). Generated reports and ignored temporary copies are not edited as documentation
-cleanup. Future evidence corrections must be separately linked artifacts.
+The superseded `IMPLEMENTATION_ROADMAP.md` has been removed; its useful capability and future-work boundaries now live in [Architecture](ARCHITECTURE.md). Future evidence corrections must be separately linked artifacts.
 

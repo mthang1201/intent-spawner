@@ -232,14 +232,13 @@ Files under `results/`, `results/cluster/derived/`, and generated reports are
 derived, but many are intentionally tracked as part of the research artifact.
 Do not delete them merely because they can be regenerated.
 
-If you ran `make regenerate-cluster-results`, inspect changes with:
+If you ran cluster evaluation, inspect changes with:
 
 ```bash
 git status --short
 git diff -- \
   results/cluster/derived \
-  benchmarks/observed_resource_envelopes.yaml \
-  docs/evaluation/CLUSTER_RESULTS.md
+  benchmarks/observed_resource_envelopes.yaml
 ```
 
 Preserve or revert those changes through normal version-control review. Do not
@@ -248,9 +247,7 @@ use destructive repository-wide reset commands.
 ## Separate Minikube Evaluation Profiles
 
 The Helm demo namespace cleanup does not delete Minikube profiles used by an
-advanced Kubernetes evaluation. Evaluation profiles have their own exact
-cleanup procedures in
-[Kubernetes Cluster Experiment Protocol](evaluation/CLUSTER_EXPERIMENT_PROTOCOL.md).
+advanced Kubernetes evaluation.
 
 Delete only the named disposable profile created for that experiment. Never
 delete an existing default, shared, or unrelated profile.
