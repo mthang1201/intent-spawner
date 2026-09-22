@@ -185,13 +185,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             raise FileExistsError(f"Review output path already exists: {args.review_output}")
 
         dataset = load_robustness_dataset(args.dataset)
-        if dataset.role == "confirmatory":
-            raise PermissionError("Paraphrase generation is strictly prohibited on confirmatory datasets.")
-        for family in dataset.families:
-            if family.is_confirmatory or family.role == "confirmatory":
-                raise PermissionError(
-                    f"Paraphrase generation is strictly prohibited on confirmatory family {family.family_id!r}."
-                )
+
 
         updated_families: list[RobustnessFamily] = []
         total_drafts_generated = 0

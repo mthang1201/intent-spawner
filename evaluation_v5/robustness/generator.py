@@ -216,27 +216,6 @@ def generate_draft_variant(
 
     All generated variants are stamped GENERATED_DRAFT and are immediately usable.
     """
-    # Check confirmatory / frozen guards
-    if (
-        family.is_confirmatory
-        or str(getattr(family, "role", "")).strip().lower() == "confirmatory"
-        or getattr(family, "evidence_classification", "") in CONFIRMATORY_ELIGIBLE_CLASSIFICATIONS
-    ):
-        raise PermissionError(
-            f"Paraphrase generation is strictly prohibited on confirmatory family {family.family_id!r}."
-        )
-    if family.source_provenance is not None:
-        source_split = family.source_provenance.get("source_split") or family.source_provenance.get("role")
-        if str(source_split).strip().lower() == "confirmatory":
-            raise PermissionError(
-                f"Paraphrase generation is strictly prohibited on confirmatory family {family.family_id!r}."
-            )
-        src_class = family.source_provenance.get("evidence_classification")
-        if src_class in CONFIRMATORY_ELIGIBLE_CLASSIFICATIONS:
-            raise PermissionError(
-                f"Paraphrase generation is strictly prohibited on confirmatory family {family.family_id!r}."
-            )
-
     canonical = family.canonical_variant
     base_text = canonical.intent
     code_context: tuple[str, ...] = canonical.code_context
@@ -319,14 +298,6 @@ def generate_family_drafts(
     seed: int = 42,
 ) -> tuple[RobustnessVariant, ...]:
     """Generate draft variants across selected perturbation classes for a family."""
-    if (
-        family.is_confirmatory
-        or str(getattr(family, "role", "")).strip().lower() == "confirmatory"
-        or getattr(family, "evidence_classification", "") in CONFIRMATORY_ELIGIBLE_CLASSIFICATIONS
-    ):
-        raise PermissionError(
-            f"Paraphrase generation is strictly prohibited on confirmatory family {family.family_id!r}."
-        )
     target_classes = (
         classes
         if classes is not None

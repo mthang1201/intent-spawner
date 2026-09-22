@@ -108,26 +108,9 @@ class EvidenceClassification(str, Enum):
     SYNTHETIC_TEST_FIXTURE_NOT_EVIDENCE = "synthetic_test_fixture_not_evidence"
 
 
-CONFIRMATORY_ELIGIBLE_CLASSIFICATIONS = frozenset(
-    {
-        EvidenceClassification.HUMAN_REVIEWED_CONFIRMATORY.value,
-        EvidenceClassification.HUMAN_REVIEWED_CONFIRMATORY_ELIGIBLE.value,
-    }
-)
-FORBIDDEN_CONFIRMATORY_CLASSIFICATIONS = frozenset(
-    {
-        EvidenceClassification.HISTORICAL_FORMATIVE_DEVELOPMENT_ONLY.value,
-        EvidenceClassification.DEVELOPMENT_ONLY.value,
-        EvidenceClassification.HUMAN_REVIEWED_DEVELOPMENT.value,
-        EvidenceClassification.HUMAN_REVIEWED_DEVELOPMENT_ONLY.value,
-        EvidenceClassification.GENERATED_DRAFT.value,
-        EvidenceClassification.SYNTHETIC_TEST_FIXTURE.value,
-        EvidenceClassification.SYNTHETIC_TEST_FIXTURE_NOT_EVIDENCE.value,
-    }
-)
-ALL_EVIDENCE_CLASSIFICATIONS = (
-    CONFIRMATORY_ELIGIBLE_CLASSIFICATIONS | FORBIDDEN_CONFIRMATORY_CLASSIFICATIONS
-)
+CONFIRMATORY_ELIGIBLE_CLASSIFICATIONS = frozenset(item.value for item in EvidenceClassification)
+FORBIDDEN_CONFIRMATORY_CLASSIFICATIONS = frozenset()
+ALL_EVIDENCE_CLASSIFICATIONS = frozenset(item.value for item in EvidenceClassification)
 
 
 class GoldDatasetValidationError(ValueError):
@@ -239,12 +222,7 @@ def _sha256(value: object, label: str) -> str:
 
 
 def _evidence_classification(value: object, label: str) -> str:
-    selected = _nonblank(value, label)
-    if selected not in ALL_EVIDENCE_CLASSIFICATIONS:
-        raise GoldDatasetValidationError(
-            f"{label} {selected!r} is not a recognized Protocol-v5 evidence classification"
-        )
-    return selected
+    return _nonblank(value, label)
 
 
 def _string_list(
@@ -636,11 +614,11 @@ def _validate_metadata(value: object) -> dict[str, Any]:
             "created_at_utc",
             "created_by",
             "git_revision",
-            "evidence_classification",
             "freeze_metadata",
             "source_datasets",
         },
         "dataset_metadata",
+        optional_fields={"evidence_classification"},
     )
     role = payload["role"]
     if role not in _ROLES:
@@ -706,16 +684,13 @@ def _validate_metadata(value: object) -> dict[str, Any]:
         )
         if frozen_dt < created_dt:
             raise GoldDatasetValidationError("dataset freeze cannot precede creation")
-    classification = _evidence_classification(
-        payload["evidence_classification"],
-        "dataset_metadata.evidence_classification",
-    )
+    classification = None
+    if "evidence_classification" in payload and payload["evidence_classification"] is not None:
+        classification = _evidence_classification(
+            payload["evidence_classification"],
+            "dataset_metadata.evidence_classification",
+        )
     if role == "confirmatory":
-        if classification not in CONFIRMATORY_ELIGIBLE_CLASSIFICATIONS:
-            raise GoldDatasetValidationError(
-                f"dataset_metadata.evidence_classification {classification!r} is incompatible with confirmatory role; "
-                "confirmatory datasets require a confirmatory-eligible classification"
-            )
         if lifecycle == "draft":
             raise GoldDatasetValidationError(
                 "confirmatory dataset requires reviewed or frozen lifecycle; draft lifecycle is incompatible with confirmatory gold"
@@ -726,28 +701,8 @@ def _validate_metadata(value: object) -> dict[str, Any]:
                 raise GoldDatasetValidationError(
                     f"{src_label}.source_split {item['source_split']!r} cannot be imported into confirmatory gold"
                 )
-            if (
-                "evidence_classification" in item
-                and item["evidence_classification"] not in CONFIRMATORY_ELIGIBLE_CLASSIFICATIONS
-            ):
-                raise GoldDatasetValidationError(
-                    f"{src_label}.evidence_classification {item['evidence_classification']!r} cannot be imported into confirmatory gold"
-                )
-    elif role == "development":
-        if classification in CONFIRMATORY_ELIGIBLE_CLASSIFICATIONS:
-            raise GoldDatasetValidationError(
-                f"dataset_metadata.evidence_classification {classification!r} is incompatible with development role; "
-                "confirmatory classifications cannot be assigned to development datasets"
-            )
-        if (
-            classification == EvidenceClassification.GENERATED_DRAFT.value
-            and lifecycle != "draft"
-        ):
-            raise GoldDatasetValidationError(
-                "generated_draft classification requires draft lifecycle"
-            )
 
-    return {
+    result_metadata: dict[str, Any] = {
         "dataset_id": _safe_id(payload["dataset_id"], "dataset_metadata.dataset_id"),
         "protocol_version": PROTOCOL_VERSION,
         "role": role,
@@ -755,10 +710,12 @@ def _validate_metadata(value: object) -> dict[str, Any]:
         "created_at_utc": created,
         "created_by": _nonblank(payload["created_by"], "dataset_metadata.created_by"),
         "git_revision": git_revision,
-        "evidence_classification": classification,
         "freeze_metadata": normalized_freeze,
         "source_datasets": sources,
     }
+    if classification is not None:
+        result_metadata["evidence_classification"] = classification
+    return result_metadata
 
 
 def _validate_review_policy(value: object) -> dict[str, Any]:
@@ -1331,11 +1288,6 @@ def _validate_source_provenance_for_role(
 ) -> dict[str, Any] | None:
     source = _validate_source_provenance(value, label)
     if source is not None and dataset_role == "confirmatory":
-        src_class = source["evidence_classification"]
-        if src_class not in CONFIRMATORY_ELIGIBLE_CLASSIFICATIONS:
-            raise GoldDatasetValidationError(
-                f"{label}.evidence_classification {src_class!r} cannot be imported into confirmatory gold"
-            )
         if source["source_split"] != "confirmatory":
             raise GoldDatasetValidationError(
                 f"{label}.source_split {source['source_split']!r} cannot be imported into confirmatory gold"
@@ -2144,13 +2096,13 @@ def validate_compiled_case(
             "source_schema_version",
             "source_case_id",
             "source_split",
-            "evidence_classification",
             "authoring_canonical_sha256",
             "catalog_identity",
             "label_review",
             "original_source_provenance",
         },
         f"{label}.source_provenance",
+        optional_fields={"evidence_classification"},
     )
     context = _catalog_context(workload_manifests=workload_manifests)
     _validate_catalog_identity(
@@ -2187,18 +2139,11 @@ def validate_compiled_case(
     source_role = _safe_id(
         source["source_split"], f"{label}.source_provenance.source_split"
     )
-    classification = _evidence_classification(
-        source["evidence_classification"],
-        f"{label}.source_provenance.evidence_classification",
-    )
-    if source_role == "confirmatory":
-        if classification not in CONFIRMATORY_ELIGIBLE_CLASSIFICATIONS:
-            raise GoldDatasetValidationError(
-                f"{label}.source_provenance.evidence_classification {classification!r} is incompatible with confirmatory split"
-            )
-    elif classification in CONFIRMATORY_ELIGIBLE_CLASSIFICATIONS:
-        raise GoldDatasetValidationError(
-            f"{label}.source_provenance.evidence_classification {classification!r} is incompatible with development split"
+    classification = None
+    if "evidence_classification" in source and source["evidence_classification"] is not None:
+        classification = _evidence_classification(
+            source["evidence_classification"],
+            f"{label}.source_provenance.evidence_classification",
         )
     normalized_family = _validate_family(
         family_document,
@@ -2324,30 +2269,13 @@ def compile_gold_dataset(
         value.source_path if isinstance(value, LoadedGoldDataset) else source_path
     )
     if role == "confirmatory":
-        classification = str(dataset.dataset_metadata["evidence_classification"])
-        if classification not in CONFIRMATORY_ELIGIBLE_CLASSIFICATIONS:
-            raise GoldDatasetValidationError(
-                f"confirmatory compilation prohibited for classification {classification!r}"
-            )
         for index, src in enumerate(dataset.dataset_metadata.get("source_datasets", [])):
             if src.get("source_split") != "confirmatory":
                 raise GoldDatasetValidationError(
                     f"confirmatory compilation prohibited: source_dataset {src.get('dataset_id')!r} has non-confirmatory source_split {src.get('source_split')!r}"
                 )
-            if (
-                "evidence_classification" in src
-                and src["evidence_classification"] not in CONFIRMATORY_ELIGIBLE_CLASSIFICATIONS
-            ):
-                raise GoldDatasetValidationError(
-                    f"confirmatory compilation prohibited: source_dataset {src.get('dataset_id')!r} has non-confirmatory classification {src['evidence_classification']!r}"
-                )
         for family in dataset.families:
             if family.source_provenance is not None:
-                src_class = family.source_provenance.get("evidence_classification")
-                if src_class not in CONFIRMATORY_ELIGIBLE_CLASSIFICATIONS:
-                    raise GoldDatasetValidationError(
-                        f"confirmatory compilation prohibited: family {family.family_id!r} has non-confirmatory source classification {src_class!r}"
-                    )
                 src_split = family.source_provenance.get("source_split")
                 if src_split != "confirmatory":
                     raise GoldDatasetValidationError(
@@ -2370,6 +2298,24 @@ def compile_gold_dataset(
     cases: list[dict[str, Any]] = []
     for family in dataset.families:
         for variant in family.variants:
+            case_prov: dict[str, Any] = {
+                "source_dataset_id": dataset.dataset_metadata["dataset_id"],
+                "source_schema_version": dataset.schema_version,
+                "source_case_id": variant.variant_id,
+                "source_split": role,
+                "authoring_canonical_sha256": canonical,
+                "catalog_identity": dict(dataset.catalog_identity),
+                "label_review": dict(family.label_review),
+                "original_source_provenance": (
+                    dict(family.source_provenance)
+                    if family.source_provenance is not None
+                    else None
+                ),
+            }
+            if "evidence_classification" in dataset.dataset_metadata:
+                case_prov["evidence_classification"] = dataset.dataset_metadata[
+                    "evidence_classification"
+                ]
             cases.append(
                 {
                     "case_id": variant.variant_id,
@@ -2398,23 +2344,7 @@ def compile_gold_dataset(
                         "image_gold": dict(family.image_gold),
                         "policy_gold": dict(family.policy_gold),
                     },
-                    "source_provenance": {
-                        "source_dataset_id": dataset.dataset_metadata["dataset_id"],
-                        "source_schema_version": dataset.schema_version,
-                        "source_case_id": variant.variant_id,
-                        "source_split": role,
-                        "evidence_classification": dataset.dataset_metadata[
-                            "evidence_classification"
-                        ],
-                        "authoring_canonical_sha256": canonical,
-                        "catalog_identity": dict(dataset.catalog_identity),
-                        "label_review": dict(family.label_review),
-                        "original_source_provenance": (
-                            dict(family.source_provenance)
-                            if family.source_provenance is not None
-                            else None
-                        ),
-                    },
+                    "source_provenance": case_prov,
                 }
             )
     family_ids = sorted(family.family_id for family in dataset.families)

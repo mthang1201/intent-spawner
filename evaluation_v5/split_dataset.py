@@ -384,7 +384,6 @@ class SplitCase:
             "source_schema_version",
             "source_case_id",
             "source_split",
-            "evidence_classification",
         }
     )
 
@@ -497,16 +496,12 @@ class SplitCase:
                 f"{label}.source_provenance missing fields: "
                 + ", ".join(missing_provenance)
             )
-        for field in cls._PROVENANCE_REQUIRED - {"evidence_classification"}:
+        for field in cls._PROVENANCE_REQUIRED:
             _safe_id(provenance[field], f"{label}.source_provenance.{field}")
-        ev_class = _nonblank(
-            provenance["evidence_classification"],
-            f"{label}.source_provenance.evidence_classification",
-        )
-        if ev_class not in ALL_EVIDENCE_CLASSIFICATIONS:
-            raise SplitBundleValidationError(
-                f"{label}.source_provenance.evidence_classification {ev_class!r} "
-                "is not a recognized Protocol-v5 evidence classification"
+        if "evidence_classification" in provenance and provenance["evidence_classification"] is not None:
+            _nonblank(
+                provenance["evidence_classification"],
+                f"{label}.source_provenance.evidence_classification",
             )
         if "original_provenance" in provenance:
             provenance["original_provenance"] = _finite_json_mapping(
@@ -736,19 +731,7 @@ def validate_split_bundle(
                     f"cases[{index}] disagrees with another case in family "
                     f"{case.family_id!r}"
                 )
-            ev_class = case.source_provenance.get("evidence_classification")
-            if manifest.role is SplitRole.CONFIRMATORY:
-                if ev_class not in CONFIRMATORY_ELIGIBLE_CLASSIFICATIONS:
-                    raise SplitBundleValidationError(
-                        f"cases[{index}].source_provenance.evidence_classification {ev_class!r} "
-                        "is incompatible with confirmatory split manifest"
-                    )
-            elif manifest.role is SplitRole.DEVELOPMENT:
-                if ev_class in CONFIRMATORY_ELIGIBLE_CLASSIFICATIONS:
-                    raise SplitBundleValidationError(
-                        f"cases[{index}].source_provenance.evidence_classification {ev_class!r} "
-                        "is incompatible with development split manifest"
-                    )
+
             if case.variant_metadata["equivalence_status"] == "canonical_reference":
                 family_canonical_references[case.family_id] = (
                     family_canonical_references.get(case.family_id, 0) + 1

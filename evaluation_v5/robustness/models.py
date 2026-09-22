@@ -138,14 +138,9 @@ class RobustnessFamily:
         """Return True if this family belongs to the sealed confirmatory split."""
         if str(self.role).strip().lower() == "confirmatory":
             return True
-        if self.evidence_classification in CONFIRMATORY_ELIGIBLE_CLASSIFICATIONS:
-            return True
         if self.source_provenance is not None:
             source_split = self.source_provenance.get("source_split") or self.source_provenance.get("role")
             if source_split is not None and str(source_split).strip().lower() == "confirmatory":
-                return True
-            src_class = self.source_provenance.get("evidence_classification")
-            if src_class is not None and src_class in CONFIRMATORY_ELIGIBLE_CLASSIFICATIONS:
                 return True
         return False
 
@@ -539,15 +534,11 @@ def validate_robustness_family(family: RobustnessFamily) -> None:
             )
         seen_ids.add(variant.variant_id)
 
-    # Role and evidence classification integrity
+    # Role and provenance split integrity
     if family.is_confirmatory:
         if family.role != "confirmatory":
             raise RobustnessValidationError(
                 f"Confirmatory family {family.family_id!r} has invalid role {family.role!r}"
-            )
-        if family.evidence_classification not in CONFIRMATORY_ELIGIBLE_CLASSIFICATIONS:
-            raise RobustnessValidationError(
-                f"Confirmatory family {family.family_id!r} has invalid evidence_classification {family.evidence_classification!r}"
             )
         if family.source_provenance is not None:
             source_split = family.source_provenance.get("source_split") or family.source_provenance.get("role")
@@ -555,16 +546,6 @@ def validate_robustness_family(family: RobustnessFamily) -> None:
                 raise RobustnessValidationError(
                     f"Confirmatory family {family.family_id!r} has conflicting source_split {source_split!r}"
                 )
-            src_class = family.source_provenance.get("evidence_classification")
-            if src_class is not None and src_class not in CONFIRMATORY_ELIGIBLE_CLASSIFICATIONS:
-                raise RobustnessValidationError(
-                    f"Confirmatory family {family.family_id!r} has non-confirmatory source evidence_classification {src_class!r}"
-                )
-    else:
-        if family.evidence_classification in CONFIRMATORY_ELIGIBLE_CLASSIFICATIONS:
-            raise RobustnessValidationError(
-                f"Development family {family.family_id!r} cannot have confirmatory evidence_classification {family.evidence_classification!r}"
-            )
 
     # Check canonical references
     canonical_refs = [

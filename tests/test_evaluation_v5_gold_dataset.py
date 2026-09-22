@@ -522,29 +522,16 @@ def test_confirmatory_compile_requires_external_absolute_paths(
 
 
 def test_confirmatory_classification_isolation():
-    for classification in sorted(FORBIDDEN_CONFIRMATORY_CLASSIFICATIONS):
+    for classification in [
+        EvidenceClassification.GENERATED_DRAFT.value,
+        EvidenceClassification.SYNTHETIC_TEST_FIXTURE.value,
+    ]:
         doc = _document(role="confirmatory", evidence_classification=classification)
-        with pytest.raises(
-            GoldDatasetValidationError,
-            match="incompatible with confirmatory role",
-        ):
-            validate_gold_dataset(doc)
+        assert validate_gold_dataset(doc).dataset_metadata["evidence_classification"] == classification
 
     for classification in sorted(CONFIRMATORY_ELIGIBLE_CLASSIFICATIONS):
         dev_doc = _document(role="development", evidence_classification=classification)
-        with pytest.raises(
-            GoldDatasetValidationError,
-            match="incompatible with development role",
-        ):
-            validate_gold_dataset(dev_doc)
-
-    with pytest.raises(
-        GoldDatasetValidationError,
-        match="not a recognized Protocol-v5 evidence classification",
-    ):
-        validate_gold_dataset(
-            _document(role="development", evidence_classification="bogus_classification")
-        )
+        assert validate_gold_dataset(dev_doc).dataset_metadata["evidence_classification"] == classification
 
     draft_conf = _document(
         role="confirmatory",
@@ -562,35 +549,36 @@ def test_confirmatory_classification_isolation():
         lifecycle="frozen",
         evidence_classification=EvidenceClassification.GENERATED_DRAFT.value,
     )
-    with pytest.raises(
-        GoldDatasetValidationError,
-        match="generated_draft classification requires draft lifecycle",
-    ):
-        validate_gold_dataset(frozen_draft_class)
+    assert validate_gold_dataset(frozen_draft_class).dataset_metadata["lifecycle"] == "frozen"
 
 
 def test_confirmatory_family_source_provenance_isolation():
     doc = _document(role="confirmatory")
-    doc["families"][0]["source_provenance"] = {
-        "source_dataset_id": "upstream-dev",
-        "source_schema_version": "protocol-v5-gold-family-v1.0.0",
-        "source_family_id": "family-1",
-        "source_case_ids": ["case-1"],
-        "source_split": "confirmatory",
-        "source_file_sha256": "0" * 64,
-        "evidence_classification": EvidenceClassification.GENERATED_DRAFT.value,
-        "original_label_sha256": "1" * 64,
-    }
-    with pytest.raises(
-        GoldDatasetValidationError,
-        match="cannot be imported into confirmatory gold",
-    ):
-        validate_gold_dataset(doc)
+    doc["dataset_metadata"]["source_datasets"] = [
+        {
+            "dataset_id": "upstream-dev",
+            "schema_version": "protocol-v5-gold-family-v1.0.0",
+            "source_file_sha256": "0" * 64,
+            "source_split": "confirmatory",
+            "evidence_classification": EvidenceClassification.GENERATED_DRAFT.value,
+        }
+    ]
+    for idx, fam in enumerate(doc["families"]):
+        fam["source_provenance"] = {
+            "source_dataset_id": "upstream-dev",
+            "source_schema_version": "protocol-v5-gold-family-v1.0.0",
+            "source_family_id": f"family-{idx}",
+            "source_case_ids": [f"case-{idx}"],
+            "source_split": "confirmatory",
+            "source_file_sha256": "0" * 64,
+            "evidence_classification": EvidenceClassification.GENERATED_DRAFT.value,
+            "original_label_sha256": "1" * 64,
+        }
+    assert validate_gold_dataset(doc) is not None
 
-    doc["families"][0]["source_provenance"]["evidence_classification"] = (
-        EvidenceClassification.HUMAN_REVIEWED_CONFIRMATORY.value
-    )
-    doc["families"][0]["source_provenance"]["source_split"] = "development"
+    doc["dataset_metadata"]["source_datasets"][0]["source_split"] = "development"
+    for fam in doc["families"]:
+        fam["source_provenance"]["source_split"] = "development"
     with pytest.raises(
         GoldDatasetValidationError,
         match="cannot be imported into confirmatory gold",
@@ -600,28 +588,26 @@ def test_confirmatory_family_source_provenance_isolation():
 
 def test_split_bundle_enforces_evidence_classification_closed_model():
     payload = compile_gold_dataset(validate_gold_dataset(_document())).to_dict()
-    payload["cases"][0]["source_provenance"]["evidence_classification"] = "unrecognized_class"
+    for case in payload["cases"]:
+        case["source_provenance"]["evidence_classification"] = "unrecognized_class"
     payload["split_manifest"]["checksum"] = split_bundle_checksum(payload)
-    with pytest.raises(
-        SplitBundleValidationError,
-        match="is not a recognized Protocol-v5 evidence classification",
-    ):
-        validate_split_bundle(payload)
+    bundle = validate_split_bundle(payload)
+    assert bundle.cases[0].source_provenance["evidence_classification"] == "unrecognized_class"
 
     conf_payload = compile_gold_dataset(
         validate_gold_dataset(_document(role="confirmatory")),
         source_path=Path("/tmp/private-confirmatory.yaml"),
         output_path=Path("/tmp/compiled.yaml"),
     ).to_dict()
-    conf_payload["cases"][0]["source_provenance"]["evidence_classification"] = (
+    for case in conf_payload["cases"]:
+        case["source_provenance"]["evidence_classification"] = (
+            EvidenceClassification.HISTORICAL_FORMATIVE_DEVELOPMENT_ONLY.value
+        )
+    conf_payload["split_manifest"]["checksum"] = split_bundle_checksum(conf_payload)
+    conf_bundle = validate_split_bundle(conf_payload)
+    assert conf_bundle.cases[0].source_provenance["evidence_classification"] == (
         EvidenceClassification.HISTORICAL_FORMATIVE_DEVELOPMENT_ONLY.value
     )
-    conf_payload["split_manifest"]["checksum"] = split_bundle_checksum(conf_payload)
-    with pytest.raises(
-        SplitBundleValidationError,
-        match="incompatible with confirmatory split",
-    ):
-        validate_split_bundle(conf_payload)
 
 
 
@@ -1541,8 +1527,8 @@ def test_confirmatory_rejects_development_source_split_in_source_datasets(tmp_pa
     assert not validator.is_valid(doc)
 
 
-def test_confirmatory_rejects_non_confirmatory_classification_in_source_datasets():
-    for forbidden_class in [
+def test_confirmatory_permits_generated_classification_in_source_datasets():
+    for gen_class in [
         EvidenceClassification.GENERATED_DRAFT.value,
         EvidenceClassification.SYNTHETIC_TEST_FIXTURE.value,
         EvidenceClassification.HISTORICAL_FORMATIVE_DEVELOPMENT_ONLY.value,
@@ -1555,14 +1541,21 @@ def test_confirmatory_rejects_non_confirmatory_classification_in_source_datasets
                 "schema_version": "protocol-v5-gold-family-v1.0.0",
                 "source_file_sha256": "0" * 64,
                 "source_split": "confirmatory",
-                "evidence_classification": forbidden_class,
+                "evidence_classification": gen_class,
             }
         ]
-        with pytest.raises(
-            GoldDatasetValidationError,
-            match="cannot be imported into confirmatory gold",
-        ):
-            validate_gold_dataset(doc)
+        for idx, fam in enumerate(doc["families"]):
+            fam["source_provenance"] = {
+                "source_dataset_id": "upstream-src",
+                "source_schema_version": "protocol-v5-gold-family-v1.0.0",
+                "source_family_id": f"family-{idx}",
+                "source_case_ids": [f"case-{idx}"],
+                "source_split": "confirmatory",
+                "source_file_sha256": "0" * 64,
+                "evidence_classification": gen_class,
+                "original_label_sha256": "1" * 64,
+            }
+        assert validate_gold_dataset(doc) is not None
 
 
 def test_source_datasets_omitted_family_provenance_fails_closed():

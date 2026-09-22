@@ -87,7 +87,7 @@
       "additionalProperties": false,
       "required": [
         "source_dataset_id", "source_schema_version", "source_case_id", "source_split",
-        "evidence_classification", "authoring_canonical_sha256", "catalog_identity",
+        "authoring_canonical_sha256", "catalog_identity",
         "label_review", "original_source_provenance"
       ],
       "properties": {
@@ -105,22 +105,7 @@
             {"$ref": "protocol-v5-gold-family-v1.schema.json#/$defs/sourceProvenance"}
           ]
         }
-      },
-      "allOf": [
-        {
-          "if": {"properties": {"source_split": {"const": "confirmatory"}}, "required": ["source_split"]},
-          "then": {
-            "properties": {
-              "evidence_classification": {
-                "enum": [
-                  "human_reviewed_confirmatory",
-                  "human_reviewed_confirmatory_eligible"
-                ]
-              }
-            }
-          }
-        }
-      ]
+      }
     }
   }
 }

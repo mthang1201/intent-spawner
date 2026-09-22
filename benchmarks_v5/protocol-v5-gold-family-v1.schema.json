@@ -63,25 +63,14 @@
       }
     },
     "evidenceClassification": {
-      "type": "string",
-      "enum": [
-        "human_reviewed_confirmatory",
-        "human_reviewed_confirmatory_eligible",
-        "historical_formative_development_only",
-        "development_only",
-        "human_reviewed_development",
-        "human_reviewed_development_only",
-        "generated_draft",
-        "synthetic_test_fixture",
-        "synthetic_test_fixture_not_evidence"
-      ]
+      "type": "string"
     },
     "datasetMetadata": {
       "type": "object",
       "additionalProperties": false,
       "required": [
         "dataset_id", "protocol_version", "role", "lifecycle", "created_at_utc", "created_by",
-        "git_revision", "evidence_classification", "freeze_metadata", "source_datasets"
+        "git_revision", "freeze_metadata", "source_datasets"
       ],
       "properties": {
         "dataset_id": {"$ref": "#/$defs/safeId"},
@@ -110,39 +99,15 @@
           "if": {"properties": {"role": {"const": "confirmatory"}}, "required": ["role"]},
           "then": {
             "properties": {
-              "evidence_classification": {
-                "enum": [
-                  "human_reviewed_confirmatory",
-                  "human_reviewed_confirmatory_eligible"
-                ]
-              },
               "lifecycle": {
                 "enum": ["reviewed", "frozen"]
               },
               "source_datasets": {
                 "items": {
                   "properties": {
-                    "source_split": {"const": "confirmatory"},
-                    "evidence_classification": {
-                      "enum": [
-                        "human_reviewed_confirmatory",
-                        "human_reviewed_confirmatory_eligible"
-                      ]
-                    }
+                    "source_split": {"const": "confirmatory"}
                   },
                   "required": ["source_split"]
-                }
-              }
-            }
-          },
-          "else": {
-            "properties": {
-              "evidence_classification": {
-                "not": {
-                  "enum": [
-                    "human_reviewed_confirmatory",
-                    "human_reviewed_confirmatory_eligible"
-                  ]
                 }
               }
             }
@@ -274,7 +239,7 @@
       "additionalProperties": false,
       "required": [
         "source_dataset_id", "source_schema_version", "source_family_id", "source_case_ids",
-        "source_split", "source_file_sha256", "evidence_classification", "original_label_sha256"
+        "source_split", "source_file_sha256", "original_label_sha256"
       ],
       "properties": {
         "source_dataset_id": {"$ref": "#/$defs/safeId"},

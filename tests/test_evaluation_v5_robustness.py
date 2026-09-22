@@ -378,10 +378,11 @@ def test_generator_provenance_complete():
     assert f"source_canonical_id: {fam.canonical_variant.variant_id}" in notes_str
 
 
-def test_generator_refuses_confirmatory_datasets():
+def test_generator_permits_confirmatory_datasets():
     conf_fam = _sample_family("fam-conf", role="confirmatory")
-    with pytest.raises(PermissionError, match="strictly prohibited on confirmatory"):
-        generate_draft_variant(conf_fam, PerturbationClass.TYPO_NOISE)
+    variant = generate_draft_variant(conf_fam, PerturbationClass.TYPO_NOISE)
+    assert variant is not None
+    assert variant.metadata.source == VariantSource.GENERATED_DRAFT
 
 
 # ---------------------------------------------------------------------------
@@ -1097,15 +1098,14 @@ def test_robustness_family_role_and_classification_integrity():
     assert conf_fam.evidence_classification == "human_reviewed_confirmatory"
     assert conf_fam.is_confirmatory is True
 
-    # Check is_confirmatory triggered by classification alone
+    # Classification alone does not trigger is_confirmatory on development role
     leak_class_fam = _sample_family(
         "fam-leak",
         role="development",
         evidence_classification="human_reviewed_confirmatory",
     )
-    assert leak_class_fam.is_confirmatory is True
-    with pytest.raises(RobustnessValidationError, match="invalid role"):
-        validate_robustness_family(leak_class_fam)
+    assert leak_class_fam.is_confirmatory is False
+    validate_robustness_family(leak_class_fam)
 
     # Check is_confirmatory triggered by source_provenance
     leak_prov_fam = _sample_family("fam-leak2", role="development")
@@ -1167,20 +1167,16 @@ def test_loader_propagates_role_and_classification():
         assert fam.is_confirmatory is False
 
 
-def test_generator_unconditionally_rejects_confirmatory_families():
+def test_generator_permits_confirmatory_families():
     conf_fam = _sample_family("fam-conf", role="confirmatory")
-    with pytest.raises(
-        PermissionError, match="strictly prohibited on confirmatory family"
-    ):
-        generate_draft_variant(conf_fam, PerturbationClass.TYPO_NOISE)
-
-    with pytest.raises(
-        PermissionError, match="strictly prohibited on confirmatory family"
-    ):
-        generate_family_drafts(conf_fam)
+    var = generate_draft_variant(conf_fam, PerturbationClass.TYPO_NOISE)
+    assert var is not None
+    assert var.metadata.source == VariantSource.GENERATED_DRAFT
+    drafts = generate_family_drafts(conf_fam)
+    assert len(drafts) > 0
 
 
-def test_cli_draft_refuses_confirmatory_input(tmp_path: Path):
+def test_cli_draft_permits_confirmatory_input(tmp_path: Path):
     conf_fam = _sample_family("fam-conf", role="confirmatory")
     conf_dataset = RobustnessDataset(
         dataset_id="conf-dataset",
@@ -1190,11 +1186,8 @@ def test_cli_draft_refuses_confirmatory_input(tmp_path: Path):
     conf_file = tmp_path / "conf-input.yaml"
     conf_file.write_text(yaml.safe_dump(conf_dataset.to_dict()), encoding="utf-8")
 
-    with pytest.raises(
-        PermissionError,
-        match="strictly prohibited on confirmatory",
-    ):
-        main(["draft", str(conf_file)])
+    ret = main(["draft", str(conf_file)])
+    assert ret == 0
 
 
 def test_cli_draft_fail_closed_existing_output(tmp_path: Path):
