@@ -28,7 +28,7 @@ run manifest. No results currently exist — previously collected
 `results_v5/`, `results/`, and formative evidence were wiped ahead of this
 cleanup, and no experiment has been re-executed yet.
 
-Protocol-v4 results remain [historical/formative evidence](docs/evaluation/PROTOCOL_V4_REVISED_EVALUATION_REPORT.md).
+Protocol-v4 results remain historical/formative evidence.
 
 ## Quickstart and reproduction
 

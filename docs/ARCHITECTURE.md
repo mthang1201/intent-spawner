@@ -191,13 +191,12 @@ under `results_v5/` — no separate freeze/audit step and no manual approval gat
 No results currently exist for any of E1-E5; previously collected evidence was
 wiped ahead of this cleanup and no experiment has been re-executed yet.
 
-The [Protocol-v4 combined report](evaluation/PROTOCOL_V4_REVISED_EVALUATION_REPORT.md)
-and [P2 integration evaluation](evaluation/P2_BACKEND_EVALUATION_V1.md) remain
+Historical Protocol-v4 evidence and P2 integration evaluation remain
 historical/formative evidence. Their samples, comparators, and RQ numbering must
 not be relabeled as Protocol-v5 confirmation. The preserved v4 Stage C evidence
 covers one disposable node and eight workload families, limiting generalization.
 
-The [P3 formative decision](evaluation/P3_INCREMENTAL_EVALUATION_V1.md) used 60
+The historical P3 formative decision used 60
 Protocol-v4 queries plus six diagnostics. It found no wrong-to-correct change,
 one correct-to-wrong regression, invalid reranker outputs, and increased latency.
 P3 was **not retained**. This negative finding is preserved; it is not a completed

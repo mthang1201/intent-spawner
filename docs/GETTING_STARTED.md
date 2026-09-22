@@ -253,13 +253,9 @@ make v4-validate
 This target runs the recommendation and system planners with `--dry-run`; it
 collects no new model responses or cluster measurements.
 
-The authoritative observed matrices are already complete. Do not overwrite or present a new dry run as those results. Their interpretation and exact evidence identities are documented in:
+The authoritative observed matrices are already complete. Do not overwrite or present a new dry run as those results.
 
-* [`evaluation/PROTOCOL_V4_REVISED_EVALUATION_REPORT.md`](evaluation/PROTOCOL_V4_REVISED_EVALUATION_REPORT.md)
-* [`evaluation/PROTOCOL_V4_EXTERNAL_LLM_LIVE_REPORT.md`](evaluation/PROTOCOL_V4_EXTERNAL_LLM_LIVE_REPORT.md)
-* [`evaluation/STAGE_C_CONFIRMATORY_REPORT.md`](evaluation/STAGE_C_CONFIRMATORY_REPORT.md)
-
-Live external or Stage C reproduction requires an explicit operator decision, frozen configuration, credentials, and a disposable cluster. Follow [`evaluation/PROTOCOL_V4_REPRODUCIBILITY.md`](evaluation/PROTOCOL_V4_REPRODUCIBILITY.md); never point a new run at an authoritative result directory.
+Live external or Stage C reproduction requires an explicit operator decision, frozen configuration, credentials, and a disposable cluster; never point a new run at an authoritative result directory.
 
 ---
 

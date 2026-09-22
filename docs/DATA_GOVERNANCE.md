@@ -206,5 +206,3 @@ collection from deployed users.
 - Protocol-v4 system and re-provisioning records reference only sanitized,
   repository-relative evidence paths. The analyzer requires evidence paths for
   observed records and preserves missing metrics as null.
-
-See `docs/evaluation/EVIDENCE_COLLECTION_V4.md` for exact collection rules.

@@ -85,14 +85,9 @@ those historical protocols, never to newly observed Protocol-v5 confirmation.
 
 | Evidence family | Entry points |
 | --- | --- |
-| P2 integration and P3 development gate | [P2 evaluation](evaluation/P2_BACKEND_EVALUATION_V1.md), [P3 negative decision](evaluation/P3_INCREMENTAL_EVALUATION_V1.md) |
-| Earlier final-evaluation design | [Final Evaluation Protocol v1](evaluation/FINAL_EVALUATION_PROTOCOL_V1.md) |
-| Protocol-v4 methods and reproduction | [Protocol](evaluation/EVALUATION_V4_PROTOCOL.md), [four-method specification](evaluation/PROTOCOL_V4_FOUR_METHOD_EVALUATION.md), [reproduction](evaluation/PROTOCOL_V4_REPRODUCIBILITY.md), [collection contract](evaluation/EVIDENCE_COLLECTION_V4.md) |
-| Protocol-v4 results | [Combined report](evaluation/PROTOCOL_V4_REVISED_EVALUATION_REPORT.md), [external LLM results](evaluation/PROTOCOL_V4_EXTERNAL_LLM_LIVE_REPORT.md), [Stage C results](evaluation/STAGE_C_CONFIRMATORY_REPORT.md) |
 | Protocol-v4 threats to validity | [Threats](evaluation/THREATS_TO_VALIDITY.md) |
 | Local and earlier cluster experiments | [Local protocol](evaluation/EXPERIMENT_PROTOCOL.md), [local results](evaluation/RESULTS.md), [cluster protocol](evaluation/CLUSTER_EXPERIMENT_PROTOCOL.md), [cluster provenance](evaluation/CLUSTER_PROVENANCE.md), [cluster results](evaluation/CLUSTER_RESULTS.md) |
-| Resource-envelope v3 | [Protocol](evaluation/RESOURCE_ENVELOPE_PROTOCOL_V3.md), [implementation audit](evaluation/RESOURCE_ENVELOPE_V3_IMPLEMENTATION_AUDIT.md) |
-| Historical integration and handoffs | [Branch integration](evaluation/BRANCH_INTEGRATION_REPORT.md), [handoff log](evaluation/NEXT_AGENT_CONTEXT.md) |
+| Protocol-v4 Stage C results | [Stage C results](evaluation/STAGE_C_CONFIRMATORY_REPORT.md) |
 
 ## Portable Evidence and Preservation
 
@@ -109,9 +104,8 @@ sidecars belong to the optional deep archive and are not guaranteed in a clean
 checkout. The historical [external checksum manifest](evaluation/PROTOCOL_V4_EXTERNAL_SHA256SUMS.txt)
 and [raw evidence manifest](evaluation/RAW_EVIDENCE_SHA256SUMS.txt) remain intact.
 
-Historical reports, raw artifacts, and checksum-bound Markdown stay in place.
-The handoff log records a pre-held-out model amendment referenced by the frozen
-external-LLM configuration. The superseded `IMPLEMENTATION_ROADMAP.md` has been
+Historical raw artifacts and checksum manifests stay in place.
+The superseded `IMPLEMENTATION_ROADMAP.md` has been
 removed; its useful capability and future-work boundaries now live in
 [Architecture](ARCHITECTURE.md). Generated reports and ignored temporary copies are not edited as documentation
 cleanup. Future evidence corrections must be separately linked artifacts.
