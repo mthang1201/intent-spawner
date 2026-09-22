@@ -6,27 +6,19 @@ This document explains the system architecture, component contracts, security bo
 
 ## 1. Primary Thesis Systems & Research Taxonomy
 
-The thesis registry defines B0, P1, P2, and optional P3. P2 is the main proposed
-method; P3 is not retained for primary evaluation.
+The thesis registry defines B0, P1, and P2. P2 is the main proposed method.
 
 | System ID | Name / Description | Pipeline Summary | Research Role |
 | :--- | :--- | :--- | :--- |
 | **B0** | **Default JupyterHub** | Manual administrator-configured `profileList` selection; no automated recommendation or intent parsing. | Manual baseline for the E3 human study (RQ3); no ranking metrics. |
 | **P1** | **Rule-Based Recommender** | Deterministic lexical keyword and heuristic scoring over intent text, dataset size, and code context. | Comparator for E1/E2 (RQ1/RQ2) and fallback backend. |
 | **P2** | **Structured Intent + Hybrid Retrieval + Deterministic Constraints** | Natural language request → `StructuredIntent` → BM25 sparse + dense embeddings retrieval → Reciprocal Rank Fusion (RRF) → deterministic hard-constraint filtering → deterministic ranking → corpus resolution. | **Main proposed method**; comparisons are specified in E1–E5. |
-| **P3** | **P2 + Retrieval-Grounded LLM Reranker** | Frozen P2 candidate generation and deterministic constraint evaluation → schema-validated LLM reranking of P2-feasible candidate IDs only → corpus resolution. | Optional E6/RQ6 extension; formative gate outcome: `not_retained`. |
-
-### Motivating & Reference Evidence (Direct-LLM Experiments)
-
-Direct end-to-end prompt-to-recommendation LLM backends (`external_llm` via Google Gemini 3.5 Flash and `self_hosted_llm` via local Ollama Llama 3) were evaluated under Protocol v4. They serve as **historical/formative reference evidence** about the recorded pipelines’ latency, reliability, and quality limitations. Head-to-head external-vs-local LLM comparison is **not** a primary research question for the thesis.
 
 ---
 
 ## 2. End-to-End System Data Flow
 
-The implemented P2 pipeline combines configurable extraction and retrieval with
-deterministic constraints/ranking. Extraction or optional P3 reranking can call
-an LLM; the diagram describes behavior, not observed Protocol-v5 performance:
+The implemented P2 pipeline combines structured extraction and hybrid retrieval with deterministic constraints and ranking:
 
 ```mermaid
 flowchart TD
@@ -34,19 +26,13 @@ flowchart TD
     Form -->|2. POST /hub/recommendation-preview| HubAPI[Authenticated Hub Preview API]
 
     subgraph P2_Pipeline [P2 Main Pipeline: recommender/p2_backend.py]
-        HubAPI --> Extractor[StructuredIntent Extractor: local / LLM]
+        HubAPI --> Extractor[StructuredIntent Extractor]
         Extractor -->|StructuredIntent Contract| Retrieval[Hybrid Retrieval: BM25 + Dense Embeddings]
         Retrieval -->|Fused Hits via RRF| Evaluator[Deterministic Constraint Evaluator]
         Evaluator -->|Feasible Candidate IDs Only| P2Ranker[Deterministic Preference Ranker]
     end
 
-    subgraph P3_Extension [P3 Optional Reranker: recommender/p3_backend.py]
-        P2Ranker -.->|P2 Feasible Ranking| P3Reranker[Grounded LLM Reranker]
-        P3Reranker -.->|Validated Feasible IDs Only| P3Selector[P3 Selected Candidate]
-    end
-
     P2Ranker -->|Selected Candidate ID| CorpusResolve[Candidate Corpus Resolution]
-    P3Selector -.->|Selected Candidate ID| CorpusResolve
     
     subgraph Trust_Boundary [Trust & Policy Boundary]
         CorpusResolve -->|Admin-Owned EnvironmentCandidate| CandidateDoc[CandidateDocument]
@@ -106,21 +92,13 @@ flowchart TD
 * Feasible candidates use `0.75 * (1 / fused_rank) + 0.25 * soft_preference_score`, rounded to 12 decimal places, with candidate ID ascending as the final tie-breaker.
 * If zero candidates are feasible, `no_feasible_candidate` marks the result infeasible and triggers explanatory warning metadata (`infeasibility_info`). P2/ranking remains the sole authority for feasibility; `infeasibility_info` is strictly derived explanatory metadata. If detailed constraint numbers are omitted or unavailable, the UI safely renders a generic warning without integration-layer resource recomputation. The preview UI displays a prominent warning, indicates catalog limits per resource when available, disables ordinary confirmation, and requires the user to edit their intent or submit an explicit manual override. Server-side `options_from_form` strictly rejects ordinary confirmation.
 
-### 3.4 Optional P3 Retrieval-Grounded LLM Reranking (`recommender/p3_reranker.py`, `recommender/p3_backend.py`)
-
-* Consumes the complete list of deterministically feasible candidates from P2.
-* Reranker prompt provides candidate facts (hardware specs, installed packages) and user context.
-* Strict schema validation rejects: unknown candidate IDs, omitted candidate IDs, duplicate candidate IDs, or out-of-bounds scores.
-* The model cannot alter resource values, choose arbitrary images, or revive infeasible candidates.
-* Any network error, timeout, or schema mismatch immediately degrades to the exact P2 deterministic ranking.
-
-### 3.5 Candidate Corpus Resolution & Trust Boundary (`recommender/candidate_corpus.py`, `recommender/policy.py`)
+### 3.4 Candidate Corpus Resolution & Trust Boundary (`recommender/candidate_corpus.py`, `recommender/policy.py`)
 
 * Every candidate ID maps to an immutable `CandidateDocument` created from administrator configuration.
 * Converts to a trusted `EnvironmentCandidate` and `SpawnRecommendation`.
 * `PolicyValidator` acts as the final gate: verifies profile allowlists, pinned image SHA-256 digests, policy versions, and catalog versions before any preview can be issued.
 
-### 3.6 Interactive Preview & Pre-Spawn Binding (`recommender/jupyterhub_integration.py`)
+### 3.5 Interactive Preview & Pre-Spawn Binding (`recommender/jupyterhub_integration.py`)
 
 * Previews are server-side, single-use, generation-bound, and tied to the authenticated user with a 30-minute TTL.
 * Modifying input parameters invalidates existing preview tokens.
@@ -142,14 +120,12 @@ and source line numbers are omitted because they change as the code evolves.
 | P2 structured extraction | `recommender/structured_intent.py`, `recommender/local_structured_intent.py` | `tests/test_structured_intent_extractor.py` | Local or LLM extraction; explicit input and schema boundaries apply. |
 | P2 hybrid retrieval | `recommender/sparse_retrieval.py`, `recommender/dense_retrieval.py`, `recommender/hybrid_retrieval.py` | `tests/test_hybrid_retrieval.py` | Curated candidate corpus; retrieval quality requires separate measurement. |
 | P2 constraints and backend | `recommender/constraint_evaluator.py`, `recommender/p2_backend.py` | `tests/test_p2_contracts.py`, `tests/test_p2_backend_integration.py` | Feasibility checks and deterministic ranking; fallback is distinct from successful inference. |
-| P3 reranking | `recommender/p3_reranker.py`, `recommender/p3_backend.py` | `tests/test_p3_reranker.py` | Implemented optional extension; not retained by the formative gate. |
 | Image and profile enforcement | `recommender/candidate_corpus.py`, `recommender/policy.py` | `tests/test_candidate_corpus.py`, `tests/test_adversarial.py` | Administrator allowlists and pinned image identity; functional correctness is measured separately. |
 | Preview, confirmation, and bounded audit logging | `recommender/jupyterhub_integration.py` | `tests/test_recommender_backends_integration.py` | Single-use preview state; multi-replica deployments need a shared state design. |
 | Notebook reprovisioning | `recommender/jupyterhub_integration.py`, `helm/reprovision-values.yaml` | `tests/test_reprovisioning.py` | Stop/recreate with PVC retention; kernel memory and running processes are lost. |
 | Dynamic resource sizing | `recommender/dynamic_resources.py`, `helm/dynamic-values.yaml` | `recommender/test_dynamic_resources.py` | Opt-in min/max/step and GPU rules; static per-spawn caps, no live quota or node-headroom query. |
 | Backend deployment | `scripts/install-proposed.sh`, `scripts/recommender_package.py` | `tests/test_helm_recommender_deployment.py` | Versioned runtime package and rollout checksum; default backend is P1. |
-| Direct LLM adapters | `recommender/external_llm.py`, `recommender/self_hosted_llm.py` | `recommender/test_external_llm.py`, `recommender/test_self_hosted_llm.py` | Historical reference methods; provider/model availability is an operational dependency. |
-| Protocol-v5 experiment harnesses | `evaluation_v5/` | `make v5-test`, `make v5-audit-test` | Harness availability does not supply missing participant, hardware, or storage observations. |
+| Protocol-v5 experiment harnesses | `evaluation_v5/` | `make v5-test` | Harness availability does not supply missing participant, hardware, or storage observations. |
 
 [Deployment](HELM_BACKEND_DEPLOYMENT.md), [reprovisioning](INTENT_AWARE_REPROVISIONING.md),
 and [dynamic sizing](DYNAMIC_PROFILE_GENERATION.md) have dedicated operational guides.
@@ -160,14 +136,13 @@ and [dynamic sizing](DYNAMIC_PROFILE_GENERATION.md) have dedicated operational g
 
 | Risk / Threat Area | Defense & Verification Mechanism | Implemented Safeguard Location | Test Coverage |
 | :--- | :--- | :--- | :--- |
-| **Prompt Injection** | User input treated strictly as data. Extraction and reranker prompts explicitly forbid instruction execution. Output fields are schema-validated against fixed types/enums; raw commands cannot bypass constraints. | `structured_intent.py`, `p3_reranker.py` | `tests/test_adversarial.py` |
-| **Invented Candidate IDs** | Output candidate IDs are checked against valid administrator corpus IDs. P3 reranker rejects unknown, duplicate, or missing IDs and validates candidate count. | `p3_reranker.py`, `p2_backend.py` | `tests/test_p3_reranker.py`, `tests/test_adversarial.py` |
+| **Prompt Injection** | User input treated strictly as data. Extraction prompts explicitly forbid instruction execution. Output fields are schema-validated against fixed types/enums; raw commands cannot bypass constraints. | `structured_intent.py` | `tests/test_adversarial.py` |
+| **Invented Candidate IDs** | Output candidate IDs are checked against valid administrator corpus IDs. Resolution rejects unknown, duplicate, or missing IDs. | `p2_backend.py`, `candidate_corpus.py` | `tests/test_adversarial.py` |
 | **Arbitrary Image / Profile References** | AI models cannot output image URLs or raw resources. Output must resolve to a `CandidateDocument` from `image-catalog.yaml`. `PolicyValidator` verifies profile against allowlist and image against pinned SHA-256 digest. | `policy.py`, `candidate_corpus.py` | `tests/test_adversarial.py`, `tests/test_p2_contracts.py` |
 | **Stale Embedding Index** | Dense and hybrid index versions and SHA-256 checksums are tracked in metadata. Preview generation includes index versions/checksums; changes invalidate unconsumed tokens. | `dense_retrieval.py`, `jupyterhub_integration.py` | `tests/test_dense_retrieval.py`, `tests/test_hybrid_retrieval.py` |
 | **Stale Candidate Catalog** | Catalog version checked at startup and during `PolicyValidator.validate()`. Mismatched catalog version raises an immediate validation error. | `policy.py`, `p2_backend.py` | `tests/test_candidate_corpus.py`, `tests/test_config_validation.py` |
 | **Malformed StructuredIntent** | Strict JSON decoding and schema validation (`_strict_json_object`). Parsing errors trigger safe degradation to `DeterministicStructuredIntentExtractor` with explicit values only. | `structured_intent.py` | `tests/test_structured_intent_extractor.py` |
-| **Malformed Reranker Output** | Reranker validates JSON structure, required fields, score bounds $[0.0, 1.0]$, and ID completeness. Any failure immediately degrades to exact P2 ranking. | `p3_reranker.py`, `p3_backend.py` | `tests/test_p3_reranker.py` |
-| **Provider Timeout / Failure** | Explicit deadlines, retry backoff, and non-blocking timeout handling (`network_work_deadline`). Failures degrade smoothly to deterministic fallback without blocking the user. | `structured_intent.py`, `p3_reranker.py`, `reliability.py` | `recommender/test_reliability.py`, `tests/test_p2_backend_integration.py` |
+| **Provider Timeout / Failure** | Explicit deadlines, retry backoff, and non-blocking timeout handling (`network_work_deadline`). Failures degrade smoothly to deterministic fallback without blocking the user. | `structured_intent.py`, `reliability.py` | `recommender/test_reliability.py`, `tests/test_p2_backend_integration.py` |
 | **Embedding Failure** | Dense retrieval errors catch exceptions and allow sparse-only fallback or complete P1 fallback with `infrastructure_provider_failure` category. | `p2_backend.py` | `tests/test_dense_retrieval.py`, `tests/test_p2_backend_integration.py` |
 | **Sparse / Dense Channel Failure** | RRF handles partial hits; empty fused results trigger graceful fallback with `retrieval_empty` category. | `p2_backend.py`, `hybrid_retrieval.py` | `tests/test_hybrid_retrieval.py` |
 | **No Feasible Candidate** | Deterministic evaluator checks hard constraints. If all candidates are infeasible, `no_feasible_candidate` triggers explanatory warning metadata (`infeasibility_info`), displays per-resource catalog limits in the preview UI, disables ordinary confirmation, and requires explicit manual override or editing intent. Server-side `options_from_form` strictly rejects ordinary confirmation. | `constraint_evaluator.py`, `p2_backend.py`, `jupyterhub_integration.py` | `tests/test_constraint_evaluator.py`, `tests/test_p2_backend_integration.py` |

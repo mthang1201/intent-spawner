@@ -11,10 +11,10 @@ Run commands from the repository root.
 | Goal | Guide section | Cluster required |
 | --- | --- | --- |
 | Run the Protocol-v5 experiments | [Protocol-v5 experiments](#protocol-v5-experiments) | Depends on experiment |
+| Run software checks or unit tests | [Local checks](#path-a-local-synthetic-benchmark--unit-tests) | No |
+| Deploy P1/P2 context-aware form | [Interactive demo](#path-b-interactive-jupyterhub-demo) | Disposable demo cluster |
+| Try reprovisioning or dynamic resources | [Reprovisioning](#path-b3-storage-preserving-notebook-re-provisioning), [dynamic sizing](#path-b4-policy-bounded-dynamic-resource-sizing) | Disposable demo cluster |
 | Inspect historical evidence | [Protocol-v4 reproduction](#path-d-historical-protocol-v4-reproduction) | No |
-| Run software checks or synthetic examples | [Local checks](#path-a-local-synthetic-benchmark--unit-tests) | No |
-| Deploy P1/P2 or configure reference LLM adapters | [Interactive demo](#path-b-interactive-jupyterhub-demo) | Disposable demo cluster |
-| Try reprovisioning or dynamic resources | [Reprovisioning](#path-b10-storage-preserving-notebook-re-provisioning), [dynamic sizing](#path-b11-policy-bounded-dynamic-resource-sizing) | Disposable demo cluster |
 
 See the [artifact index](ARTIFACT_MANIFEST.md) for detailed contracts.
 
@@ -68,9 +68,7 @@ train/confirmatory-split data leakage, not to gate approval.
 
 E3 (user study) needs real participants and E4/E5 cluster runs need a
 disposable Kubernetes cluster; see the module-specific `--help` output for
-each experiment's exact requirements. No results currently exist for any
-experiment — they were wiped ahead of this cleanup and have not been
-re-executed yet.
+each experiment's exact requirements.
 
 ## Path A: Local Synthetic Benchmark & Unit Tests
 
@@ -87,7 +85,7 @@ Test intent and code-context parsing directly from the command line:
 
 ### A2. Run Software Tests
 
-Run the full Python test suite, including P2/P3 and evaluation harness checks:
+Run the full Python test suite, including P1, P2, and evaluation harness checks:
 
 ```bash
 .venv/bin/python -m pytest
@@ -154,57 +152,7 @@ Open `http://127.0.0.1:8000`. You will see the new **Workload Intent Form**:
 
 ---
 
-## Path B-LLM: Configuring External LLM (Google Gemini)
-
-The checked-in Gemini overlay records the Protocol-v4 reference configuration.
-Using it makes live provider calls; it is separate from offline Protocol-v5
-experiment runs. See [external LLM configuration](EXTERNAL_LLM_RECOMMENDER.md).
-
-### 1. Create the Kubernetes Secret
-
-```bash
-read -rsp 'Enter Gemini API key: ' GEMINI_KEY; echo
-kubectl create secret generic intent-spawner-external-llm \
-  --namespace=z2jh-context-demo \
-  --from-literal=api-key="$GEMINI_KEY" \
-  --dry-run=client -o yaml | kubectl apply -f -
-unset GEMINI_KEY
-```
-
-### 2. Deploy with Gemini Configuration
-
-```bash
-BACKEND_VALUES=helm/gemini-values.yaml bash scripts/install-proposed.sh
-```
-
----
-
-## Path B-Ollama: Configuring Self-Hosted LLM (Local Ollama)
-
-To run inference on a local Ollama service (installation and model download require network access):
-
-### 1. Start Local Ollama
-
-```bash
-# Install Ollama (macOS)
-brew install ollama
-
-# Start the Ollama daemon
-ollama serve
-
-# In another terminal, pull the model
-ollama pull llama3
-```
-
-### 2. Deploy with Ollama Configuration
-
-```bash
-BACKEND_VALUES=helm/ollama-values.yaml bash scripts/install-proposed.sh
-```
-
----
-
-## Path B10: Storage-Preserving Notebook Re-Provisioning
+## Path B3: Storage-Preserving Notebook Re-Provisioning
 
 Test changing workloads on an already-running notebook session:
 
@@ -224,7 +172,7 @@ Test changing workloads on an already-running notebook session:
 
 ---
 
-## Path B11: Policy-Bounded Dynamic Resource Sizing
+## Path B4: Policy-Bounded Dynamic Resource Sizing
 
 To enable fine-grained continuous CPU/RAM sizing instead of fixed profile tiers:
 
