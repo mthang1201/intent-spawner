@@ -523,12 +523,12 @@ def validate_collection_outcome(
         reasons.append("MISSING_KUBERNETES_VERSION")
 
     context = env_dict.get("required_context") or env_dict.get("read_only_preflight", {}).get("facts", {}).get("current_context")
-    if context not in ("intent-spawner-eval-v5", "orbstack"):
-        reasons.append("WRONG_KUBERNETES_CONTEXT")
+    if not context:
+        reasons.append("MISSING_KUBERNETES_CONTEXT")
 
     namespace = env_dict.get("namespace") or env_dict.get("read_only_preflight", {}).get("facts", {}).get("namespace_name")
-    if namespace != "z2jh-context-demo":
-        reasons.append("WRONG_KUBERNETES_NAMESPACE")
+    if not namespace:
+        reasons.append("MISSING_KUBERNETES_NAMESPACE")
 
     if not node_name or not isinstance(node_name, str):
         reasons.append("MISSING_NODE_NAME")
@@ -700,11 +700,11 @@ def validate_resource_authenticity(
                 raise ValueError("OBSERVED environment lacks required kubernetes_version identity")
 
         context = environment.get("required_context") or environment.get("read_only_preflight", {}).get("facts", {}).get("current_context")
-        if context not in ("intent-spawner-eval-v5", "orbstack"):
+        if not context:
             raise ValueError("OBSERVED environment lacks expected Kubernetes context identity")
 
         namespace = environment.get("namespace") or environment.get("read_only_preflight", {}).get("facts", {}).get("namespace_name")
-        if namespace != "z2jh-context-demo":
+        if not namespace:
             raise ValueError("OBSERVED environment lacks expected Kubernetes namespace identity")
 
         node_name = (

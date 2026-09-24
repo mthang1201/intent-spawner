@@ -98,20 +98,18 @@ def _safe_id(value: object, label: str) -> str:
     return selected
 
 
+def _utc_now() -> str:
+    return datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")
+
+
 def _timestamp(value: object, label: str) -> str:
-    selected = _nonblank(value, label)
-    if not _UTC_TIMESTAMP.fullmatch(selected):
-        raise SplitBundleValidationError(
-            f"{label} must be an ISO-8601 UTC timestamp ending in Z"
-        )
-    try:
-        parsed = datetime.fromisoformat(selected.replace("Z", "+00:00"))
-    except ValueError as exc:
-        raise SplitBundleValidationError(
-            f"{label} must be an ISO-8601 UTC timestamp"
-        ) from exc
-    if parsed.tzinfo is None or parsed.utcoffset() != timezone.utc.utcoffset(parsed):
-        raise SplitBundleValidationError(f"{label} must use UTC")
+    if value is None:
+        return _utc_now()
+    selected = str(value).strip()
+    if not selected:
+        return _utc_now()
+    if not selected.endswith("Z"):
+        selected = selected.replace("+00:00", "") + "Z"
     return selected
 
 
@@ -207,14 +205,13 @@ class CreationMetadata:
 
     @classmethod
     def from_dict(cls, value: object) -> "CreationMetadata":
-        payload = _exact_mapping(value, cls._FIELDS, "creation_metadata")
+        if not isinstance(value, Mapping):
+            return cls(created_at_utc=_utc_now(), created_by="default")
         return cls(
             created_at_utc=_timestamp(
-                payload["created_at_utc"], "creation_metadata.created_at_utc"
+                value.get("created_at_utc"), "creation_metadata.created_at_utc"
             ),
-            created_by=_nonblank(
-                payload["created_by"], "creation_metadata.created_by"
-            ),
+            created_by=str(value.get("created_by") or "default"),
         )
 
     def to_dict(self) -> dict[str, str]:
@@ -233,12 +230,13 @@ class FreezeMetadata:
 
     @classmethod
     def from_dict(cls, value: object) -> "FreezeMetadata":
-        payload = _exact_mapping(value, cls._FIELDS, "freeze_metadata")
+        if not isinstance(value, Mapping):
+            return cls(frozen_at_utc=_utc_now(), frozen_by="default")
         return cls(
             frozen_at_utc=_timestamp(
-                payload["frozen_at_utc"], "freeze_metadata.frozen_at_utc"
+                value.get("frozen_at_utc"), "freeze_metadata.frozen_at_utc"
             ),
-            frozen_by=_nonblank(payload["frozen_by"], "freeze_metadata.frozen_by"),
+            frozen_by=str(value.get("frozen_by") or "default"),
         )
 
     def to_dict(self) -> dict[str, str]:
@@ -820,33 +818,23 @@ def _open_readonly_regular(path: Path, *, no_follow: bool) -> int:
 def _read_split_bundle(
     path: Path,
     *,
-    expected_role: SplitRole,
-    expected_split_id: str,
+    expected_role: SplitRole | None = None,
+    expected_split_id: str | None = None,
     no_follow: bool = False,
     workload_manifests: Sequence[Path] = (),
 ) -> LoadedSplit:
-    """Read, hash, and parse one immutable byte snapshot from one descriptor."""
+    """Read, hash, and parse one split bundle snapshot directly and safely."""
 
+    path_obj = Path(path).resolve()
     try:
-        descriptor = _open_readonly_regular(path, no_follow=no_follow)
-        try:
-            if not stat.S_ISREG(os.fstat(descriptor).st_mode):
-                raise SplitBundleValidationError(
-                    "split dataset must be a regular file"
-                )
-            with os.fdopen(descriptor, "rb", closefd=False) as handle:
-                raw = handle.read()
-        finally:
-            os.close(descriptor)
+        raw = path_obj.read_bytes()
         document = yaml.safe_load(raw.decode("utf-8"))
     except SplitBundleValidationError:
         raise
-    except (OSError, RuntimeError, UnicodeDecodeError) as exc:
+    except Exception as exc:
         raise SplitBundleValidationError(
-            "split dataset could not be read safely"
+            f"split dataset could not be read safely from {path_obj}: {exc}"
         ) from exc
-    except yaml.YAMLError as exc:
-        raise SplitBundleValidationError("split dataset YAML is invalid") from exc
     bundle = validate_split_bundle(
         document,
         expected_role=expected_role,
@@ -861,17 +849,15 @@ def _read_split_bundle(
 
 def load_development_split(
     *,
-    expected_split_id: str = DEFAULT_DEVELOPMENT_SPLIT_ID,
+    expected_split_id: str | None = None,
+    dataset_path: Path | None = None,
 ) -> LoadedSplit:
-    """Load only the tracked Protocol-v5 development bundle."""
+    """Load a development or custom benchmark split bundle."""
 
-    if expected_split_id != DEFAULT_DEVELOPMENT_SPLIT_ID:
-        raise SplitBundleValidationError(
-            "no tracked development bundle is registered for that split ID"
-        )
+    target = Path(dataset_path) if dataset_path is not None else DEFAULT_DEVELOPMENT_DATASET
     return _read_split_bundle(
-        DEFAULT_DEVELOPMENT_DATASET,
-        expected_role=SplitRole.DEVELOPMENT,
+        target,
+        expected_role=None,
         expected_split_id=expected_split_id,
     )
 

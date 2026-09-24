@@ -2,8 +2,36 @@ E4_RESOURCE_DRY_RUN_ID := e4-resource-envelope-dry-run-$(shell date -u +%Y%m%dT%
 E4_RESOURCE_EFFICIENCY_DRY_RUN_ID := e4-resource-efficiency-dry-run-$(shell date -u +%Y%m%dT%H%M%SZ)
 V5_PYTHON ?= $(shell if [ -x .venv/bin/python ]; then echo .venv/bin/python; elif [ -x ../intent-spawner/.venv/bin/python ]; then echo ../intent-spawner/.venv/bin/python; else echo python3; fi)
 
-.PHONY: check validate-cluster-results validate-raw-integrity v5-test v5-resource-validate v5-resource-test v5-resource-dry-run v5-resource-efficiency-validate v5-resource-efficiency-test v5-resource-efficiency-dry-run v5-user-study-test v5-user-study-smoke v5-isolation-check
+.PHONY: test eval-offline eval-dataset eval-robustness check validate-cluster-results validate-raw-integrity v5-test v5-resource-validate v5-resource-test v5-resource-dry-run v5-resource-efficiency-validate v5-resource-efficiency-test v5-resource-efficiency-dry-run v5-user-study-test v5-user-study-smoke v5-isolation-check
 .PHONY: v5-e4-preflight v5-resource-preflight v5-resource-efficiency-preflight
+
+test:
+	PYTHONPATH=. $(V5_PYTHON) -m pytest -q \
+		tests/test_p2_backend_integration.py \
+		tests/test_single_input_workflow.py \
+		tests/test_constraint_evaluator.py \
+		tests/test_dense_retrieval.py \
+		tests/test_hybrid_retrieval.py
+
+eval-offline:
+	PYTHONPATH=. $(V5_PYTHON) -m evaluation_v5.offline.runner \
+		--systems P1,P2 \
+		--repeats 1 \
+		--result-dir results_v5/protocol-v5.0.0/E1/run-e1-offline
+
+eval-dataset:
+	@if [ -z "$(DATASET)" ]; then \
+		echo "Usage: make eval-dataset DATASET=path/to/dataset.yaml"; \
+		exit 1; \
+	fi
+	PYTHONPATH=. $(V5_PYTHON) -m evaluation_v5.offline.runner \
+		--dataset $(DATASET) \
+		--systems P1,P2 \
+		--repeats 1 \
+		--result-dir results_v5/protocol-v5.0.0/E1/run-custom-dataset
+
+eval-robustness:
+	PYTHONPATH=. $(V5_PYTHON) -m evaluation_v5.robustness summary benchmarks_v5/v5-development.yaml
 
 check:
 	bash scripts/check.sh
