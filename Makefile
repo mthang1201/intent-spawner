@@ -36,7 +36,7 @@ v5-resource-dry-run: v5-resource-validate
 		--result-dir results_v5/protocol-v5.0.0/E4/$(E4_RESOURCE_DRY_RUN_ID) \
 		--run-id $(E4_RESOURCE_DRY_RUN_ID) \
 		--image example.invalid/intent-spawner-resource-v5@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa \
-		--reason "Current context is not the required disposable intent-spawner-eval-v5 cluster."
+		--reason "Simulated dry-run execution without active cluster measurement."
 
 v5-resource-efficiency-preflight:
 	PYTHONPATH=. $(V5_PYTHON) -m evaluation_v5.resource.efficiency_runner preflight
