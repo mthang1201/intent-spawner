@@ -853,7 +853,7 @@ def test_cluster_eligibility_fails_closed(mutation, code):
     kwargs = _eligible_cluster_fixture()
     policy = kwargs["policy"]
     if mutation == "context":
-        kwargs["current_context"] = "orbstack"
+        kwargs["current_context"] = "wrong-context"
     elif mutation == "cluster":
         kwargs["namespace"]["metadata"]["labels"][policy["cluster_identity_label"]["key"]] = "wrong"
     elif mutation == "cgroup":
@@ -992,7 +992,7 @@ def test_dry_run_uses_only_read_only_context_probe(tmp_path, monkeypatch):
 
     def fake_run(args, **kwargs):
         calls.append(args)
-        return __import__("subprocess").CompletedProcess(args, 0, stdout="orbstack\n", stderr="")
+        return __import__("subprocess").CompletedProcess(args, 0, stdout="wrong-context\n", stderr="")
 
     monkeypatch.setattr(adapter_module.subprocess, "run", fake_run)
     result_dir = tmp_path / "read-only-dry"

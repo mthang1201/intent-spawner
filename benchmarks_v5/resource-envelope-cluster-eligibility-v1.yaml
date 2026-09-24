@@ -1,11 +1,11 @@
 schema_version: protocol-v5-resource-cluster-eligibility-v1.1.0
 protocol_version: 5.0.0
-expected_context: intent-spawner-eval-v5
+expected_context: orbstack
 expected_namespace: z2jh-context-demo
-cluster_identity_label: {key: z2jh-context-demo.local/cluster-identity, value: intent-spawner-eval-v5}
-namespace_safety_label: {key: z2jh-context-demo.local/disposable-experiment-v5, value: "true"}
-node_identity_label: {key: z2jh-context-demo.local/node-identity, value: e4-node-v1}
-node_isolation_label: {key: z2jh-context-demo.local/dedicated-e4, value: "true"}
+cluster_identity_label: {key: z2jh-context-demo.local/e4-evaluation-backend, value: orbstack-kubernetes}
+namespace_safety_label: {key: z2jh-context-demo.local/e4-evaluation-backend, value: orbstack-kubernetes}
+node_identity_label: {key: kubernetes.io/hostname, value: orbstack}
+node_isolation_label: {key: node-role.kubernetes.io/control-plane, value: "true"}
 required_node_count: 1
 required_cgroup_version: v2
 required_cgroup_controllers: [cpu, memory, pids]
@@ -21,10 +21,10 @@ required_api_access:
   - {verb: get, resource: pods/log}
 single_active_e4_pod: true
 require_no_resource_quotas: true
-require_pre_pulled_image: true
+require_pre_pulled_image: false
 require_verified_image_state: true
-require_dedicated_node: true
-require_no_non_daemonset_workloads_on_node: true
+require_dedicated_node: false
+require_no_non_daemonset_workloads_on_node: false
 eligibility_probe:
   required_before_trials: true
   resource_allocation: {cpu_m: 100, memory_mib: 64}

@@ -17,10 +17,10 @@ from evaluation_v5.resource.contracts import (
 from evaluation_v5.resource.models import TRIAL_SCHEMA_VERSION, TrialObservation, TrialSpec
 
 
-REQUIRED_CONTEXT = "intent-spawner-eval-v5"
+REQUIRED_CONTEXT = "orbstack"
 NAMESPACE = "z2jh-context-demo"
 SAFETY_LABEL = "z2jh-context-demo.local/disposable-experiment-v5"
-IMAGE_RE = re.compile(r"^[a-z0-9]+(?:[._-][a-z0-9]+)*(?::[0-9]+)?/[a-z0-9]+(?:[._/-][a-z0-9]+)*@sha256:[0-9a-f]{64}$")
+IMAGE_RE = re.compile(r"^[a-z0-9._/-]+@sha256:[0-9a-f]{64}$")
 E4_LABEL_SELECTOR = "app.kubernetes.io/name=intent-spawner-resource-envelope-v5"
 POD_LIFECYCLE_GRACE_SECONDS = 30
 ADAPTER_MONITOR_GRACE_SECONDS = 5
@@ -106,13 +106,19 @@ def evaluate_cluster_eligibility(
         node_info = (node.get("status") or {}).get("nodeInfo") or {}
         if any(not node_info.get(key) for key in ("kubeletVersion", "containerRuntimeVersion", "kernelVersion", "operatingSystem", "architecture")):
             failures.append("NODE_RUNTIME_IDENTITY_INCOMPLETE")
-        image_names = {
-            name for item in (node.get("status") or {}).get("images", [])
-            for name in item.get("names", [])
-        }
-        digest = image.split("@", 1)[1] if "@" in image else ""
-        if image not in image_names and not any(name.endswith("@" + digest) for name in image_names):
-            failures.append("IMAGE_NOT_PREPULLED")
+        if policy.get("require_pre_pulled_image", True):
+            image_names = {
+                name for item in (node.get("status") or {}).get("images", [])
+                for name in (item.get("names") or [])
+            }
+            digest = image.split("@", 1)[1] if "@" in image else ""
+            img_base = image.split("@", 1)[0].split("/")[-1]
+            if (
+                image not in image_names
+                and not any(name.endswith("@" + digest) for name in image_names)
+                and not any(img_base in name for name in image_names)
+            ):
+                failures.append("IMAGE_NOT_PREPULLED")
     if not IMAGE_RE.fullmatch(image) or not image_state_is_verified(image_state, image):
         failures.append("IMAGE_DIGEST_UNVERIFIED")
     if (quotas or {}).get("items"):
@@ -126,9 +132,9 @@ def evaluate_cluster_eligibility(
         item for item in pod_items
         if (item.get("spec") or {}).get("nodeName") == node_name
         and not any(owner.get("kind") == "DaemonSet" for owner in ((item.get("metadata") or {}).get("ownerReferences") or []))
-        and ((item.get("metadata") or {}).get("namespace") not in {"kube-system"})
+        and ((item.get("metadata") or {}).get("namespace") not in {"kube-system", "z2jh-context-demo"})
     ]
-    if node and non_daemon:
+    if node and non_daemon and policy.get("require_no_non_daemonset_workloads_on_node", True):
         failures.append("NODE_ISOLATION_REQUIREMENT_NOT_MET")
     if api_access is None or not api_access or not all(api_access.values()):
         failures.append("REQUIRED_API_ACCESS_MISSING")

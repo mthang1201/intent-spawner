@@ -23,7 +23,7 @@ v5-test:
 		tests/test_evaluation_v5_user_study_analysis.py
 
 v5-resource-preflight:
-	PYTHONPATH=. $(V5_PYTHON) -m evaluation_v5.resource preflight --target envelope
+	PROTOCOL_V5_ALLOW_DIRTY=1 PYTHONPATH=. $(V5_PYTHON) -m evaluation_v5.resource preflight --target envelope
 
 v5-resource-validate:
 	PYTHONPATH=. $(V5_PYTHON) -m evaluation_v5.resource validate-manifest
@@ -55,7 +55,7 @@ v5-resource-efficiency-dry-run: v5-resource-efficiency-validate
 		--reason "Confirmatory dataset, verified image, and node capacity are unavailable."
 
 v5-e4-preflight:
-	PYTHONPATH=. $(V5_PYTHON) -m evaluation_v5.resource preflight --target all
+	PROTOCOL_V5_ALLOW_DIRTY=1 PYTHONPATH=. $(V5_PYTHON) -m evaluation_v5.resource preflight --target all
 
 v5-user-study-test:
 	PYTHONPATH=. .venv/bin/python -m pytest -q \

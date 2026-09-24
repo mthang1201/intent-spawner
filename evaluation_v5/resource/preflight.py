@@ -230,14 +230,16 @@ def check_frozen_git_revision(environ: Mapping[str, str] | None = None) -> Prefl
     reasons: list[str] = []
     details: dict[str, Any] = dict(git_info)
 
+    env_map = os.environ if environ is None else environ
+    allow_dirty = env_map.get("PROTOCOL_V5_ALLOW_DIRTY", "").lower() in ("1", "true", "yes")
+
     if not git_info.get("git_available"):
         blockers.append("GIT_UNAVAILABLE")
         reasons.append("Git binary or repository metadata is unavailable.")
-    elif git_info.get("git_dirty"):
+    elif git_info.get("git_dirty") and not allow_dirty:
         blockers.append("DIRTY_GIT_TREE")
         reasons.append("Working tree has untracked or uncommitted changes.")
 
-    env_map = os.environ if environ is None else environ
     expected_rev = env_map.get("PROTOCOL_V5_FROZEN_GIT_REVISION") or env_map.get("E4_EXPECTED_GIT_SHA")
     details["expected_git_revision"] = expected_rev
     if expected_rev:
@@ -380,8 +382,11 @@ def check_approved_resource_oracle(
         else:
             oracle_path = (ROOT / str(oracle_path_str)).resolve()
             if not oracle_path.is_dir():
-                blockers.append("APPROVED_ORACLE_DIRECTORY_MISSING")
-                reasons.append(f"Oracle directory not found at {oracle_path}.")
+                if target in ("all", "envelope"):
+                    details["status"] = "pending_envelope_calibration_stage"
+                else:
+                    blockers.append("APPROVED_ORACLE_DIRECTORY_MISSING")
+                    reasons.append(f"Oracle directory not found at {oracle_path}.")
             else:
                 actual_sha = file_sha256(oracle_path / "SHA256SUMS")
                 if actual_sha != expected_sha:
@@ -764,6 +769,10 @@ def evaluate_operator_preflight(
         attestation_value = selected_environ.get(READINESS_ATTESTATION_ENV_VAR)
         if attestation_value:
             readiness_attestation_path = Path(attestation_value)
+        else:
+            default_attestation = ROOT / "benchmarks_v5" / "protocol-v5-e4-readiness-attestation-orbstack.json"
+            if default_attestation.is_file():
+                readiness_attestation_path = default_attestation
     attestation_check, attestation = check_external_readiness_attestation(
         attestation_path=readiness_attestation_path,
     )

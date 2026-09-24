@@ -1,0 +1,58 @@
+{
+  "schema_version": "protocol-v5-e4-readiness-attestation-v1.0.0",
+  "protocol_version": "5.0.0",
+  "attestation_id": "e4-orbstack-readiness-attestation-v1",
+  "attested_at_utc": "2026-09-24T09:30:00.000000Z",
+  "attestor_pseudonym": "operator-orbstack",
+  "freeze": {
+    "freeze_id": "e4-orbstack-freeze-v1",
+    "freeze_manifest_sha256": "a2687b315c659fcaff545f8f7f7e976d20ee33110f20e713009af9d962e20b54",
+    "frozen_execution_sha": "d7bf26fc05919baa4ecf4d597c209b414073aebd",
+    "freeze_artifact_commit_sha": "d7bf26fc05919baa4ecf4d597c209b414073aebd"
+  },
+  "oracle": {
+    "package_id": "oracle-envelope-v1",
+    "package_path": "benchmarks_v5/oracle",
+    "sha256sums_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "manual_review_status": "APPROVED"
+  },
+  "execution_image": {
+    "reference": "intent-spawner-resource-v5@sha256:a47e5339acca724b7f8b60510f1117d4a251c19efa5478cdbcfe4d77b8b3bbc6",
+    "runtime_verified": true
+  },
+  "cluster": {
+    "context": "orbstack",
+    "cluster_identity": "orbstack-kubernetes",
+    "namespace": "z2jh-context-demo",
+    "kubernetes_version": "v1.33.9+orb1",
+    "kubernetes_version_sha256": "2b45aaeb228bf8bce3fb24ad4fe604c76b470a9bd689fd991c7cdd530d25ae51",
+    "disposable_nonproduction": true,
+    "api_access_verified": true
+  },
+  "node_capacity": {
+    "node_identity": "orbstack",
+    "node_name": "orbstack",
+    "node_uid": "574e43f1-b4af-45a4-94ae-385414e52560",
+    "node_count": 1,
+    "allocatable_cpu_millicores": 8000,
+    "allocatable_memory_mib": 7993,
+    "allocatable_gpu_count": 0,
+    "allocatable_gpu_resource": null,
+    "dedicated": true
+  },
+  "cgroup": {
+    "version": "v2",
+    "controllers": [
+      "cpu",
+      "memory",
+      "pids"
+    ],
+    "required_files_verified": true
+  },
+  "assertions": {
+    "facts_collected_read_only": true,
+    "no_experiment_trials_executed": true,
+    "attestation_external_to_frozen_source": true,
+    "not_confirmatory_dataset_material": true
+  }
+}

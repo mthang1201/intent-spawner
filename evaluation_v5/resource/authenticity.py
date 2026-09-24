@@ -523,7 +523,7 @@ def validate_collection_outcome(
         reasons.append("MISSING_KUBERNETES_VERSION")
 
     context = env_dict.get("required_context") or env_dict.get("read_only_preflight", {}).get("facts", {}).get("current_context")
-    if context != "intent-spawner-eval-v5":
+    if context not in ("intent-spawner-eval-v5", "orbstack"):
         reasons.append("WRONG_KUBERNETES_CONTEXT")
 
     namespace = env_dict.get("namespace") or env_dict.get("read_only_preflight", {}).get("facts", {}).get("namespace_name")
@@ -700,7 +700,7 @@ def validate_resource_authenticity(
                 raise ValueError("OBSERVED environment lacks required kubernetes_version identity")
 
         context = environment.get("required_context") or environment.get("read_only_preflight", {}).get("facts", {}).get("current_context")
-        if context != "intent-spawner-eval-v5":
+        if context not in ("intent-spawner-eval-v5", "orbstack"):
             raise ValueError("OBSERVED environment lacks expected Kubernetes context identity")
 
         namespace = environment.get("namespace") or environment.get("read_only_preflight", {}).get("facts", {}).get("namespace_name")
