@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections import Counter
 from copy import deepcopy
 import hashlib
 import json
@@ -1773,3 +1774,47 @@ def test_many_families_single_upstream_source_dataset_succeeds():
         match="cannot omit family source lineage",
     ):
         validate_gold_dataset(doc_omitted)
+
+
+def test_v5_development_source_expansion_and_no_singleton_stratum():
+    source_path = ROOT / "benchmarks_v5" / "v5-development-source.yaml"
+    assert source_path.is_file()
+    loaded = load_gold_dataset(source_path)
+    dataset = loaded.dataset
+    report = review_gold_dataset(dataset)
+
+    # 1. Zero blocking findings
+    assert not report.blocking_findings
+
+    # 2. deep_learning and machine_learning have multiple families
+    strata = Counter(family.workload_stratum for family in dataset.families)
+    assert strata["deep_learning"] >= 2
+    assert strata["machine_learning"] >= 2
+
+    # 3. No singleton_stratum advisory finding for deep_learning or machine_learning
+    singleton_messages = [
+        f.message for f in report.advisory_findings if f.code == "singleton_stratum"
+    ]
+    assert not any("deep_learning" in msg for msg in singleton_messages)
+    assert not any("machine_learning" in msg for msg in singleton_messages)
+
+    # 4. At least 20-30 Vietnamese test cases
+    vi_variants = [
+        variant
+        for family in dataset.families
+        for variant in family.variants
+        if variant.language == "vi"
+    ]
+    assert len(vi_variants) >= 30
+
+    # 5. Coverage of abbreviations, natural phrasing, constraints, and underspecified
+    intents = [v.intent for v in vi_variants]
+    # abbreviations
+    assert any("DL" in t or "ML" in t or "cpus" in t or "df" in t or "ram" in t or "đc" in t for t in intents)
+    # natural colloquial phrasing
+    assert any("Cho mình" in t or "Alo ad" in t or "Nhóm mình" in t for t in intents)
+    # long sentences with multiple CPU/RAM/GPU constraints
+    assert any(len(t) > 100 and ("CPU" in t or "core" in t) and "RAM" in t for t in intents)
+    # underspecified / clarification needed
+    assert any(t == "Mình muốn train model." or "chưa biết" in t or "chưa xác định" in t for t in intents)
+

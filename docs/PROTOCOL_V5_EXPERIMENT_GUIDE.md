@@ -41,6 +41,8 @@ make v5-e4-preflight
 # hoặc chạy trực tiếp:
 PYTHONPATH=. .venv/bin/python -m evaluation_v5.resource preflight --target all
 ```
+> [!NOTE]
+> Mặc định preflight tự động nạp cấu hình chứng thực sẵn sàng cho cụm OrbStack (`benchmarks_v5/protocol-v5-e4-readiness-attestation-orbstack.json`) với image digest đã ghim và dung lượng node đã đóng băng.
 
 ### 1.3 Tạo gói đóng băng cấu hình (Production Freeze Manifest)
 Tạo snapshot bất biến (*immutable freeze*) ghi nhận mã nguồn, commit hash, cấu hình mô hình và catalog để dùng cho toàn bộ các thí nghiệm:

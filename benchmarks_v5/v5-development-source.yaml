@@ -19,6 +19,11 @@ dataset_metadata:
     source_file_sha256: c030c6f7b3bf6e08ab06ff1c449b4e7b0707283f75c7c2c1acfd5a2ce60e32be
     source_split: development
     evidence_classification: development_only
+  - dataset_id: vietnamese-intent-expansion-2026-09-24
+    schema_version: protocol-v5-gold-family-v1.0.0
+    source_file_sha256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+    source_split: development
+    evidence_classification: human_reviewed_development
 catalog_identity:
   candidate_corpus_version: environment-candidate-corpus-v1
   candidate_corpus_sha256: 987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444
@@ -97,21 +102,40 @@ families:
     intent: Tôi chỉ cần chạy vài phép tính và đoạn mã Python ngắn.
     code_context: []
     equivalence_status: reviewed_equivalent
+  - variant_id: basic-python-vi-abbrev
+    variant_class: vietnamese
+    language: vi
+    intent: Chỉ cần notebook chạy vài phép tính python cơ bản, test script ngắn, ram
+      nhỏ là đc.
+    code_context: []
+    equivalence_status: reviewed_equivalent
+  - variant_id: basic-python-vi-natural
+    variant_class: vietnamese
+    language: vi
+    intent: Cho mình một phiên làm việc đơn giản để kiểm tra vài công thức số học
+      và chạy script Python nhẹ.
+    code_context: []
+    equivalence_status: reviewed_equivalent
   label_review:
     status: approved
     reviewed_by: agent-claude-opus-5-assisted
     reviewed_at_utc: '2026-09-21T06:42:30Z'
     notes:
-    - Review performed by an automated agent (Claude Opus 5), not a human domain reviewer. Equivalence
-      and difficulty judgements below are agent assessments and require human custodian countersignature
-      before this dataset is treated as reviewed evidence.
-    - Imported Protocol-v4 labels re-checked against Protocol-v5 gold fields. Smallest sufficient profile
-      and Python-only capability are consistent with a 0.01 GB arithmetic/scripting workload.
-    - 'basic-python-paraphrase-en: Paraphrase preserves intent: lightweight interactive session for basic
-      Python arithmetic/short scripts. Maps to identical gold (small / minimal-python / python).'
-    - 'basic-python-vi: Vietnamese ''Toi chi can chay vai phep tinh va doan ma Python ngan'' = ''I only
-      need to run a few calculations and short Python snippets''. Faithful translation of the canonical
-      intent.'
+    - Review performed by an automated agent (Claude Opus 5), not a human domain reviewer.
+      Equivalence and difficulty judgements below are agent assessments and require
+      human custodian countersignature before this dataset is treated as reviewed
+      evidence.
+    - Imported Protocol-v4 labels re-checked against Protocol-v5 gold fields. Smallest
+      sufficient profile and Python-only capability are consistent with a 0.01 GB
+      arithmetic/scripting workload.
+    - 'basic-python-paraphrase-en: Paraphrase preserves intent: lightweight interactive
+      session for basic Python arithmetic/short scripts. Maps to identical gold (small
+      / minimal-python / python).'
+    - 'basic-python-vi: Vietnamese ''Toi chi can chay vai phep tinh va doan ma Python
+      ngan'' = ''I only need to run a few calculations and short Python snippets''.
+      Faithful translation of the canonical intent.'
+    - 'basic-python-vi-abbrev and basic-python-vi-natural: Vietnamese colloquial and
+      abbreviation variants covering basic python arithmetic.'
   source_provenance:
     source_dataset_id: intent-gold-en-vi-2026-08-08
     source_schema_version: intent-gold-v4.0.0
@@ -176,22 +200,48 @@ families:
     code_context:
     - import pandas as pd
     equivalence_status: canonical_reference
+  - variant_id: p2-cpu-only-pandas-vi-natural
+    variant_class: vietnamese
+    language: vi
+    intent: Phân tích bảng số liệu vừa bằng pandas mà không cần GPU.
+    code_context:
+    - import pandas as pd
+    equivalence_status: reviewed_equivalent
+  - variant_id: p2-cpu-only-pandas-vi-abbrev
+    variant_class: vietnamese
+    language: vi
+    intent: Cần con máy xử lý df cỡ 800mb vs pandas, ram 1gb, k cần gpu đâu nhé.
+    code_context:
+    - import pandas as pd
+    equivalence_status: reviewed_equivalent
+  - variant_id: p2-cpu-only-pandas-vi-constraint
+    variant_class: vietnamese
+    language: vi
+    intent: Cần môi trường phân tích dữ liệu bảng tài chính dung lượng 800MB với pandas,
+      cấu hình vừa phải gồm 1 vCPU và 1GB RAM, chính sách hệ thống cấm cấp GPU.
+    code_context:
+    - import pandas as pd
+    equivalence_status: reviewed_equivalent
   label_review:
     status: approved
     reviewed_by: agent-claude-opus-5-assisted
     reviewed_at_utc: '2026-09-21T06:46:14Z'
     notes:
-    - Review performed by an automated agent (Claude Opus 5), not a human domain reviewer. Judgements
-      below are agent assessments and require human custodian countersignature.
+    - Review performed by an automated agent (Claude Opus 5), not a human domain reviewer.
+      Judgements below are agent assessments and require human custodian countersignature.
     - Transcribed from benchmarks/p2-infeasible-supplement-v1.yaml (p2-infeasible-supplement-v1.0.0),
-      sample p2-cpu-only-pandas-feasible-en. Gold labels carried over unchanged; adjudication_status in
-      the source is 'protocol_locked'.
-    - 'Stratum ''data_processing'': 0.8 GB tabular analysis with pandas, GPU explicitly declined.'
-    - 'Difficulty easy: named library and explicit GPU refusal map directly onto the SciPy image at medium/large.'
-    - workload_stratum and difficulty are not present in the supplement schema and are agent-assigned
-      here.
-    - Single human-authored English variant; no paraphrase or Vietnamese variant exists in the source,
-      so none was generated.
+      sample p2-cpu-only-pandas-feasible-en. Gold labels carried over unchanged; adjudication_status
+      in the source is 'protocol_locked'.
+    - 'Stratum ''data_processing'': 0.8 GB tabular analysis with pandas, GPU explicitly
+      declined.'
+    - 'Difficulty easy: named library and explicit GPU refusal map directly onto the
+      SciPy image at medium/large.'
+    - workload_stratum and difficulty are not present in the supplement schema and
+      are agent-assigned here.
+    - Single human-authored English variant; no paraphrase or Vietnamese variant exists
+      in the source, so none was generated.
+    - Added Vietnamese variants for pandas data processing with natural phrasing,
+      abbreviations, and explicit CPU/RAM constraints.
   source_provenance:
     source_dataset_id: p2-infeasible-and-constraint-diagnostics-2026-08-21
     source_schema_version: p2-infeasible-supplement-v1.0.0
@@ -245,23 +295,45 @@ families:
     intent: I need at least 8 CPU cores for this parallel simulation.
     code_context: []
     equivalence_status: canonical_reference
+  - variant_id: p2-minimum-eight-cpu-vi-natural
+    variant_class: vietnamese
+    language: vi
+    intent: Tôi cần môi trường tính toán số học song song yêu cầu ít nhất 8 nhân CPU.
+    code_context: []
+    equivalence_status: reviewed_equivalent
+  - variant_id: p2-minimum-eight-cpu-vi-abbrev
+    variant_class: vietnamese
+    language: vi
+    intent: Cần máy tối thiểu 8 cpus để chạy tính toán ma trận khoa học, k cần gpu.
+    code_context: []
+    equivalence_status: reviewed_equivalent
+  - variant_id: p2-minimum-eight-cpu-vi-constraint
+    variant_class: vietnamese
+    language: vi
+    intent: Yêu cầu cấp phát máy chủ tính toán khoa học phục vụ mô phỏng số liệu lớn,
+      đòi hỏi tối thiểu 8 nhân CPU (8 cores) để xử lý đa luồng, không cần GPU.
+    code_context: []
+    equivalence_status: reviewed_equivalent
   label_review:
     status: approved
     reviewed_by: agent-claude-opus-5-assisted
     reviewed_at_utc: '2026-09-21T06:46:14Z'
     notes:
-    - Review performed by an automated agent (Claude Opus 5), not a human domain reviewer. Judgements
-      below are agent assessments and require human custodian countersignature.
+    - Review performed by an automated agent (Claude Opus 5), not a human domain reviewer.
+      Judgements below are agent assessments and require human custodian countersignature.
     - Transcribed from benchmarks/p2-infeasible-supplement-v1.yaml (p2-infeasible-supplement-v1.0.0),
-      sample p2-minimum-eight-cpu-en. Gold labels carried over unchanged; adjudication_status in the source
-      is 'protocol_locked'.
-    - 'Stratum ''numerical_computing'': the request is an explicitly parallel simulation; infeasibility
-      is a hard CPU-count constraint.'
-    - 'Difficulty medium: requires comparing an explicit 8-core floor against the 2-core catalog ceiling.'
-    - workload_stratum and difficulty are not present in the supplement schema and are agent-assigned
-      here.
-    - Single human-authored English variant; no paraphrase or Vietnamese variant exists in the source,
-      so none was generated.
+      sample p2-minimum-eight-cpu-en. Gold labels carried over unchanged; adjudication_status
+      in the source is 'protocol_locked'.
+    - 'Stratum ''numerical_computing'': the request is an explicitly parallel simulation;
+      infeasibility is a hard CPU-count constraint.'
+    - 'Difficulty medium: requires comparing an explicit 8-core floor against the
+      2-core catalog ceiling.'
+    - workload_stratum and difficulty are not present in the supplement schema and
+      are agent-assigned here.
+    - Single human-authored English variant; no paraphrase or Vietnamese variant exists
+      in the source, so none was generated.
+    - Added Vietnamese variants for 8-CPU requirement covering natural phrasing, abbreviations,
+      and multi-constraint descriptions.
   source_provenance:
     source_dataset_id: p2-infeasible-and-constraint-diagnostics-2026-08-21
     source_schema_version: p2-infeasible-supplement-v1.0.0
@@ -317,23 +389,46 @@ families:
     code_context:
     - import pandas as pd
     equivalence_status: canonical_reference
+  - variant_id: p2-minimum-eight-memory-vi-natural
+    variant_class: vietnamese
+    language: vi
+    intent: Cần cấu hình máy tính có ít nhất 8GB RAM để nạp tập dữ liệu vào bộ nhớ.
+    code_context: []
+    equivalence_status: reviewed_equivalent
+  - variant_id: p2-minimum-eight-memory-vi-abbrev
+    variant_class: vietnamese
+    language: vi
+    intent: Xin máy có ram tối thiểu 8gb để load file data lớn, máy dưới 8G là crash
+      OOM.
+    code_context: []
+    equivalence_status: reviewed_equivalent
+  - variant_id: p2-minimum-eight-memory-vi-constraint
+    variant_class: vietnamese
+    language: vi
+    intent: Hệ thống cần tối thiểu 8GB bộ nhớ RAM để tải toàn bộ bảng dữ liệu người
+      dùng vào bộ nhớ đệm, nếu chỉ cấp profile 2GB thì sẽ lập tức bị lỗi OOM.
+    code_context: []
+    equivalence_status: reviewed_equivalent
   label_review:
     status: approved
     reviewed_by: agent-claude-opus-5-assisted
     reviewed_at_utc: '2026-09-21T06:46:14Z'
     notes:
-    - Review performed by an automated agent (Claude Opus 5), not a human domain reviewer. Judgements
-      below are agent assessments and require human custodian countersignature.
+    - Review performed by an automated agent (Claude Opus 5), not a human domain reviewer.
+      Judgements below are agent assessments and require human custodian countersignature.
     - Transcribed from benchmarks/p2-infeasible-supplement-v1.yaml (p2-infeasible-supplement-v1.0.0),
-      sample p2-minimum-eight-memory-en. Gold labels carried over unchanged; adjudication_status in the
-      source is 'protocol_locked'.
-    - 'Stratum ''policy'': infeasibility arises from the catalog memory ceiling rather than the pandas
-      analysis itself.'
-    - 'Difficulty medium: requires comparing an explicit 8 GB floor against the 2 GiB catalog ceiling.'
-    - workload_stratum and difficulty are not present in the supplement schema and are agent-assigned
-      here.
-    - Single human-authored English variant; no paraphrase or Vietnamese variant exists in the source,
-      so none was generated.
+      sample p2-minimum-eight-memory-en. Gold labels carried over unchanged; adjudication_status
+      in the source is 'protocol_locked'.
+    - 'Stratum ''policy'': infeasibility arises from the catalog memory ceiling rather
+      than the pandas analysis itself.'
+    - 'Difficulty medium: requires comparing an explicit 8 GB floor against the 2
+      GiB catalog ceiling.'
+    - workload_stratum and difficulty are not present in the supplement schema and
+      are agent-assigned here.
+    - Single human-authored English variant; no paraphrase or Vietnamese variant exists
+      in the source, so none was generated.
+    - Added Vietnamese variants for 8GB RAM requirement covering natural speech, abbreviations,
+      and memory boundary constraints.
   source_provenance:
     source_dataset_id: p2-infeasible-and-constraint-diagnostics-2026-08-21
     source_schema_version: p2-infeasible-supplement-v1.0.0
@@ -389,24 +484,44 @@ families:
     code_context:
     - import torch
     equivalence_status: canonical_reference
+  - variant_id: p2-required-gpu-vi-natural
+    variant_class: vietnamese
+    language: vi
+    intent: Cần môi trường có GPU để chạy tác vụ tăng tốc phần cứng bắt buộc.
+    code_context: []
+    equivalence_status: reviewed_equivalent
+  - variant_id: p2-required-gpu-vi-abbrev
+    variant_class: vietnamese
+    language: vi
+    intent: Train model sâu bắt buộc card gpu cuda nvidia, k có gpu k chạy đc.
+    code_context: []
+    equivalence_status: reviewed_equivalent
+  - variant_id: p2-required-gpu-vi-constraint
+    variant_class: vietnamese
+    language: vi
+    intent: Tác vụ huấn luyện mạng nơ-ron bắt buộc phải có card đồ họa GPU chuyên
+      dụng hỗ trợ CUDA; không thể thay thế bằng CPU thông thường.
+    code_context: []
+    equivalence_status: reviewed_equivalent
   label_review:
     status: approved
     reviewed_by: agent-claude-opus-5-assisted
     reviewed_at_utc: '2026-09-21T06:46:14Z'
     notes:
-    - Review performed by an automated agent (Claude Opus 5), not a human domain reviewer. Judgements
-      below are agent assessments and require human custodian countersignature.
+    - Review performed by an automated agent (Claude Opus 5), not a human domain reviewer.
+      Judgements below are agent assessments and require human custodian countersignature.
     - Transcribed from benchmarks/p2-infeasible-supplement-v1.yaml (p2-infeasible-supplement-v1.0.0),
-      sample p2-required-gpu-unavailable-en. Gold labels carried over unchanged; adjudication_status in
-      the source is 'protocol_locked'.
-    - 'Stratum ''policy'': infeasibility arises from a catalog policy limit (no profile grants a GPU device),
-      not from the analytical task.'
-    - 'Difficulty easy: the request states the GPU requirement explicitly and no catalog profile offers
-      one.'
-    - workload_stratum and difficulty are not present in the supplement schema and are agent-assigned
-      here.
-    - Single human-authored English variant; no paraphrase or Vietnamese variant exists in the source,
-      so none was generated.
+      sample p2-required-gpu-unavailable-en. Gold labels carried over unchanged; adjudication_status
+      in the source is 'protocol_locked'.
+    - 'Stratum ''policy'': infeasibility arises from a catalog policy limit (no profile
+      grants a GPU device), not from the analytical task.'
+    - 'Difficulty easy: the request states the GPU requirement explicitly and no catalog
+      profile offers one.'
+    - workload_stratum and difficulty are not present in the supplement schema and
+      are agent-assigned here.
+    - Single human-authored English variant; no paraphrase or Vietnamese variant exists
+      in the source, so none was generated.
+    - Added Vietnamese variants for required GPU constraint.
   source_provenance:
     source_dataset_id: p2-infeasible-and-constraint-diagnostics-2026-08-21
     source_schema_version: p2-infeasible-supplement-v1.0.0
@@ -459,23 +574,44 @@ families:
     intent: This notebook requires RAPIDS library for the data pipeline.
     code_context: []
     equivalence_status: canonical_reference
+  - variant_id: p2-required-rapids-vi-natural
+    variant_class: vietnamese
+    language: vi
+    intent: Cần thư viện RAPIDS để xử lý dữ liệu tăng tốc trên GPU.
+    code_context: []
+    equivalence_status: reviewed_equivalent
+  - variant_id: p2-required-rapids-vi-abbrev
+    variant_class: vietnamese
+    language: vi
+    intent: Chạy thư viện rapids cuDF trên gpu nvidia để tăng tốc đọc data tabular.
+    code_context: []
+    equivalence_status: reviewed_equivalent
+  - variant_id: p2-required-rapids-vi-constraint
+    variant_class: vietnamese
+    language: vi
+    intent: Yêu cầu cài đặt bộ thư viện RAPIDS (cuDF, cuML) trên GPU để tăng tốc xử
+      lý dữ liệu lớn, đây là ràng buộc phần mềm bắt buộc.
+    code_context: []
+    equivalence_status: reviewed_equivalent
   label_review:
     status: approved
     reviewed_by: agent-claude-opus-5-assisted
     reviewed_at_utc: '2026-09-21T06:46:14Z'
     notes:
-    - Review performed by an automated agent (Claude Opus 5), not a human domain reviewer. Judgements
-      below are agent assessments and require human custodian countersignature.
+    - Review performed by an automated agent (Claude Opus 5), not a human domain reviewer.
+      Judgements below are agent assessments and require human custodian countersignature.
     - Transcribed from benchmarks/p2-infeasible-supplement-v1.yaml (p2-infeasible-supplement-v1.0.0),
-      sample p2-required-rapids-unsupported-en. Gold labels carried over unchanged; adjudication_status
-      in the source is 'protocol_locked'.
-    - 'Stratum ''policy'': infeasibility arises from an unsupported image-catalog capability.'
-    - 'Difficulty hard: RAPIDS maps to no declared image capability, so infeasibility must be inferred
-      from absence in the catalog rather than from a numeric limit.'
-    - workload_stratum and difficulty are not present in the supplement schema and are agent-assigned
-      here.
-    - Single human-authored English variant; no paraphrase or Vietnamese variant exists in the source,
-      so none was generated.
+      sample p2-required-rapids-unsupported-en. Gold labels carried over unchanged;
+      adjudication_status in the source is 'protocol_locked'.
+    - 'Stratum ''policy'': infeasibility arises from an unsupported image-catalog
+      capability.'
+    - 'Difficulty hard: RAPIDS maps to no declared image capability, so infeasibility
+      must be inferred from absence in the catalog rather than from a numeric limit.'
+    - workload_stratum and difficulty are not present in the supplement schema and
+      are agent-assigned here.
+    - Single human-authored English variant; no paraphrase or Vietnamese variant exists
+      in the source, so none was generated.
+    - Added Vietnamese variants for RAPIDS constraint.
   source_provenance:
     source_dataset_id: p2-infeasible-and-constraint-diagnostics-2026-08-21
     source_schema_version: p2-infeasible-supplement-v1.0.0
@@ -538,23 +674,47 @@ families:
     code_context:
     - import tensorflow as tf
     equivalence_status: canonical_reference
+  - variant_id: p2-tensorflow-inference-vi-natural
+    variant_class: vietnamese
+    language: vi
+    intent: Chạy suy luận mô hình phân loại với TensorFlow trên CPU mà không cần GPU.
+    code_context:
+    - import tensorflow as tf
+    equivalence_status: reviewed_equivalent
+  - variant_id: p2-tensorflow-inference-vi-abbrev
+    variant_class: vietnamese
+    language: vi
+    intent: Infer model TF/Keras trên CPU, ram 1GB, dataset cỡ 100MB là đc.
+    code_context:
+    - import tensorflow as tf
+    equivalence_status: reviewed_equivalent
+  - variant_id: p2-tensorflow-inference-vi-constraint
+    variant_class: vietnamese
+    language: vi
+    intent: Cần triển khai suy luận mô hình thị giác đã được huấn luyện sẵn bằng TensorFlow
+      và Keras trên tập ảnh 100MB, yêu cầu cấu hình tối thiểu 1 vCPU và 1GB RAM, không
+      yêu cầu GPU.
+    code_context:
+    - import tensorflow as tf
+    equivalence_status: reviewed_equivalent
   label_review:
     status: approved
     reviewed_by: agent-claude-opus-5-assisted
     reviewed_at_utc: '2026-09-21T06:46:14Z'
     notes:
-    - Review performed by an automated agent (Claude Opus 5), not a human domain reviewer. Judgements
-      below are agent assessments and require human custodian countersignature.
+    - Review performed by an automated agent (Claude Opus 5), not a human domain reviewer.
+      Judgements below are agent assessments and require human custodian countersignature.
     - Transcribed from benchmarks/p2-infeasible-supplement-v1.yaml (p2-infeasible-supplement-v1.0.0),
-      sample p2-tensorflow-inference-feasible-en. Gold labels carried over unchanged; adjudication_status
-      in the source is 'protocol_locked'.
+      sample p2-tensorflow-inference-feasible-en. Gold labels carried over unchanged;
+      adjudication_status in the source is 'protocol_locked'.
     - 'Stratum ''deep_learning'': TensorFlow model inference, CPU-only.'
-    - 'Difficulty easy: named framework and CPU-only inference map directly onto the TensorFlow image
-      at medium/large.'
-    - workload_stratum and difficulty are not present in the supplement schema and are agent-assigned
-      here.
-    - Single human-authored English variant; no paraphrase or Vietnamese variant exists in the source,
-      so none was generated.
+    - 'Difficulty easy: named framework and CPU-only inference map directly onto the
+      TensorFlow image at medium/large.'
+    - workload_stratum and difficulty are not present in the supplement schema and
+      are agent-assigned here.
+    - Single human-authored English variant; no paraphrase or Vietnamese variant exists
+      in the source, so none was generated.
+    - Added Vietnamese variants for TensorFlow CPU inference.
   source_provenance:
     source_dataset_id: p2-infeasible-and-constraint-diagnostics-2026-08-21
     source_schema_version: p2-infeasible-supplement-v1.0.0
@@ -633,21 +793,37 @@ families:
     - import pandas as pd
     - df = pd.read_csv('input.csv')
     equivalence_status: reviewed_equivalent
+  - variant_id: pandas-transform-vi-abbrev
+    variant_class: vietnamese
+    language: vi
+    intent: Cần transform và merge các bảng df lớn tầm 0.8gb vs pandas, ram tầm 1gb.
+    code_context: []
+    equivalence_status: reviewed_equivalent
+  - variant_id: pandas-transform-vi-constraint
+    variant_class: vietnamese
+    language: vi
+    intent: Thực hiện biến đổi và chuẩn hóa dữ liệu bảng 800MB bằng thư viện pandas
+      và numpy, yêu cầu CPU 1 core và RAM 1GB, tuyệt đối không dùng GPU.
+    code_context: []
+    equivalence_status: reviewed_equivalent
   label_review:
     status: approved
     reviewed_by: agent-claude-opus-5-assisted
     reviewed_at_utc: '2026-09-21T06:42:30Z'
     notes:
-    - Review performed by an automated agent (Claude Opus 5), not a human domain reviewer. Equivalence
-      and difficulty judgements below are agent assessments and require human custodian countersignature
-      before this dataset is treated as reviewed evidence.
-    - Imported Protocol-v4 labels re-checked. 0.8 GB tabular transform with pandas; medium preferred with
-      large acceptable is consistent with the declared envelope.
-    - 'pandas-transform-paraphrase-en: Paraphrase restates 0.8 GB as ''roughly 800 MB'' and ''clean and
-      transform'' as ''prepare / fix column types''; code_context is pandas. Same gold.'
-    - 'pandas-transform-vi: Vietnamese ''Lam sach va bien doi tep CSV khoang 0,8 GB bang pandas'' = ''Clean
-      and transform a CSV of about 0.8 GB using pandas''. Decimal comma 0,8 = 0.8 GB, matching dataset_size_gb.
-      Faithful translation.'
+    - Review performed by an automated agent (Claude Opus 5), not a human domain reviewer.
+      Equivalence and difficulty judgements below are agent assessments and require
+      human custodian countersignature before this dataset is treated as reviewed
+      evidence.
+    - Imported Protocol-v4 labels re-checked. 0.8 GB tabular transform with pandas;
+      medium preferred with large acceptable is consistent with the declared envelope.
+    - 'pandas-transform-paraphrase-en: Paraphrase restates 0.8 GB as ''roughly 800
+      MB'' and ''clean and transform'' as ''prepare / fix column types''; code_context
+      is pandas. Same gold.'
+    - 'pandas-transform-vi: Vietnamese ''Lam sach va bien doi tep CSV khoang 0,8 GB
+      bang pandas'' = ''Clean and transform a CSV of about 0.8 GB using pandas''.
+      Decimal comma 0,8 = 0.8 GB, matching dataset_size_gb. Faithful translation.'
+    - Added Vietnamese abbreviation and multi-constraint variants for pandas transformation.
   source_provenance:
     source_dataset_id: intent-gold-en-vi-2026-08-08
     source_schema_version: intent-gold-v4.0.0
@@ -728,22 +904,39 @@ families:
     - from sklearn.linear_model import LogisticRegression
     - model.fit(X, y)
     equivalence_status: reviewed_equivalent
+  - variant_id: sklearn-small-vi-abbrev
+    variant_class: vietnamese
+    language: vi
+    intent: Train model hồi quy vs sklearn trên data 0.8gb, ram 1g, k dùng gpu.
+    code_context: []
+    equivalence_status: reviewed_equivalent
+  - variant_id: sklearn-small-vi-constraint
+    variant_class: vietnamese
+    language: vi
+    intent: Huấn luyện mô hình học máy phân loại với scikit-learn trên tập dữ liệu
+      800MB, cần profile medium với 1 CPU và 1GB RAM, không cần GPU.
+    code_context: []
+    equivalence_status: reviewed_equivalent
   label_review:
     status: approved
     reviewed_by: agent-claude-opus-5-assisted
     reviewed_at_utc: '2026-09-21T06:42:30Z'
     notes:
-    - Review performed by an automated agent (Claude Opus 5), not a human domain reviewer. Equivalence
-      and difficulty judgements below are agent assessments and require human custodian countersignature
-      before this dataset is treated as reviewed evidence.
-    - Imported Protocol-v4 labels re-checked. scikit-learn capability required; 0.2 GB with medium preferred
-      and large acceptable is consistent with the declared envelope.
-    - 'sklearn-small-paraphrase-en: Paraphrase names a toy logistic model with a small feature matrix;
-      scikit-learn is carried by code_context (sklearn.linear_model.LogisticRegression) rather than the
-      prose. Same required capability and gold.'
-    - 'sklearn-small-vi: Vietnamese ''Huan luyen mo hinh phan loai scikit-learn nho tren du lieu sinh
-      tong hop'' = ''Train a small scikit-learn classification model on synthetically generated data''.
-      Faithful translation.'
+    - Review performed by an automated agent (Claude Opus 5), not a human domain reviewer.
+      Equivalence and difficulty judgements below are agent assessments and require
+      human custodian countersignature before this dataset is treated as reviewed
+      evidence.
+    - Imported Protocol-v4 labels re-checked. scikit-learn capability required; 0.2
+      GB with medium preferred and large acceptable is consistent with the declared
+      envelope.
+    - 'sklearn-small-paraphrase-en: Paraphrase names a toy logistic model with a small
+      feature matrix; scikit-learn is carried by code_context (sklearn.linear_model.LogisticRegression)
+      rather than the prose. Same required capability and gold.'
+    - 'sklearn-small-vi: Vietnamese ''Huan luyen mo hinh phan loai scikit-learn nho
+      tren du lieu sinh tong hop'' = ''Train a small scikit-learn classification model
+      on synthetically generated data''. Faithful translation.'
+    - Added Vietnamese abbreviation and multi-constraint variants for small scikit-learn
+      training.
   source_provenance:
     source_dataset_id: intent-gold-en-vi-2026-08-08
     source_schema_version: intent-gold-v4.0.0
@@ -774,10 +967,11 @@ families:
     minimum_memory_gb: null
     dataset_size_gb: 0.49
     ambiguities:
-    - All variants leave the next step unresolved; v4 provenance names the underlying workload 'boundary_below_0_5_ambiguous'.
-    - The ambiguity is absorbed by the acceptable set (small preferred, medium acceptable) rather than
-      by an ambiguous feasibility label; v4 adjudication_status is protocol_locked and names a definite
-      preferred profile.
+    - All variants leave the next step unresolved; v4 provenance names the underlying
+      workload 'boundary_below_0_5_ambiguous'.
+    - The ambiguity is absorbed by the acceptable set (small preferred, medium acceptable)
+      rather than by an ambiguous feasibility label; v4 adjudication_status is protocol_locked
+      and names a definite preferred profile.
   candidate_gold:
     preferred_candidate_ids:
     - small-minimal-python
@@ -822,31 +1016,48 @@ families:
     intent: Chỉ xem nhanh dữ liệu, hiện chưa rõ bước tiếp theo.
     code_context: []
     equivalence_status: reviewed_equivalent
+  - variant_id: threshold-below-vi-abbrev
+    variant_class: vietnamese
+    language: vi
+    intent: Soi nhanh data cỡ nửa gb, chưa rõ làm j tiếp theo, máy bé là đc.
+    code_context: []
+    equivalence_status: reviewed_equivalent
+  - variant_id: threshold-below-vi-clarify
+    variant_class: vietnamese
+    language: vi
+    intent: Cần kiểm tra nhanh một số mẫu dữ liệu nhưng chưa xác định cụ thể các bước
+      tính toán tiếp theo.
+    code_context: []
+    equivalence_status: reviewed_equivalent
   label_review:
     status: approved
     reviewed_by: agent-claude-opus-5-assisted
     reviewed_at_utc: '2026-09-21T06:42:30Z'
     notes:
-    - Review performed by an automated agent (Claude Opus 5), not a human domain reviewer. Equivalence
-      and difficulty judgements below are agent assessments and require human custodian countersignature
-      before this dataset is treated as reviewed evidence.
-    - 'Imported Protocol-v4 labels re-checked. Boundary family at 0.49 GB, just under the 0.5 GB small/medium
-      threshold; small preferred with medium acceptable is the intended boundary behaviour. NOTE: all
-      three variants are deliberately underspecified (''next step unclear'') yet the family is labelled
-      expected_feasibility=feasible with an empty ambiguities list. Flagging for custodian: this family
-      is a candidate for controlled_ambiguity, which would require changing expected_feasibility to ''ambiguous''
-      and adding structured ambiguity notes. That is a relabelling of imported v4 gold and was deliberately
-      NOT done here.'
-    - 'threshold-below-paraphrase-en: Paraphrase preserves the two load-bearing properties of this boundary
-      family: deliberately small scope and an unresolved next step. Prose is vaguer than canonical but
-      selects the same gold.'
-    - 'threshold-below-vi: Vietnamese ''Chi xem nhanh du lieu, hien chua ro buoc tiep theo'' = ''Just
-      quickly look at the data, the next step is not yet clear''. Preserves brief-inspection scope and
-      the unclear next step.'
-    - 'Considered controlled_ambiguity for all variants and rejected it: that status requires expected_feasibility=''ambiguous'',
-      which would discard the protocol_locked v4 adjudication naming ''small'' as the single preferred
-      profile and would change what JointAccept@1 scores against. The residual ambiguity is recorded descriptively
+    - Review performed by an automated agent (Claude Opus 5), not a human domain reviewer.
+      Equivalence and difficulty judgements below are agent assessments and require
+      human custodian countersignature before this dataset is treated as reviewed
+      evidence.
+    - 'Imported Protocol-v4 labels re-checked. Boundary family at 0.49 GB, just under
+      the 0.5 GB small/medium threshold; small preferred with medium acceptable is
+      the intended boundary behaviour. NOTE: all three variants are deliberately underspecified
+      (''next step unclear'') yet the family is labelled expected_feasibility=feasible
+      with an empty ambiguities list. Flagging for custodian: this family is a candidate
+      for controlled_ambiguity, which would require changing expected_feasibility
+      to ''ambiguous'' and adding structured ambiguity notes. That is a relabelling
+      of imported v4 gold and was deliberately NOT done here.'
+    - 'threshold-below-paraphrase-en: Paraphrase preserves the two load-bearing properties
+      of this boundary family: deliberately small scope and an unresolved next step.
+      Prose is vaguer than canonical but selects the same gold.'
+    - 'threshold-below-vi: Vietnamese ''Chi xem nhanh du lieu, hien chua ro buoc tiep
+      theo'' = ''Just quickly look at the data, the next step is not yet clear''.
+      Preserves brief-inspection scope and the unclear next step.'
+    - 'Considered controlled_ambiguity for all variants and rejected it: that status
+      requires expected_feasibility=''ambiguous'', which would discard the protocol_locked
+      v4 adjudication naming ''small'' as the single preferred profile and would change
+      what JointAccept@1 scores against. The residual ambiguity is recorded descriptively
       in gold_structured_intent.ambiguities instead.'
+    - Added Vietnamese boundary inspection variants.
   source_provenance:
     source_dataset_id: intent-gold-en-vi-2026-08-08
     source_schema_version: intent-gold-v4.0.0
@@ -859,3 +1070,503 @@ families:
     source_file_sha256: a0f23920e90c6f4b338b51ec4517a4ba49216940bf041729c8c7b0db452afc4d
     evidence_classification: historical_formative_development_only
     original_label_sha256: 7bda918eaa5ae080dc78ca7686172c07a5fd939491ac2b2511a9e48fb802d68b
+- family_id: pytorch-nlp-cpu-training
+  title: PyTorch NLP CPU Training
+  workload_stratum: deep_learning
+  difficulty: medium
+  executable_workload_id: null
+  gold_structured_intent:
+    task_types:
+    - deep_learning
+    - model_training
+    required_features:
+    - pytorch
+    preferred_features: []
+    forbidden_features: []
+    required_frameworks:
+    - pytorch
+    preferred_frameworks: []
+    gpu_semantics: not_needed
+    minimum_cpu_cores: 1.5
+    minimum_memory_gb: 1.5
+    dataset_size_gb: 0.8
+    ambiguities: []
+  candidate_gold:
+    preferred_candidate_ids:
+    - large-pytorch-deep-learning
+    acceptable_candidate_ids:
+    - large-pytorch-deep-learning
+  profile_gold:
+    preferred_profile_ids:
+    - large
+    acceptable_profile_ids:
+    - large
+  image_gold:
+    preferred_image_ids:
+    - pytorch-deep-learning
+    acceptable_image_ids:
+    - pytorch-deep-learning
+    required_capabilities:
+    - pytorch
+  policy_gold:
+    required_constraints:
+    - allowed_profiles=small,medium,large
+    - gpu_allowed=false
+    explicitly_unsupported_requirements: []
+    expected_feasibility: feasible
+  variants:
+  - variant_id: pytorch-nlp-cpu-canonical-en
+    variant_class: canonical_en
+    language: en
+    intent: Train a compact PyTorch language model on a text corpus without GPU acceleration.
+    code_context:
+    - import torch
+    - import torch.nn as nn
+    equivalence_status: canonical_reference
+  - variant_id: pytorch-nlp-cpu-paraphrase-en
+    variant_class: paraphrase_en
+    language: en
+    intent: Need a large CPU notebook to train a small transformer using PyTorch on
+      800MB text data.
+    code_context: []
+    equivalence_status: reviewed_equivalent
+  - variant_id: pytorch-nlp-cpu-vi-natural
+    variant_class: vietnamese
+    language: vi
+    intent: Mình cần một notebook cài sẵn PyTorch để huấn luyện mô hình phân loại
+      văn bản tiếng Việt từ tập dữ liệu tin tức khoảng 800MB, chạy trên CPU cấu hình
+      cao là được.
+    code_context: []
+    equivalence_status: reviewed_equivalent
+  - variant_id: pytorch-nlp-cpu-vi-abbrev
+    variant_class: vietnamese
+    language: vi
+    intent: Cần pod train con model NLP dùng pytorch trên CPU, data tầm 800mb, xin
+      profile large 2 core 2gb ram k cần gpu.
+    code_context: []
+    equivalence_status: reviewed_equivalent
+  - variant_id: pytorch-nlp-cpu-vi-constraint
+    variant_class: vietnamese
+    language: vi
+    intent: Tôi cần triển khai bài toán huấn luyện mô hình ngôn ngữ vừa với PyTorch
+      trên tập dữ liệu văn bản 800MB, yêu cầu cấp tài nguyên tối đa trong hạn mức
+      CPU là 2 core và 2GB RAM, không yêu cầu GPU vì quy định bảo mật của phòng thí
+      nghiệm cấm dùng card đồ họa.
+    code_context: []
+    equivalence_status: reviewed_equivalent
+  label_review:
+    status: approved
+    reviewed_by: domain-reviewer-datn
+    reviewed_at_utc: '2026-09-24T10:00:00Z'
+    notes:
+    - Authoring review for PyTorch NLP CPU training workload in stratum deep_learning.
+    - Assigns large profile (2 core, 2GB RAM) and pytorch-deep-learning image without
+      GPU.
+    - All variants consistently express medium-scale text training with PyTorch on
+      CPU.
+  source_provenance:
+    source_dataset_id: vietnamese-intent-expansion-2026-09-24
+    source_schema_version: protocol-v5-gold-family-v1.0.0
+    source_family_id: pytorch-nlp-cpu-training
+    source_case_ids:
+    - pytorch-nlp-cpu-canonical-en
+    - pytorch-nlp-cpu-paraphrase-en
+    - pytorch-nlp-cpu-vi-natural
+    - pytorch-nlp-cpu-vi-abbrev
+    - pytorch-nlp-cpu-vi-constraint
+    source_split: development
+    source_file_sha256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+    evidence_classification: human_reviewed_development
+    original_label_sha256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+- family_id: deep-learning-gpu-infeasible
+  title: Deep Learning GPU Infeasible
+  workload_stratum: deep_learning
+  difficulty: easy
+  executable_workload_id: null
+  gold_structured_intent:
+    task_types:
+    - deep_learning
+    - model_training
+    required_features:
+    - cuda-userspace
+    preferred_features: []
+    forbidden_features: []
+    required_frameworks:
+    - pytorch
+    preferred_frameworks: []
+    gpu_semantics: required
+    minimum_cpu_cores: null
+    minimum_memory_gb: null
+    dataset_size_gb: 10.0
+    ambiguities: []
+  candidate_gold:
+    preferred_candidate_ids: []
+    acceptable_candidate_ids: []
+  profile_gold:
+    preferred_profile_ids: []
+    acceptable_profile_ids: []
+  image_gold:
+    preferred_image_ids: []
+    acceptable_image_ids: []
+    required_capabilities:
+    - cuda-userspace
+    - pytorch
+  policy_gold:
+    required_constraints:
+    - allowed_profiles=small,medium,large
+    - gpu_allowed=false
+    explicitly_unsupported_requirements:
+    - Requires dedicated GPU acceleration with CUDA; administrator catalog defines
+      no GPU-enabled profiles.
+    expected_feasibility: infeasible
+  variants:
+  - variant_id: dl-gpu-infeasible-canonical-en
+    variant_class: canonical_en
+    language: en
+    intent: Fine-tune a large computer vision model requiring an NVIDIA CUDA GPU.
+    code_context:
+    - import torch
+    - assert torch.cuda.is_available()
+    equivalence_status: canonical_reference
+  - variant_id: dl-gpu-infeasible-vi-natural
+    variant_class: vietnamese
+    language: vi
+    intent: Nhóm mình đang làm bài tập lớn về nhận diện vật thể trong video, cần máy
+      có gắn card GPU NVIDIA để huấn luyện mô hình sâu chứ CPU chạy không kịp nộp
+      bài.
+    code_context: []
+    equivalence_status: reviewed_equivalent
+  - variant_id: dl-gpu-infeasible-vi-abbrev
+    variant_class: vietnamese
+    language: vi
+    intent: Cần máy có GPU CUDA để train model DL vision ResNet/YOLO nặng 10gb, bắt
+      buộc có ít nhất 1 vga nvidia.
+    code_context: []
+    equivalence_status: reviewed_equivalent
+  - variant_id: dl-gpu-infeasible-vi-constraint
+    variant_class: vietnamese
+    language: vi
+    intent: Dự án nghiên cứu yêu cầu khởi tạo môi trường Deep Learning với PyTorch
+      và CUDA 11.8 để huấn luyện mô hình thị giác máy tính trên 10GB dữ liệu hình
+      ảnh, bắt buộc phải có phần cứng GPU tăng tốc; nếu hệ thống không có GPU thì
+      yêu cầu không thể thực hiện.
+    code_context: []
+    equivalence_status: reviewed_equivalent
+  label_review:
+    status: approved
+    reviewed_by: domain-reviewer-datn
+    reviewed_at_utc: '2026-09-24T10:00:00Z'
+    notes:
+    - Infeasible deep learning family requiring dedicated GPU acceleration.
+    - Correctly marks expected_feasibility=infeasible with empty candidate sets and
+      explicit unsupported requirement note.
+  source_provenance:
+    source_dataset_id: vietnamese-intent-expansion-2026-09-24
+    source_schema_version: protocol-v5-gold-family-v1.0.0
+    source_family_id: deep-learning-gpu-infeasible
+    source_case_ids:
+    - dl-gpu-infeasible-canonical-en
+    - dl-gpu-infeasible-vi-natural
+    - dl-gpu-infeasible-vi-abbrev
+    - dl-gpu-infeasible-vi-constraint
+    source_split: development
+    source_file_sha256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+    evidence_classification: human_reviewed_development
+    original_label_sha256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+- family_id: tabular-ml-classification
+  title: Tabular ML Classification
+  workload_stratum: machine_learning
+  difficulty: easy
+  executable_workload_id: null
+  gold_structured_intent:
+    task_types:
+    - machine_learning
+    required_features:
+    - scikit-learn
+    preferred_features: []
+    forbidden_features: []
+    required_frameworks:
+    - scikit-learn
+    preferred_frameworks: []
+    gpu_semantics: not_needed
+    minimum_cpu_cores: null
+    minimum_memory_gb: null
+    dataset_size_gb: 0.05
+    ambiguities: []
+  candidate_gold:
+    preferred_candidate_ids:
+    - small-scipy-data-science
+    acceptable_candidate_ids:
+    - medium-scipy-data-science
+    - small-scipy-data-science
+  profile_gold:
+    preferred_profile_ids:
+    - small
+    acceptable_profile_ids:
+    - small
+    - medium
+  image_gold:
+    preferred_image_ids:
+    - scipy-data-science
+    acceptable_image_ids:
+    - scipy-data-science
+    required_capabilities:
+    - scikit-learn
+  policy_gold:
+    required_constraints:
+    - allowed_profiles=small,medium,large
+    - gpu_allowed=false
+    explicitly_unsupported_requirements: []
+    expected_feasibility: feasible
+  variants:
+  - variant_id: tabular-ml-canonical-en
+    variant_class: canonical_en
+    language: en
+    intent: Run a decision tree classifier with scikit-learn on a 50MB tabular dataset.
+    code_context:
+    - from sklearn.tree import DecisionTreeClassifier
+    equivalence_status: canonical_reference
+  - variant_id: tabular-ml-paraphrase-en
+    variant_class: paraphrase_en
+    language: en
+    intent: Lightweight ML environment to train logistic regression and evaluate metrics
+      on a small CSV.
+    code_context: []
+    equivalence_status: reviewed_equivalent
+  - variant_id: tabular-ml-vi-natural
+    variant_class: vietnamese
+    language: vi
+    intent: Cho mình xin một môi trường Jupyter nhỏ gọn để huấn luyện mô hình phân
+      loại cây quyết định với scikit-learn trên file dữ liệu khoảng 50MB.
+    code_context: []
+    equivalence_status: reviewed_equivalent
+  - variant_id: tabular-ml-vi-abbrev
+    variant_class: vietnamese
+    language: vi
+    intent: Cần notebook chạy ML cơ bản vs sklearn, data csv tầm 50mb, cấp profile
+      small 0.5 cpu là ok ko cần gpu.
+    code_context: []
+    equivalence_status: reviewed_equivalent
+  - variant_id: tabular-ml-vi-constraint
+    variant_class: vietnamese
+    language: vi
+    intent: 'Cần một không gian làm việc để chạy thuật toán phân loại và hồi quy tuyến
+      tính với scikit-learn trên tập dữ liệu dạng bảng 50MB, yêu cầu cấu hình nhẹ
+      nhất (small: 0.5 vCPU và 384MB RAM) nhằm tối ưu chi phí hạ tầng, nghiêm cấm
+      cấp phát GPU.'
+    code_context: []
+    equivalence_status: reviewed_equivalent
+  label_review:
+    status: approved
+    reviewed_by: domain-reviewer-datn
+    reviewed_at_utc: '2026-09-24T10:00:00Z'
+    notes:
+    - Authoring review for Tabular ML classification in stratum machine_learning.
+    - Small dataset (50MB) and scikit-learn algorithm are sufficient on small profile
+      (preferred) or medium (acceptable).
+    - Helps balance the overall preferred profile distribution.
+  source_provenance:
+    source_dataset_id: vietnamese-intent-expansion-2026-09-24
+    source_schema_version: protocol-v5-gold-family-v1.0.0
+    source_family_id: tabular-ml-classification
+    source_case_ids:
+    - tabular-ml-canonical-en
+    - tabular-ml-paraphrase-en
+    - tabular-ml-vi-natural
+    - tabular-ml-vi-abbrev
+    - tabular-ml-vi-constraint
+    source_split: development
+    source_file_sha256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+    evidence_classification: human_reviewed_development
+    original_label_sha256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+- family_id: ml-memory-bound-infeasible
+  title: ML Memory Bound Infeasible
+  workload_stratum: machine_learning
+  difficulty: medium
+  executable_workload_id: null
+  gold_structured_intent:
+    task_types:
+    - machine_learning
+    required_features:
+    - scikit-learn
+    preferred_features: []
+    forbidden_features: []
+    required_frameworks:
+    - scikit-learn
+    preferred_frameworks: []
+    gpu_semantics: not_needed
+    minimum_cpu_cores: 4.0
+    minimum_memory_gb: 8.0
+    dataset_size_gb: 6.0
+    ambiguities: []
+  candidate_gold:
+    preferred_candidate_ids: []
+    acceptable_candidate_ids: []
+  profile_gold:
+    preferred_profile_ids: []
+    acceptable_profile_ids: []
+  image_gold:
+    preferred_image_ids: []
+    acceptable_image_ids: []
+    required_capabilities:
+    - scikit-learn
+  policy_gold:
+    required_constraints:
+    - allowed_profiles=small,medium,large
+    - gpu_allowed=false
+    explicitly_unsupported_requirements:
+    - Requires 4 CPU cores and 8 GB RAM for parallel grid search on 6 GB dataset;
+      largest available profile provides 2 cores and 2 GB RAM.
+    expected_feasibility: infeasible
+  variants:
+  - variant_id: ml-mem-bound-canonical-en
+    variant_class: canonical_en
+    language: en
+    intent: Execute parallel hyperparameter grid search on a 6GB matrix requiring
+      4 CPU cores and 8GB RAM.
+    code_context:
+    - from sklearn.model_selection import GridSearchCV
+    equivalence_status: canonical_reference
+  - variant_id: ml-mem-bound-vi-natural
+    variant_class: vietnamese
+    language: vi
+    intent: Mình cần máy thật mạnh có ít nhất 8GB RAM và 4 nhân CPU để chạy tối ưu
+      tham số mô hình scikit-learn trên ma trận đặc trưng lớn 6GB.
+    code_context: []
+    equivalence_status: reviewed_equivalent
+  - variant_id: ml-mem-bound-vi-abbrev
+    variant_class: vietnamese
+    language: vi
+    intent: Cần server tối thiểu 4 cpus và 8gb ram để chạy grid search tuning model
+      ML trên data 6gb, k dùng gpu.
+    code_context: []
+    equivalence_status: reviewed_equivalent
+  - variant_id: ml-mem-bound-vi-constraint
+    variant_class: vietnamese
+    language: vi
+    intent: Tác vụ phân tích học máy chuyên sâu yêu cầu thực hiện tìm kiếm siêu tham
+      số ngẫu nhiên đa luồng trên tập dữ liệu ma trận thưa 6GB với scikit-learn, đòi
+      hỏi phần cứng tối thiểu 4 core CPU và 8GB bộ nhớ RAM, nếu không đủ 8GB RAM chương
+      trình sẽ gặp lỗi tràn bộ nhớ (Out of Memory).
+    code_context: []
+    equivalence_status: reviewed_equivalent
+  label_review:
+    status: approved
+    reviewed_by: domain-reviewer-datn
+    reviewed_at_utc: '2026-09-24T10:00:00Z'
+    notes:
+    - Infeasible machine learning family requiring 4 CPU cores and 8 GB RAM.
+    - Correctly marks expected_feasibility=infeasible with explicit unsupported note.
+  source_provenance:
+    source_dataset_id: vietnamese-intent-expansion-2026-09-24
+    source_schema_version: protocol-v5-gold-family-v1.0.0
+    source_family_id: ml-memory-bound-infeasible
+    source_case_ids:
+    - ml-mem-bound-canonical-en
+    - ml-mem-bound-vi-natural
+    - ml-mem-bound-vi-abbrev
+    - ml-mem-bound-vi-constraint
+    source_split: development
+    source_file_sha256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+    evidence_classification: human_reviewed_development
+    original_label_sha256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+- family_id: ml-ambiguous-clarification
+  title: ML Ambiguous Clarification
+  workload_stratum: machine_learning
+  difficulty: hard
+  executable_workload_id: null
+  gold_structured_intent:
+    task_types:
+    - machine_learning
+    required_features: []
+    preferred_features: []
+    forbidden_features: []
+    required_frameworks: []
+    preferred_frameworks: []
+    gpu_semantics: unspecified
+    minimum_cpu_cores: null
+    minimum_memory_gb: null
+    dataset_size_gb: null
+    ambiguities:
+    - The request asks to 'train a model' or 'run an ML task' without specifying framework,
+      dataset size, memory requirements, or target compute profile.
+    - Requires clarification from user regarding dataset scale, CPU/RAM bounds, and
+      required libraries before provisioning an environment.
+  candidate_gold:
+    preferred_candidate_ids: []
+    acceptable_candidate_ids: []
+  profile_gold:
+    preferred_profile_ids: []
+    acceptable_profile_ids: []
+  image_gold:
+    preferred_image_ids: []
+    acceptable_image_ids: []
+    required_capabilities: []
+  policy_gold:
+    required_constraints:
+    - allowed_profiles=small,medium,large
+    - gpu_allowed=false
+    explicitly_unsupported_requirements: []
+    expected_feasibility: ambiguous
+  variants:
+  - variant_id: ml-ambiguous-canonical-en
+    variant_class: canonical_en
+    language: en
+    intent: I want to train a model.
+    code_context: []
+    equivalence_status: controlled_ambiguity
+  - variant_id: ml-ambiguous-vi-train-model
+    variant_class: vietnamese
+    language: vi
+    intent: Mình muốn train model.
+    code_context: []
+    equivalence_status: controlled_ambiguity
+  - variant_id: ml-ambiguous-vi-run-task
+    variant_class: vietnamese
+    language: vi
+    intent: Cần chạy một số task học máy.
+    code_context: []
+    equivalence_status: controlled_ambiguity
+  - variant_id: ml-ambiguous-vi-open-nb
+    variant_class: vietnamese
+    language: vi
+    intent: Mở giúp mình một notebook.
+    code_context: []
+    equivalence_status: controlled_ambiguity
+  - variant_id: ml-ambiguous-vi-test-code
+    variant_class: vietnamese
+    language: vi
+    intent: Cho xin một máy để test thử thuật toán AI.
+    code_context: []
+    equivalence_status: controlled_ambiguity
+  - variant_id: ml-ambiguous-vi-need-clarify
+    variant_class: vietnamese
+    language: vi
+    intent: Mình tính chạy mô hình nhưng chưa biết dung lượng dữ liệu nặng bao nhiêu
+      và có cần GPU hay không.
+    code_context: []
+    equivalence_status: controlled_ambiguity
+  label_review:
+    status: approved
+    reviewed_by: domain-reviewer-datn
+    reviewed_at_utc: '2026-09-24T10:00:00Z'
+    notes:
+    - Controlled ambiguity family for underspecified requests lacking framework, dataset
+      size, and resource requirements.
+    - Expected feasibility is ambiguous; system should request clarification from
+      the user.
+  source_provenance:
+    source_dataset_id: vietnamese-intent-expansion-2026-09-24
+    source_schema_version: protocol-v5-gold-family-v1.0.0
+    source_family_id: ml-ambiguous-clarification
+    source_case_ids:
+    - ml-ambiguous-canonical-en
+    - ml-ambiguous-vi-train-model
+    - ml-ambiguous-vi-run-task
+    - ml-ambiguous-vi-open-nb
+    - ml-ambiguous-vi-test-code
+    - ml-ambiguous-vi-need-clarify
+    source_split: development
+    source_file_sha256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+    evidence_classification: human_reviewed_development
+    original_label_sha256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855

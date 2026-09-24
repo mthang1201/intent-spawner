@@ -150,7 +150,7 @@ frozen verified record matching the exact image.
 
 Dry-run preflight uses read-only `kubectl config`, `get`, `version`, and
 `auth can-i` operations only. It never creates the cgroup probe or a workload.
-The current `orbstack` context remains ineligible and dry-run-only.
+The `orbstack` context is verified as eligible for execution via the readiness attestation artifact (`benchmarks_v5/protocol-v5-e4-readiness-attestation-orbstack.json`).
 
 ## Evidence, review, and retention
 
