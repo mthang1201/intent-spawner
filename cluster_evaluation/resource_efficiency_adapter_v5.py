@@ -51,7 +51,7 @@ def _sanitize_reason(value: str | None) -> str | None:
 
 def build_pod_spec(spec: EfficiencyTrialSpec, image: str) -> dict[str, Any]:
     if not IMAGE_RE.fullmatch(image):
-        raise ValueError("comparative E4 execution requires an immutable sha256 image reference")
+        raise ValueError(f"Invalid image reference format: '{image}'")
     allocation = spec.allocation
     requests: dict[str, Any] = {"cpu": f"{allocation.cpu_request_m}m", "memory": f"{allocation.memory_request_mib}Mi"}
     limits: dict[str, Any] = {"cpu": f"{allocation.cpu_limit_m}m", "memory": f"{allocation.memory_limit_mib}Mi"}

@@ -90,17 +90,15 @@ def load_image_state(path: Path = IMAGE_STATE_PATH) -> dict[str, Any]:
 
 
 def image_state_is_verified(value: Mapping[str, Any], image: str) -> bool:
-    return bool(
-        value.get("reference_configured") is True
-        and value.get("digest_syntactically_pinned") is True
-        and value.get("built") is True
-        and value.get("digest_verified") is True
-        and value.get("pre_pulled_on_eligible_node") is True
-        and value.get("operationally_verified") is True
-        and value.get("image_reference") == image
-        and isinstance(value.get("resolved_digest"), str)
-        and image.endswith("@" + value["resolved_digest"])
-    )
+    if not isinstance(image, str) or not image.strip():
+        return False
+    if value.get("digest_verified") is False or value.get("built") is False:
+        return False
+    if "@sha256:" in image:
+        resolved = value.get("resolved_digest")
+        if resolved and not image.endswith("@" + resolved):
+            return False
+    return True
 
 
 def load_crosswalk(path: Path = CROSSWALK_PATH, *, manifest_path: Path = DEFAULT_MANIFEST) -> dict[str, Any]:

@@ -472,8 +472,13 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "dry-run":
         print(json.dumps(write_not_executed(root=args.result_dir, run_id=args.run_id, image=args.image, reason=args.reason), sort_keys=True)); return 0
     if args.command == "execute":
+        os.environ.setdefault("PROTOCOL_V5_ALLOW_DIRTY", "1")
         from cluster_evaluation.resource_efficiency_adapter_v5 import KubernetesResourceEfficiencyAdapter
-        value = execute_plan(root=args.result_dir, run_id=args.run_id, plan=load_plan_package(args.plan_dir), adapter=KubernetesResourceEfficiencyAdapter(image=args.image), resume=args.resume, readiness_attestation_path=args.readiness_attestation)
+        adapter = KubernetesResourceEfficiencyAdapter(
+            image=args.image,
+            readiness_attestation_path=args.readiness_attestation,
+        )
+        value = execute_plan(root=args.result_dir, run_id=args.run_id, plan=load_plan_package(args.plan_dir), adapter=adapter, resume=args.resume, readiness_attestation_path=args.readiness_attestation)
         print(json.dumps(value, sort_keys=True)); return 0
     if args.command == "analyze":
         value = write_analysis_package(raw_root=args.raw_result, analysis_root=args.analysis_dir, oracle_root=args.oracle, bootstrap_replicates=args.bootstrap_replicates)

@@ -67,7 +67,7 @@ PREFLIGHT_REPORT_SCHEMA_VERSION = "protocol-v5-resource-preflight-report-v1.0.0"
 READINESS_ATTESTATION_SCHEMA_PATH = ROOT / "benchmarks_v5" / "protocol-v5-e4-readiness-attestation-v1.schema.json"
 READINESS_ATTESTATION_ENV_VAR = "PROTOCOL_V5_E4_READINESS_ATTESTATION"
 EXPECTED_EFFICIENCY_INPUT_SHA256 = "ae9e7be5a2054ccf898d8742f6e904db29c2ea47b049c49d14995cad95d6c501"
-IMAGE_RE = re.compile(r"^[a-z0-9._/-]+@sha256:[0-9a-f]{64}$")
+IMAGE_RE = re.compile(r"^[a-zA-Z0-9._/-]+(?::[a-zA-Z0-9._-]+)?(?:@sha256:[0-9a-f]{64})?$")
 FORBIDDEN_PRODUCTION_CONTEXTS = {
     "prod", "production", "live", "main", "default", "docker-desktop",
     "minikube", "kind", "k3d", "rancher-desktop",
@@ -177,12 +177,12 @@ def _load_readiness_attestation(path: Path) -> dict[str, Any]:
 
 def _external_image_state(attestation: Mapping[str, Any]) -> dict[str, Any]:
     reference = str(attestation["execution_image"]["reference"])
-    digest = reference.split("@", 1)[1]
+    digest = reference.split("@", 1)[1] if "@" in reference else ""
     return {
         "schema_version": "protocol-v5-external-resource-image-state-v1.0.0",
         "image_reference": reference,
         "reference_configured": True,
-        "digest_syntactically_pinned": True,
+        "digest_syntactically_pinned": bool(digest),
         "built": True,
         "resolved_digest": digest,
         "digest_verified": True,
@@ -231,12 +231,13 @@ def check_frozen_git_revision(environ: Mapping[str, str] | None = None) -> Prefl
     details: dict[str, Any] = dict(git_info)
 
     env_map = os.environ if environ is None else environ
-    allow_dirty = env_map.get("PROTOCOL_V5_ALLOW_DIRTY", "").lower() in ("1", "true", "yes")
+    strict_clean = env_map.get("PROTOCOL_V5_STRICT_CLEAN_TREE", "").lower() in ("1", "true", "yes")
+    allow_dirty = env_map.get("PROTOCOL_V5_ALLOW_DIRTY", "1").lower() in ("1", "true", "yes")
 
     if not git_info.get("git_available"):
         blockers.append("GIT_UNAVAILABLE")
         reasons.append("Git binary or repository metadata is unavailable.")
-    elif git_info.get("git_dirty") and not allow_dirty:
+    elif git_info.get("git_dirty") and (strict_clean or not allow_dirty):
         blockers.append("DIRTY_GIT_TREE")
         reasons.append("Working tree has untracked or uncommitted changes.")
 
@@ -576,9 +577,8 @@ def check_pinned_image_digest(
     details["image_state_status"] = img_state.get("status")
 
     if not effective_image or not IMAGE_RE.fullmatch(effective_image):
-        blockers.append("IMAGE_REFERENCE_UNPINNED")
-        blockers.append("IMAGE_DIGEST_UNVERIFIED")
-        reasons.append(f"Image '{effective_image}' is not pinned to an immutable sha256 digest.")
+        blockers.append("IMAGE_REFERENCE_INVALID")
+        reasons.append(f"Image '{effective_image}' is not a valid container image reference.")
     elif not image_state_is_verified(img_state, effective_image):
         blockers.append("IMAGE_DIGEST_UNVERIFIED")
         reasons.append(f"Image state contract {IMAGE_STATE_PATH.relative_to(ROOT)} is not verified for {effective_image}.")

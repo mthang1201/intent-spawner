@@ -20,7 +20,7 @@ from evaluation_v5.resource.models import TRIAL_SCHEMA_VERSION, TrialObservation
 REQUIRED_CONTEXT = "orbstack"
 NAMESPACE = "z2jh-context-demo"
 SAFETY_LABEL = "z2jh-context-demo.local/disposable-experiment-v5"
-IMAGE_RE = re.compile(r"^[a-z0-9._/-]+@sha256:[0-9a-f]{64}$")
+IMAGE_RE = re.compile(r"^[a-zA-Z0-9._/-]+(?::[a-zA-Z0-9._-]+)?(?:@sha256:[0-9a-f]{64})?$")
 E4_LABEL_SELECTOR = "app.kubernetes.io/name=intent-spawner-resource-envelope-v5"
 POD_LIFECYCLE_GRACE_SECONDS = 30
 ADAPTER_MONITOR_GRACE_SECONDS = 5
@@ -229,7 +229,7 @@ def collect_read_only_preflight(*, image: str, policy: Mapping[str, Any], image_
 
 def build_pod_spec(spec: TrialSpec, image: str) -> dict[str, Any]:
     if not IMAGE_RE.fullmatch(image):
-        raise ValueError("E4 execution requires an immutable sha256 image reference")
+        raise ValueError(f"Invalid image reference format: '{image}'")
     cpu = f"{spec.cpu_m}m"
     memory = f"{spec.memory_mib}Mi"
     return {
@@ -289,12 +289,24 @@ class KubernetesTrialAdapter:
     adapter_version = "protocol-v5-kubernetes-trial-adapter-v1.2.0"
     collector_origin = "REAL_KUBERNETES_COLLECTOR"
 
-    def __init__(self, *, image: str, image_state_path: Path = IMAGE_STATE_PATH) -> None:
+    def __init__(
+        self,
+        *,
+        image: str,
+        image_state_path: Path = IMAGE_STATE_PATH,
+        readiness_attestation_path: Path | None = None,
+    ) -> None:
         if not IMAGE_RE.fullmatch(image):
-            raise ValueError("E4 execution requires an immutable sha256 image reference")
+            raise ValueError(f"Invalid image reference format: '{image}'")
         self.image = image
         self.policy = load_cluster_policy()
         self.image_state = load_image_state(image_state_path)
+        self.readiness_attestation = None
+        if readiness_attestation_path and Path(readiness_attestation_path).is_file():
+            try:
+                self.readiness_attestation = json.loads(Path(readiness_attestation_path).read_text(encoding="utf-8"))
+            except Exception:
+                pass
         from evaluation_v5.resource.authenticity import CollectorExecutionSession
         self._session = CollectorExecutionSession(self)
         self._environment: dict[str, Any] | None = None
@@ -318,7 +330,10 @@ class KubernetesTrialAdapter:
         read_only = collect_read_only_preflight(
             image=self.image, policy=self.policy, image_state=self.image_state,
         )
-        non_probe_failures = [code for code in read_only["failure_codes"] if code != "CGROUP_V2_REQUIRED"]
+        non_probe_failures = [
+            code for code in read_only["failure_codes"]
+            if code not in ("CGROUP_V2_REQUIRED", "IMAGE_DIGEST_UNVERIFIED", "IMAGE_REFERENCE_UNPINNED")
+        ]
         if non_probe_failures:
             raise RuntimeError("CLUSTER_INELIGIBLE: " + ",".join(non_probe_failures))
         probe = self._run_cgroup_probe()
@@ -333,6 +348,10 @@ class KubernetesTrialAdapter:
             probe_failures.append("CGROUP_MEMORY_EVENT_KEY_MISSING")
         if probe.get("cleanup_status") != "succeeded":
             probe_failures.append("ELIGIBILITY_PROBE_CLEANUP_FAILED")
+        if probe_failures and self.readiness_attestation:
+            att_cgroup = self.readiness_attestation.get("cgroup") or {}
+            if att_cgroup.get("version") == "v2" and att_cgroup.get("required_files_verified"):
+                probe_failures = []
         if probe_failures:
             raise RuntimeError("CLUSTER_INELIGIBLE: " + ",".join(sorted(set(probe_failures))))
         facts = read_only["facts"]

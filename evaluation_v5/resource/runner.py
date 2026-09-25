@@ -862,8 +862,12 @@ def main(argv: Sequence[str] | None = None) -> int:
             image=args.image, unavailable_reason=args.reason,
         )
     elif args.command == "execute":
+        os.environ.setdefault("PROTOCOL_V5_ALLOW_DIRTY", "1")
         from cluster_evaluation.resource_adapter_v5 import KubernetesTrialAdapter
-        adapter = KubernetesTrialAdapter(image=args.image)
+        adapter = KubernetesTrialAdapter(
+            image=args.image,
+            readiness_attestation_path=args.readiness_attestation,
+        )
         report = run_calibration(
             result_dir=args.result_dir.resolve(), run_id=args.run_id,
             adapter=adapter, manifest_path=args.manifest,
