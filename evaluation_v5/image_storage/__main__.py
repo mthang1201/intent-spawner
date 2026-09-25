@@ -30,6 +30,7 @@ from .contracts import (
 )
 from .manifest import build_image_probe_manifest
 from .metrics import compute_functional_metrics, evaluate_recommendation_functional
+from .progress import format_progress_bar, progress_log
 from .functional_provenance import (
     SOURCE_RECOMMENDATIONS_FILENAME,
     SOURCE_RECOMMENDATION_PROVENANCE_FILENAME,
@@ -400,6 +401,10 @@ def run_e5_evaluation(
         evaluation_records.append(eval_rec)
 
     # 6. Aggregate metrics
+    progress_log(
+        f"Aggregating functional metrics across {len(evaluation_records)} records...",
+        prefix="E5:Functional",
+    )
     metrics_report = compute_functional_metrics(
         evaluation_records, catalog, probe_results=probe_results
     )
@@ -491,10 +496,13 @@ def run_e5_evaluation(
     write_json_exclusive(out_dir / "manifest.json", manifest_data)
 
     # SHA256SUMS
+    progress_log(f"Computing SHA256SUMS and materializing evidence package into {out_dir}...", prefix="E5:Functional")
     _write_checksums(out_dir)
 
     # Fail-closed validation of produced evidence package
+    progress_log("Running fail-closed validation of functional evidence package...", prefix="E5:Functional")
     validate_e5_evidence(out_dir)
+    progress_log("Functional evidence package validated successfully.", prefix="E5:Functional")
 
     return out_dir
 
@@ -554,6 +562,21 @@ def main() -> None:
     parser.add_argument("--dataset", type=Path, default=None, help="Path to sealed confirmatory dataset YAML.")
 
     args = parser.parse_args()
+
+    progress_log(
+        f"=== Starting Protocol-v5 E5 Execution: experiment={args.experiment}, mode={args.mode} ===",
+        prefix="E5:CLI",
+    )
+    if args.experiment in ("storage", "both"):
+        progress_log(
+            f"Storage config: stage={args.stage}, arch={args.arch}, scales={args.scales}",
+            prefix="E5:CLI",
+        )
+    if args.experiment in ("functional", "both"):
+        progress_log(
+            f"Functional config: pull_policy={args.pull_policy}, timeout={args.timeout}s",
+            prefix="E5:CLI",
+        )
 
     if args.experiment in ("functional", "both"):
         if args.recommendation_run is None:

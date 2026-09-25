@@ -26,6 +26,11 @@ from .contracts import (
     validate_approved_image_spec,
 )
 from .manifest import validate_approved_probe_spec
+from .progress import (
+    ProgressHeartbeat,
+    format_progress_bar,
+    progress_log,
+)
 
 
 PROBE_META_PREFIX = "PROBE_META:"
@@ -193,10 +198,35 @@ class BaseProbeRunner:
             validate_approved_image_spec(image_spec, self.catalog)
             for probe in image_spec.probes:
                 validate_approved_probe_spec(image_spec, probe)
+
+        total_probes = sum(len(img.probes) for img in manifest.images)
+        progress_log(
+            f"Executing {total_probes} functional probe(s) across {len(manifest.images)} image(s)...",
+            prefix="E5:Functional",
+        )
         results: list[ImageProbeResult] = []
+        probe_idx = 0
         for image_spec in manifest.images:
             for probe in image_spec.probes:
-                results.append(self.run_probe(image_spec, probe))
+                probe_idx += 1
+                bar = format_progress_bar(probe_idx, total_probes)
+                progress_log(
+                    f"{bar} Probing '{image_spec.image_id}' -> capability '{probe.capability}'...",
+                    prefix="E5:Functional",
+                )
+                res = self.run_probe(image_spec, probe)
+                status_str = "PASSED" if res.success else f"FAILED ({res.error_category or 'error'})"
+                progress_log(
+                    f"  -> '{image_spec.image_id}' [{probe.capability}]: {status_str} in {res.runtime_seconds:.2f}s",
+                    prefix="E5:Functional",
+                )
+                results.append(res)
+
+        passed_count = sum(1 for r in results if r.success)
+        progress_log(
+            f"All {total_probes} probe(s) finished: {passed_count}/{total_probes} passed.",
+            prefix="E5:Functional",
+        )
         return results
 
 
@@ -446,22 +476,35 @@ class DockerProbeRunner(BaseProbeRunner):
     ) -> RuntimeImageIdentity:
         identity = self.inspect_image_identity(image_reference)
         if not identity.present and self.pull_policy == "missing":
-            try:
-                pull = subprocess.run(
-                    ["docker", "pull", image_reference],
-                    capture_output=True,
-                    text=True,
-                    timeout=self.image_setup_timeout_seconds,
-                    check=False,
-                )
-            except subprocess.TimeoutExpired as exc:
-                return RuntimeImageIdentity(
-                    False, None, None, None, f"approved image pull timed out: {exc}"
-                )
-            if pull.returncode != 0:
-                return RuntimeImageIdentity(
-                    False, None, None, None, pull.stderr.strip() or "approved image pull failed"
-                )
+            progress_log(
+                f"Image '{image_reference}' not found locally. Pulling image (pull-policy=missing)...",
+                prefix="E5:Docker",
+            )
+            with ProgressHeartbeat(
+                f"Pulling image '{image_reference}'",
+                interval_seconds=20.0,
+                prefix="E5:Docker",
+            ):
+                try:
+                    pull = subprocess.run(
+                        ["docker", "pull", image_reference],
+                        capture_output=True,
+                        text=True,
+                        timeout=self.image_setup_timeout_seconds,
+                        check=False,
+                    )
+                except subprocess.TimeoutExpired as exc:
+                    return RuntimeImageIdentity(
+                        False, None, None, None, f"approved image pull timed out: {exc}"
+                    )
+                if pull.returncode != 0:
+                    return RuntimeImageIdentity(
+                        False, None, None, None, pull.stderr.strip() or "approved image pull failed"
+                    )
+            progress_log(
+                f"Successfully pulled image '{image_reference}'.",
+                prefix="E5:Docker",
+            )
             identity = self.inspect_image_identity(image_reference)
         if identity.present and identity.digest != expected_digest:
             raise SecurityVerificationError(
@@ -592,13 +635,18 @@ class DockerProbeRunner(BaseProbeRunner):
         cleanup_succeeded = False
 
         try:
-            proc = subprocess.run(
-                cmd,
-                capture_output=True,
-                text=True,
-                timeout=probe.timeout_seconds + 3.0,
-                check=False,
-            )
+            with ProgressHeartbeat(
+                f"Container probe '{image_spec.image_id}' [{probe.capability}]",
+                interval_seconds=15.0,
+                prefix="E5:Docker",
+            ):
+                proc = subprocess.run(
+                    cmd,
+                    capture_output=True,
+                    text=True,
+                    timeout=probe.timeout_seconds + 3.0,
+                    check=False,
+                )
             returncode = proc.returncode
             stdout = proc.stdout
             stderr = proc.stderr

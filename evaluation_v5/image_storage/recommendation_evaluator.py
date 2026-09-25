@@ -10,7 +10,10 @@ import logging
 import math
 from pathlib import Path
 import statistics
+import time
 from typing import Any
+
+from .progress import format_progress_bar, progress_log
 
 from evaluation_v5.offline.runner import _case_input
 from evaluation_v5.analysis.statistics import (
@@ -622,8 +625,22 @@ def evaluate_catalog_scale_recommendation(
     feasible_count = 0
     latencies: list[float] = []
     case_records: list[dict[str, Any]] = []
+    total_cases = len(cases)
+    t_eval = time.monotonic()
 
-    for case in cases:
+    progress_log(
+        f"Evaluating P2 recommendation on scale {len(scale_images)}: {total_cases} cases...",
+        prefix="E5:ScaleEval",
+    )
+
+    for idx, case in enumerate(cases, start=1):
+        if idx % 20 == 0 or idx == total_cases:
+            bar = format_progress_bar(idx, total_cases)
+            elapsed_s = time.monotonic() - t_eval
+            progress_log(
+                f"  {bar} cases evaluated ({elapsed_s:.1f}s elapsed)",
+                prefix="E5:ScaleEval",
+            )
         case_input = _case_input(case)
         det = p2.recommend_detailed(case_input.request())
         lat = (
@@ -735,6 +752,10 @@ def evaluate_catalog_scale_recommendation(
             }
         )
 
+    progress_log(
+        f"Aggregating {len(case_records)} cases and computing family bootstrap CI...",
+        prefix="E5:ScaleEval",
+    )
     family_estimates, family_summary = _family_aggregation(
         case_records,
         dataset_sha256=dataset_sha256,

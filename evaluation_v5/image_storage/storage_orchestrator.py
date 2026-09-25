@@ -16,12 +16,17 @@ from typing import Any
 
 import yaml
 
-from evaluation_v5.offline.recommenders import candidate_catalog_snapshot
+from evaluation_v5.offline.recommenders import (
+    candidate_catalog_snapshot,
+    p2_frozen_provenance,
+)
 from evaluation_v5.provenance import write_json_exclusive
 from evaluation_v5.schemas import EvidenceStatus, ProtocolV5Manifest
 from recommender.candidate_corpus import build_candidate_corpus
+from recommender.p2_backend import P2Recommender
 
 from .contracts import file_sha256
+from .progress import format_bytes, format_progress_bar, progress_log
 from .recommendation_evaluator import DEFAULT_RECALL_K, evaluate_catalog_scale_recommendation
 from .storage_contracts import (
     DEFAULT_CATALOG_SCALES,
@@ -374,6 +379,11 @@ def run_storage_evaluation(
     catalog_version = str(catalog.get("catalog_version", "unknown"))
     cat_sha = file_sha256(cat_path)
 
+    progress_log(
+        f"Starting E5 storage evaluation (mode={mode}, stage={stage}, arch={target_arch}, scales={list(scales)})...",
+        prefix="E5:Storage",
+    )
+
     # Resolve runner
     runner = create_storage_runner(
         catalog=catalog,
@@ -512,12 +522,20 @@ def run_storage_evaluation(
     # Evaluate each configured scale
     scale_records: list[ScaleLevelEvaluationRecord] = []
     raw_scale_evaluations: list[dict[str, Any]] = []
+    progress_log(
+        f"Evaluating {len(exp_catalog.catalog_scales)} catalog scales: {list(exp_catalog.catalog_scales)}...",
+        prefix="E5:Storage",
+    )
     for scale in exp_catalog.catalog_scales:
         scale_status, reason = exp_catalog.get_scale_status(scale)
         scale_imgs = exp_catalog.get_scale_images(scale)
         ordered_refs = tuple(img.reference for img in scale_imgs)
 
         if scale_status == "OBSERVED" and scale <= len(prefixes):
+            progress_log(
+                f"Scale {scale}: status=OBSERVED ({len(scale_imgs)} image(s)). Evaluating recommendation performance (stage={norm_stage})...",
+                prefix="E5:Storage",
+            )
             pref = prefixes[scale - 1]
             marg = marginal_records[scale - 1]
             st_status = execution_status
@@ -636,6 +654,10 @@ def run_storage_evaluation(
                 )
             )
         else:
+            progress_log(
+                f"Scale {scale}: status=NOT_EXECUTED ({reason})",
+                prefix="E5:Storage",
+            )
             # Scale has insufficient approved images -> Mark NOT_EXECUTED honestly
             raw_scale_evaluations.append(
                 {
@@ -876,13 +898,10 @@ def run_storage_evaluation(
         else None
     )
 
-    dense_idx: dict[str, Any] = {}
-    sparse_idx: dict[str, Any] = {}
-    hybrid_idx: dict[str, Any] = {}
-    retrieval_cfg: dict[str, Any] = {}
-    constraints_cfg: dict[str, Any] = {}
-    frozen_extractor: dict[str, Any] = {}
-    frozen_structured_intent: dict[str, Any] = {}
+    p2_prov: dict[str, Any] = {}
+    if execution_status == StorageExecutionStatus.OBSERVED.value:
+        p2_backend = P2Recommender(catalog=catalog)
+        p2_prov = p2_frozen_provenance(p2_backend)
 
     # 8. Manifest.json (cross-experiment ProtocolV5Manifest compatibility)
     is_obs = (execution_status == StorageExecutionStatus.OBSERVED.value)
@@ -912,26 +931,26 @@ def run_storage_evaluation(
             "corpus_version": corpus_snapshot.get("corpus_version") if is_obs else None,
             "corpus_sha256": corpus_sha,
         },
-        "structured_intent_schema_version": frozen_structured_intent.get("schema_version") if is_obs else None,
+        "structured_intent_schema_version": p2_prov.get("structured_intent_schema_version") if is_obs else None,
         "extractor": {
-            "extractor_name": frozen_extractor.get("name") if is_obs else None,
-            "extractor_version": frozen_extractor.get("version") if is_obs else None,
-            "extractor_model_id": frozen_extractor.get("model_id") if is_obs else None,
-            "extractor_prompt_version": frozen_extractor.get("prompt_version") if is_obs else None,
-            "extractor_prompt_sha256": frozen_extractor.get("prompt_sha256") if is_obs else None,
+            "extractor_name": p2_prov.get("extractor_name") if is_obs else None,
+            "extractor_version": p2_prov.get("extractor_version") if is_obs else None,
+            "extractor_model_id": p2_prov.get("extractor_model_id") if is_obs else None,
+            "extractor_prompt_version": p2_prov.get("extractor_prompt_version") if is_obs else None,
+            "extractor_prompt_sha256": p2_prov.get("extractor_prompt_sha256") if is_obs else None,
         },
         "embedding_indexes": {
-            "embedding_model_id": dense_idx.get("model_id") if is_obs else None,
-            "embedding_model_revision": dense_idx.get("model_revision") if is_obs else None,
-            "dense_index_version": dense_idx.get("index_version") if is_obs else None,
-            "dense_index_sha256": dense_idx.get("index_checksum") if is_obs else None,
-            "sparse_index_version": sparse_idx.get("index_version") if is_obs else None,
-            "sparse_index_sha256": sparse_idx.get("index_checksum") if is_obs else None,
-            "hybrid_index_version": hybrid_idx.get("index_version") if is_obs else None,
-            "hybrid_index_sha256": hybrid_idx.get("index_checksum") if is_obs else None,
+            "embedding_model_id": p2_prov.get("embedding_model_id") if is_obs else None,
+            "embedding_model_revision": p2_prov.get("embedding_model_revision") if is_obs else None,
+            "dense_index_version": p2_prov.get("dense_index_version") if is_obs else None,
+            "dense_index_sha256": p2_prov.get("dense_index_sha256") if is_obs else None,
+            "sparse_index_version": p2_prov.get("sparse_index_version") if is_obs else None,
+            "sparse_index_sha256": p2_prov.get("sparse_index_sha256") if is_obs else None,
+            "hybrid_index_version": p2_prov.get("hybrid_index_version") if is_obs else None,
+            "hybrid_index_sha256": p2_prov.get("hybrid_index_sha256") if is_obs else None,
         },
-        "retrieval_configuration": retrieval_cfg,
-        "constraint_ranking_configuration": constraints_cfg,
+        "retrieval_configuration": p2_prov.get("retrieval_configuration", {}) if is_obs else {},
+        "constraint_ranking_configuration": p2_prov.get("constraint_ranking_configuration", {}) if is_obs else {},
         "p3_reranker_version": None,
         "environment_identity": env_data,
         "random_seeds": [42],
@@ -940,11 +959,14 @@ def run_storage_evaluation(
     write_json_exclusive(out_dir / "manifest.json", manifest_data)
 
     # 9. SHA256SUMS covering all files
+    progress_log(f"Computing SHA256SUMS and materializing evidence package into {out_dir}...", prefix="E5:Storage")
     _write_checksums(out_dir)
 
     # 10. Fail-closed validation of produced package
+    progress_log("Running fail-closed validation of storage evidence package...", prefix="E5:Storage")
     validate_e5_storage_evidence(
         out_dir, confirmatory_split=confirmatory_capability
     )
+    progress_log("Storage evidence package validated successfully.", prefix="E5:Storage")
 
     return out_dir

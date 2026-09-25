@@ -8,11 +8,18 @@ import json
 import logging
 import re
 import subprocess
+import time
 from typing import Any, Mapping, Sequence
 
 from .contracts import (
     parse_image_digest,
     validate_approved_image_reference,
+)
+from .progress import (
+    ProgressHeartbeat,
+    format_bytes,
+    format_progress_bar,
+    progress_log,
 )
 from .storage_contracts import (
     ImageLayerMetadata,
@@ -100,10 +107,33 @@ class BaseStorageRunner:
             if images is not None
             else get_ordered_catalog_images(self.catalog)
         )
+        total_images = len(ordered)
+        progress_log(
+            f"Measuring storage layers for {total_images} catalog image(s) (arch={self.target_arch}, os={self.target_os})...",
+            prefix="E5:Storage",
+        )
         inspections: list[ImageLayerMetadata] = []
 
-        for image_id, ref, _ in ordered:
-            metadata = self.inspect_image_layers(image_id, ref)
+        for idx, (image_id, ref, _) in enumerate(ordered, start=1):
+            bar = format_progress_bar(idx, total_images)
+            progress_log(
+                f"{bar} Inspecting image '{image_id}' ({ref})...",
+                prefix="E5:Storage",
+            )
+            t0 = time.monotonic()
+            with ProgressHeartbeat(
+                f"Inspecting layer manifest for '{image_id}'",
+                interval_seconds=15.0,
+                prefix="E5:Storage",
+            ):
+                metadata = self.inspect_image_layers(image_id, ref)
+            elapsed = time.monotonic() - t0
+            layer_count = len(metadata.layers)
+            bytes_str = format_bytes(metadata.total_bytes or metadata.uncompressed_layer_bytes or 0)
+            progress_log(
+                f"  -> '{image_id}' inspected in {elapsed:.1f}s: {layer_count} layers ({bytes_str})",
+                prefix="E5:Storage",
+            )
             inspections.append(metadata)
 
         if inspections:
@@ -136,6 +166,16 @@ class BaseStorageRunner:
                     within_image_duplicate_digest_count=meta.within_image_duplicate_digest_count,
                     within_image_duplicate_bytes=meta.within_image_duplicate_bytes,
                 )
+            )
+
+        if prefixes:
+            last = prefixes[-1]
+            progress_log(
+                f"Layer measurement completed: {len(inspections)} image(s) processed. "
+                f"Total logical: {format_bytes(last.naive_logical_bytes)}, "
+                f"Unique layer bytes: {format_bytes(last.unique_layer_bytes)} "
+                f"(Deduplication savings: {last.savings_ratio:.1%})",
+                prefix="E5:Storage",
             )
 
         expected_origin = self.collector_origin.value

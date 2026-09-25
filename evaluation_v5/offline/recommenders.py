@@ -90,7 +90,7 @@ def candidate_catalog_snapshot(corpus: CandidateCorpus) -> dict[str, Any]:
     }
 
 
-def _p2_frozen_provenance(backend: P2Recommender) -> dict[str, Any]:
+def p2_frozen_provenance(backend: P2Recommender) -> dict[str, Any]:
     dense = backend.retriever.dense_retriever.metadata
     sparse = backend.retriever.sparse_retriever.metadata
     hybrid = backend.retriever.metadata
@@ -134,6 +134,9 @@ def _p2_frozen_provenance(backend: P2Recommender) -> dict[str, Any]:
         "generation": _json_value(backend.generation),
         "candidate_catalog": candidate_catalog_snapshot(backend.corpus),
     }
+
+
+_p2_frozen_provenance = p2_frozen_provenance
 
 
 @dataclass(frozen=True, slots=True)
@@ -422,4 +425,5 @@ __all__ = [
     "SYSTEM_IDS",
     "candidate_catalog_snapshot",
     "default_adapters",
+    "p2_frozen_provenance",
 ]

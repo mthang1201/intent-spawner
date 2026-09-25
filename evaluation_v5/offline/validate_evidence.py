@@ -84,6 +84,7 @@ _COMPLETION_FIELDS = frozenset(
 )
 _METRIC_INPUT_FIELDS = frozenset(
     {
+        "language",
         "request_feasible",
         "preferred_candidate_id",
         "acceptable_candidate_ids",
