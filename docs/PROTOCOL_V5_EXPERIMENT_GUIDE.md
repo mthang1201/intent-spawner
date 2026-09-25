@@ -58,17 +58,39 @@ PYTHONPATH=. .venv/bin/python -m evaluation_v5.offline.runner \
 ### 3. Thực Nghiệm E4 — Đánh Giá Tài Nguyên Thực Tế Trên Kubernetes
 Đo đạc việc phân bổ tài nguyên thực tế của KubeSpawner trên cụm Kubernetes cục bộ (OrbStack, Kind, Docker Desktop, Minikube, K3s):
 
-1. **Kiểm tra kết nối cụm:**
+1. **Kiểm tra kết nối và tính sẵn sàng của cụm:**
    ```bash
    make v5-e4-preflight
    ```
-2. **Thực thi kiểm tra pod:**
-   Đảm bảo cụm K8s đang chạy, sau đó chạy kịch bản đo đạc tài nguyên để chứng minh:
+2. **Kiểm tra mô phỏng (Dry-run):**
+   ```bash
+   make v5-resource-dry-run
+   # hoặc kiểm tra phân bổ hiệu quả:
+   make v5-resource-efficiency-dry-run
+   ```
+3. **Thực thi đo đạc Pod thực tế trên K8s:**
+   Khi cụm K8s đang chạy (`status: READY`), thực thi đo đạc tải thực tế trên các workload tính toán để chứng minh:
    * **Baseline Small:** Bị OOM (Out Of Memory) với workload dữ liệu lớn.
    * **Intent-Spawner (P2):** Tự động nhận diện intent -> cấp phát Medium/Large -> Pod chạy thành công mà không lãng phí tài nguyên quá mức.
+   ```bash
+   PYTHONPATH=. .venv/bin/python -m evaluation_v5.resource execute \
+     --result-dir results_v5/protocol-v5.0.0/E4/run-e4-observed \
+     --run-id run-e4-observed \
+     --image intent-spawner-resource-v5:latest \
+     --readiness-attestation benchmarks_v5/protocol-v5-e4-readiness-attestation-orbstack.json
+   ```
+
+---
+
+## 📌 Lưu Ý Về Phạm Vi Các Thí Nghiệm (E1 – E5)
+
+* **E1 (Chất lượng gợi ý) & E2 (Độ bền ngôn ngữ):** Đóng vai trò là các thực nghiệm cốt lõi kiểm chứng thuật toán P2, được thực thi và trích xuất số liệu tự động qua `make eval-offline`.
+* **E4 (Đo lường tài nguyên thực tế trên K8s):** Đóng vai trò kiểm chứng hạ tầng thực tế trên cụm Kubernetes (OrbStack/Kind), đo đạc việc cấp phát phần cứng tránh OOM.
+* **E3 (Khảo sát người dùng UI) & E5 (Image storage footprint):** Là các nội dung mở rộng/phụ trợ; trọng tâm kỹ thuật của ĐATN tập trung chính vào E1, E2 và E4.
 
 ---
 
 ## 📁 Cấu Trúc Thư Mục Kết Quả
 
 * `results_v5/protocol-v5.0.0/E1/`: Chứa file `SUMMARY.md` (bảng số liệu hoàn chỉnh cho luận văn), `summary_metrics.json` (dữ liệu máy đọc), và thư mục `raw/` (chứa toàn bộ log từng trường hợp thử nghiệm).
+* `results_v5/protocol-v5.0.0/E4/`: Chứa báo cáo tài nguyên, cgroup metrics đo đạc được từ các pod thực tế trên Kubernetes.

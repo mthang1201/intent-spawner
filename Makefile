@@ -15,7 +15,6 @@ test:
 
 eval-offline:
 	PYTHONPATH=. $(V5_PYTHON) -m evaluation_v5.offline.runner \
-		--dataset benchmarks_v5/v5-development-expanded.yaml \
 		--systems P1,P2 \
 		--repeats 1 \
 		--result-dir results_v5/protocol-v5.0.0/E1/run-e1-offline
@@ -32,7 +31,7 @@ eval-dataset:
 		--result-dir results_v5/protocol-v5.0.0/E1/run-custom-dataset
 
 eval-robustness:
-	PYTHONPATH=. $(V5_PYTHON) -m evaluation_v5.robustness summary benchmarks_v5/v5-development-expanded.yaml
+	PYTHONPATH=. $(V5_PYTHON) -m evaluation_v5.robustness summary benchmarks_v5/v5-development.yaml
 
 check:
 	bash scripts/check.sh

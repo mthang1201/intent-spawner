@@ -152,7 +152,33 @@ def test_legacy_v1_split_input_handling(
 ):
     """V1 development split cannot complete v2 scoring and emits NOT_EXECUTED."""
     evidence_dir = valid_e1_evidence
-    gold_path = ROOT / "benchmarks_v5/v5-development.yaml"
+    v1_doc = {
+        "schema_version": "protocol-v5-split-bundle-v1.0.0",
+        "split_manifest": {
+            "dataset_id": "legacy-v1-dev",
+            "split_id": "v5-development",
+            "role": "development",
+            "family_ids": ["basic-python"],
+            "case_count": 1,
+            "family_count": 1,
+            "checksum": "0" * 64,
+            "creation_metadata": {"created_at_utc": "2026-08-22T00:00:00Z", "created_by": "test"},
+            "freeze_metadata": {"frozen_at_utc": "2026-08-22T00:00:00Z", "frozen_by": "test"},
+        },
+        "cases": [{
+            "case_id": "basic-python-canonical-en",
+            "family_id": "basic-python",
+            "variant_id": "canonical",
+            "language": "en",
+            "prompt": "Basic python",
+            "inputs": {"dataset_size_gb": 0.01, "code_context_hints": []},
+            "gold": {"request_feasible": True, "preferred_candidate_id": "small-minimal-python", "acceptable_candidate_ids": ["small-minimal-python"], "required_image_capabilities": ["python"], "allowed_profiles": ["small"], "gpu_allowed": False, "expected_extraction": None},
+        }],
+    }
+    from evaluation_v5.split_dataset import split_bundle_checksum
+    v1_doc["split_manifest"]["checksum"] = split_bundle_checksum(v1_doc)
+    gold_path = tmp_path / "legacy_v1_split.json"
+    gold_path.write_text(json.dumps(v1_doc), encoding="utf-8")
     output_dir = tmp_path / "legacy_v1_report"
 
     # CLI invocation on E1 development evidence returns exit 0 with NOT_EXECUTED
