@@ -13,8 +13,10 @@ Toàn bộ các rào cản hành chính giả định (yêu cầu chữ ký revi
 | **Kiểm thử logic lõi** | `make test` | 80/80 unit tests pass (0.6s) |
 | **Chạy thực nghiệm E1 (Chất lượng gợi ý)** | `make eval-offline` | Bảng Markdown so sánh Top-1, Image Match, Latency của P1 vs P2 |
 | **Chạy với Dataset tùy chọn** | `make eval-dataset DATASET=path/to/dataset.yaml` | Kết quả đánh giá trên tập benchmark chỉ định |
-| **Tổng quan độ bền ngôn ngữ (E2)** | `make eval-robustness` | Báo cáo phân tích số lượng biến thể và độ bền tiếng Việt |
-| **Kiểm tra trạng thái cluster Kubernetes** | `make v5-e4-preflight` | Xác nhận cụm K8s sẵn sàng (OrbStack/Kind/K3s/Minikube) |
+| **Tổng quan độ bền ngôn ngữ (E2)** | `make eval-robustness` | Báo cáo phân tích 68 biến thể và độ bền tiếng Việt |
+| **Smoke test khảo sát người dùng (E3)** | `make v5-user-study-smoke` | Kiểm thử luồng phân bổ kịch bản ngẫu nhiên cho người dùng |
+| **Kiểm tra trạng thái cluster Kubernetes (E4)** | `make v5-e4-preflight` | Xác nhận cụm K8s sẵn sàng (OrbStack/Kind/K3s/Minikube) |
+| **Kiểm tra khả năng lưu trữ & Image (E5)** | `PYTHONPATH=. python -m evaluation_v5.image_storage --help` | Công cụ đo đạc chia sẻ layer và kiểm thử khởi động container |
 
 ---
 
@@ -55,7 +57,35 @@ PYTHONPATH=. .venv/bin/python -m evaluation_v5.offline.runner \
 
 ---
 
-### 3. Thực Nghiệm E4 — Đánh Giá Tài Nguyên Thực Tế Trên Kubernetes
+### 3. Thực Nghiệm E3 — Khảo Sát Trải Nghiệm Người Dùng (Human Usability Study: B0 vs P2)
+Đánh giá tính hữu ích và tốc độ ra quyết định của người dùng thực tế khi chọn môi trường trên giao diện JupyterHub:
+* **B0 (Manual Selection):** Người dùng tự chọn Profile và Image bằng tay qua dropdown mặc định.
+* **P2 (Intent-Spawner):** Người dùng mô tả bài toán bằng ngôn ngữ tự nhiên, hệ thống tự động nhận diện và đề xuất cấu hình phù hợp.
+
+* **Chỉ số đo lường:**
+  * **Selection Correctness:** Tỉ lệ chọn đúng môi trường tối ưu đáp ứng yêu cầu bài toán.
+  * **Decision Time:** Thời gian từ lúc nhận đề bài đến khi xác nhận khởi tạo môi trường (giây).
+  * **Interaction Burden:** Số lần chỉnh sửa, số thao tác click chuột và tỉ lệ hoàn thành nhiệm vụ.
+* **Quy trình kiểm thử & Thực thi:**
+  1. **Kiểm tra luồng phân bổ ngẫu nhiên (Smoke test):**
+     ```bash
+     make v5-user-study-smoke
+     ```
+  2. **Kiểm tra tính toàn vẹn của kịch bản nhiệm vụ:**
+     ```bash
+     make v5-user-study-test
+     ```
+  3. **Tạo lịch trình phân bổ đối ngẫu (Counterbalanced assignments):**
+     ```bash
+     PYTHONPATH=. .venv/bin/python -m evaluation_v5.user_study.runner generate-assignment \
+       --task-set benchmarks_v5/user-study-draft-v1.yaml \
+       --output benchmarks_v5/protocol-v5-e3-assignment-target-36 \
+       --seed 20260827
+     ```
+
+---
+
+### 4. Thực Nghiệm E4 — Đánh Giá Tài Nguyên Thực Tế Trên Kubernetes
 Đo đạc việc phân bổ tài nguyên thực tế của KubeSpawner trên cụm Kubernetes cục bộ (OrbStack, Kind, Docker Desktop, Minikube, K3s):
 
 1. **Kiểm tra kết nối và tính sẵn sàng của cụm:**
@@ -82,15 +112,34 @@ PYTHONPATH=. .venv/bin/python -m evaluation_v5.offline.runner \
 
 ---
 
+### 5. Thực Nghiệm E5 — Hiệu Quả Lưu Trữ Image & Kiểm Thử Khởi Động Container (Image Storage & Functionality)
+Đo lường dung lượng lưu trữ thực tế trên node Kubernetes và tính tương thích chức năng của các Image notebook trong catalog:
+* **Tối ưu hóa lưu trữ:** Đo lường hiệu quả chia sẻ layer (layer sharing/deduplication) giữa các image notebook (`scipy-data-science`, `pytorch-deep-learning`, `tensorflow-deep-learning`, `minimal-python`).
+* **Tính tương thích chức năng:** Kiểm tra container khởi động thành công và đáp ứng đúng năng lực (Python, PyTorch, CUDA/GPU, TensorFlow).
+
+* **Chỉ số đo lường:**
+  * **Layer Deduplication Ratio:** Tỉ lệ dung lượng tiết kiệm được nhờ dùng chung base layers.
+  * **Container Startup Time:** Thời gian pull và khởi chạy container.
+  * **Probe Success Rate:** Tỉ lệ vượt qua các kiểm tra thư viện lõi bên trong container.
+* **Lệnh thực thi kiểm tra:**
+  ```bash
+  # Kiểm tra các tùy chọn đo đạc lưu trữ và kiểm thử Image:
+  PYTHONPATH=. .venv/bin/python -m evaluation_v5.image_storage --help
+  ```
+
+---
+
 ## 📌 Lưu Ý Về Phạm Vi Các Thí Nghiệm (E1 – E5)
 
 * **E1 (Chất lượng gợi ý) & E2 (Độ bền ngôn ngữ):** Đóng vai trò là các thực nghiệm cốt lõi kiểm chứng thuật toán P2, được thực thi và trích xuất số liệu tự động qua `make eval-offline`.
 * **E4 (Đo lường tài nguyên thực tế trên K8s):** Đóng vai trò kiểm chứng hạ tầng thực tế trên cụm Kubernetes (OrbStack/Kind), đo đạc việc cấp phát phần cứng tránh OOM.
-* **E3 (Khảo sát người dùng UI) & E5 (Image storage footprint):** Là các nội dung mở rộng/phụ trợ; trọng tâm kỹ thuật của ĐATN tập trung chính vào E1, E2 và E4.
+* **E3 (Khảo sát người dùng UI) & E5 (Image storage footprint):** Đóng vai trò mở rộng khảo sát trải nghiệm thực tế và tối ưu hóa hạ tầng lưu trữ.
 
 ---
 
 ## 📁 Cấu Trúc Thư Mục Kết Quả
 
 * `results_v5/protocol-v5.0.0/E1/`: Chứa file `SUMMARY.md` (bảng số liệu hoàn chỉnh cho luận văn), `summary_metrics.json` (dữ liệu máy đọc), và thư mục `raw/` (chứa toàn bộ log từng trường hợp thử nghiệm).
+* `results_v5/protocol-v5.0.0/E3/`: Chứa nhật ký sự kiện tương tác của người tham gia khảo sát (decision time, selection correctness).
 * `results_v5/protocol-v5.0.0/E4/`: Chứa báo cáo tài nguyên, cgroup metrics đo đạc được từ các pod thực tế trên Kubernetes.
+* `results_v5/protocol-v5.0.0/E5/`: Chứa số liệu kích thước layer và kết quả kiểm thử chức năng môi trường container.
