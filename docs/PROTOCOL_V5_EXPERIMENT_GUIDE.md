@@ -77,9 +77,11 @@ PYTHONPATH=. .venv/bin/python -m evaluation_v5.offline.runner \
      ```
   3. **Tạo lịch trình phân bổ đối ngẫu (Counterbalanced assignments):**
      ```bash
-     PYTHONPATH=. .venv/bin/python -m evaluation_v5.user_study.runner generate-assignment \
-       --task-set benchmarks_v5/user-study-draft-v1.yaml \
-       --output benchmarks_v5/protocol-v5-e3-assignment-target-36 \
+     PYTHONPATH=. .venv/bin/python -m evaluation_v5.user_study.runner generate-assignments \
+       benchmarks_v5/user-study-draft-v1.yaml \
+       --output-dir benchmarks_v5/protocol-v5-e3-assignment-target-36 \
+       --study-id e3-user-study \
+       --consent-version consent-v1 \
        --seed 20260827
      ```
 
