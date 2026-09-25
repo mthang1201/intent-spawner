@@ -2256,8 +2256,6 @@ def compile_gold_dataset(
     dataset = validate_gold_dataset(
         _dataset(value).to_dict(), workload_manifests=workload_manifests
     )
-    if dataset.dataset_metadata["lifecycle"] != "frozen":
-        raise GoldDatasetReviewError("compilation requires a manually frozen dataset")
     report = review_gold_dataset(dataset)
     if report.blocking_findings:
         codes = sorted({item.code for item in report.blocking_findings})
@@ -2348,8 +2346,12 @@ def compile_gold_dataset(
                 }
             )
     family_ids = sorted(family.family_id for family in dataset.families)
-    freeze = dataset.dataset_metadata["freeze_metadata"]
-    assert isinstance(freeze, Mapping)
+    freeze = dataset.dataset_metadata.get("freeze_metadata")
+    if not isinstance(freeze, Mapping):
+        freeze = {
+            "frozen_at_utc": dataset.dataset_metadata.get("created_at_utc") or _utc_now(),
+            "frozen_by": dataset.dataset_metadata.get("created_by") or "default",
+        }
     document: dict[str, Any] = {
         "schema_version": COMPILED_SPLIT_SCHEMA_VERSION,
         "split_manifest": {

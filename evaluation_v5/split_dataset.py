@@ -835,6 +835,14 @@ def _read_split_bundle(
         raise SplitBundleValidationError(
             f"split dataset could not be read safely from {path_obj}: {exc}"
         ) from exc
+    if isinstance(document, Mapping) and ("families" in document or document.get("schema_version") == "protocol-v5-gold-family-v1.0.0"):
+        from .gold_dataset import compile_gold_dataset, validate_gold_dataset
+        gold_ds = validate_gold_dataset(document, workload_manifests=workload_manifests)
+        bundle = compile_gold_dataset(gold_ds, workload_manifests=workload_manifests)
+        return LoadedSplit(
+            bundle=bundle,
+            source_file_sha256=hashlib.sha256(raw).hexdigest(),
+        )
     bundle = validate_split_bundle(
         document,
         expected_role=expected_role,

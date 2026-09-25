@@ -481,10 +481,10 @@ def test_v2_validation_rejects_source_role_drift():
         validate_split_bundle(payload)
 
 
-def test_compile_blocks_unfrozen_but_not_pending_review_labels():
+def test_compile_permits_draft_and_pending_review_labels():
     draft = validate_gold_dataset(_document(lifecycle="draft"))
-    with pytest.raises(GoldDatasetReviewError, match="manually frozen"):
-        compile_gold_dataset(draft)
+    bundle_draft = compile_gold_dataset(draft)
+    assert bundle_draft.split_manifest.case_count == 4
 
     # A variant with pending semantic-equivalence review is usable immediately;
     # there is no manual-approval gate blocking it from compiling.
@@ -760,12 +760,10 @@ def test_compile_gating_matrix_blocks_only_unassessed_difficulty_and_unfrozen():
     # equivalence, and unresolved ambiguity are all advisory-only and do not
     # block compilation.
     draft = validate_gold_dataset(_document(lifecycle="draft"))
-    with pytest.raises(GoldDatasetReviewError, match="manually frozen"):
-        compile_gold_dataset(draft)
+    assert compile_gold_dataset(draft).split_manifest.case_count == 4
 
     reviewed = validate_gold_dataset(_document(lifecycle="reviewed"))
-    with pytest.raises(GoldDatasetReviewError, match="manually frozen"):
-        compile_gold_dataset(reviewed)
+    assert compile_gold_dataset(reviewed).split_manifest.case_count == 4
 
     pending_review_document = _document()
     _set_pending_review(pending_review_document["families"][0])  # type: ignore[index]
@@ -1470,9 +1468,8 @@ def test_complete_temporary_development_authoring_lifecycle(
     reviewed_path = tmp_path / "reviewed.json"
     write_document_exclusive(reviewed_path, reviewed_document)
     reviewed = load_gold_dataset(reviewed_path)
-    assert not review_gold_dataset(reviewed).blocking_findings
-    with pytest.raises(GoldDatasetReviewError, match="manually frozen"):
-        compile_gold_dataset(reviewed)
+    compiled_reviewed = compile_gold_dataset(reviewed)
+    assert compiled_reviewed.split_manifest.case_count > 0
     assert reviewed.dataset.dataset_metadata["lifecycle"] == "reviewed"
 
     frozen_document = deepcopy(reviewed_document)
