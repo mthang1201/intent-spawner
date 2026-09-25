@@ -16,7 +16,8 @@ Toàn bộ các rào cản hành chính giả định (yêu cầu chữ ký revi
 | **Tổng quan độ bền ngôn ngữ (E2)** | `make eval-robustness` | Báo cáo phân tích 68 biến thể và độ bền tiếng Việt |
 | **Smoke test khảo sát người dùng (E3)** | `make v5-user-study-smoke` | Kiểm thử luồng phân bổ kịch bản ngẫu nhiên cho người dùng |
 | **Kiểm tra trạng thái cluster Kubernetes (E4)** | `make v5-e4-preflight` | Xác nhận cụm K8s sẵn sàng (OrbStack/Kind/K3s/Minikube) |
-| **Kiểm tra khả năng lưu trữ & Image (E5)** | `PYTHONPATH=. python -m evaluation_v5.image_storage --help` | Công cụ đo đạc chia sẻ layer và kiểm thử khởi động container |
+| **Đo lường lưu trữ Image E5 (Storage)** | `PYTHONPATH=. .venv/bin/python -m evaluation_v5.image_storage --experiment storage --mode docker --stage development` | Báo cáo chia sẻ layer và dung lượng tiết kiệm |
+| **Kiểm thử chức năng Image E5 (Functional)** | `PYTHONPATH=. .venv/bin/python -m evaluation_v5.image_storage --experiment functional --recommendation-run results_v5/protocol-v5.0.0/E1/run-e1-offline --mode docker --pull-policy missing` | Kết quả khởi chạy container và probe kiểm thử thư viện |
 
 ---
 
@@ -123,11 +124,50 @@ PYTHONPATH=. .venv/bin/python -m evaluation_v5.offline.runner \
   * **Layer Deduplication Ratio:** Tỉ lệ dung lượng tiết kiệm được nhờ dùng chung base layers.
   * **Container Startup Time:** Thời gian pull và khởi chạy container.
   * **Probe Success Rate:** Tỉ lệ vượt qua các kiểm tra thư viện lõi bên trong container.
-* **Lệnh thực thi kiểm tra:**
-  ```bash
-  # Kiểm tra các tùy chọn đo đạc lưu trữ và kiểm thử Image:
-  PYTHONPATH=. .venv/bin/python -m evaluation_v5.image_storage --help
-  ```
+* **Kết nối Runtime (Docker / OrbStack):**
+  Runner tự động nhận diện và kết nối trực tiếp với Docker daemon hoặc cụm Kubernetes của **OrbStack** trên macOS.
+
+* **Quy trình thực thi chi tiết:**
+
+  1. **Đo lường hiệu quả lưu trữ & chia sẻ layer (Storage Deduplication):**
+     * *Chế độ mô phỏng (Dry-run, không cần Docker):*
+       ```bash
+       PYTHONPATH=. .venv/bin/python -m evaluation_v5.image_storage \
+         --experiment storage \
+         --mode dry-run \
+         --stage development \
+         --output-dir results_v5/protocol-v5.0.0/E5/run-e5-storage-dry-run
+       ```
+     * *Chế độ thực tế với Docker (OrbStack):*
+       ```bash
+       PYTHONPATH=. .venv/bin/python -m evaluation_v5.image_storage \
+         --experiment storage \
+         --mode docker \
+         --stage development \
+         --arch arm64 \
+         --output-dir results_v5/protocol-v5.0.0/E5/run-e5-storage-orbstack
+       ```
+
+  2. **Kiểm thử chức năng Image trong Container (Functional Validation):**
+     *(Yêu cầu đã chạy E1 trước đó để lấy file kết quả khuyến nghị làm đầu vào)*
+     * *Chế độ mô phỏng (Dry-run):*
+       ```bash
+       PYTHONPATH=. .venv/bin/python -m evaluation_v5.image_storage \
+         --experiment functional \
+         --recommendation-run results_v5/protocol-v5.0.0/E1/run-e1-offline \
+         --mode dry-run \
+         --output-dir results_v5/protocol-v5.0.0/E5/run-e5-functional-dry-run
+       ```
+     * *Chế độ thực tế với Docker (OrbStack - tự động khởi chạy container & probe kiểm thử):*
+       ```bash
+       PYTHONPATH=. .venv/bin/python -m evaluation_v5.image_storage \
+         --experiment functional \
+         --recommendation-run results_v5/protocol-v5.0.0/E1/run-e1-offline \
+         --mode docker \
+         --pull-policy missing \
+         --output-dir results_v5/protocol-v5.0.0/E5/run-e5-functional-orbstack
+       ```
+       *(Cờ `--pull-policy missing` đảm bảo OrbStack tự động tải image về nếu local store chưa có).*
 
 ---
 
