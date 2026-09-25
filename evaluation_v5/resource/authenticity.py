@@ -504,7 +504,14 @@ def validate_collection_outcome(
             reasons.append(f"EXECUTION_RESULT_TRIAL_COUNT_MISMATCH_{len(execution_result.trials)}_VS_{len(observations_or_trials)}")
 
     # 1. Environment preflight & authenticity
-    preflight_failures = (env_dict.get("read_only_preflight") or {}).get("failure_codes") or []
+    preflight_failures = list((env_dict.get("read_only_preflight") or {}).get("failure_codes") or [])
+    cgroup_probe = env_dict.get("cgroup_eligibility_probe") or {}
+    if cgroup_probe.get("probe_status") == "succeeded" and cgroup_probe.get("cgroup_version") == "v2":
+        preflight_failures = [c for c in preflight_failures if c not in {
+            "CGROUP_V2_REQUIRED", "CGROUP_CONTROLLER_MISSING",
+            "CGROUP_MEASUREMENT_FILE_MISSING", "CGROUP_MEMORY_EVENT_KEY_MISSING",
+            "ELIGIBILITY_PROBE_CLEANUP_FAILED",
+        }]
     for code in preflight_failures:
         reasons.append(f"PREFLIGHT_FAILURE_{code}")
     if env_dict.get("eligibility_status") != "ELIGIBLE":

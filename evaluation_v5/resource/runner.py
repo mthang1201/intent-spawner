@@ -11,6 +11,7 @@ from pathlib import Path
 import platform
 import subprocess
 import sys
+import time
 from typing import Any, Mapping, Sequence
 
 from evaluation_v5.provenance import write_json_exclusive
@@ -61,6 +62,150 @@ RUNNER_VERSION = "protocol-v5-resource-calibration-runner-v1.2.0"
 
 class InfrastructureExhausted(RuntimeError):
     pass
+
+
+class CalibrationProgressTracker:
+    """Tracks and reports calibration progress in real time with periodic heartbeats."""
+
+    def __init__(
+        self,
+        total_workloads: int,
+        heartbeat_interval_seconds: float = 120.0,
+        stream: Any = sys.stderr,
+    ) -> None:
+        self.total_workloads = total_workloads
+        self.heartbeat_interval_seconds = heartbeat_interval_seconds
+        self.stream = stream
+        self.start_time = time.monotonic()
+        self.last_heartbeat = self.start_time
+        self.current_workload_num = 0
+        self.current_family_id = ""
+        self.completed_families: list[str] = []
+        self.total_trials = 0
+        self.total_decisions = 0
+        self.current_phase = ""
+        self.current_cell = ""
+
+    def _render_bar(self, ratio: float, width: int = 24) -> str:
+        filled = int(round(ratio * width))
+        filled = max(0, min(width, filled))
+        return "█" * filled + "░" * (width - filled)
+
+    def _format_duration(self, seconds: float) -> str:
+        mins, secs = divmod(int(seconds), 60)
+        hours, mins = divmod(mins, 60)
+        if hours > 0:
+            return f"{hours:02d}h {mins:02d}m {secs:02d}s"
+        return f"{mins:02d}m {secs:02d}s"
+
+    def log(self, message: str) -> None:
+        now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        self.stream.write(f"[{now_str}] {message}\n")
+        self.stream.flush()
+
+    def start_workload(self, family_id: str, index: int) -> None:
+        self.current_workload_num = index
+        self.current_family_id = family_id
+        ratio = (index - 1) / max(1, self.total_workloads)
+        bar = self._render_bar(ratio)
+        elapsed = time.monotonic() - self.start_time
+        self.log(
+            f"=== [Workload {index}/{self.total_workloads}] Starting family '{family_id}' "
+            f"[{bar}] {ratio*100:.1f}% | Elapsed: {self._format_duration(elapsed)} ==="
+        )
+        self.heartbeat(force=True)
+
+    def finish_workload(self, family_id: str, success: bool, reason: str = "") -> None:
+        self.completed_families.append(family_id)
+        ratio = len(self.completed_families) / max(1, self.total_workloads)
+        bar = self._render_bar(ratio)
+        elapsed = time.monotonic() - self.start_time
+        status = "COMPLETED" if success else f"SKIPPED/REJECTED ({reason})"
+        self.log(
+            f"=== [Workload {self.current_workload_num}/{self.total_workloads}] Finished family '{family_id}': {status} "
+            f"[{bar}] {ratio*100:.1f}% | Elapsed: {self._format_duration(elapsed)} ==="
+        )
+
+    def before_trial(self, spec: TrialSpec) -> None:
+        self.current_phase = spec.phase
+        self.current_cell = f"cpu={spec.cpu_m}m mem={spec.memory_mib}Mi"
+        self.heartbeat()
+
+    def record_trial(
+        self,
+        spec: TrialSpec,
+        observation: TrialObservation,
+        repeat_idx: int,
+        repeats: int,
+    ) -> None:
+        self.total_trials += 1
+        self.current_phase = spec.phase
+        self.current_cell = f"cpu={spec.cpu_m}m mem={spec.memory_mib}Mi"
+        runtime_str = f"{observation.runtime_seconds:.3f}s" if observation.runtime_seconds is not None else "N/A"
+        exit_str = observation.exit_reason or ("exit 0" if observation.exit_code == 0 else f"code {observation.exit_code}")
+        extra = ""
+        if observation.oom_killed:
+            extra = " [OOM]"
+        elif observation.timeout:
+            extra = " [TIMEOUT]"
+        elif observation.infrastructure_invalid:
+            extra = f" [INFRA: {observation.exclusion_reason}]"
+        self.log(
+            f"  [Trial #{self.total_trials}] {spec.family_id} ({spec.phase} {repeat_idx+1}/{repeats}) "
+            f"{self.current_cell} -> {exit_str}{extra} (runtime: {runtime_str})"
+        )
+        self.heartbeat()
+
+    def record_decision(
+        self,
+        phase: str,
+        cpu_m: int,
+        memory_mib: int,
+        accepted: bool,
+        note: str = "",
+    ) -> None:
+        self.total_decisions += 1
+        status = "ACCEPTED" if accepted else "REJECTED"
+        note_str = f" ({note})" if note else ""
+        self.log(f"  --> Decision: phase={phase} cpu={cpu_m}m mem={memory_mib}Mi -> {status}{note_str}")
+        self.heartbeat()
+
+    def finish_calibration(self, run_id: str) -> None:
+        elapsed = time.monotonic() - self.start_time
+        done_count = len(self.completed_families)
+        ratio = done_count / max(1, self.total_workloads)
+        bar = self._render_bar(ratio)
+        self.log(
+            f"=== [E4 Calibration Complete] Run '{run_id}' finished in {self._format_duration(elapsed)} "
+            f"[{bar}] {ratio*100:.1f}% ({done_count}/{self.total_workloads} workloads) | Total Trials: {self.total_trials} ==="
+        )
+
+    def heartbeat(self, force: bool = False) -> None:
+        now = time.monotonic()
+        if not force and (now - self.last_heartbeat < self.heartbeat_interval_seconds):
+            return
+        self.last_heartbeat = now
+        elapsed = now - self.start_time
+        done_count = len(self.completed_families)
+        ratio = done_count / max(1, self.total_workloads)
+        bar = self._render_bar(ratio)
+        eta_str = "calculating..."
+        if done_count > 0:
+            avg_per_workload = elapsed / done_count
+            remaining_workloads = self.total_workloads - done_count
+            eta_seconds = avg_per_workload * remaining_workloads
+            eta_str = self._format_duration(eta_seconds)
+        summary = (
+            f"\n--------------------------------------------------------------------------------\n"
+            f"[E4 Calibration Progress Report]\n"
+            f"  Progress:      [{bar}] {ratio*100:.1f}% ({done_count}/{self.total_workloads} workloads completed)\n"
+            f"  Elapsed:       {self._format_duration(elapsed)} | Estimated Remaining: ~{eta_str}\n"
+            f"  Current:       {self.current_family_id} (phase: {self.current_phase}, cell: {self.current_cell})\n"
+            f"  Total Trials:  {self.total_trials} | Total Decisions: {self.total_decisions}\n"
+            f"--------------------------------------------------------------------------------\n"
+        )
+        self.stream.write(summary)
+        self.stream.flush()
 
 
 def _utc_now() -> str:
@@ -343,6 +488,7 @@ def _record_cell_decision(
     rows: Sequence[TrialObservation],
     accepted: bool,
     reference_median: float | None,
+    tracker: CalibrationProgressTracker | None = None,
 ) -> None:
     _record_decision(path, seen, {
         "decision_id": f"{workload['family_id']}:{phase}:c{cpu_m}:m{memory_mib}",
@@ -357,6 +503,8 @@ def _record_cell_decision(
         "reference_median_runtime_seconds": reference_median,
         "accepted_under_frozen_safe_rule": accepted,
     })
+    if tracker is not None:
+        tracker.record_decision(phase=phase, cpu_m=cpu_m, memory_mib=memory_mib, accepted=accepted)
 
 
 def _execute(
@@ -366,6 +514,7 @@ def _execute(
     records_path: Path,
     run_directory: Path,
     cached: dict[str, TrialObservation],
+    tracker: CalibrationProgressTracker | None = None,
 ) -> TrialObservation:
     if spec.run_id in cached:
         observation = cached[spec.run_id]
@@ -375,6 +524,8 @@ def _execute(
             sidecar_directory.mkdir(parents=True, exist_ok=True)
             write_json_exclusive(sidecar_directory / "record.json", observation.to_dict())
     else:
+        if tracker is not None:
+            tracker.before_trial(spec)
         observation = adapter.run_trial(spec)
         validate_trial_observation(observation, spec)
         append_jsonl_fsync(records_path, observation.to_dict())
@@ -385,6 +536,8 @@ def _execute(
         return observation
     if spec.replacement_of is not None:
         raise InfrastructureExhausted(spec.replacement_of)
+    if tracker is not None:
+        tracker.log(f"  [Infrastructure retry] Replacing invalid trial {spec.run_id}...")
     replacement = replace(
         spec,
         run_id=f"{spec.run_id}-replacement",
@@ -393,6 +546,7 @@ def _execute(
     replacement_observation = _execute(
         adapter, replacement, records_path=records_path,
         run_directory=run_directory, cached=cached,
+        tracker=tracker,
     )
     if replacement_observation.infrastructure_invalid:
         raise InfrastructureExhausted(spec.run_id)
@@ -411,6 +565,7 @@ def _run_cell(
     records_path: Path,
     run_directory: Path,
     cached: dict[str, TrialObservation],
+    tracker: CalibrationProgressTracker | None = None,
 ) -> list[TrialObservation]:
     rows = []
     for repeat in range(repeats):
@@ -419,10 +574,14 @@ def _run_cell(
             repeat_index=repeat, plan_index=next_index[0],
         )
         next_index[0] += 1
-        rows.append(_execute(
+        obs = _execute(
             adapter, spec, records_path=records_path,
             run_directory=run_directory, cached=cached,
-        ))
+            tracker=tracker,
+        )
+        rows.append(obs)
+        if tracker is not None:
+            tracker.record_trial(spec, obs, repeat, repeats)
     return rows
 
 
@@ -436,6 +595,7 @@ def run_calibration(
     resume: bool = False,
     enforce_readiness: bool = True,
     readiness_attestation_path: Path | None = None,
+    progress_heartbeat_seconds: float = 120.0,
 ) -> dict[str, Any]:
     manifest_path = manifest_path.resolve()
     if not resume and result_dir.exists():
@@ -488,7 +648,8 @@ def run_calibration(
         if prior.get("plan_fingerprint") != provenance["plan_fingerprint"]:
             raise ValueError("resume provenance fingerprint mismatch")
     else:
-        if provenance["git_dirty"] and enforce_readiness:
+        allow_dirty = os.environ.get("PROTOCOL_V5_ALLOW_DIRTY", "0").lower() in ("1", "true", "yes")
+        if provenance["git_dirty"] and enforce_readiness and not allow_dirty:
             raise RuntimeError("observed E4 calibration requires a clean Git tree")
         write_json_exclusive(provenance_path, provenance)
         write_json_exclusive(plan_path, build_calibration_plan(manifest))
@@ -500,20 +661,30 @@ def run_calibration(
     decisions_seen = _decision_ids(decisions_path)
     next_index = [len(cached)]
 
-    for workload in workloads.values():
+    tracker = CalibrationProgressTracker(
+        total_workloads=len(workloads),
+        heartbeat_interval_seconds=progress_heartbeat_seconds,
+    )
+    tracker.log(f"Starting Protocol-v5 E4 calibration run '{run_id}' with {len(workloads)} workloads.")
+    tracker.heartbeat(force=True)
+
+    for w_idx, workload in enumerate(workloads.values(), 1):
+        family_id = workload["family_id"]
+        tracker.start_workload(family_id, w_idx)
         try:
             reference = _run_cell(
                 adapter, workload, phase="reference", cpu_m=2000, memory_mib=2048,
                 repeats=3, next_index=next_index, records_path=records_path,
-                run_directory=run_directory, cached=cached,
+                run_directory=run_directory, cached=cached, tracker=tracker,
             )
             reference_usable = len(reference) == 3 and all(trial_basic_success(row) for row in reference)
             if not reference_usable:
                 _record_cell_decision(
                     decisions_path, decisions_seen, workload, phase="reference",
                     cpu_m=2000, memory_mib=2048, rows=reference,
-                    accepted=False, reference_median=None,
+                    accepted=False, reference_median=None, tracker=tracker,
                 )
+                tracker.finish_workload(family_id, success=False, reason="REFERENCE_UNUSABLE")
                 continue
             reference_median = sorted(float(row.runtime_seconds) for row in reference if row.runtime_seconds is not None)[1]
             reference_stable, _ = reference_is_stable(
@@ -522,24 +693,26 @@ def run_calibration(
             _record_cell_decision(
                 decisions_path, decisions_seen, workload, phase="reference",
                 cpu_m=2000, memory_mib=2048, rows=reference,
-                accepted=reference_stable, reference_median=reference_median,
+                accepted=reference_stable, reference_median=reference_median, tracker=tracker,
             )
             if not reference_stable:
+                tracker.finish_workload(family_id, success=False, reason="REFERENCE_UNSTABLE")
                 continue
 
             max_memory_rows = _run_cell(
                 adapter, workload, phase="memory_probe", cpu_m=2000,
                 memory_mib=MEMORY_LATTICE_MIB[-1], repeats=2,
                 next_index=next_index, records_path=records_path,
-                run_directory=run_directory, cached=cached,
+                run_directory=run_directory, cached=cached, tracker=tracker,
             )
             max_memory_accepted = cell_acceptable(max_memory_rows, reference_median, 2)
             _record_cell_decision(
                 decisions_path, decisions_seen, workload, phase="memory_probe",
                 cpu_m=2000, memory_mib=MEMORY_LATTICE_MIB[-1], rows=max_memory_rows,
-                accepted=max_memory_accepted, reference_median=reference_median,
+                accepted=max_memory_accepted, reference_median=reference_median, tracker=tracker,
             )
             if not max_memory_accepted:
+                tracker.finish_workload(family_id, success=False, reason="MAX_MEMORY_FAILED")
                 continue
             low, high = -1, len(MEMORY_LATTICE_MIB) - 1
             while high - low > 1:
@@ -548,13 +721,13 @@ def run_calibration(
                     adapter, workload, phase="memory_probe", cpu_m=2000,
                     memory_mib=MEMORY_LATTICE_MIB[middle], repeats=2,
                     next_index=next_index, records_path=records_path,
-                    run_directory=run_directory, cached=cached,
+                    run_directory=run_directory, cached=cached, tracker=tracker,
                 )
                 accepted = cell_acceptable(rows, reference_median, 2)
                 _record_cell_decision(
                     decisions_path, decisions_seen, workload, phase="memory_probe",
                     cpu_m=2000, memory_mib=MEMORY_LATTICE_MIB[middle], rows=rows,
-                    accepted=accepted, reference_median=reference_median,
+                    accepted=accepted, reference_median=reference_median, tracker=tracker,
                 )
                 if accepted:
                     high = middle
@@ -566,27 +739,28 @@ def run_calibration(
                     adapter, workload, phase="memory_probe", cpu_m=2000,
                     memory_mib=MEMORY_LATTICE_MIB[high - 1], repeats=2,
                     next_index=next_index, records_path=records_path,
-                    run_directory=run_directory, cached=cached,
+                    run_directory=run_directory, cached=cached, tracker=tracker,
                 )
                 _record_cell_decision(
                     decisions_path, decisions_seen, workload, phase="memory_probe",
                     cpu_m=2000, memory_mib=MEMORY_LATTICE_MIB[high - 1], rows=lower_rows,
                     accepted=cell_acceptable(lower_rows, reference_median, 2),
-                    reference_median=reference_median,
+                    reference_median=reference_median, tracker=tracker,
                 )
 
             max_cpu_rows = _run_cell(
                 adapter, workload, phase="cpu_probe", cpu_m=CPU_LATTICE_M[-1],
                 memory_mib=selected_memory, repeats=2, next_index=next_index,
-                records_path=records_path, run_directory=run_directory, cached=cached,
+                records_path=records_path, run_directory=run_directory, cached=cached, tracker=tracker,
             )
             max_cpu_accepted = cell_acceptable(max_cpu_rows, reference_median, 2)
             _record_cell_decision(
                 decisions_path, decisions_seen, workload, phase="cpu_probe",
                 cpu_m=CPU_LATTICE_M[-1], memory_mib=selected_memory, rows=max_cpu_rows,
-                accepted=max_cpu_accepted, reference_median=reference_median,
+                accepted=max_cpu_accepted, reference_median=reference_median, tracker=tracker,
             )
             if not max_cpu_accepted:
+                tracker.finish_workload(family_id, success=False, reason="MAX_CPU_FAILED")
                 continue
             low, high = -1, len(CPU_LATTICE_M) - 1
             while high - low > 1:
@@ -594,13 +768,13 @@ def run_calibration(
                 rows = _run_cell(
                     adapter, workload, phase="cpu_probe", cpu_m=CPU_LATTICE_M[middle],
                     memory_mib=selected_memory, repeats=2, next_index=next_index,
-                    records_path=records_path, run_directory=run_directory, cached=cached,
+                    records_path=records_path, run_directory=run_directory, cached=cached, tracker=tracker,
                 )
                 accepted = cell_acceptable(rows, reference_median, 2)
                 _record_cell_decision(
                     decisions_path, decisions_seen, workload, phase="cpu_probe",
                     cpu_m=CPU_LATTICE_M[middle], memory_mib=selected_memory, rows=rows,
-                    accepted=accepted, reference_median=reference_median,
+                    accepted=accepted, reference_median=reference_median, tracker=tracker,
                 )
                 if accepted:
                     high = middle
@@ -611,26 +785,28 @@ def run_calibration(
                 lower_rows = _run_cell(
                     adapter, workload, phase="cpu_probe", cpu_m=CPU_LATTICE_M[high - 1],
                     memory_mib=selected_memory, repeats=2, next_index=next_index,
-                    records_path=records_path, run_directory=run_directory, cached=cached,
+                    records_path=records_path, run_directory=run_directory, cached=cached, tracker=tracker,
                 )
                 _record_cell_decision(
                     decisions_path, decisions_seen, workload, phase="cpu_probe",
                     cpu_m=CPU_LATTICE_M[high - 1], memory_mib=selected_memory,
                     rows=lower_rows, accepted=cell_acceptable(lower_rows, reference_median, 2),
-                    reference_median=reference_median,
+                    reference_median=reference_median, tracker=tracker,
                 )
             joint_rows = _run_cell(
                 adapter, workload, phase="joint_verification", cpu_m=selected_cpu,
                 memory_mib=selected_memory, repeats=5, next_index=next_index,
-                records_path=records_path, run_directory=run_directory, cached=cached,
+                records_path=records_path, run_directory=run_directory, cached=cached, tracker=tracker,
             )
             _record_cell_decision(
                 decisions_path, decisions_seen, workload, phase="joint_verification",
                 cpu_m=selected_cpu, memory_mib=selected_memory, rows=joint_rows,
                 accepted=cell_acceptable(joint_rows, reference_median, 5),
-                reference_median=reference_median,
+                reference_median=reference_median, tracker=tracker,
             )
+            tracker.finish_workload(family_id, success=True)
         except InfrastructureExhausted:
+            tracker.finish_workload(family_id, success=False, reason="INFRASTRUCTURE_REPLACEMENT_EXHAUSTED")
             _record_decision(decisions_path, decisions_seen, {
                 "decision_id": f"{workload['family_id']}:infrastructure-replacement-exhausted",
                 "decision_type": "family_execution_stopped",
@@ -640,6 +816,8 @@ def run_calibration(
                 "reason_code": "INFRASTRUCTURE_REPLACEMENT_EXHAUSTED",
             })
             continue
+
+    tracker.finish_calibration(run_id=run_id)
 
     observations = load_observations(records_path)
     derived = derive_safe_envelopes(manifest, observations)

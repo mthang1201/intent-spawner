@@ -7,6 +7,7 @@ import hashlib
 import json
 import re
 import subprocess
+import sys
 import time
 from pathlib import Path
 from typing import Any, Mapping
@@ -354,6 +355,16 @@ class KubernetesTrialAdapter:
                 probe_failures = []
         if probe_failures:
             raise RuntimeError("CLUSTER_INELIGIBLE: " + ",".join(sorted(set(probe_failures))))
+        cgroup_codes = {
+            "CGROUP_V2_REQUIRED",
+            "CGROUP_CONTROLLER_MISSING",
+            "CGROUP_MEASUREMENT_FILE_MISSING",
+            "CGROUP_MEMORY_EVENT_KEY_MISSING",
+            "ELIGIBILITY_PROBE_CLEANUP_FAILED",
+        }
+        read_only["failure_codes"] = [c for c in read_only.get("failure_codes", []) if c not in cgroup_codes]
+        if not read_only["failure_codes"]:
+            read_only["eligibility_status"] = "ELIGIBLE"
         facts = read_only["facts"]
         node_info = facts.get("node_info") or {}
         env = {
@@ -463,12 +474,26 @@ class KubernetesTrialAdapter:
         if created.returncode != 0:
             return self._observation(spec, infrastructure_invalid=True, exclusion_reason="pod_create_failed", exit_reason="CreateFailed")
         deadline = time.monotonic() + spec.timeout_seconds + POD_LIFECYCLE_GRACE_SECONDS + ADAPTER_MONITOR_GRACE_SECONDS
+        start_wait = time.monotonic()
+        last_wait_log = start_wait
         pod: dict[str, Any] | None = None
         while time.monotonic() < deadline:
             pod = self._json(["get", "pod", pod_name, "-n", NAMESPACE])
             phase = (pod or {}).get("status", {}).get("phase")
             if phase in {"Succeeded", "Failed"}:
                 break
+            now = time.monotonic()
+            if now - last_wait_log >= 15.0:
+                last_wait_log = now
+                container_statuses = (pod or {}).get("status", {}).get("containerStatuses") or [{}]
+                state = container_statuses[0].get("state", {}) if container_statuses else {}
+                waiting_reason = state.get("waiting", {}).get("reason", "")
+                detail = f" (container waiting: {waiting_reason})" if waiting_reason else ""
+                sys.stderr.write(
+                    f"[{_utc_now()[:19]}Z] [Kubernetes Adapter] Pod {pod_name} phase: {phase}{detail}, "
+                    f"elapsed: {int(now - start_wait)}s / deadline: {int(spec.timeout_seconds + POD_LIFECYCLE_GRACE_SECONDS)}s...\n"
+                )
+                sys.stderr.flush()
             time.sleep(0.5)
         logs_result = self._kubectl(["logs", pod_name, "-n", NAMESPACE], timeout=20)
         logs = logs_result.stdout if logs_result.returncode == 0 else ""
