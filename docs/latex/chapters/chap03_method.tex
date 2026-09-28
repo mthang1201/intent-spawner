@@ -11,9 +11,9 @@ where $q$ is validated structured intent, $C$ is the active catalog, $H$ is the 
 
 \begin{figure}[ht]{P2 transforms a bounded intent into a confirmed catalog choice before the ordinary Kubernetes spawn path.}
 \centering
-\begin{tikzpicture}[node distance=0.65cm, every node/.style={draw, rounded corners, align=center, minimum height=1.05cm, text width=2.35cm, font=\small}, >=stealth]
+\begin{tikzpicture}[node distance=0.65cm, every node/.style={draw, rounded corners, align=center, minimum height=1.05cm, text width=2.45cm, font=\small}, >=stealth]
 \node (intent) {User intent\\explicit hints};
-\node (parse) [right=of intent] {Validated\\StructuredIntent};
+\node (parse) [right=of intent] {Validated\\Structured\-Intent};
 \node (retrieve) [right=of parse] {BM25 + dense\\retrieval and RRF};
 \node (filter) [below=of retrieve] {Hard constraints\\deterministic rank};
 \node (preview) [left=of filter] {Trusted catalog\\preview and confirm};
