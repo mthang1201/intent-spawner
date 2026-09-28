@@ -41,3 +41,5 @@ benchmarks_v5/v5-confirmatory.*
 benchmarks_v5/*confirmatory*
 evaluation_v5/cache/
 evaluation_v5/indexes/
+output/
+tmp/

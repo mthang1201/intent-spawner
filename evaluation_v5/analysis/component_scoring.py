@@ -394,7 +394,11 @@ def load_component_gold(
         expected_role=SplitRole.DEVELOPMENT,
         expected_split_id=selected_split_id,
     )
-    return _gold_cases_from_split(split, freeze_identity=None)
+    freeze_identity = None
+    if split.manifest is not None:
+        from evaluation_v5.offline.runner import _freeze_identity
+        freeze_identity = _freeze_identity(split)
+    return _gold_cases_from_split(split, freeze_identity=freeze_identity)
 
 
 def _strict_json_lines(path: Path) -> list[dict[str, Any]]:

@@ -55,13 +55,24 @@ _REQUIRED_PACKAGE_PATTERN = re.compile(
     re.IGNORECASE,
 )
 
-_GPU_FORBIDDEN = re.compile(r"\b(?:no|without|forbid(?:den)?|không)\s+(?:a\s+)?gpu\b", re.IGNORECASE)
+_GPU_FORBIDDEN = re.compile(
+    r"\b(?:no|without|forbid(?:den)?)\s+(?:a\s+)?gpu\b"
+    r"|\b(?:strictly\s+)?(?:do\s+not|don't)\s+(?:use|need)\s+(?:a\s+)?gpu\b"
+    r"|\b(?:tuyệt\s+đối\s+)?(?:không|chẳng|k|cấm|nghiêm\s+cấm)\s+(?:cần(?:\s+thiết)?|dùng|cấp|sử\s+dụng|được\s+dùng)?\s*(?:card\s+đồ\s+họa\s+|a\s+)?gpu\b"
+    r"|\b(?:cpu\s*[-–]\s*only|only\s+cpu|thuần\s+cpu|chỉ\s+cpu)\b",
+    re.IGNORECASE,
+)
 _GPU_REQUIRED = re.compile(
     r"\b(?:require[sd]?|must\s+(?:have|use)|need[sd]?|cần|bắt\s+buộc)\b[^.\n]{0,40}\bgpu\b",
     re.IGNORECASE,
 )
 _GPU_PREFERRED = re.compile(r"\b(?:prefer(?:red)?|would\s+like|ưu\s+tiên)\b[^.\n]{0,40}\bgpu\b", re.IGNORECASE)
 _GPU_MENTION = re.compile(r"\bgpu\b", re.IGNORECASE)
+
+_FORBIDDEN_PACKAGE_PATTERN = re.compile(
+    r"\b(?:không\s+(?:cần(?:\s+(?:cài|dùng|thiết))?|dùng|cài|sử\s+dụng)|ko\s+cần|k\s+cần|đừng\s+(?:cài|dùng)|no\s+(?:need\s+(?:for|to\s+install)|demand\s+for)|do\s+not\s+(?:need|install|use)|don't\s+(?:need|install|use)|strictly\s+no(?:\s+need\s+for)?|without|cấm)\s+([^,.;!?\n]{1,60})",
+    re.IGNORECASE,
+)
 
 
 def local_parser_contract_sha256() -> str:
@@ -78,6 +89,7 @@ def local_parser_contract_sha256() -> str:
             "cpu": _CPU_PATTERN.pattern,
             "memory": _MEMORY_PATTERN.pattern,
             "required_package": _REQUIRED_PACKAGE_PATTERN.pattern,
+            "forbidden_package": _FORBIDDEN_PACKAGE_PATTERN.pattern,
             "gpu_forbidden": _GPU_FORBIDDEN.pattern,
             "gpu_required": _GPU_REQUIRED.pattern,
             "gpu_preferred": _GPU_PREFERRED.pattern,
@@ -152,8 +164,26 @@ class LocalStructuredIntentExtractor:
             if package not in ignored_package_words and not package[0].isdigit():
                 libraries.add(IMPORT_ALIASES.get(package, package))
 
+        forbidden_features: set[str] = set()
+        for match in _FORBIDDEN_PACKAGE_PATTERN.finditer(combined):
+            chunk = match.group(1).casefold()
+            tokens = re.split(r"[\s/,]+", chunk)
+            for tok in tokens:
+                tok = tok.strip(".,;:!?()")
+                if tok in {"pytorch", "torch"}:
+                    forbidden_features.add("pytorch")
+                elif tok in {"tensorflow", "tf"}:
+                    forbidden_features.add("tensorflow")
+                elif tok in {"keras"}:
+                    forbidden_features.add("keras")
+                elif tok in {"scikit-learn", "sklearn"}:
+                    forbidden_features.add("scikit-learn")
+                elif tok in {"pandas"}:
+                    forbidden_features.add("pandas")
+
         return StructuredIntent(
             required_libraries=tuple(libraries),
+            forbidden_features=tuple(sorted(forbidden_features)),
             resource_constraints=ResourceConstraints(
                 gpu_requirement=_gpu_requirement(combined),
                 minimum_cpu_cores=_minimum(_CPU_PATTERN, combined),

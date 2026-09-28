@@ -451,8 +451,8 @@ def test_compile_preserves_full_gold_and_v1_remains_supported():
     assert validate_split_bundle(payload).to_dict() == payload
 
     historical = load_development_split()
-    assert historical.bundle.schema_version == SPLIT_BUNDLE_SCHEMA_VERSION
-    assert historical.manifest.case_count == 18
+    assert historical.bundle.schema_version == COMPILED_SPLIT_SCHEMA_VERSION
+    assert historical.manifest.case_count == 83
 
 
 def test_v2_validation_rejects_cross_case_family_drift():

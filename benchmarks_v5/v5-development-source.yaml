@@ -1570,3 +1570,308 @@ families:
     source_file_sha256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
     evidence_classification: human_reviewed_development
     original_label_sha256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+- family_id: negative-constraint-cpu-ml
+  title: Negative Constraint CPU Machine Learning
+  workload_stratum: machine_learning
+  difficulty: medium
+  executable_workload_id: null
+  gold_structured_intent:
+    task_types:
+    - machine_learning
+    - model_training
+    required_features:
+    - scikit-learn
+    preferred_features: []
+    forbidden_features: []
+    required_frameworks: []
+    preferred_frameworks: []
+    gpu_semantics: forbidden
+    minimum_cpu_cores: null
+    minimum_memory_gb: null
+    dataset_size_gb: 0.8
+    ambiguities: []
+  candidate_gold:
+    preferred_candidate_ids:
+    - large-scipy-data-science
+    acceptable_candidate_ids:
+    - large-scipy-data-science
+    - medium-scipy-data-science
+  profile_gold:
+    preferred_profile_ids:
+    - large
+    acceptable_profile_ids:
+    - large
+    - medium
+  image_gold:
+    preferred_image_ids:
+    - scipy-data-science
+    acceptable_image_ids:
+    - scipy-data-science
+    required_capabilities:
+    - scikit-learn
+  policy_gold:
+    required_constraints:
+    - allowed_profiles=small,medium,large
+    - gpu_allowed=false
+    explicitly_unsupported_requirements: []
+    expected_feasibility: feasible
+  variants:
+  - variant_id: negative-constraint-cpu-ml-canonical-en
+    variant_class: canonical_en
+    language: en
+    intent: I want to run text classification machine learning models using scikit-learn, but my account has exhausted its quota so strictly do not use GPU, grant a large CPU and sufficient memory.
+    code_context:
+    - import sklearn
+    - from sklearn.pipeline import Pipeline
+    equivalence_status: canonical_reference
+  - variant_id: negative-constraint-cpu-ml-paraphrase-en
+    variant_class: paraphrase_en
+    language: en
+    intent: Train a scikit-learn classifier on an 800MB text dataset; strictly forbidden GPU due to zero quota, allocate large CPU with 2GB RAM.
+    code_context:
+    - import sklearn
+    equivalence_status: reviewed_equivalent
+  - variant_id: negative-constraint-cpu-ml-vi-natural
+    variant_class: vietnamese
+    language: vi
+    intent: Tôi muốn làm bài tập học máy phân loại văn bản, nhưng tài khoản hết quota nên TUYỆT ĐỐI KHÔNG dùng GPU, chỉ cấp CPU lớn và RAM vừa đủ.
+    code_context:
+    - import sklearn
+    equivalence_status: reviewed_equivalent
+  - variant_id: negative-constraint-cpu-ml-vi-colloquial
+    variant_class: vietnamese
+    language: vi
+    intent: Cho mình xin một máy cấu hình vừa để chạy thử mấy thuật toán scikit-learn với, nhớ là không dùng gpu nhé vì quota hết rồi.
+    code_context:
+    - import sklearn
+    equivalence_status: reviewed_equivalent
+  - variant_id: negative-constraint-cpu-ml-vi-abbrev
+    variant_class: vietnamese
+    language: vi
+    intent: Train model phân loại text ML cơ bản vs scikit-learn, cấm cấp gpu vì hết quota, xin máy cpu lớn ram 2gb nhé.
+    code_context:
+    - import sklearn
+    equivalence_status: reviewed_equivalent
+  label_review:
+    status: approved
+    reviewed_by: domain-reviewer-datn
+    reviewed_at_utc: '2026-09-28T09:00:00Z'
+    notes:
+    - Machine learning text classification with explicit negative GPU constraint.
+    - Zero GPU quota requires CPU-only execution with large CPU and RAM for text modeling.
+    - Resolves to large-scipy-data-science candidate.
+  source_provenance:
+    source_dataset_id: vietnamese-intent-expansion-2026-09-24
+    source_schema_version: protocol-v5-gold-family-v1.0.0
+    source_family_id: negative-constraint-cpu-ml
+    source_case_ids:
+    - negative-constraint-cpu-ml-canonical-en
+    - negative-constraint-cpu-ml-paraphrase-en
+    - negative-constraint-cpu-ml-vi-natural
+    - negative-constraint-cpu-ml-vi-colloquial
+    - negative-constraint-cpu-ml-vi-abbrev
+    source_split: development
+    source_file_sha256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+    evidence_classification: human_reviewed_development
+    original_label_sha256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+- family_id: negative-constraint-minimal-python
+  title: Negative Constraint Minimal Python Data Analysis
+  workload_stratum: light
+  difficulty: easy
+  executable_workload_id: null
+  gold_structured_intent:
+    task_types: []
+    required_features:
+    - python
+    preferred_features: []
+    forbidden_features:
+    - pytorch
+    - tensorflow
+    required_frameworks: []
+    preferred_frameworks: []
+    gpu_semantics: unspecified
+    minimum_cpu_cores: null
+    minimum_memory_gb: null
+    dataset_size_gb: 0.05
+    ambiguities: []
+  candidate_gold:
+    preferred_candidate_ids:
+    - small-minimal-python
+    acceptable_candidate_ids:
+    - small-minimal-python
+  profile_gold:
+    preferred_profile_ids:
+    - small
+    acceptable_profile_ids:
+    - small
+  image_gold:
+    preferred_image_ids:
+    - minimal-python
+    acceptable_image_ids:
+    - minimal-python
+    required_capabilities:
+    - python
+  policy_gold:
+    required_constraints:
+    - allowed_profiles=small,medium,large
+    - gpu_allowed=false
+    explicitly_unsupported_requirements: []
+    expected_feasibility: feasible
+  variants:
+  - variant_id: negative-constraint-minimal-canonical-en
+    variant_class: canonical_en
+    language: en
+    intent: Basic Python data analysis and string processing, strictly no need for PyTorch or TensorFlow to keep the environment lightweight.
+    code_context: []
+    equivalence_status: canonical_reference
+  - variant_id: negative-constraint-minimal-paraphrase-en
+    variant_class: paraphrase_en
+    language: en
+    intent: Run text preprocessing pipeline with standard Python regex and NLTK; do not install PyTorch or TensorFlow.
+    code_context: []
+    equivalence_status: reviewed_equivalent
+  - variant_id: negative-constraint-minimal-vi-natural
+    variant_class: vietnamese
+    language: vi
+    intent: Phân tích dữ liệu bằng Python cơ bản, KHÔNG CẦN cài PyTorch hay TensorFlow cho nặng máy.
+    code_context: []
+    equivalence_status: reviewed_equivalent
+  - variant_id: negative-constraint-minimal-vi-pipeline
+    variant_class: vietnamese
+    language: vi
+    intent: Xây dựng pipeline tiền xử lý văn bản tiếng Việt sử dụng NLTK/Regex cơ bản, không dùng pytorch hay tensorflow.
+    code_context: []
+    equivalence_status: reviewed_equivalent
+  - variant_id: negative-constraint-minimal-vi-abbrev
+    variant_class: vietnamese
+    language: vi
+    intent: Cần notebook python thuần xử lý string nhẹ, ko cần pytorch tensorflow j đâu cho đỡ nặng máy, profile small thôi.
+    code_context: []
+    equivalence_status: reviewed_equivalent
+  label_review:
+    status: approved
+    reviewed_by: domain-reviewer-datn
+    reviewed_at_utc: '2026-09-28T09:00:00Z'
+    notes:
+    - Lightweight Python workload with negative framework exclusion of PyTorch and TensorFlow.
+    - Intentionally tests recommender robustness against false positive deep learning matches.
+    - Resolves to small-minimal-python.
+  source_provenance:
+    source_dataset_id: vietnamese-intent-expansion-2026-09-24
+    source_schema_version: protocol-v5-gold-family-v1.0.0
+    source_family_id: negative-constraint-minimal-python
+    source_case_ids:
+    - negative-constraint-minimal-canonical-en
+    - negative-constraint-minimal-paraphrase-en
+    - negative-constraint-minimal-vi-natural
+    - negative-constraint-minimal-vi-pipeline
+    - negative-constraint-minimal-vi-abbrev
+    source_split: development
+    source_file_sha256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+    evidence_classification: human_reviewed_development
+    original_label_sha256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+- family_id: pytorch-mnist-cpu-feasible
+  title: PyTorch MNIST CPU Feasible Training
+  workload_stratum: deep_learning
+  difficulty: medium
+  executable_workload_id: null
+  gold_structured_intent:
+    task_types:
+    - deep_learning
+    - model_training
+    required_features:
+    - pytorch
+    preferred_features: []
+    forbidden_features: []
+    required_frameworks:
+    - pytorch
+    preferred_frameworks: []
+    gpu_semantics: unspecified
+    minimum_cpu_cores: 0.5
+    minimum_memory_gb: 0.7
+    dataset_size_gb: 0.1
+    ambiguities: []
+  candidate_gold:
+    preferred_candidate_ids:
+    - medium-pytorch-deep-learning
+    acceptable_candidate_ids:
+    - large-pytorch-deep-learning
+    - medium-pytorch-deep-learning
+  profile_gold:
+    preferred_profile_ids:
+    - medium
+    acceptable_profile_ids:
+    - large
+    - medium
+  image_gold:
+    preferred_image_ids:
+    - pytorch-deep-learning
+    acceptable_image_ids:
+    - pytorch-deep-learning
+    required_capabilities:
+    - pytorch
+  policy_gold:
+    required_constraints:
+    - allowed_profiles=small,medium,large
+    - gpu_allowed=false
+    explicitly_unsupported_requirements: []
+    expected_feasibility: feasible
+  variants:
+  - variant_id: pytorch-mnist-cpu-canonical-en
+    variant_class: canonical_en
+    language: en
+    intent: Train a simple MNIST digit recognition neural network using PyTorch on CPU.
+    code_context:
+    - import torch
+    - import torch.nn as nn
+    equivalence_status: canonical_reference
+  - variant_id: pytorch-mnist-cpu-paraphrase-en
+    variant_class: paraphrase_en
+    language: en
+    intent: Build a lightweight convolutional neural network for MNIST classification with PyTorch without a GPU.
+    code_context:
+    - import torch
+    equivalence_status: reviewed_equivalent
+  - variant_id: pytorch-mnist-cpu-vi-natural
+    variant_class: vietnamese
+    language: vi
+    intent: Huấn luyện mạng nơ-ron đơn giản nhận diện chữ số MNIST bằng PyTorch trên CPU.
+    code_context:
+    - import torch
+    equivalence_status: reviewed_equivalent
+  - variant_id: pytorch-mnist-cpu-vi-colloquial
+    variant_class: vietnamese
+    language: vi
+    intent: Cần notebook train thử model nhận diện chữ viết tay nhẹ nhẹ trên CPU tầm 1 tiếng, cấp ram vừa đủ tầm 1GB nhé.
+    code_context:
+    - import torch
+    equivalence_status: reviewed_equivalent
+  - variant_id: pytorch-mnist-cpu-vi-abbrev
+    variant_class: vietnamese
+    language: vi
+    intent: Train con CNN nhỏ phân loại ảnh MNIST bằng pytorch cpu thôi, ram 1gb là đủ dùng.
+    code_context:
+    - import torch
+    equivalence_status: reviewed_equivalent
+  label_review:
+    status: approved
+    reviewed_by: domain-reviewer-datn
+    reviewed_at_utc: '2026-09-28T09:00:00Z'
+    notes:
+    - Feasible CPU-only deep learning training using PyTorch for MNIST image classification.
+    - Dataset is 0.1GB; fits comfortably into medium profile (1 CPU core, 1GB RAM).
+    - Resolves to medium-pytorch-deep-learning candidate.
+  source_provenance:
+    source_dataset_id: vietnamese-intent-expansion-2026-09-24
+    source_schema_version: protocol-v5-gold-family-v1.0.0
+    source_family_id: pytorch-mnist-cpu-feasible
+    source_case_ids:
+    - pytorch-mnist-cpu-canonical-en
+    - pytorch-mnist-cpu-paraphrase-en
+    - pytorch-mnist-cpu-vi-natural
+    - pytorch-mnist-cpu-vi-colloquial
+    - pytorch-mnist-cpu-vi-abbrev
+    source_split: development
+    source_file_sha256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+    evidence_classification: human_reviewed_development
+    original_label_sha256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855

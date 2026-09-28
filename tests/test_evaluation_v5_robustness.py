@@ -288,8 +288,8 @@ def test_v1_grouping_prompt_text_alteration_invariance():
     raw_doc["split_manifest"]["checksum"] = split_bundle_checksum(raw_doc)
 
     dataset = load_robustness_families_from_split(raw_doc)
-    assert len(dataset.families) == 15
-    assert dataset.total_variants == 68
+    assert len(dataset.families) == 18
+    assert dataset.total_variants == 83
 
 
 def test_v1_grouping_semantic_similarity_isolation():
@@ -312,8 +312,8 @@ def test_v1_grouping_semantic_similarity_isolation():
     raw_doc["split_manifest"]["checksum"] = split_bundle_checksum(raw_doc)
 
     dataset = load_robustness_families_from_split(raw_doc)
-    # Must now have exactly 16 distinct families
-    assert len(dataset.families) == 16
+    # Must now have exactly 19 distinct families
+    assert len(dataset.families) == 19
     family_ids = [f.family_id for f in dataset.families]
     assert "brand-new-family" in family_ids
 
@@ -322,7 +322,7 @@ def test_v1_grouping_recommender_prediction_independence():
     """Recommender predictions or model inferences have zero role in dataset family loading."""
     dataset = load_robustness_dataset(DEV_SPLIT_PATH)
     # Grouping is completely static and deterministic
-    assert len(dataset.families) == 15
+    assert len(dataset.families) == 18
     for fam in dataset.families:
         assert isinstance(fam.family_id, str)
         assert len(fam.variants) >= 1
@@ -688,9 +688,9 @@ def test_cli_summary(capsys: pytest.CaptureFixture[str]):
     assert exit_code == 0
     captured = capsys.readouterr().out
     assert "Dataset ID: v5-development-reconstructed-v1" in captured
-    assert "Families: 15" in captured
-    assert "Total variants: 68" in captured
-    assert "Valid reviewed-equivalent variants: 48" in captured
+    assert "Families: 18" in captured
+    assert "Total variants: 83" in captured
+    assert "Valid reviewed-equivalent variants: 60" in captured
 
 
 def test_cli_review_markdown(capsys: pytest.CaptureFixture[str]):
@@ -865,8 +865,8 @@ def test_load_robustness_dataset_from_dev_split():
     dataset = load_robustness_dataset(DEV_SPLIT_PATH)
     assert dataset.dataset_id == "v5-development-reconstructed-v1"
     assert dataset.role == "development"
-    assert len(dataset.families) == 15
-    assert dataset.total_variants == 68
+    assert len(dataset.families) == 18
+    assert dataset.total_variants == 83
 
     for family in dataset.families:
         assert family.canonical_variant is not None

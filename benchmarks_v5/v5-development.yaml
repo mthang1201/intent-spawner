@@ -8,6 +8,8 @@ split_manifest:
   - deep-learning-gpu-infeasible
   - ml-ambiguous-clarification
   - ml-memory-bound-infeasible
+  - negative-constraint-cpu-ml
+  - negative-constraint-minimal-python
   - p2-cpu-only-pandas-feasible
   - p2-minimum-eight-cpu
   - p2-minimum-eight-memory
@@ -15,13 +17,14 @@ split_manifest:
   - p2-required-rapids-unsupported
   - p2-tensorflow-inference-feasible
   - pandas-transform
+  - pytorch-mnist-cpu-feasible
   - pytorch-nlp-cpu-training
   - sklearn-small
   - tabular-ml-classification
   - threshold-below
-  case_count: 68
-  family_count: 15
-  checksum: 72db6b3ae8441c562b18175725356167b499b70a9b1496e5ea3593f1d6a2a4f0
+  case_count: 83
+  family_count: 18
+  checksum: 079ca97e88719b2edd259ef8e252f09bc481d6d579d2f00136f694ebc4a2046e
   creation_metadata:
     created_at_utc: '2026-09-21T06:38:01Z'
     created_by: protocol-v5-v4-importer+agent-authored-p2-supplement
@@ -88,7 +91,7 @@ cases:
     source_case_id: basic-python-canonical-en
     source_split: development
     evidence_classification: historical_formative_development_only
-    authoring_canonical_sha256: 7ce88d3602d3a0b03c68a5ab807be70c260988b16561b6e9a99d18f93c5143cf
+    authoring_canonical_sha256: 0d3f502f5d5dc70e43452b650c1f479ffc2b05d43ad68864782837d8d6ec4c07
     catalog_identity:
       candidate_corpus_version: environment-candidate-corpus-v1
       candidate_corpus_sha256: 987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444
@@ -186,7 +189,7 @@ cases:
     source_case_id: basic-python-paraphrase-en
     source_split: development
     evidence_classification: historical_formative_development_only
-    authoring_canonical_sha256: 7ce88d3602d3a0b03c68a5ab807be70c260988b16561b6e9a99d18f93c5143cf
+    authoring_canonical_sha256: 0d3f502f5d5dc70e43452b650c1f479ffc2b05d43ad68864782837d8d6ec4c07
     catalog_identity:
       candidate_corpus_version: environment-candidate-corpus-v1
       candidate_corpus_sha256: 987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444
@@ -284,7 +287,7 @@ cases:
     source_case_id: basic-python-vi
     source_split: development
     evidence_classification: historical_formative_development_only
-    authoring_canonical_sha256: 7ce88d3602d3a0b03c68a5ab807be70c260988b16561b6e9a99d18f93c5143cf
+    authoring_canonical_sha256: 0d3f502f5d5dc70e43452b650c1f479ffc2b05d43ad68864782837d8d6ec4c07
     catalog_identity:
       candidate_corpus_version: environment-candidate-corpus-v1
       candidate_corpus_sha256: 987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444
@@ -383,7 +386,7 @@ cases:
     source_case_id: basic-python-vi-abbrev
     source_split: development
     evidence_classification: historical_formative_development_only
-    authoring_canonical_sha256: 7ce88d3602d3a0b03c68a5ab807be70c260988b16561b6e9a99d18f93c5143cf
+    authoring_canonical_sha256: 0d3f502f5d5dc70e43452b650c1f479ffc2b05d43ad68864782837d8d6ec4c07
     catalog_identity:
       candidate_corpus_version: environment-candidate-corpus-v1
       candidate_corpus_sha256: 987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444
@@ -482,7 +485,7 @@ cases:
     source_case_id: basic-python-vi-natural
     source_split: development
     evidence_classification: historical_formative_development_only
-    authoring_canonical_sha256: 7ce88d3602d3a0b03c68a5ab807be70c260988b16561b6e9a99d18f93c5143cf
+    authoring_canonical_sha256: 0d3f502f5d5dc70e43452b650c1f479ffc2b05d43ad68864782837d8d6ec4c07
     catalog_identity:
       candidate_corpus_version: environment-candidate-corpus-v1
       candidate_corpus_sha256: 987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444
@@ -584,7 +587,7 @@ cases:
     source_case_id: p2-cpu-only-pandas-feasible-en
     source_split: development
     evidence_classification: historical_formative_development_only
-    authoring_canonical_sha256: 7ce88d3602d3a0b03c68a5ab807be70c260988b16561b6e9a99d18f93c5143cf
+    authoring_canonical_sha256: 0d3f502f5d5dc70e43452b650c1f479ffc2b05d43ad68864782837d8d6ec4c07
     catalog_identity:
       candidate_corpus_version: environment-candidate-corpus-v1
       candidate_corpus_sha256: 987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444
@@ -685,7 +688,7 @@ cases:
     source_case_id: p2-cpu-only-pandas-vi-natural
     source_split: development
     evidence_classification: historical_formative_development_only
-    authoring_canonical_sha256: 7ce88d3602d3a0b03c68a5ab807be70c260988b16561b6e9a99d18f93c5143cf
+    authoring_canonical_sha256: 0d3f502f5d5dc70e43452b650c1f479ffc2b05d43ad68864782837d8d6ec4c07
     catalog_identity:
       candidate_corpus_version: environment-candidate-corpus-v1
       candidate_corpus_sha256: 987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444
@@ -786,7 +789,7 @@ cases:
     source_case_id: p2-cpu-only-pandas-vi-abbrev
     source_split: development
     evidence_classification: historical_formative_development_only
-    authoring_canonical_sha256: 7ce88d3602d3a0b03c68a5ab807be70c260988b16561b6e9a99d18f93c5143cf
+    authoring_canonical_sha256: 0d3f502f5d5dc70e43452b650c1f479ffc2b05d43ad68864782837d8d6ec4c07
     catalog_identity:
       candidate_corpus_version: environment-candidate-corpus-v1
       candidate_corpus_sha256: 987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444
@@ -888,7 +891,7 @@ cases:
     source_case_id: p2-cpu-only-pandas-vi-constraint
     source_split: development
     evidence_classification: historical_formative_development_only
-    authoring_canonical_sha256: 7ce88d3602d3a0b03c68a5ab807be70c260988b16561b6e9a99d18f93c5143cf
+    authoring_canonical_sha256: 0d3f502f5d5dc70e43452b650c1f479ffc2b05d43ad68864782837d8d6ec4c07
     catalog_identity:
       candidate_corpus_version: environment-candidate-corpus-v1
       candidate_corpus_sha256: 987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444
@@ -980,7 +983,7 @@ cases:
     source_case_id: p2-minimum-eight-cpu-en
     source_split: development
     evidence_classification: historical_formative_development_only
-    authoring_canonical_sha256: 7ce88d3602d3a0b03c68a5ab807be70c260988b16561b6e9a99d18f93c5143cf
+    authoring_canonical_sha256: 0d3f502f5d5dc70e43452b650c1f479ffc2b05d43ad68864782837d8d6ec4c07
     catalog_identity:
       candidate_corpus_version: environment-candidate-corpus-v1
       candidate_corpus_sha256: 987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444
@@ -1072,7 +1075,7 @@ cases:
     source_case_id: p2-minimum-eight-cpu-vi-natural
     source_split: development
     evidence_classification: historical_formative_development_only
-    authoring_canonical_sha256: 7ce88d3602d3a0b03c68a5ab807be70c260988b16561b6e9a99d18f93c5143cf
+    authoring_canonical_sha256: 0d3f502f5d5dc70e43452b650c1f479ffc2b05d43ad68864782837d8d6ec4c07
     catalog_identity:
       candidate_corpus_version: environment-candidate-corpus-v1
       candidate_corpus_sha256: 987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444
@@ -1164,7 +1167,7 @@ cases:
     source_case_id: p2-minimum-eight-cpu-vi-abbrev
     source_split: development
     evidence_classification: historical_formative_development_only
-    authoring_canonical_sha256: 7ce88d3602d3a0b03c68a5ab807be70c260988b16561b6e9a99d18f93c5143cf
+    authoring_canonical_sha256: 0d3f502f5d5dc70e43452b650c1f479ffc2b05d43ad68864782837d8d6ec4c07
     catalog_identity:
       candidate_corpus_version: environment-candidate-corpus-v1
       candidate_corpus_sha256: 987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444
@@ -1257,7 +1260,7 @@ cases:
     source_case_id: p2-minimum-eight-cpu-vi-constraint
     source_split: development
     evidence_classification: historical_formative_development_only
-    authoring_canonical_sha256: 7ce88d3602d3a0b03c68a5ab807be70c260988b16561b6e9a99d18f93c5143cf
+    authoring_canonical_sha256: 0d3f502f5d5dc70e43452b650c1f479ffc2b05d43ad68864782837d8d6ec4c07
     catalog_identity:
       candidate_corpus_version: environment-candidate-corpus-v1
       candidate_corpus_sha256: 987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444
@@ -1351,7 +1354,7 @@ cases:
     source_case_id: p2-minimum-eight-memory-en
     source_split: development
     evidence_classification: historical_formative_development_only
-    authoring_canonical_sha256: 7ce88d3602d3a0b03c68a5ab807be70c260988b16561b6e9a99d18f93c5143cf
+    authoring_canonical_sha256: 0d3f502f5d5dc70e43452b650c1f479ffc2b05d43ad68864782837d8d6ec4c07
     catalog_identity:
       candidate_corpus_version: environment-candidate-corpus-v1
       candidate_corpus_sha256: 987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444
@@ -1444,7 +1447,7 @@ cases:
     source_case_id: p2-minimum-eight-memory-vi-natural
     source_split: development
     evidence_classification: historical_formative_development_only
-    authoring_canonical_sha256: 7ce88d3602d3a0b03c68a5ab807be70c260988b16561b6e9a99d18f93c5143cf
+    authoring_canonical_sha256: 0d3f502f5d5dc70e43452b650c1f479ffc2b05d43ad68864782837d8d6ec4c07
     catalog_identity:
       candidate_corpus_version: environment-candidate-corpus-v1
       candidate_corpus_sha256: 987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444
@@ -1538,7 +1541,7 @@ cases:
     source_case_id: p2-minimum-eight-memory-vi-abbrev
     source_split: development
     evidence_classification: historical_formative_development_only
-    authoring_canonical_sha256: 7ce88d3602d3a0b03c68a5ab807be70c260988b16561b6e9a99d18f93c5143cf
+    authoring_canonical_sha256: 0d3f502f5d5dc70e43452b650c1f479ffc2b05d43ad68864782837d8d6ec4c07
     catalog_identity:
       candidate_corpus_version: environment-candidate-corpus-v1
       candidate_corpus_sha256: 987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444
@@ -1632,7 +1635,7 @@ cases:
     source_case_id: p2-minimum-eight-memory-vi-constraint
     source_split: development
     evidence_classification: historical_formative_development_only
-    authoring_canonical_sha256: 7ce88d3602d3a0b03c68a5ab807be70c260988b16561b6e9a99d18f93c5143cf
+    authoring_canonical_sha256: 0d3f502f5d5dc70e43452b650c1f479ffc2b05d43ad68864782837d8d6ec4c07
     catalog_identity:
       candidate_corpus_version: environment-candidate-corpus-v1
       candidate_corpus_sha256: 987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444
@@ -1726,7 +1729,7 @@ cases:
     source_case_id: p2-required-gpu-unavailable-en
     source_split: development
     evidence_classification: historical_formative_development_only
-    authoring_canonical_sha256: 7ce88d3602d3a0b03c68a5ab807be70c260988b16561b6e9a99d18f93c5143cf
+    authoring_canonical_sha256: 0d3f502f5d5dc70e43452b650c1f479ffc2b05d43ad68864782837d8d6ec4c07
     catalog_identity:
       candidate_corpus_version: environment-candidate-corpus-v1
       candidate_corpus_sha256: 987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444
@@ -1818,7 +1821,7 @@ cases:
     source_case_id: p2-required-gpu-vi-natural
     source_split: development
     evidence_classification: historical_formative_development_only
-    authoring_canonical_sha256: 7ce88d3602d3a0b03c68a5ab807be70c260988b16561b6e9a99d18f93c5143cf
+    authoring_canonical_sha256: 0d3f502f5d5dc70e43452b650c1f479ffc2b05d43ad68864782837d8d6ec4c07
     catalog_identity:
       candidate_corpus_version: environment-candidate-corpus-v1
       candidate_corpus_sha256: 987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444
@@ -1910,7 +1913,7 @@ cases:
     source_case_id: p2-required-gpu-vi-abbrev
     source_split: development
     evidence_classification: historical_formative_development_only
-    authoring_canonical_sha256: 7ce88d3602d3a0b03c68a5ab807be70c260988b16561b6e9a99d18f93c5143cf
+    authoring_canonical_sha256: 0d3f502f5d5dc70e43452b650c1f479ffc2b05d43ad68864782837d8d6ec4c07
     catalog_identity:
       candidate_corpus_version: environment-candidate-corpus-v1
       candidate_corpus_sha256: 987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444
@@ -2003,7 +2006,7 @@ cases:
     source_case_id: p2-required-gpu-vi-constraint
     source_split: development
     evidence_classification: historical_formative_development_only
-    authoring_canonical_sha256: 7ce88d3602d3a0b03c68a5ab807be70c260988b16561b6e9a99d18f93c5143cf
+    authoring_canonical_sha256: 0d3f502f5d5dc70e43452b650c1f479ffc2b05d43ad68864782837d8d6ec4c07
     catalog_identity:
       candidate_corpus_version: environment-candidate-corpus-v1
       candidate_corpus_sha256: 987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444
@@ -2093,7 +2096,7 @@ cases:
     source_case_id: p2-required-rapids-unsupported-en
     source_split: development
     evidence_classification: historical_formative_development_only
-    authoring_canonical_sha256: 7ce88d3602d3a0b03c68a5ab807be70c260988b16561b6e9a99d18f93c5143cf
+    authoring_canonical_sha256: 0d3f502f5d5dc70e43452b650c1f479ffc2b05d43ad68864782837d8d6ec4c07
     catalog_identity:
       candidate_corpus_version: environment-candidate-corpus-v1
       candidate_corpus_sha256: 987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444
@@ -2183,7 +2186,7 @@ cases:
     source_case_id: p2-required-rapids-vi-natural
     source_split: development
     evidence_classification: historical_formative_development_only
-    authoring_canonical_sha256: 7ce88d3602d3a0b03c68a5ab807be70c260988b16561b6e9a99d18f93c5143cf
+    authoring_canonical_sha256: 0d3f502f5d5dc70e43452b650c1f479ffc2b05d43ad68864782837d8d6ec4c07
     catalog_identity:
       candidate_corpus_version: environment-candidate-corpus-v1
       candidate_corpus_sha256: 987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444
@@ -2273,7 +2276,7 @@ cases:
     source_case_id: p2-required-rapids-vi-abbrev
     source_split: development
     evidence_classification: historical_formative_development_only
-    authoring_canonical_sha256: 7ce88d3602d3a0b03c68a5ab807be70c260988b16561b6e9a99d18f93c5143cf
+    authoring_canonical_sha256: 0d3f502f5d5dc70e43452b650c1f479ffc2b05d43ad68864782837d8d6ec4c07
     catalog_identity:
       candidate_corpus_version: environment-candidate-corpus-v1
       candidate_corpus_sha256: 987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444
@@ -2364,7 +2367,7 @@ cases:
     source_case_id: p2-required-rapids-vi-constraint
     source_split: development
     evidence_classification: historical_formative_development_only
-    authoring_canonical_sha256: 7ce88d3602d3a0b03c68a5ab807be70c260988b16561b6e9a99d18f93c5143cf
+    authoring_canonical_sha256: 0d3f502f5d5dc70e43452b650c1f479ffc2b05d43ad68864782837d8d6ec4c07
     catalog_identity:
       candidate_corpus_version: environment-candidate-corpus-v1
       candidate_corpus_sha256: 987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444
@@ -2464,7 +2467,7 @@ cases:
     source_case_id: p2-tensorflow-inference-feasible-en
     source_split: development
     evidence_classification: historical_formative_development_only
-    authoring_canonical_sha256: 7ce88d3602d3a0b03c68a5ab807be70c260988b16561b6e9a99d18f93c5143cf
+    authoring_canonical_sha256: 0d3f502f5d5dc70e43452b650c1f479ffc2b05d43ad68864782837d8d6ec4c07
     catalog_identity:
       candidate_corpus_version: environment-candidate-corpus-v1
       candidate_corpus_sha256: 987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444
@@ -2563,7 +2566,7 @@ cases:
     source_case_id: p2-tensorflow-inference-vi-natural
     source_split: development
     evidence_classification: historical_formative_development_only
-    authoring_canonical_sha256: 7ce88d3602d3a0b03c68a5ab807be70c260988b16561b6e9a99d18f93c5143cf
+    authoring_canonical_sha256: 0d3f502f5d5dc70e43452b650c1f479ffc2b05d43ad68864782837d8d6ec4c07
     catalog_identity:
       candidate_corpus_version: environment-candidate-corpus-v1
       candidate_corpus_sha256: 987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444
@@ -2662,7 +2665,7 @@ cases:
     source_case_id: p2-tensorflow-inference-vi-abbrev
     source_split: development
     evidence_classification: historical_formative_development_only
-    authoring_canonical_sha256: 7ce88d3602d3a0b03c68a5ab807be70c260988b16561b6e9a99d18f93c5143cf
+    authoring_canonical_sha256: 0d3f502f5d5dc70e43452b650c1f479ffc2b05d43ad68864782837d8d6ec4c07
     catalog_identity:
       candidate_corpus_version: environment-candidate-corpus-v1
       candidate_corpus_sha256: 987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444
@@ -2763,7 +2766,7 @@ cases:
     source_case_id: p2-tensorflow-inference-vi-constraint
     source_split: development
     evidence_classification: historical_formative_development_only
-    authoring_canonical_sha256: 7ce88d3602d3a0b03c68a5ab807be70c260988b16561b6e9a99d18f93c5143cf
+    authoring_canonical_sha256: 0d3f502f5d5dc70e43452b650c1f479ffc2b05d43ad68864782837d8d6ec4c07
     catalog_identity:
       candidate_corpus_version: environment-candidate-corpus-v1
       candidate_corpus_sha256: 987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444
@@ -2862,7 +2865,7 @@ cases:
     source_case_id: pandas-transform-canonical-en
     source_split: development
     evidence_classification: historical_formative_development_only
-    authoring_canonical_sha256: 7ce88d3602d3a0b03c68a5ab807be70c260988b16561b6e9a99d18f93c5143cf
+    authoring_canonical_sha256: 0d3f502f5d5dc70e43452b650c1f479ffc2b05d43ad68864782837d8d6ec4c07
     catalog_identity:
       candidate_corpus_version: environment-candidate-corpus-v1
       candidate_corpus_sha256: 987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444
@@ -2962,7 +2965,7 @@ cases:
     source_case_id: pandas-transform-paraphrase-en
     source_split: development
     evidence_classification: historical_formative_development_only
-    authoring_canonical_sha256: 7ce88d3602d3a0b03c68a5ab807be70c260988b16561b6e9a99d18f93c5143cf
+    authoring_canonical_sha256: 0d3f502f5d5dc70e43452b650c1f479ffc2b05d43ad68864782837d8d6ec4c07
     catalog_identity:
       candidate_corpus_version: environment-candidate-corpus-v1
       candidate_corpus_sha256: 987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444
@@ -3062,7 +3065,7 @@ cases:
     source_case_id: pandas-transform-vi
     source_split: development
     evidence_classification: historical_formative_development_only
-    authoring_canonical_sha256: 7ce88d3602d3a0b03c68a5ab807be70c260988b16561b6e9a99d18f93c5143cf
+    authoring_canonical_sha256: 0d3f502f5d5dc70e43452b650c1f479ffc2b05d43ad68864782837d8d6ec4c07
     catalog_identity:
       candidate_corpus_version: environment-candidate-corpus-v1
       candidate_corpus_sha256: 987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444
@@ -3160,7 +3163,7 @@ cases:
     source_case_id: pandas-transform-vi-abbrev
     source_split: development
     evidence_classification: historical_formative_development_only
-    authoring_canonical_sha256: 7ce88d3602d3a0b03c68a5ab807be70c260988b16561b6e9a99d18f93c5143cf
+    authoring_canonical_sha256: 0d3f502f5d5dc70e43452b650c1f479ffc2b05d43ad68864782837d8d6ec4c07
     catalog_identity:
       candidate_corpus_version: environment-candidate-corpus-v1
       candidate_corpus_sha256: 987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444
@@ -3259,7 +3262,7 @@ cases:
     source_case_id: pandas-transform-vi-constraint
     source_split: development
     evidence_classification: historical_formative_development_only
-    authoring_canonical_sha256: 7ce88d3602d3a0b03c68a5ab807be70c260988b16561b6e9a99d18f93c5143cf
+    authoring_canonical_sha256: 0d3f502f5d5dc70e43452b650c1f479ffc2b05d43ad68864782837d8d6ec4c07
     catalog_identity:
       candidate_corpus_version: environment-candidate-corpus-v1
       candidate_corpus_sha256: 987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444
@@ -3359,7 +3362,7 @@ cases:
     source_case_id: sklearn-small-canonical-en
     source_split: development
     evidence_classification: historical_formative_development_only
-    authoring_canonical_sha256: 7ce88d3602d3a0b03c68a5ab807be70c260988b16561b6e9a99d18f93c5143cf
+    authoring_canonical_sha256: 0d3f502f5d5dc70e43452b650c1f479ffc2b05d43ad68864782837d8d6ec4c07
     catalog_identity:
       candidate_corpus_version: environment-candidate-corpus-v1
       candidate_corpus_sha256: 987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444
@@ -3461,7 +3464,7 @@ cases:
     source_case_id: sklearn-small-paraphrase-en
     source_split: development
     evidence_classification: historical_formative_development_only
-    authoring_canonical_sha256: 7ce88d3602d3a0b03c68a5ab807be70c260988b16561b6e9a99d18f93c5143cf
+    authoring_canonical_sha256: 0d3f502f5d5dc70e43452b650c1f479ffc2b05d43ad68864782837d8d6ec4c07
     catalog_identity:
       candidate_corpus_version: environment-candidate-corpus-v1
       candidate_corpus_sha256: 987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444
@@ -3563,7 +3566,7 @@ cases:
     source_case_id: sklearn-small-vi
     source_split: development
     evidence_classification: historical_formative_development_only
-    authoring_canonical_sha256: 7ce88d3602d3a0b03c68a5ab807be70c260988b16561b6e9a99d18f93c5143cf
+    authoring_canonical_sha256: 0d3f502f5d5dc70e43452b650c1f479ffc2b05d43ad68864782837d8d6ec4c07
     catalog_identity:
       candidate_corpus_version: environment-candidate-corpus-v1
       candidate_corpus_sha256: 987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444
@@ -3663,7 +3666,7 @@ cases:
     source_case_id: sklearn-small-vi-abbrev
     source_split: development
     evidence_classification: historical_formative_development_only
-    authoring_canonical_sha256: 7ce88d3602d3a0b03c68a5ab807be70c260988b16561b6e9a99d18f93c5143cf
+    authoring_canonical_sha256: 0d3f502f5d5dc70e43452b650c1f479ffc2b05d43ad68864782837d8d6ec4c07
     catalog_identity:
       candidate_corpus_version: environment-candidate-corpus-v1
       candidate_corpus_sha256: 987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444
@@ -3764,7 +3767,7 @@ cases:
     source_case_id: sklearn-small-vi-constraint
     source_split: development
     evidence_classification: historical_formative_development_only
-    authoring_canonical_sha256: 7ce88d3602d3a0b03c68a5ab807be70c260988b16561b6e9a99d18f93c5143cf
+    authoring_canonical_sha256: 0d3f502f5d5dc70e43452b650c1f479ffc2b05d43ad68864782837d8d6ec4c07
     catalog_identity:
       candidate_corpus_version: environment-candidate-corpus-v1
       candidate_corpus_sha256: 987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444
@@ -3869,7 +3872,7 @@ cases:
     source_case_id: threshold-below-canonical-en
     source_split: development
     evidence_classification: historical_formative_development_only
-    authoring_canonical_sha256: 7ce88d3602d3a0b03c68a5ab807be70c260988b16561b6e9a99d18f93c5143cf
+    authoring_canonical_sha256: 0d3f502f5d5dc70e43452b650c1f479ffc2b05d43ad68864782837d8d6ec4c07
     catalog_identity:
       candidate_corpus_version: environment-candidate-corpus-v1
       candidate_corpus_sha256: 987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444
@@ -3983,7 +3986,7 @@ cases:
     source_case_id: threshold-below-paraphrase-en
     source_split: development
     evidence_classification: historical_formative_development_only
-    authoring_canonical_sha256: 7ce88d3602d3a0b03c68a5ab807be70c260988b16561b6e9a99d18f93c5143cf
+    authoring_canonical_sha256: 0d3f502f5d5dc70e43452b650c1f479ffc2b05d43ad68864782837d8d6ec4c07
     catalog_identity:
       candidate_corpus_version: environment-candidate-corpus-v1
       candidate_corpus_sha256: 987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444
@@ -4097,7 +4100,7 @@ cases:
     source_case_id: threshold-below-vi
     source_split: development
     evidence_classification: historical_formative_development_only
-    authoring_canonical_sha256: 7ce88d3602d3a0b03c68a5ab807be70c260988b16561b6e9a99d18f93c5143cf
+    authoring_canonical_sha256: 0d3f502f5d5dc70e43452b650c1f479ffc2b05d43ad68864782837d8d6ec4c07
     catalog_identity:
       candidate_corpus_version: environment-candidate-corpus-v1
       candidate_corpus_sha256: 987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444
@@ -4211,7 +4214,7 @@ cases:
     source_case_id: threshold-below-vi-abbrev
     source_split: development
     evidence_classification: historical_formative_development_only
-    authoring_canonical_sha256: 7ce88d3602d3a0b03c68a5ab807be70c260988b16561b6e9a99d18f93c5143cf
+    authoring_canonical_sha256: 0d3f502f5d5dc70e43452b650c1f479ffc2b05d43ad68864782837d8d6ec4c07
     catalog_identity:
       candidate_corpus_version: environment-candidate-corpus-v1
       candidate_corpus_sha256: 987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444
@@ -4326,7 +4329,7 @@ cases:
     source_case_id: threshold-below-vi-clarify
     source_split: development
     evidence_classification: historical_formative_development_only
-    authoring_canonical_sha256: 7ce88d3602d3a0b03c68a5ab807be70c260988b16561b6e9a99d18f93c5143cf
+    authoring_canonical_sha256: 0d3f502f5d5dc70e43452b650c1f479ffc2b05d43ad68864782837d8d6ec4c07
     catalog_identity:
       candidate_corpus_version: environment-candidate-corpus-v1
       candidate_corpus_sha256: 987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444
@@ -4438,7 +4441,7 @@ cases:
     source_case_id: pytorch-nlp-cpu-canonical-en
     source_split: development
     evidence_classification: historical_formative_development_only
-    authoring_canonical_sha256: 7ce88d3602d3a0b03c68a5ab807be70c260988b16561b6e9a99d18f93c5143cf
+    authoring_canonical_sha256: 0d3f502f5d5dc70e43452b650c1f479ffc2b05d43ad68864782837d8d6ec4c07
     catalog_identity:
       candidate_corpus_version: environment-candidate-corpus-v1
       candidate_corpus_sha256: 987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444
@@ -4532,7 +4535,7 @@ cases:
     source_case_id: pytorch-nlp-cpu-paraphrase-en
     source_split: development
     evidence_classification: historical_formative_development_only
-    authoring_canonical_sha256: 7ce88d3602d3a0b03c68a5ab807be70c260988b16561b6e9a99d18f93c5143cf
+    authoring_canonical_sha256: 0d3f502f5d5dc70e43452b650c1f479ffc2b05d43ad68864782837d8d6ec4c07
     catalog_identity:
       candidate_corpus_version: environment-candidate-corpus-v1
       candidate_corpus_sha256: 987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444
@@ -4627,7 +4630,7 @@ cases:
     source_case_id: pytorch-nlp-cpu-vi-natural
     source_split: development
     evidence_classification: historical_formative_development_only
-    authoring_canonical_sha256: 7ce88d3602d3a0b03c68a5ab807be70c260988b16561b6e9a99d18f93c5143cf
+    authoring_canonical_sha256: 0d3f502f5d5dc70e43452b650c1f479ffc2b05d43ad68864782837d8d6ec4c07
     catalog_identity:
       candidate_corpus_version: environment-candidate-corpus-v1
       candidate_corpus_sha256: 987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444
@@ -4721,7 +4724,7 @@ cases:
     source_case_id: pytorch-nlp-cpu-vi-abbrev
     source_split: development
     evidence_classification: historical_formative_development_only
-    authoring_canonical_sha256: 7ce88d3602d3a0b03c68a5ab807be70c260988b16561b6e9a99d18f93c5143cf
+    authoring_canonical_sha256: 0d3f502f5d5dc70e43452b650c1f479ffc2b05d43ad68864782837d8d6ec4c07
     catalog_identity:
       candidate_corpus_version: environment-candidate-corpus-v1
       candidate_corpus_sha256: 987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444
@@ -4817,7 +4820,7 @@ cases:
     source_case_id: pytorch-nlp-cpu-vi-constraint
     source_split: development
     evidence_classification: historical_formative_development_only
-    authoring_canonical_sha256: 7ce88d3602d3a0b03c68a5ab807be70c260988b16561b6e9a99d18f93c5143cf
+    authoring_canonical_sha256: 0d3f502f5d5dc70e43452b650c1f479ffc2b05d43ad68864782837d8d6ec4c07
     catalog_identity:
       candidate_corpus_version: environment-candidate-corpus-v1
       candidate_corpus_sha256: 987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444
@@ -4909,7 +4912,7 @@ cases:
     source_case_id: dl-gpu-infeasible-canonical-en
     source_split: development
     evidence_classification: historical_formative_development_only
-    authoring_canonical_sha256: 7ce88d3602d3a0b03c68a5ab807be70c260988b16561b6e9a99d18f93c5143cf
+    authoring_canonical_sha256: 0d3f502f5d5dc70e43452b650c1f479ffc2b05d43ad68864782837d8d6ec4c07
     catalog_identity:
       candidate_corpus_version: environment-candidate-corpus-v1
       candidate_corpus_sha256: 987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444
@@ -4997,7 +5000,7 @@ cases:
     source_case_id: dl-gpu-infeasible-vi-natural
     source_split: development
     evidence_classification: historical_formative_development_only
-    authoring_canonical_sha256: 7ce88d3602d3a0b03c68a5ab807be70c260988b16561b6e9a99d18f93c5143cf
+    authoring_canonical_sha256: 0d3f502f5d5dc70e43452b650c1f479ffc2b05d43ad68864782837d8d6ec4c07
     catalog_identity:
       candidate_corpus_version: environment-candidate-corpus-v1
       candidate_corpus_sha256: 987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444
@@ -5085,7 +5088,7 @@ cases:
     source_case_id: dl-gpu-infeasible-vi-abbrev
     source_split: development
     evidence_classification: historical_formative_development_only
-    authoring_canonical_sha256: 7ce88d3602d3a0b03c68a5ab807be70c260988b16561b6e9a99d18f93c5143cf
+    authoring_canonical_sha256: 0d3f502f5d5dc70e43452b650c1f479ffc2b05d43ad68864782837d8d6ec4c07
     catalog_identity:
       candidate_corpus_version: environment-candidate-corpus-v1
       candidate_corpus_sha256: 987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444
@@ -5175,7 +5178,7 @@ cases:
     source_case_id: dl-gpu-infeasible-vi-constraint
     source_split: development
     evidence_classification: historical_formative_development_only
-    authoring_canonical_sha256: 7ce88d3602d3a0b03c68a5ab807be70c260988b16561b6e9a99d18f93c5143cf
+    authoring_canonical_sha256: 0d3f502f5d5dc70e43452b650c1f479ffc2b05d43ad68864782837d8d6ec4c07
     catalog_identity:
       candidate_corpus_version: environment-candidate-corpus-v1
       candidate_corpus_sha256: 987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444
@@ -5267,7 +5270,7 @@ cases:
     source_case_id: tabular-ml-canonical-en
     source_split: development
     evidence_classification: historical_formative_development_only
-    authoring_canonical_sha256: 7ce88d3602d3a0b03c68a5ab807be70c260988b16561b6e9a99d18f93c5143cf
+    authoring_canonical_sha256: 0d3f502f5d5dc70e43452b650c1f479ffc2b05d43ad68864782837d8d6ec4c07
     catalog_identity:
       candidate_corpus_version: environment-candidate-corpus-v1
       candidate_corpus_sha256: 987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444
@@ -5361,7 +5364,7 @@ cases:
     source_case_id: tabular-ml-paraphrase-en
     source_split: development
     evidence_classification: historical_formative_development_only
-    authoring_canonical_sha256: 7ce88d3602d3a0b03c68a5ab807be70c260988b16561b6e9a99d18f93c5143cf
+    authoring_canonical_sha256: 0d3f502f5d5dc70e43452b650c1f479ffc2b05d43ad68864782837d8d6ec4c07
     catalog_identity:
       candidate_corpus_version: environment-candidate-corpus-v1
       candidate_corpus_sha256: 987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444
@@ -5455,7 +5458,7 @@ cases:
     source_case_id: tabular-ml-vi-natural
     source_split: development
     evidence_classification: historical_formative_development_only
-    authoring_canonical_sha256: 7ce88d3602d3a0b03c68a5ab807be70c260988b16561b6e9a99d18f93c5143cf
+    authoring_canonical_sha256: 0d3f502f5d5dc70e43452b650c1f479ffc2b05d43ad68864782837d8d6ec4c07
     catalog_identity:
       candidate_corpus_version: environment-candidate-corpus-v1
       candidate_corpus_sha256: 987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444
@@ -5549,7 +5552,7 @@ cases:
     source_case_id: tabular-ml-vi-abbrev
     source_split: development
     evidence_classification: historical_formative_development_only
-    authoring_canonical_sha256: 7ce88d3602d3a0b03c68a5ab807be70c260988b16561b6e9a99d18f93c5143cf
+    authoring_canonical_sha256: 0d3f502f5d5dc70e43452b650c1f479ffc2b05d43ad68864782837d8d6ec4c07
     catalog_identity:
       candidate_corpus_version: environment-candidate-corpus-v1
       candidate_corpus_sha256: 987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444
@@ -5645,7 +5648,7 @@ cases:
     source_case_id: tabular-ml-vi-constraint
     source_split: development
     evidence_classification: historical_formative_development_only
-    authoring_canonical_sha256: 7ce88d3602d3a0b03c68a5ab807be70c260988b16561b6e9a99d18f93c5143cf
+    authoring_canonical_sha256: 0d3f502f5d5dc70e43452b650c1f479ffc2b05d43ad68864782837d8d6ec4c07
     catalog_identity:
       candidate_corpus_version: environment-candidate-corpus-v1
       candidate_corpus_sha256: 987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444
@@ -5734,7 +5737,7 @@ cases:
     source_case_id: ml-mem-bound-canonical-en
     source_split: development
     evidence_classification: historical_formative_development_only
-    authoring_canonical_sha256: 7ce88d3602d3a0b03c68a5ab807be70c260988b16561b6e9a99d18f93c5143cf
+    authoring_canonical_sha256: 0d3f502f5d5dc70e43452b650c1f479ffc2b05d43ad68864782837d8d6ec4c07
     catalog_identity:
       candidate_corpus_version: environment-candidate-corpus-v1
       candidate_corpus_sha256: 987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444
@@ -5820,7 +5823,7 @@ cases:
     source_case_id: ml-mem-bound-vi-natural
     source_split: development
     evidence_classification: historical_formative_development_only
-    authoring_canonical_sha256: 7ce88d3602d3a0b03c68a5ab807be70c260988b16561b6e9a99d18f93c5143cf
+    authoring_canonical_sha256: 0d3f502f5d5dc70e43452b650c1f479ffc2b05d43ad68864782837d8d6ec4c07
     catalog_identity:
       candidate_corpus_version: environment-candidate-corpus-v1
       candidate_corpus_sha256: 987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444
@@ -5906,7 +5909,7 @@ cases:
     source_case_id: ml-mem-bound-vi-abbrev
     source_split: development
     evidence_classification: historical_formative_development_only
-    authoring_canonical_sha256: 7ce88d3602d3a0b03c68a5ab807be70c260988b16561b6e9a99d18f93c5143cf
+    authoring_canonical_sha256: 0d3f502f5d5dc70e43452b650c1f479ffc2b05d43ad68864782837d8d6ec4c07
     catalog_identity:
       candidate_corpus_version: environment-candidate-corpus-v1
       candidate_corpus_sha256: 987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444
@@ -5994,7 +5997,7 @@ cases:
     source_case_id: ml-mem-bound-vi-constraint
     source_split: development
     evidence_classification: historical_formative_development_only
-    authoring_canonical_sha256: 7ce88d3602d3a0b03c68a5ab807be70c260988b16561b6e9a99d18f93c5143cf
+    authoring_canonical_sha256: 0d3f502f5d5dc70e43452b650c1f479ffc2b05d43ad68864782837d8d6ec4c07
     catalog_identity:
       candidate_corpus_version: environment-candidate-corpus-v1
       candidate_corpus_sha256: 987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444
@@ -6078,7 +6081,7 @@ cases:
     source_case_id: ml-ambiguous-canonical-en
     source_split: development
     evidence_classification: historical_formative_development_only
-    authoring_canonical_sha256: 7ce88d3602d3a0b03c68a5ab807be70c260988b16561b6e9a99d18f93c5143cf
+    authoring_canonical_sha256: 0d3f502f5d5dc70e43452b650c1f479ffc2b05d43ad68864782837d8d6ec4c07
     catalog_identity:
       candidate_corpus_version: environment-candidate-corpus-v1
       candidate_corpus_sha256: 987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444
@@ -6165,7 +6168,7 @@ cases:
     source_case_id: ml-ambiguous-vi-train-model
     source_split: development
     evidence_classification: historical_formative_development_only
-    authoring_canonical_sha256: 7ce88d3602d3a0b03c68a5ab807be70c260988b16561b6e9a99d18f93c5143cf
+    authoring_canonical_sha256: 0d3f502f5d5dc70e43452b650c1f479ffc2b05d43ad68864782837d8d6ec4c07
     catalog_identity:
       candidate_corpus_version: environment-candidate-corpus-v1
       candidate_corpus_sha256: 987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444
@@ -6252,7 +6255,7 @@ cases:
     source_case_id: ml-ambiguous-vi-run-task
     source_split: development
     evidence_classification: historical_formative_development_only
-    authoring_canonical_sha256: 7ce88d3602d3a0b03c68a5ab807be70c260988b16561b6e9a99d18f93c5143cf
+    authoring_canonical_sha256: 0d3f502f5d5dc70e43452b650c1f479ffc2b05d43ad68864782837d8d6ec4c07
     catalog_identity:
       candidate_corpus_version: environment-candidate-corpus-v1
       candidate_corpus_sha256: 987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444
@@ -6339,7 +6342,7 @@ cases:
     source_case_id: ml-ambiguous-vi-open-nb
     source_split: development
     evidence_classification: historical_formative_development_only
-    authoring_canonical_sha256: 7ce88d3602d3a0b03c68a5ab807be70c260988b16561b6e9a99d18f93c5143cf
+    authoring_canonical_sha256: 0d3f502f5d5dc70e43452b650c1f479ffc2b05d43ad68864782837d8d6ec4c07
     catalog_identity:
       candidate_corpus_version: environment-candidate-corpus-v1
       candidate_corpus_sha256: 987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444
@@ -6426,7 +6429,7 @@ cases:
     source_case_id: ml-ambiguous-vi-test-code
     source_split: development
     evidence_classification: historical_formative_development_only
-    authoring_canonical_sha256: 7ce88d3602d3a0b03c68a5ab807be70c260988b16561b6e9a99d18f93c5143cf
+    authoring_canonical_sha256: 0d3f502f5d5dc70e43452b650c1f479ffc2b05d43ad68864782837d8d6ec4c07
     catalog_identity:
       candidate_corpus_version: environment-candidate-corpus-v1
       candidate_corpus_sha256: 987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444
@@ -6514,7 +6517,7 @@ cases:
     source_case_id: ml-ambiguous-vi-need-clarify
     source_split: development
     evidence_classification: historical_formative_development_only
-    authoring_canonical_sha256: 7ce88d3602d3a0b03c68a5ab807be70c260988b16561b6e9a99d18f93c5143cf
+    authoring_canonical_sha256: 0d3f502f5d5dc70e43452b650c1f479ffc2b05d43ad68864782837d8d6ec4c07
     catalog_identity:
       candidate_corpus_version: environment-candidate-corpus-v1
       candidate_corpus_sha256: 987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444
@@ -6541,6 +6544,1423 @@ cases:
       - ml-ambiguous-vi-open-nb
       - ml-ambiguous-vi-test-code
       - ml-ambiguous-vi-need-clarify
+      source_split: development
+      source_file_sha256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+      evidence_classification: human_reviewed_development
+      original_label_sha256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+- case_id: negative-constraint-cpu-ml-canonical-en
+  family_id: negative-constraint-cpu-ml
+  variant_id: negative-constraint-cpu-ml-canonical-en
+  language: en
+  prompt: I want to run text classification machine learning models using scikit-learn,
+    but my account has exhausted its quota so strictly do not use GPU, grant a large
+    CPU and sufficient memory.
+  inputs:
+    dataset_size_gb: 0.8
+    code_context_hints:
+    - import sklearn
+    - from sklearn.pipeline import Pipeline
+  family_metadata:
+    title: Negative Constraint CPU Machine Learning
+    workload_stratum: machine_learning
+    difficulty: medium
+    executable_workload_id: null
+  variant_metadata:
+    variant_class: canonical_en
+    equivalence_status: canonical_reference
+  gold:
+    gold_structured_intent:
+      task_types:
+      - machine_learning
+      - model_training
+      required_features:
+      - scikit-learn
+      preferred_features: []
+      forbidden_features: []
+      required_frameworks: []
+      preferred_frameworks: []
+      gpu_semantics: forbidden
+      minimum_cpu_cores: null
+      minimum_memory_gb: null
+      dataset_size_gb: 0.8
+      ambiguities: []
+    candidate_gold:
+      preferred_candidate_ids:
+      - large-scipy-data-science
+      acceptable_candidate_ids:
+      - large-scipy-data-science
+      - medium-scipy-data-science
+    profile_gold:
+      preferred_profile_ids:
+      - large
+      acceptable_profile_ids:
+      - large
+      - medium
+    image_gold:
+      preferred_image_ids:
+      - scipy-data-science
+      acceptable_image_ids:
+      - scipy-data-science
+      required_capabilities:
+      - scikit-learn
+    policy_gold:
+      required_constraints:
+      - allowed_profiles=small,medium,large
+      - gpu_allowed=false
+      explicitly_unsupported_requirements: []
+      expected_feasibility: feasible
+  source_provenance:
+    source_dataset_id: v5-development-reconstructed-v1
+    source_schema_version: protocol-v5-gold-family-v1.0.0
+    source_case_id: negative-constraint-cpu-ml-canonical-en
+    source_split: development
+    evidence_classification: historical_formative_development_only
+    authoring_canonical_sha256: 0d3f502f5d5dc70e43452b650c1f479ffc2b05d43ad68864782837d8d6ec4c07
+    catalog_identity:
+      candidate_corpus_version: environment-candidate-corpus-v1
+      candidate_corpus_sha256: 987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444
+      image_catalog_version: 2026-08-06.1
+      image_catalog_sha256: bd2211d5fd769b5addec3c41e8cbd48bb0d9cd1c958aa554ada9bf88c29509f3
+      profile_catalog_sha256: c8f797b9c4d30459da99dad8d6d1c28e07e6803d76fab7cf88cdcd0f6c679348
+    label_review:
+      status: approved
+      reviewed_by: domain-reviewer-datn
+      reviewed_at_utc: '2026-09-28T09:00:00Z'
+      notes:
+      - Machine learning text classification with explicit negative GPU constraint.
+      - Zero GPU quota requires CPU-only execution with large CPU and RAM for text
+        modeling.
+      - Resolves to large-scipy-data-science candidate.
+    original_source_provenance:
+      source_dataset_id: vietnamese-intent-expansion-2026-09-24
+      source_schema_version: protocol-v5-gold-family-v1.0.0
+      source_family_id: negative-constraint-cpu-ml
+      source_case_ids:
+      - negative-constraint-cpu-ml-canonical-en
+      - negative-constraint-cpu-ml-paraphrase-en
+      - negative-constraint-cpu-ml-vi-natural
+      - negative-constraint-cpu-ml-vi-colloquial
+      - negative-constraint-cpu-ml-vi-abbrev
+      source_split: development
+      source_file_sha256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+      evidence_classification: human_reviewed_development
+      original_label_sha256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+- case_id: negative-constraint-cpu-ml-paraphrase-en
+  family_id: negative-constraint-cpu-ml
+  variant_id: negative-constraint-cpu-ml-paraphrase-en
+  language: en
+  prompt: Train a scikit-learn classifier on an 800MB text dataset; strictly forbidden
+    GPU due to zero quota, allocate large CPU with 2GB RAM.
+  inputs:
+    dataset_size_gb: 0.8
+    code_context_hints:
+    - import sklearn
+  family_metadata:
+    title: Negative Constraint CPU Machine Learning
+    workload_stratum: machine_learning
+    difficulty: medium
+    executable_workload_id: null
+  variant_metadata:
+    variant_class: paraphrase_en
+    equivalence_status: reviewed_equivalent
+  gold:
+    gold_structured_intent:
+      task_types:
+      - machine_learning
+      - model_training
+      required_features:
+      - scikit-learn
+      preferred_features: []
+      forbidden_features: []
+      required_frameworks: []
+      preferred_frameworks: []
+      gpu_semantics: forbidden
+      minimum_cpu_cores: null
+      minimum_memory_gb: null
+      dataset_size_gb: 0.8
+      ambiguities: []
+    candidate_gold:
+      preferred_candidate_ids:
+      - large-scipy-data-science
+      acceptable_candidate_ids:
+      - large-scipy-data-science
+      - medium-scipy-data-science
+    profile_gold:
+      preferred_profile_ids:
+      - large
+      acceptable_profile_ids:
+      - large
+      - medium
+    image_gold:
+      preferred_image_ids:
+      - scipy-data-science
+      acceptable_image_ids:
+      - scipy-data-science
+      required_capabilities:
+      - scikit-learn
+    policy_gold:
+      required_constraints:
+      - allowed_profiles=small,medium,large
+      - gpu_allowed=false
+      explicitly_unsupported_requirements: []
+      expected_feasibility: feasible
+  source_provenance:
+    source_dataset_id: v5-development-reconstructed-v1
+    source_schema_version: protocol-v5-gold-family-v1.0.0
+    source_case_id: negative-constraint-cpu-ml-paraphrase-en
+    source_split: development
+    evidence_classification: historical_formative_development_only
+    authoring_canonical_sha256: 0d3f502f5d5dc70e43452b650c1f479ffc2b05d43ad68864782837d8d6ec4c07
+    catalog_identity:
+      candidate_corpus_version: environment-candidate-corpus-v1
+      candidate_corpus_sha256: 987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444
+      image_catalog_version: 2026-08-06.1
+      image_catalog_sha256: bd2211d5fd769b5addec3c41e8cbd48bb0d9cd1c958aa554ada9bf88c29509f3
+      profile_catalog_sha256: c8f797b9c4d30459da99dad8d6d1c28e07e6803d76fab7cf88cdcd0f6c679348
+    label_review:
+      status: approved
+      reviewed_by: domain-reviewer-datn
+      reviewed_at_utc: '2026-09-28T09:00:00Z'
+      notes:
+      - Machine learning text classification with explicit negative GPU constraint.
+      - Zero GPU quota requires CPU-only execution with large CPU and RAM for text
+        modeling.
+      - Resolves to large-scipy-data-science candidate.
+    original_source_provenance:
+      source_dataset_id: vietnamese-intent-expansion-2026-09-24
+      source_schema_version: protocol-v5-gold-family-v1.0.0
+      source_family_id: negative-constraint-cpu-ml
+      source_case_ids:
+      - negative-constraint-cpu-ml-canonical-en
+      - negative-constraint-cpu-ml-paraphrase-en
+      - negative-constraint-cpu-ml-vi-natural
+      - negative-constraint-cpu-ml-vi-colloquial
+      - negative-constraint-cpu-ml-vi-abbrev
+      source_split: development
+      source_file_sha256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+      evidence_classification: human_reviewed_development
+      original_label_sha256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+- case_id: negative-constraint-cpu-ml-vi-natural
+  family_id: negative-constraint-cpu-ml
+  variant_id: negative-constraint-cpu-ml-vi-natural
+  language: vi
+  prompt: Tôi muốn làm bài tập học máy phân loại văn bản, nhưng tài khoản hết quota
+    nên TUYỆT ĐỐI KHÔNG dùng GPU, chỉ cấp CPU lớn và RAM vừa đủ.
+  inputs:
+    dataset_size_gb: 0.8
+    code_context_hints:
+    - import sklearn
+  family_metadata:
+    title: Negative Constraint CPU Machine Learning
+    workload_stratum: machine_learning
+    difficulty: medium
+    executable_workload_id: null
+  variant_metadata:
+    variant_class: vietnamese
+    equivalence_status: reviewed_equivalent
+  gold:
+    gold_structured_intent:
+      task_types:
+      - machine_learning
+      - model_training
+      required_features:
+      - scikit-learn
+      preferred_features: []
+      forbidden_features: []
+      required_frameworks: []
+      preferred_frameworks: []
+      gpu_semantics: forbidden
+      minimum_cpu_cores: null
+      minimum_memory_gb: null
+      dataset_size_gb: 0.8
+      ambiguities: []
+    candidate_gold:
+      preferred_candidate_ids:
+      - large-scipy-data-science
+      acceptable_candidate_ids:
+      - large-scipy-data-science
+      - medium-scipy-data-science
+    profile_gold:
+      preferred_profile_ids:
+      - large
+      acceptable_profile_ids:
+      - large
+      - medium
+    image_gold:
+      preferred_image_ids:
+      - scipy-data-science
+      acceptable_image_ids:
+      - scipy-data-science
+      required_capabilities:
+      - scikit-learn
+    policy_gold:
+      required_constraints:
+      - allowed_profiles=small,medium,large
+      - gpu_allowed=false
+      explicitly_unsupported_requirements: []
+      expected_feasibility: feasible
+  source_provenance:
+    source_dataset_id: v5-development-reconstructed-v1
+    source_schema_version: protocol-v5-gold-family-v1.0.0
+    source_case_id: negative-constraint-cpu-ml-vi-natural
+    source_split: development
+    evidence_classification: historical_formative_development_only
+    authoring_canonical_sha256: 0d3f502f5d5dc70e43452b650c1f479ffc2b05d43ad68864782837d8d6ec4c07
+    catalog_identity:
+      candidate_corpus_version: environment-candidate-corpus-v1
+      candidate_corpus_sha256: 987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444
+      image_catalog_version: 2026-08-06.1
+      image_catalog_sha256: bd2211d5fd769b5addec3c41e8cbd48bb0d9cd1c958aa554ada9bf88c29509f3
+      profile_catalog_sha256: c8f797b9c4d30459da99dad8d6d1c28e07e6803d76fab7cf88cdcd0f6c679348
+    label_review:
+      status: approved
+      reviewed_by: domain-reviewer-datn
+      reviewed_at_utc: '2026-09-28T09:00:00Z'
+      notes:
+      - Machine learning text classification with explicit negative GPU constraint.
+      - Zero GPU quota requires CPU-only execution with large CPU and RAM for text
+        modeling.
+      - Resolves to large-scipy-data-science candidate.
+    original_source_provenance:
+      source_dataset_id: vietnamese-intent-expansion-2026-09-24
+      source_schema_version: protocol-v5-gold-family-v1.0.0
+      source_family_id: negative-constraint-cpu-ml
+      source_case_ids:
+      - negative-constraint-cpu-ml-canonical-en
+      - negative-constraint-cpu-ml-paraphrase-en
+      - negative-constraint-cpu-ml-vi-natural
+      - negative-constraint-cpu-ml-vi-colloquial
+      - negative-constraint-cpu-ml-vi-abbrev
+      source_split: development
+      source_file_sha256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+      evidence_classification: human_reviewed_development
+      original_label_sha256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+- case_id: negative-constraint-cpu-ml-vi-colloquial
+  family_id: negative-constraint-cpu-ml
+  variant_id: negative-constraint-cpu-ml-vi-colloquial
+  language: vi
+  prompt: Cho mình xin một máy cấu hình vừa để chạy thử mấy thuật toán scikit-learn
+    với, nhớ là không dùng gpu nhé vì quota hết rồi.
+  inputs:
+    dataset_size_gb: 0.8
+    code_context_hints:
+    - import sklearn
+  family_metadata:
+    title: Negative Constraint CPU Machine Learning
+    workload_stratum: machine_learning
+    difficulty: medium
+    executable_workload_id: null
+  variant_metadata:
+    variant_class: vietnamese
+    equivalence_status: reviewed_equivalent
+  gold:
+    gold_structured_intent:
+      task_types:
+      - machine_learning
+      - model_training
+      required_features:
+      - scikit-learn
+      preferred_features: []
+      forbidden_features: []
+      required_frameworks: []
+      preferred_frameworks: []
+      gpu_semantics: forbidden
+      minimum_cpu_cores: null
+      minimum_memory_gb: null
+      dataset_size_gb: 0.8
+      ambiguities: []
+    candidate_gold:
+      preferred_candidate_ids:
+      - large-scipy-data-science
+      acceptable_candidate_ids:
+      - large-scipy-data-science
+      - medium-scipy-data-science
+    profile_gold:
+      preferred_profile_ids:
+      - large
+      acceptable_profile_ids:
+      - large
+      - medium
+    image_gold:
+      preferred_image_ids:
+      - scipy-data-science
+      acceptable_image_ids:
+      - scipy-data-science
+      required_capabilities:
+      - scikit-learn
+    policy_gold:
+      required_constraints:
+      - allowed_profiles=small,medium,large
+      - gpu_allowed=false
+      explicitly_unsupported_requirements: []
+      expected_feasibility: feasible
+  source_provenance:
+    source_dataset_id: v5-development-reconstructed-v1
+    source_schema_version: protocol-v5-gold-family-v1.0.0
+    source_case_id: negative-constraint-cpu-ml-vi-colloquial
+    source_split: development
+    evidence_classification: historical_formative_development_only
+    authoring_canonical_sha256: 0d3f502f5d5dc70e43452b650c1f479ffc2b05d43ad68864782837d8d6ec4c07
+    catalog_identity:
+      candidate_corpus_version: environment-candidate-corpus-v1
+      candidate_corpus_sha256: 987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444
+      image_catalog_version: 2026-08-06.1
+      image_catalog_sha256: bd2211d5fd769b5addec3c41e8cbd48bb0d9cd1c958aa554ada9bf88c29509f3
+      profile_catalog_sha256: c8f797b9c4d30459da99dad8d6d1c28e07e6803d76fab7cf88cdcd0f6c679348
+    label_review:
+      status: approved
+      reviewed_by: domain-reviewer-datn
+      reviewed_at_utc: '2026-09-28T09:00:00Z'
+      notes:
+      - Machine learning text classification with explicit negative GPU constraint.
+      - Zero GPU quota requires CPU-only execution with large CPU and RAM for text
+        modeling.
+      - Resolves to large-scipy-data-science candidate.
+    original_source_provenance:
+      source_dataset_id: vietnamese-intent-expansion-2026-09-24
+      source_schema_version: protocol-v5-gold-family-v1.0.0
+      source_family_id: negative-constraint-cpu-ml
+      source_case_ids:
+      - negative-constraint-cpu-ml-canonical-en
+      - negative-constraint-cpu-ml-paraphrase-en
+      - negative-constraint-cpu-ml-vi-natural
+      - negative-constraint-cpu-ml-vi-colloquial
+      - negative-constraint-cpu-ml-vi-abbrev
+      source_split: development
+      source_file_sha256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+      evidence_classification: human_reviewed_development
+      original_label_sha256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+- case_id: negative-constraint-cpu-ml-vi-abbrev
+  family_id: negative-constraint-cpu-ml
+  variant_id: negative-constraint-cpu-ml-vi-abbrev
+  language: vi
+  prompt: Train model phân loại text ML cơ bản vs scikit-learn, cấm cấp gpu vì hết
+    quota, xin máy cpu lớn ram 2gb nhé.
+  inputs:
+    dataset_size_gb: 0.8
+    code_context_hints:
+    - import sklearn
+  family_metadata:
+    title: Negative Constraint CPU Machine Learning
+    workload_stratum: machine_learning
+    difficulty: medium
+    executable_workload_id: null
+  variant_metadata:
+    variant_class: vietnamese
+    equivalence_status: reviewed_equivalent
+  gold:
+    gold_structured_intent:
+      task_types:
+      - machine_learning
+      - model_training
+      required_features:
+      - scikit-learn
+      preferred_features: []
+      forbidden_features: []
+      required_frameworks: []
+      preferred_frameworks: []
+      gpu_semantics: forbidden
+      minimum_cpu_cores: null
+      minimum_memory_gb: null
+      dataset_size_gb: 0.8
+      ambiguities: []
+    candidate_gold:
+      preferred_candidate_ids:
+      - large-scipy-data-science
+      acceptable_candidate_ids:
+      - large-scipy-data-science
+      - medium-scipy-data-science
+    profile_gold:
+      preferred_profile_ids:
+      - large
+      acceptable_profile_ids:
+      - large
+      - medium
+    image_gold:
+      preferred_image_ids:
+      - scipy-data-science
+      acceptable_image_ids:
+      - scipy-data-science
+      required_capabilities:
+      - scikit-learn
+    policy_gold:
+      required_constraints:
+      - allowed_profiles=small,medium,large
+      - gpu_allowed=false
+      explicitly_unsupported_requirements: []
+      expected_feasibility: feasible
+  source_provenance:
+    source_dataset_id: v5-development-reconstructed-v1
+    source_schema_version: protocol-v5-gold-family-v1.0.0
+    source_case_id: negative-constraint-cpu-ml-vi-abbrev
+    source_split: development
+    evidence_classification: historical_formative_development_only
+    authoring_canonical_sha256: 0d3f502f5d5dc70e43452b650c1f479ffc2b05d43ad68864782837d8d6ec4c07
+    catalog_identity:
+      candidate_corpus_version: environment-candidate-corpus-v1
+      candidate_corpus_sha256: 987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444
+      image_catalog_version: 2026-08-06.1
+      image_catalog_sha256: bd2211d5fd769b5addec3c41e8cbd48bb0d9cd1c958aa554ada9bf88c29509f3
+      profile_catalog_sha256: c8f797b9c4d30459da99dad8d6d1c28e07e6803d76fab7cf88cdcd0f6c679348
+    label_review:
+      status: approved
+      reviewed_by: domain-reviewer-datn
+      reviewed_at_utc: '2026-09-28T09:00:00Z'
+      notes:
+      - Machine learning text classification with explicit negative GPU constraint.
+      - Zero GPU quota requires CPU-only execution with large CPU and RAM for text
+        modeling.
+      - Resolves to large-scipy-data-science candidate.
+    original_source_provenance:
+      source_dataset_id: vietnamese-intent-expansion-2026-09-24
+      source_schema_version: protocol-v5-gold-family-v1.0.0
+      source_family_id: negative-constraint-cpu-ml
+      source_case_ids:
+      - negative-constraint-cpu-ml-canonical-en
+      - negative-constraint-cpu-ml-paraphrase-en
+      - negative-constraint-cpu-ml-vi-natural
+      - negative-constraint-cpu-ml-vi-colloquial
+      - negative-constraint-cpu-ml-vi-abbrev
+      source_split: development
+      source_file_sha256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+      evidence_classification: human_reviewed_development
+      original_label_sha256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+- case_id: negative-constraint-minimal-canonical-en
+  family_id: negative-constraint-minimal-python
+  variant_id: negative-constraint-minimal-canonical-en
+  language: en
+  prompt: Basic Python data analysis and string processing, strictly no need for PyTorch
+    or TensorFlow to keep the environment lightweight.
+  inputs:
+    dataset_size_gb: 0.05
+    code_context_hints: []
+  family_metadata:
+    title: Negative Constraint Minimal Python Data Analysis
+    workload_stratum: light
+    difficulty: easy
+    executable_workload_id: null
+  variant_metadata:
+    variant_class: canonical_en
+    equivalence_status: canonical_reference
+  gold:
+    gold_structured_intent:
+      task_types: []
+      required_features:
+      - python
+      preferred_features: []
+      forbidden_features:
+      - pytorch
+      - tensorflow
+      required_frameworks: []
+      preferred_frameworks: []
+      gpu_semantics: unspecified
+      minimum_cpu_cores: null
+      minimum_memory_gb: null
+      dataset_size_gb: 0.05
+      ambiguities: []
+    candidate_gold:
+      preferred_candidate_ids:
+      - small-minimal-python
+      acceptable_candidate_ids:
+      - small-minimal-python
+    profile_gold:
+      preferred_profile_ids:
+      - small
+      acceptable_profile_ids:
+      - small
+    image_gold:
+      preferred_image_ids:
+      - minimal-python
+      acceptable_image_ids:
+      - minimal-python
+      required_capabilities:
+      - python
+    policy_gold:
+      required_constraints:
+      - allowed_profiles=small,medium,large
+      - gpu_allowed=false
+      explicitly_unsupported_requirements: []
+      expected_feasibility: feasible
+  source_provenance:
+    source_dataset_id: v5-development-reconstructed-v1
+    source_schema_version: protocol-v5-gold-family-v1.0.0
+    source_case_id: negative-constraint-minimal-canonical-en
+    source_split: development
+    evidence_classification: historical_formative_development_only
+    authoring_canonical_sha256: 0d3f502f5d5dc70e43452b650c1f479ffc2b05d43ad68864782837d8d6ec4c07
+    catalog_identity:
+      candidate_corpus_version: environment-candidate-corpus-v1
+      candidate_corpus_sha256: 987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444
+      image_catalog_version: 2026-08-06.1
+      image_catalog_sha256: bd2211d5fd769b5addec3c41e8cbd48bb0d9cd1c958aa554ada9bf88c29509f3
+      profile_catalog_sha256: c8f797b9c4d30459da99dad8d6d1c28e07e6803d76fab7cf88cdcd0f6c679348
+    label_review:
+      status: approved
+      reviewed_by: domain-reviewer-datn
+      reviewed_at_utc: '2026-09-28T09:00:00Z'
+      notes:
+      - Lightweight Python workload with negative framework exclusion of PyTorch and
+        TensorFlow.
+      - Intentionally tests recommender robustness against false positive deep learning
+        matches.
+      - Resolves to small-minimal-python.
+    original_source_provenance:
+      source_dataset_id: vietnamese-intent-expansion-2026-09-24
+      source_schema_version: protocol-v5-gold-family-v1.0.0
+      source_family_id: negative-constraint-minimal-python
+      source_case_ids:
+      - negative-constraint-minimal-canonical-en
+      - negative-constraint-minimal-paraphrase-en
+      - negative-constraint-minimal-vi-natural
+      - negative-constraint-minimal-vi-pipeline
+      - negative-constraint-minimal-vi-abbrev
+      source_split: development
+      source_file_sha256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+      evidence_classification: human_reviewed_development
+      original_label_sha256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+- case_id: negative-constraint-minimal-paraphrase-en
+  family_id: negative-constraint-minimal-python
+  variant_id: negative-constraint-minimal-paraphrase-en
+  language: en
+  prompt: Run text preprocessing pipeline with standard Python regex and NLTK; do
+    not install PyTorch or TensorFlow.
+  inputs:
+    dataset_size_gb: 0.05
+    code_context_hints: []
+  family_metadata:
+    title: Negative Constraint Minimal Python Data Analysis
+    workload_stratum: light
+    difficulty: easy
+    executable_workload_id: null
+  variant_metadata:
+    variant_class: paraphrase_en
+    equivalence_status: reviewed_equivalent
+  gold:
+    gold_structured_intent:
+      task_types: []
+      required_features:
+      - python
+      preferred_features: []
+      forbidden_features:
+      - pytorch
+      - tensorflow
+      required_frameworks: []
+      preferred_frameworks: []
+      gpu_semantics: unspecified
+      minimum_cpu_cores: null
+      minimum_memory_gb: null
+      dataset_size_gb: 0.05
+      ambiguities: []
+    candidate_gold:
+      preferred_candidate_ids:
+      - small-minimal-python
+      acceptable_candidate_ids:
+      - small-minimal-python
+    profile_gold:
+      preferred_profile_ids:
+      - small
+      acceptable_profile_ids:
+      - small
+    image_gold:
+      preferred_image_ids:
+      - minimal-python
+      acceptable_image_ids:
+      - minimal-python
+      required_capabilities:
+      - python
+    policy_gold:
+      required_constraints:
+      - allowed_profiles=small,medium,large
+      - gpu_allowed=false
+      explicitly_unsupported_requirements: []
+      expected_feasibility: feasible
+  source_provenance:
+    source_dataset_id: v5-development-reconstructed-v1
+    source_schema_version: protocol-v5-gold-family-v1.0.0
+    source_case_id: negative-constraint-minimal-paraphrase-en
+    source_split: development
+    evidence_classification: historical_formative_development_only
+    authoring_canonical_sha256: 0d3f502f5d5dc70e43452b650c1f479ffc2b05d43ad68864782837d8d6ec4c07
+    catalog_identity:
+      candidate_corpus_version: environment-candidate-corpus-v1
+      candidate_corpus_sha256: 987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444
+      image_catalog_version: 2026-08-06.1
+      image_catalog_sha256: bd2211d5fd769b5addec3c41e8cbd48bb0d9cd1c958aa554ada9bf88c29509f3
+      profile_catalog_sha256: c8f797b9c4d30459da99dad8d6d1c28e07e6803d76fab7cf88cdcd0f6c679348
+    label_review:
+      status: approved
+      reviewed_by: domain-reviewer-datn
+      reviewed_at_utc: '2026-09-28T09:00:00Z'
+      notes:
+      - Lightweight Python workload with negative framework exclusion of PyTorch and
+        TensorFlow.
+      - Intentionally tests recommender robustness against false positive deep learning
+        matches.
+      - Resolves to small-minimal-python.
+    original_source_provenance:
+      source_dataset_id: vietnamese-intent-expansion-2026-09-24
+      source_schema_version: protocol-v5-gold-family-v1.0.0
+      source_family_id: negative-constraint-minimal-python
+      source_case_ids:
+      - negative-constraint-minimal-canonical-en
+      - negative-constraint-minimal-paraphrase-en
+      - negative-constraint-minimal-vi-natural
+      - negative-constraint-minimal-vi-pipeline
+      - negative-constraint-minimal-vi-abbrev
+      source_split: development
+      source_file_sha256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+      evidence_classification: human_reviewed_development
+      original_label_sha256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+- case_id: negative-constraint-minimal-vi-natural
+  family_id: negative-constraint-minimal-python
+  variant_id: negative-constraint-minimal-vi-natural
+  language: vi
+  prompt: Phân tích dữ liệu bằng Python cơ bản, KHÔNG CẦN cài PyTorch hay TensorFlow
+    cho nặng máy.
+  inputs:
+    dataset_size_gb: 0.05
+    code_context_hints: []
+  family_metadata:
+    title: Negative Constraint Minimal Python Data Analysis
+    workload_stratum: light
+    difficulty: easy
+    executable_workload_id: null
+  variant_metadata:
+    variant_class: vietnamese
+    equivalence_status: reviewed_equivalent
+  gold:
+    gold_structured_intent:
+      task_types: []
+      required_features:
+      - python
+      preferred_features: []
+      forbidden_features:
+      - pytorch
+      - tensorflow
+      required_frameworks: []
+      preferred_frameworks: []
+      gpu_semantics: unspecified
+      minimum_cpu_cores: null
+      minimum_memory_gb: null
+      dataset_size_gb: 0.05
+      ambiguities: []
+    candidate_gold:
+      preferred_candidate_ids:
+      - small-minimal-python
+      acceptable_candidate_ids:
+      - small-minimal-python
+    profile_gold:
+      preferred_profile_ids:
+      - small
+      acceptable_profile_ids:
+      - small
+    image_gold:
+      preferred_image_ids:
+      - minimal-python
+      acceptable_image_ids:
+      - minimal-python
+      required_capabilities:
+      - python
+    policy_gold:
+      required_constraints:
+      - allowed_profiles=small,medium,large
+      - gpu_allowed=false
+      explicitly_unsupported_requirements: []
+      expected_feasibility: feasible
+  source_provenance:
+    source_dataset_id: v5-development-reconstructed-v1
+    source_schema_version: protocol-v5-gold-family-v1.0.0
+    source_case_id: negative-constraint-minimal-vi-natural
+    source_split: development
+    evidence_classification: historical_formative_development_only
+    authoring_canonical_sha256: 0d3f502f5d5dc70e43452b650c1f479ffc2b05d43ad68864782837d8d6ec4c07
+    catalog_identity:
+      candidate_corpus_version: environment-candidate-corpus-v1
+      candidate_corpus_sha256: 987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444
+      image_catalog_version: 2026-08-06.1
+      image_catalog_sha256: bd2211d5fd769b5addec3c41e8cbd48bb0d9cd1c958aa554ada9bf88c29509f3
+      profile_catalog_sha256: c8f797b9c4d30459da99dad8d6d1c28e07e6803d76fab7cf88cdcd0f6c679348
+    label_review:
+      status: approved
+      reviewed_by: domain-reviewer-datn
+      reviewed_at_utc: '2026-09-28T09:00:00Z'
+      notes:
+      - Lightweight Python workload with negative framework exclusion of PyTorch and
+        TensorFlow.
+      - Intentionally tests recommender robustness against false positive deep learning
+        matches.
+      - Resolves to small-minimal-python.
+    original_source_provenance:
+      source_dataset_id: vietnamese-intent-expansion-2026-09-24
+      source_schema_version: protocol-v5-gold-family-v1.0.0
+      source_family_id: negative-constraint-minimal-python
+      source_case_ids:
+      - negative-constraint-minimal-canonical-en
+      - negative-constraint-minimal-paraphrase-en
+      - negative-constraint-minimal-vi-natural
+      - negative-constraint-minimal-vi-pipeline
+      - negative-constraint-minimal-vi-abbrev
+      source_split: development
+      source_file_sha256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+      evidence_classification: human_reviewed_development
+      original_label_sha256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+- case_id: negative-constraint-minimal-vi-pipeline
+  family_id: negative-constraint-minimal-python
+  variant_id: negative-constraint-minimal-vi-pipeline
+  language: vi
+  prompt: Xây dựng pipeline tiền xử lý văn bản tiếng Việt sử dụng NLTK/Regex cơ bản,
+    không dùng pytorch hay tensorflow.
+  inputs:
+    dataset_size_gb: 0.05
+    code_context_hints: []
+  family_metadata:
+    title: Negative Constraint Minimal Python Data Analysis
+    workload_stratum: light
+    difficulty: easy
+    executable_workload_id: null
+  variant_metadata:
+    variant_class: vietnamese
+    equivalence_status: reviewed_equivalent
+  gold:
+    gold_structured_intent:
+      task_types: []
+      required_features:
+      - python
+      preferred_features: []
+      forbidden_features:
+      - pytorch
+      - tensorflow
+      required_frameworks: []
+      preferred_frameworks: []
+      gpu_semantics: unspecified
+      minimum_cpu_cores: null
+      minimum_memory_gb: null
+      dataset_size_gb: 0.05
+      ambiguities: []
+    candidate_gold:
+      preferred_candidate_ids:
+      - small-minimal-python
+      acceptable_candidate_ids:
+      - small-minimal-python
+    profile_gold:
+      preferred_profile_ids:
+      - small
+      acceptable_profile_ids:
+      - small
+    image_gold:
+      preferred_image_ids:
+      - minimal-python
+      acceptable_image_ids:
+      - minimal-python
+      required_capabilities:
+      - python
+    policy_gold:
+      required_constraints:
+      - allowed_profiles=small,medium,large
+      - gpu_allowed=false
+      explicitly_unsupported_requirements: []
+      expected_feasibility: feasible
+  source_provenance:
+    source_dataset_id: v5-development-reconstructed-v1
+    source_schema_version: protocol-v5-gold-family-v1.0.0
+    source_case_id: negative-constraint-minimal-vi-pipeline
+    source_split: development
+    evidence_classification: historical_formative_development_only
+    authoring_canonical_sha256: 0d3f502f5d5dc70e43452b650c1f479ffc2b05d43ad68864782837d8d6ec4c07
+    catalog_identity:
+      candidate_corpus_version: environment-candidate-corpus-v1
+      candidate_corpus_sha256: 987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444
+      image_catalog_version: 2026-08-06.1
+      image_catalog_sha256: bd2211d5fd769b5addec3c41e8cbd48bb0d9cd1c958aa554ada9bf88c29509f3
+      profile_catalog_sha256: c8f797b9c4d30459da99dad8d6d1c28e07e6803d76fab7cf88cdcd0f6c679348
+    label_review:
+      status: approved
+      reviewed_by: domain-reviewer-datn
+      reviewed_at_utc: '2026-09-28T09:00:00Z'
+      notes:
+      - Lightweight Python workload with negative framework exclusion of PyTorch and
+        TensorFlow.
+      - Intentionally tests recommender robustness against false positive deep learning
+        matches.
+      - Resolves to small-minimal-python.
+    original_source_provenance:
+      source_dataset_id: vietnamese-intent-expansion-2026-09-24
+      source_schema_version: protocol-v5-gold-family-v1.0.0
+      source_family_id: negative-constraint-minimal-python
+      source_case_ids:
+      - negative-constraint-minimal-canonical-en
+      - negative-constraint-minimal-paraphrase-en
+      - negative-constraint-minimal-vi-natural
+      - negative-constraint-minimal-vi-pipeline
+      - negative-constraint-minimal-vi-abbrev
+      source_split: development
+      source_file_sha256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+      evidence_classification: human_reviewed_development
+      original_label_sha256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+- case_id: negative-constraint-minimal-vi-abbrev
+  family_id: negative-constraint-minimal-python
+  variant_id: negative-constraint-minimal-vi-abbrev
+  language: vi
+  prompt: Cần notebook python thuần xử lý string nhẹ, ko cần pytorch tensorflow j
+    đâu cho đỡ nặng máy, profile small thôi.
+  inputs:
+    dataset_size_gb: 0.05
+    code_context_hints: []
+  family_metadata:
+    title: Negative Constraint Minimal Python Data Analysis
+    workload_stratum: light
+    difficulty: easy
+    executable_workload_id: null
+  variant_metadata:
+    variant_class: vietnamese
+    equivalence_status: reviewed_equivalent
+  gold:
+    gold_structured_intent:
+      task_types: []
+      required_features:
+      - python
+      preferred_features: []
+      forbidden_features:
+      - pytorch
+      - tensorflow
+      required_frameworks: []
+      preferred_frameworks: []
+      gpu_semantics: unspecified
+      minimum_cpu_cores: null
+      minimum_memory_gb: null
+      dataset_size_gb: 0.05
+      ambiguities: []
+    candidate_gold:
+      preferred_candidate_ids:
+      - small-minimal-python
+      acceptable_candidate_ids:
+      - small-minimal-python
+    profile_gold:
+      preferred_profile_ids:
+      - small
+      acceptable_profile_ids:
+      - small
+    image_gold:
+      preferred_image_ids:
+      - minimal-python
+      acceptable_image_ids:
+      - minimal-python
+      required_capabilities:
+      - python
+    policy_gold:
+      required_constraints:
+      - allowed_profiles=small,medium,large
+      - gpu_allowed=false
+      explicitly_unsupported_requirements: []
+      expected_feasibility: feasible
+  source_provenance:
+    source_dataset_id: v5-development-reconstructed-v1
+    source_schema_version: protocol-v5-gold-family-v1.0.0
+    source_case_id: negative-constraint-minimal-vi-abbrev
+    source_split: development
+    evidence_classification: historical_formative_development_only
+    authoring_canonical_sha256: 0d3f502f5d5dc70e43452b650c1f479ffc2b05d43ad68864782837d8d6ec4c07
+    catalog_identity:
+      candidate_corpus_version: environment-candidate-corpus-v1
+      candidate_corpus_sha256: 987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444
+      image_catalog_version: 2026-08-06.1
+      image_catalog_sha256: bd2211d5fd769b5addec3c41e8cbd48bb0d9cd1c958aa554ada9bf88c29509f3
+      profile_catalog_sha256: c8f797b9c4d30459da99dad8d6d1c28e07e6803d76fab7cf88cdcd0f6c679348
+    label_review:
+      status: approved
+      reviewed_by: domain-reviewer-datn
+      reviewed_at_utc: '2026-09-28T09:00:00Z'
+      notes:
+      - Lightweight Python workload with negative framework exclusion of PyTorch and
+        TensorFlow.
+      - Intentionally tests recommender robustness against false positive deep learning
+        matches.
+      - Resolves to small-minimal-python.
+    original_source_provenance:
+      source_dataset_id: vietnamese-intent-expansion-2026-09-24
+      source_schema_version: protocol-v5-gold-family-v1.0.0
+      source_family_id: negative-constraint-minimal-python
+      source_case_ids:
+      - negative-constraint-minimal-canonical-en
+      - negative-constraint-minimal-paraphrase-en
+      - negative-constraint-minimal-vi-natural
+      - negative-constraint-minimal-vi-pipeline
+      - negative-constraint-minimal-vi-abbrev
+      source_split: development
+      source_file_sha256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+      evidence_classification: human_reviewed_development
+      original_label_sha256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+- case_id: pytorch-mnist-cpu-canonical-en
+  family_id: pytorch-mnist-cpu-feasible
+  variant_id: pytorch-mnist-cpu-canonical-en
+  language: en
+  prompt: Train a simple MNIST digit recognition neural network using PyTorch on CPU.
+  inputs:
+    dataset_size_gb: 0.1
+    code_context_hints:
+    - import torch
+    - import torch.nn as nn
+  family_metadata:
+    title: PyTorch MNIST CPU Feasible Training
+    workload_stratum: deep_learning
+    difficulty: medium
+    executable_workload_id: null
+  variant_metadata:
+    variant_class: canonical_en
+    equivalence_status: canonical_reference
+  gold:
+    gold_structured_intent:
+      task_types:
+      - deep_learning
+      - model_training
+      required_features:
+      - pytorch
+      preferred_features: []
+      forbidden_features: []
+      required_frameworks:
+      - pytorch
+      preferred_frameworks: []
+      gpu_semantics: unspecified
+      minimum_cpu_cores: 0.5
+      minimum_memory_gb: 0.7
+      dataset_size_gb: 0.1
+      ambiguities: []
+    candidate_gold:
+      preferred_candidate_ids:
+      - medium-pytorch-deep-learning
+      acceptable_candidate_ids:
+      - large-pytorch-deep-learning
+      - medium-pytorch-deep-learning
+    profile_gold:
+      preferred_profile_ids:
+      - medium
+      acceptable_profile_ids:
+      - large
+      - medium
+    image_gold:
+      preferred_image_ids:
+      - pytorch-deep-learning
+      acceptable_image_ids:
+      - pytorch-deep-learning
+      required_capabilities:
+      - pytorch
+    policy_gold:
+      required_constraints:
+      - allowed_profiles=small,medium,large
+      - gpu_allowed=false
+      explicitly_unsupported_requirements: []
+      expected_feasibility: feasible
+  source_provenance:
+    source_dataset_id: v5-development-reconstructed-v1
+    source_schema_version: protocol-v5-gold-family-v1.0.0
+    source_case_id: pytorch-mnist-cpu-canonical-en
+    source_split: development
+    evidence_classification: historical_formative_development_only
+    authoring_canonical_sha256: 0d3f502f5d5dc70e43452b650c1f479ffc2b05d43ad68864782837d8d6ec4c07
+    catalog_identity:
+      candidate_corpus_version: environment-candidate-corpus-v1
+      candidate_corpus_sha256: 987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444
+      image_catalog_version: 2026-08-06.1
+      image_catalog_sha256: bd2211d5fd769b5addec3c41e8cbd48bb0d9cd1c958aa554ada9bf88c29509f3
+      profile_catalog_sha256: c8f797b9c4d30459da99dad8d6d1c28e07e6803d76fab7cf88cdcd0f6c679348
+    label_review:
+      status: approved
+      reviewed_by: domain-reviewer-datn
+      reviewed_at_utc: '2026-09-28T09:00:00Z'
+      notes:
+      - Feasible CPU-only deep learning training using PyTorch for MNIST image classification.
+      - Dataset is 0.1GB; fits comfortably into medium profile (1 CPU core, 1GB RAM).
+      - Resolves to medium-pytorch-deep-learning candidate.
+    original_source_provenance:
+      source_dataset_id: vietnamese-intent-expansion-2026-09-24
+      source_schema_version: protocol-v5-gold-family-v1.0.0
+      source_family_id: pytorch-mnist-cpu-feasible
+      source_case_ids:
+      - pytorch-mnist-cpu-canonical-en
+      - pytorch-mnist-cpu-paraphrase-en
+      - pytorch-mnist-cpu-vi-natural
+      - pytorch-mnist-cpu-vi-colloquial
+      - pytorch-mnist-cpu-vi-abbrev
+      source_split: development
+      source_file_sha256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+      evidence_classification: human_reviewed_development
+      original_label_sha256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+- case_id: pytorch-mnist-cpu-paraphrase-en
+  family_id: pytorch-mnist-cpu-feasible
+  variant_id: pytorch-mnist-cpu-paraphrase-en
+  language: en
+  prompt: Build a lightweight convolutional neural network for MNIST classification
+    with PyTorch without a GPU.
+  inputs:
+    dataset_size_gb: 0.1
+    code_context_hints:
+    - import torch
+  family_metadata:
+    title: PyTorch MNIST CPU Feasible Training
+    workload_stratum: deep_learning
+    difficulty: medium
+    executable_workload_id: null
+  variant_metadata:
+    variant_class: paraphrase_en
+    equivalence_status: reviewed_equivalent
+  gold:
+    gold_structured_intent:
+      task_types:
+      - deep_learning
+      - model_training
+      required_features:
+      - pytorch
+      preferred_features: []
+      forbidden_features: []
+      required_frameworks:
+      - pytorch
+      preferred_frameworks: []
+      gpu_semantics: unspecified
+      minimum_cpu_cores: 0.5
+      minimum_memory_gb: 0.7
+      dataset_size_gb: 0.1
+      ambiguities: []
+    candidate_gold:
+      preferred_candidate_ids:
+      - medium-pytorch-deep-learning
+      acceptable_candidate_ids:
+      - large-pytorch-deep-learning
+      - medium-pytorch-deep-learning
+    profile_gold:
+      preferred_profile_ids:
+      - medium
+      acceptable_profile_ids:
+      - large
+      - medium
+    image_gold:
+      preferred_image_ids:
+      - pytorch-deep-learning
+      acceptable_image_ids:
+      - pytorch-deep-learning
+      required_capabilities:
+      - pytorch
+    policy_gold:
+      required_constraints:
+      - allowed_profiles=small,medium,large
+      - gpu_allowed=false
+      explicitly_unsupported_requirements: []
+      expected_feasibility: feasible
+  source_provenance:
+    source_dataset_id: v5-development-reconstructed-v1
+    source_schema_version: protocol-v5-gold-family-v1.0.0
+    source_case_id: pytorch-mnist-cpu-paraphrase-en
+    source_split: development
+    evidence_classification: historical_formative_development_only
+    authoring_canonical_sha256: 0d3f502f5d5dc70e43452b650c1f479ffc2b05d43ad68864782837d8d6ec4c07
+    catalog_identity:
+      candidate_corpus_version: environment-candidate-corpus-v1
+      candidate_corpus_sha256: 987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444
+      image_catalog_version: 2026-08-06.1
+      image_catalog_sha256: bd2211d5fd769b5addec3c41e8cbd48bb0d9cd1c958aa554ada9bf88c29509f3
+      profile_catalog_sha256: c8f797b9c4d30459da99dad8d6d1c28e07e6803d76fab7cf88cdcd0f6c679348
+    label_review:
+      status: approved
+      reviewed_by: domain-reviewer-datn
+      reviewed_at_utc: '2026-09-28T09:00:00Z'
+      notes:
+      - Feasible CPU-only deep learning training using PyTorch for MNIST image classification.
+      - Dataset is 0.1GB; fits comfortably into medium profile (1 CPU core, 1GB RAM).
+      - Resolves to medium-pytorch-deep-learning candidate.
+    original_source_provenance:
+      source_dataset_id: vietnamese-intent-expansion-2026-09-24
+      source_schema_version: protocol-v5-gold-family-v1.0.0
+      source_family_id: pytorch-mnist-cpu-feasible
+      source_case_ids:
+      - pytorch-mnist-cpu-canonical-en
+      - pytorch-mnist-cpu-paraphrase-en
+      - pytorch-mnist-cpu-vi-natural
+      - pytorch-mnist-cpu-vi-colloquial
+      - pytorch-mnist-cpu-vi-abbrev
+      source_split: development
+      source_file_sha256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+      evidence_classification: human_reviewed_development
+      original_label_sha256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+- case_id: pytorch-mnist-cpu-vi-natural
+  family_id: pytorch-mnist-cpu-feasible
+  variant_id: pytorch-mnist-cpu-vi-natural
+  language: vi
+  prompt: Huấn luyện mạng nơ-ron đơn giản nhận diện chữ số MNIST bằng PyTorch trên
+    CPU.
+  inputs:
+    dataset_size_gb: 0.1
+    code_context_hints:
+    - import torch
+  family_metadata:
+    title: PyTorch MNIST CPU Feasible Training
+    workload_stratum: deep_learning
+    difficulty: medium
+    executable_workload_id: null
+  variant_metadata:
+    variant_class: vietnamese
+    equivalence_status: reviewed_equivalent
+  gold:
+    gold_structured_intent:
+      task_types:
+      - deep_learning
+      - model_training
+      required_features:
+      - pytorch
+      preferred_features: []
+      forbidden_features: []
+      required_frameworks:
+      - pytorch
+      preferred_frameworks: []
+      gpu_semantics: unspecified
+      minimum_cpu_cores: 0.5
+      minimum_memory_gb: 0.7
+      dataset_size_gb: 0.1
+      ambiguities: []
+    candidate_gold:
+      preferred_candidate_ids:
+      - medium-pytorch-deep-learning
+      acceptable_candidate_ids:
+      - large-pytorch-deep-learning
+      - medium-pytorch-deep-learning
+    profile_gold:
+      preferred_profile_ids:
+      - medium
+      acceptable_profile_ids:
+      - large
+      - medium
+    image_gold:
+      preferred_image_ids:
+      - pytorch-deep-learning
+      acceptable_image_ids:
+      - pytorch-deep-learning
+      required_capabilities:
+      - pytorch
+    policy_gold:
+      required_constraints:
+      - allowed_profiles=small,medium,large
+      - gpu_allowed=false
+      explicitly_unsupported_requirements: []
+      expected_feasibility: feasible
+  source_provenance:
+    source_dataset_id: v5-development-reconstructed-v1
+    source_schema_version: protocol-v5-gold-family-v1.0.0
+    source_case_id: pytorch-mnist-cpu-vi-natural
+    source_split: development
+    evidence_classification: historical_formative_development_only
+    authoring_canonical_sha256: 0d3f502f5d5dc70e43452b650c1f479ffc2b05d43ad68864782837d8d6ec4c07
+    catalog_identity:
+      candidate_corpus_version: environment-candidate-corpus-v1
+      candidate_corpus_sha256: 987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444
+      image_catalog_version: 2026-08-06.1
+      image_catalog_sha256: bd2211d5fd769b5addec3c41e8cbd48bb0d9cd1c958aa554ada9bf88c29509f3
+      profile_catalog_sha256: c8f797b9c4d30459da99dad8d6d1c28e07e6803d76fab7cf88cdcd0f6c679348
+    label_review:
+      status: approved
+      reviewed_by: domain-reviewer-datn
+      reviewed_at_utc: '2026-09-28T09:00:00Z'
+      notes:
+      - Feasible CPU-only deep learning training using PyTorch for MNIST image classification.
+      - Dataset is 0.1GB; fits comfortably into medium profile (1 CPU core, 1GB RAM).
+      - Resolves to medium-pytorch-deep-learning candidate.
+    original_source_provenance:
+      source_dataset_id: vietnamese-intent-expansion-2026-09-24
+      source_schema_version: protocol-v5-gold-family-v1.0.0
+      source_family_id: pytorch-mnist-cpu-feasible
+      source_case_ids:
+      - pytorch-mnist-cpu-canonical-en
+      - pytorch-mnist-cpu-paraphrase-en
+      - pytorch-mnist-cpu-vi-natural
+      - pytorch-mnist-cpu-vi-colloquial
+      - pytorch-mnist-cpu-vi-abbrev
+      source_split: development
+      source_file_sha256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+      evidence_classification: human_reviewed_development
+      original_label_sha256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+- case_id: pytorch-mnist-cpu-vi-colloquial
+  family_id: pytorch-mnist-cpu-feasible
+  variant_id: pytorch-mnist-cpu-vi-colloquial
+  language: vi
+  prompt: Cần notebook train thử model nhận diện chữ viết tay nhẹ nhẹ trên CPU tầm
+    1 tiếng, cấp ram vừa đủ tầm 1GB nhé.
+  inputs:
+    dataset_size_gb: 0.1
+    code_context_hints:
+    - import torch
+  family_metadata:
+    title: PyTorch MNIST CPU Feasible Training
+    workload_stratum: deep_learning
+    difficulty: medium
+    executable_workload_id: null
+  variant_metadata:
+    variant_class: vietnamese
+    equivalence_status: reviewed_equivalent
+  gold:
+    gold_structured_intent:
+      task_types:
+      - deep_learning
+      - model_training
+      required_features:
+      - pytorch
+      preferred_features: []
+      forbidden_features: []
+      required_frameworks:
+      - pytorch
+      preferred_frameworks: []
+      gpu_semantics: unspecified
+      minimum_cpu_cores: 0.5
+      minimum_memory_gb: 0.7
+      dataset_size_gb: 0.1
+      ambiguities: []
+    candidate_gold:
+      preferred_candidate_ids:
+      - medium-pytorch-deep-learning
+      acceptable_candidate_ids:
+      - large-pytorch-deep-learning
+      - medium-pytorch-deep-learning
+    profile_gold:
+      preferred_profile_ids:
+      - medium
+      acceptable_profile_ids:
+      - large
+      - medium
+    image_gold:
+      preferred_image_ids:
+      - pytorch-deep-learning
+      acceptable_image_ids:
+      - pytorch-deep-learning
+      required_capabilities:
+      - pytorch
+    policy_gold:
+      required_constraints:
+      - allowed_profiles=small,medium,large
+      - gpu_allowed=false
+      explicitly_unsupported_requirements: []
+      expected_feasibility: feasible
+  source_provenance:
+    source_dataset_id: v5-development-reconstructed-v1
+    source_schema_version: protocol-v5-gold-family-v1.0.0
+    source_case_id: pytorch-mnist-cpu-vi-colloquial
+    source_split: development
+    evidence_classification: historical_formative_development_only
+    authoring_canonical_sha256: 0d3f502f5d5dc70e43452b650c1f479ffc2b05d43ad68864782837d8d6ec4c07
+    catalog_identity:
+      candidate_corpus_version: environment-candidate-corpus-v1
+      candidate_corpus_sha256: 987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444
+      image_catalog_version: 2026-08-06.1
+      image_catalog_sha256: bd2211d5fd769b5addec3c41e8cbd48bb0d9cd1c958aa554ada9bf88c29509f3
+      profile_catalog_sha256: c8f797b9c4d30459da99dad8d6d1c28e07e6803d76fab7cf88cdcd0f6c679348
+    label_review:
+      status: approved
+      reviewed_by: domain-reviewer-datn
+      reviewed_at_utc: '2026-09-28T09:00:00Z'
+      notes:
+      - Feasible CPU-only deep learning training using PyTorch for MNIST image classification.
+      - Dataset is 0.1GB; fits comfortably into medium profile (1 CPU core, 1GB RAM).
+      - Resolves to medium-pytorch-deep-learning candidate.
+    original_source_provenance:
+      source_dataset_id: vietnamese-intent-expansion-2026-09-24
+      source_schema_version: protocol-v5-gold-family-v1.0.0
+      source_family_id: pytorch-mnist-cpu-feasible
+      source_case_ids:
+      - pytorch-mnist-cpu-canonical-en
+      - pytorch-mnist-cpu-paraphrase-en
+      - pytorch-mnist-cpu-vi-natural
+      - pytorch-mnist-cpu-vi-colloquial
+      - pytorch-mnist-cpu-vi-abbrev
+      source_split: development
+      source_file_sha256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+      evidence_classification: human_reviewed_development
+      original_label_sha256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+- case_id: pytorch-mnist-cpu-vi-abbrev
+  family_id: pytorch-mnist-cpu-feasible
+  variant_id: pytorch-mnist-cpu-vi-abbrev
+  language: vi
+  prompt: Train con CNN nhỏ phân loại ảnh MNIST bằng pytorch cpu thôi, ram 1gb là
+    đủ dùng.
+  inputs:
+    dataset_size_gb: 0.1
+    code_context_hints:
+    - import torch
+  family_metadata:
+    title: PyTorch MNIST CPU Feasible Training
+    workload_stratum: deep_learning
+    difficulty: medium
+    executable_workload_id: null
+  variant_metadata:
+    variant_class: vietnamese
+    equivalence_status: reviewed_equivalent
+  gold:
+    gold_structured_intent:
+      task_types:
+      - deep_learning
+      - model_training
+      required_features:
+      - pytorch
+      preferred_features: []
+      forbidden_features: []
+      required_frameworks:
+      - pytorch
+      preferred_frameworks: []
+      gpu_semantics: unspecified
+      minimum_cpu_cores: 0.5
+      minimum_memory_gb: 0.7
+      dataset_size_gb: 0.1
+      ambiguities: []
+    candidate_gold:
+      preferred_candidate_ids:
+      - medium-pytorch-deep-learning
+      acceptable_candidate_ids:
+      - large-pytorch-deep-learning
+      - medium-pytorch-deep-learning
+    profile_gold:
+      preferred_profile_ids:
+      - medium
+      acceptable_profile_ids:
+      - large
+      - medium
+    image_gold:
+      preferred_image_ids:
+      - pytorch-deep-learning
+      acceptable_image_ids:
+      - pytorch-deep-learning
+      required_capabilities:
+      - pytorch
+    policy_gold:
+      required_constraints:
+      - allowed_profiles=small,medium,large
+      - gpu_allowed=false
+      explicitly_unsupported_requirements: []
+      expected_feasibility: feasible
+  source_provenance:
+    source_dataset_id: v5-development-reconstructed-v1
+    source_schema_version: protocol-v5-gold-family-v1.0.0
+    source_case_id: pytorch-mnist-cpu-vi-abbrev
+    source_split: development
+    evidence_classification: historical_formative_development_only
+    authoring_canonical_sha256: 0d3f502f5d5dc70e43452b650c1f479ffc2b05d43ad68864782837d8d6ec4c07
+    catalog_identity:
+      candidate_corpus_version: environment-candidate-corpus-v1
+      candidate_corpus_sha256: 987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444
+      image_catalog_version: 2026-08-06.1
+      image_catalog_sha256: bd2211d5fd769b5addec3c41e8cbd48bb0d9cd1c958aa554ada9bf88c29509f3
+      profile_catalog_sha256: c8f797b9c4d30459da99dad8d6d1c28e07e6803d76fab7cf88cdcd0f6c679348
+    label_review:
+      status: approved
+      reviewed_by: domain-reviewer-datn
+      reviewed_at_utc: '2026-09-28T09:00:00Z'
+      notes:
+      - Feasible CPU-only deep learning training using PyTorch for MNIST image classification.
+      - Dataset is 0.1GB; fits comfortably into medium profile (1 CPU core, 1GB RAM).
+      - Resolves to medium-pytorch-deep-learning candidate.
+    original_source_provenance:
+      source_dataset_id: vietnamese-intent-expansion-2026-09-24
+      source_schema_version: protocol-v5-gold-family-v1.0.0
+      source_family_id: pytorch-mnist-cpu-feasible
+      source_case_ids:
+      - pytorch-mnist-cpu-canonical-en
+      - pytorch-mnist-cpu-paraphrase-en
+      - pytorch-mnist-cpu-vi-natural
+      - pytorch-mnist-cpu-vi-colloquial
+      - pytorch-mnist-cpu-vi-abbrev
       source_split: development
       source_file_sha256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
       evidence_classification: human_reviewed_development
