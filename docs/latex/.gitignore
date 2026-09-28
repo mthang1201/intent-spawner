@@ -64,3 +64,5 @@
 # Vim
 *.swp
 *.swo
+
+.docx
