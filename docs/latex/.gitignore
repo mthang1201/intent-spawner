@@ -1,0 +1,66 @@
+# =========================
+# LaTeX build artifacts
+# =========================
+
+*.aux
+*.bbl
+*.bcf
+*.blg
+*.fdb_latexmk
+*.fls
+*.log
+*.out
+*.run.xml
+*.synctex
+*.synctex.gz
+*.toc
+*.lof
+*.lot
+*.nav
+*.snm
+*.vrb
+*.xdv
+
+# Glossaries / indexes
+*.acn
+*.acr
+*.alg
+*.glg
+*.glo
+*.gls
+*.glsdefs
+*.ist
+*.idx
+*.ilg
+*.ind
+
+# Bibliography / biber
+*.run.xml
+
+# LaTeX Workshop / temporary files
+.latex-workshop/
+
+# =========================
+# OS generated files
+# =========================
+
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# macOS thumbnail / metadata
+._*
+
+# =========================
+# Editor
+# =========================
+
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+
+.idea/
+
+# Vim
+*.swp
+*.swo
