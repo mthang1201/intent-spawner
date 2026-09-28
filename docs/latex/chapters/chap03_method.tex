@@ -1,6 +1,6 @@
 \chapter{Proposed Method}
 
-\section{System taxonomy and design objective}
+\section{System Taxonomy, Intent, and Candidate Retrieval}
 The thesis distinguishes four systems. \textbf{B0} is the default manual JupyterHub selection workflow and generates no ranking. \textbf{P1} is the frozen existing rule-based recommender. \textbf{P2} is the principal proposed method: structured workload intent, hybrid retrieval, deterministic constraints, and ranking. \textbf{P3} is a grounded large-language-model reranking extension, considered only if it passes a development gate. P3 did not satisfy the retained-branch criterion in the current development evidence and is not part of the main deployed path.
 
 P2's objective is to return an inspectable, policy-compliant ordering of candidates in a finite administrator-owned catalog. The output is advisory until the authenticated user confirms it. A candidate that fails a mandatory constraint is not made acceptable by high retrieval relevance. The design objective can therefore be summarized as a constrained ranking problem:
@@ -26,14 +26,12 @@ where $q$ is validated structured intent, $C$ is the active catalog, $H$ is the 
 \end{tikzpicture}
 \end{figure}
 
-\subsection{Structured intent representation}
 The raw request is first parsed into a versioned \emph{StructuredIntent}. This representation keeps free text available for retrieval while separating explicit constraints from inferred task descriptors. Representative fields include canonical task terms, required capabilities, excluded capabilities, optional framework and library hints, minimum resource requests when explicitly stated, accelerator requirements, dataset/workload hints, and provenance indicating whether a value was directly supplied or inferred. A schema validator rejects malformed types and bounds before retrieval begins.
 
 The distinction between explicit and inferred fields prevents a soft semantic interpretation from becoming an accidental mandatory requirement. For example, “I want to explore a medium-sized CSV” may contribute data-analysis terms and an approximate workload tag, but it does not establish a measured memory requirement. In contrast, “the notebook must have at least 8 GiB” can be represented as a numeric minimum and checked against candidate metadata. If the language parser is uncertain, the system should preserve that uncertainty or ask the user to edit the preview rather than silently turning it into a hard constraint.
 
 StructuredIntent is an interface contract between language interpretation and candidate ranking. Its schema version, normalization behavior, and field semantics need to be frozen for a confirmatory run. If a schema changes after development, the dataset and implementation provenance must make that change explicit. The experiment protocol treats a change in parsing behavior as a material change to the system, not as an invisible data-cleaning adjustment.
 
-\subsection{Hybrid candidate retrieval}
 Each candidate in the administrator catalog has searchable text derived from its stable identifier, description, capabilities, framework/library metadata, resource class, and other approved attributes. P2 evaluates a lexical retrieval channel and a dense semantic retrieval channel. BM25 helps preserve exact technical vocabulary; dense retrieval helps with paraphrase and semantically related expressions \cite{bm25,sentencebert,dpr,sparse_dense}. Each channel emits an ordered candidate list. RRF fuses the ranks:
 \[
 S_{\mathrm{hybrid}}(c\mid q)=\sum_{m\in\{\mathrm{BM25},\mathrm{dense}\}}\frac{1}{k+r_m(c)},
@@ -42,7 +40,7 @@ where $r_m(c)$ is the candidate's one-based rank from method $m$, and a missing 
 
 Hybrid retrieval is intentionally a shortlist generator. It does not decide whether a candidate is policy-compliant and does not treat the dense score as a probability. This separation allows the system to combine complementary retrieval behavior without allowing similarity to overrule explicit requirements. E1/E2 separately record retrieval recall and final recommendation metrics so that a retrieval failure is not misattributed to downstream ranking.
 
-\section{Hard constraints and deterministic ranking}
+\section{Feasibility, Ranking, and User Confirmation}
 Let $R(q)$ be the candidates returned by retrieval. P2 evaluates each candidate against hard constraints $h_j(q,c)\in\{0,1\}$. Feasibility is
 \[
 H(q,c)=\prod_{j=1}^{J}h_j(q,c).
@@ -53,12 +51,10 @@ For candidates that remain feasible, a deterministic ranking function combines c
 
 The empty feasible set is a meaningful system outcome. It should be surfaced to the user with the reason that no current catalog candidate satisfies the request. The user can revise the request or choose an existing allowlisted manual profile according to deployment policy. P2 must not weaken a hard constraint to force a non-empty result. This behavior is especially important for unsupported accelerator, memory, or software requirements.
 
-\subsection{Trusted candidate corpus and policy boundary}
 The user's language is untrusted input. Candidate identifiers, image references, profile mappings, constraints, and policy are administrator-owned data. The recommender returns an identifier, not an arbitrary container reference or raw Kubernetes object. The integration resolves that identifier from the current trusted catalog, verifies that the candidate is enabled and allowlisted, and checks the catalog and policy version before preparing a preview. Images are expected to be digest pinned for immutable identity.
 
 This boundary constrains the effect of parsing and ranking errors. A mistaken interpretation can recommend the wrong approved profile, but it should not authorize an unapproved image or inject arbitrary Pod configuration. Kubernetes admission remains the final enforcement point. A preview token is bound to the authenticated user and the stored decision; it is single use and has a time-to-live. Changes to the request invalidate the old decision and require another preview. The pre-spawn hook applies the stored confirmed selection rather than rerunning the model at spawn time, so the decision visible to the user is the decision applied by the integration.
 
-\subsection{Preview, confirmation, and pre-spawn binding}
 The interaction is organized as a state transition:
 \begin{enumerate}
 \item The authenticated user submits an intent and optional explicit hints.
@@ -71,40 +67,36 @@ The interaction is organized as a state transition:
 
 The stored-state design prevents time-of-check/time-of-use drift from silently changing the choice after confirmation. It does not make cluster admission atomic with preview. If the policy or catalog version changes, the stored choice can be rejected and the user asked to generate a fresh preview. If the Pod fails to schedule, ordinary Kubernetes diagnostics apply; that failure is not evidence that the semantic recommender made a wrong ranking decision.
 
-\section{Rationale for the selected architecture}
+\section{Architecture and Optional Extensions}
 The architecture chooses hybrid retrieval because the catalog has both exact technical vocabulary and human-readable descriptions. A sparse method is responsive to framework and package names; a dense method can help when task wording differs from candidate descriptions. Rank fusion avoids treating raw relevance scores from different systems as directly comparable. Deterministic feasibility comes after retrieval because a hard requirement should not be represented as a compensable preference. Finally, catalog resolution occurs after the ranking stage because the ranking result must never itself become authority to choose an arbitrary image.
 
 Each choice has a limitation. BM25 depends on useful tokenization and metadata. Dense retrieval depends on the embedding model and may blur near-neighbor concepts. Fusion depends on the retrieval depth and constant. A fixed constraint set may not capture every operational rule. Deterministic ranking can be repeatable while still being wrong if the catalog is inaccurate. The architecture does not remove these limitations; it creates separate interfaces and versions so that they can be tested and updated without obscuring what changed.
 
 The preview and confirmation step is also a deliberate design choice. An automatic spawn could reduce interaction, but it would transfer authority to a system whose interpretation may be incomplete. A preview makes the recommendation useful without requiring users to trust it blindly. The state token also ensures that confirmation applies to the option displayed. This additional interaction has a cost and must be tested with participants. Since E3 has not been executed, the thesis cannot yet claim that the design strikes the optimal balance between speed and user control.
 
-\subsection{Optional dynamic sizing and reprovisioning}
 The repository contains prototype extensions for resource profile generation and intent-aware reprovisioning. Dynamic sizing applies configured bounds and policy to explicit workload information and profile metadata. It is not the principal P2 ranking method and is not an exact demand predictor. Any generated size must respect administrator minima/maxima and be distinguished from values derived from independent telemetry. The extension should be evaluated separately because it changes the action space and the resource-safety claim.
 
 The reprovisioning design supports a user requesting a different environment after a session exists. It is a stop-and-recreate workflow with explicit lifecycle and persistent-volume considerations, not in-place migration of a running process. User files must be preserved according to storage policy; kernel state and in-memory objects cannot be assumed to survive recreation. The current thesis treats this feature as a prototype extension and makes no claim of transparent migration or production-grade availability.
 
-\subsection{Ranking pipeline and score interpretation}
 The method can be represented as a sequence of typed transformations. Let $x$ denote the original request, $N_v$ a versioned intent normalizer, $I=N_v(x)$ the structured intent, $T_m$ the catalog text for candidate $m$, and $E$ the active catalog/index version. Retrieval computes two ordered lists, $L_s=\operatorname{BM25}(I,E)$ and $L_d=\operatorname{Dense}(I,E)$. The fused list is $L_f=\operatorname{RRF}(L_s,L_d)$. Constraint evaluation produces the feasible set $F=\{c\in L_f:H(I,c)=1\}$. A configured preference function $P(I,c)$ orders $F$, with deterministic tie-breaking on stable candidate identifiers. This sequence makes it possible to attribute an error to interpretation, candidate recall, feasibility metadata, or final ranking rather than treating the recommender as one opaque score.
 
 A high fused rank means that the candidate appeared near the top of one or both retrieval lists; it does not mean the candidate has a stated probability of success. Similarly, the preference score orders candidates under the configured policy and is not calibrated confidence. The interface should avoid percentages that imply calibration unless a separate calibration analysis has been performed. A compact rationale can report exact-match terms, semantic task tags, and constraints satisfied, while separately showing any uncertain inferred field.
 
 This architecture encourages a conservative rule for missing metadata. If a user explicitly requires an accelerator and the candidate record lacks accelerator support, the system should treat it as not demonstrated and exclude it, unless the policy explicitly defines an unknown state that triggers user review. It should not impute capability from a nearby name or from the embedding similarity of the description. This conservative handling may lower top-one coverage when metadata is incomplete, but it keeps a hard requirement from being masked by a soft signal.
 
-\section{Algorithmic outline}
+\section{Algorithm, Threat Model, and Auditability}
 Algorithmically, P2 has two responsibilities: rank feasible items and produce a result that can be applied later without recomputation. The first responsibility is a deterministic function of the normalized request, catalog, index, and frozen configuration. The second responsibility is a state-management function that binds the selected candidate to user confirmation and the hook.
 
 The recommendation routine performs schema validation before accessing the index. It then queries each retriever with a fixed depth, merges candidate identifiers, computes fused ranks, and asks the constraint evaluator to return a structured feasibility record for every candidate. The output records candidates removed by each hard constraint, when that explanation can be disclosed safely. The remaining list is sorted by a fixed preference tuple, such as descending configured score followed by ascending stable identifier. All inputs that can affect this order are versioned.
 
 The preview service stores the exact candidate identifier and decision context. The confirmation endpoint atomically consumes the token and marks the preview confirmed. On spawn, the hook verifies the authenticated user binding, expiration, token state, policy version, and catalog resolution. If any check fails, the hook does not substitute a newly ranked option because that would violate the preview contract. It fails with a clear requirement to regenerate or manually select an approved profile. This separation supports audit logs that connect an observed Pod configuration to the decision the user saw.
 
-\subsection{Threat model}
 The threat model includes accidental malformed input, adversarial text attempting to name an unapproved image, replay of an old confirmation token, cross-user token use, stale catalog references, metadata errors, retrieval outages, and concurrent consumption. The core security response is to treat user intent only as data, resolve all selections through administrator-owned identifiers, validate policy again at the hook, bind tokens to users, and consume tokens atomically. The threat model does not assume that the recommender can defend against a compromised Hub, cluster administrator, catalog signing key, or Kubernetes control plane.
 
 Prompt injection is less central in the P2 path because P2 does not ask an LLM to generate deployable configuration. If an optional P3 component is introduced, its output must be limited to reranking identifiers from the already feasible candidate set. It must not add a new image, weaken a constraint, or alter resource values. The P3 gate exists partly because extra model complexity creates failure modes and operational cost; a branch that lacks measurable ranking headroom should not be retained.
 
 Metadata poisoning is addressed through code review, versioned catalog provenance, digest-pinned image references, and bounded functional tests. These do not prove the image is harmless. They establish which artifact was tested and constrain mutable tags. Runtime sandboxing and container security remain deployment responsibilities.
 
-\subsection{Privacy, auditability, and reproducibility}
 The system should retain only the information necessary to explain a decision and support audit. Logs should avoid raw participant identifiers and unnecessary full free-text prompts. User-study records must be pseudonymized, and participant data must be governed by consent and retention rules. Operational provenance should record timestamp, source revision, protocol version, dataset checksum, backend and index versions, and relevant environment identity. Recommendation output, raw observations, derived metrics, statistical conclusions, and interpretation are separate artifacts.
 
 Reproducibility also requires frozen comparator versions and a protected confirmatory split. No prompts, retrieval parameters, candidate metadata, thresholds, ranking weights, constraints, or P3 settings may be tuned on final confirmatory cases. Workload family is the semantic independent unit. Repeated stochastic executions estimate variability; prompt paraphrases and repeats do not inflate the independent sample count. These requirements make the evaluation design part of the method rather than an afterthought.
