@@ -103,6 +103,7 @@ luatexbase.add_to_callback("mathfont.add_math_constants", custom_math_constants,
 \DeclareRobustCommand\englishsupervisor[1]{\global\def\@meta@englishsupervisor{#1}}
 \DeclareRobustCommand\englishcosupervisor[1]{\global\def\@meta@englishcosupervisor{#1}}
 \newenvironment{coverpage}{%
+	\thispagestyle{empty}%
 	\setlength\parindent{0cm}\tikz[overlay, remember picture]{
 		\draw[line width=3pt,color=black,fill=none]
 			($(current page.north west)+(2.5cm,-2cm)$) rectangle ($(current page.south east)-(1.5cm,-2.5cm)$);
@@ -115,11 +116,11 @@ luatexbase.add_to_callback("mathfont.add_math_constants", custom_math_constants,
 		\centering%
 		\setfontsize{12pt}\textbf{VIETNAM NATIONAL UNIVERSITY, HANOI}\par
 		\textbf{UNIVERSITY OF ENGINEERING AND TECHNOLOGY}\par
-		\vspace{2cm}\includegraphics[scale=0.6]{UET logo.pdf}\par
+		\vspace{2cm}\includegraphics[scale=0.6]{images/UET_logo.pdf}\par
 		\vspace{0.5cm}\setfontsize{14pt}\textbf{\@meta@studentname}\par
 		\vspace{1.5cm}\setfontsize{18pt}\textbf{\MakeUppercase{\@meta@title}}\par
 		\vspace{2cm}\setfontsize{14pt}\textbf{\MakeUppercase{\@meta@documenttype}}\par
-		\textbf{Ngành: \@meta@major}\par
+		\textbf{Major: \@meta@major}\par
 		\vfill\setfontsize{12pt}\textbf{HA NOI -- \@meta@year}\par%
 	\end{coverpage}
 	\begin{coverpage}%
@@ -130,7 +131,7 @@ luatexbase.add_to_callback("mathfont.add_math_constants", custom_math_constants,
 			\vspace{1.5cm}\setfontsize{14pt}\textbf{\@meta@studentname}\par
 			\vspace{1.5cm}\setfontsize{18pt}\textbf{\MakeUppercase{\@meta@title}}\par
 			\vspace{3cm}\setfontsize{14pt}\textbf{\MakeUppercase{\@meta@documenttype}}\par
-			\textbf{Ngành: \@meta@major}\par%
+			\textbf{Major: \@meta@major}\par%
 		}
 		\vspace{2.5cm}\setfontsize{14pt}\textbf{Supervisor: \@meta@supervisor}\par%
 		\if@meta@hascosupervisor\vspace{3cm}\textbf{Co-Supervisor: \@meta@cosupervisor}\par\fi%
@@ -153,6 +154,10 @@ luatexbase.add_to_callback("mathfont.add_math_constants", custom_math_constants,
 			\centering\vfill\setfontsize{12pt}\textbf{HÀ NỘI -- \@meta@year}\par%
 		}
 	\end{coverpage}\fi
+	\clearpage
+	\pagestyle{plain}%
+	\pagenumbering{roman}%
+	\setcounter{page}{1}%
 }
 
 \newenvironment{preamble}[1]{%
@@ -171,7 +176,7 @@ luatexbase.add_to_callback("mathfont.add_math_constants", custom_math_constants,
 	}\fi%
 	\noindent\Large\textbf{#1}\par\vspace{1cm}\normalsize
 }{\clearpage}
-\newcommand\tableofcontents{\begin{contentlistingsection}{Mục lục}\@starttoc{toc}\end{contentlistingsection}}
+\newcommand\tableofcontents{\begin{contentlistingsection}{Contents}\@starttoc{toc}\end{contentlistingsection}}
 \renewcommand\numberline[2]{#1 #2}
 \newcommand\@tocline[4]{\ifnum #1>\c@tocdepth\else
 	\vskip\z@\@plus.2\p@{%
@@ -190,7 +195,7 @@ luatexbase.add_to_callback("mathfont.add_math_constants", custom_math_constants,
 \renewcommand\thechapter{\@arabic\c@chapter}
 \renewcommand\thesection{\thechapter.\@arabic\c@section}
 \renewcommand\thesubsection{\thesection.\@arabic\c@subsection}
-\newcommand\@chapterprefix{Chương}
+\newcommand\@chapterprefix{Chapter}
 \newif\if@firstchapter\@firstchaptertrue
 \newcommand\chapter[1]{%
 	\clearpage\refstepcounter{chapter}
@@ -256,40 +261,40 @@ luatexbase.add_to_callback("mathfont.add_math_constants", custom_math_constants,
 		\refstepcounter{a@#1}\def\@captiontext{##2}\ifx&##1&\@float{a@#1}\else\@float{a@#1}[##1]\fi#4%
 	}{#5\csname enda@#1\endcsname}
 }
-\makeattachmenttype{figure}{tbp}{Hình}{}{%
+\makeattachmenttype{figure}{tbp}{Figure}{}{%
 	\vspace{0.25cm}\attachmentcaptionbox{\centering\small\attachmentcaption}%
-}{lof}{\listoffigures}{Danh sách hình vẽ}
-\makeattachmenttype{table}{tbp}{Bảng}{%
+}{lof}{\listoffigures}{List of Figures}
+\makeattachmenttype{table}{tbp}{Table}{%
 	\attachmentcaptionbox{\centering\small\textbf{\attachmentcaption}}\vspace{0.25cm}%
-}{}{lot}{\listoftables}{Danh sách bảng}
+}{}{lot}{\listoftables}{List of Tables}
 
 \renewcommand\footnoterule{\kern-3\p@\hrule\@width.4\columnwidth\kern2.6\p@}
 \newcommand\@makefntext[1]{\parindent 1em\noindent\hb@xt@1.8em{\hss\@makefnmark}#1}
 
-\newcommand\bibname{Tài liệu tham khảo}
+\newcommand\bibname{References}
 \newcounter{bibitem}
 \renewcommand\thebibitem{\@arabic\c@bibitem}
 \newif\if@inthebibliography\@inthebibliographyfalse
 \newif\if@inbibsection\@inbibsectionfalse
-\newenvironment{thebibliography}[1]{
-	\@inthebibliographytrue\settowidth\labelwidth{\@biblabel{#1}}
-	\clearpage\noindent\Large\textbf{\bibname}\par\normalsize\vspace{1cm}
-}{\@inthebibliographyfalse}
-\newenvironment{bibsection}[1]{%
-	\if@inthebibliography\else\PackageError{uetgraduation}{\`bibsection\` not in \`thebibliography\`.}{
-		A bibliography section needs to be placed in \`thebibliography\` environment.
-	}\fi\@inbibsectiontrue%
-	\noindent\textbf{#1}
-	\list{\@biblabel{\thebibitem}}{
+\def\newblock{\hskip .11em\@plus.33em\@minus.07em}
+\newenvironment{thebibliography}[1]{%
+	\@inthebibliographytrue
+	\clearpage\noindent\Large\textbf{\bibname}\par\normalsize\vspace{1cm}%
+	\list{\@biblabel{\thebibitem}}{%
+		\settowidth\labelwidth{\@biblabel{#1}}%
 		\leftmargin\labelwidth\advance\leftmargin\labelsep
-		\@nmbrlisttrue\def\@listctr{bibitem}
+		\@nmbrlisttrue\def\@listctr{bibitem}%
 	}%
 	\sloppy\clubpenalty 4000\@clubpenalty \clubpenalty\widowpenalty 4000\sfcode`\.\@m
-}{\def\@noitemerr{}\endlist\@inbibsectionfalse}
+}{%
+	\def\@noitemerr{}\endlist
+	\@inthebibliographyfalse
+}
+\newenvironment{bibsection}[1]{%
+	\item[]\hspace*{-\leftmargin}\textbf{#1}\par\vspace{0.3cm}%
+}{%
+}
 \renewcommand\bibitem[1]{%
-	\if@inbibsection\else\PackageError{uetgraduation}{\`bibitem\` not in \`bibsection\`.}{
-		A bibliography item needs to be placed in a \`bibsection\` environment.
-	}\fi%
 	\item\if@filesw\immediate\write\@auxout{\string\bibcite{#1}{\the\value{\@listctr}}}\fi\ignorespaces
 }
 
@@ -297,8 +302,7 @@ luatexbase.add_to_callback("mathfont.add_math_constants", custom_math_constants,
 \mathchardef\mdot="202E % Multiplication dot (.).
 \mathchardef\ngt="2D % Negative sign (-).
 
-% No page numbering for the cover and preamble pages, page numbering will automatically start at the first chapter.
-\pagestyle{empty}
+% Roman page numbering starts after covers, and arabic numbering begins at Chapter 1.
 \bibliographystyle{plain}
 
 % Prevent overflow of the text column at all costs.

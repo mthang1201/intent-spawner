@@ -1,18 +1,77 @@
 \documentclass{uetgraduation}
-
+\usepackage{setspace}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{longtable}
+\usepackage{caption}\usetikzlibrary{positioning}
+\usepackage{url}
+\usepackage{microtype}
+\geometry{bottom=3cm}
+\setlength{\parindent}{1cm}
+\setlength{\parskip}{6pt}
+\AtBeginDocument{\setfontsize{13pt}\setstretch{1.3}}
+\graphicspath{{figures/}{images/}}
 \begin{document}
-
-\studentname{Bùi Minh Thắng}
+\studentname{Bui Minh Thang}
 \title{Design and Evaluation of a Context-Aware Resource Profile Selection Extension for JupyterHub on Kubernetes}
-\documenttype{Khóa luận tốt nghiệp đại học hệ chính quy}
-\major{Mạng máy tính và truyền thông dữ liệu}
+\documenttype{Graduation Thesis}
+\major{Computer Networks and Data Communications}
 \year{2026}
-\supervisor{Tên giảng viên hướng dẫn}
-
+\supervisor{Dr. Hoang Xuan Tung}
 \makecovers
+\addcontentsline{toc}{chapter}{Abstract}
+\begin{preamble}{Abstract}
+Shared JupyterHub deployments commonly expose administrator-defined notebook environments through manual profile and image selectors. This preserves operational control, but requires users to translate a workload described in semantic terms into software-image and Kubernetes resource choices before a pod exists. This thesis studies Intent-Spawner, a bounded pre-spawn decision-support workflow for that choice. Its principal method, P2, converts natural-language workload intent and explicit hints into a validated structured representation, retrieves administrator-curated candidates using BM25 and dense retrieval, fuses their ranks with Reciprocal Rank Fusion, removes candidates that violate hard constraints, and ranks feasible candidates deterministically. The selected identifier is resolved from trusted administrator data and checked against policy, profile allowlists, catalog versions, and digest-pinned image identity. A preview lets the authenticated user confirm, edit, or choose an allowlisted manual override. A single-use, user-bound token binds the confirmed preview to the pre-spawn hook, which applies the stored decision without recomputing the recommendation.
 
-\chapter{Mở đầu}
+The thesis defines B0 as ordinary manual JupyterHub selection, P1 as a frozen rule-based recommender, P2 as the proposed structured-intent hybrid-retrieval method, and P3 as an optional grounded language-model reranker. Protocol-v5 separates offline recommendation and language robustness (E1/E2), human outcomes (E3), independently observed resource envelopes (E4), and image functionality and storage (E5). P3 was not retained after its development gate. Available evidence includes a development-only E1/E2 run over 18 workload families and 83 prompt variants, local OrbStack E4 observations of 421 Pod trials across 20 workload families, and E5 Docker/OCI observations for four digest-pinned images on linux/arm64. These packages are bounded observations, not confirmatory evaluations. E3 has no participant observations; the consolidated Protocol-v5 analysis is INCOMPLETE and all confirmatory decisions are \texttt{NOT\_EXECUTED}. The thesis therefore presents the system design, implementation, and evaluation infrastructure, but does not claim confirmatory superiority, user benefit, general cluster efficiency, production readiness, or realized node-storage savings.
 
-Đây là nội dung thử nghiệm.
+The main contribution is an auditable composition of workload-intent parsing, hybrid retrieval, deterministic feasibility and ranking, trusted catalog resolution, and explicit human confirmation at the JupyterHub pre-spawn boundary. The work also establishes a reproducible protocol for evaluating recommendation quality, language robustness, human outcomes, resource envelopes, and image behavior as distinct constructs. Optional dynamic sizing and stop/recreate reprovisioning are prototype extensions; neither is an exact demand oracle nor live migration.
 
+\textbf{Keywords:} JupyterHub; Kubernetes; workload intent; hybrid retrieval.
+\end{preamble}
+\addcontentsline{toc}{chapter}{Authorship Declaration}
+\begin{preamble}{Authorship Declaration}
+I declare that this thesis is my own work, except where the contributions of others are explicitly acknowledged and cited. I have not presented planned or incomplete experiments as completed results. All empirical statements in this manuscript are limited to the provenance and evidence status recorded in the repository.\par\vspace{1cm}
+Signature: \rule{6cm}{0.4pt}
+\end{preamble}
+\addcontentsline{toc}{chapter}{Acknowledgements}
+\begin{preamble}{Acknowledgements}
+The author would like to express sincere gratitude to the thesis supervisor, Dr. Hoang Xuan Tung, for guidance, critical feedback, and encouragement throughout the development and evaluation of this work. The author is also grateful to the lecturers and staff of the Faculty of Information Technology, University of Engineering and Technology, Vietnam National University, Hanoi, for the technical and academic foundation that made this project possible.
+
+The implementation and evaluation work required repeated review of JupyterHub, Kubernetes, information-retrieval, recommender-system, container-image, and human-computer-interaction concepts. Appreciation is extended to colleagues, friends, and family members whose discussions and practical support helped sustain this iterative process. Any remaining errors, limitations, or interpretation choices in this thesis are the responsibility of the author.
+\end{preamble}
+\begin{contentlisting}
+\tableofcontents
+\addcontentsline{toc}{chapter}{List of Figures}
+\listoffigures
+\addcontentsline{toc}{chapter}{List of Tables}
+\listoftables
+\addcontentsline{toc}{chapter}{Abbreviations}
+\begin{contentlistingsection}{Abbreviations}
+\begin{tabular}{ll}
+API & Application Programming Interface\\
+BM25 & Best Matching 25\\
+CPU & Central Processing Unit\\
+GPU & Graphics Processing Unit\\
+HCI & Human-Computer Interaction\\
+IR & Information Retrieval\\
+LLM & Large Language Model\\
+MRR & Mean Reciprocal Rank\\
+nDCG & Normalized Discounted Cumulative Gain\\
+OCI & Open Container Initiative\\
+POD & Plain Old Data / Kubernetes Pod (context dependent)\\
+RRF & Reciprocal Rank Fusion\\
+RQ & Research Question\\
+TTL & Time to Live\\
+VPA & Vertical Pod Autoscaler\\
+\end{tabular}
+\end{contentlistingsection}
+\end{contentlisting}
+\input{chapters/chap01_introduction}
+\input{chapters/chap02_background}
+\input{chapters/chap03_method}
+\input{chapters/chap04_experiments}
+\input{chapters/chap05_conclusion}
+\addcontentsline{toc}{chapter}{References}
+\bibliography{references}
 \end{document}

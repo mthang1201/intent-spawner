@@ -1,0 +1,7 @@
+stream,stage,status,scope
+E1-E2,development,OBSERVED,18 workload families and 83 prompt variants; non-confirmatory
+E3,confirmatory,NOT_EXECUTED,no participant observations
+E4,local observation,OBSERVED,421 Pod trials across 20 workload families in OrbStack
+E5 functional,development,OBSERVED,17 probe specifications and 166 evaluated recommendations
+E5 storage,development,OBSERVED,four approved images on linux/arm64
+P3,development gate,NOT_RETAINED,zero ranking-error families in gate set
