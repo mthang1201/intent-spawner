@@ -88,7 +88,7 @@ where $q_s$ is an expanded lexical query constructed from the intent, $\phi(I)$ 
 
 \subsection{Sparse lexical query construction and execution}
 
-The sparse channel uses BM25 with standard parameters ($k_1 = 1.5, b = 0.75$). 
+The sparse channel uses BM25 \cite{bm25} with standard parameters ($k_1 = 1.5, b = 0.75$). 
 
 Instead of searching on raw user text alone, the query builder constructs an expanded lexical string $q_s$ by aggregating structured intent attributes:
 \[
@@ -102,7 +102,7 @@ Query $q_s$ undergoes lowercasing, NFKC normalization, and punctuation removal. 
 
 \subsection{Dense semantic indexing and query inference}
 
-The dense channel captures semantic context when user phrasing differs from catalog descriptions. During catalog preparation, candidate documents $c \in C$ are embedded offline into vectors $\phi(c) \in \mathbb{R}^D$ using \texttt{all-MiniLM-L6-v2}. The resulting vectors are stored in an immutable index artifact.
+The dense channel captures semantic context when user phrasing differs from catalog descriptions. During catalog preparation, candidate documents $c \in C$ are embedded offline into vectors $\phi(c) \in \mathbb{R}^D$ using \texttt{all-MiniLM-L6-v2} \cite{sentencebert}. The resulting vectors are stored in an immutable index artifact.
 
 At query time, the system encodes the normalized intent $I$ into query vector $\phi(I) \in \mathbb{R}^D$. It then computes cosine similarities between $\phi(I)$ and catalog vectors $\phi(c)$, returning shortlist $L_d$ sorted by descending similarity.
 
@@ -112,7 +112,7 @@ Sparse BM25 scores and dense cosine similarities have different scales and distr
 \[
 \operatorname{RRF}(c) = \sum_{m \in \{s, d\}} \mathbb{I}(c \in L_m) \cdot \frac{w_m}{k_{\mathrm{RRF}} + \operatorname{rank}(c, L_m)},
 \]
-where $k_{\mathrm{RRF}} = 60.0$, and channel weights are set equally ($w_s = 1.0, w_d = 1.0$).
+where $k_{\mathrm{RRF}} = 60.0$ is the standard ranking constant validated in the original formulation of Reciprocal Rank Fusion \cite{rrf}, and channel weights are set equally ($w_s = 1.0, w_d = 1.0$).
 
 Algorithm~\ref{alg:rrf_fusion} shows how we combine and truncate candidates into a top-$K$ shortlist $L_f$ ($K = 10$). Any score ties are broken deterministically by sorting candidate IDs in alphanumeric order.
 
@@ -175,7 +175,7 @@ In P2, an empty feasible set ($F = \emptyset$) is a normal, first-class outcome.
 
 \section{Deterministic candidate ranking}
 
-\subsection{Multi-Criteria deterministic scoring formulation}
+\subsection{Multi-criteria deterministic scoring formulation}
 
 All feasible candidates $c \in F$ are scored across three dimensions: retrieval relevance, user preferences, and resource footprint. The composite score $S(c) \in [0, 1]$ is:
 \[
@@ -237,7 +237,7 @@ The validator checks six explicit rules:
 \begin{enumerate}
     \item The selected profile ID exists in the active profile allowlist.
     \item The container image ID exists in the active image allowlist.
-    \item The image reference matches the catalog's digest-pinned SHA-256 hash.
+    \item The image reference matches the catalog's digest-pinned SHA-256 hash per the OCI Image Specification \cite{oci}.
     \item The running policy version matches the cluster configuration.
     \item The catalog checksum matches the deployed provenance record.
     \item The recommendation data payload conforms to the deployment schema.
@@ -248,7 +248,7 @@ These checks prevent unvetted images or misconfigured resource limits from reach
 \subsection{Two-phase preview and confirmation lifecycle}
 \label{subsec:preview_workflow}
 
-P2 adopts a two-phase preview and confirmation lifecycle to keep human users in control (Figure~\ref{fig:p2_preview_lifecycle}). 
+P2 adopts a two-phase preview and confirmation lifecycle to keep human users in control (Figure~\ref{fig:p2_preview_lifecycle}), adhering to established principles of human-in-the-loop automation and declarative intent fulfillment \cite{parasuraman,rfc9315}. 
 
 \begin{figure}[ht]{Two-phase preview, user confirmation, and pre-spawn binding lifecycle}
 \centering
@@ -265,7 +265,7 @@ The lifecycle proceeds as follows:
 \subsection{Pre-spawn binding hook and zero-recomputation execution}
 \label{subsec:prespawn_binding}
 
-A core property of our JupyterHub integration is zero recomputation during pod launch. In typical KubeSpawner setups, users submit spawn requests through web forms. P2 intercepts this flow with a synchronous \texttt{pre\_spawn\_hook}.
+A core property of our JupyterHub integration is zero recomputation during pod launch. In typical KubeSpawner setups, users submit spawn requests through web forms. P2 intercepts this flow with a synchronous \texttt{pre\_spawn\_hook} provided by KubeSpawner \cite{kspawner}.
 
 Algorithm~\ref{alg:prespawn_enforcement} describes the hook's validation and binding steps.
 
