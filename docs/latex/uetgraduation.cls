@@ -212,7 +212,7 @@ luatexbase.add_to_callback("mathfont.add_math_constants", custom_math_constants,
 	\par%
 	\setcounter{chapter}{0}%
 	\setcounter{section}{0}%
-	\renewcommand\@chapterprefix{Phụ lục}%
+	\renewcommand\@chapterprefix{Appendix}%
 	\renewcommand\thechapter{\@Alph\c@chapter}%
 }
 \newcommand\@makesection[2]{%
@@ -256,10 +256,19 @@ luatexbase.add_to_callback("mathfont.add_math_constants", custom_math_constants,
 	\expandafter\newcommand\csname prefix@a@#1\endcsname{#3}
 	\newcommand #7{\begin{contentlistingsection}{#8}\@starttoc{#6}\end{contentlistingsection}}
 	\expandafter\newcommand\expandafter*\csname l@a@#1\endcsname{\@tocline{2}{0cm}}
-	\expandafter\let\csname enda@#1\endcsname\end@float
 	\newenvironment{#1}[2][]{%
-		\refstepcounter{a@#1}\def\@captiontext{##2}\ifx&##1&\@float{a@#1}\else\@float{a@#1}[##1]\fi#4%
-	}{#5\csname enda@#1\endcsname}
+		\par\vspace{0.4cm}\noindent
+		\begin{minipage}{\textwidth}
+		\def\@captype{a@#1}%
+		\refstepcounter{a@#1}%
+		\def\@captiontext{##2}%
+		#4%
+	}{%
+		#5%
+		\end{minipage}%
+		\par
+		\vspace{0.4cm}%
+	}
 }
 \makeattachmenttype{figure}{tbp}{Figure}{}{%
 	\vspace{0.25cm}\attachmentcaptionbox{\centering\small\attachmentcaption}%
@@ -267,6 +276,24 @@ luatexbase.add_to_callback("mathfont.add_math_constants", custom_math_constants,
 \makeattachmenttype{table}{tbp}{Table}{%
 	\attachmentcaptionbox{\centering\small\textbf{\attachmentcaption}}\vspace{0.25cm}%
 }{}{lot}{\listoftables}{List of Tables}
+\makeattachmenttype{algorithm}{tbp}{Algorithm}{%
+	\hrule height 0.8pt depth 0pt\kern 4pt%
+	\attachmentcaptionbox{\raggedright\small\textbf{\attachmentcaption}}%
+	\kern 4pt\hrule height 0.4pt depth 0pt\kern 6pt%
+}{%
+	\kern 4pt\hrule height 0.8pt depth 0pt\relax%
+}{loa}{\listofalgorithms}{List of Algorithms}
+
+\providecommand\@dottedtocline[5]{\@tocline{#1}{#2}{#4}{#5}}
+\AtBeginDocument{%
+	\def\l@lstlisting#1#2{\@tocline{2}{0cm}{#1}{#2}}%
+	\renewcommand\lstlistoflistings{%
+		\begin{contentlistingsection}{List of Listings}%
+		\@starttoc{lol}%
+		\end{contentlistingsection}%
+	}%
+}
+
 
 \renewcommand\footnoterule{\kern-3\p@\hrule\@width.4\columnwidth\kern2.6\p@}
 \newcommand\@makefntext[1]{\parindent 1em\noindent\hb@xt@1.8em{\hss\@makefnmark}#1}

@@ -3,9 +3,39 @@
 \usepackage{booktabs}
 \usepackage{array}
 \usepackage{longtable}
-\usepackage{caption}\usetikzlibrary{positioning}
+\usetikzlibrary{positioning}
 \usepackage{xurl}
 \usepackage{microtype}
+\usepackage{amssymb}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage[noEnd=false,indLines=true]{algpseudocodex}
+\tikzset{algpxIndentLine/.style={draw=black, line width=0.5pt}}
+\definecolor{codegreen}{rgb}{0,0.5,0}
+\definecolor{codegray}{rgb}{0.45,0.45,0.45}
+\definecolor{codepurple}{rgb}{0.5,0,0.5}
+\definecolor{backcolour}{rgb}{0.97,0.97,0.98}
+
+\lstset{
+    backgroundcolor=\color{backcolour},
+    commentstyle=\color{codegreen}\itshape,
+    keywordstyle=\color{blue}\bfseries,
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\ttfamily\footnotesize,
+    breakatwhitespace=false,
+    breaklines=true,
+    captionpos=b,
+    keepspaces=true,
+    numbers=left,
+    numbersep=7pt,
+    showspaces=false,
+    showstringspaces=false,
+    showtabs=false,
+    tabsize=4,
+    frame=single,
+    rulecolor=\color{gray!30}
+}
 \geometry{bottom=3cm}
 \setlength{\parindent}{1cm}
 \setlength{\parskip}{6pt}
@@ -21,22 +51,30 @@
 \makecovers
 \addcontentsline{toc}{chapter}{Abstract}
 \begin{preamble}{Abstract}
-Shared JupyterHub deployments require users to translate semantic workload requirements into container images and Kubernetes resource specifications before pod creation. This thesis presents Intent-Spawner, a bounded pre-spawn decision-support system for environment selection. Its primary method, P2, extracts structured constraints from natural-language intent, retrieves administrator-curated candidates via hybrid BM25 and dense retrieval with Reciprocal Rank Fusion, removes candidates violating hard constraints, and ranks feasible options deterministically. An interactive preview and single-use token bind the user's explicit confirmation to the pre-spawn hook without recomputation.
+JupyterHub provides a flexible platform for interactive computing, but selecting an appropriate computational environment remains a manual configuration task. Users are typically required to understand available resource profiles, software environments, and notebook images before starting a session. As the number and diversity of available environments increase, manual selection can introduce unnecessary configuration effort and may result in unsuitable resource or software choices. This thesis investigates the use of workload intent and context to assist users in selecting an appropriate JupyterHub environment while preserving administrator-defined resource and deployment policies.
 
-The system is evaluated under Protocol-v5 across offline recommendation quality and prompt robustness (E1/E2), human outcomes (E3), local resource envelopes (E4), and OCI image capability and layer reuse (E5). Empirical evidence includes development observations across 18 workload families, 421 local Pod trials, and four digest-pinned images. E3 contains no participant data, and formal confirmatory hypotheses remain unexecuted. The primary contribution is an auditable architecture and reproducible protocol for pre-spawn intent resolution that enforces strict evidence boundaries without overclaiming general cluster efficiency or production readiness.
+The problem addressed in this thesis is the selection of a suitable resource profile and notebook environment from a bounded, administrator-managed catalog based on a user's natural-language workload description. The objective is not to allow an automated model to generate arbitrary Kubernetes configurations, but to determine whether natural-language intent can be transformed into a structured representation, used to retrieve relevant approved environments, and subsequently filtered and ranked according to explicit technical constraints. A further objective is to establish a system architecture in which recommendation remains explainable, policy-bounded, reproducible, and subject to user confirmation before deployment.
 
-\textbf{Keywords:} JupyterHub; Kubernetes; workload intent; hybrid retrieval.
+The proposed approach, implemented as Intent-Spawner, combines structured intent extraction, hybrid information retrieval, deterministic constraint evaluation, and trusted catalog resolution. A user's workload description is converted into a schema-validated structured intent containing task characteristics, software requirements, resource constraints, and preferences. Candidate environments are then retrieved using two complementary retrieval channels: BM25-based sparse retrieval for exact technical terminology and dense semantic retrieval for semantically related workload descriptions. Their ranked results are combined using Reciprocal Rank Fusion (RRF). Retrieved candidates are subsequently evaluated against hard constraints, including GPU availability, minimum CPU and memory requirements, dataset size, and forbidden features. Candidates that violate hard constraints are excluded before deterministic preference ranking is applied.
+
+The resulting recommendation is resolved through an administrator-owned candidate catalog rather than allowing the recommendation model to directly specify an image or Kubernetes resource configuration. Approved notebook images are identified by immutable digest-pinned references, while resource profiles are restricted to administrator-defined configurations. A preview and confirmation mechanism binds the displayed recommendation to the authenticated user and to a single-use, time-limited token. The JupyterHub pre-spawn hook validates this state before applying the selected configuration, without performing new recommendation or model inference during pod creation. The system was evaluated through controlled experiment protocols covering recommendation behavior, system integration, resource-related measurements, and environment functionality. The evaluation distinguishes workload families as the semantic experimental unit and separates repeated executions used for stability analysis from independent recommendation cases.
+
+The experimental evaluation demonstrates that the implemented recommendation pipeline can process structured workload intents and resolve recommendations through the bounded candidate catalog without requiring arbitrary configuration generation. In the evaluated external-model extraction runs, the structured-intent stage produced valid outputs for all 240 evaluated cases, while the corresponding evaluation pipeline completed without recommendation fallbacks in the 320-trial workload evaluation. The evaluation also established the functional integration of recommendation preview, policy validation, user confirmation, and pre-spawn application within JupyterHub, including enforcement of approved profiles and digest-pinned images.
+
+These results indicate that intent-aware environment selection can be integrated into JupyterHub while maintaining a separation between language-based recommendation and authoritative infrastructure configuration. Hybrid retrieval provides a mechanism for combining exact technical vocabulary with semantic similarity, whereas deterministic constraints prevent soft relevance signals from overriding explicit resource or policy requirements. The architecture therefore provides a bounded form of decision support in which natural-language interaction reduces configuration effort without transferring deployment authority to the recommendation model. However, the available evidence does not establish statistical superiority over manual selection or alternative recommenders, nor does it demonstrate general performance across arbitrary multi-node, multi-tenant Kubernetes deployments. Human-user effectiveness and broader production validation remain subjects for further evaluation.
+
+\textbf{Keywords:} JupyterHub, Kubernetes, Workload Intent, Resource Profile Recommendation, Hybrid Information Retrieval, Constraint-Based Selection, Notebook Environments.
 \end{preamble}
-\addcontentsline{toc}{chapter}{Authorship Declaration}
-\begin{preamble}{Authorship Declaration}
-I declare that this thesis is my own work, except where the contributions of others are explicitly acknowledged and cited. I have not presented planned or incomplete experiments as completed results. All empirical statements in this manuscript are limited to the provenance and evidence status recorded in the repository.\par\vspace{1cm}
+\addcontentsline{toc}{chapter}{Authorship}
+\begin{preamble}{Authorship}
+I hereby declare that the work contained in this thesis is of my own and has not been previously submitted for a degree or diploma at this or any other higher education institution. To the best of my knowledge and belief, the thesis contains no materials previously published or written by another person except where due reference or acknowledgement is made.\par\vspace{1cm}
 Signature: \rule{6cm}{0.4pt}
 \end{preamble}
 \addcontentsline{toc}{chapter}{Acknowledgements}
 \begin{preamble}{Acknowledgements}
-The author would like to express sincere gratitude to the thesis supervisor, Dr. Hoang Xuan Tung, for guidance, critical feedback, and encouragement throughout the development and evaluation of this work. The author is also grateful to the lecturers and staff of the Faculty of Information Technology, University of Engineering and Technology, Vietnam National University, Hanoi, for the technical and academic foundation that made this project possible.
+I would like to express my sincere gratitude to my thesis supervisor, Dr. Hoang Xuan Tung, for guidance, critical feedback, and encouragement throughout the development and evaluation of this work. I am also grateful to the lecturers and staff of the Faculty of Information Technology, for the technical and academic foundation that made this project possible.
 
-The implementation and evaluation work required repeated review of JupyterHub, Kubernetes, information-retrieval, recommender-system, container-image, and human-computer-interaction concepts. Appreciation is extended to colleagues, friends, and family members whose discussions and practical support helped sustain this iterative process. Any remaining errors, limitations, or interpretation choices in this thesis are the responsibility of the author.
+I would also like to thank my friends, and family for their valuable discussions, encouragement, and practical support throughout this iterative process. I take full responsibility for any remaining errors, limitations, or interpretation choices in this thesis.
 \end{preamble}
 \begin{contentlisting}
 \tableofcontents
@@ -44,6 +82,8 @@ The implementation and evaluation work required repeated review of JupyterHub, K
 \listoffigures
 \addcontentsline{toc}{chapter}{List of Tables}
 \listoftables
+\addcontentsline{toc}{chapter}{List of Algorithms}
+\listofalgorithms
 \addcontentsline{toc}{chapter}{Abbreviations}
 \begin{contentlistingsection}{Abbreviations}
 \begin{tabular}{ll}

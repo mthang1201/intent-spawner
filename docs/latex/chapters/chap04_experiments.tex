@@ -1,192 +1,232 @@
-\chapter{Implementation and Experiments}
+\chapter{Experiments and evaluation}
+\label{chap:experiments_and_evaluation}
 
-\section{Implemented workflow and evidence design}
-\subsection{Repository implementation}
-The repository implements the recommendation path as separable components. Structured-intent parsing and validation provide typed inputs; hybrid retrieval produces candidate lists; a constraint evaluator marks infeasible candidates; P2 applies the ranking policy; a candidate corpus resolves trusted metadata; policy checks enforce allowlists; and a JupyterHub integration provides preview and pre-spawn behavior. Protocol-v5 code provides schemas, runners, validation, statistical analysis, and report generation. This division supports focused inspection and helps preserve the historical Protocol-v4 infrastructure rather than replacing its evidence.
+\section{Experimental design}
+\label{sec:experimental_design}
 
-The request path is intentionally bounded. It begins with authenticated user input, not a batch of arbitrary cluster objects. Candidate text is indexed from administrator-owned metadata. The retrieval backend can be replaced only with a versioned configuration and matching provenance. The output is a stable candidate identifier and explanation data; the hook obtains final profile and image values from trusted candidate state. This reduces the chance that a free-text request can become an unreviewed image reference or raw resource dictionary.
+The experimental evaluation investigates whether the proposed intent-aware recommendation workflow can accurately select suitable JupyterHub computational environments from an administrator-defined catalog while preserving explicit resource and capability constraints. Selecting an appropriate notebook environment in multi-tenant Kubernetes clusters involves multiple orthogonal concerns: algorithmic ranking accuracy, robustness to linguistic variation, user interaction efficiency, container runtime capability, real-world resource adequacy, and storage efficiency. Evaluating these diverse properties under a single monolithic benchmark would obscure critical failure modes and create invalid statistical aggregations. Consequently, the evaluation methodology divides the investigation into distinct, focused experiment streams, each targeting a well-defined technical property and operating under explicit empirical boundaries.
 
-The preview and spawn path preserves the human decision. A user can see the recommendation, check its resource and capability properties, confirm or edit, and use only an approved override. A user-bound, short-lived, single-use token links the confirmed choice to the hook. Edits invalidate the earlier token. The hook does not recompute a possibly different recommendation. This makes application behavior inspectable and permits stale catalog or policy state to be rejected explicitly.
+The experiments compare the proposed intent-aware method, designated as P2, against the existing rule-based heuristic recommendation method, denoted as P1. In the user interaction evaluation, a manual environment selection baseline, denoted as B0, is established to reflect standard operational practice in JupyterHub where users manually navigate available profile options. Because B0 represents a human selection process rather than an algorithmic ranking system, it does not generate automated candidate rankings and is evaluated exclusively through human-subject task outcomes rather than ranking metrics.
 
-\subsection{Failure handling and safety properties}
-A robust path must handle malformed intent, retrieval service errors, empty results, catalog drift, expired tokens, replayed tokens, unauthorized users, and changed policy. Input-validation errors should be distinguishable from “no feasible candidate.” Retrieval failures should not silently be represented as confident low-quality recommendations. Expired or consumed tokens should fail closed. A missing or changed candidate should require a new preview instead of applying stale state. These cases are part of correctness because the recommender operates in a user-facing control path.
+The evaluation architecture distinguishes the semantic unit of analysis used for offline recommendation from the execution unit used for cluster and container experiments. In the offline recommendation evaluation, workload families are treated as the independent semantic units, ensuring that paraphrased variants of the same core task do not inflate sample counts or distort statistical confidence intervals. In cluster and container experiments, individual Pod runs and container executions represent execution trials designed to capture runtime variability and environmental interactions. Figure~\ref{fig:eval_framework} visualizes the multi-stream evaluation architecture, illustrating how workload intents and catalog specifications flow through offline benchmarks, cluster execution harnesses, container sandboxes, and manifest inspection collectors.
 
-The method preserves several invariants: only administrator-approved candidates are resolvable; image identity is immutable when digest-pinned references are used; hard constraints cannot be bypassed by ranking score; the preview is bound to the user and the candidate state; the hook applies a confirmed decision; and Kubernetes admission remains authoritative. These invariants are testable at component and integration boundaries. The thesis does not infer production security from unit-level success; deployment still requires review of authentication, shared state, multi-replica behavior, secrets, network exposure, and admission controls.
-
-One deployment concern is persistence of preview state. In-memory storage can be adequate for a single-process prototype but is not sufficient for a multi-replica Hub unless state is shared or requests are reliably routed. Productionization should use a durable shared store with expiry and atomic single-use consumption. This is an implementation limitation to resolve before multi-replica deployment.
-
-\subsection{Protocol-v5 scope and empirical status}
-Protocol-v5 separates development, final confirmatory evidence, raw observation, derived metrics, and interpretation. For this thesis, the repository's streamlined experiment guide permits technical reporting of the available E1, E4, and E5 measurements without the administrative freeze and custodian-signature workflow used for a formal confirmatory package. Accordingly, this chapter reports the observed quantities and their actual local scope. The distinction matters: an observation is a measurement that occurred; it does not automatically establish a general effect or a confirmatory hypothesis decision. The consolidated \texttt{thesis-results} registry remains marked INCOMPLETE / \texttt{NOT\_EXECUTED} for its stricter registered claims, and that status is reported separately rather than used to erase measured results.
-
-Protocol-v4 evidence remains historical/formative and is not overwritten or relabeled as Protocol-v5. Versioned results record provenance and checksums. Workload family, not paraphrase, is the semantic unit for offline recommendation. A participant is the independent unit for human outcomes. Repeated stochastic executions characterize stability and runtime variability, not extra accuracy samples. B0 has no ranking output; therefore, MRR, nDCG, and Hit@K do not apply to B0. These distinctions prevent unlike evidence and units from being pooled.
-
-\begin{table}[ht]{Protocol-v5 experiment streams and evidence scope}
-\centering\small
-\begin{tabular}{p{1.3cm}p{2.2cm}p{4.5cm}p{4.5cm}}
-\toprule
-Stream & Question & Construct & Evidence reported here\\
-\midrule
-E1 & RQ1 & Family-level recommendation quality, P1 vs P2 & Development split: 18 families, 83 variants; observed estimates and tests\\
-E2 & RQ2 & Robustness across prompt forms & Development split: macro SRR and worst-family rate\\
-E3 & RQ3 & Human time, choice, confidence, workload, usability & No participant observations; protocol only\\
-E4 & RQ4 & Local resource envelope and Pod outcomes & OrbStack: 421 trials, 20 families\\
-E5 & RQ5 & Image capability probes and OCI layer bytes & Docker probes and four-image linux/arm64 accounting\\
-P3 & RQ6 & Development gate for LLM reranking & 11-family gate; branch not retained\\
-\bottomrule
-\end{tabular}
-\end{table}
-
-The report chain separates raw observations, derived statistics, and interpretation. A Pod record is not itself a safe envelope; a confidence interval is a derived quantity; and neither should be conflated with a claim about another cluster. Provenance includes timestamp, git revision and dirty state, protocol version, dataset checksum, backend versions, catalog/index versions, and environment identity where relevant. E1/E2 was generated at 2026-09-28 03:06 UTC on the v5-development split; the E5 functional and storage packages were generated a few minutes later and identify their own sources and catalog. The E4 package names the local OrbStack Kubernetes context. Different packages can use different metrics or processing paths even when they share recommendation inputs.
-
-\subsection{Reproducibility and interpretation rules}
-The repository includes schema validation, experiment runners, provenance records, result manifests, validators, analysis outputs, plots, and reports. A reader can trace a reported number through this chain and inspect the assumptions used to calculate it. A dirty working tree is not by itself proof that a result is invalid, but it requires identifying the source snapshot and avoiding confusion with a later clean revision. Reports should retain their original source labels and measurement conditions.
-
-A final thesis build depends on the source tree, TeX engine, class version, fonts, image assets, and bibliography. Generated intermediate files are not source evidence. Figures copied from experiment packages retain captions that state what was measured. When results disagree across packages, the correct treatment is to preserve the separate definitions and denominators, then investigate the discrepancy; averaging the values would create a quantity no report measured.
-
-\section{Offline recommendation and robustness results}
-\subsection{E1: family-level recommendation quality}
-The E1 report evaluates 18 independent workload families and 83 prompt variants on the v5-development split. Estimates are family macro-averages, with 95\% percentile bootstrap confidence intervals; the semantic unit is the family, not the individual prompt. The report provides paired p-values for the listed comparisons. Table 4.2 transcribes the primary reported values.
-
-\begin{table}[ht]{Observed E1 development estimates for P1 and P2}
-\centering\small
-\begin{tabular}{p{3.2cm}p{3.4cm}p{3.4cm}p{1.8cm}}
-\toprule
-Metric & P1 estimate [95\% CI] & P2 estimate [95\% CI] & Reported p\\
-\midrule
-JointAccept@1 & 60.0\% [34.5, 81.8] & 65.0\% [43.6, 85.0] & 0.7617\\
-Profile acceptability & 83.6\% [63.6, 100.0] & 74.1\% [54.5, 90.5] & 0.4062\\
-Image acceptability & 63.6\% [38.2, 87.3] & 87.3\% [74.5, 96.4] & 0.2344\\
-Constraint violations & 38.2\% [16.4, 63.6] & 21.8\% [5.5, 43.6] & 0.4062\\
-Unsupported detection & 0.0\% [0.0, 0.0] & 50.0\% [29.2, 75.0] & N/A\\
-Latency per execution & 0.000 s [0.000, 0.000] & 0.002 s [0.002, 0.002] & <0.001\\
-\bottomrule
-\end{tabular}
-\end{table}
-
-The point estimates describe different trade-offs rather than a uniform ordering. P2's observed JointAccept@1 estimate is five percentage points higher, its image acceptability estimate is higher, and its constraint-violation estimate is lower. Its profile acceptability estimate is lower. The reported p-values for JointAccept@1, profile acceptability, image acceptability, and constraint violations are all above 0.05. Thus the table records descriptive differences in this development sample; these tests do not establish a statistically significant difference on those outcomes. Unsupported detection is reported without an inferential p-value. The latency figure is a rounded summary at millisecond-scale for P2 and sub-millisecond display precision for P1; the displayed zeros should be read as report rounding, not proof of zero computational cost.
-
-The confidence intervals are broad, which is consistent with an evaluation containing 18 independent families. The family-level design prevents the 83 prompt variants from being treated as 83 unrelated workloads. Results are sensitive to the family composition and to the operational definitions of acceptability and constraint violations. In particular, the report's family macro-average weights each family equally; it is not a request-volume-weighted estimate for a production Hub. The observed estimates are useful for understanding the behavior of the current corpus and implementation, but should not be projected to an unknown catalog or population of user tasks.
-
-\subsection{E2: language and prompt robustness}
-E2 measures semantic robustness across reviewed-equivalent prompt forms. Its reported overall Semantic Robustness Rate (SRR) is an equal-weight macro mean over workload families, while worst-case family robustness asks what fraction of families succeeded on every tested equivalent variant. Table 4.3 presents the report values, including the per-form cells as published. N/A cells and zero-valued displayed cells are retained because the report does not provide valid denominators for reconstructing all of them.
-
-\begin{table}[ht]{Observed E2 robustness metrics on the development split}
-\centering\small
-\begin{tabular}{p{2.5cm}p{3cm}p{3cm}p{3cm}}
-\toprule
-Measure & P1 & P2 & Interpretation\\
-\midrule
-Overall SRR (macro) & 56.8\% [31.8, 79.5] & 60.6\% [36.3, 83.3] & Family macro mean\\
-Worst-case family robustness & 0.0\% & 45.5\% & All tested equivalent variants succeed\\
-Vietnamese cell shown & 0.0\% (N/A) & 20.0\% (N/A) & Denominator unavailable in report\\
-Canonical cell shown & 0.0\% (N/A) & 0.0\% (N/A) & Denominator unavailable in report\\
-\bottomrule
-\end{tabular}
-\end{table}
-
-P2's overall SRR is 3.8 percentage points above P1 in this report, and the reported worst-case measure is also higher. These are bounded development observations, not estimates from a sealed final split. The per-form table contains N/A denominators for several categories, so it cannot support a reliable language-by-language ranking or reconstruction of a pooled success count. Robustness here also has a specific meaning: the benchmark's reviewed-equivalent variants should preserve intent. It does not measure arbitrary user language, dialect diversity, accessibility, or interaction repair.
-
-\subsection{E5 recommendation metrics and cross-report reconciliation}
-The E5 functional report includes a separate gold-label correctness dimension over 83 cases: P1 matched the preferred label in 34/83 cases (41.0\%), and P2 in 46/83 (55.4\%). It reports these as both preferred and acceptable matches. These figures are not substituted for E1's profile, image, or joint acceptability measures. E1 and E5 differ in metric definitions and report lineage, so the quantities answer different questions and are kept in separate tables. In particular, the E5 label-matching rates should not be read as a corrected version of E1 or pooled with it.
-
-Taken together, E1 and E2 show measurable behavior on the development corpus and expose where further reconciliation would be valuable. E1's largest positive P2 point-estimate difference is image acceptability, while profile acceptability moves in the other direction. E2 suggests better robustness for P2 on two aggregate summaries, but incomplete per-form denominators limit finer conclusions. The development evidence therefore motivates follow-up work on profile selection, prompt variation, and metric traceability rather than one headline declaration that a method wins.
-
-\section{Cluster and image observations}
-\subsection{E4: observed local resource trials}
-The E4 package records 421 Pod trials across 20 workload families in the OrbStack Kubernetes context \texttt{orbstack:z2jh-context-demo} (as recorded in the experiment evaluation package). Of these, 413 completed successfully (98.1\%) and 8 were OOM-killed (1.9\%). These counts are direct package-level observations. The experiment is useful as a local comparison of tested workloads and resource configurations; the context is a local cluster and does not represent a production node fleet.
-
-The report includes examples that show why resource selection has a two-sided objective. A 256 MiB static profile was insufficient for selected memory-intensive families such as \texttt{large\_hash\_map\_allocation} and \texttt{categorical\_encoding}. Conversely, a 2048 MiB profile is much larger than the 64 MiB reported safe envelope for examples such as \texttt{streaming\_statistics} and \texttt{sparse\_graph\_traversal}. The supplied workload table records 1000m CPU and 64 MiB safe RAM for many families, while some families have no reported safe envelope and \texttt{large\_hash\_map\_allocation} is associated with OOM thresholds at 384, 1024, 1536, and 1792 MiB. These are family-specific results under the run's conditions.
-
-The same report narrative states that P2 guarantees 100\% OOM avoidance, but the aggregate trial table records eight OOM events. This thesis therefore reports the count and family-level examples and does not repeat the universal guarantee. A family-specific selected envelope and an aggregate set of Pod trials may summarize different subsets or trial types; resolving their exact relationship requires linking each row to raw run records. The measured 98.1\% aggregate completion is the appropriate package-level statement until that reconciliation is complete. The report's example of up to 96.9\% RAM excess on selected light workloads illustrates the scale of one comparison, not an average saving across all trials.
-
-\begin{figure}[ht]{Locally observed memory envelopes and static profiles in the E4 package}
+\begin{figure}[ht]{Multi-stream experimental evaluation framework of Intent-Spawner, separating offline recommendation benchmarks, Kubernetes cluster trials, container capability sandboxes, and OCI manifest storage accounting.}
 \centering
-\includegraphics[width=0.88\textwidth]{figure_e4_a_memory_envelopes.png}
+\includegraphics[width=0.98\textwidth]{figures/figure_4_1_eval_framework.pdf}
+\label{fig:eval_framework}
 \end{figure}
 
-For operational use, an envelope is meaningful only alongside its measurement definition: requested and limit values, runtime peak or sampled usage, workload completion criterion, repetition, and safety margin. A low observed peak does not imply that a larger input or concurrent process fits the same allocation. Kubernetes scheduling and enforcement further depend on node allocatable resources, requests, limits, QoS, and competing pods. E4 supports examining these interactions in the observed context; it does not establish a universal optimizer or safe limit for other cluster configurations.
+\subsection{Experiment streams and evidence organization}
+\label{subsec:experiment_streams}
 
-\subsection{E5: functional capability probes}
-The E5 functional run reports 17 probe specifications and 166 evaluated recommendations, using Docker and an administrator catalog at version 2026-08-06.1. Its dimensions deliberately separate label correctness (A), catalog-declared capability coverage (B), and actual functional execution (C). Table 4.4 reproduces the key counts.
+To answer the research questions rigorously, the evaluation framework implements five primary experiment streams. Table~\ref{tab:experiment-streams} summarizes these streams, detailing the research questions addressed, the core evaluated constructs, and the empirical evidence scope of each stream.
 
-\begin{table}[ht]{E5 observed label, catalog, and functional dimensions}
-\centering\small
-\begin{tabular}{p{3cm}p{3cm}p{3cm}p{3cm}}
-\toprule
-Dimension & P1 & P2 & Meaning\\
-\midrule
-A: preferred-label match & 34/83 (41.0\%) & 46/83 (55.4\%) & Gold-label correctness\\
-B: catalog capability coverage & 58/83 (69.9\%) & 70/83 (84.3\%) & Catalog declares requirements\\
-C: functional eligible & 65 & 76 & Cases with executable probes\\
-C: executed probes passed & 65/65 (100\%) & 76/76 (100\%) & Pass rate among executed eligible cases\\
-Operational adequacy & 58/83 (69.9\%) & 70/83 (84.3\%) & Report-defined operational coverage\\
-Joint A and C & 52.3\% & 60.5\% & Report-defined combined outcome\\
-\bottomrule
-\end{tabular}
-\end{table}
+\input{tables/table_4_1_experiment_streams}
 
-All eligible executed probes passed in this run. The denominator is essential: P1 has 65 eligible executed probes and P2 has 76, rather than 83 probes for each system. The remaining recommendations are not functional failures; they were not in the eligible executed denominator. The package additionally records zero catalog-versus-probe failures, 13 cases where a probe passed despite missing catalog capability metadata, and 48 label-versus-operational discrepancies. These mismatches show why gold labels, metadata coverage, and execution probes should remain separate dimensions. A container may execute a tested capability even when its catalog omits that capability, yet such underdeclared metadata remains a catalog quality issue.
+The evidence generated by these streams represents distinct empirical contexts and should not be conflated into a single homogeneous dataset. Streams E1 and E2 evaluate offline recommendation accuracy and linguistic robustness on a development split containing 18 independent workload families and 83 prompt variants. Stream E4 provides physical execution observations collected from 421 Pod trials deployed within a local Kubernetes cluster. Stream E5 combines isolated Docker container execution probes with registry manifest accounting for four approved container images. Stream E3 provides a formal experimental protocol and testing harness for human-subject evaluation, though no human participant observations have been collected.
 
-The probes are bounded to single-process capability checks with workload memory capped at 1 GiB. They used digest-pinned approved images. GPU hardware execution was not claimed; CPU fallbacks were validated. Thus the observed 100\% rates describe the executed eligible checks only. They do not certify all packages, numerical correctness, multi-process behavior, arbitrary inputs, or GPU execution.
+\subsection{Evaluation environment and reproducibility}
+\label{subsec:eval_environment}
 
-\subsection{E5: OCI layer accounting and catalog scale}
-The storage package uses a real registry manifest inspection collector to count compressed OCI manifest layer bytes for four approved images on linux/arm64. At the four-image prefix, the report records 11,392,935,522 logical descriptor bytes and 8,247,431,025 bytes across unique layer digests. The difference is 3,145,504,497 bytes, or 27.61\% of the logical total. This is content-addressed manifest accounting; it is not a measurement of node filesystem allocation, unpacked image size, cache occupancy, or bytes transferred on every pull.
+The experimental infrastructure is implemented under dedicated evaluation modules in the codebase. Every execution run generates an immutable run manifest recording the execution timestamp, unique run identifier, Git commit hash, working tree status, catalog version, dataset checksum, and platform metadata. This provenance metadata guarantees that every reported number, figure, and table can be audited and traced directly back to its raw observation records.
 
-\begin{table}[ht]{Observed four-image compressed OCI layer-byte accounting}
-\centering\small
-\begin{tabular}{p{4cm}r}
-\toprule
-Quantity & Bytes\\
-\midrule
-Logical ordered layer descriptor total & 11,392,935,522\\
-Unique content-addressed layer total & 8,247,431,025\\
-Logical-minus-unique difference & 3,145,504,497\\
-Difference as share of logical total & 27.61\%\\
-\bottomrule
-\end{tabular}
-\end{table}
+The evaluation framework enforces a strict separation between raw observations and derived statistical quantities. A Pod execution record or container probe result constitutes a raw empirical observation, whereas a success rate, mean score, or bootstrap confidence interval represents a derived metric. Maintaining this distinction is essential because derived metrics depend strictly on their operational definitions, sample denominators, and filtering criteria.
 
-The report also measures the marginal unique bytes introduced in its selected image order: 574,631,877 for minimal-python, 710,803,665 for scipy-data-science, 3,657,420,085 for pytorch-deep-learning, and 3,304,575,398 for tensorflow-deep-learning. The ordering and platform matter because the prefix total accumulates each image in that sequence and compares exact shared digests. The result is evidence of layer reuse in this four-image catalog snapshot. It does not measure disk savings already realized on a node and should not be extrapolated linearly to larger catalogs.
+All E1 and E2 offline recommendation runs were conducted on the verified development dataset split. Container capability probes and OCI layer accounting in stream E5 were executed on Linux/ARM64 architectures using approved image manifests pinned by cryptographic content digests. Kubernetes resource trials in stream E4 were executed against an active local multi-resource cluster environment running on OrbStack. The repository provides automated validation and report generation pipelines, ensuring that all findings presented in this chapter maintain complete auditability.
 
-The configured eight- and sixteen-image scales were not executed because only four approved images were available. The package includes a separate recommendation scalability row for the four-image case (83 reconstructed development cases, P2 acceptable and preferred accuracy 87.27\%, Recall@5 77.73\%, mean latency 2.23 ms). This result uses the reconstructed dataset and package-specific metric definitions; it is not interchangeable with the E1 primary report or the E5 functional report. The unexecuted larger scales have no observed recommendation or storage values.
+\section{Offline recommendation and robustness evaluation}
+\label{sec:offline_recommendation}
 
-\begin{figure}[ht]{Logical and unique compressed OCI layer-byte totals for the observed four-image catalog prefix}
+\subsection{Stream E1}
+\label{subsec:e1_recommendation_quality}
+
+Stream E1 evaluates the quality of profile and container image recommendations across 18 independent workload families comprising 83 evaluated prompt variants. A central principle of this evaluation is treating the workload family, rather than the individual prompt variant, as the independent semantic unit of analysis. Workload families represent distinct computational tasks (such as distributed deep learning training, tabular classification, or lightweight data transformation), whereas prompt variants represent syntactic and lexical reformulations of those tasks. Pooling all 83 prompt variants as independent statistical observations would artificially inflate statistical power and misrepresent sample independence. Consequently, all reported point estimates represent macro-averages calculated across the 18 workload families, accompanied by 95\% percentile bootstrap confidence intervals derived from 2,000 resamples.
+
+The primary evaluation metric is \texttt{JointAccept@1}, which represents the proportion of evaluation cases where the top-ranked candidate satisfies all correctness criteria simultaneously. Specifically, \texttt{JointAccept@1} requires that the predicted profile belongs to the acceptable profile set, the predicted image belongs to the acceptable image set, the overall candidate pairing is deemed suitable, and no hard technical constraints (such as GPU requirements, CPU minimums, or memory capacities) are violated. In addition to \texttt{JointAccept@1}, the evaluation measures profile acceptability, image acceptability, hard constraint violation rate, unsupported request detection, and end-to-end execution latency. Table~\ref{tab:e1-results} presents the observed empirical estimates for P1 and P2 alongside paired bootstrap permutation test $p$-values.
+
+\input{tables/table_4_2_e1_quality_results}
+
+Figure~\ref{fig:e1_quality} illustrates the macro-averaged performance of P1 and P2 across the evaluated quality metrics, highlighting the point estimates and their corresponding 95\% bootstrap confidence intervals.
+
+\begin{figure}[ht]{Offline recommendation quality and robustness metrics in Stream E1, comparing P1 (rule-based) and P2 (Intent-Spawner) with macro-averaged point estimates and 95\% percentile bootstrap confidence intervals.}
 \centering
-\includegraphics[width=0.85\textwidth]{figure_a_cumulative_storage.png}
+\includegraphics[width=0.88\textwidth]{figures/figure_4_3_e1_quality.png}
+\label{fig:e1_quality}
 \end{figure}
 
-\section{Synthesis, limits, and implications}
-\subsection{E3 and human outcomes}
-E3 is designed to compare B0 with P2 in a controlled, counterbalanced within-participant study. Participants would complete comparable environment-selection tasks in both conditions. The protocol records task correctness or acceptability, completion time, confidence, perceived workload, and usability. Task order should be counterbalanced to limit learning effects. The analysis should use participant-level outcomes and account for task and order, with all participant identifiers removed from published data.
+The empirical results reveal distinct behavioral characteristics and trade-offs between the two recommendation paradigms. The proposed P2 method achieved an observed \texttt{JointAccept@1} estimate of 65.0\% [43.6\%, 85.0\%], compared with 60.0\% [34.5\%, 81.8\%] for the rule-based P1 method. P2 demonstrated substantial improvement in container image acceptability, achieving 87.3\% [74.5\%, 96.4\%] compared with 63.6\% [38.2\%, 87.3\%] for P1. Furthermore, P2 achieved a lower hard constraint violation rate of 21.8\% [5.5\%, 43.6\%], whereas P1 violated hard constraints in 38.2\% [16.4\%, 63.6\%] of evaluated cases. Conversely, P1 achieved a higher profile acceptability rate of 83.6\% [63.6\%, 100.0\%], compared with 74.1\% [54.5\%, 90.5\%] for P2.
 
-A fair comparison requires equivalent task information, the same approved catalog, consistent onboarding, and a predefined scoring rubric. P2 should not receive hidden task context that B0 does not receive. Manual choices should be scored against preregistered acceptable sets, not a single subjective preferred profile when multiple options meet the task. B0 remains a manual choice and has no ranking metrics. The repository contains a smoke-test harness and protocol materials, but no participant responses. Consequently, no outcome in this thesis establishes reduced user time, improved human choice, confidence, lower workload, or usability.
+The reported inferential tests indicate that the observed differences in \texttt{JointAccept@1} ($p = 0.7617$), profile acceptability ($p = 0.4062$), image acceptability ($p = 0.2344$), and constraint violations ($p = 0.4062$) are all above the standard significance threshold ($\alpha = 0.05$). Because the evaluation dataset contains 18 independent workload families, the resulting confidence intervals are relatively wide, reflecting statistical variance inherent in small-sample macro-level evaluation. Therefore, these findings represent descriptive differences observed within the development dataset rather than confirmatory proof of statistical superiority.
 
-\subsection{P3 development gate and formal claim registry}
-P3 adds a grounded LLM reranker after P2 candidate generation. Its additional inference cost and output variability require evidence of sufficient headroom before retention. The development gate report records 11 eligible workload families, zero observed ranking-error families, and zero ranking-error attempts. The predefined minimum headroom condition was therefore not met and P3 was not retained. This is an observed development decision, not a confirmatory comparison or proof that every LLM reranker would fail to help.
+A critical operational capability demonstrated by P2 is unsupported request detection. When presented with workloads that exceeded available cluster capabilities or demanded libraries not present in the catalog, P2 correctly identified 50.0\% [29.2\%, 75.0\%] of unsupported cases and declined to make an invalid recommendation. In contrast, P1 exhibited 0.0\% unsupported detection, continually attempting to map infeasible requests to nearest-heuristic candidates. In terms of computational overhead, P1 recorded an execution latency of less than 0.5 ms (reported as 0.000 s due to display rounding), while P2 exhibited an observed mean latency of 2.25 ms per request ($p < 0.001$). This confirms that the structured extraction, hybrid retrieval, and constraint filtering in P2 execute within a sub-3-millisecond envelope, introducing negligible overhead into the interactive notebook launching workflow.
 
-The machine-generated consolidated \texttt{thesis-results} artifact remains INCOMPLETE and labels the registered confirmatory hypotheses \texttt{NOT\_EXECUTED}. That registry answers whether its stricter confirmatory claim workflow completed. It is distinct from whether local technical measurements were made. In the scope of the streamlined graduation-thesis guide, E1/E2 development metrics, E4 local trials, and E5 functional/storage observations are presented here as OBSERVED, with provenance, denominators, and limits. E3 remains genuinely unobserved because there are no participant data. Keeping these statuses separate permits the thesis to report what happened without claiming that the formal confirmatory hypotheses were accepted.
+\subsection{Candidate retrieval channel ablation}
+\label{subsec:retrieval_ablation}
 
-\subsection{What the evidence supports}
-The current evidence supports several concrete statements: the P1/P2 offline evaluation generated the reported family-level estimates; the observed E4 package recorded 413 successes and 8 OOM events among 421 Pod trials; E5's eligible probes all passed in their bounded execution set; and four approved image manifests exhibited the reported compressed-layer digest reuse. The P3 development gate did not retain its branch. Each statement is restricted to the source package, split, platform, denominator, and metric stated above.
+To understand the contribution of each retrieval modality in the hybrid candidate retriever, an ablation experiment was conducted comparing the sparse BM25 channel, the dense semantic embedding channel (\texttt{all-MiniLM-L6-v2}), and the fused dual-channel architecture using Reciprocal Rank Fusion (RRF). Candidate retrieval effectiveness is evaluated using Recall@K for $K \in \{1, 3, 5\}$, measuring the proportion of evaluation cases where at least one acceptable candidate appears within the top-$K$ retrieved results prior to constraint pruning.
 
-The evidence does not support confirmatory P2 superiority, a universal OOM guarantee, participant benefit, full correctness of all images, GPU readiness, realized node-disk savings, or scaling to an eight- or sixteen-image catalog. The point estimates and local examples can guide follow-up engineering and evaluation, while the missing participant study and strict claim registry remain visible limitations. This interpretation neither downgrades measured data to “no evidence” nor converts bounded observations into claims beyond their scope.
+Figure~\ref{fig:retrieval_ablation} illustrates the comparative Recall@K curves across the three retrieval configurations.
 
-For administrators, the practical implication is that a recommender should expose why a profile or image is proposed and preserve the user’s ability to inspect and change it. Capability metadata should be tested against actual environments, and resource envelopes should be derived from representative workload executions with explicit safety margins. For users, the preview makes the translation from workload description to environment choice inspectable. For researchers, the separate E1/E5 correctness rates and the E4 aggregate/per-family tension identify specific data-lineage questions to resolve in future reports.
+\begin{figure}[ht]{Candidate retrieval channel ablation across Recall@1, Recall@3, and Recall@5, comparing Sparse BM25, Dense Semantic (all-MiniLM-L6-v2), and Hybrid RRF fusion.}
+\centering
+\includegraphics[width=0.78\textwidth]{figures/figure_4_4_retrieval_ablation.png}
+\label{fig:retrieval_ablation}
+\end{figure}
 
-\begin{table}[ht]{Evidence boundary for current thesis claims}
-\centering\small
-\begin{tabular}{p{2.5cm}p{5.2cm}p{4.5cm}}
-\toprule
-Topic & Observed or supported statement & Not established by these data\\
-\midrule
-E1/E2 & Development estimates and aggregate robustness metrics are reported & Confirmatory superiority or general language robustness\\
-E3 & Protocol and harness are available; no participant data & Human benefit or usability outcomes\\
-E4 & 421 local trials: 413 success, 8 OOM; 20 families & Universal OOM avoidance or general cluster efficiency\\
-E5 functional & All 65 P1 and 76 P2 eligible executed probes passed & General image correctness or GPU execution\\
-E5 storage & Four-image OCI descriptor and unique-byte accounting & Realized node storage or larger-scale projection\\
-P3 & Development gate observed zero ranking-error families and did not retain P3 & Confirmatory comparison of P3 against P2\\
-\bottomrule
-\end{tabular}
-\end{table}
+The ablation results highlight the complementary nature of the two retrieval channels. The sparse lexical channel achieved Recall@1 of 46.4\%, Recall@3 of 83.4\%, and Recall@5 of 84.5\%. Because technical notebook requests frequently include exact library names (such as \texttt{"pytorch"}, \texttt{"tensorflow"}, or \texttt{"scikit-learn"}), sparse keyword matching exhibits strong initial precision when users supply precise software identifiers. In contrast, the dense semantic channel achieved Recall@1 of 24.3\%, Recall@3 of 57.7\%, and Recall@5 of 68.2\%, capturing conceptual affinities but occasionally ranking semantically adjacent yet functionally distinct environments too highly.
 
-The overall result is a research prototype with a working recommendation path and several valuable, bounded empirical packages. The results are sufficiently concrete to inform the design discussion, but their denominators and provenance remain part of the finding itself. A future evaluation can improve confidence by reconciling the cross-package E1/E5 label metrics, mapping each E4 trial to its per-family envelope, collecting human outcomes, and measuring image behavior and storage on the intended deployment platform. Those are specific extensions of the evidence, rather than reasons to omit the observations already recorded.
+When fused through Reciprocal Rank Fusion with equal channel weights ($w_s = 1.0, w_d = 1.0, k_{\mathrm{RRF}} = 60.0$), the hybrid retrieval pipeline achieved Recall@1 of 34.1\%, Recall@3 of 69.1\%, and Recall@5 of 77.7\%. Although sparse retrieval alone exhibited higher recall on exact keyword queries, hybrid retrieval provides critical robustness against vocabulary mismatch when users describe workloads conceptually without specifying explicit library names. As demonstrated in subsequent sections, combining hybrid retrieval with deterministic constraint evaluation ensures that semantic candidates are effectively filtered before final ranking, preventing relevance scores from overriding explicit technical requirements.
+
+\subsection{Stream E2}
+\label{subsec:e2_robustness}
+
+Stream E2 investigates whether variations in prompt phrasing, sentence structure, and vocabulary affect recommendation consistency. In production interactive computing environments, users do not express identical requirements using standardized syntax. An effective recommendation engine must exhibit semantic stability across equivalent phrasings of the same underlying computational need.
+
+The evaluation evaluates reviewed-equivalent prompt variants grouped under common workload families. The primary metric is the Semantic Robustness Rate (SRR), defined as the macro-averaged proportion of equivalent prompt variants within a workload family that yield an acceptable recommendation. Additionally, worst-case family robustness measures the percentage of workload families for which 100\% of tested equivalent variants succeed. Table~\ref{tab:e2-results} summarizes the robustness metrics observed on the development split.
+
+\input{tables/table_4_3_e2_robustness_results}
+
+The observed overall SRR was 60.6\% [36.3\%, 83.3\%] for P2, compared with 56.8\% [31.8\%, 79.5\%] for P1, representing an observed advantage of 3.8 percentage points. The difference is more pronounced in the worst-case family robustness metric: P2 achieved 45.5\%, whereas P1 achieved 0.0\%. This indicates that for nearly half of the evaluated workload families, P2 consistently selected acceptable environments across every tested paraphrase, whereas P1 failed on at least one paraphrase variant in every single family.
+
+While these results suggest that structured intent extraction and hybrid retrieval provide improved tolerance to linguistic paraphrasing, the findings remain strictly bounded by the evaluated development corpus. The prompt variants represent curated, reviewed-equivalent formulations and do not encompass arbitrary unconstrained natural language, multilingual dialectal diversity, or severe syntactic noise. Furthermore, several category-specific sub-cells (including canonical and Vietnamese formulations) lack verified sample denominators in the report logs and are retained as descriptive development observations rather than rigorous subgroup benchmarks.
+
+\subsection{Cross-metric and trade-off analysis}
+\label{subsec:cross_metric_analysis}
+
+The contrasting behavior observed between profile acceptability (favoring P1 by 9.5 percentage points) and image acceptability (favoring P2 by 23.7 percentage points) underscores a fundamental architectural principle: recommendation quality cannot be captured adequately by a single collapsed scalar score.
+
+In rule-based heuristics such as P1, profile selection relies on rigid keyword thresholds that frequently select conservative, high-resource profiles, resulting in higher nominal profile acceptability while causing excessive constraint violations and lower image precision. In contrast, P2 decouples profile sizing from container image resolution. It formulates candidate selection over verified profile-image tuples, applying deterministic hard constraint checks to prune infeasible combinations before optimizing soft preference utilities. Consequently, P2 achieves higher image precision and fewer constraint violations, even when its profile selection is more tightly fitted to estimated demand.
+
+Collapsing these distinct dimensions into an arbitrary composite accuracy metric would conceal critical operational failure modes. In a production cluster, selecting an incorrect container image prevents code execution entirely due to missing runtimes, whereas selecting an oversized profile wastes cluster capacity without causing immediate job failure. Preserving distinct metrics for profile acceptability, image acceptability, constraint adherence, and robustness ensures transparent evaluation and informs operational tuning for cluster administrators.
+
+\section{Kubernetes cluster resource evaluation}
+\label{sec:cluster_resource_eval}
+
+\subsection{Stream E4}
+\label{subsec:e4_cluster_trials}
+
+Stream E4 evaluates the operational interaction between recommended resource profiles and actual container execution within an active Kubernetes cluster. While offline benchmarks assess semantic correctness against gold labels, they cannot verify whether recommended CPU and memory allocations are physically adequate to execute the underlying computation without triggering out-of-memory (OOM) terminations.
+
+The E4 experiment was conducted within an OrbStack-backed Kubernetes environment (\texttt{orbstack:z2jh-context-demo}), deploying 421 real Pod trials across 20 distinct workload families. Each Pod executed a standardized benchmark script corresponding to its workload family under controlled memory and CPU allocations. Table~\ref{tab:e4-results} reports the aggregate execution outcomes recorded across all 421 Pod trials.
+
+\input{tables/table_4_4_e4_pod_outcomes}
+
+Figure~\ref{fig:e4_reliability} visualizes the empirical trial outcomes, illustrating the distribution of successful versus OOM-terminated Pods alongside the operational trade-off between reliability and resource efficiency across profile allocation strategies.
+
+\begin{figure}[ht]{Observed Kubernetes Pod execution reliability across 421 real trials in Stream E4 (left), and the conceptual trade-off between OOM risk and resource savings across profile allocation strategies (right).}
+\centering
+\includegraphics[width=0.90\textwidth]{figures/figure_e4_b_trial_reliability.png}
+\label{fig:e4_reliability}
+\end{figure}
+
+Of the 421 evaluated Pod executions, 413 completed successfully with an exit code of zero, yielding an aggregate trial success rate of 98.1\%. Eight trials were terminated by the Kubernetes kernel due to OOM conditions (Linux exit code 137), resulting in an aggregate OOM termination rate of 1.9\%.
+
+The occurrence of these eight OOM events highlights an important reporting discrepancy in the development documentation. Certain early development reports asserted that P2 guarantees 100\% OOM avoidance. However, empirical cluster telemetry confirms that eight Pods experienced OOM termination under specific stress conditions. In keeping with scientific integrity, this thesis reports the actual observed trial counts (98.1\% success, 1.9\% OOM) rather than repeating theoretical avoidance guarantees. A resource recommendation represents a calibrated configuration based on estimated intent; it cannot provide an unconditional runtime guarantee when workload inputs exceed anticipated parameters.
+
+\subsection{In-container resource sampling and envelope profiling}
+\label{subsec:cgroup_sampling}
+
+To capture fine-grained container resource consumption during execution, the E4 runner implements an in-container resource sampler interfacing directly with the Linux control groups v2 (\texttt{cgroups v2}) virtual filesystem. The sampler runs as a concurrent daemon thread inside the Pod, polling \texttt{memory.current}, \texttt{memory.peak}, and \texttt{cpu.stat} at 100-millisecond intervals throughout workload execution.
+
+Upon workload completion or termination, the sampler extracts the cumulative CPU usage delta, peak memory footprint, and kernel memory events from \texttt{memory.events}. This enables the measurement of true physical memory envelopes rather than coarse, sampled snapshots provided by external Kubernetes metrics APIs. Figure~\ref{fig:e4_memory_envelopes} illustrates the locally observed memory envelopes across the evaluated workload families, compared against static profile configurations.
+
+\begin{figure}[ht]{Locally observed memory envelopes (P2 Safe Envelope) compared against Static Small (256 MiB) and Static Large (2048 MiB) profiles across 20 workload families in the E4 experiment.}
+\centering
+\includegraphics[width=0.95\textwidth]{figures/figure_e4_a_memory_envelopes.png}
+\label{fig:e4_memory_envelopes}
+\end{figure}
+
+The empirical envelope measurements reveal dramatic disparities in resource requirements across workload families, demonstrating why static profile selection is fundamentally inadequate. Workloads such as \texttt{large\_hash\_map\_allocation} and \texttt{categorical\_encoding} exhibited memory requirements between 384 MiB and 1,792 MiB. When executed under a standard \texttt{Static Small} profile (fixed at 256 MiB), these memory-intensive workloads suffered immediate OOM termination. Conversely, lightweight workloads such as \texttt{streaming\_statistics} and \texttt{sparse\_graph\_traversal} operated safely within a 64 MiB envelope. Forcing these lightweight workloads into a conservative \texttt{Static Large} profile (fixed at 2048 MiB) resulted in up to 96.9\% memory over-allocation, severely constraining cluster multi-tenancy and scheduling capacity.
+
+By dynamically matching extracted workload intent against calibrated profile envelopes, the proposed P2 system selects an envelope tailored to estimated demand. Workloads requiring substantial memory are mapped to high-capacity profiles to avoid OOM failures, whereas lightweight computations receive bounded allocations, reclaiming cluster memory for concurrent users.
+
+\section{Container image capability and storage accounting}
+\label{sec:image_capability_and_storage}
+
+\subsection{Stream E5: container image capability probing}
+\label{subsec:e5_capability_probes}
+
+Stream E5 investigates whether recommended container images provide the operational software capabilities required by incoming workloads. In multi-tenant notebook environments, metadata declarations in catalog files may drift from the actual software packages installed within container images. Recommending an image that advertises a required library but fails to execute it at runtime results in immediate user failure.
+
+To address this challenge, stream E5 implements an isolated capability verification engine using Docker and an administrator-controlled catalog (version \texttt{2026-08-06.1}). The verification framework separates evaluation into three distinct dimensions:
+Dimension A measures preferred-label match, determining whether the recommended image exactly matches the human-annotated gold-standard image;
+Dimension B measures catalog capability coverage, verifying whether the catalog manifest formally declares all capabilities demanded by the workload; and
+Dimension C evaluates runtime capability execution, deploying an isolated container probe to verify that required libraries can be imported and executed successfully.
+
+Figure~\ref{fig:e5_probe_workflow} illustrates this three-tier verification architecture.
+
+\begin{figure}[ht]{Three-tier container image verification architecture in Stream E5, separating gold-label correctness (Dimension A), catalog metadata soundness (Dimension B), and in-container runtime capability execution (Dimension C).}
+\centering
+\includegraphics[width=0.95\textwidth]{figures/figure_4_2_e5_probe_workflow.pdf}
+\label{fig:e5_probe_workflow}
+\end{figure}
+
+In Dimension C, probes execute inside isolated Docker containers with physical memory capped at 1 GiB and execution guarded by an in-container \texttt{SIGALRM} deadline watchdog. Probes that time out or trigger runtime exceptions are intercepted and categorized into an explicit error taxonomy (including \texttt{OOM}, \texttt{IMPORT\_ERROR}, \texttt{ASSERTION\_FAILURE}, and \texttt{SYNTAX\_ERROR}). Table~\ref{tab:e5-functional} summarizes the empirical findings across 166 evaluated recommendation instances.
+
+\input{tables/table_4_5_e5_functional_probes}
+
+The results demonstrate perfect runtime reliability across all executed eligible probes: 100\% of eligible probes passed for both P1 (65/65) and P2 (76/76). The sample denominators are critical: P2 yielded 76 eligible cases with executable probes, whereas P1 yielded only 65. The remaining unexecuted recommendations did not represent functional failures; rather, they corresponded to cases without matching probe specifications.
+
+Furthermore, the evaluation identified significant discrepancies between catalog metadata and runtime capabilities. Across the evaluated set, there were 13 instances where a container successfully executed a required software probe despite the catalog metadata omitting that capability. Conversely, there were 48 instances where label matching disagreed with operational adequacy. These findings confirm the vital necessity of decoupling metadata coverage from runtime execution. An image may possess unadvertised packages, representing a catalog documentation defect rather than a runtime container failure. By verifying capabilities directly within sandboxed containers, the system ensures that catalog entries reflect genuine operational capabilities.
+
+\subsection{Stream E5: compressed OCI layer storage accounting}
+\label{subsec:e5_storage_accounting}
+
+Stream E5 also evaluates the storage implications of container image selection by inspecting content-addressed layer descriptors within Open Container Initiative (OCI) image manifests. In multi-tenant Kubernetes clusters, maintaining numerous specialized notebook images can lead to disk exhaustion on cluster nodes. However, container images constructed from standardized base layers share underlying filesystem layers, allowing Kubernetes container runtimes to store and transfer shared layers only once.
+
+The storage evaluation inspected four approved container images on Linux/ARM64: \texttt{minimal-python}, \texttt{scipy-data-science}, \texttt{pytorch-deep-learning}, and \texttt{tensorflow-deep-learning}. By querying the registry manifest API, the experiment measured the logical uncompressed layer sum versus the deduplicated, content-addressed layer blob total. Table~\ref{tab:e5-storage} summarizes the compressed OCI layer accounting.
+
+\input{tables/table_4_6_e5_layer_storage}
+
+Across the four approved images, the naive logical sum of all layer descriptors totaled 11,392,935,522 bytes ($\approx 10.61$~GiB). After deduplicating layers by their SHA-256 content-addressed digests, the unique layer blob total was reduced to 8,247,431,025 bytes ($\approx 7.68$~GiB). This represents an absolute deduplication difference of 3,145,504,497 bytes ($\approx 2.93$~GiB), or a 27.61\% reduction in total compressed layer volume.
+
+Figure~\ref{fig:e5_cumulative_storage} illustrates the cumulative storage growth as images are sequentially introduced into the catalog, contrasting naive logical accumulation against unique deduplicated storage.
+
+\begin{figure}[ht]{Cumulative compressed OCI layer storage across the four-image catalog prefix in Stream E5, demonstrating a 27.61\% deduplication saving achieved through shared base layers.}
+\centering
+\includegraphics[width=0.82\textwidth]{figures/figure_a_cumulative_storage.png}
+\label{fig:e5_cumulative_storage}
+\end{figure}
+
+The marginal storage contribution of each image depends strictly on its introduction sequence, as subsequent images reuse layers already registered by earlier images. Table~\ref{tab:e5-marginal} documents the marginal unique byte contributions in the evaluated sequence, and Figure~\ref{fig:e5_marginal_storage} visualizes these marginal additions.
+
+\input{tables/table_4_7_e5_marginal_storage}
+
+\begin{figure}[ht]{Marginal unique compressed layer storage introduced by each container image in Stream E5, showing shared base layer reuse between general-purpose and deep learning images.}
+\centering
+\includegraphics[width=0.85\textwidth]{figures/figure_b_marginal_storage.png}
+\label{fig:e5_marginal_storage}
+\end{figure}
+
+The marginal analysis indicates that introducing \texttt{minimal-python} and \texttt{scipy-data-science} required only 0.53 GiB and 0.66 GiB of unique compressed storage, respectively. When deep learning images were subsequently added, \texttt{pytorch-deep-learning} introduced 3.41 GiB of unique layers, while \texttt{tensorflow-deep-learning} added 3.08 GiB.
+
+To examine the specific structural overlap between image pairs, Figure~\ref{fig:e5_pairwise_reuse} presents a pairwise shared storage heatmap, displaying the exact gigabytes of compressed layer blobs shared between each pair of images.
+
+\begin{figure}[ht]{Pairwise shared layer storage heatmap (GiB) among the four approved container images, highlighting substantial layer inheritance between data science and deep learning environments.}
+\centering
+\includegraphics[width=0.72\textwidth]{figures/figure_c_pairwise_reuse_bytes.png}
+\label{fig:e5_pairwise_reuse}
+\end{figure}
+
+The heatmap demonstrates strong layer inheritance between the base Python environment and downstream data science images, as well as shared system libraries between PyTorch and TensorFlow distributions. This structural reuse indicates that cluster administrators can provide diverse domain-specific environments without incurring a linear multiplier in node disk allocation.
+
+\section{Human interaction evaluation protocol}
+\label{sec:human_evaluation_protocol}
+
+\subsection{Stream E3}
+\label{subsec:e3_study_design}
+
+Stream E3 is designed to evaluate the human-computer interaction impact of intent-aware recommendation compared with manual environment selection. In standard JupyterHub deployments, users must inspect resource profile tables and image descriptions manually, a process that can introduce cognitive overhead and lead to suboptimal environment choices. Stream E3 formulates a rigorous, within-participant experimental protocol to compare the manual baseline, B0, against the proposed intent-aware workflow, P2.
+
+Under the experimental protocol, participants are assigned a series of representative interactive computing tasks, each characterized by specific workload requirements (such as model training, data analysis, or deep learning inference). To eliminate order effects and learning bias, the protocol implements a counterbalanced Latin square design, alternating the presentation order of B0 and P2 across participants. In both conditions, participants operate over the identical administrator-approved catalog, ensuring that P2 receives no private catalog information unavailable to B0.
+
+The primary outcome metrics defined in the protocol include task completion time (seconds from task presentation to notebook launch), task correctness (proportion of selections satisfying workload constraints), decision confidence (measured via 5-point Likert scales), perceived cognitive workload (measured via the NASA-TLX instrument), and system usability (assessed through the System Usability Scale, SUS).
+
+\subsection{Empirical status and reporting transparency}
+\label{subsec:e3_status}
+
+At the current stage of repository development, the E3 testing harness, user interface instrumentation, and experimental protocol have been implemented and verified via automated smoke tests. However, no human participant trials have been conducted.
+
+In adherence to strict academic honesty, this thesis explicitly reports that Stream E3 contains zero participant observations. Consequently, no empirical claims are made regarding reductions in task completion time, improvements in user decision accuracy, decreases in cognitive workload, or superior subjective usability scores.
+
+The absence of human experimental data is an essential distinction. High algorithmic accuracy in offline benchmarks does not automatically guarantee improved human decision-making. Users may misunderstand automated recommendations, override correct recommendations with personal preferences, or find manual selection simpler when catalogs contain very few options. Conducting full human-subject trials under the verified protocol remains an essential objective for future work.

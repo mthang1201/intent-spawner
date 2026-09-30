@@ -1,0 +1,25 @@
+\begin{table}[ht]{Specification of the StructuredIntent data contract and normalization rules}
+\label{tab:structured_intent_schema}
+\centering\footnotesize
+\begin{tabular}{p{3.2cm}p{2.6cm}p{3.8cm}p{3.8cm}}
+\toprule
+\textbf{Field Name} & \textbf{Data Type} & \textbf{Normalization Rule} & \textbf{Evaluation Role} \\
+\midrule
+\texttt{task\_types} & Tuple[\texttt{TaskType}] & Enum validation, deduplicated & Sparse/dense query context \\
+\texttt{required\_features} & Tuple[str] & NFKC, case-folded, sorted & Hard constraint filter ($H$) \\
+\texttt{preferred\_features} & Tuple[str] & NFKC, case-folded, sorted & Soft preference score ($S_{\mathrm{pref}}$) \\
+\texttt{forbidden\_features} & Tuple[str] & NFKC, case-folded, sorted & Hard exclusion predicate ($H$) \\
+\texttt{required\_frameworks} & Tuple[str] & NFKC, case-folded, sorted & Hard constraint filter ($H$) \\
+\texttt{preferred\_frameworks}& Tuple[str] & NFKC, case-folded, sorted & Soft preference score ($S_{\mathrm{pref}}$) \\
+\texttt{required\_libraries}  & Tuple[str] & NFKC, case-folded, sorted & Hard constraint filter ($H$) \\
+\texttt{preferred\_libraries} & Tuple[str] & NFKC, case-folded, sorted & Soft preference score ($S_{\mathrm{pref}}$) \\
+\texttt{gpu\_requirement}     & \texttt{GPURequirement} & Enum (\texttt{required/preferred/not}) & Hard constraint / preference \\
+\texttt{minimum\_cpu\_cores}  & Optional[float] & Finite non-negative float & Hard lower-bound constraint \\
+\texttt{minimum\_memory\_gb}  & Optional[float] & Finite non-negative float & Hard lower-bound constraint \\
+\texttt{dataset\_size\_gb}    & Optional[float] & UI precedence, finite float & Hard memory headroom bound \\
+\texttt{ambiguities}          & Tuple[str] & Printable characters, sorted & Diagnostic explanation \\
+\texttt{normalized\_query}    & str & Whitespace collapsed & Sparse BM25 retrieval token \\
+\texttt{extraction\_provenance}& \texttt{Provenance} & Extractor ID, mode, hash & Security and audit tracking \\
+\bottomrule
+\end{tabular}
+\end{table}

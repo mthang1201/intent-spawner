@@ -1,0 +1,17 @@
+\begin{table}[ht]{Deterministic hard constraint evaluation rules and pruning conditions}
+\label{tab:hard_constraints_spec}
+\centering\footnotesize
+\begin{tabular}{p{2.6cm}p{3.8cm}p{4.2cm}p{3.0cm}}
+\toprule
+\textbf{Constraint} & \textbf{Predicate $h_j(I, c)$} & \textbf{Enforcement Condition} & \textbf{Pruning Diagnostic} \\
+\midrule
+GPU Requirement & $\mathbb{I}(I.\mathrm{gpu} = \texttt{req} \implies c.\mathrm{has\_gpu})$ & Requires accelerator device presence in catalog profile & \texttt{gpu\_unavailable} \\
+CPU Cores & $\mathbb{I}(c.\mathrm{cpu\_limit} \ge I.\mathrm{min\_cpu})$ & Profile CPU limit must meet or exceed intent minimum & \texttt{insufficient\_cpu} \\
+Memory Capacity & $\mathbb{I}(c.\mathrm{mem\_limit} \ge I.\mathrm{min\_ram})$ & Profile memory limit must meet or exceed intent minimum & \texttt{insufficient\_memory} \\
+Dataset Headroom & $\mathbb{I}(c.\mathrm{mem\_limit} > I.\mathrm{dataset\_size})$ & Profile RAM must exceed estimated dataset footprint & \texttt{dataset\_overflow} \\
+Required Features & $\mathbb{I}(I.\mathrm{req\_feats} \subseteq c.\mathrm{capabilities})$ & Candidate must advertise all requested mandatory tools & \texttt{missing\_capability} \\
+Forbidden Features & $\mathbb{I}(I.\mathrm{forbid\_feats} \cap c.\mathrm{capabilities} = \emptyset)$ & Candidate must not contain any explicitly prohibited feature & \texttt{forbidden\_capability} \\
+Catalog Allowlist & $\mathbb{I}(c.\mathrm{profile} \in \mathcal{P}_{\mathrm{allow}} \land c.\mathrm{img} \in \mathcal{I}_{\mathrm{allow}})$ & Candidate must belong to active administrator policy & \texttt{unapproved\_candidate} \\
+\bottomrule
+\end{tabular}
+\end{table}

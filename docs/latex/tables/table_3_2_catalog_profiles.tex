@@ -1,0 +1,20 @@
+\begin{table}[ht]{Administrator-defined resource profiles and approved notebook images}
+\label{tab:candidate_catalog_spec}
+\centering\footnotesize
+\begin{tabular}{p{2.5cm}p{2.2cm}p{2.2cm}p{2.2cm}p{4.2cm}}
+\toprule
+\textbf{Profile Name} & \textbf{CPU Request} & \textbf{CPU Limit} & \textbf{RAM Limit} & \textbf{Default Target Workloads} \\
+\midrule
+\texttt{small}  & 0.1 cores (100m) & 0.5 cores (500m) & 384 MiB & Lightweight script execution, education \\
+\texttt{medium} & 0.5 cores (500m) & 1.0 cores (1000m)& 1024 MiB (1 GiB) & Data exploration, tabular processing \\
+\texttt{large}  & 1.5 cores (1500m)& 2.0 cores (2000m)& 2048 MiB (2 GiB) & Classical ML training, deep learning \\
+\midrule
+\textbf{Image ID} & \textbf{Display Name} & \textbf{Digest Pinning (Immutable OCI)} & \textbf{Key Pre-installed Capabilities} \\
+\midrule
+\texttt{minimal-python}   & Minimal Python       & \texttt{sha256:a153ceb...} & Python, JupyterLab, shell utilities \\
+\texttt{scipy-data-science}& SciPy Data Science  & \texttt{sha256:1a91a69...} & NumPy, pandas, SciPy, scikit-learn \\
+\texttt{pytorch-deep-learning}& PyTorch Deep Learning & \texttt{sha256:69c7282...} & PyTorch, torchvision, torchaudio, CUDA \\
+\texttt{tensorflow-deep-learning}& TensorFlow DL   & \texttt{sha256:25ddc4f...} & TensorFlow, Keras, CUDA user-space \\
+\bottomrule
+\end{tabular}
+\end{table}

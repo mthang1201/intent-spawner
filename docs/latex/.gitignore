@@ -12,10 +12,11 @@
 *.out
 *.run.xml
 *.synctex
-*.synctex.gz
+*.synctex*
 *.toc
 *.lof
 *.lot
+*.loa
 *.nav
 *.snm
 *.vrb
