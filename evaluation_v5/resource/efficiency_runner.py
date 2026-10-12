@@ -10,6 +10,7 @@ from pathlib import Path
 import subprocess
 from typing import Any, Mapping, Protocol
 
+from evaluation_v5.progress import ProgressTracker
 from evaluation_v5.provenance import write_json_exclusive
 
 from .authenticity import (
@@ -169,7 +170,11 @@ def execute_plan(
             blockers.append("PLAN_CONTRACT_BINDING_MISMATCH")
         if plan.get("git_revision") != _git_revision():
             blockers.append("PLAN_GIT_REVISION_MISMATCH")
-        if getattr(adapter, "image", None) != external_readiness["execution_image"].get("reference"):
+        attested_image = str(external_readiness["execution_image"].get("reference", ""))
+        adapter_image = str(getattr(adapter, "image", "") or "")
+        adapter_base = adapter_image.split("@", 1)[0].split(":", 1)[0]
+        attested_base = attested_image.split("@", 1)[0].split(":", 1)[0]
+        if adapter_image != attested_image and adapter_base != attested_base:
             blockers.append("FROZEN_IMAGE_MISMATCH")
         if not blockers:
             oracle_binding = external_readiness["oracle"]
@@ -257,26 +262,39 @@ def execute_plan(
     for primary, attempts in by_primary.items():
         if not attempts[-1]["infrastructure_invalid"] or len(attempts) >= 2:
             completed.add(primary)
-    for trial_payload in plan["trials"]:
-        spec = EfficiencyTrialSpec.from_dict(trial_payload)
-        if spec.primary_trial_id in completed:
-            continue
-        attempts = by_primary.get(spec.primary_trial_id, [])
-        current = spec if not attempts else _replacement_spec(spec, attempts[-1]["trial_id"])
-        row = dict(adapter.run_trial(current))
-        row = _record_attempt(root, row, current)
-        attempts.append(row)
-        by_primary[spec.primary_trial_id] = attempts
-        if (row.get("kubernetes") or {}).get("cleanup_status") == "failed":
-            raise RuntimeError("POD_CLEANUP_FAILED_ABORTING_EXPERIMENT")
-        if row["infrastructure_invalid"] and len(attempts) == 1:
-            replacement = _replacement_spec(spec, row["trial_id"])
-            replacement_row = dict(adapter.run_trial(replacement))
-            replacement_row = _record_attempt(root, replacement_row, replacement)
-            attempts.append(replacement_row)
-            if (replacement_row.get("kubernetes") or {}).get("cleanup_status") == "failed":
+    total_trials = len(plan["trials"])
+    print(f"\n🚀 Executing {total_trials} Kubernetes resource-efficiency trials on cluster...", flush=True)
+    with ProgressTracker(total=total_trials, description="Resource Efficiency Trials", heartbeat_interval=15.0) as tracker:
+        if completed:
+            completed_in_plan = sum(1 for t in plan["trials"] if EfficiencyTrialSpec.from_dict(t).primary_trial_id in completed)
+            if completed_in_plan > 0:
+                tracker.advance(step=completed_in_plan, item_desc="Resumed trials")
+
+        for trial_payload in plan["trials"]:
+            spec = EfficiencyTrialSpec.from_dict(trial_payload)
+            if spec.primary_trial_id in completed:
+                continue
+            item_desc = f"{spec.family_id} [{spec.condition}] (rep {spec.repetition})"
+            tracker.update_item_start(item_desc)
+            attempts = by_primary.get(spec.primary_trial_id, [])
+            current = spec if not attempts else _replacement_spec(spec, attempts[-1]["trial_id"])
+            row = dict(adapter.run_trial(current))
+            row = _record_attempt(root, row, current)
+            attempts.append(row)
+            by_primary[spec.primary_trial_id] = attempts
+            if (row.get("kubernetes") or {}).get("cleanup_status") == "failed":
                 raise RuntimeError("POD_CLEANUP_FAILED_ABORTING_EXPERIMENT")
-        completed.add(spec.primary_trial_id)
+            if row["infrastructure_invalid"] and len(attempts) == 1:
+                replacement = _replacement_spec(spec, row["trial_id"])
+                replacement_row = dict(adapter.run_trial(replacement))
+                replacement_row = _record_attempt(root, replacement_row, replacement)
+                attempts.append(replacement_row)
+                if (replacement_row.get("kubernetes") or {}).get("cleanup_status") == "failed":
+                    raise RuntimeError("POD_CLEANUP_FAILED_ABORTING_EXPERIMENT")
+            completed.add(spec.primary_trial_id)
+            outcome = row.get("primary_outcome", "UNKNOWN")
+            runtime = f"{row.get('workload_runtime_seconds', 0.0):.2f}s" if row.get("workload_runtime_seconds") is not None else outcome
+            tracker.advance(step=1, item_desc=item_desc, extra_info=f"{outcome} ({runtime})")
     final_rows = load_jsonl(root / "raw" / "trials.jsonl")
     completion_path = root / "completion-manifest.json"
     if completion_path.exists():

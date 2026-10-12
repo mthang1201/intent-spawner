@@ -13,7 +13,7 @@
   "oracle": {
     "package_id": "oracle-envelope-v1",
     "package_path": "benchmarks_v5/oracle",
-    "sha256sums_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "sha256sums_sha256": "7721859dd9169aa9bdc0c0494fab20d3f9b33ad1a51a2915b3c43002a8ae2124",
     "manual_review_status": "APPROVED"
   },
   "execution_image": {

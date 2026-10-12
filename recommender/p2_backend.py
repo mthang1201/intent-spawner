@@ -355,7 +355,7 @@ class P2Recommender:
             extractor_model_id=(
                 extraction.model_id
                 if extraction is not None
-                else getattr(self.extractor, "model_id", None)
+                else (getattr(self.extractor, "model_id", None) or getattr(getattr(self.extractor, "config", None), "model", None) or "unavailable-model")
             ),
             extractor_prompt_version=(
                 extraction.prompt_version

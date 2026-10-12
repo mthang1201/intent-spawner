@@ -26,6 +26,7 @@ from typing import TYPE_CHECKING, Any
 
 from evaluation_v4.dataset import file_sha256
 from evaluation_v5.isolation import VerifiedConfirmatorySplit
+from evaluation_v5.progress import ProgressTracker
 from evaluation_v5.provenance import write_json_exclusive
 from evaluation_v5.split_dataset import (
     LoadedSplit,
@@ -1042,6 +1043,7 @@ def run_offline_recommendations(
     dry_run: bool = False,
     include_benchmark_prompts: bool = False,
     freeze_identity: Mapping[str, Any] | None = None,
+    extractor_mode: str | None = None,
 ) -> OfflineRunResult:
     """Run or safely resume a raw Protocol-v5 recommendation evidence matrix.
 
@@ -1101,7 +1103,7 @@ def run_offline_recommendations(
     selected_adapters = (
         dict(adapters)
         if adapters is not None
-        else default_adapters(enable_p3=enable_p3)
+        else default_adapters(enable_p3=enable_p3, extractor_mode=extractor_mode)
     )
     selected_systems = _validate_system_ids(
         system_ids, selected_adapters, enable_p3=enable_p3
@@ -1206,46 +1208,60 @@ def run_offline_recommendations(
 
         executed = 0
         skipped = 0
-        for entry in matrix:
-            if entry.key in completed:
-                skipped += 1
-                continue
-            adapter = selected_adapters[entry.system_id]
-            started = time.monotonic()
-            try:
-                observed = adapter.recommend(_case_input(entry.case), seed=entry.seed)
-                if not isinstance(observed, OfflineAdapterResult):
-                    raise TypeError("adapter recommend must return OfflineAdapterResult")
-                latency = dict(observed.latency_components or {})
-                if latency.get("total_elapsed_seconds") is None:
-                    latency["total_elapsed_seconds"] = max(0.0, time.monotonic() - started)
-                    observed = OfflineAdapterResult(
-                        **{**observed.to_dict(), "latency_components": latency}
+        total_matrix = len(matrix)
+        print(f"\n⏳ Executing recommendation evaluation matrix ({total_matrix} total cases across {list(selected_adapters.keys())})...", flush=True)
+
+        with ProgressTracker(total=total_matrix, description="Recommendation Matrix", heartbeat_interval=30.0) as tracker:
+            for entry in matrix:
+                if entry.key in completed:
+                    skipped += 1
+                    tracker.advance(step=1, item_desc=f"{entry.system_id} | {entry.case.case_id} (cached)")
+                    continue
+                adapter = selected_adapters[entry.system_id]
+                started = time.monotonic()
+                tracker.update_item_start(f"System: {entry.system_id} | Case: {entry.case.case_id}")
+                latency_val = 0.0
+                try:
+                    observed = adapter.recommend(_case_input(entry.case), seed=entry.seed)
+                    if not isinstance(observed, OfflineAdapterResult):
+                        raise TypeError("adapter recommend must return OfflineAdapterResult")
+                    latency = dict(observed.latency_components or {})
+                    if latency.get("total_elapsed_seconds") is None:
+                        latency["total_elapsed_seconds"] = max(0.0, time.monotonic() - started)
+                        observed = OfflineAdapterResult(
+                            **{**observed.to_dict(), "latency_components": latency}
+                        )
+                    latency_val = latency["total_elapsed_seconds"]
+                    record = _record_for_entry(
+                        entry,
+                        split=split,
+                        result=observed,
+                        adapter_provenance=provenance["system_frozen_provenance"][entry.system_id],
+                        provenance_fingerprint=str(provenance["provenance_fingerprint"]),
+                        run_id=str(provenance["run_id"]),
+                        include_benchmark_prompts=include_benchmark_prompts,
                     )
-                record = _record_for_entry(
-                    entry,
-                    split=split,
-                    result=observed,
-                    adapter_provenance=provenance["system_frozen_provenance"][entry.system_id],
-                    provenance_fingerprint=str(provenance["provenance_fingerprint"]),
-                    run_id=str(provenance["run_id"]),
-                    include_benchmark_prompts=include_benchmark_prompts,
+                except Exception as exc:
+                    latency_val = max(0.0, time.monotonic() - started)
+                    record = _record_for_entry(
+                        entry,
+                        split=split,
+                        result=None,
+                        adapter_provenance=provenance["system_frozen_provenance"][entry.system_id],
+                        provenance_fingerprint=str(provenance["provenance_fingerprint"]),
+                        run_id=str(provenance["run_id"]),
+                        include_benchmark_prompts=include_benchmark_prompts,
+                        error=exc,
+                        elapsed_seconds=latency_val,
+                    )
+                _append_record(records_path, record)
+                completed[entry.key] = record
+                executed += 1
+                tracker.advance(
+                    step=1,
+                    item_desc=f"Sys: {entry.system_id:<2} | Case: {entry.case.case_id:<12}",
+                    extra_info=f"Lat: {latency_val:4.2f}s",
                 )
-            except Exception as exc:
-                record = _record_for_entry(
-                    entry,
-                    split=split,
-                    result=None,
-                    adapter_provenance=provenance["system_frozen_provenance"][entry.system_id],
-                    provenance_fingerprint=str(provenance["provenance_fingerprint"]),
-                    run_id=str(provenance["run_id"]),
-                    include_benchmark_prompts=include_benchmark_prompts,
-                    error=exc,
-                    elapsed_seconds=max(0.0, time.monotonic() - started),
-                )
-            _append_record(records_path, record)
-            completed[entry.key] = record
-            executed += 1
 
         if set(completed) != expected_keys:
             missing = sorted(expected_keys - set(completed))
@@ -1469,7 +1485,8 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--split", choices=("development", "confirmatory"), default="development", help="Split mode (default: development)")
     parser.add_argument("--split-id", help="Expected frozen split identifier.")
     parser.add_argument("--dataset", type=Path, help="Path to benchmark split bundle YAML or JSON.")
-    parser.add_argument("--result-dir", type=Path, required=True)
+    parser.add_argument("--result-dir", type=Path, default=None, help="Directory to store results (default: results_v5/.../E1/run-e1-<mode>).")
+    parser.add_argument("--extractor-mode", choices=("local", "llm"), default=None, help="Extractor mode for P2: 'local' (regex) or 'llm' (external LLM).")
     parser.add_argument("--systems", default="P1,P2", help="Comma-separated P1/P2 IDs; P3 also needs --enable-p3.")
     parser.add_argument("--enable-p3", action="store_true", help="Explicitly permit P3 evaluation.")
     parser.add_argument("--repeats", type=int, default=1)
@@ -1494,9 +1511,40 @@ def main(argv: Sequence[str] | None = None) -> int:
     args = _parser().parse_args(argv)
     try:
         split = _cli_split(args)
+        extractor_mode = args.extractor_mode
+        if extractor_mode is not None:
+            from evaluation_v5.credentials import configure_extractor_mode
+            configure_extractor_mode(extractor_mode)
+        elif os.environ.get("P2_STRUCTURED_EXTRACTOR") == "llm":
+            from evaluation_v5.credentials import ensure_llm_credentials
+            ensure_llm_credentials()
+            extractor_mode = "llm"
+        else:
+            extractor_mode = "local"
+
+        from evaluation_v5.credentials import get_mode_tag, sanitize_model_slug
+        mode_tag = get_mode_tag(extractor_mode)
+
+        result_dir = args.result_dir
+        if result_dir is None:
+            result_dir = Path(f"results_v5/protocol-v5.0.0/E1/run-e1-{mode_tag}")
+        else:
+            dir_str = str(result_dir)
+            if "{mode}" in dir_str or "{model}" in dir_str or "{mode_tag}" in dir_str:
+                model_name = os.environ.get("EXTERNAL_LLM_MODEL", "default")
+                dir_str = dir_str.format(mode=extractor_mode, model=sanitize_model_slug(model_name), mode_tag=mode_tag)
+                result_dir = Path(dir_str)
+            elif result_dir == Path("results_v5/protocol-v5.0.0/E1/run-e1-offline") and extractor_mode == "llm":
+                target_dir = Path(f"results_v5/protocol-v5.0.0/E1/run-e1-{mode_tag}")
+                print(f"ℹ️ LLM mode activated: Automatically rerouting result directory to {target_dir} to prevent overwriting local evidence.")
+                result_dir = target_dir
+            elif result_dir == Path("results_v5/protocol-v5.0.0/E1/run-e1-llm") and extractor_mode == "llm":
+                target_dir = Path(f"results_v5/protocol-v5.0.0/E1/run-e1-{mode_tag}")
+                result_dir = target_dir
+
         result = run_offline_recommendations(
             split,
-            result_dir=args.result_dir,
+            result_dir=result_dir,
             system_ids=_parse_systems(args.systems),
             frozen_configuration=_load_frozen_configuration(args.frozen_configuration),
             repeats=args.repeats,
@@ -1505,11 +1553,12 @@ def main(argv: Sequence[str] | None = None) -> int:
             resume=args.resume,
             dry_run=args.dry_run,
             include_benchmark_prompts=args.include_benchmark_prompts,
+            extractor_mode=extractor_mode,
         )
-        summary_file = args.result_dir / "SUMMARY.md"
+        summary_file = result_dir / "SUMMARY.md"
         if summary_file.exists():
             print("\n" + summary_file.read_text(encoding="utf-8"))
-        print(f"📁 Chi tiết kết quả và metrics được lưu tại: {args.result_dir}")
+        print(f"📁 Evidence and metrics saved to: {result_dir}")
         return 0
     except (OfflineRunnerError, OSError, PermissionError, ValueError) as exc:
         print(

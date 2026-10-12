@@ -8,7 +8,7 @@ same boundary for development and confirmatory evaluation.
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
-from dataclasses import asdict, dataclass, is_dataclass
+from dataclasses import asdict, dataclass, is_dataclass, replace
 from enum import Enum
 import math
 from typing import Any, Protocol, runtime_checkable
@@ -19,7 +19,7 @@ from recommender.constraint_evaluator import (
     SOFT_PREFERENCE_WEIGHT,
 )
 from recommender.models import STRUCTURED_INTENT_SCHEMA_VERSION, RecommendationRequest
-from recommender.p2_backend import P2DetailedResult, P2Recommender
+from recommender.p2_backend import P2Config, P2DetailedResult, P2Recommender
 from recommender.p3_backend import P3DetailedResult, P3Recommender
 from recommender.rule_based import RuleBasedRecommender
 
@@ -350,8 +350,21 @@ class P2FrozenAdapter:
 
     system_id = "P2"
 
-    def __init__(self, backend: P2Recommender | None = None) -> None:
-        self.backend = backend or P2Recommender()
+    def __init__(
+        self,
+        backend: P2Recommender | None = None,
+        *,
+        extractor_mode: str | None = None,
+    ) -> None:
+        if backend is not None:
+            self.backend = backend
+        elif extractor_mode is not None:
+            config = P2Config.from_environ()
+            if config.extractor_mode != extractor_mode:
+                config = replace(config, extractor_mode=extractor_mode)
+            self.backend = P2Recommender(config=config)
+        else:
+            self.backend = P2Recommender()
 
     @property
     def stochastic(self) -> bool:
@@ -403,12 +416,17 @@ class P3FrozenAdapter:
         return _detail_result(self.backend.recommend_detailed(case.request()))
 
 
-def default_adapters(*, enable_p3: bool = False) -> dict[str, OfflineSystemAdapter]:
+def default_adapters(
+    *,
+    enable_p3: bool = False,
+    extractor_mode: str | None = None,
+    p2_backend: P2Recommender | None = None,
+) -> dict[str, OfflineSystemAdapter]:
     """Construct production adapters without selecting P3 implicitly."""
 
     adapters: dict[str, OfflineSystemAdapter] = {
         "P1": P1FrozenAdapter(),
-        "P2": P2FrozenAdapter(),
+        "P2": P2FrozenAdapter(backend=p2_backend, extractor_mode=extractor_mode),
     }
     if enable_p3:
         adapters["P3"] = P3FrozenAdapter()

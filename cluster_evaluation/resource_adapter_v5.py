@@ -18,8 +18,10 @@ from evaluation_v5.resource.contracts import (
 from evaluation_v5.resource.models import TRIAL_SCHEMA_VERSION, TrialObservation, TrialSpec
 
 
-REQUIRED_CONTEXT = "orbstack"
-NAMESPACE = "z2jh-context-demo"
+import os
+
+REQUIRED_CONTEXT = os.environ.get("PROTOCOL_V5_K8S_CONTEXT") or "orbstack"
+NAMESPACE = os.environ.get("PROTOCOL_V5_K8S_NAMESPACE") or "z2jh-context-demo"
 SAFETY_LABEL = "z2jh-context-demo.local/disposable-experiment-v5"
 IMAGE_RE = re.compile(r"^[a-zA-Z0-9._/-]+(?::[a-zA-Z0-9._-]+)?(?:@sha256:[0-9a-f]{64})?$")
 E4_LABEL_SELECTOR = "app.kubernetes.io/name=intent-spawner-resource-envelope-v5"

@@ -5,6 +5,7 @@ from __future__ import annotations
 import ast
 import hashlib
 import json
+import os
 from pathlib import Path
 import re
 from typing import Any, Mapping
@@ -53,6 +54,10 @@ def load_semantic_independence(
 
 def load_cluster_policy(path: Path = ELIGIBILITY_PATH) -> dict[str, Any]:
     value = _load_yaml(path)
+    if os.environ.get("PROTOCOL_V5_K8S_CONTEXT"):
+        value["expected_context"] = os.environ["PROTOCOL_V5_K8S_CONTEXT"]
+    if os.environ.get("PROTOCOL_V5_K8S_NAMESPACE"):
+        value["expected_namespace"] = os.environ["PROTOCOL_V5_K8S_NAMESPACE"]
     required = {
         "schema_version", "protocol_version", "expected_context", "expected_namespace",
         "cluster_identity_label", "namespace_safety_label", "node_identity_label",

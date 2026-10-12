@@ -1,0 +1,21 @@
+family_id,safe_cpu_millicores,safe_memory_mib,rejected_cpu_tests,rejected_memory_tests,small_profile_vulnerable,median_runtime_sec
+streaming_statistics,1000,64,"500,750",None,OK,0.059
+relational_transform,N/A,N/A,500,None,OK,0.046
+hash_join,N/A,N/A,None,None,OK,0.046
+sort_group_reduction,1000,64,"500,750",None,OK,0.076
+categorical_encoding,N/A,N/A,None,2048,OOM / INSUFFICIENT,0.292
+iterative_linear_fit,1000,64,"500,750",None,OK,0.236
+dense_matrix_computation,N/A,N/A,"200,300",None,OK,0.024
+sparse_graph_traversal,1000,64,"500,750",None,OK,0.022
+text_tfidf,1000,64,"500,750",None,OK,0.113
+json_normalization,1000,64,"500,750",None,OK,0.071
+image_convolution,1000,64,"500,750",None,OK,0.064
+compression_roundtrip,1000,64,"500,750",None,OK,0.229
+rolling_timeseries,1000,64,"500,750",None,OK,0.060
+monte_carlo,1000,64,"500,750",None,OK,0.255
+content_deduplication,1000,64,"500,750",None,OK,0.053
+bounded_producer_consumer,1000,64,"500,750",None,OK,0.145
+dense_array_allocation,N/A,N/A,None,None,OK,0.215
+cpu_bound_iteration,1000,64,"500,750",None,OK,10.664
+large_hash_map_allocation,1000,2048,"500,750","384,1024,1536,1792",OOM / INSUFFICIENT,4.010
+bitmix_saturation_sweep,1000,64,"500,750",None,OK,11.004

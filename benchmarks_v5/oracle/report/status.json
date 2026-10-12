@@ -1,0 +1,23 @@
+{
+  "cluster_measurement_status": "OBSERVED",
+  "collector_origin": "REAL_KUBERNETES_COLLECTOR",
+  "eligible_for_comparison": false,
+  "executed_trials": 421,
+  "execution_status": "OBSERVED",
+  "limitations": [
+    "Repeated executions estimate stability and runtime variability; they are not independent workload samples.",
+    "Envelope minima are interval-censored by the fixed CPU and memory lattices.",
+    "No result is eligible for comparison until an exclusive manual-review attestation is recorded."
+  ],
+  "manual_review_status": "REQUIRED",
+  "review_input_components": {
+    "derived/safe-envelopes.json": "7f30fbc2aad18a4d9170b88c9a052962479b1d16e09674fcf064c17f3a02f41d",
+    "raw/decision-ledger.jsonl": "7571570bc8b4921d2eebd595f130bb026f6fdfcffb5f32053e3234c5a5379ee4",
+    "raw/environment.json": "1295c00b3c43ff5e53e95dfb11b9ee0d01c2d380391760f55578583ca88bbfc9",
+    "raw/plan.json": "47774ed06f34ed3cfe4ad7964bb503d2d28de21ee18dd8ace1a6b1ddb28dba05",
+    "raw/run-provenance.json": "67109c154b64259c777d4716d384c622a0194e97c431465aab521a96aa989514",
+    "raw/trials.jsonl": "98bfba1b6d660c8960d0a8f1319947d076e58e1c9922e2aab760e71dddf42bcb"
+  },
+  "review_input_fingerprint": "e79e9089be4d63f27e1cf9359b3f4f9a8ec0e45fabac38d869acf0fdbc0e1edd",
+  "status": "OBSERVED_PENDING_MANUAL_REVIEW"
+}

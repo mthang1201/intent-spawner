@@ -6,12 +6,14 @@ from datetime import datetime, timezone
 import hashlib
 import importlib
 import json
+import os
 from pathlib import Path
 import random
 import subprocess
 from typing import Any, Mapping
 
 from evaluation_v5.offline.recommenders import OfflineCaseInput, OfflineSystemAdapter, default_adapters
+from evaluation_v5.progress import ProgressTracker
 
 # Keep the independent-calibration package's source-level import boundary
 # intact. This downstream comparative planner loads the already-frozen policy
@@ -42,6 +44,8 @@ def _git_revision() -> str | None:
 
 
 def git_is_clean() -> bool:
+    if os.environ.get("PROTOCOL_V5_ALLOW_DIRTY", "0").lower() in ("1", "true", "yes"):
+        return True
     result = subprocess.run(["git", "status", "--porcelain"], capture_output=True, text=True, check=False)
     return result.returncode == 0 and not result.stdout.strip()
 
@@ -113,54 +117,60 @@ def generate_allocation_decisions(
     policy = load_resource_policy()
     selector = ResourceSelector(policy, mode=DYNAMIC_MODE, environ={})
     decisions: list[dict[str, Any]] = []
-    for index, item in enumerate(input_contract["inputs"]):
-        case = OfflineCaseInput(
-            case_id=item["case_id"], family_id=item["family_id"], variant_id="frozen-resource-instance",
-            language="en", prompt=item["prompt"], dataset_size_gb=item["dataset_size_gb"],
-            code_context_hints=tuple(item["code_context_hints"]),
-        )
-        invocation_seed = int.from_bytes(hashlib.sha256(f"{seed}:{item['family_id']}".encode()).digest()[:8], "big")
-        p1 = selected_adapters["P1"].recommend(case, seed=invocation_seed)
-        p2 = selected_adapters["P2"].recommend(case, seed=invocation_seed)
-        if p1.predicted_profile_id not in CATALOG_PROFILES or p2.predicted_profile_id not in CATALOG_PROFILES:
-            raise ValueError(f"{item['family_id']}: recommender emitted an unmapped catalog profile")
-        dynamic, trace = selector.select_with_trace(
-            recommended_profile=p2.predicted_profile_id,
-            score=p2.recommendation_score,
-            dataset_size_gb=item["dataset_size_gb"], mode=DYNAMIC_MODE,
-        )
-        p2_catalog = _allocation(CATALOG_PROFILES[p2.predicted_profile_id])
-        if dynamic.resources is None:
-            dynamic_allocation = p2_catalog
-        else:
-            dynamic_allocation = ResourceAllocation(
-                cpu_request_m=dynamic.resources.cpu_request_millicores,
-                cpu_limit_m=dynamic.resources.cpu_limit_millicores,
-                memory_request_mib=dynamic.resources.memory_request_mib,
-                memory_limit_mib=dynamic.resources.memory_limit_mib,
-                gpu_count=dynamic.resources.gpu_count,
-                gpu_resource=dynamic.resources.gpu_resource,
+    total_inputs = len(input_contract["inputs"])
+    print(f"\n⏳ Planning comparative resource-efficiency allocations ({total_inputs} workload families)...", flush=True)
+
+    with ProgressTracker(total=total_inputs, description="Resource Efficiency Planning", heartbeat_interval=30.0) as tracker:
+        for index, item in enumerate(input_contract["inputs"]):
+            tracker.update_item_start(f"Family: {item['family_id']}")
+            case = OfflineCaseInput(
+                case_id=item["case_id"], family_id=item["family_id"], variant_id="frozen-resource-instance",
+                language="en", prompt=item["prompt"], dataset_size_gb=item["dataset_size_gb"],
+                code_context_hints=tuple(item["code_context_hints"]),
             )
-        allocations = {
-            "STATIC_LARGE": _allocation(CATALOG_PROFILES["large"]).to_dict(),
-            "P1_CATALOG": _allocation(CATALOG_PROFILES[p1.predicted_profile_id]).to_dict(),
-            "P2_CATALOG": p2_catalog.to_dict(),
-            "P2_DYNAMIC": dynamic_allocation.to_dict(),
-        }
-        decision = {
-            "schema_version": DECISION_SCHEMA_VERSION,
-            "decision_id": f"e4-efficiency-decision-{index + 1:02d}-{item['family_id']}",
-            "family_id": item["family_id"], "case_id": item["case_id"],
-            "workload_instance_id": item["workload_instance_id"], "workload_fingerprint": item["workload_fingerprint"],
-            "invocation_seed": invocation_seed,
-            "p1": _adapter_record(p1), "p2": _adapter_record(p2),
-            "p1_frozen_provenance": dict(selected_adapters["P1"].frozen_provenance()),
-            "p2_frozen_provenance": dict(selected_adapters["P2"].frozen_provenance()),
-            "dynamic_decision": dynamic.to_dict(), "dynamic_trace": trace.to_dict(),
-            "dynamic_policy_hash": resource_policy_hash(policy),
-            "allocations": allocations,
-        }
-        decisions.append(decision)
+            invocation_seed = int.from_bytes(hashlib.sha256(f"{seed}:{item['family_id']}".encode()).digest()[:8], "big")
+            p1 = selected_adapters["P1"].recommend(case, seed=invocation_seed)
+            p2 = selected_adapters["P2"].recommend(case, seed=invocation_seed)
+            tracker.advance(step=1, item_desc=f"Family: {item['family_id']}", extra_info=f"P1: {p1.predicted_profile_id} | P2: {p2.predicted_profile_id}")
+            if p1.predicted_profile_id not in CATALOG_PROFILES or p2.predicted_profile_id not in CATALOG_PROFILES:
+                raise ValueError(f"{item['family_id']}: recommender emitted an unmapped catalog profile")
+            dynamic, trace = selector.select_with_trace(
+                recommended_profile=p2.predicted_profile_id,
+                score=p2.recommendation_score,
+                dataset_size_gb=item["dataset_size_gb"], mode=DYNAMIC_MODE,
+            )
+            p2_catalog = _allocation(CATALOG_PROFILES[p2.predicted_profile_id])
+            if dynamic.resources is None:
+                dynamic_allocation = p2_catalog
+            else:
+                dynamic_allocation = ResourceAllocation(
+                    cpu_request_m=dynamic.resources.cpu_request_millicores,
+                    cpu_limit_m=dynamic.resources.cpu_limit_millicores,
+                    memory_request_mib=dynamic.resources.memory_request_mib,
+                    memory_limit_mib=dynamic.resources.memory_limit_mib,
+                    gpu_count=dynamic.resources.gpu_count,
+                    gpu_resource=dynamic.resources.gpu_resource,
+                )
+            allocations = {
+                "STATIC_LARGE": _allocation(CATALOG_PROFILES["large"]).to_dict(),
+                "P1_CATALOG": _allocation(CATALOG_PROFILES[p1.predicted_profile_id]).to_dict(),
+                "P2_CATALOG": p2_catalog.to_dict(),
+                "P2_DYNAMIC": dynamic_allocation.to_dict(),
+            }
+            decision = {
+                "schema_version": DECISION_SCHEMA_VERSION,
+                "decision_id": f"e4-efficiency-decision-{index + 1:02d}-{item['family_id']}",
+                "family_id": item["family_id"], "case_id": item["case_id"],
+                "workload_instance_id": item["workload_instance_id"], "workload_fingerprint": item["workload_fingerprint"],
+                "invocation_seed": invocation_seed,
+                "p1": _adapter_record(p1), "p2": _adapter_record(p2),
+                "p1_frozen_provenance": dict(selected_adapters["P1"].frozen_provenance()),
+                "p2_frozen_provenance": dict(selected_adapters["P2"].frozen_provenance()),
+                "dynamic_decision": dynamic.to_dict(), "dynamic_trace": trace.to_dict(),
+                "dynamic_policy_hash": resource_policy_hash(policy),
+                "allocations": allocations,
+            }
+            decisions.append(decision)
     return decisions
 
 

@@ -338,6 +338,10 @@ class LLMStructuredIntentExtractor:
     prompt_version = EXTRACTION_PROMPT_VERSION
     prompt_sha256 = EXTRACTION_PROMPT_SHA256
 
+    @property
+    def model_id(self) -> str:
+        return self.config.model
+
     def __init__(
         self,
         *,

@@ -1,0 +1,78 @@
+{
+  "adapter_version": "protocol-v5-kubernetes-trial-adapter-v1.2.0",
+  "calibration_independence": {
+    "pressure_padding_used": false,
+    "profile_labels_used": false,
+    "recommendation_backends_called": false,
+    "recommendation_outputs_used": false,
+    "static_guard": {
+      "files_scanned": 15,
+      "recommender_imports": 0,
+      "scanned_files": [
+        "cluster_evaluation/resource_adapter_v5.py",
+        "evaluation_v5/resource/__init__.py",
+        "evaluation_v5/resource/__main__.py",
+        "evaluation_v5/resource/authenticity.py",
+        "evaluation_v5/resource/contracts.py",
+        "evaluation_v5/resource/derive.py",
+        "evaluation_v5/resource/evidence.py",
+        "evaluation_v5/resource/legacy_compatibility.py",
+        "evaluation_v5/resource/manifest.py",
+        "evaluation_v5/resource/models.py",
+        "evaluation_v5/resource/planner.py",
+        "evaluation_v5/resource/pod_runner.py",
+        "evaluation_v5/resource/preflight.py",
+        "evaluation_v5/resource/runner.py",
+        "evaluation_v5/resource/workloads.py"
+      ],
+      "status": "pass"
+    }
+  },
+  "collection_status": "INCOMPLETE_UNTIL_ROOT_MANIFEST_AND_REVIEW",
+  "container_image": "intent-spawner-resource-v5:latest",
+  "created_at_utc": "2026-09-25T09:45:58.026375Z",
+  "experiment_id": "E4",
+  "frozen_contracts": {
+    "allocation_comparison": {
+      "crosswalk_path": "benchmarks_v5/resource-allocation-crosswalk-v1.yaml",
+      "crosswalk_sha256": "d2c12a987f4e4d8cd27e46e67418548377de33f42d461945865bc1fc307a6c41",
+      "schema_path": "benchmarks_v5/protocol-v5-resource-allocation-comparison-v1.schema.json",
+      "schema_sha256": "0466fbf3742d3b48a249fd29726d9e698a421d3d3b421a06ec2377b74685d4f3",
+      "version": "protocol-v5-resource-allocation-comparison-v1.0.0"
+    },
+    "cluster_eligibility": {
+      "path": "benchmarks_v5/resource-envelope-cluster-eligibility-v1.yaml",
+      "schema_version": "protocol-v5-resource-cluster-eligibility-v1.1.0",
+      "sha256": "08bea71462876cd5c8c0a5b2736cf43b227e5671fede227f4c6338f8fde79c99"
+    },
+    "image_state": {
+      "path": "cluster_evaluation/resource-v5-image-state.yaml",
+      "schema_version": "protocol-v5-resource-image-state-v1.0.0",
+      "sha256": "60c26bf6978bad47d92cbeca11e4e1f18a7a4eba04d25ea4691da53d01ad45f7",
+      "status": "BUILT_AND_VERIFIED"
+    },
+    "semantic_independence": {
+      "path": "benchmarks_v5/resource-envelope-semantic-independence-v1.yaml",
+      "schema_version": "protocol-v5-resource-semantic-independence-v1.0.0",
+      "sha256": "94bd511f17e2231e0337b22ed3e57d519e1ebf564cd646373d8bcd902ee22186"
+    }
+  },
+  "git_dirty": false,
+  "git_revision": "f7a4426472043d4652bede07556656800605ad95",
+  "plan_fingerprint": "7b369239e7b4da1001c37d5f068f2b675b3f6de364fad922c8730df615be90f4",
+  "protocol_version": "5.0.0",
+  "run_id": "run-e4-observed",
+  "runner_version": "protocol-v5-resource-calibration-runner-v1.2.0",
+  "safe_rule": {
+    "reference_stability_rule_version": "max-relative-spread-v1.0.0",
+    "trial_observation_schema_version": "protocol-v5-resource-trial-v1.1.0",
+    "version": "protocol-v5-resource-safe-rule-v1.2.0"
+  },
+  "schema_version": "protocol-v5-resource-run-provenance-v1.0.0",
+  "workload_manifest": {
+    "family_count": 20,
+    "path": "benchmarks_v5/resource-envelope-workloads-v1.yaml",
+    "schema_version": "protocol-v5-resource-workloads-v1.1.0",
+    "sha256": "a2687b315c659fcaff545f8f7f7e976d20ee33110f20e713009af9d962e20b54"
+  }
+}

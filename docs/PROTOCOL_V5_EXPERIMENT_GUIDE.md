@@ -10,31 +10,41 @@ Toàn bộ các rào cản hành chính giả định (yêu cầu chữ ký revi
 
 | Tác vụ | Lệnh thực thi nhanh | Kết quả đầu ra |
 | :--- | :--- | :--- |
+| **Menu thực nghiệm tương tác (E1-E5)** | `make run-experiments` hoặc `python scripts/run_experiments.py` | Hộp thoại chọn E1..E5, chọn chế độ `local`/`llm`, tự hỏi API key nếu thiếu |
 | **Kiểm thử logic lõi** | `make test` | 80/80 unit tests pass (0.6s) |
-| **Chạy thực nghiệm E1 (Chất lượng gợi ý)** | `make eval-offline` | Bảng Markdown so sánh Top-1, Image Match, Latency của P1 vs P2 |
+| **E1 Chế độ Local (0-cost, regex)** | `make eval-offline-local` | Lưu tại `results_v5/.../E1/run-e1-local` |
+| **E1 Chế độ LLM (Semantic extractor)** | `make eval-offline-llm` | Tự hỏi API key; lưu tại `results_v5/.../E1/run-e1-llm-<model-slug>` |
 | **Chạy với Dataset tùy chọn** | `make eval-dataset DATASET=path/to/dataset.yaml` | Kết quả đánh giá trên tập benchmark chỉ định |
 | **Tổng quan độ bền ngôn ngữ (E2)** | `make eval-robustness` | Báo cáo phân tích 68 biến thể và độ bền tiếng Việt |
 | **Smoke test khảo sát người dùng (E3)** | `make v5-user-study-smoke` | Kiểm thử luồng phân bổ kịch bản ngẫu nhiên cho người dùng |
 | **Kiểm tra trạng thái cluster Kubernetes (E4)** | `make v5-e4-preflight` | Xác nhận cụm K8s sẵn sàng (OrbStack/Kind/K3s/Minikube) |
 | **Đo lường lưu trữ Image E5 (Storage)** | `PYTHONPATH=. .venv/bin/python -m evaluation_v5.image_storage --experiment storage --mode docker --stage development` | Báo cáo chia sẻ layer và dung lượng tiết kiệm |
-| **Kiểm thử chức năng Image E5 (Functional)** | `PYTHONPATH=. .venv/bin/python -m evaluation_v5.image_storage --experiment functional --recommendation-run results_v5/protocol-v5.0.0/E1/run-e1-offline --mode docker --pull-policy missing` | Kết quả khởi chạy container và probe kiểm thử thư viện |
+| **Kiểm thử chức năng Image E5 (Functional)** | `PYTHONPATH=. .venv/bin/python -m evaluation_v5.image_storage --experiment functional --recommendation-run results_v5/protocol-v5.0.0/E1/run-e1-local --mode docker --pull-policy missing` | Kết quả khởi chạy container và probe kiểm thử thư viện |
 
 ---
 
-## 🔬 Chi Tiết Các Thực Nghiệm
+## 🔬 Chi Tiết Các Thực Nghiệm & Lựa Chọn Chế Độ (Local vs LLM)
+
+Hệ thống hỗ trợ 2 chế độ trích xuất ý định (Intent Extractor) cho P2:
+* **`local` (Mặc định):** Parser xác định dựa trên regex và rules. Chạy ngoại tuyến, không tốn chi phí token, độ trễ cực thấp (~1ms). Lưu tại `run-*-local`.
+* **`llm`:** Gọi mô hình ngôn ngữ lớn (OpenAI / Ollama / vLLM / LiteLLM) để trích xuất ngữ nghĩa tự nhiên. Nếu thiếu API key trong môi trường, script sẽ **tự động hỏi người dùng paste API key trực tiếp trên terminal (bằng tiếng Anh)**.
+* **Phân vùng lưu trữ tách biệt theo Model (`run-*-llm-<model-slug>`):** Kết quả của từng model LLM khác nhau (ví dụ: `gpt-4o-mini`, `gpt-4o`, `llama3.1`, `qwen2.5-coder`) được lưu vào các thư mục riêng biệt (như `run-e1-llm-gpt-4o-mini`, `run-e1-llm-llama3.1`) để không bao giờ bị ghi đè lẫn nhau và tuyệt đối không xung đột mã băm provenance.
+* **Thanh tiến độ thời gian thực (Progress Bar & Heartbeat):** Mọi thí nghiệm đều hiển thị thanh tiến độ trực quan với thời gian đã chạy (Elapsed), dự kiến hoàn thành (ETA), và gửi nhịp tim (Heartbeat) định kỳ 30-60 giây để đảm bảo terminal không bao giờ bị đơ/đứng hình khi chờ phản hồi mạng.
 
 ### 1. Thực Nghiệm E1 — Đo Chất Lượng Gợi Ý (P1 vs P2 Recommendation Quality)
 Đánh giá khả năng dịch intent của người dùng thành cấu hình phần cứng (Small, Medium, Large) và Image môi trường phù hợp.
 
 ```bash
-# Lệnh chạy nhanh:
-make eval-offline
+# Cách 1: Dùng script điều phối chung có menu tương tác (Menu bằng tiếng Anh)
+python scripts/run_experiments.py --experiment e1
 
-# Hoặc chạy lệnh trực tiếp với các tùy chọn:
-PYTHONPATH=. .venv/bin/python -m evaluation_v5.offline.runner \
-  --systems P1,P2 \
-  --repeats 1 \
-  --result-dir results_v5/protocol-v5.0.0/E1/run-e1-offline
+# Cách 2: Chạy trực tiếp chế độ Local
+make eval-offline-local
+# (Kết quả lưu tại: results_v5/protocol-v5.0.0/E1/run-e1-local)
+
+# Cách 3: Chạy trực tiếp chế độ LLM (sẽ hỏi API key và cấu hình model nếu chưa export)
+make eval-offline-llm
+# (Kết quả lưu tại: results_v5/protocol-v5.0.0/E1/run-e1-llm-<model-slug>)
 ```
 
 * **Chỉ số đo lường:**
