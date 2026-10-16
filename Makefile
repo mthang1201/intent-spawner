@@ -2,7 +2,7 @@ E4_RESOURCE_DRY_RUN_ID := e4-resource-envelope-dry-run-$(shell date -u +%Y%m%dT%
 E4_RESOURCE_EFFICIENCY_DRY_RUN_ID := e4-resource-efficiency-dry-run-$(shell date -u +%Y%m%dT%H%M%SZ)
 V5_PYTHON ?= $(shell if [ -x .venv/bin/python ]; then echo .venv/bin/python; elif [ -x ../intent-spawner/.venv/bin/python ]; then echo ../intent-spawner/.venv/bin/python; else echo python3; fi)
 
-.PHONY: test eval-offline eval-offline-local eval-offline-llm eval-dataset eval-robustness run-experiments check validate-cluster-results validate-raw-integrity v5-test v5-resource-validate v5-resource-test v5-resource-dry-run v5-resource-efficiency-validate v5-resource-efficiency-test v5-resource-efficiency-dry-run v5-user-study-test v5-user-study-smoke v5-isolation-check
+.PHONY: test eval-offline eval-offline-local eval-offline-llm eval-dataset eval-robustness experiments report research-analysis check validate-cluster-results validate-raw-integrity v5-test v5-resource-validate v5-resource-test v5-resource-dry-run v5-resource-efficiency-validate v5-resource-efficiency-test v5-resource-efficiency-dry-run v5-user-study-test v5-user-study-smoke v5-isolation-check
 .PHONY: v5-e4-preflight v5-resource-preflight v5-resource-efficiency-preflight
 
 test:
@@ -17,7 +17,7 @@ eval-offline:
 	PYTHONPATH=. $(V5_PYTHON) -m evaluation_v5.offline.runner \
 		--systems P1,P2 \
 		--repeats 1 \
-		--result-dir results_v5/protocol-v5.0.0/E1/run-e1-offline
+		--result-dir results_v5/protocol-v5.0.0/E1/run-e1-local
 
 eval-offline-local:
 	PYTHONPATH=. $(V5_PYTHON) -m evaluation_v5.offline.runner \
@@ -33,8 +33,14 @@ eval-offline-llm:
 		--repeats 1 \
 		--result-dir results_v5/protocol-v5.0.0/E1/run-e1-llm
 
-run-experiments:
+experiments:
 	PYTHONPATH=. $(V5_PYTHON) scripts/run_experiments.py
+
+report:
+	PYTHONPATH=. $(V5_PYTHON) scripts/run_experiments.py --experiment report $(if $(TARGET),--report-target $(TARGET),)
+
+research-analysis:
+	PYTHONPATH=. $(V5_PYTHON) scripts/run_experiments.py --experiment research
 
 eval-dataset:
 	@if [ -z "$(DATASET)" ]; then \

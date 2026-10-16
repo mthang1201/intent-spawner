@@ -10,7 +10,7 @@ Toàn bộ các rào cản hành chính giả định (yêu cầu chữ ký revi
 
 | Tác vụ | Lệnh thực thi nhanh | Kết quả đầu ra |
 | :--- | :--- | :--- |
-| **Menu thực nghiệm tương tác (E1-E5)** | `make run-experiments` hoặc `python scripts/run_experiments.py` | Hộp thoại chọn E1..E5, chọn chế độ `local`/`llm`, tự hỏi API key nếu thiếu |
+| **Menu thực nghiệm tương tác (E1-E5)** | `make experiments` hoặc `python scripts/run_experiments.py` | Hộp thoại chọn E1..E5, chọn chế độ `local`/`llm`, tự hỏi API key nếu thiếu |
 | **Kiểm thử logic lõi** | `make test` | 80/80 unit tests pass (0.6s) |
 | **E1 Chế độ Local (0-cost, regex)** | `make eval-offline-local` | Lưu tại `results_v5/.../E1/run-e1-local` |
 | **E1 Chế độ LLM (Semantic extractor)** | `make eval-offline-llm` | Tự hỏi API key; lưu tại `results_v5/.../E1/run-e1-llm-<model-slug>` |
@@ -77,24 +77,21 @@ make eval-offline-llm
   * **Selection Correctness:** Tỉ lệ chọn đúng môi trường tối ưu đáp ứng yêu cầu bài toán.
   * **Decision Time:** Thời gian từ lúc nhận đề bài đến khi xác nhận khởi tạo môi trường (giây).
   * **Interaction Burden:** Số lần chỉnh sửa, số thao tác click chuột và tỉ lệ hoàn thành nhiệm vụ.
-* **Quy trình kiểm thử & Thực thi:**
-  1. **Kiểm tra luồng phân bổ ngẫu nhiên (Smoke test):**
-     ```bash
-     make v5-user-study-smoke
-     ```
-  2. **Kiểm tra tính toàn vẹn của kịch bản nhiệm vụ:**
-     ```bash
-     make v5-user-study-test
-     ```
-  3. **Tạo lịch trình phân bổ đối ngẫu (Counterbalanced assignments):**
-     ```bash
-     PYTHONPATH=. .venv/bin/python -m evaluation_v5.user_study.runner generate-assignments \
-       benchmarks_v5/user-study-draft-v1.yaml \
-       --output-dir benchmarks_v5/protocol-v5-e3-assignment-target-36 \
-       --study-id e3-user-study \
-       --consent-version consent-v1 \
-       --seed 20260827
-     ```
+* **Quy trình kiểm thử & Thực thi (Tích hợp trong `make experiments`):**
+  Chạy `make experiments`, chọn `3. [E3] Human Usability Study`, menu sẽ hỗ trợ 4 chế độ:
+  1. **`smoke` (Kiểm thử mô phỏng):** Xác nhận tính toàn vẹn của harness và luồng phân bổ đối ngẫu.
+  2. **`generate-plan` (Tạo lịch phân bổ người dùng):** Tự động sinh danh sách phân bổ người dùng với số lượng $N$ tùy chọn (6, 12, hoặc 36).
+  3. **`trial-session` (Chạy phiên thử nghiệm người dùng thật):** Người dùng ngồi làm bài trực tiếp trên terminal với 8 tasks (2 warm-up, 6 đo lường), trải nghiệm cả B0 và P2, đo thời gian ra quyết định chính xác tới miligiây, và trả lời bảng hỏi độ hài lòng (SEQ, SUS 10 câu, Final preference).
+  4. **`finalize` (Đóng băng & Phân tích thống kê):** Tự động chạy mô hình thống kê GEE, tính điểm SUS, vẽ biểu đồ và xuất báo cáo `results_v5/protocol-v5.0.0/E3/run-e3-observed/`.
+
+* **Lệnh chạy thủ công qua CLI:**
+  ```bash
+  # Tạo lịch phân bổ 12 người tham gia:
+  python -m evaluation_v5.user_study.runner generate-assignments benchmarks_v5/user-study-draft-v1.yaml --output-dir benchmarks_v5/protocol-v5-e3-assignment-target-12 --study-id e3-user-study --participant-count 12 --consent-version consent-v1 --seed 20260827
+
+  # Đóng băng kết quả sau khi thu thập staging:
+  PROTOCOL_V5_ALLOW_DIRTY=1 python -m evaluation_v5.user_study.runner finalize --run-id run-e3-observed --task-set benchmarks_v5/user-study-draft-v1.yaml --assignments benchmarks_v5/protocol-v5-e3-assignment-target-12/assignment-manifest.json --events results_v5/protocol-v5.0.0/E3/staging/events.jsonl --sessions results_v5/protocol-v5.0.0/E3/staging/sessions.jsonl --exclusions results_v5/protocol-v5.0.0/E3/staging/exclusions.jsonl --questionnaires results_v5/protocol-v5.0.0/E3/staging/questionnaires.jsonl --execution-status OBSERVED
+  ```
 
 ---
 

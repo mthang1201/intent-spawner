@@ -1,17 +1,17 @@
-\begin{table}[ht]{Observed E1 offline recommendation quality estimates for P1 and P2}
+\begin{table}[ht]{Observed E1 offline recommendation quality estimates for P1 and P2 (Local vs. LLM Mode)}
 \label{tab:e1-results}
 \centering
 \small
-\begin{tabular}{p{4.2cm}p{3.8cm}p{3.8cm}p{1.8cm}}
+\begin{tabular}{p{3.6cm}p{3.0cm}p{3.2cm}p{3.4cm}}
 \toprule
-Metric & P1 estimate [95\% CI] & P2 estimate [95\% CI] & Reported $p$ \\
+Metric & P1 Baseline [95\% CI] & P2 Local Mode [95\% CI] & P2 LLM Mode [95\% CI] \\
 \midrule
-JointAccept@1 & 60.0\% [34.5, 81.8] & 65.0\% [43.6, 85.0] & 0.7617 \\
-Profile acceptability & 83.6\% [63.6, 100.0] & 74.1\% [54.5, 90.5] & 0.4062 \\
-Image acceptability & 63.6\% [38.2, 87.3] & 87.3\% [74.5, 96.4] & 0.2344 \\
-Constraint violations & 38.2\% [16.4, 63.6] & 21.8\% [5.5, 43.6] & 0.4062 \\
-Unsupported detection & 0.0\% [0.0, 0.0] & 50.0\% [29.2, 75.0] & N/A \\
-Latency per execution & 0.000 s [0.000, 0.000] & 0.002 s [0.002, 0.002] & $<0.001$ \\
+JointAccept@1 & 60.0\% [34.5, 81.8] & 65.0\% [43.6, 85.0] & 55.9\% [36.4, 74.5] \\
+Profile acceptability & 83.6\% [63.6, 100.0] & 74.1\% [54.5, 90.5] & 78.2\% [56.4, 96.4] \\
+Image acceptability & 63.6\% [38.2, 87.3] & 87.3\% [74.5, 96.4] & 66.8\% [47.3, 85.0] \\
+Constraint violations & 38.2\% [16.4, 63.6] & 21.8\% [5.5, 43.6] & 35.0\% [17.3, 53.2] \\
+Unsupported detection & 0.0\% [0.0, 0.0] & 50.0\% [29.2, 75.0] & 100.0\% [100.0, 100.0] \\
+Latency per execution & 0.000 s [0.000, 0.000] & 0.002 s [0.002, 0.002] & 1.508 s [1.440, 1.586] \\
 \bottomrule
 \end{tabular}
 \end{table}

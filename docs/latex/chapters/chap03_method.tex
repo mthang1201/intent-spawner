@@ -70,7 +70,7 @@ The intent schema intentionally omits infrastructure directives. It contains no 
 
 \section{Hybrid candidate retrieval}
 
-\subsection{Dual-channel candidate retrieval pipeline}
+\subsection{Retrieval pipeline architecture}
 
 P2 searches an administrator-managed catalog $C$ containing pre-built container images and resource profiles. Relying solely on keywords fails when users describe tasks informally. Conversely, relying solely on vector embeddings often misses exact package names and version tags. We therefore deploy a dual-channel hybrid retriever that combines sparse lexical search with dense semantic search in parallel (Figure~\ref{fig:p2_retrieval_pipeline}).
 
@@ -86,7 +86,7 @@ L_s = \operatorname{BM25}(q_s, C), \quad L_d = \operatorname{Dense}(\phi(I), C),
 \]
 where $q_s$ is an expanded lexical query constructed from the intent, $\phi(I)$ is the dense vector embedding of $I$, and $L_s, L_d$ are the resulting ranked candidate shortlists.
 
-\subsection{Sparse lexical query construction and execution}
+\subsection{Lexical query formulation}
 
 The sparse channel uses BM25 \cite{bm25} with standard parameters ($k_1 = 1.5, b = 0.75$). 
 
@@ -100,13 +100,13 @@ q_s = \operatorname{Concat}\Big( & x, \, I.\mathrm{normalized\_query}, \, \opera
 \]
 Query $q_s$ undergoes lowercasing, NFKC normalization, and punctuation removal. Searching $C$ with $q_s$ yields candidate list $L_s$, ensuring exact matches on technical terms such as library names and specific APIs.
 
-\subsection{Dense semantic indexing and query inference}
+\subsection{Semantic indexing and search}
 
 The dense channel captures semantic context when user phrasing differs from catalog descriptions. During catalog preparation, candidate documents $c \in C$ are embedded offline into vectors $\phi(c) \in \mathbb{R}^D$ using \texttt{all-MiniLM-L6-v2} \cite{sentencebert}. The resulting vectors are stored in an immutable index artifact.
 
 At query time, the system encodes the normalized intent $I$ into query vector $\phi(I) \in \mathbb{R}^D$. It then computes cosine similarities between $\phi(I)$ and catalog vectors $\phi(c)$, returning shortlist $L_d$ sorted by descending similarity.
 
-\subsection{Reciprocal rank fusion implementation}
+\subsection{Rank fusion via RRF}
 
 Sparse BM25 scores and dense cosine similarities have different scales and distributions. Blending raw scores directly is fragile and requires empirical tuning. P2 avoids this by using Reciprocal Rank Fusion (RRF). For every candidate $c \in \mathcal{C} = \operatorname{Candidates}(L_s) \cup \operatorname{Candidates}(L_d)$, the fused score is:
 \[
@@ -130,7 +130,7 @@ Algorithm~\ref{alg:rrf_fusion} shows how we combine and truncate candidates into
 \end{algorithmic}
 \end{algorithm}
 
-\section{Deterministic constraint evaluation}
+\section{Constraint filtering}
 
 After candidate retrieval, each candidate in shortlist $L_f$ undergoes strict constraint evaluation. We treat hard constraints as non-negotiable operational requirements. If a candidate fails a single check, the evaluator prunes it immediately, regardless of how well it scored during retrieval.
 
@@ -173,9 +173,9 @@ We follow a strict zero-assumption rule: if a package or driver is not explicitl
 
 In P2, an empty feasible set ($F = \emptyset$) is a normal, first-class outcome. If no candidate satisfies all mandatory rules, the system does not guess or quietly relax constraints. Instead, it stops and returns \texttt{no\_feasible\_candidate}. The UI highlights the exact constraint failures (for example, insufficient GPU memory or a missing library), letting the user adjust their prompt or pick a profile manually. This fail-safe behavior turns hidden under-provisioning bugs into clear, actionable notifications.
 
-\section{Deterministic candidate ranking}
+\section{Multi-criteria candidate ranking}
 
-\subsection{Multi-criteria deterministic scoring formulation}
+\subsection{Scoring formulation}
 
 All feasible candidates $c \in F$ are scored across three dimensions: retrieval relevance, user preferences, and resource footprint. The composite score $S(c) \in [0, 1]$ is:
 \[
@@ -187,7 +187,7 @@ w_{\mathrm{ret}} = 0.60, \quad w_{\mathrm{pref}} = 0.25, \quad w_{\mathrm{res}} 
 \]
 which sum to $1.00$.
 
-\subsection{Linear rank utility and resource cost modeling}
+\subsection{Utility and resource cost modeling}
 
 The rank utility function $U(r)$ converts ordinal retrieval positions into linear scores:
 \[
@@ -228,7 +228,7 @@ Algorithm~\ref{alg:deterministic_ranking} details candidate scoring and tie-brea
 
 \section{JupyterHub integration and runtime enforcement}
 
-\subsection{Trusted candidate resolution and policy validation}
+\subsection{Policy validation and candidate resolution}
 \label{subsec:policy_validation}
 
 The candidate ID $c^*$ selected by the ranker cannot trigger a container spawn on its own. Before showing any recommendation to the user, P2 passes $c^*$ through the \texttt{PolicyValidator} to confirm catalog integrity.
@@ -245,7 +245,7 @@ The validator checks six explicit rules:
 
 These checks prevent unvetted images or misconfigured resource limits from reaching Kubernetes, even if the upstream ranking service behaves unexpectedly.
 
-\subsection{Two-phase preview and confirmation lifecycle}
+\subsection{Two-phase preview and confirmation}
 \label{subsec:preview_workflow}
 
 P2 adopts a two-phase preview and confirmation lifecycle to keep human users in control (Figure~\ref{fig:p2_preview_lifecycle}), adhering to established principles of human-in-the-loop automation and declarative intent fulfillment \cite{parasuraman,rfc9315}. 
@@ -262,7 +262,7 @@ The lifecycle proceeds as follows:
     \item \textbf{Phase 2: Confirmation and Binding.} The user reviews the recommendation. If they edit the prompt, P2 invalidates the token and regenerates the preview. Once the user clicks confirm (or selects an alternative profile manually), the client submits the preview token with the spawn request. The server consumes the token atomically and launches the pod.
 \end{itemize}
 
-\subsection{Pre-spawn binding hook and zero-recomputation execution}
+\subsection{Pre-spawn binding and execution}
 \label{subsec:prespawn_binding}
 
 A core property of our JupyterHub integration is zero recomputation during pod launch. In typical KubeSpawner setups, users submit spawn requests through web forms. P2 intercepts this flow with a synchronous \texttt{pre\_spawn\_hook} provided by KubeSpawner \cite{kspawner}.

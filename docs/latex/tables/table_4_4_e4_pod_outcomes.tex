@@ -1,15 +1,17 @@
-\begin{table}[ht]{Observed E4 Kubernetes Pod execution outcomes (OrbStack environment)}
+\begin{table}[ht]{Observed E4 Kubernetes Pod execution outcomes across 800 trials (OrbStack environment)}
 \label{tab:e4-results}
 \centering
 \small
-\begin{tabular}{lrr}
+\begin{tabular}{p{2.8cm}rrrp{2.4cm}r}
 \toprule
-Execution outcome & Trial count & Aggregate percentage \\
+Allocation Condition & Trials & Success Rate & OOM & RAM Avg (MiB) & CPU Avg (m) \\
 \midrule
-Successful completion & 413 & 98.1\% \\
-Out-of-memory (OOM) termination & 8 & 1.9\% \\
+P1 Catalog & 200 & 90.0\% (180/200) & 20 & 16.2 & 578.4 \\
+P2 Catalog & 200 & 100.0\% (200/200) & 0 & 175.1 & 831.1 \\
+P2 Dynamic & 200 & 95.0\% (190/200) & 10 & 88.4 & 905.7 \\
+Static Large & 200 & 100.0\% (200/200) & 0 & 174.7 & 1005.1 \\
 \midrule
-Total evaluated Pod trials & 421 & 100.0\% \\
+Total / Aggregate & 800 & 96.3\% (770/800) & 30 & --- & --- \\
 \bottomrule
 \end{tabular}
 \end{table}

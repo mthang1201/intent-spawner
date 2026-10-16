@@ -82,11 +82,11 @@
 };
 \node[eval, below=0.6cm of e4_stream] (e4_eval) {
     \textbf{Kubernetes Pod Runner}\\
-    \scriptsize 421 real Pod trials $\cdot$ Dynamic cgroups v2 monitoring (100ms) $\cdot$ OOM detection
+    \scriptsize 800 real Pod trials $\cdot$ Four allocation conditions (200 each) $\cdot$ OOM detection
 };
 \node[metric, below=0.6cm of e4_eval] (e4_metric) {
     \textbf{Empirical Observations}\\
-    \scriptsize 98.1\% success (413/421) $\cdot$ 1.9\% OOM (8) $\cdot$ Safe dynamic envelope vs static
+    \scriptsize 96.3\% success (770/800) $\cdot$ 3.8\% OOM (30) $\cdot$ 0 timeouts
 };
 
 % Stream E5

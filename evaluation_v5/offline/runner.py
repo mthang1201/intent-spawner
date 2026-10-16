@@ -1155,9 +1155,11 @@ def run_offline_recommendations(
                 records_path.unlink()
             if provenance_path.exists():
                 provenance_path.unlink()
-            completion_path = root / COMPLETION_FILENAME
+            completion_path = report_dir / COMPLETION_FILENAME
             if completion_path.exists():
                 completion_path.unlink()
+            if (root / COMPLETION_FILENAME).exists():
+                (root / COMPLETION_FILENAME).unlink()
             lock_path = root / LOCK_FILENAME
             if lock_path.exists():
                 lock_path.unlink()

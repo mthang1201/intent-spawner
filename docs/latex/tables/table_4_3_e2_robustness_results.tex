@@ -1,15 +1,15 @@
-\begin{table}[ht]{Observed E2 semantic robustness metrics on the development split}
+\begin{table}[ht]{Observed E2 semantic and linguistic robustness metrics on the development split}
 \label{tab:e2-results}
 \centering
 \small
-\begin{tabular}{p{4.2cm}p{3.2cm}p{3.2cm}p{3.8cm}}
+\begin{tabular}{p{3.8cm}p{2.3cm}p{2.4cm}p{2.4cm}p{2.0cm}}
 \toprule
-Measure & P1 & P2 & Operational interpretation \\
+Measure & P1 Baseline & P2 Local Mode & P2 LLM Mode & Sample Basis \\
 \midrule
-Overall SRR (macro) & 56.8\% [31.8, 79.5] & 60.6\% [36.3, 83.3] & Workload family macro-mean \\
-Worst-case family robustness & 0.0\% & 45.5\% & All equivalent variants succeed \\
-Vietnamese prompt form & 0.0\% (N/A) & 20.0\% (N/A) & Denominator unavailable in run \\
-Canonical prompt form & 0.0\% (N/A) & 0.0\% (N/A) & Denominator unavailable in run \\
+Overall SRR (macro) & 56.8\% [31.8, 79.5] & 60.6\% [36.3, 83.3] & 51.5\% [33.3, 70.5] & 18 families \\
+Worst-case family robustness & 0.0\% & 45.5\% & 0.0\% & 18 families \\
+English prompts (EN) & 51.9\% (14/27) & 51.9\% (14/27) & 48.1\% (13/27) & 27 variants \\
+Vietnamese prompts (VI) & 32.1\% (18/56) & 35.7\% (20/56) & 28.6\% (16/56) & 56 variants \\
 \bottomrule
 \end{tabular}
 \end{table}

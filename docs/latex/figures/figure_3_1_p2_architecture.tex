@@ -8,7 +8,7 @@
 \begin{tikzpicture}[
     font=\small,
     >=Stealth,
-    node distance=1.1cm and 0.9cm,
+    node distance=1.1cm and 1.2cm,
     box/.style={
         draw=blue!70!black,
         fill=blue!5,
@@ -57,7 +57,7 @@
         dashed,
         rounded corners=6pt,
         line width=0.7pt,
-        inner sep=8pt
+        inner sep=14pt
     },
     grouplabel/.style={
         font=\footnotesize\bfseries,
@@ -73,10 +73,10 @@
 % Middle Row - Hybrid Retrieval
 \node[proc, right=of extractor, yshift=0.85cm] (sparse) {\textbf{Sparse Retrieval}\\BM25 Inverted Index\\Rankings $L_s$};
 \node[proc, right=of extractor, yshift=-0.85cm] (dense) {\textbf{Dense Retrieval}\\Semantic Vectors\\Rankings $L_d$};
-\node[proc, right=1.0cm of $(sparse)!0.5!(dense)$] (rrf) {\textbf{Reciprocal Rank}\\Fusion (RRF)\\Shortlist $L_f$};
+\node[proc, right=1.8cm of $(sparse)!0.5!(dense)$] (rrf) {\textbf{Reciprocal Rank}\\Fusion (RRF)\\Shortlist $L_f$};
 
 % Lower Row - Deterministic Constraints & Ranking
-\node[decision, below=1.4cm of rrf] (constraints) {\textbf{Deterministic}\\Hard Constraints\\$H(I, c) \in \{0, 1\}$};
+\node[decision, below=1.8cm of rrf] (constraints) {\textbf{Deterministic}\\Hard Constraints\\$H(I, c) \in \{0, 1\}$};
 \node[decision, left=of constraints] (ranker) {\textbf{Deterministic}\\Candidate Ranker\\Linear Utility + Pref};
 
 % Bottom Row - Trust, Preview & Execution
@@ -91,19 +91,19 @@
 \draw[->, line width=0.8pt] (extractor.east) -- ++(0.35,0) |- (dense.west);
 \draw[->, line width=0.8pt] (sparse.east) -| (rrf.north);
 \draw[->, line width=0.8pt] (dense.east) -| (rrf.south);
-\draw[->, line width=0.8pt] (rrf) -- (constraints) node[midway, right, font=\footnotesize] {Shortlist $L_f$};
+\draw[->, line width=0.8pt] (rrf) -- (constraints) node[midway, right, align=left, font=\scriptsize, fill=white, inner sep=1pt] {Shortlist\\$L_f$};
 \draw[->, line width=0.8pt] (constraints) -- (ranker) node[midway, above, font=\footnotesize] {Feasible $F$};
 \draw[->, line width=0.8pt] (catalog) -- (ranker) node[midway, right, font=\footnotesize] {Metadata};
-\draw[->, line width=0.8pt] (ranker) -- (preview) node[midway, above, font=\footnotesize] {Top Candidate $c^*$};
-\draw[->, line width=0.8pt] (preview) -- (prespawn) node[midway, above, font=\footnotesize] {Confirmed Token};
+\draw[->, line width=0.8pt] (ranker) -- (preview) node[midway, above, align=center, text width=1.0cm, font=\scriptsize, fill=white, inner sep=1pt] {Top $c^*$};
+\draw[->, line width=0.8pt] (preview) -- (prespawn) node[midway, above, align=center, text width=1.0cm, font=\scriptsize, fill=white, inner sep=1pt] {Token};
 \draw[->, line width=0.8pt] (prespawn) -- (pod) node[midway, left, font=\footnotesize] {Apply Config};
-\draw[->, line width=0.8pt, dashed] (input) |- (preview) node[pos=0.8, left, font=\footnotesize] {User Confirmation};
+\draw[->, line width=0.8pt, dashed] (input) |- (preview) node[pos=0.2, left, font=\scriptsize, fill=white, inner sep=1pt] {User Confirmation};
 
 % Groups
 \begin{scope}[on background layer]
-    \node[group, fit=(sparse) (dense) (rrf), label={[grouplabel]north west:Stage 2: Hybrid Candidate Retrieval}] (g_retrieval) {};
-    \node[group, fit=(constraints) (ranker) (catalog), label={[grouplabel]north west:Stage 3: Policy, Constraints \& Deterministic Ranking}] (g_ranking) {};
-    \node[group, fit=(preview) (prespawn) (pod), label={[grouplabel]north west:Stage 4: Preview \& Pre-Spawn Enforcement}] (g_execution) {};
+    \node[group, fit=(sparse) (dense) (rrf), label={[grouplabel]north west:Stage 2: Hybrid Retrieval}] (g_retrieval) {};
+    \node[group, fit=(constraints) (ranker) (catalog), label={[grouplabel]north west:Stage 3: Constraints \& Ranking}] (g_ranking) {};
+    \node[group, fit=(preview) (prespawn) (pod), label={[grouplabel]north west:Stage 4: Preview \& Enforcement}] (g_execution) {};
 \end{scope}
 
 \end{tikzpicture}

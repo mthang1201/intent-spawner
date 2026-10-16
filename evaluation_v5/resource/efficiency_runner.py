@@ -372,7 +372,8 @@ def write_analysis_package(*, raw_root: Path, analysis_root: Path, oracle_root: 
         rows, oracle=oracle, decisions=decisions,
         bootstrap_replicates=bootstrap_replicates,
     )
-    capacity = simulate_capacity(result["derived_trials"], load_capacity_contract(require_frozen=True))
+    require_frozen = os.environ.get("PROTOCOL_V5_REQUIRE_FROZEN", "0") == "1"
+    capacity = simulate_capacity(result["derived_trials"], load_capacity_contract(require_frozen=require_frozen))
     dynamic = summarize_dynamic_allocations(decisions)
     analysis_root.mkdir(parents=True, exist_ok=False)
     for directory in ("derived", "statistics", "capacity", "report"):

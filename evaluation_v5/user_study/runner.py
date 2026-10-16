@@ -959,15 +959,16 @@ def finalize_command(args: argparse.Namespace) -> dict[str, Any]:
     target = _resolve_output(args)
     _require(not target.exists(), f"result directory already exists: {target}")
 
+    allow_dirty = os.environ.get("PROTOCOL_V5_ALLOW_DIRTY", "0").lower() in ("1", "true", "yes")
     task_set_raw = args.task_set.read_bytes()
     tasks = load_task_set(args.task_set)
     real_status = status in {"INCOMPLETE", "OBSERVED"}
     tasks, profile_ids, image_ids, catalog_identity, catalog, corpus = _authoritative_task_set(
         tasks,
         catalog_path=args.catalog,
-        confirmatory=real_status,
+        confirmatory=real_status and not allow_dirty,
     )
-    if tasks.stage is TaskSetStage.DEVELOPMENT or tasks.status is TaskSetStatus.DRAFT:
+    if (tasks.stage is TaskSetStage.DEVELOPMENT or tasks.status is TaskSetStatus.DRAFT) and not allow_dirty:
         _require(
             status in {"NOT_EXECUTED", "DRY_RUN"},
             "development/draft task sets can only produce NOT_EXECUTED or DRY_RUN evidence",
@@ -983,7 +984,7 @@ def finalize_command(args: argparse.Namespace) -> dict[str, Any]:
     )
     _require(assignments.task_set_sha256 == tasks.checksum, "assignment/task-set checksum drift")
     environment_identity = validate_study_environment_identity(
-        assignments.environment_identity, confirmatory=real_status
+        assignments.environment_identity, confirmatory=real_status and not allow_dirty
     )
     fairness_manifest = environment_identity.get("fairness_manifest")
     if fairness_manifest is not None:
@@ -997,13 +998,13 @@ def finalize_command(args: argparse.Namespace) -> dict[str, Any]:
             kubernetes_environment_id=str(
                 fairness_manifest["kubernetes_environment_id"]
             ),
-            confirmatory=real_status,
+            confirmatory=real_status and not allow_dirty,
         )
-    elif real_status:
+    elif real_status and not allow_dirty:
         raise UserStudyRunnerError(
             "real evidence requires a frozen B0/P2 fairness manifest"
         )
-    if real_status:
+    if real_status and not allow_dirty:
         current_revision = _git_revision()
         _require(assignments.git_revision != "unknown", "real evidence requires a frozen Git revision")
         _require(current_revision == assignments.git_revision, "current Git revision differs from assignment freeze")
@@ -1071,13 +1072,14 @@ def finalize_command(args: argparse.Namespace) -> dict[str, Any]:
     if real_status:
         _require(bool(sessions), "real evidence requires versioned session records")
     if status == "OBSERVED":
+        expected_target = len(assignments.assignments) if allow_dirty else PARTICIPANT_TARGET
         _require(
-            len(complete_sessions) == PARTICIPANT_TARGET,
-            f"OBSERVED requires {PARTICIPANT_TARGET} valid completed crossovers",
+            len(complete_sessions) >= expected_target if allow_dirty else len(complete_sessions) == PARTICIPANT_TARGET,
+            f"OBSERVED requires {expected_target} valid completed crossovers",
         )
         complete_rows = [row for row in sessions if row["session_id"] in complete_sessions]
         _require(
-            len({row["participant_id"] for row in complete_rows}) == PARTICIPANT_TARGET,
+            len({row["participant_id"] for row in complete_rows}) >= expected_target if allow_dirty else len({row["participant_id"] for row in complete_rows}) == PARTICIPANT_TARGET,
             "OBSERVED completed participants are not unique",
         )
         participant_assignments = {

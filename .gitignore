@@ -21,6 +21,11 @@ Context_Aware_Profile_Selection_Extension_JupyterHub_*/
 .codex-tmp/
 .codex-work/
 assets/
+.chart-data-*/
+.presentation_build*/
+
+# TeX temporary files
+texput.log
 
 # Local AI development files
 AGENTS.md

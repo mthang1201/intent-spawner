@@ -11,6 +11,8 @@ from collections.abc import Mapping, Sequence
 from dataclasses import asdict, dataclass, is_dataclass, replace
 from enum import Enum
 import math
+import os
+import time
 from typing import Any, Protocol, runtime_checkable
 
 from recommender.candidate_corpus import CandidateCorpus, build_candidate_corpus
@@ -377,6 +379,12 @@ class P2FrozenAdapter:
         # Current P2 has no seed argument.  Recording this seed permits a
         # provider-backed extractor to be audited without changing P2 semantics.
         del seed
+        # Rate-limiting guard for free-tier LLM endpoints (avoids 429 Too Many Requests per minute)
+        if self.backend.network_bound or getattr(self.backend.extractor, "network_bound", False) or os.environ.get("P2_STRUCTURED_EXTRACTOR", "").lower() == "llm":
+            pacing_delay = float(os.environ.get("EXTERNAL_LLM_PACING_SLEEP_SECONDS", "3.0"))
+            if pacing_delay > 0:
+                time.sleep(pacing_delay)
+
         return _detail_result(self.backend.recommend_detailed(case.request()))
 
 
