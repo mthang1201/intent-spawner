@@ -1,0 +1,30 @@
+{
+  "execution_status": "DRY_RUN",
+  "manifest": "/private/var/folders/rr/ghqxplb512s6t8cqw96fdmsc0000gn/T/intent-spawner-user-study-smoke-wxi_620q/finalized-dry-run/manifest.json",
+  "matched_pair_outcome_count": 3,
+  "measured_task_outcome_count": 6,
+  "questionnaire_submission_count": 9,
+  "raw_event_count": 48,
+  "result_directory": "/private/var/folders/rr/ghqxplb512s6t8cqw96fdmsc0000gn/T/intent-spawner-user-study-smoke-wxi_620q/finalized-dry-run",
+  "run_id": "synthetic-hub-smoke",
+  "schema_version": "protocol-v5-user-study-finalization-result-v1.0.0",
+  "status": "FINALIZED"
+}
+{
+  "condition_task_counts": {
+    "B0": 4,
+    "P2": 4
+  },
+  "event_count": 48,
+  "evidence_class": "SYNTHETIC_DRY_RUN",
+  "finalized_measured_task_count": 6,
+  "notebook_ready_count": 8,
+  "participant_id": "P-ef60e2035136",
+  "privacy_audit_status": "PASS",
+  "required_analysis_output_count": 17,
+  "schema_version": "protocol-v5-user-study-hub-smoke-v1.1.0",
+  "status": "PASS",
+  "task_count": 8,
+  "temporary_output_removed": true
+}
+

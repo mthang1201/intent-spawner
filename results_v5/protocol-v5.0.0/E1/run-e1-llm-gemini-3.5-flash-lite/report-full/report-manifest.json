@@ -1,0 +1,52 @@
+{
+  "bootstrap": {
+    "base_seed": 20260824,
+    "replicates": 2000
+  },
+  "claims_permitted": false,
+  "created_at_utc": "2026-10-13T08:44:42.723208Z",
+  "git_revision": "9f513666ea51d3bd9113be33d9d7707dd5fe6636",
+  "outputs": {
+    "E1_E2_OFFLINE_REPORT.md": "af7d61d00f4da683b4f767cd58225d30ec1ae00220bc2d460c1021ece10e6452",
+    "figures/confidence_intervals.svg": "eefde2ac52ee70a11383bbc71526a0331b055b1194125bedf17f7879ebed045e",
+    "figures/error_taxonomy.svg": "b89d875ecc84fd3d24acd8dcb883d37425e156818ae1519ecdde549770b43a6e",
+    "figures/paired_family_outcomes.svg": "4ede11266fa98e3d3a6d19ef23186425f7277d443d74f803e5cfb07b6c05a0c1",
+    "figures/retrieval_recall_at_k.svg": "356deaccead4b4ee5291e2c011c348fd56f5e4100809e9642775ad931aebc9c1",
+    "limitations.md": "ece5af593506bc6dfa0f0cbe77ae3dad29c1c9f37f55d1c6ab0a26a33864abc2",
+    "p3_development_decision.md": "157589c8077463879961a93cb5fbff908ac744a6f1292dd5f7b2fa156087e978",
+    "recommendation_quality.md": "7ff56e781a88b620b884b31e76cf1ca4de97ed8e3d882c37c748e292bec0b56a",
+    "robustness.md": "0d9892782e8ce7b5b1fccdb5e48b780e4b8ae82142b36ff5bd0767d9dd4eea21",
+    "tables/confidence_intervals.csv": "f3f652d025761440edddfe867ef53b75f7369195bc9b1afd9d1a9777e8504d95",
+    "tables/confidence_intervals.json": "0dab93ef04ca7bc9c1a0787fd75c86ef5821667ed4652059cde3474b52b07c87",
+    "tables/error_taxonomy.csv": "6ff522f06613661e7097aed7ccc866d8a20b8dcfdf22808483b8cf2fccf97bf0",
+    "tables/error_taxonomy.json": "0bc200f05cbca68f7ebe68aa8c9ab35208cfeef125d187f8a09f7513944d25a0",
+    "tables/p3_development_decision.json": "5b69ae176c6a1b60fb5cf3020e00719e495209a742e47d20376d0697179eccbc",
+    "tables/paired_family_outcomes.csv": "912afb4a91edb6af2fcd90e071be98310762e8c032eb27bcfdeef28c4ae0b51d",
+    "tables/paired_family_outcomes.json": "ad37538ec1f02e5c3b9a9fd73fc29ad817cadb9ebfbb843693d40dbbfa9b0bf1",
+    "tables/recommendation_quality.csv": "4bf6fa452d366acef43feea247e374c50e867b9e0032b49b20c9dc80dd2e18db",
+    "tables/recommendation_quality.json": "c020e83ba4e04afd5b534f62bbc8ffbc596e43ae53ae7cb6aa206ac0352025f0",
+    "tables/retrieval_ablation.csv": "65b29c4998d8842a35434efb55f4dfa53dcec73e3b6f2a5b635face662c216f6",
+    "tables/retrieval_ablation.json": "fad93b5545cbeb56cbdb93a462168a89ab3130cb129b752f4ca6e4507d1efdb6",
+    "tables/robustness.csv": "fc3acc91fb7e1948189be9d5c094d66dec0a76b21bb72427530da02d38da5f54",
+    "tables/robustness.json": "5916bb6acc3cfce166b29a47fd9a6c804820554f0b61a943c3c4045844140f15"
+  },
+  "protocol_version": "5.0.0",
+  "retrieval_ks": [
+    1,
+    3,
+    5
+  ],
+  "schema_version": "protocol-v5-offline-reporting-v1.0.0",
+  "source": {
+    "dataset_checksum": "079ca97e88719b2edd259ef8e252f09bc481d6d579d2f00136f694ebc4a2046e",
+    "dataset_id": "v5-development-reconstructed-v1",
+    "offline_run_id": "run-e1-llm-gemini-3.5-flash-lite",
+    "split_id": "v5-development",
+    "split_role": "development"
+  },
+  "status": "REPORT_COMPLETE",
+  "systems": [
+    "P1",
+    "P2"
+  ]
+}

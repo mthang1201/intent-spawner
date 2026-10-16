@@ -1,0 +1,12 @@
+P1_score,P2_score,P3_score,delta_P2_minus_P1,family_id,pairing_status,stratum,winner
+1.0,0.4,,-0.6,basic-python,PAIRED,unspecified,P1
+0.0,0.2,,0.2,negative-constraint-cpu-ml,PAIRED,unspecified,P2
+0.0,0.0,,0.0,negative-constraint-minimal-python,PAIRED,unspecified,Tie
+0.0,0.75,,0.75,p2-cpu-only-pandas-feasible,PAIRED,unspecified,P2
+1.0,1.0,,0.0,p2-tensorflow-inference-feasible,PAIRED,unspecified,Tie
+0.8,0.8,,0.0,pandas-transform,PAIRED,unspecified,Tie
+1.0,1.0,,0.0,pytorch-mnist-cpu-feasible,PAIRED,unspecified,Tie
+0.8,0.8,,0.0,pytorch-nlp-cpu-training,PAIRED,unspecified,Tie
+0.6,0.6,,0.0,sklearn-small,PAIRED,unspecified,Tie
+0.4,0.4,,0.0,tabular-ml-classification,PAIRED,unspecified,Tie
+1.0,0.2,,-0.8,threshold-below,PAIRED,unspecified,P1

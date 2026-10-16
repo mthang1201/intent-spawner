@@ -1,0 +1,128 @@
+[
+  {
+    "condition": "B0",
+    "denominator": 3,
+    "missing_count": 0,
+    "outcome": "decision_time_seconds"
+  },
+  {
+    "condition": "P2",
+    "denominator": 3,
+    "missing_count": 0,
+    "outcome": "decision_time_seconds"
+  },
+  {
+    "condition": "B0",
+    "denominator": 3,
+    "missing_count": 0,
+    "outcome": "notebook_ready_time_seconds"
+  },
+  {
+    "condition": "P2",
+    "denominator": 3,
+    "missing_count": 0,
+    "outcome": "notebook_ready_time_seconds"
+  },
+  {
+    "condition": "B0",
+    "denominator": 3,
+    "missing_count": 0,
+    "outcome": "end_to_end_seconds"
+  },
+  {
+    "condition": "P2",
+    "denominator": 3,
+    "missing_count": 0,
+    "outcome": "end_to_end_seconds"
+  },
+  {
+    "condition": "B0",
+    "denominator": 3,
+    "missing_count": 0,
+    "outcome": "confirmation"
+  },
+  {
+    "condition": "P2",
+    "denominator": 3,
+    "missing_count": 0,
+    "outcome": "confirmation"
+  },
+  {
+    "condition": "B0",
+    "denominator": 3,
+    "missing_count": 0,
+    "outcome": "notebook_ready_after_confirmation"
+  },
+  {
+    "condition": "P2",
+    "denominator": 3,
+    "missing_count": 0,
+    "outcome": "notebook_ready_after_confirmation"
+  },
+  {
+    "condition": "B0",
+    "denominator": 3,
+    "missing_count": 0,
+    "outcome": "seq_ease"
+  },
+  {
+    "condition": "P2",
+    "denominator": 3,
+    "missing_count": 0,
+    "outcome": "seq_ease"
+  },
+  {
+    "condition": "B0",
+    "denominator": 1,
+    "missing_count": 0,
+    "outcome": "sus_score"
+  },
+  {
+    "condition": "P2",
+    "denominator": 1,
+    "missing_count": 0,
+    "outcome": "sus_score"
+  },
+  {
+    "condition": "B0",
+    "denominator": 1,
+    "missing_count": 0,
+    "outcome": "custom_confidence_selected_environment"
+  },
+  {
+    "condition": "P2",
+    "denominator": 1,
+    "missing_count": 0,
+    "outcome": "custom_confidence_selected_environment"
+  },
+  {
+    "condition": "B0",
+    "denominator": 1,
+    "missing_count": 0,
+    "outcome": "custom_natural_workload_expression"
+  },
+  {
+    "condition": "P2",
+    "denominator": 1,
+    "missing_count": 0,
+    "outcome": "custom_natural_workload_expression"
+  },
+  {
+    "condition": "B0",
+    "denominator": 1,
+    "missing_count": 0,
+    "outcome": "custom_selection_convenience"
+  },
+  {
+    "condition": "P2",
+    "denominator": 1,
+    "missing_count": 0,
+    "outcome": "custom_selection_convenience"
+  },
+  {
+    "condition": "ALL",
+    "denominator": 1,
+    "missing_count": 0,
+    "outcome": "final_preference"
+  }
+]

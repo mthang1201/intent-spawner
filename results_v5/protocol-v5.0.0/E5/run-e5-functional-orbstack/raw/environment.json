@@ -1,0 +1,13 @@
+{
+  "environment_id": "e5-docker-darwin",
+  "execution_mode": "docker",
+  "git_info": {
+    "git_dirty": true,
+    "git_revision": "f7a4426472043d4652bede07556656800605ad95"
+  },
+  "platform": "macOS-15.3.2-arm64-arm-64bit-Mach-O",
+  "python_version": "3.14.6 (main, Jun 10 2026, 10:03:53) [Clang 17.0.0 (clang-1700.6.4.2)]",
+  "runtime_detected": "docker",
+  "source_recommendation_run_id": "run-e1-offline",
+  "source_recommendation_run_sha256": "832ab0e3500e9e368b7d3336f89a520a7165ab121aa0f79e6f0709412cd9a153"
+}

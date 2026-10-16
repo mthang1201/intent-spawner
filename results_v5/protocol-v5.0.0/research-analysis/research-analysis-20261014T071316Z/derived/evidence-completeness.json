@@ -1,0 +1,27 @@
+{
+  "all_required_claims_decided": false,
+  "counts": {
+    "NOT_EXECUTED": 3,
+    "NOT_SUPPORTED": 4,
+    "SUPPORTED": 2
+  },
+  "not_executed_required_claims": [
+    "H3",
+    "H4"
+  ],
+  "optional_claims": [
+    "H8"
+  ],
+  "package_status": "INCOMPLETE",
+  "required_claims": [
+    "H1",
+    "H2",
+    "H3",
+    "H4",
+    "H5",
+    "H6",
+    "H7F",
+    "H7"
+  ],
+  "schema_version": "protocol-v5-claim-completeness-v1.0.0"
+}

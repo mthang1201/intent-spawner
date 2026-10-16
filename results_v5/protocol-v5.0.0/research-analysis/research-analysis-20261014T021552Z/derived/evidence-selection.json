@@ -1,0 +1,681 @@
+{
+  "global_errors": [],
+  "requirements": [
+    {
+      "accepted_schema_versions": [
+        "protocol-v5-statistical-analysis-v1.0.0"
+      ],
+      "candidate_count": 2,
+      "candidate_packages": [
+        "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E1/run-e1-llm-gemini-3.5-flash-lite",
+        "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E1/run-e1-local"
+      ],
+      "candidate_records": [
+        {
+          "actual_manifest_sha256": "008848753589e4bbd4d2d3c6d16b597473fd5da3a37f36cd435472649b6c52b3",
+          "authentication": {
+            "package_validator": "validate_statistical_package+source_checksum_binding",
+            "source_checksums_verified": true,
+            "split_custody_verified": true
+          },
+          "claim_eligibility": "INELIGIBLE",
+          "content_signature_sha256": "216bc68fcd01e161e2eeba7793d0775e074031a7ec8339e07e6bfe5ac2b49f87",
+          "decision_signature_sha256": "f99344a81b2cf026816ebfb82d75d47ac1c36a0419454312b7285408c98af543",
+          "disposition": "INELIGIBLE_OR_INVALID",
+          "duplicate_reference_of": null,
+          "execution_status": "DERIVED_EVIDENCE_COMPLETE",
+          "integrity_errors": [],
+          "manifest_path": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E1/run-e1-llm-gemini-3.5-flash-lite/derived/statistical_analysis/analysis-manifest.json",
+          "package_path": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E1/run-e1-llm-gemini-3.5-flash-lite",
+          "reason_codes": [
+            "CLAIMS_NOT_PERMITTED",
+            "NON_CONFIRMATORY_EVIDENCE"
+          ],
+          "registered_manifest_sha256": "008848753589e4bbd4d2d3c6d16b597473fd5da3a37f36cd435472649b6c52b3",
+          "semantic_provenance": {
+            "benchmark.dataset_sha256": null,
+            "benchmark.split_id": "v5-development",
+            "catalog.version": "2026-08-06.1",
+            "constraints.evaluator_version": "p2-deterministic-constraint-evaluator-v1.1.0",
+            "constraints.policy_version": "p2-constraint-policy-v1.0.0",
+            "constraints.ranker_version": "p2-deterministic-ranker-v2.0.0",
+            "corpus.sha256": "987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444",
+            "corpus.version": "environment-candidate-corpus-v1",
+            "extractor.prompt_sha256": "aa607821b326ce94aad5e44197f230b919f37fc50897489adf3932aba9056195",
+            "indexes.dense.sha256": "c0561bcd1ee6ec5153b710aef3deae88bd259a011ddd454513cbb1c675118387",
+            "indexes.hybrid.sha256": "45ea08f29492d796189920713636b3a9cae2f0fb264e023124eb38c8cfad83a4",
+            "indexes.sparse.sha256": "931fac84b818cb934a37bfbfa76092a89626cd5eaffc869887de8558bc6fa747",
+            "p1.backend_version": "rule-based-v1",
+            "p2.backend_version": "p2-hybrid-v1.0.0",
+            "p2.config_version": "p2-config-v1.1.0",
+            "p2.pipeline_version": "p2-pipeline-v1.0.0",
+            "p3.pipeline_version": null,
+            "p3.prompt_sha256": null,
+            "p3.reranker_version": null
+          },
+          "source_provenance": {
+            "analysis_environment": {
+              "platform": "Darwin",
+              "platform_release": "24.3.0",
+              "python_version": "3.14.6"
+            },
+            "dataset": {
+              "dataset_canonical_sha256": "079ca97e88719b2edd259ef8e252f09bc481d6d579d2f00136f694ebc4a2046e",
+              "dataset_id": "v5-development-reconstructed-v1",
+              "dataset_schema_version": "protocol-v5-split-bundle-v2.0.0",
+              "dataset_source_file_sha256": "71f57daafe319afea1b5ce23e9e1a762105c31f2f756f55abbd06b551c4eed6c",
+              "freeze_identity": {
+                "freeze_id": null,
+                "frozen_at_utc": "2026-09-21T06:38:01Z",
+                "frozen_by": "protocol-v5-v4-importer+agent-authored-p2-supplement",
+                "source": "development_split_manifest"
+              },
+              "gold_catalog_identity": {
+                "candidate_corpus_sha256": "987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444",
+                "candidate_corpus_version": "environment-candidate-corpus-v1",
+                "image_catalog_sha256": "bd2211d5fd769b5addec3c41e8cbd48bb0d9cd1c958aa554ada9bf88c29509f3",
+                "image_catalog_version": "2026-08-06.1",
+                "profile_catalog_sha256": "c8f797b9c4d30459da99dad8d6d1c28e07e6803d76fab7cf88cdcd0f6c679348"
+              },
+              "offline_completion_sha256": "c8e4dd0f424b587bb71ce4beed01dfa1697d421d70ad80a340c9f27479ed5bdd",
+              "offline_provenance_fingerprint": "f4853498bbcdbc32f86915d2d34aa842d0466caf4edb7a03d9b93b6994a68b71",
+              "offline_provenance_sha256": "6fcc62b655e42a951c5da3d3e78f2a57944d40745eb0032a2034bc62a61cfb60",
+              "offline_recommendations_sha256": "3c39b7acd1855d889111d6625e4a275e3fa6fa8ee9fee8147620797f9a351beb",
+              "offline_run_id": "run-e1-llm-gemini-3.5-flash-lite",
+              "offline_split_identity": {
+                "bundle_checksum": "079ca97e88719b2edd259ef8e252f09bc481d6d579d2f00136f694ebc4a2046e",
+                "case_count": 83,
+                "dataset_id": "v5-development-reconstructed-v1",
+                "dataset_sha256": "71f57daafe319afea1b5ce23e9e1a762105c31f2f756f55abbd06b551c4eed6c",
+                "family_count": 18,
+                "role": "development",
+                "split_id": "v5-development"
+              },
+              "split_checksum": "079ca97e88719b2edd259ef8e252f09bc481d6d579d2f00136f694ebc4a2046e",
+              "split_id": "v5-development",
+              "split_role": "development"
+            },
+            "freeze_identity": {
+              "freeze_id": null,
+              "frozen_at_utc": "2026-09-21T06:38:01Z",
+              "frozen_by": "protocol-v5-v4-importer+agent-authored-p2-supplement",
+              "source": "development_split_manifest"
+            },
+            "git_dirty": null,
+            "git_revision": "9f513666ea51d3bd9113be33d9d7707dd5fe6636",
+            "source_environment": {
+              "platform": "darwin",
+              "platform_release": "24.3.0",
+              "python_version": "3.14.6"
+            }
+          },
+          "stage": "development",
+          "validation_status": "PASS"
+        },
+        {
+          "actual_manifest_sha256": "1a8c8636823515e3ac5bc84bd32ef48b995840a044729c6b818fe14458fcd044",
+          "authentication": {
+            "package_validator": "validate_statistical_package+source_checksum_binding",
+            "source_checksums_verified": true,
+            "split_custody_verified": true
+          },
+          "claim_eligibility": "INELIGIBLE",
+          "content_signature_sha256": "32a6638777589822c8a7d16a9add066ab75a632df6e9b6d227c09e7c226bc5ee",
+          "decision_signature_sha256": "220c92fa40cd892460fbae63655baea3df946c31bdf60f73b07193f67bc298ba",
+          "disposition": "INELIGIBLE_OR_INVALID",
+          "duplicate_reference_of": null,
+          "execution_status": "DERIVED_EVIDENCE_COMPLETE",
+          "integrity_errors": [],
+          "manifest_path": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E1/run-e1-local/derived/statistical_analysis/analysis-manifest.json",
+          "package_path": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E1/run-e1-local",
+          "reason_codes": [
+            "CLAIMS_NOT_PERMITTED",
+            "NON_CONFIRMATORY_EVIDENCE"
+          ],
+          "registered_manifest_sha256": "1a8c8636823515e3ac5bc84bd32ef48b995840a044729c6b818fe14458fcd044",
+          "semantic_provenance": {
+            "benchmark.dataset_sha256": null,
+            "benchmark.split_id": "v5-development",
+            "catalog.version": "2026-08-06.1",
+            "constraints.evaluator_version": "p2-deterministic-constraint-evaluator-v1.1.0",
+            "constraints.policy_version": "p2-constraint-policy-v1.0.0",
+            "constraints.ranker_version": "p2-deterministic-ranker-v2.0.0",
+            "corpus.sha256": "987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444",
+            "corpus.version": "environment-candidate-corpus-v1",
+            "extractor.prompt_sha256": "8be330fe52b1b6b1520997309746b6b6b7e5e24867d962846ccf68a2af7256d9",
+            "indexes.dense.sha256": "c0561bcd1ee6ec5153b710aef3deae88bd259a011ddd454513cbb1c675118387",
+            "indexes.hybrid.sha256": "45ea08f29492d796189920713636b3a9cae2f0fb264e023124eb38c8cfad83a4",
+            "indexes.sparse.sha256": "931fac84b818cb934a37bfbfa76092a89626cd5eaffc869887de8558bc6fa747",
+            "p1.backend_version": "rule-based-v1",
+            "p2.backend_version": "p2-hybrid-v1.0.0",
+            "p2.config_version": "p2-config-v1.1.0",
+            "p2.pipeline_version": "p2-pipeline-v1.0.0",
+            "p3.pipeline_version": null,
+            "p3.prompt_sha256": null,
+            "p3.reranker_version": null
+          },
+          "source_provenance": {
+            "analysis_environment": {
+              "platform": "Darwin",
+              "platform_release": "24.3.0",
+              "python_version": "3.14.6"
+            },
+            "dataset": {
+              "dataset_canonical_sha256": "079ca97e88719b2edd259ef8e252f09bc481d6d579d2f00136f694ebc4a2046e",
+              "dataset_id": "v5-development-reconstructed-v1",
+              "dataset_schema_version": "protocol-v5-split-bundle-v2.0.0",
+              "dataset_source_file_sha256": "71f57daafe319afea1b5ce23e9e1a762105c31f2f756f55abbd06b551c4eed6c",
+              "freeze_identity": {
+                "freeze_id": null,
+                "frozen_at_utc": "2026-09-21T06:38:01Z",
+                "frozen_by": "protocol-v5-v4-importer+agent-authored-p2-supplement",
+                "source": "development_split_manifest"
+              },
+              "gold_catalog_identity": {
+                "candidate_corpus_sha256": "987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444",
+                "candidate_corpus_version": "environment-candidate-corpus-v1",
+                "image_catalog_sha256": "bd2211d5fd769b5addec3c41e8cbd48bb0d9cd1c958aa554ada9bf88c29509f3",
+                "image_catalog_version": "2026-08-06.1",
+                "profile_catalog_sha256": "c8f797b9c4d30459da99dad8d6d1c28e07e6803d76fab7cf88cdcd0f6c679348"
+              },
+              "offline_completion_sha256": "cf837168b5b0b248effe5a7cc5c9d4ec7c08c2b0bb128b51fcde0842e0fc909e",
+              "offline_provenance_fingerprint": "5fa81eced88e4c7badc8d0865cd9fddd7a5514e616e9a5e1652b86b864887d80",
+              "offline_provenance_sha256": "94f97da9d543976a32cec72713749fa193e27a5537d32e27aaefdde057d1abe5",
+              "offline_recommendations_sha256": "9214066f4ecb27e386479cc723dccc9ee5bd7a8d0732fa0c088192297fba9d1f",
+              "offline_run_id": "run-e1-local",
+              "offline_split_identity": {
+                "bundle_checksum": "079ca97e88719b2edd259ef8e252f09bc481d6d579d2f00136f694ebc4a2046e",
+                "case_count": 83,
+                "dataset_id": "v5-development-reconstructed-v1",
+                "dataset_sha256": "71f57daafe319afea1b5ce23e9e1a762105c31f2f756f55abbd06b551c4eed6c",
+                "family_count": 18,
+                "role": "development",
+                "split_id": "v5-development"
+              },
+              "split_checksum": "079ca97e88719b2edd259ef8e252f09bc481d6d579d2f00136f694ebc4a2046e",
+              "split_id": "v5-development",
+              "split_role": "development"
+            },
+            "freeze_identity": {
+              "freeze_id": null,
+              "frozen_at_utc": "2026-09-21T06:38:01Z",
+              "frozen_by": "protocol-v5-v4-importer+agent-authored-p2-supplement",
+              "source": "development_split_manifest"
+            },
+            "git_dirty": null,
+            "git_revision": "9f513666ea51d3bd9113be33d9d7707dd5fe6636",
+            "source_environment": {
+              "platform": "darwin",
+              "platform_release": "24.3.0",
+              "python_version": "3.14.6"
+            }
+          },
+          "stage": "development",
+          "validation_status": "PASS"
+        }
+      ],
+      "conflict_status": "NONE",
+      "eligible_candidate_count": 0,
+      "evidence_class": "E1",
+      "reason_codes": [
+        "CLAIMS_NOT_PERMITTED",
+        "NON_CONFIRMATORY_EVIDENCE",
+        "NO_ELIGIBLE_CONFIRMATORY_EVIDENCE"
+      ],
+      "requirement_id": "offline_recommendation",
+      "selected_manifest_sha256": null,
+      "selected_package": null,
+      "selection_mode": "NONE",
+      "unique_candidate_count": 2
+    },
+    {
+      "accepted_schema_versions": [
+        "protocol-v5-statistical-analysis-v1.0.0"
+      ],
+      "candidate_count": 2,
+      "candidate_packages": [
+        "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E1/run-e1-llm-gemini-3.5-flash-lite",
+        "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E1/run-e1-local"
+      ],
+      "candidate_records": [
+        {
+          "actual_manifest_sha256": "008848753589e4bbd4d2d3c6d16b597473fd5da3a37f36cd435472649b6c52b3",
+          "authentication": {
+            "package_validator": "validate_statistical_package+source_checksum_binding",
+            "source_checksums_verified": true,
+            "split_custody_verified": true
+          },
+          "claim_eligibility": "INELIGIBLE",
+          "content_signature_sha256": "216bc68fcd01e161e2eeba7793d0775e074031a7ec8339e07e6bfe5ac2b49f87",
+          "decision_signature_sha256": "8715aee66becccae10b6dfd0a92808ee295905c78f831b2ccd4aad1210e82cc2",
+          "disposition": "INELIGIBLE_OR_INVALID",
+          "duplicate_reference_of": null,
+          "execution_status": "DERIVED_EVIDENCE_COMPLETE",
+          "integrity_errors": [],
+          "manifest_path": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E1/run-e1-llm-gemini-3.5-flash-lite/derived/statistical_analysis/analysis-manifest.json",
+          "package_path": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E1/run-e1-llm-gemini-3.5-flash-lite",
+          "reason_codes": [
+            "CLAIMS_NOT_PERMITTED",
+            "NON_CONFIRMATORY_EVIDENCE"
+          ],
+          "registered_manifest_sha256": "008848753589e4bbd4d2d3c6d16b597473fd5da3a37f36cd435472649b6c52b3",
+          "semantic_provenance": {
+            "benchmark.dataset_sha256": null,
+            "benchmark.split_id": "v5-development",
+            "catalog.version": "2026-08-06.1",
+            "constraints.evaluator_version": "p2-deterministic-constraint-evaluator-v1.1.0",
+            "constraints.policy_version": "p2-constraint-policy-v1.0.0",
+            "constraints.ranker_version": "p2-deterministic-ranker-v2.0.0",
+            "corpus.sha256": "987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444",
+            "corpus.version": "environment-candidate-corpus-v1",
+            "extractor.prompt_sha256": "aa607821b326ce94aad5e44197f230b919f37fc50897489adf3932aba9056195",
+            "indexes.dense.sha256": "c0561bcd1ee6ec5153b710aef3deae88bd259a011ddd454513cbb1c675118387",
+            "indexes.hybrid.sha256": "45ea08f29492d796189920713636b3a9cae2f0fb264e023124eb38c8cfad83a4",
+            "indexes.sparse.sha256": "931fac84b818cb934a37bfbfa76092a89626cd5eaffc869887de8558bc6fa747",
+            "p1.backend_version": "rule-based-v1",
+            "p2.backend_version": "p2-hybrid-v1.0.0",
+            "p2.config_version": "p2-config-v1.1.0",
+            "p2.pipeline_version": "p2-pipeline-v1.0.0",
+            "p3.pipeline_version": null,
+            "p3.prompt_sha256": null,
+            "p3.reranker_version": null
+          },
+          "source_provenance": {
+            "analysis_environment": {
+              "platform": "Darwin",
+              "platform_release": "24.3.0",
+              "python_version": "3.14.6"
+            },
+            "dataset": {
+              "dataset_canonical_sha256": "079ca97e88719b2edd259ef8e252f09bc481d6d579d2f00136f694ebc4a2046e",
+              "dataset_id": "v5-development-reconstructed-v1",
+              "dataset_schema_version": "protocol-v5-split-bundle-v2.0.0",
+              "dataset_source_file_sha256": "71f57daafe319afea1b5ce23e9e1a762105c31f2f756f55abbd06b551c4eed6c",
+              "freeze_identity": {
+                "freeze_id": null,
+                "frozen_at_utc": "2026-09-21T06:38:01Z",
+                "frozen_by": "protocol-v5-v4-importer+agent-authored-p2-supplement",
+                "source": "development_split_manifest"
+              },
+              "gold_catalog_identity": {
+                "candidate_corpus_sha256": "987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444",
+                "candidate_corpus_version": "environment-candidate-corpus-v1",
+                "image_catalog_sha256": "bd2211d5fd769b5addec3c41e8cbd48bb0d9cd1c958aa554ada9bf88c29509f3",
+                "image_catalog_version": "2026-08-06.1",
+                "profile_catalog_sha256": "c8f797b9c4d30459da99dad8d6d1c28e07e6803d76fab7cf88cdcd0f6c679348"
+              },
+              "offline_completion_sha256": "c8e4dd0f424b587bb71ce4beed01dfa1697d421d70ad80a340c9f27479ed5bdd",
+              "offline_provenance_fingerprint": "f4853498bbcdbc32f86915d2d34aa842d0466caf4edb7a03d9b93b6994a68b71",
+              "offline_provenance_sha256": "6fcc62b655e42a951c5da3d3e78f2a57944d40745eb0032a2034bc62a61cfb60",
+              "offline_recommendations_sha256": "3c39b7acd1855d889111d6625e4a275e3fa6fa8ee9fee8147620797f9a351beb",
+              "offline_run_id": "run-e1-llm-gemini-3.5-flash-lite",
+              "offline_split_identity": {
+                "bundle_checksum": "079ca97e88719b2edd259ef8e252f09bc481d6d579d2f00136f694ebc4a2046e",
+                "case_count": 83,
+                "dataset_id": "v5-development-reconstructed-v1",
+                "dataset_sha256": "71f57daafe319afea1b5ce23e9e1a762105c31f2f756f55abbd06b551c4eed6c",
+                "family_count": 18,
+                "role": "development",
+                "split_id": "v5-development"
+              },
+              "split_checksum": "079ca97e88719b2edd259ef8e252f09bc481d6d579d2f00136f694ebc4a2046e",
+              "split_id": "v5-development",
+              "split_role": "development"
+            },
+            "freeze_identity": {
+              "freeze_id": null,
+              "frozen_at_utc": "2026-09-21T06:38:01Z",
+              "frozen_by": "protocol-v5-v4-importer+agent-authored-p2-supplement",
+              "source": "development_split_manifest"
+            },
+            "git_dirty": null,
+            "git_revision": "9f513666ea51d3bd9113be33d9d7707dd5fe6636",
+            "source_environment": {
+              "platform": "darwin",
+              "platform_release": "24.3.0",
+              "python_version": "3.14.6"
+            }
+          },
+          "stage": "development",
+          "validation_status": "PASS"
+        },
+        {
+          "actual_manifest_sha256": "1a8c8636823515e3ac5bc84bd32ef48b995840a044729c6b818fe14458fcd044",
+          "authentication": {
+            "package_validator": "validate_statistical_package+source_checksum_binding",
+            "source_checksums_verified": true,
+            "split_custody_verified": true
+          },
+          "claim_eligibility": "INELIGIBLE",
+          "content_signature_sha256": "32a6638777589822c8a7d16a9add066ab75a632df6e9b6d227c09e7c226bc5ee",
+          "decision_signature_sha256": "deca8bc19806fa60284357fd423eaf1fcb5821bf32829ea4907eaf23daf1eab3",
+          "disposition": "INELIGIBLE_OR_INVALID",
+          "duplicate_reference_of": null,
+          "execution_status": "DERIVED_EVIDENCE_COMPLETE",
+          "integrity_errors": [],
+          "manifest_path": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E1/run-e1-local/derived/statistical_analysis/analysis-manifest.json",
+          "package_path": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E1/run-e1-local",
+          "reason_codes": [
+            "CLAIMS_NOT_PERMITTED",
+            "NON_CONFIRMATORY_EVIDENCE"
+          ],
+          "registered_manifest_sha256": "1a8c8636823515e3ac5bc84bd32ef48b995840a044729c6b818fe14458fcd044",
+          "semantic_provenance": {
+            "benchmark.dataset_sha256": null,
+            "benchmark.split_id": "v5-development",
+            "catalog.version": "2026-08-06.1",
+            "constraints.evaluator_version": "p2-deterministic-constraint-evaluator-v1.1.0",
+            "constraints.policy_version": "p2-constraint-policy-v1.0.0",
+            "constraints.ranker_version": "p2-deterministic-ranker-v2.0.0",
+            "corpus.sha256": "987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444",
+            "corpus.version": "environment-candidate-corpus-v1",
+            "extractor.prompt_sha256": "8be330fe52b1b6b1520997309746b6b6b7e5e24867d962846ccf68a2af7256d9",
+            "indexes.dense.sha256": "c0561bcd1ee6ec5153b710aef3deae88bd259a011ddd454513cbb1c675118387",
+            "indexes.hybrid.sha256": "45ea08f29492d796189920713636b3a9cae2f0fb264e023124eb38c8cfad83a4",
+            "indexes.sparse.sha256": "931fac84b818cb934a37bfbfa76092a89626cd5eaffc869887de8558bc6fa747",
+            "p1.backend_version": "rule-based-v1",
+            "p2.backend_version": "p2-hybrid-v1.0.0",
+            "p2.config_version": "p2-config-v1.1.0",
+            "p2.pipeline_version": "p2-pipeline-v1.0.0",
+            "p3.pipeline_version": null,
+            "p3.prompt_sha256": null,
+            "p3.reranker_version": null
+          },
+          "source_provenance": {
+            "analysis_environment": {
+              "platform": "Darwin",
+              "platform_release": "24.3.0",
+              "python_version": "3.14.6"
+            },
+            "dataset": {
+              "dataset_canonical_sha256": "079ca97e88719b2edd259ef8e252f09bc481d6d579d2f00136f694ebc4a2046e",
+              "dataset_id": "v5-development-reconstructed-v1",
+              "dataset_schema_version": "protocol-v5-split-bundle-v2.0.0",
+              "dataset_source_file_sha256": "71f57daafe319afea1b5ce23e9e1a762105c31f2f756f55abbd06b551c4eed6c",
+              "freeze_identity": {
+                "freeze_id": null,
+                "frozen_at_utc": "2026-09-21T06:38:01Z",
+                "frozen_by": "protocol-v5-v4-importer+agent-authored-p2-supplement",
+                "source": "development_split_manifest"
+              },
+              "gold_catalog_identity": {
+                "candidate_corpus_sha256": "987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444",
+                "candidate_corpus_version": "environment-candidate-corpus-v1",
+                "image_catalog_sha256": "bd2211d5fd769b5addec3c41e8cbd48bb0d9cd1c958aa554ada9bf88c29509f3",
+                "image_catalog_version": "2026-08-06.1",
+                "profile_catalog_sha256": "c8f797b9c4d30459da99dad8d6d1c28e07e6803d76fab7cf88cdcd0f6c679348"
+              },
+              "offline_completion_sha256": "cf837168b5b0b248effe5a7cc5c9d4ec7c08c2b0bb128b51fcde0842e0fc909e",
+              "offline_provenance_fingerprint": "5fa81eced88e4c7badc8d0865cd9fddd7a5514e616e9a5e1652b86b864887d80",
+              "offline_provenance_sha256": "94f97da9d543976a32cec72713749fa193e27a5537d32e27aaefdde057d1abe5",
+              "offline_recommendations_sha256": "9214066f4ecb27e386479cc723dccc9ee5bd7a8d0732fa0c088192297fba9d1f",
+              "offline_run_id": "run-e1-local",
+              "offline_split_identity": {
+                "bundle_checksum": "079ca97e88719b2edd259ef8e252f09bc481d6d579d2f00136f694ebc4a2046e",
+                "case_count": 83,
+                "dataset_id": "v5-development-reconstructed-v1",
+                "dataset_sha256": "71f57daafe319afea1b5ce23e9e1a762105c31f2f756f55abbd06b551c4eed6c",
+                "family_count": 18,
+                "role": "development",
+                "split_id": "v5-development"
+              },
+              "split_checksum": "079ca97e88719b2edd259ef8e252f09bc481d6d579d2f00136f694ebc4a2046e",
+              "split_id": "v5-development",
+              "split_role": "development"
+            },
+            "freeze_identity": {
+              "freeze_id": null,
+              "frozen_at_utc": "2026-09-21T06:38:01Z",
+              "frozen_by": "protocol-v5-v4-importer+agent-authored-p2-supplement",
+              "source": "development_split_manifest"
+            },
+            "git_dirty": null,
+            "git_revision": "9f513666ea51d3bd9113be33d9d7707dd5fe6636",
+            "source_environment": {
+              "platform": "darwin",
+              "platform_release": "24.3.0",
+              "python_version": "3.14.6"
+            }
+          },
+          "stage": "development",
+          "validation_status": "PASS"
+        }
+      ],
+      "conflict_status": "NONE",
+      "eligible_candidate_count": 0,
+      "evidence_class": "E2",
+      "reason_codes": [
+        "CLAIMS_NOT_PERMITTED",
+        "NON_CONFIRMATORY_EVIDENCE",
+        "NO_ELIGIBLE_CONFIRMATORY_EVIDENCE"
+      ],
+      "requirement_id": "natural_language_robustness",
+      "selected_manifest_sha256": null,
+      "selected_package": null,
+      "selection_mode": "NONE",
+      "unique_candidate_count": 2
+    },
+    {
+      "accepted_schema_versions": [
+        "protocol-v5-user-study-provenance-v1.0.0"
+      ],
+      "candidate_count": 0,
+      "candidate_packages": [],
+      "candidate_records": [],
+      "conflict_status": "NONE",
+      "eligible_candidate_count": 0,
+      "evidence_class": "E3",
+      "reason_codes": [
+        "NO_ELIGIBLE_CONFIRMATORY_EVIDENCE"
+      ],
+      "requirement_id": "user_study",
+      "selected_manifest_sha256": null,
+      "selected_package": null,
+      "selection_mode": "NONE",
+      "unique_candidate_count": 0
+    },
+    {
+      "accepted_schema_versions": [
+        "protocol-v5-resource-efficiency-analysis-package-v1.0.0"
+      ],
+      "candidate_count": 0,
+      "candidate_packages": [],
+      "candidate_records": [],
+      "conflict_status": "NONE",
+      "eligible_candidate_count": 0,
+      "evidence_class": "E4",
+      "reason_codes": [
+        "NO_ELIGIBLE_CONFIRMATORY_EVIDENCE"
+      ],
+      "requirement_id": "resource_efficiency",
+      "selected_manifest_sha256": null,
+      "selected_package": null,
+      "selection_mode": "NONE",
+      "unique_candidate_count": 0
+    },
+    {
+      "accepted_schema_versions": [
+        "protocol-v5-manifest-v1.0.0"
+      ],
+      "candidate_count": 1,
+      "candidate_packages": [
+        "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/run-e5-functional-orbstack"
+      ],
+      "candidate_records": [
+        {
+          "actual_manifest_sha256": "8bc3912e751da6ffa6ea0e04bbdb1b084b4afb2899dd7378d1d5b49647045ca8",
+          "authentication": {
+            "collector_authentic": true,
+            "collector_origins": [
+              "LIVE_DOCKER"
+            ],
+            "package_validator": "validate_e5_evidence",
+            "recommendation_provenance_verified": true,
+            "source_checksums_verified": true,
+            "validator_status": "CURRENT_VALID"
+          },
+          "claim_eligibility": "INELIGIBLE",
+          "content_signature_sha256": "e15dd199c910091d8de36c065739c1d1d75b2a12457498b0a58fa4922251db2a",
+          "decision_signature_sha256": "b23789b2b04455ad6356aece12083b714af07564f7f16f2866dbb53a00fa821b",
+          "disposition": "INELIGIBLE_OR_INVALID",
+          "duplicate_reference_of": null,
+          "execution_status": "OBSERVED",
+          "integrity_errors": [],
+          "manifest_path": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/run-e5-functional-orbstack/manifest.json",
+          "package_path": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/run-e5-functional-orbstack",
+          "reason_codes": [
+            "CLAIMS_NOT_PERMITTED",
+            "NON_CONFIRMATORY_EVIDENCE"
+          ],
+          "registered_manifest_sha256": "8bc3912e751da6ffa6ea0e04bbdb1b084b4afb2899dd7378d1d5b49647045ca8",
+          "semantic_provenance": {
+            "catalog.file_sha256": "bd2211d5fd769b5addec3c41e8cbd48bb0d9cd1c958aa554ada9bf88c29509f3",
+            "catalog.version": "2026-08-06.1",
+            "constraints.evaluator_version": null,
+            "constraints.ranker_version": "p2-deterministic-ranker-v2.0.0",
+            "corpus.sha256": "987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444",
+            "indexes.dense.sha256": "c0561bcd1ee6ec5153b710aef3deae88bd259a011ddd454513cbb1c675118387",
+            "indexes.hybrid.sha256": "45ea08f29492d796189920713636b3a9cae2f0fb264e023124eb38c8cfad83a4",
+            "indexes.sparse.sha256": "931fac84b818cb934a37bfbfa76092a89626cd5eaffc869887de8558bc6fa747",
+            "p1.backend_version": {
+              "adapter_version": "protocol-v5-p1-frozen-adapter-v1",
+              "backend_name": "rule_based",
+              "backend_version": "rule-based-v1"
+            },
+            "p2.pipeline_version": {
+              "adapter_version": "protocol-v5-p2-frozen-adapter-v1",
+              "backend_name": "p2",
+              "backend_version": "p2-hybrid-v1.0.0"
+            }
+          },
+          "source_provenance": {
+            "collector_origins": [
+              "LIVE_DOCKER"
+            ],
+            "dataset": {
+              "dataset_id": "v5-development-reconstructed-v1",
+              "dataset_sha256": "71f57daafe319afea1b5ce23e9e1a762105c31f2f756f55abbd06b551c4eed6c"
+            },
+            "environment": {
+              "environment_id": "e5-docker-darwin",
+              "execution_mode": "docker",
+              "git_info": {
+                "git_dirty": true,
+                "git_revision": "f7a4426472043d4652bede07556656800605ad95"
+              },
+              "platform": "macOS-15.3.2-arm64-arm-64bit-Mach-O",
+              "python_version": "3.14.6 (main, Jun 10 2026, 10:03:53) [Clang 17.0.0 (clang-1700.6.4.2)]",
+              "runtime_detected": "docker",
+              "source_recommendation_run_id": "run-e1-offline",
+              "source_recommendation_run_sha256": "832ab0e3500e9e368b7d3336f89a520a7165ab121aa0f79e6f0709412cd9a153"
+            },
+            "git_revision": "f7a4426472043d4652bede07556656800605ad95",
+            "random_seeds": []
+          },
+          "stage": "development",
+          "validation_status": "PASS"
+        }
+      ],
+      "conflict_status": "NONE",
+      "eligible_candidate_count": 0,
+      "evidence_class": "E5",
+      "reason_codes": [
+        "CLAIMS_NOT_PERMITTED",
+        "NON_CONFIRMATORY_EVIDENCE",
+        "NO_ELIGIBLE_CONFIRMATORY_EVIDENCE"
+      ],
+      "requirement_id": "image_functional",
+      "selected_manifest_sha256": null,
+      "selected_package": null,
+      "selection_mode": "NONE",
+      "unique_candidate_count": 1
+    },
+    {
+      "accepted_schema_versions": [
+        "protocol-v5-image-storage-evidence-v1.1.0"
+      ],
+      "candidate_count": 1,
+      "candidate_packages": [
+        "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/run-e5-storage-orbstack"
+      ],
+      "candidate_records": [
+        {
+          "actual_manifest_sha256": "7cdf05eb7d69372d54279f1387aea94d972f693c1bfad55e54b983492c3eda0a",
+          "authentication": {
+            "collector_authentic": true,
+            "collector_origin": "REAL_REGISTRY",
+            "package_validator": "validate_e5_storage_evidence",
+            "recommendation_provenance_verified": true,
+            "source_checksums_verified": true,
+            "validator_status": "CURRENT_VALID"
+          },
+          "claim_eligibility": "INELIGIBLE",
+          "content_signature_sha256": "e845f5c69fdee4174e6c6fd7a5c2ac5d17d9928c390f2c46a4ce6fb721acaad2",
+          "decision_signature_sha256": "80457532cccec4a34a3b165f974a42342df61cc7bbcb8e2a1fb643512f3bd171",
+          "disposition": "INELIGIBLE_OR_INVALID",
+          "duplicate_reference_of": null,
+          "execution_status": "OBSERVED",
+          "integrity_errors": [],
+          "manifest_path": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/run-e5-storage-orbstack/derived/storage_metrics.json",
+          "package_path": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/run-e5-storage-orbstack",
+          "reason_codes": [
+            "CLAIMS_NOT_PERMITTED",
+            "NON_CONFIRMATORY_EVIDENCE"
+          ],
+          "registered_manifest_sha256": "7cdf05eb7d69372d54279f1387aea94d972f693c1bfad55e54b983492c3eda0a",
+          "semantic_provenance": {
+            "catalog.file_sha256": "f45b04efc2ea6f271d49c6806b58bfc0f30503cb68944930609f6e0f71882a71",
+            "catalog.version": "2026-08-06.1",
+            "p2.pipeline_version": "p2-pipeline-v1.0.0"
+          },
+          "source_provenance": {
+            "backend_system_versions": {
+              "P2": "p2-pipeline-v1.0.0"
+            },
+            "collector_origin": "REAL_REGISTRY",
+            "dataset_sha256": "f45b04efc2ea6f271d49c6806b58bfc0f30503cb68944930609f6e0f71882a71",
+            "git_revision": "f7a4426472043d4652bede07556656800605ad95",
+            "storage_collector_origin": "REAL_REGISTRY"
+          },
+          "stage": "development",
+          "validation_status": "PASS"
+        }
+      ],
+      "conflict_status": "NONE",
+      "eligible_candidate_count": 0,
+      "evidence_class": "E5",
+      "reason_codes": [
+        "CLAIMS_NOT_PERMITTED",
+        "NON_CONFIRMATORY_EVIDENCE",
+        "NO_ELIGIBLE_CONFIRMATORY_EVIDENCE"
+      ],
+      "requirement_id": "image_storage",
+      "selected_manifest_sha256": null,
+      "selected_package": null,
+      "selection_mode": "NONE",
+      "unique_candidate_count": 1
+    },
+    {
+      "accepted_schema_versions": [
+        "protocol-v5-statistical-analysis-v1.0.0"
+      ],
+      "candidate_count": 0,
+      "candidate_packages": [],
+      "candidate_records": [],
+      "conflict_status": "NONE",
+      "eligible_candidate_count": 0,
+      "evidence_class": "P2_P3",
+      "reason_codes": [
+        "NO_ELIGIBLE_CONFIRMATORY_EVIDENCE",
+        "P3_NOT_RETAINED_OR_NOT_PRESENT"
+      ],
+      "requirement_id": "p2_p3",
+      "selected_manifest_sha256": null,
+      "selected_package": null,
+      "selection_mode": "NONE",
+      "unique_candidate_count": 0
+    }
+  ],
+  "schema_version": "protocol-v5-evidence-selection-result-v1.0.0",
+  "selection_lock_present": false
+}

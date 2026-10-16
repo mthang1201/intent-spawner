@@ -1,0 +1,4 @@
+preference,count,answered_denominator,percentage,simultaneous_confidence_interval_95,interval_method,missing_response_count
+B0,0,1,0.0,"[0.0,85.14367392926796]",bonferroni_adjusted_wilson,0
+P2,0,1,0.0,"[0.0,85.14367392926796]",bonferroni_adjusted_wilson,0
+NO_PREFERENCE,1,1,100.0,"[14.85632607073204,100.0]",bonferroni_adjusted_wilson,0

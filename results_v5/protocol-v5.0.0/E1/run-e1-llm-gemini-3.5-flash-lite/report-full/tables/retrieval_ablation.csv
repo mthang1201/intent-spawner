@@ -1,0 +1,10 @@
+channel,is_ablation,is_proposed,k,recall_at_k
+Sparse,True,False,1,0.4272727272727273
+Sparse,True,False,3,0.8340909090909091
+Sparse,True,False,5,0.8545454545454546
+Dense,True,False,1,0.23636363636363636
+Dense,True,False,3,0.5750000000000001
+Dense,True,False,5,0.6477272727272727
+Hybrid,False,True,1,0.3795454545454545
+Hybrid,False,True,3,0.7136363636363636
+Hybrid,False,True,5,0.8272727272727273

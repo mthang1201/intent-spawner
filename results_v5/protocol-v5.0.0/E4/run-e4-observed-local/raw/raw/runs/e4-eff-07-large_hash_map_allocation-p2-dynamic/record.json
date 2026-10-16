@@ -1,0 +1,137 @@
+{
+  "admission_or_scheduling_reason": "UNKNOWN",
+  "cgroup_metrics": {},
+  "collector_origin": "REAL_KUBERNETES_COLLECTOR",
+  "condition": "P2_DYNAMIC",
+  "container_runtime_seconds": 3.0,
+  "correctness": null,
+  "correctness_details": {},
+  "correctness_invariants_ok": null,
+  "deterministic_seed": 8119,
+  "exclusion_reason": null,
+  "expected_marker_sha256": "c800002893b7975cd8076075909cbaea693c6e11bf3afb64ea93676c47f07df3",
+  "family_id": "large_hash_map_allocation",
+  "infrastructure_invalid": false,
+  "kubernetes": {
+    "cleanup_status": "succeeded",
+    "events": [
+      {
+        "count": null,
+        "first_timestamp": null,
+        "last_timestamp": null,
+        "message": "Successfully assigned z2jh-context-demo/e4e-02b337a8f99976a355ff4589 to orbstack",
+        "reason": "Scheduled",
+        "type": "Normal"
+      },
+      {
+        "count": 1,
+        "first_timestamp": "2026-10-13T10:00:45Z",
+        "last_timestamp": "2026-10-13T10:00:45Z",
+        "message": "Container image \"intent-spawner-resource-v5:latest\" already present on machine",
+        "reason": "Pulled",
+        "type": "Normal"
+      },
+      {
+        "count": 1,
+        "first_timestamp": "2026-10-13T10:00:45Z",
+        "last_timestamp": "2026-10-13T10:00:45Z",
+        "message": "Created container: workload",
+        "reason": "Created",
+        "type": "Normal"
+      },
+      {
+        "count": 1,
+        "first_timestamp": "2026-10-13T10:00:45Z",
+        "last_timestamp": "2026-10-13T10:00:45Z",
+        "message": "Started container workload",
+        "reason": "Started",
+        "type": "Normal"
+      },
+      {
+        "count": null,
+        "first_timestamp": null,
+        "last_timestamp": null,
+        "message": "Successfully assigned z2jh-context-demo/e4e-02b337a8f99976a355ff4589 to orbstack",
+        "reason": "Scheduled",
+        "type": "Normal"
+      },
+      {
+        "count": 1,
+        "first_timestamp": "2026-10-14T03:10:32Z",
+        "last_timestamp": "2026-10-14T03:10:32Z",
+        "message": "Container image \"intent-spawner-resource-v5:latest\" already present on machine",
+        "reason": "Pulled",
+        "type": "Normal"
+      },
+      {
+        "count": 1,
+        "first_timestamp": "2026-10-14T03:10:32Z",
+        "last_timestamp": "2026-10-14T03:10:32Z",
+        "message": "Created container: workload",
+        "reason": "Created",
+        "type": "Normal"
+      },
+      {
+        "count": 1,
+        "first_timestamp": "2026-10-14T03:10:32Z",
+        "last_timestamp": "2026-10-14T03:10:32Z",
+        "message": "Started container workload",
+        "reason": "Started",
+        "type": "Normal"
+      }
+    ],
+    "exit_code": 137,
+    "finished_at": "2026-10-14T03:10:35Z",
+    "image_id": "docker://sha256:84554666609638527f99c47ca139d29daf41ce3aef3f5f2c955421aa72842beb",
+    "image_reference": "intent-spawner-resource-v5:latest",
+    "node_name": "orbstack",
+    "phase": "Failed",
+    "pod_name": "e4e-02b337a8f99976a355ff4589",
+    "pod_uid": "18b1eb12-33f1-4f3b-ab72-ab0e902ce0d1",
+    "reason": "OOMKilled",
+    "restart_count": 0,
+    "started_at": "2026-10-14T03:10:32Z",
+    "terminated_reason": "OOMKilled",
+    "waiting_reason": null
+  },
+  "observed_marker_sha256": null,
+  "observed_resources": {
+    "cpu_limit_m": 1500,
+    "cpu_request_m": 1100,
+    "gpu_count": 0,
+    "gpu_resource": null,
+    "memory_limit_mib": 1536,
+    "memory_request_mib": 1280
+  },
+  "oom": true,
+  "pending_or_admission_failure": false,
+  "plan_index": 497,
+  "planned_resources": {
+    "cpu_limit_m": 1500,
+    "cpu_request_m": 1100,
+    "gpu_count": 0,
+    "gpu_resource": null,
+    "memory_limit_mib": 1536,
+    "memory_request_mib": 1280
+  },
+  "pod_created": true,
+  "primary_outcome": "OOM",
+  "primary_trial_id": "e4-eff-07-large_hash_map_allocation-p2-dynamic",
+  "recorded_at_utc": "2026-10-14T03:10:37.646504Z",
+  "repetition": 7,
+  "replacement_of": null,
+  "runtime_error": false,
+  "scheduled": true,
+  "schema_version": "protocol-v5-resource-efficiency-trial-v1.0.0",
+  "sidecar_paths": {
+    "record": "raw/runs/e4-eff-07-large_hash_map_allocation-p2-dynamic/record.json"
+  },
+  "success": false,
+  "timeout": false,
+  "timeout_seconds": 120,
+  "trial_id": "e4-eff-07-large_hash_map_allocation-p2-dynamic",
+  "workload_fingerprint": "c1af7d0fe1bc96526d19261576155e6f44fec306549faeab241bd41681d3a26b",
+  "workload_instance_id": "large-hash-map-v1-entries-14000000-seed-8119",
+  "workload_output_exists": false,
+  "workload_runtime_seconds": null
+}

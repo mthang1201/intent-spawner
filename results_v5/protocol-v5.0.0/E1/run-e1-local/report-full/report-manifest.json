@@ -1,0 +1,52 @@
+{
+  "bootstrap": {
+    "base_seed": 20260824,
+    "replicates": 2000
+  },
+  "claims_permitted": false,
+  "created_at_utc": "2026-10-13T01:19:38.679566Z",
+  "git_revision": "9f513666ea51d3bd9113be33d9d7707dd5fe6636",
+  "outputs": {
+    "E1_E2_OFFLINE_REPORT.md": "9e9be0c8235e822ad9a68ee4f78243c82597e8c65464fabf470c925eb7161ae5",
+    "figures/confidence_intervals.svg": "367eee5e7fb431d46975414201af28c6f8228c55ed8bb78efcf490d62da40d4f",
+    "figures/error_taxonomy.svg": "b89d875ecc84fd3d24acd8dcb883d37425e156818ae1519ecdde549770b43a6e",
+    "figures/paired_family_outcomes.svg": "15fa4b0eb9012e2e479116438244a72f0a927716a2e1ebe1dc7b60226a2c70a6",
+    "figures/retrieval_recall_at_k.svg": "a038ce1ba99047c231ff6361ae05f0b7f0de9267d9a45ab8e9ada3da48e18c0f",
+    "limitations.md": "ece5af593506bc6dfa0f0cbe77ae3dad29c1c9f37f55d1c6ab0a26a33864abc2",
+    "p3_development_decision.md": "91cef9ef901f52a7b950bbb6208b9e2a28fcc95a8263473fbc0c2b55da7746d0",
+    "recommendation_quality.md": "3da55c62d037d533170af520f9976b445e500fda5404a6f7543f12a00586a3a0",
+    "robustness.md": "caa64aa5e2a2e1572599d661de627de809a6feb87674cedacf4416ccccbe2344",
+    "tables/confidence_intervals.csv": "0ebfa92a1b21eceeebe1f4d04ca9b168401101eb1cef5e3ef19bf881e6749321",
+    "tables/confidence_intervals.json": "9ca3ac6a941305d6fc8d220c0661572661d41bab5f55441aa9d8320107a3a8fc",
+    "tables/error_taxonomy.csv": "6ff522f06613661e7097aed7ccc866d8a20b8dcfdf22808483b8cf2fccf97bf0",
+    "tables/error_taxonomy.json": "0bc200f05cbca68f7ebe68aa8c9ab35208cfeef125d187f8a09f7513944d25a0",
+    "tables/p3_development_decision.json": "8181bab67f01e0111f30f763cb6c8114d589e6ae781a75a0380bb48403d7aa27",
+    "tables/paired_family_outcomes.csv": "f2a83a0e3f66d9a703df11855d74edcaddca5b711bbbc3803dfebdc3d3081a89",
+    "tables/paired_family_outcomes.json": "29c406ac7dda784322bbaf96b132f7fee994af4fe58e845e30e2228e052028bc",
+    "tables/recommendation_quality.csv": "827ce1f6c810306d115689adfd6f07ef9dd71195f51b0df982872508de4aeb51",
+    "tables/recommendation_quality.json": "423bf51aaa67fb134b1ebcf2245c421888f8ed9cd001a958001e8ffba4d05135",
+    "tables/retrieval_ablation.csv": "871fd58710790138292df89011c45ae1a22fce05271ef7cd486853514af4895b",
+    "tables/retrieval_ablation.json": "35c345b36b6684d0fa037de40f4b1460f45d2d61e9a636b5d82b6e09af48ed1d",
+    "tables/robustness.csv": "01088b95ed700d29fe37f88efcc42806a7a10d32568f93cb8fc92f84954a9185",
+    "tables/robustness.json": "91d692c5c4f39839c2248d5ef8f4d2c77a788a54bfaa46e2d6ca19e00ecaba7f"
+  },
+  "protocol_version": "5.0.0",
+  "retrieval_ks": [
+    1,
+    3,
+    5
+  ],
+  "schema_version": "protocol-v5-offline-reporting-v1.0.0",
+  "source": {
+    "dataset_checksum": "079ca97e88719b2edd259ef8e252f09bc481d6d579d2f00136f694ebc4a2046e",
+    "dataset_id": "v5-development-reconstructed-v1",
+    "offline_run_id": "run-e1-local",
+    "split_id": "v5-development",
+    "split_role": "development"
+  },
+  "status": "REPORT_COMPLETE",
+  "systems": [
+    "P1",
+    "P2"
+  ]
+}

@@ -1,0 +1,730 @@
+{
+  "blocked_requirements": [],
+  "disclosures": [
+    {
+      "blocking": false,
+      "status": "DISCLOSED_DIFFERENCE",
+      "type": "GIT_REVISION",
+      "values": {
+        "image_functional": "f7a4426472043d4652bede07556656800605ad95",
+        "image_storage": "f7a4426472043d4652bede07556656800605ad95",
+        "natural_language_robustness": "9f513666ea51d3bd9113be33d9d7707dd5fe6636",
+        "offline_recommendation": "9f513666ea51d3bd9113be33d9d7707dd5fe6636",
+        "resource_efficiency": "9f513666ea51d3bd9113be33d9d7707dd5fe6636"
+      }
+    },
+    {
+      "blocking": false,
+      "status": "DISCLOSED_DIFFERENCE",
+      "type": "ENVIRONMENT_IDENTITY",
+      "values": {
+        "image_functional": {
+          "environment_id": "e5-docker-darwin",
+          "execution_mode": "docker",
+          "git_info": {
+            "git_dirty": true,
+            "git_revision": "f7a4426472043d4652bede07556656800605ad95"
+          },
+          "platform": "macOS-15.3.2-arm64-arm-64bit-Mach-O",
+          "python_version": "3.14.6 (main, Jun 10 2026, 10:03:53) [Clang 17.0.0 (clang-1700.6.4.2)]",
+          "runtime_detected": "docker",
+          "source_recommendation_run_id": "run-e1-offline",
+          "source_recommendation_run_sha256": "832ab0e3500e9e368b7d3336f89a520a7165ab121aa0f79e6f0709412cd9a153"
+        },
+        "natural_language_robustness": {
+          "platform": "darwin",
+          "platform_release": "24.3.0",
+          "python_version": "3.14.6"
+        },
+        "offline_recommendation": {
+          "platform": "darwin",
+          "platform_release": "24.3.0",
+          "python_version": "3.14.6"
+        },
+        "resource_efficiency": {
+          "adapter_monitor_grace_seconds": 5,
+          "architecture": "arm64",
+          "captured_at_utc": "2026-10-14T02:30:10.262718Z",
+          "cgroup_eligibility_probe": {
+            "available_files": [
+              "cgroup.controllers",
+              "cpu.max",
+              "cpu.stat",
+              "memory.current",
+              "memory.events",
+              "memory.max",
+              "memory.peak"
+            ],
+            "cgroup_version": "v2",
+            "cleanup_status": "succeeded",
+            "controllers": [
+              "cpuset",
+              "cpu",
+              "io",
+              "memory",
+              "pids"
+            ],
+            "memory_event_keys": [
+              "low",
+              "high",
+              "max",
+              "oom",
+              "oom_kill",
+              "oom_group_kill",
+              "sock_throttled"
+            ],
+            "probe_status": "succeeded"
+          },
+          "cgroup_requirement": "v2",
+          "cluster_measurement_status": "OBSERVED",
+          "collector_implementation": "cluster_evaluation.resource_efficiency_adapter_v5.KubernetesResourceEfficiencyAdapter",
+          "collector_origin": "REAL_KUBERNETES_COLLECTOR",
+          "collector_version": "protocol-v5-resource-efficiency-kubernetes-adapter-v1.0.0",
+          "container_image": "intent-spawner-resource-v5:latest",
+          "container_runtime": "docker://29.4.0",
+          "eligibility_policy_version": "protocol-v5-resource-cluster-eligibility-v1.1.0",
+          "eligibility_status": "ELIGIBLE",
+          "environment_id": "orbstack:z2jh-context-demo",
+          "kernel_version": "7.0.5-orbstack-00330-ge3df4e19b0a0-dirty",
+          "kubelet_version": "v1.33.9+orb1",
+          "kubernetes_version": {
+            "clientVersion": {
+              "buildDate": "2025-07-15T17:59:41Z",
+              "compiler": "gc",
+              "gitCommit": "80779bd6ff08b451e1c165a338a7b69351e9b0b8",
+              "gitTreeState": "clean",
+              "gitVersion": "v1.33.3",
+              "goVersion": "go1.24.5",
+              "major": "1",
+              "minor": "33",
+              "platform": "darwin/arm64"
+            },
+            "kustomizeVersion": "v5.6.0",
+            "serverVersion": {
+              "buildDate": "2026-04-18T09:19:01Z",
+              "compiler": "gc",
+              "emulationMajor": "1",
+              "emulationMinor": "33",
+              "gitCommit": "9093adae538d4d93bfa398549c569fe860ffe049",
+              "gitTreeState": "clean",
+              "gitVersion": "v1.33.9+orb1",
+              "goVersion": "go1.24.13",
+              "major": "1",
+              "minCompatibilityMajor": "1",
+              "minCompatibilityMinor": "32",
+              "minor": "33",
+              "platform": "linux/arm64"
+            }
+          },
+          "namespace": "z2jh-context-demo",
+          "namespace_safety_label": "z2jh-context-demo.local/disposable-experiment-v5=true",
+          "node_allocatable": {
+            "cpu": "8",
+            "ephemeral-storage": "45454332893",
+            "memory": "8185712Ki",
+            "pods": "110"
+          },
+          "node_capacity": {
+            "cpu": "8",
+            "ephemeral-storage": "46725260Ki",
+            "memory": "8185712Ki",
+            "pods": "110"
+          },
+          "node_name": "orbstack",
+          "node_uid": "574e43f1-b4af-45a4-94ae-385414e52560",
+          "operating_system": "linux",
+          "pod_lifecycle_grace_seconds": 30,
+          "read_only_preflight": {
+            "eligibility_status": "ELIGIBLE",
+            "facts": {
+              "api_access": {
+                "create:pods": true,
+                "delete:pods": true,
+                "get:pods": true,
+                "get:pods/log": true,
+                "list:pods": true
+              },
+              "cgroup_probe": {},
+              "current_context": "orbstack",
+              "expected_context": "orbstack",
+              "image_declared_state": {
+                "build_context_dockerignore_path": "cluster_evaluation/Dockerfile.resource-v5.dockerignore",
+                "build_context_dockerignore_sha256": "1cedf3c42d1173e18b735eb92bebd3fbc80872ce6c8e6e31111a73ecdcc315ad",
+                "built": true,
+                "digest_syntactically_pinned": true,
+                "digest_verified": true,
+                "dockerfile_path": "cluster_evaluation/Dockerfile.resource-v5",
+                "dockerfile_sha256": "a9ce83468dbdf19569a703cb9277a39f5d26308a1230e2b00ed88d614bc10ed4",
+                "image_reference": "intent-spawner-resource-v5@sha256:a47e5339acca724b7f8b60510f1117d4a251c19efa5478cdbcfe4d77b8b3bbc6",
+                "note": "Verified execution image for OrbStack Kubernetes cluster.",
+                "operationally_verified": true,
+                "pre_pulled_on_eligible_node": true,
+                "protocol_version": "5.0.0",
+                "reference_configured": true,
+                "resolved_digest": "sha256:a47e5339acca724b7f8b60510f1117d4a251c19efa5478cdbcfe4d77b8b3bbc6",
+                "schema_version": "protocol-v5-resource-image-state-v1.0.0",
+                "status": "BUILT_AND_VERIFIED"
+              },
+              "image_reference": "intent-spawner-resource-v5:latest",
+              "image_reference_pinned": true,
+              "kubernetes_version": {
+                "clientVersion": {
+                  "buildDate": "2025-07-15T17:59:41Z",
+                  "compiler": "gc",
+                  "gitCommit": "80779bd6ff08b451e1c165a338a7b69351e9b0b8",
+                  "gitTreeState": "clean",
+                  "gitVersion": "v1.33.3",
+                  "goVersion": "go1.24.5",
+                  "major": "1",
+                  "minor": "33",
+                  "platform": "darwin/arm64"
+                },
+                "kustomizeVersion": "v5.6.0",
+                "serverVersion": {
+                  "buildDate": "2026-04-18T09:19:01Z",
+                  "compiler": "gc",
+                  "emulationMajor": "1",
+                  "emulationMinor": "33",
+                  "gitCommit": "9093adae538d4d93bfa398549c569fe860ffe049",
+                  "gitTreeState": "clean",
+                  "gitVersion": "v1.33.9+orb1",
+                  "goVersion": "go1.24.13",
+                  "major": "1",
+                  "minCompatibilityMajor": "1",
+                  "minCompatibilityMinor": "32",
+                  "minor": "33",
+                  "platform": "linux/arm64"
+                }
+              },
+              "namespace_labels": {
+                "kubernetes.io/metadata.name": "z2jh-context-demo",
+                "z2jh-context-demo.local/e4-evaluation-backend": "orbstack-kubernetes"
+              },
+              "namespace_name": "z2jh-context-demo",
+              "node_allocatable": {
+                "cpu": "8",
+                "ephemeral-storage": "45454332893",
+                "memory": "8185712Ki",
+                "pods": "110"
+              },
+              "node_capacity": {
+                "cpu": "8",
+                "ephemeral-storage": "46725260Ki",
+                "memory": "8185712Ki",
+                "pods": "110"
+              },
+              "node_info": {
+                "architecture": "arm64",
+                "bootID": "fcc05fb0-88c1-49af-80fd-a3f1c6056379",
+                "containerRuntimeVersion": "docker://29.4.0",
+                "kernelVersion": "7.0.5-orbstack-00330-ge3df4e19b0a0-dirty",
+                "kubeProxyVersion": "",
+                "kubeletVersion": "v1.33.9+orb1",
+                "machineID": "82ddc538b9e95ae7c1d309201ccb5f9d",
+                "operatingSystem": "linux",
+                "osImage": "OrbStack",
+                "swap": {
+                  "capacity": 9455902720
+                },
+                "systemUUID": "82ddc538b9e95ae7c1d309201ccb5f9d"
+              },
+              "node_labels": {
+                "beta.kubernetes.io/arch": "arm64",
+                "beta.kubernetes.io/instance-type": "k3s",
+                "beta.kubernetes.io/os": "linux",
+                "kubernetes.io/arch": "arm64",
+                "kubernetes.io/hostname": "orbstack",
+                "kubernetes.io/os": "linux",
+                "node-role.kubernetes.io/control-plane": "true",
+                "node-role.kubernetes.io/master": "true",
+                "node.kubernetes.io/instance-type": "k3s",
+                "z2jh-context-demo.local/dedicated-e4": "true",
+                "z2jh-context-demo.local/node-identity": "e4-node-v1"
+              },
+              "node_name": "orbstack",
+              "node_uid": "574e43f1-b4af-45a4-94ae-385414e52560"
+            },
+            "failure_codes": [],
+            "schema_version": "protocol-v5-resource-cluster-preflight-v1.1.0"
+          },
+          "required_context": "orbstack",
+          "required_memory_event_keys": [
+            "oom",
+            "oom_kill"
+          ],
+          "schema_version": "protocol-v5-resource-environment-v1.1.0",
+          "single_active_workload": true,
+          "workload_timeout_basis": "measured_workload_runtime_seconds"
+        }
+      }
+    }
+  ],
+  "schema_version": "protocol-v5-research-provenance-check-v1.1.0",
+  "semantic_comparisons": [
+    {
+      "comparison_group": "offline_benchmark",
+      "digest_namespace": "offline_benchmark_dataset_bytes",
+      "expected": "71f57daafe319afea1b5ce23e9e1a762105c31f2f756f55abbd06b551c4eed6c",
+      "freeze_digest_namespace": null,
+      "freeze_pointer": null,
+      "observed": {
+        "natural_language_robustness": "71f57daafe319afea1b5ce23e9e1a762105c31f2f756f55abbd06b551c4eed6c",
+        "offline_recommendation": "71f57daafe319afea1b5ce23e9e1a762105c31f2f756f55abbd06b551c4eed6c"
+      },
+      "requirement_id": [
+        "offline_recommendation",
+        "natural_language_robustness"
+      ],
+      "scope": "CROSS_EXPERIMENT_DECLARED",
+      "semantic_key": "benchmark.dataset_sha256",
+      "source_manifest": [
+        "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E1/run-e1-local/derived/statistical_analysis/analysis-manifest.json",
+        "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E1/run-e1-local/derived/statistical_analysis/analysis-manifest.json"
+      ],
+      "status": "MATCH"
+    },
+    {
+      "comparison_group": "offline_benchmark",
+      "digest_namespace": "offline_benchmark_split_id",
+      "expected": "v5-development",
+      "freeze_digest_namespace": null,
+      "freeze_pointer": null,
+      "observed": {
+        "natural_language_robustness": "v5-development",
+        "offline_recommendation": "v5-development"
+      },
+      "requirement_id": [
+        "offline_recommendation",
+        "natural_language_robustness"
+      ],
+      "scope": "CROSS_EXPERIMENT_DECLARED",
+      "semantic_key": "benchmark.split_id",
+      "source_manifest": [
+        "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E1/run-e1-local/derived/statistical_analysis/analysis-manifest.json",
+        "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E1/run-e1-local/derived/statistical_analysis/analysis-manifest.json"
+      ],
+      "status": "MATCH"
+    },
+    {
+      "digest_namespace": "offline_benchmark_dataset_bytes",
+      "expected": "71f57daafe319afea1b5ce23e9e1a762105c31f2f756f55abbd06b551c4eed6c",
+      "freeze_digest_namespace": null,
+      "freeze_pointer": null,
+      "observed": {
+        "natural_language_robustness": "71f57daafe319afea1b5ce23e9e1a762105c31f2f756f55abbd06b551c4eed6c",
+        "offline_recommendation": "71f57daafe319afea1b5ce23e9e1a762105c31f2f756f55abbd06b551c4eed6c"
+      },
+      "requirement_id": [
+        "offline_recommendation",
+        "natural_language_robustness"
+      ],
+      "scope": "CROSS_EXPERIMENT",
+      "semantic_key": "benchmark.dataset_sha256",
+      "source_manifest": [
+        "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E1/run-e1-local/derived/statistical_analysis/analysis-manifest.json",
+        "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E1/run-e1-local/derived/statistical_analysis/analysis-manifest.json"
+      ],
+      "status": "MATCH"
+    },
+    {
+      "digest_namespace": null,
+      "expected": "v5-development",
+      "freeze_digest_namespace": null,
+      "freeze_pointer": null,
+      "observed": {
+        "natural_language_robustness": "v5-development",
+        "offline_recommendation": "v5-development"
+      },
+      "requirement_id": [
+        "offline_recommendation",
+        "natural_language_robustness"
+      ],
+      "scope": "CROSS_EXPERIMENT",
+      "semantic_key": "benchmark.split_id",
+      "source_manifest": [
+        "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E1/run-e1-local/derived/statistical_analysis/analysis-manifest.json",
+        "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E1/run-e1-local/derived/statistical_analysis/analysis-manifest.json"
+      ],
+      "status": "MATCH"
+    },
+    {
+      "digest_namespace": "catalog_file_bytes",
+      "expected": "bd2211d5fd769b5addec3c41e8cbd48bb0d9cd1c958aa554ada9bf88c29509f3",
+      "freeze_digest_namespace": null,
+      "freeze_pointer": null,
+      "observed": {
+        "image_functional": "bd2211d5fd769b5addec3c41e8cbd48bb0d9cd1c958aa554ada9bf88c29509f3",
+        "image_storage": "f45b04efc2ea6f271d49c6806b58bfc0f30503cb68944930609f6e0f71882a71"
+      },
+      "requirement_id": [
+        "image_functional",
+        "image_storage"
+      ],
+      "scope": "CROSS_EXPERIMENT",
+      "semantic_key": "catalog.file_sha256",
+      "source_manifest": [
+        "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/run-e5-functional-orbstack/manifest.json",
+        "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/run-e5-storage-orbstack/derived/storage_metrics.json"
+      ],
+      "status": "MISMATCH"
+    },
+    {
+      "digest_namespace": null,
+      "expected": "2026-08-06.1",
+      "freeze_digest_namespace": null,
+      "freeze_pointer": null,
+      "observed": {
+        "image_functional": "2026-08-06.1",
+        "image_storage": "2026-08-06.1",
+        "natural_language_robustness": "2026-08-06.1",
+        "offline_recommendation": "2026-08-06.1"
+      },
+      "requirement_id": [
+        "offline_recommendation",
+        "natural_language_robustness",
+        "image_functional",
+        "image_storage"
+      ],
+      "scope": "CROSS_EXPERIMENT",
+      "semantic_key": "catalog.version",
+      "source_manifest": [
+        "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E1/run-e1-local/derived/statistical_analysis/analysis-manifest.json",
+        "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E1/run-e1-local/derived/statistical_analysis/analysis-manifest.json",
+        "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/run-e5-functional-orbstack/manifest.json",
+        "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/run-e5-storage-orbstack/derived/storage_metrics.json"
+      ],
+      "status": "MATCH"
+    },
+    {
+      "digest_namespace": null,
+      "expected": "p2-deterministic-constraint-evaluator-v1.1.0",
+      "freeze_digest_namespace": null,
+      "freeze_pointer": null,
+      "observed": {
+        "natural_language_robustness": "p2-deterministic-constraint-evaluator-v1.1.0",
+        "offline_recommendation": "p2-deterministic-constraint-evaluator-v1.1.0",
+        "resource_efficiency": "p2-deterministic-constraint-evaluator-v1.1.0"
+      },
+      "requirement_id": [
+        "offline_recommendation",
+        "natural_language_robustness",
+        "resource_efficiency"
+      ],
+      "scope": "CROSS_EXPERIMENT",
+      "semantic_key": "constraints.evaluator_version",
+      "source_manifest": [
+        "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E1/run-e1-local/derived/statistical_analysis/analysis-manifest.json",
+        "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E1/run-e1-local/derived/statistical_analysis/analysis-manifest.json",
+        "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E4/run-e4-observed-local-analysis/manifest.json"
+      ],
+      "status": "MATCH"
+    },
+    {
+      "digest_namespace": null,
+      "expected": "p2-constraint-policy-v1.0.0",
+      "freeze_digest_namespace": null,
+      "freeze_pointer": null,
+      "observed": {
+        "natural_language_robustness": "p2-constraint-policy-v1.0.0",
+        "offline_recommendation": "p2-constraint-policy-v1.0.0",
+        "resource_efficiency": "p2-constraint-policy-v1.0.0"
+      },
+      "requirement_id": [
+        "offline_recommendation",
+        "natural_language_robustness",
+        "resource_efficiency"
+      ],
+      "scope": "CROSS_EXPERIMENT",
+      "semantic_key": "constraints.policy_version",
+      "source_manifest": [
+        "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E1/run-e1-local/derived/statistical_analysis/analysis-manifest.json",
+        "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E1/run-e1-local/derived/statistical_analysis/analysis-manifest.json",
+        "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E4/run-e4-observed-local-analysis/manifest.json"
+      ],
+      "status": "MATCH"
+    },
+    {
+      "digest_namespace": null,
+      "expected": "p2-deterministic-ranker-v2.0.0",
+      "freeze_digest_namespace": null,
+      "freeze_pointer": null,
+      "observed": {
+        "image_functional": "p2-deterministic-ranker-v2.0.0",
+        "natural_language_robustness": "p2-deterministic-ranker-v2.0.0",
+        "offline_recommendation": "p2-deterministic-ranker-v2.0.0",
+        "resource_efficiency": "p2-deterministic-ranker-v2.0.0"
+      },
+      "requirement_id": [
+        "offline_recommendation",
+        "natural_language_robustness",
+        "resource_efficiency",
+        "image_functional"
+      ],
+      "scope": "CROSS_EXPERIMENT",
+      "semantic_key": "constraints.ranker_version",
+      "source_manifest": [
+        "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E1/run-e1-local/derived/statistical_analysis/analysis-manifest.json",
+        "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E1/run-e1-local/derived/statistical_analysis/analysis-manifest.json",
+        "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E4/run-e4-observed-local-analysis/manifest.json",
+        "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/run-e5-functional-orbstack/manifest.json"
+      ],
+      "status": "MATCH"
+    },
+    {
+      "digest_namespace": "candidate_corpus_canonical",
+      "expected": "987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444",
+      "freeze_digest_namespace": null,
+      "freeze_pointer": null,
+      "observed": {
+        "image_functional": "987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444",
+        "natural_language_robustness": "987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444",
+        "offline_recommendation": "987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444"
+      },
+      "requirement_id": [
+        "offline_recommendation",
+        "natural_language_robustness",
+        "image_functional"
+      ],
+      "scope": "CROSS_EXPERIMENT",
+      "semantic_key": "corpus.sha256",
+      "source_manifest": [
+        "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E1/run-e1-local/derived/statistical_analysis/analysis-manifest.json",
+        "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E1/run-e1-local/derived/statistical_analysis/analysis-manifest.json",
+        "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/run-e5-functional-orbstack/manifest.json"
+      ],
+      "status": "MATCH"
+    },
+    {
+      "digest_namespace": null,
+      "expected": "environment-candidate-corpus-v1",
+      "freeze_digest_namespace": null,
+      "freeze_pointer": null,
+      "observed": {
+        "natural_language_robustness": "environment-candidate-corpus-v1",
+        "offline_recommendation": "environment-candidate-corpus-v1"
+      },
+      "requirement_id": [
+        "offline_recommendation",
+        "natural_language_robustness"
+      ],
+      "scope": "CROSS_EXPERIMENT",
+      "semantic_key": "corpus.version",
+      "source_manifest": [
+        "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E1/run-e1-local/derived/statistical_analysis/analysis-manifest.json",
+        "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E1/run-e1-local/derived/statistical_analysis/analysis-manifest.json"
+      ],
+      "status": "MATCH"
+    },
+    {
+      "digest_namespace": "extractor_prompt_bytes",
+      "expected": "8be330fe52b1b6b1520997309746b6b6b7e5e24867d962846ccf68a2af7256d9",
+      "freeze_digest_namespace": null,
+      "freeze_pointer": null,
+      "observed": {
+        "natural_language_robustness": "8be330fe52b1b6b1520997309746b6b6b7e5e24867d962846ccf68a2af7256d9",
+        "offline_recommendation": "8be330fe52b1b6b1520997309746b6b6b7e5e24867d962846ccf68a2af7256d9",
+        "resource_efficiency": "8be330fe52b1b6b1520997309746b6b6b7e5e24867d962846ccf68a2af7256d9"
+      },
+      "requirement_id": [
+        "offline_recommendation",
+        "natural_language_robustness",
+        "resource_efficiency"
+      ],
+      "scope": "CROSS_EXPERIMENT",
+      "semantic_key": "extractor.prompt_sha256",
+      "source_manifest": [
+        "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E1/run-e1-local/derived/statistical_analysis/analysis-manifest.json",
+        "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E1/run-e1-local/derived/statistical_analysis/analysis-manifest.json",
+        "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E4/run-e4-observed-local-analysis/manifest.json"
+      ],
+      "status": "MATCH"
+    },
+    {
+      "digest_namespace": "dense_index_canonical",
+      "expected": "c0561bcd1ee6ec5153b710aef3deae88bd259a011ddd454513cbb1c675118387",
+      "freeze_digest_namespace": null,
+      "freeze_pointer": null,
+      "observed": {
+        "image_functional": "c0561bcd1ee6ec5153b710aef3deae88bd259a011ddd454513cbb1c675118387",
+        "natural_language_robustness": "c0561bcd1ee6ec5153b710aef3deae88bd259a011ddd454513cbb1c675118387",
+        "offline_recommendation": "c0561bcd1ee6ec5153b710aef3deae88bd259a011ddd454513cbb1c675118387",
+        "resource_efficiency": "c0561bcd1ee6ec5153b710aef3deae88bd259a011ddd454513cbb1c675118387"
+      },
+      "requirement_id": [
+        "offline_recommendation",
+        "natural_language_robustness",
+        "resource_efficiency",
+        "image_functional"
+      ],
+      "scope": "CROSS_EXPERIMENT",
+      "semantic_key": "indexes.dense.sha256",
+      "source_manifest": [
+        "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E1/run-e1-local/derived/statistical_analysis/analysis-manifest.json",
+        "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E1/run-e1-local/derived/statistical_analysis/analysis-manifest.json",
+        "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E4/run-e4-observed-local-analysis/manifest.json",
+        "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/run-e5-functional-orbstack/manifest.json"
+      ],
+      "status": "MATCH"
+    },
+    {
+      "digest_namespace": "hybrid_index_canonical",
+      "expected": "45ea08f29492d796189920713636b3a9cae2f0fb264e023124eb38c8cfad83a4",
+      "freeze_digest_namespace": null,
+      "freeze_pointer": null,
+      "observed": {
+        "image_functional": "45ea08f29492d796189920713636b3a9cae2f0fb264e023124eb38c8cfad83a4",
+        "natural_language_robustness": "45ea08f29492d796189920713636b3a9cae2f0fb264e023124eb38c8cfad83a4",
+        "offline_recommendation": "45ea08f29492d796189920713636b3a9cae2f0fb264e023124eb38c8cfad83a4",
+        "resource_efficiency": "45ea08f29492d796189920713636b3a9cae2f0fb264e023124eb38c8cfad83a4"
+      },
+      "requirement_id": [
+        "offline_recommendation",
+        "natural_language_robustness",
+        "resource_efficiency",
+        "image_functional"
+      ],
+      "scope": "CROSS_EXPERIMENT",
+      "semantic_key": "indexes.hybrid.sha256",
+      "source_manifest": [
+        "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E1/run-e1-local/derived/statistical_analysis/analysis-manifest.json",
+        "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E1/run-e1-local/derived/statistical_analysis/analysis-manifest.json",
+        "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E4/run-e4-observed-local-analysis/manifest.json",
+        "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/run-e5-functional-orbstack/manifest.json"
+      ],
+      "status": "MATCH"
+    },
+    {
+      "digest_namespace": "sparse_index_canonical",
+      "expected": "931fac84b818cb934a37bfbfa76092a89626cd5eaffc869887de8558bc6fa747",
+      "freeze_digest_namespace": null,
+      "freeze_pointer": null,
+      "observed": {
+        "image_functional": "931fac84b818cb934a37bfbfa76092a89626cd5eaffc869887de8558bc6fa747",
+        "natural_language_robustness": "931fac84b818cb934a37bfbfa76092a89626cd5eaffc869887de8558bc6fa747",
+        "offline_recommendation": "931fac84b818cb934a37bfbfa76092a89626cd5eaffc869887de8558bc6fa747",
+        "resource_efficiency": "931fac84b818cb934a37bfbfa76092a89626cd5eaffc869887de8558bc6fa747"
+      },
+      "requirement_id": [
+        "offline_recommendation",
+        "natural_language_robustness",
+        "resource_efficiency",
+        "image_functional"
+      ],
+      "scope": "CROSS_EXPERIMENT",
+      "semantic_key": "indexes.sparse.sha256",
+      "source_manifest": [
+        "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E1/run-e1-local/derived/statistical_analysis/analysis-manifest.json",
+        "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E1/run-e1-local/derived/statistical_analysis/analysis-manifest.json",
+        "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E4/run-e4-observed-local-analysis/manifest.json",
+        "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/run-e5-functional-orbstack/manifest.json"
+      ],
+      "status": "MATCH"
+    },
+    {
+      "digest_namespace": null,
+      "expected": "rule-based-v1",
+      "freeze_digest_namespace": null,
+      "freeze_pointer": null,
+      "observed": {
+        "image_functional": "rule-based-v1",
+        "natural_language_robustness": "rule-based-v1",
+        "offline_recommendation": "rule-based-v1",
+        "resource_efficiency": "rule-based-v1"
+      },
+      "requirement_id": [
+        "offline_recommendation",
+        "natural_language_robustness",
+        "resource_efficiency",
+        "image_functional"
+      ],
+      "scope": "CROSS_EXPERIMENT",
+      "semantic_key": "p1.backend_version",
+      "source_manifest": [
+        "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E1/run-e1-local/derived/statistical_analysis/analysis-manifest.json",
+        "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E1/run-e1-local/derived/statistical_analysis/analysis-manifest.json",
+        "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E4/run-e4-observed-local-analysis/manifest.json",
+        "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/run-e5-functional-orbstack/manifest.json"
+      ],
+      "status": "MATCH"
+    },
+    {
+      "digest_namespace": null,
+      "expected": "p2-hybrid-v1.0.0",
+      "freeze_digest_namespace": null,
+      "freeze_pointer": null,
+      "observed": {
+        "natural_language_robustness": "p2-hybrid-v1.0.0",
+        "offline_recommendation": "p2-hybrid-v1.0.0",
+        "resource_efficiency": "p2-hybrid-v1.0.0"
+      },
+      "requirement_id": [
+        "offline_recommendation",
+        "natural_language_robustness",
+        "resource_efficiency"
+      ],
+      "scope": "CROSS_EXPERIMENT",
+      "semantic_key": "p2.backend_version",
+      "source_manifest": [
+        "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E1/run-e1-local/derived/statistical_analysis/analysis-manifest.json",
+        "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E1/run-e1-local/derived/statistical_analysis/analysis-manifest.json",
+        "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E4/run-e4-observed-local-analysis/manifest.json"
+      ],
+      "status": "MATCH"
+    },
+    {
+      "digest_namespace": null,
+      "expected": "p2-config-v1.1.0",
+      "freeze_digest_namespace": null,
+      "freeze_pointer": null,
+      "observed": {
+        "natural_language_robustness": "p2-config-v1.1.0",
+        "offline_recommendation": "p2-config-v1.1.0",
+        "resource_efficiency": "p2-config-v1.1.0"
+      },
+      "requirement_id": [
+        "offline_recommendation",
+        "natural_language_robustness",
+        "resource_efficiency"
+      ],
+      "scope": "CROSS_EXPERIMENT",
+      "semantic_key": "p2.config_version",
+      "source_manifest": [
+        "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E1/run-e1-local/derived/statistical_analysis/analysis-manifest.json",
+        "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E1/run-e1-local/derived/statistical_analysis/analysis-manifest.json",
+        "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E4/run-e4-observed-local-analysis/manifest.json"
+      ],
+      "status": "MATCH"
+    },
+    {
+      "digest_namespace": null,
+      "expected": "p2-pipeline-v1.0.0",
+      "freeze_digest_namespace": null,
+      "freeze_pointer": null,
+      "observed": {
+        "image_functional": "p2-pipeline-v1.0.0",
+        "image_storage": "p2-pipeline-v1.0.0",
+        "natural_language_robustness": "p2-pipeline-v1.0.0",
+        "offline_recommendation": "p2-pipeline-v1.0.0",
+        "resource_efficiency": "p2-pipeline-v1.0.0"
+      },
+      "requirement_id": [
+        "offline_recommendation",
+        "natural_language_robustness",
+        "resource_efficiency",
+        "image_functional",
+        "image_storage"
+      ],
+      "scope": "CROSS_EXPERIMENT",
+      "semantic_key": "p2.pipeline_version",
+      "source_manifest": [
+        "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E1/run-e1-local/derived/statistical_analysis/analysis-manifest.json",
+        "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E1/run-e1-local/derived/statistical_analysis/analysis-manifest.json",
+        "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E4/run-e4-observed-local-analysis/manifest.json",
+        "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/run-e5-functional-orbstack/manifest.json",
+        "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/run-e5-storage-orbstack/derived/storage_metrics.json"
+      ],
+      "status": "MATCH"
+    }
+  ],
+  "semantic_status": "PASS"
+}

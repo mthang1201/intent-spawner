@@ -1,0 +1,152 @@
+{
+  "admission_or_scheduling_reason": "UNKNOWN",
+  "cgroup_metrics": {
+    "cgroup_version": "v2",
+    "controllers": [
+      "cpuset",
+      "cpu",
+      "io",
+      "memory",
+      "pids"
+    ],
+    "cpu_full_window_average_m": 1004.346324,
+    "cpu_interval_sample_max_m": 1041.950872,
+    "cpu_max": "150000 100000",
+    "cpu_nr_periods_delta": 2,
+    "cpu_nr_throttled_delta": 0,
+    "cpu_throttled_usec_delta": 0,
+    "cpu_usage_usec_delta": 253796,
+    "memory_current_sample_max_mib": 1390.007812,
+    "memory_events_delta": {
+      "high": 0,
+      "low": 0,
+      "max": 0,
+      "oom": 0,
+      "oom_group_kill": 0,
+      "oom_kill": 0,
+      "sock_throttled": 0
+    },
+    "memory_high": "max",
+    "memory_max": "1610612736",
+    "memory_peak_mib": 1390.007812,
+    "sample_count": 1,
+    "sample_interval_seconds": 0.1,
+    "source": "cgroup_v2_in_container"
+  },
+  "collector_origin": "REAL_KUBERNETES_COLLECTOR",
+  "condition": "P2_DYNAMIC",
+  "container_runtime_seconds": 0.0,
+  "correctness": true,
+  "correctness_details": {
+    "all_invariants_match": true,
+    "checker_version": "frozen-invariant-checker-v1.0.0",
+    "expected_invariants": {
+      "checksum": 3317213468984727290,
+      "dataset_size": 180000000,
+      "elements": 180000000,
+      "tail": 13341076425184216860
+    },
+    "observed_invariants": {
+      "checksum": 3317213468984727290,
+      "dataset_size": 180000000,
+      "elements": 180000000,
+      "tail": 13341076425184216860
+    }
+  },
+  "correctness_invariants_ok": true,
+  "deterministic_seed": 8117,
+  "exclusion_reason": null,
+  "expected_marker_sha256": "75d7473572cf42d67223fe64a28a4a6bba8ae280b385484df30b72f1c1693dcf",
+  "family_id": "dense_array_allocation",
+  "infrastructure_invalid": false,
+  "kubernetes": {
+    "cleanup_status": "succeeded",
+    "events": [
+      {
+        "count": null,
+        "first_timestamp": null,
+        "last_timestamp": null,
+        "message": "Successfully assigned z2jh-context-demo/e4e-e50e0cf581cf589cc78016ee to orbstack",
+        "reason": "Scheduled",
+        "type": "Normal"
+      },
+      {
+        "count": 1,
+        "first_timestamp": "2026-10-13T10:02:25Z",
+        "last_timestamp": "2026-10-13T10:02:25Z",
+        "message": "Container image \"intent-spawner-resource-v5:latest\" already present on machine",
+        "reason": "Pulled",
+        "type": "Normal"
+      },
+      {
+        "count": 1,
+        "first_timestamp": "2026-10-13T10:02:25Z",
+        "last_timestamp": "2026-10-13T10:02:25Z",
+        "message": "Created container: workload",
+        "reason": "Created",
+        "type": "Normal"
+      },
+      {
+        "count": 1,
+        "first_timestamp": "2026-10-13T10:02:25Z",
+        "last_timestamp": "2026-10-13T10:02:25Z",
+        "message": "Started container workload",
+        "reason": "Started",
+        "type": "Normal"
+      }
+    ],
+    "exit_code": 0,
+    "finished_at": "2026-10-13T10:02:25Z",
+    "image_id": "docker://sha256:84554666609638527f99c47ca139d29daf41ce3aef3f5f2c955421aa72842beb",
+    "image_reference": "intent-spawner-resource-v5:latest",
+    "node_name": "orbstack",
+    "phase": "Succeeded",
+    "pod_name": "e4e-e50e0cf581cf589cc78016ee",
+    "pod_uid": "69872d41-8a70-4bc3-9421-42b5c1eae690",
+    "reason": "Completed",
+    "restart_count": 0,
+    "started_at": "2026-10-13T10:02:25Z",
+    "terminated_reason": "Completed",
+    "waiting_reason": null
+  },
+  "observed_marker_sha256": "75d7473572cf42d67223fe64a28a4a6bba8ae280b385484df30b72f1c1693dcf",
+  "observed_resources": {
+    "cpu_limit_m": 1500,
+    "cpu_request_m": 1100,
+    "gpu_count": 0,
+    "gpu_resource": null,
+    "memory_limit_mib": 1536,
+    "memory_request_mib": 1280
+  },
+  "oom": false,
+  "pending_or_admission_failure": false,
+  "plan_index": 527,
+  "planned_resources": {
+    "cpu_limit_m": 1500,
+    "cpu_request_m": 1100,
+    "gpu_count": 0,
+    "gpu_resource": null,
+    "memory_limit_mib": 1536,
+    "memory_request_mib": 1280
+  },
+  "pod_created": true,
+  "primary_outcome": "SUCCESS",
+  "primary_trial_id": "e4-eff-07-dense_array_allocation-p2-dynamic",
+  "recorded_at_utc": "2026-10-13T10:02:28.236216Z",
+  "repetition": 7,
+  "replacement_of": null,
+  "runtime_error": false,
+  "scheduled": true,
+  "schema_version": "protocol-v5-resource-efficiency-trial-v1.0.0",
+  "sidecar_paths": {
+    "record": "raw/runs/e4-eff-07-dense_array_allocation-p2-dynamic/record.json"
+  },
+  "success": true,
+  "timeout": false,
+  "timeout_seconds": 120,
+  "trial_id": "e4-eff-07-dense_array_allocation-p2-dynamic",
+  "workload_fingerprint": "95557cab44677af36ee07a3f3829fe3b56e06cc8ed117deca63f5c7ed9e98c4c",
+  "workload_instance_id": "dense-array-allocation-v1-elements-180000000-seed-8117",
+  "workload_output_exists": true,
+  "workload_runtime_seconds": 0.252961
+}

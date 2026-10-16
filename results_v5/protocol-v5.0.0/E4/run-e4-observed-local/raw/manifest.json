@@ -1,0 +1,15 @@
+{
+  "adapter_version": "protocol-v5-resource-efficiency-kubernetes-adapter-v1.0.0",
+  "attempt_record_count": 800,
+  "cluster_measurement_status": "OBSERVED",
+  "collector_origin": "REAL_KUBERNETES_COLLECTOR",
+  "completed_at": "2026-10-14T03:35:41.353081Z",
+  "execution_status": "OBSERVED",
+  "plan_sha256": "03e9d49818efc36fb614b8b93f350bb8006188ffdc7a5b98745e55d07014919a",
+  "primary_trial_count": 800,
+  "protocol_version": "5.0.0",
+  "provenance_sha256": "5f13978b1df01a675ee86de37d0de2855f9a526c4177f809b1073d2670ffca0f",
+  "run_id": "run-e4-observed-local",
+  "schema_version": "protocol-v5-resource-efficiency-raw-package-v1.0.0",
+  "started_at": "2026-10-14T02:30:10.263167Z"
+}

@@ -1,0 +1,67 @@
+{
+  "analysis_environment": {
+    "git_dirty": true,
+    "git_revision": "9f513666ea51d3bd9113be33d9d7707dd5fe6636",
+    "implementation_files": {
+      "evaluation_v5/analysis/research_analysis.py": "85d201b58bb7018a9f636192e1f2622bd046c29cc0264f35abd8c5f6ea5c6bb4",
+      "evaluation_v5/analysis/research_contracts.py": "e8bbf00e847cc7fb83b247ac2916ebafc9b5394fd490a1e3d0afe89bac6ef43a"
+    },
+    "platform": "macOS-15.3.2-arm64-arm-64bit-Mach-O",
+    "python_version": "3.14.6"
+  },
+  "backend_semantics_modified": false,
+  "claim_counts": {
+    "NOT_EXECUTED": 9,
+    "NOT_SUPPORTED": 0,
+    "SUPPORTED": 0
+  },
+  "created_at_utc": "2026-10-14T04:11:31Z",
+  "input_artifact_sha256": {
+    "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E1/run-e1-llm-gemini-3.5-flash-lite/derived/statistical_analysis/analysis-manifest.json": "2292823ccce3a6c9c736cbffb01e13b0adb706f09330fd01cbd1e53c020708f3",
+    "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E1/run-e1-llm-gemini-3.5-flash-lite/derived/statistical_analysis/family-estimates.jsonl": "52d31f96d74998396292f4ab1615056123f74fcfeba2295cf75aa0cfb3aedd22",
+    "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E1/run-e1-llm-gemini-3.5-flash-lite/derived/statistical_analysis/paired-comparisons.jsonl": "4c3c3ef6d626e504ca93d3afc33916e6d0e4057e9975fb68e5a0eda61b0b6ea1",
+    "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E1/run-e1-llm-gemini-3.5-flash-lite/raw/offline-run-provenance.json": "6fcc62b655e42a951c5da3d3e78f2a57944d40745eb0032a2034bc62a61cfb60",
+    "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E1/run-e1-llm-gemini-3.5-flash-lite/raw/recommendations.jsonl": "3c39b7acd1855d889111d6625e4a275e3fa6fa8ee9fee8147620797f9a351beb",
+    "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E1/run-e1-llm-gemini-3.5-flash-lite/report/offline-run-completion.json": "c8e4dd0f424b587bb71ce4beed01dfa1697d421d70ad80a340c9f27479ed5bdd",
+    "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E1/run-e1-local/derived/statistical_analysis/analysis-manifest.json": "1a8c8636823515e3ac5bc84bd32ef48b995840a044729c6b818fe14458fcd044",
+    "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E1/run-e1-local/derived/statistical_analysis/family-estimates.jsonl": "a92997e874b46fc6f8382e6a82543775fad2311cd942a7015edc99daedd9f5b1",
+    "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E1/run-e1-local/derived/statistical_analysis/paired-comparisons.jsonl": "2a2de6f6347be49a371a0886243483106acbccf2ba4bbb4e6c49d5873a90420d",
+    "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E1/run-e1-local/raw/offline-run-provenance.json": "94f97da9d543976a32cec72713749fa193e27a5537d32e27aaefdde057d1abe5",
+    "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E1/run-e1-local/raw/recommendations.jsonl": "9214066f4ecb27e386479cc723dccc9ee5bd7a8d0732fa0c088192297fba9d1f",
+    "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E1/run-e1-local/report/offline-run-completion.json": "cf837168b5b0b248effe5a7cc5c9d4ec7c08c2b0bb128b51fcde0842e0fc909e",
+    "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/run-e5-functional-orbstack/derived/functional_metrics.json": "022f082ed834b81a9f5962d86b637c83bc1cc5c44f71247be3fd772e8472f0a8",
+    "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/run-e5-functional-orbstack/manifest.json": "8bc3912e751da6ffa6ea0e04bbdb1b084b4afb2899dd7378d1d5b49647045ca8",
+    "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/run-e5-functional-orbstack/raw/probe_manifest.json": "613a88e0f796318f0cf31d3ef1f56d7d96b24b4571bd7cfbba9ff1ae509d702f",
+    "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/run-e5-functional-orbstack/raw/probe_results.jsonl": "f236866e71f91b263a22bfcf16602baf163a73b7957766e078afca56fb2c5a61",
+    "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/run-e5-functional-orbstack/report/status.json": "81d32aeeaf413b24586f7820abf90f5e8b8574ca50c8d6ef5a4630c4e487e0c1",
+    "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/run-e5-storage-orbstack/derived/storage_metrics.json": "7cdf05eb7d69372d54279f1387aea94d972f693c1bfad55e54b983492c3eda0a"
+  },
+  "output_checksums": {
+    "derived/evaluated-claim-registry.json": "863966d160ad37d542ea97425edb26d730d6f72c591e6015806d11ad4a144887",
+    "derived/evidence-completeness.json": "6db6d2fc8918c0ef44a1089f6d756d0d1f1f33ff193a500be3d6062560cd9f7b",
+    "derived/evidence-inventory.json": "f0b2d0fe829158ffded8cf0ce2c53973be50f6c7dc343bb062c2215e43a4bdf8",
+    "derived/evidence-selection.json": "2d77974f87f39aade5f75779b132bc04d9e2f2844ccf2a63e7ab70785fc7f3d9",
+    "derived/provenance-consistency.json": "18deb221236f775ef852a2b61b76404251697f8a8899ddc93c7217eb6ac88d25",
+    "report/THREATS_TO_VALIDITY.md": "58b1b711380bdd026d87dcb8440c16ad19bf469f7e982413bec0a392c79307aa",
+    "report/threats-to-validity.json": "55ec6dc3d58f4f7fb5fa90cc047c68a564ef5309515afbfcdc23ba3371fd8fab",
+    "status.json": "dc6853277dbbdd6908bd9c5fd14f61bd85d559951108afba9399ec51db0b1b3c",
+    "tables/claim-matrix.csv": "0e45179f0dcd39ae9b166affd557ea77543df8312b07c230c3c9496ac5500c52",
+    "tables/claim-matrix.json": "6cb6e2b02bd84da7eabdc88219bb554208508df4c8e9504d1504c2b2276bef68",
+    "tables/claim-matrix.md": "8cc999a14b3b5971b7f71fb27c1f98e513c8ea9952dcba4593908969f6e337d2",
+    "tables/thesis-results.csv": "2f0f96e2ca169f992574d7253ac365615ff136d0771d4be680c73c5d151ad844",
+    "tables/thesis-results.md": "1a711e23a77927e475fc20ffcc71012f76d142114e272a445558d35c68e01e67",
+    "tables/thesis-results.tex": "e4efcd502ef611f3aaa3da0e329347ed92ed0e8c422d86d422fbceef74df59ff"
+  },
+  "p3_threshold": null,
+  "protocol_version": "5.0.0",
+  "raw_evidence_modified": false,
+  "registry": {
+    "path": "/Users/mthang1201/Documents/datn/intent-spawner/benchmarks_v5/protocol-v5-claim-registry-v1.2.yaml",
+    "sha256": "46c0a681a11685886f3b9b7d7ed13ca16ee72d226bfb089020fbd767b294bec2"
+  },
+  "run_id": "research-analysis-20261014T041125Z",
+  "schema_version": "protocol-v5-research-analysis-package-v1.1.0",
+  "selection": null,
+  "status": "INCOMPLETE",
+  "thesis_claims_permitted": true
+}

@@ -1,0 +1,81 @@
+{
+  "analysis_environment": {
+    "git_dirty": true,
+    "git_revision": "9f513666ea51d3bd9113be33d9d7707dd5fe6636",
+    "implementation_files": {
+      "evaluation_v5/analysis/research_analysis.py": "7b3639e5b038904e23f23391f7a248644d943504dbfe7172f50acb155cf45ddb",
+      "evaluation_v5/analysis/research_contracts.py": "e8bbf00e847cc7fb83b247ac2916ebafc9b5394fd490a1e3d0afe89bac6ef43a"
+    },
+    "platform": "macOS-15.3.2-arm64-arm-64bit-Mach-O",
+    "python_version": "3.14.6"
+  },
+  "backend_semantics_modified": false,
+  "claim_counts": {
+    "NOT_EXECUTED": 3,
+    "NOT_SUPPORTED": 4,
+    "SUPPORTED": 2
+  },
+  "created_at_utc": "2026-10-14T07:38:23Z",
+  "input_artifact_sha256": {
+    "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E1/run-e1-llm-gemini-3.5-flash-lite/derived/statistical_analysis/analysis-manifest.json": "2292823ccce3a6c9c736cbffb01e13b0adb706f09330fd01cbd1e53c020708f3",
+    "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E1/run-e1-llm-gemini-3.5-flash-lite/derived/statistical_analysis/family-estimates.jsonl": "52d31f96d74998396292f4ab1615056123f74fcfeba2295cf75aa0cfb3aedd22",
+    "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E1/run-e1-llm-gemini-3.5-flash-lite/derived/statistical_analysis/paired-comparisons.jsonl": "4c3c3ef6d626e504ca93d3afc33916e6d0e4057e9975fb68e5a0eda61b0b6ea1",
+    "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E1/run-e1-llm-gemini-3.5-flash-lite/raw/offline-run-provenance.json": "6fcc62b655e42a951c5da3d3e78f2a57944d40745eb0032a2034bc62a61cfb60",
+    "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E1/run-e1-llm-gemini-3.5-flash-lite/raw/recommendations.jsonl": "3c39b7acd1855d889111d6625e4a275e3fa6fa8ee9fee8147620797f9a351beb",
+    "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E1/run-e1-llm-gemini-3.5-flash-lite/report/offline-run-completion.json": "c8e4dd0f424b587bb71ce4beed01dfa1697d421d70ad80a340c9f27479ed5bdd",
+    "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E1/run-e1-local/derived/statistical_analysis/analysis-manifest.json": "1a8c8636823515e3ac5bc84bd32ef48b995840a044729c6b818fe14458fcd044",
+    "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E1/run-e1-local/derived/statistical_analysis/family-estimates.jsonl": "a92997e874b46fc6f8382e6a82543775fad2311cd942a7015edc99daedd9f5b1",
+    "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E1/run-e1-local/derived/statistical_analysis/paired-comparisons.jsonl": "2a2de6f6347be49a371a0886243483106acbccf2ba4bbb4e6c49d5873a90420d",
+    "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E1/run-e1-local/raw/offline-run-provenance.json": "94f97da9d543976a32cec72713749fa193e27a5537d32e27aaefdde057d1abe5",
+    "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E1/run-e1-local/raw/recommendations.jsonl": "9214066f4ecb27e386479cc723dccc9ee5bd7a8d0732fa0c088192297fba9d1f",
+    "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E1/run-e1-local/report/offline-run-completion.json": "cf837168b5b0b248effe5a7cc5c9d4ec7c08c2b0bb128b51fcde0842e0fc909e",
+    "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E4/run-e4-observed-llm-gemini-3.5-flash-lite-analysis/derived/condition-summaries.json": "a652297bc5c3f61c7b58bc6a9f85107093aba22efa4594de7aaf0b781227a897",
+    "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E4/run-e4-observed-llm-gemini-3.5-flash-lite-analysis/derived/trials.jsonl": "bd04f66e08a8bb8370fd53ba9fbb09f699d8c2d347ca86535a225590546f20e5",
+    "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E4/run-e4-observed-llm-gemini-3.5-flash-lite-analysis/manifest.json": "3097b8a55aee4bfb24eadeff37bc1194edc5292468786e444a03b64d04f89ec7",
+    "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E4/run-e4-observed-llm-gemini-3.5-flash-lite-analysis/report/pareto.json": "811e470c5bd9afd66867eb0fe052452a916bacabe3d58c4d450fb78f19b7222f",
+    "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E4/run-e4-observed-llm-gemini-3.5-flash-lite-analysis/statistics/results.json": "8bba49e79fdffe367bbc1aca083238315808e52472a15e0c8bf554acfe55e769",
+    "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E4/run-e4-observed-llm-gemini-3.5-flash-lite/raw/manifest.json": "9433780de39aa4de683bc1134e36bf3d616ed42727473b8161d4f077e49bda52",
+    "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E4/run-e4-observed-llm-gemini-3.5-flash-lite/raw/plan.json": "4a962e5cfc5d4c30cda4837742892496c21369f7a09b03718d36e3b93b308b7e",
+    "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E4/run-e4-observed-local-analysis/derived/condition-summaries.json": "53295bc6227b0952db292e85530a1709f127bc5a005245bd9bd7fbf6bd3ea584",
+    "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E4/run-e4-observed-local-analysis/derived/trials.jsonl": "7e8e70c71849cc2286948fb54f34eef1fd9dc6fb01dca74e9b9e6e9a52698a11",
+    "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E4/run-e4-observed-local-analysis/manifest.json": "d3c24df2100f542de5c5dbedffbb4e2d6f31db1639d0a7d2c5a485995c6989a3",
+    "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E4/run-e4-observed-local-analysis/report/pareto.json": "811e470c5bd9afd66867eb0fe052452a916bacabe3d58c4d450fb78f19b7222f",
+    "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E4/run-e4-observed-local-analysis/statistics/results.json": "02661a2b2eec2d8b15f9823485e339700b6ef3449a2df76dba6372da93b19307",
+    "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E4/run-e4-observed-local/raw/manifest.json": "c419e0ddcfb06351b58731ca0681d939b76f6a09b97cae51a5f3b31891f98b6a",
+    "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E4/run-e4-observed-local/raw/plan.json": "b48af10574ec92e75f2687953d7f6319d125f1cc27d2975efb2e2b2630030899",
+    "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/run-e5-functional-orbstack/derived/functional_metrics.json": "022f082ed834b81a9f5962d86b637c83bc1cc5c44f71247be3fd772e8472f0a8",
+    "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/run-e5-functional-orbstack/manifest.json": "8bc3912e751da6ffa6ea0e04bbdb1b084b4afb2899dd7378d1d5b49647045ca8",
+    "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/run-e5-functional-orbstack/raw/probe_manifest.json": "613a88e0f796318f0cf31d3ef1f56d7d96b24b4571bd7cfbba9ff1ae509d702f",
+    "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/run-e5-functional-orbstack/raw/probe_results.jsonl": "f236866e71f91b263a22bfcf16602baf163a73b7957766e078afca56fb2c5a61",
+    "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/run-e5-functional-orbstack/report/status.json": "81d32aeeaf413b24586f7820abf90f5e8b8574ca50c8d6ef5a4630c4e487e0c1",
+    "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/run-e5-storage-orbstack/derived/storage_metrics.json": "7cdf05eb7d69372d54279f1387aea94d972f693c1bfad55e54b983492c3eda0a"
+  },
+  "output_checksums": {
+    "derived/evaluated-claim-registry.json": "fe3419300edf24c47bd5a630458fb89310a181285c96c05cf40779b7288ed736",
+    "derived/evidence-completeness.json": "91e7938a9a61b9b67be9e97d8adc17184e4fe88de6229cf4b3bb6937f4111b2b",
+    "derived/evidence-inventory.json": "b260288f0e86f49944cd0028ab08ecdf75df3fae1e2174eeeec79177549c7949",
+    "derived/evidence-selection.json": "9bfee3eee3517306d1ac5eb7311e642c17744431e79c325f31a0724683af0d03",
+    "derived/provenance-consistency.json": "e1a43378f674239c9914803e7cfe1aea22bcd69c4e64de028dc11ec9af8cec11",
+    "report/THREATS_TO_VALIDITY.md": "b438cb76451bddadb0d52d066e59586fd67ee4ecdd45bfab821aec42f3b89236",
+    "report/threats-to-validity.json": "331a0995d81ad5e403c573f4e63d206467ab90a454c3eabea124d1e8646bfefe",
+    "status.json": "bf58c270d7f7df1343832fa72d99ae294c9375002c6166d51f05a1fb155476d8",
+    "tables/claim-matrix.csv": "37bd3feb325bedaa7c2d221462a960bf4397d699fe1aecace36df1fbd0a33fc9",
+    "tables/claim-matrix.json": "3c9927da513ab2d77e9f7cd907952227f10b43b6fd539171720bbb5f8232b9be",
+    "tables/claim-matrix.md": "044f0be9907bc1e400fef1784cb0d6a1f06faafa96eb024c5e680f9f8a02df7d",
+    "tables/thesis-results.csv": "1466f08f4e06aa957feb6d30ba76af8269dafd556233cc4cb122a4487afe22df",
+    "tables/thesis-results.md": "404e4612d0d304d29a3024f2fa6a8866c1e0d5c0dfc8a8471e8884a87703ad5f",
+    "tables/thesis-results.tex": "b16f867c266085f6ebf07f2be965f7eb88581698894310383ae057ba033fec1c"
+  },
+  "p3_threshold": null,
+  "protocol_version": "5.0.0",
+  "raw_evidence_modified": false,
+  "registry": {
+    "path": "/Users/mthang1201/Documents/datn/intent-spawner/benchmarks_v5/protocol-v5-claim-registry-v1.2.yaml",
+    "sha256": "46c0a681a11685886f3b9b7d7ed13ca16ee72d226bfb089020fbd767b294bec2"
+  },
+  "run_id": "research-analysis-llm-20261014T073814Z",
+  "schema_version": "protocol-v5-research-analysis-package-v1.1.0",
+  "selection": null,
+  "status": "INCOMPLETE",
+  "thesis_claims_permitted": true
+}

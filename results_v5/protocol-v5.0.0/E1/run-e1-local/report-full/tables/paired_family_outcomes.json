@@ -1,0 +1,122 @@
+{
+  "eligible_paired_families": 11,
+  "families": [
+    {
+      "P1_score": 1.0,
+      "P2_score": 0.2,
+      "P3_score": null,
+      "delta_P2_minus_P1": -0.8,
+      "family_id": "basic-python",
+      "pairing_status": "PAIRED",
+      "stratum": "unspecified",
+      "winner": "P1"
+    },
+    {
+      "P1_score": 0.0,
+      "P2_score": 1.0,
+      "P3_score": null,
+      "delta_P2_minus_P1": 1.0,
+      "family_id": "negative-constraint-cpu-ml",
+      "pairing_status": "PAIRED",
+      "stratum": "unspecified",
+      "winner": "P2"
+    },
+    {
+      "P1_score": 0.0,
+      "P2_score": 1.0,
+      "P3_score": null,
+      "delta_P2_minus_P1": 1.0,
+      "family_id": "negative-constraint-minimal-python",
+      "pairing_status": "PAIRED",
+      "stratum": "unspecified",
+      "winner": "P2"
+    },
+    {
+      "P1_score": 0.0,
+      "P2_score": 1.0,
+      "P3_score": null,
+      "delta_P2_minus_P1": 1.0,
+      "family_id": "p2-cpu-only-pandas-feasible",
+      "pairing_status": "PAIRED",
+      "stratum": "unspecified",
+      "winner": "P2"
+    },
+    {
+      "P1_score": 1.0,
+      "P2_score": 0.75,
+      "P3_score": null,
+      "delta_P2_minus_P1": -0.25,
+      "family_id": "p2-tensorflow-inference-feasible",
+      "pairing_status": "PAIRED",
+      "stratum": "unspecified",
+      "winner": "P1"
+    },
+    {
+      "P1_score": 0.8,
+      "P2_score": 1.0,
+      "P3_score": null,
+      "delta_P2_minus_P1": 0.19999999999999996,
+      "family_id": "pandas-transform",
+      "pairing_status": "PAIRED",
+      "stratum": "unspecified",
+      "winner": "P2"
+    },
+    {
+      "P1_score": 1.0,
+      "P2_score": 1.0,
+      "P3_score": null,
+      "delta_P2_minus_P1": 0.0,
+      "family_id": "pytorch-mnist-cpu-feasible",
+      "pairing_status": "PAIRED",
+      "stratum": "unspecified",
+      "winner": "Tie"
+    },
+    {
+      "P1_score": 0.8,
+      "P2_score": 0.0,
+      "P3_score": null,
+      "delta_P2_minus_P1": -0.8,
+      "family_id": "pytorch-nlp-cpu-training",
+      "pairing_status": "PAIRED",
+      "stratum": "unspecified",
+      "winner": "P1"
+    },
+    {
+      "P1_score": 0.6,
+      "P2_score": 0.4,
+      "P3_score": null,
+      "delta_P2_minus_P1": -0.19999999999999996,
+      "family_id": "sklearn-small",
+      "pairing_status": "PAIRED",
+      "stratum": "unspecified",
+      "winner": "P1"
+    },
+    {
+      "P1_score": 0.4,
+      "P2_score": 0.4,
+      "P3_score": null,
+      "delta_P2_minus_P1": 0.0,
+      "family_id": "tabular-ml-classification",
+      "pairing_status": "PAIRED",
+      "stratum": "unspecified",
+      "winner": "Tie"
+    },
+    {
+      "P1_score": 1.0,
+      "P2_score": 0.4,
+      "P3_score": null,
+      "delta_P2_minus_P1": -0.6,
+      "family_id": "threshold-below",
+      "pairing_status": "PAIRED",
+      "stratum": "unspecified",
+      "winner": "P1"
+    }
+  ],
+  "ineligible_unpaired_families": 0,
+  "p1_wins": 5,
+  "p2_wins": 4,
+  "schema_version": "protocol-v5-offline-reporting-v1.0.0",
+  "ties": 2,
+  "title": "Paired Family Outcomes (P1 vs P2)",
+  "total_families": 11
+}

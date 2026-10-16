@@ -1,0 +1,7 @@
+{
+  "attempt_records": 800,
+  "completed_at": "2026-10-14T03:35:41.353081Z",
+  "completed_primary_trials": 800,
+  "expected_primary_trials": 800,
+  "schema_version": "protocol-v5-resource-efficiency-completion-v1.0.0"
+}

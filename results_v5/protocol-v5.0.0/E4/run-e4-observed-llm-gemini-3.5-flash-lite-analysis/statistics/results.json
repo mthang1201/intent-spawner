@@ -1,0 +1,2733 @@
+{
+  "design_counts": {
+    "independent_semantic_n": 20,
+    "number_of_families": 20,
+    "raw_primary_trial_count": 800,
+    "repetitions_per_family_condition": 10
+  },
+  "family_is_primary_unit": true,
+  "hierarchy": [
+    "raw_trial_attempt",
+    "family_condition_repetition",
+    "family_condition",
+    "paired_cross_family_inference"
+  ],
+  "repetitions_are_independent_families": false,
+  "rows": [
+    {
+      "candidate_condition": "P2_CATALOG",
+      "ci_95_candidate_minus_reference": [
+        0.0,
+        0.0
+      ],
+      "effect": {
+        "cohens_dz": null,
+        "effect_direction": "second_minus_first",
+        "matched_pairs_rank_biserial": 0.0,
+        "mean_difference": 0.0,
+        "median_paired_difference": 0.0,
+        "pairs": 20,
+        "risk_difference": 0.0
+      },
+      "effect_direction": "candidate_minus_reference",
+      "effective_family_n": 20,
+      "endpoint": "success_rate",
+      "endpoint_role": "primary",
+      "reference_condition": "STATIC_LARGE",
+      "test": {
+        "alternative": "two_sided",
+        "binary_outcome": false,
+        "binary_outcome_detected": true,
+        "effect_direction": "second_minus_first",
+        "effective_family_n": 20,
+        "inference_status": "ELIGIBLE",
+        "non_zero_pairs": 0,
+        "p_value_holm_within_endpoint": 1.0,
+        "p_value_raw": 1.0,
+        "pairs": 20,
+        "statistic": 0.0,
+        "test_method": "wilcoxon_signed_rank",
+        "w_negative": 0.0,
+        "w_positive": 0.0,
+        "warning_codes": [],
+        "z_score": 0.0
+      }
+    },
+    {
+      "candidate_condition": "P2_DYNAMIC",
+      "ci_95_candidate_minus_reference": [
+        -0.15000000000000002,
+        0.0
+      ],
+      "effect": {
+        "cohens_dz": -0.223606797749979,
+        "effect_direction": "second_minus_first",
+        "matched_pairs_rank_biserial": -1.0,
+        "mean_difference": -0.05,
+        "median_paired_difference": 0.0,
+        "pairs": 20,
+        "risk_difference": -0.05
+      },
+      "effect_direction": "candidate_minus_reference",
+      "effective_family_n": 20,
+      "endpoint": "success_rate",
+      "endpoint_role": "primary",
+      "reference_condition": "STATIC_LARGE",
+      "test": {
+        "alternative": "two_sided",
+        "binary_outcome": false,
+        "binary_outcome_detected": true,
+        "effect_direction": "second_minus_first",
+        "effective_family_n": 20,
+        "inference_status": "ELIGIBLE",
+        "non_zero_pairs": 1,
+        "p_value_holm_within_endpoint": 1.0,
+        "p_value_raw": 1.0,
+        "pairs": 20,
+        "statistic": 0,
+        "test_method": "wilcoxon_signed_rank",
+        "w_negative": 1.0,
+        "w_positive": 0,
+        "warning_codes": [],
+        "z_score": 0.0
+      }
+    },
+    {
+      "candidate_condition": "P2_DYNAMIC",
+      "ci_95_candidate_minus_reference": [
+        -0.15000000000000002,
+        0.0
+      ],
+      "effect": {
+        "cohens_dz": -0.223606797749979,
+        "effect_direction": "second_minus_first",
+        "matched_pairs_rank_biserial": -1.0,
+        "mean_difference": -0.05,
+        "median_paired_difference": 0.0,
+        "pairs": 20,
+        "risk_difference": -0.05
+      },
+      "effect_direction": "candidate_minus_reference",
+      "effective_family_n": 20,
+      "endpoint": "success_rate",
+      "endpoint_role": "primary",
+      "reference_condition": "P2_CATALOG",
+      "test": {
+        "alternative": "two_sided",
+        "binary_outcome": false,
+        "binary_outcome_detected": true,
+        "effect_direction": "second_minus_first",
+        "effective_family_n": 20,
+        "inference_status": "ELIGIBLE",
+        "non_zero_pairs": 1,
+        "p_value_holm_within_endpoint": 1.0,
+        "p_value_raw": 1.0,
+        "pairs": 20,
+        "statistic": 0,
+        "test_method": "wilcoxon_signed_rank",
+        "w_negative": 1.0,
+        "w_positive": 0,
+        "warning_codes": [],
+        "z_score": 0.0
+      }
+    },
+    {
+      "candidate_condition": "P2_CATALOG",
+      "ci_95_candidate_minus_reference": [
+        0.0,
+        0.25
+      ],
+      "effect": {
+        "cohens_dz": 0.32489314482696546,
+        "effect_direction": "second_minus_first",
+        "matched_pairs_rank_biserial": 1.0,
+        "mean_difference": 0.1,
+        "median_paired_difference": 0.0,
+        "pairs": 20,
+        "risk_difference": 0.1
+      },
+      "effect_direction": "candidate_minus_reference",
+      "effective_family_n": 20,
+      "endpoint": "success_rate",
+      "endpoint_role": "primary",
+      "reference_condition": "P1_CATALOG",
+      "test": {
+        "alternative": "two_sided",
+        "binary_outcome": false,
+        "binary_outcome_detected": true,
+        "effect_direction": "second_minus_first",
+        "effective_family_n": 20,
+        "inference_status": "ELIGIBLE",
+        "non_zero_pairs": 2,
+        "p_value_holm_within_endpoint": 1.0,
+        "p_value_raw": 0.5,
+        "pairs": 20,
+        "statistic": 0,
+        "test_method": "wilcoxon_signed_rank",
+        "w_negative": 0,
+        "w_positive": 3.0,
+        "warning_codes": [],
+        "z_score": 0.0
+      }
+    },
+    {
+      "candidate_condition": "P2_CATALOG",
+      "ci_95_candidate_minus_reference": [
+        0.0,
+        0.0
+      ],
+      "effect": {
+        "cohens_dz": null,
+        "effect_direction": "second_minus_first",
+        "matched_pairs_rank_biserial": 0.0,
+        "mean_difference": 0.0,
+        "median_paired_difference": 0.0,
+        "pairs": 20,
+        "risk_difference": 0.0
+      },
+      "effect_direction": "candidate_minus_reference",
+      "effective_family_n": 20,
+      "endpoint": "oom_rate",
+      "endpoint_role": "primary",
+      "reference_condition": "STATIC_LARGE",
+      "test": {
+        "alternative": "two_sided",
+        "binary_outcome": false,
+        "binary_outcome_detected": true,
+        "effect_direction": "second_minus_first",
+        "effective_family_n": 20,
+        "inference_status": "ELIGIBLE",
+        "non_zero_pairs": 0,
+        "p_value_holm_within_endpoint": 1.0,
+        "p_value_raw": 1.0,
+        "pairs": 20,
+        "statistic": 0.0,
+        "test_method": "wilcoxon_signed_rank",
+        "w_negative": 0.0,
+        "w_positive": 0.0,
+        "warning_codes": [],
+        "z_score": 0.0
+      }
+    },
+    {
+      "candidate_condition": "P2_DYNAMIC",
+      "ci_95_candidate_minus_reference": [
+        0.0,
+        0.15
+      ],
+      "effect": {
+        "cohens_dz": 0.223606797749979,
+        "effect_direction": "second_minus_first",
+        "matched_pairs_rank_biserial": 1.0,
+        "mean_difference": 0.05,
+        "median_paired_difference": 0.0,
+        "pairs": 20,
+        "risk_difference": 0.05
+      },
+      "effect_direction": "candidate_minus_reference",
+      "effective_family_n": 20,
+      "endpoint": "oom_rate",
+      "endpoint_role": "primary",
+      "reference_condition": "STATIC_LARGE",
+      "test": {
+        "alternative": "two_sided",
+        "binary_outcome": false,
+        "binary_outcome_detected": true,
+        "effect_direction": "second_minus_first",
+        "effective_family_n": 20,
+        "inference_status": "ELIGIBLE",
+        "non_zero_pairs": 1,
+        "p_value_holm_within_endpoint": 1.0,
+        "p_value_raw": 1.0,
+        "pairs": 20,
+        "statistic": 0,
+        "test_method": "wilcoxon_signed_rank",
+        "w_negative": 0,
+        "w_positive": 1.0,
+        "warning_codes": [],
+        "z_score": 0.0
+      }
+    },
+    {
+      "candidate_condition": "P2_DYNAMIC",
+      "ci_95_candidate_minus_reference": [
+        0.0,
+        0.15
+      ],
+      "effect": {
+        "cohens_dz": 0.223606797749979,
+        "effect_direction": "second_minus_first",
+        "matched_pairs_rank_biserial": 1.0,
+        "mean_difference": 0.05,
+        "median_paired_difference": 0.0,
+        "pairs": 20,
+        "risk_difference": 0.05
+      },
+      "effect_direction": "candidate_minus_reference",
+      "effective_family_n": 20,
+      "endpoint": "oom_rate",
+      "endpoint_role": "primary",
+      "reference_condition": "P2_CATALOG",
+      "test": {
+        "alternative": "two_sided",
+        "binary_outcome": false,
+        "binary_outcome_detected": true,
+        "effect_direction": "second_minus_first",
+        "effective_family_n": 20,
+        "inference_status": "ELIGIBLE",
+        "non_zero_pairs": 1,
+        "p_value_holm_within_endpoint": 1.0,
+        "p_value_raw": 1.0,
+        "pairs": 20,
+        "statistic": 0,
+        "test_method": "wilcoxon_signed_rank",
+        "w_negative": 0,
+        "w_positive": 1.0,
+        "warning_codes": [],
+        "z_score": 0.0
+      }
+    },
+    {
+      "candidate_condition": "P2_CATALOG",
+      "ci_95_candidate_minus_reference": [
+        -0.25,
+        0.0
+      ],
+      "effect": {
+        "cohens_dz": -0.32489314482696546,
+        "effect_direction": "second_minus_first",
+        "matched_pairs_rank_biserial": -1.0,
+        "mean_difference": -0.1,
+        "median_paired_difference": 0.0,
+        "pairs": 20,
+        "risk_difference": -0.1
+      },
+      "effect_direction": "candidate_minus_reference",
+      "effective_family_n": 20,
+      "endpoint": "oom_rate",
+      "endpoint_role": "primary",
+      "reference_condition": "P1_CATALOG",
+      "test": {
+        "alternative": "two_sided",
+        "binary_outcome": false,
+        "binary_outcome_detected": true,
+        "effect_direction": "second_minus_first",
+        "effective_family_n": 20,
+        "inference_status": "ELIGIBLE",
+        "non_zero_pairs": 2,
+        "p_value_holm_within_endpoint": 1.0,
+        "p_value_raw": 0.5,
+        "pairs": 20,
+        "statistic": 0,
+        "test_method": "wilcoxon_signed_rank",
+        "w_negative": 3.0,
+        "w_positive": 0,
+        "warning_codes": [],
+        "z_score": 0.0
+      }
+    },
+    {
+      "candidate_condition": "P2_CATALOG",
+      "ci_95_candidate_minus_reference": [
+        -3.4796625940874994,
+        -0.019819892462499926
+      ],
+      "effect": {
+        "cohens_dz": -0.33493982020397417,
+        "effect_direction": "second_minus_first",
+        "matched_pairs_rank_biserial": -0.6571428571428571,
+        "mean_difference": -1.423314067,
+        "median_paired_difference": -0.06321342499999999,
+        "pairs": 20,
+        "risk_difference": null
+      },
+      "effect_direction": "candidate_minus_reference",
+      "effective_family_n": 20,
+      "endpoint": "cpu_cost_per_success",
+      "endpoint_role": "primary",
+      "reference_condition": "STATIC_LARGE",
+      "test": {
+        "alternative": "two_sided",
+        "binary_outcome": false,
+        "binary_outcome_detected": false,
+        "effect_direction": "second_minus_first",
+        "effective_family_n": 20,
+        "inference_status": "ELIGIBLE",
+        "non_zero_pairs": 20,
+        "p_value_holm_within_endpoint": 0.0210983754246,
+        "p_value_raw": 0.0105491877123,
+        "pairs": 20,
+        "statistic": 36.0,
+        "test_method": "wilcoxon_signed_rank",
+        "w_negative": 174.0,
+        "w_positive": 36.0,
+        "warning_codes": [],
+        "z_score": 2.557288
+      }
+    },
+    {
+      "candidate_condition": "P2_DYNAMIC",
+      "ci_95_candidate_minus_reference": [
+        -1.1826449003289463,
+        -0.05782968065789476
+      ],
+      "effect": {
+        "cohens_dz": -0.3856167480719923,
+        "effect_direction": "second_minus_first",
+        "matched_pairs_rank_biserial": -1.0,
+        "mean_difference": -0.5209806231578945,
+        "median_paired_difference": -0.062219090000000005,
+        "pairs": 19,
+        "risk_difference": null
+      },
+      "effect_direction": "candidate_minus_reference",
+      "effective_family_n": 19,
+      "endpoint": "cpu_cost_per_success",
+      "endpoint_role": "primary",
+      "reference_condition": "STATIC_LARGE",
+      "test": {
+        "alternative": "two_sided",
+        "binary_outcome": false,
+        "binary_outcome_detected": false,
+        "effect_direction": "second_minus_first",
+        "effective_family_n": 19,
+        "inference_status": "ELIGIBLE",
+        "non_zero_pairs": 19,
+        "p_value_holm_within_endpoint": 0.000572080293572,
+        "p_value_raw": 0.000143020073393,
+        "pairs": 19,
+        "statistic": 0,
+        "test_method": "wilcoxon_signed_rank",
+        "w_negative": 190.0,
+        "w_positive": 0,
+        "warning_codes": [
+          "SMALL_EFFECTIVE_FAMILY_N"
+        ],
+        "z_score": 3.802886
+      }
+    },
+    {
+      "candidate_condition": "P2_DYNAMIC",
+      "ci_95_candidate_minus_reference": [
+        -0.029126478736842123,
+        2.4900638365131584
+      ],
+      "effect": {
+        "cohens_dz": 0.33093002049475523,
+        "effect_direction": "second_minus_first",
+        "matched_pairs_rank_biserial": 0.45263157894736844,
+        "mean_difference": 0.992209957894737,
+        "median_paired_difference": 0.028225839999999995,
+        "pairs": 19,
+        "risk_difference": null
+      },
+      "effect_direction": "candidate_minus_reference",
+      "effective_family_n": 19,
+      "endpoint": "cpu_cost_per_success",
+      "endpoint_role": "primary",
+      "reference_condition": "P2_CATALOG",
+      "test": {
+        "alternative": "two_sided",
+        "binary_outcome": false,
+        "binary_outcome_detected": false,
+        "effect_direction": "second_minus_first",
+        "effective_family_n": 19,
+        "inference_status": "ELIGIBLE",
+        "non_zero_pairs": 19,
+        "p_value_holm_within_endpoint": 0.0872117558874,
+        "p_value_raw": 0.0872117558874,
+        "pairs": 19,
+        "statistic": 52.0,
+        "test_method": "wilcoxon_signed_rank",
+        "w_negative": 52.0,
+        "w_positive": 138.0,
+        "warning_codes": [
+          "SMALL_EFFECTIVE_FAMILY_N"
+        ],
+        "z_score": 1.710293
+      }
+    },
+    {
+      "candidate_condition": "P2_CATALOG",
+      "ci_95_candidate_minus_reference": [
+        0.010688972541666718,
+        0.10728823602777782
+      ],
+      "effect": {
+        "cohens_dz": 0.46171580284700753,
+        "effect_direction": "second_minus_first",
+        "matched_pairs_rank_biserial": 0.8947368421052632,
+        "mean_difference": 0.05111860611111111,
+        "median_paired_difference": 0.011648535000000002,
+        "pairs": 18,
+        "risk_difference": null
+      },
+      "effect_direction": "candidate_minus_reference",
+      "effective_family_n": 18,
+      "endpoint": "cpu_cost_per_success",
+      "endpoint_role": "primary",
+      "reference_condition": "P1_CATALOG",
+      "test": {
+        "alternative": "two_sided",
+        "binary_outcome": false,
+        "binary_outcome_detected": false,
+        "effect_direction": "second_minus_first",
+        "effective_family_n": 18,
+        "inference_status": "ELIGIBLE",
+        "non_zero_pairs": 18,
+        "p_value_holm_within_endpoint": 0.002800609250517,
+        "p_value_raw": 0.000933536416839,
+        "pairs": 18,
+        "statistic": 9.0,
+        "test_method": "wilcoxon_signed_rank",
+        "w_negative": 9.0,
+        "w_positive": 162.0,
+        "warning_codes": [
+          "SMALL_EFFECTIVE_FAMILY_N"
+        ],
+        "z_score": 3.309827
+      }
+    },
+    {
+      "candidate_condition": "P2_CATALOG",
+      "ci_95_candidate_minus_reference": [
+        -2685.12768064,
+        -0.6197635840000462
+      ],
+      "effect": {
+        "cohens_dz": -0.33232867183783077,
+        "effect_direction": "second_minus_first",
+        "matched_pairs_rank_biserial": -0.6476190476190476,
+        "mean_difference": -1091.8895961599999,
+        "median_paired_difference": -48.233817599999995,
+        "pairs": 20,
+        "risk_difference": null
+      },
+      "effect_direction": "candidate_minus_reference",
+      "effective_family_n": 20,
+      "endpoint": "memory_cost_per_success",
+      "endpoint_role": "primary",
+      "reference_condition": "STATIC_LARGE",
+      "test": {
+        "alternative": "two_sided",
+        "binary_outcome": false,
+        "binary_outcome_detected": false,
+        "effect_direction": "second_minus_first",
+        "effective_family_n": 20,
+        "inference_status": "ELIGIBLE",
+        "non_zero_pairs": 20,
+        "p_value_holm_within_endpoint": 0.0234739542324,
+        "p_value_raw": 0.0117369771162,
+        "pairs": 20,
+        "statistic": 37.0,
+        "test_method": "wilcoxon_signed_rank",
+        "w_negative": 173.0,
+        "w_positive": 37.0,
+        "warning_codes": [],
+        "z_score": 2.519955
+      }
+    },
+    {
+      "candidate_condition": "P2_DYNAMIC",
+      "ci_95_candidate_minus_reference": [
+        -775.7466225852622,
+        -36.83111659789473
+      ],
+      "effect": {
+        "cohens_dz": -0.38636096769179046,
+        "effect_direction": "second_minus_first",
+        "matched_pairs_rank_biserial": -0.8947368421052632,
+        "mean_difference": -337.92940058947346,
+        "median_paired_difference": -41.52995840000003,
+        "pairs": 19,
+        "risk_difference": null
+      },
+      "effect_direction": "candidate_minus_reference",
+      "effective_family_n": 19,
+      "endpoint": "memory_cost_per_success",
+      "endpoint_role": "primary",
+      "reference_condition": "STATIC_LARGE",
+      "test": {
+        "alternative": "two_sided",
+        "binary_outcome": false,
+        "binary_outcome_detected": false,
+        "effect_direction": "second_minus_first",
+        "effective_family_n": 19,
+        "inference_status": "ELIGIBLE",
+        "non_zero_pairs": 19,
+        "p_value_holm_within_endpoint": 0.002690860145888,
+        "p_value_raw": 0.000672715036472,
+        "pairs": 19,
+        "statistic": 10.0,
+        "test_method": "wilcoxon_signed_rank",
+        "w_negative": 180.0,
+        "w_positive": 10.0,
+        "warning_codes": [
+          "SMALL_EFFECTIVE_FAMILY_N"
+        ],
+        "z_score": 3.400464
+      }
+    },
+    {
+      "candidate_condition": "P2_DYNAMIC",
+      "ci_95_candidate_minus_reference": [
+        -21.09783865263161,
+        2070.8364201431577
+      ],
+      "effect": {
+        "cohens_dz": 0.3323189119234547,
+        "effect_direction": "second_minus_first",
+        "matched_pairs_rank_biserial": 0.4631578947368421,
+        "mean_difference": 826.7524823578948,
+        "median_paired_difference": 23.985151999999992,
+        "pairs": 19,
+        "risk_difference": null
+      },
+      "effect_direction": "candidate_minus_reference",
+      "effective_family_n": 19,
+      "endpoint": "memory_cost_per_success",
+      "endpoint_role": "primary",
+      "reference_condition": "P2_CATALOG",
+      "test": {
+        "alternative": "two_sided",
+        "binary_outcome": false,
+        "binary_outcome_detected": false,
+        "effect_direction": "second_minus_first",
+        "effective_family_n": 19,
+        "inference_status": "ELIGIBLE",
+        "non_zero_pairs": 19,
+        "p_value_holm_within_endpoint": 0.0800260557921,
+        "p_value_raw": 0.0800260557921,
+        "pairs": 19,
+        "statistic": 51.0,
+        "test_method": "wilcoxon_signed_rank",
+        "w_negative": 51.0,
+        "w_positive": 139.0,
+        "warning_codes": [
+          "SMALL_EFFECTIVE_FAMILY_N"
+        ],
+        "z_score": 1.750535
+      }
+    },
+    {
+      "candidate_condition": "P2_CATALOG",
+      "ci_95_candidate_minus_reference": [
+        12.299317155555556,
+        84.47035331555556
+      ],
+      "effect": {
+        "cohens_dz": 0.5257390399139051,
+        "effect_direction": "second_minus_first",
+        "matched_pairs_rank_biserial": 0.8830409356725146,
+        "mean_difference": 45.533942044444444,
+        "median_paired_difference": 13.724607999999998,
+        "pairs": 18,
+        "risk_difference": null
+      },
+      "effect_direction": "candidate_minus_reference",
+      "effective_family_n": 18,
+      "endpoint": "memory_cost_per_success",
+      "endpoint_role": "primary",
+      "reference_condition": "P1_CATALOG",
+      "test": {
+        "alternative": "two_sided",
+        "binary_outcome": false,
+        "binary_outcome_detected": false,
+        "effect_direction": "second_minus_first",
+        "effective_family_n": 18,
+        "inference_status": "ELIGIBLE",
+        "non_zero_pairs": 18,
+        "p_value_holm_within_endpoint": 0.00326915172249,
+        "p_value_raw": 0.00108971724083,
+        "pairs": 18,
+        "statistic": 10.0,
+        "test_method": "wilcoxon_signed_rank",
+        "w_negative": 10.0,
+        "w_positive": 161.0,
+        "warning_codes": [
+          "SMALL_EFFECTIVE_FAMILY_N"
+        ],
+        "z_score": 3.266277
+      }
+    },
+    {
+      "candidate_condition": "P2_CATALOG",
+      "ci_95_candidate_minus_reference": [
+        0.0,
+        0.0
+      ],
+      "effect": {
+        "cohens_dz": null,
+        "effect_direction": "second_minus_first",
+        "matched_pairs_rank_biserial": 0.0,
+        "mean_difference": 0.0,
+        "median_paired_difference": 0.0,
+        "pairs": 20,
+        "risk_difference": 0.0
+      },
+      "effect_direction": "candidate_minus_reference",
+      "effective_family_n": 20,
+      "endpoint": "timeout_rate",
+      "endpoint_role": "secondary",
+      "reference_condition": "STATIC_LARGE",
+      "test": {
+        "alternative": "two_sided",
+        "binary_outcome": false,
+        "binary_outcome_detected": true,
+        "effect_direction": "second_minus_first",
+        "effective_family_n": 20,
+        "inference_status": "ELIGIBLE",
+        "non_zero_pairs": 0,
+        "p_value_holm_within_endpoint": 1.0,
+        "p_value_raw": 1.0,
+        "pairs": 20,
+        "statistic": 0.0,
+        "test_method": "wilcoxon_signed_rank",
+        "w_negative": 0.0,
+        "w_positive": 0.0,
+        "warning_codes": [],
+        "z_score": 0.0
+      }
+    },
+    {
+      "candidate_condition": "P2_DYNAMIC",
+      "ci_95_candidate_minus_reference": [
+        0.0,
+        0.0
+      ],
+      "effect": {
+        "cohens_dz": null,
+        "effect_direction": "second_minus_first",
+        "matched_pairs_rank_biserial": 0.0,
+        "mean_difference": 0.0,
+        "median_paired_difference": 0.0,
+        "pairs": 20,
+        "risk_difference": 0.0
+      },
+      "effect_direction": "candidate_minus_reference",
+      "effective_family_n": 20,
+      "endpoint": "timeout_rate",
+      "endpoint_role": "secondary",
+      "reference_condition": "STATIC_LARGE",
+      "test": {
+        "alternative": "two_sided",
+        "binary_outcome": false,
+        "binary_outcome_detected": true,
+        "effect_direction": "second_minus_first",
+        "effective_family_n": 20,
+        "inference_status": "ELIGIBLE",
+        "non_zero_pairs": 0,
+        "p_value_holm_within_endpoint": 1.0,
+        "p_value_raw": 1.0,
+        "pairs": 20,
+        "statistic": 0.0,
+        "test_method": "wilcoxon_signed_rank",
+        "w_negative": 0.0,
+        "w_positive": 0.0,
+        "warning_codes": [],
+        "z_score": 0.0
+      }
+    },
+    {
+      "candidate_condition": "P2_DYNAMIC",
+      "ci_95_candidate_minus_reference": [
+        0.0,
+        0.0
+      ],
+      "effect": {
+        "cohens_dz": null,
+        "effect_direction": "second_minus_first",
+        "matched_pairs_rank_biserial": 0.0,
+        "mean_difference": 0.0,
+        "median_paired_difference": 0.0,
+        "pairs": 20,
+        "risk_difference": 0.0
+      },
+      "effect_direction": "candidate_minus_reference",
+      "effective_family_n": 20,
+      "endpoint": "timeout_rate",
+      "endpoint_role": "secondary",
+      "reference_condition": "P2_CATALOG",
+      "test": {
+        "alternative": "two_sided",
+        "binary_outcome": false,
+        "binary_outcome_detected": true,
+        "effect_direction": "second_minus_first",
+        "effective_family_n": 20,
+        "inference_status": "ELIGIBLE",
+        "non_zero_pairs": 0,
+        "p_value_holm_within_endpoint": 1.0,
+        "p_value_raw": 1.0,
+        "pairs": 20,
+        "statistic": 0.0,
+        "test_method": "wilcoxon_signed_rank",
+        "w_negative": 0.0,
+        "w_positive": 0.0,
+        "warning_codes": [],
+        "z_score": 0.0
+      }
+    },
+    {
+      "candidate_condition": "P2_CATALOG",
+      "ci_95_candidate_minus_reference": [
+        0.0,
+        0.0
+      ],
+      "effect": {
+        "cohens_dz": null,
+        "effect_direction": "second_minus_first",
+        "matched_pairs_rank_biserial": 0.0,
+        "mean_difference": 0.0,
+        "median_paired_difference": 0.0,
+        "pairs": 20,
+        "risk_difference": 0.0
+      },
+      "effect_direction": "candidate_minus_reference",
+      "effective_family_n": 20,
+      "endpoint": "timeout_rate",
+      "endpoint_role": "secondary",
+      "reference_condition": "P1_CATALOG",
+      "test": {
+        "alternative": "two_sided",
+        "binary_outcome": false,
+        "binary_outcome_detected": true,
+        "effect_direction": "second_minus_first",
+        "effective_family_n": 20,
+        "inference_status": "ELIGIBLE",
+        "non_zero_pairs": 0,
+        "p_value_holm_within_endpoint": 1.0,
+        "p_value_raw": 1.0,
+        "pairs": 20,
+        "statistic": 0.0,
+        "test_method": "wilcoxon_signed_rank",
+        "w_negative": 0.0,
+        "w_positive": 0.0,
+        "warning_codes": [],
+        "z_score": 0.0
+      }
+    },
+    {
+      "candidate_condition": "P2_CATALOG",
+      "ci_95_candidate_minus_reference": [
+        0.0,
+        0.0
+      ],
+      "effect": {
+        "cohens_dz": null,
+        "effect_direction": "second_minus_first",
+        "matched_pairs_rank_biserial": 0.0,
+        "mean_difference": 0.0,
+        "median_paired_difference": 0.0,
+        "pairs": 20,
+        "risk_difference": 0.0
+      },
+      "effect_direction": "candidate_minus_reference",
+      "effective_family_n": 20,
+      "endpoint": "pending_or_admission_rate",
+      "endpoint_role": "secondary",
+      "reference_condition": "STATIC_LARGE",
+      "test": {
+        "alternative": "two_sided",
+        "binary_outcome": false,
+        "binary_outcome_detected": true,
+        "effect_direction": "second_minus_first",
+        "effective_family_n": 20,
+        "inference_status": "ELIGIBLE",
+        "non_zero_pairs": 0,
+        "p_value_holm_within_endpoint": 1.0,
+        "p_value_raw": 1.0,
+        "pairs": 20,
+        "statistic": 0.0,
+        "test_method": "wilcoxon_signed_rank",
+        "w_negative": 0.0,
+        "w_positive": 0.0,
+        "warning_codes": [],
+        "z_score": 0.0
+      }
+    },
+    {
+      "candidate_condition": "P2_DYNAMIC",
+      "ci_95_candidate_minus_reference": [
+        0.0,
+        0.0
+      ],
+      "effect": {
+        "cohens_dz": null,
+        "effect_direction": "second_minus_first",
+        "matched_pairs_rank_biserial": 0.0,
+        "mean_difference": 0.0,
+        "median_paired_difference": 0.0,
+        "pairs": 20,
+        "risk_difference": 0.0
+      },
+      "effect_direction": "candidate_minus_reference",
+      "effective_family_n": 20,
+      "endpoint": "pending_or_admission_rate",
+      "endpoint_role": "secondary",
+      "reference_condition": "STATIC_LARGE",
+      "test": {
+        "alternative": "two_sided",
+        "binary_outcome": false,
+        "binary_outcome_detected": true,
+        "effect_direction": "second_minus_first",
+        "effective_family_n": 20,
+        "inference_status": "ELIGIBLE",
+        "non_zero_pairs": 0,
+        "p_value_holm_within_endpoint": 1.0,
+        "p_value_raw": 1.0,
+        "pairs": 20,
+        "statistic": 0.0,
+        "test_method": "wilcoxon_signed_rank",
+        "w_negative": 0.0,
+        "w_positive": 0.0,
+        "warning_codes": [],
+        "z_score": 0.0
+      }
+    },
+    {
+      "candidate_condition": "P2_DYNAMIC",
+      "ci_95_candidate_minus_reference": [
+        0.0,
+        0.0
+      ],
+      "effect": {
+        "cohens_dz": null,
+        "effect_direction": "second_minus_first",
+        "matched_pairs_rank_biserial": 0.0,
+        "mean_difference": 0.0,
+        "median_paired_difference": 0.0,
+        "pairs": 20,
+        "risk_difference": 0.0
+      },
+      "effect_direction": "candidate_minus_reference",
+      "effective_family_n": 20,
+      "endpoint": "pending_or_admission_rate",
+      "endpoint_role": "secondary",
+      "reference_condition": "P2_CATALOG",
+      "test": {
+        "alternative": "two_sided",
+        "binary_outcome": false,
+        "binary_outcome_detected": true,
+        "effect_direction": "second_minus_first",
+        "effective_family_n": 20,
+        "inference_status": "ELIGIBLE",
+        "non_zero_pairs": 0,
+        "p_value_holm_within_endpoint": 1.0,
+        "p_value_raw": 1.0,
+        "pairs": 20,
+        "statistic": 0.0,
+        "test_method": "wilcoxon_signed_rank",
+        "w_negative": 0.0,
+        "w_positive": 0.0,
+        "warning_codes": [],
+        "z_score": 0.0
+      }
+    },
+    {
+      "candidate_condition": "P2_CATALOG",
+      "ci_95_candidate_minus_reference": [
+        0.0,
+        0.0
+      ],
+      "effect": {
+        "cohens_dz": null,
+        "effect_direction": "second_minus_first",
+        "matched_pairs_rank_biserial": 0.0,
+        "mean_difference": 0.0,
+        "median_paired_difference": 0.0,
+        "pairs": 20,
+        "risk_difference": 0.0
+      },
+      "effect_direction": "candidate_minus_reference",
+      "effective_family_n": 20,
+      "endpoint": "pending_or_admission_rate",
+      "endpoint_role": "secondary",
+      "reference_condition": "P1_CATALOG",
+      "test": {
+        "alternative": "two_sided",
+        "binary_outcome": false,
+        "binary_outcome_detected": true,
+        "effect_direction": "second_minus_first",
+        "effective_family_n": 20,
+        "inference_status": "ELIGIBLE",
+        "non_zero_pairs": 0,
+        "p_value_holm_within_endpoint": 1.0,
+        "p_value_raw": 1.0,
+        "pairs": 20,
+        "statistic": 0.0,
+        "test_method": "wilcoxon_signed_rank",
+        "w_negative": 0.0,
+        "w_positive": 0.0,
+        "warning_codes": [],
+        "z_score": 0.0
+      }
+    },
+    {
+      "candidate_condition": "P2_CATALOG",
+      "ci_95_candidate_minus_reference": [
+        0.0,
+        0.0
+      ],
+      "effect": {
+        "cohens_dz": null,
+        "effect_direction": "second_minus_first",
+        "matched_pairs_rank_biserial": 0.0,
+        "mean_difference": 0.0,
+        "median_paired_difference": 0.0,
+        "pairs": 20,
+        "risk_difference": 0.0
+      },
+      "effect_direction": "candidate_minus_reference",
+      "effective_family_n": 20,
+      "endpoint": "runtime_error_rate",
+      "endpoint_role": "secondary",
+      "reference_condition": "STATIC_LARGE",
+      "test": {
+        "alternative": "two_sided",
+        "binary_outcome": false,
+        "binary_outcome_detected": true,
+        "effect_direction": "second_minus_first",
+        "effective_family_n": 20,
+        "inference_status": "ELIGIBLE",
+        "non_zero_pairs": 0,
+        "p_value_holm_within_endpoint": 1.0,
+        "p_value_raw": 1.0,
+        "pairs": 20,
+        "statistic": 0.0,
+        "test_method": "wilcoxon_signed_rank",
+        "w_negative": 0.0,
+        "w_positive": 0.0,
+        "warning_codes": [],
+        "z_score": 0.0
+      }
+    },
+    {
+      "candidate_condition": "P2_DYNAMIC",
+      "ci_95_candidate_minus_reference": [
+        0.0,
+        0.0
+      ],
+      "effect": {
+        "cohens_dz": null,
+        "effect_direction": "second_minus_first",
+        "matched_pairs_rank_biserial": 0.0,
+        "mean_difference": 0.0,
+        "median_paired_difference": 0.0,
+        "pairs": 20,
+        "risk_difference": 0.0
+      },
+      "effect_direction": "candidate_minus_reference",
+      "effective_family_n": 20,
+      "endpoint": "runtime_error_rate",
+      "endpoint_role": "secondary",
+      "reference_condition": "STATIC_LARGE",
+      "test": {
+        "alternative": "two_sided",
+        "binary_outcome": false,
+        "binary_outcome_detected": true,
+        "effect_direction": "second_minus_first",
+        "effective_family_n": 20,
+        "inference_status": "ELIGIBLE",
+        "non_zero_pairs": 0,
+        "p_value_holm_within_endpoint": 1.0,
+        "p_value_raw": 1.0,
+        "pairs": 20,
+        "statistic": 0.0,
+        "test_method": "wilcoxon_signed_rank",
+        "w_negative": 0.0,
+        "w_positive": 0.0,
+        "warning_codes": [],
+        "z_score": 0.0
+      }
+    },
+    {
+      "candidate_condition": "P2_DYNAMIC",
+      "ci_95_candidate_minus_reference": [
+        0.0,
+        0.0
+      ],
+      "effect": {
+        "cohens_dz": null,
+        "effect_direction": "second_minus_first",
+        "matched_pairs_rank_biserial": 0.0,
+        "mean_difference": 0.0,
+        "median_paired_difference": 0.0,
+        "pairs": 20,
+        "risk_difference": 0.0
+      },
+      "effect_direction": "candidate_minus_reference",
+      "effective_family_n": 20,
+      "endpoint": "runtime_error_rate",
+      "endpoint_role": "secondary",
+      "reference_condition": "P2_CATALOG",
+      "test": {
+        "alternative": "two_sided",
+        "binary_outcome": false,
+        "binary_outcome_detected": true,
+        "effect_direction": "second_minus_first",
+        "effective_family_n": 20,
+        "inference_status": "ELIGIBLE",
+        "non_zero_pairs": 0,
+        "p_value_holm_within_endpoint": 1.0,
+        "p_value_raw": 1.0,
+        "pairs": 20,
+        "statistic": 0.0,
+        "test_method": "wilcoxon_signed_rank",
+        "w_negative": 0.0,
+        "w_positive": 0.0,
+        "warning_codes": [],
+        "z_score": 0.0
+      }
+    },
+    {
+      "candidate_condition": "P2_CATALOG",
+      "ci_95_candidate_minus_reference": [
+        0.0,
+        0.0
+      ],
+      "effect": {
+        "cohens_dz": null,
+        "effect_direction": "second_minus_first",
+        "matched_pairs_rank_biserial": 0.0,
+        "mean_difference": 0.0,
+        "median_paired_difference": 0.0,
+        "pairs": 20,
+        "risk_difference": 0.0
+      },
+      "effect_direction": "candidate_minus_reference",
+      "effective_family_n": 20,
+      "endpoint": "runtime_error_rate",
+      "endpoint_role": "secondary",
+      "reference_condition": "P1_CATALOG",
+      "test": {
+        "alternative": "two_sided",
+        "binary_outcome": false,
+        "binary_outcome_detected": true,
+        "effect_direction": "second_minus_first",
+        "effective_family_n": 20,
+        "inference_status": "ELIGIBLE",
+        "non_zero_pairs": 0,
+        "p_value_holm_within_endpoint": 1.0,
+        "p_value_raw": 1.0,
+        "pairs": 20,
+        "statistic": 0.0,
+        "test_method": "wilcoxon_signed_rank",
+        "w_negative": 0.0,
+        "w_positive": 0.0,
+        "warning_codes": [],
+        "z_score": 0.0
+      }
+    },
+    {
+      "candidate_condition": "P2_CATALOG",
+      "ci_95_candidate_minus_reference": [
+        0.0,
+        0.0
+      ],
+      "effect": {
+        "cohens_dz": null,
+        "effect_direction": "second_minus_first",
+        "matched_pairs_rank_biserial": 0.0,
+        "mean_difference": 0.0,
+        "median_paired_difference": 0.0,
+        "pairs": 20,
+        "risk_difference": 0.0
+      },
+      "effect_direction": "candidate_minus_reference",
+      "effective_family_n": 20,
+      "endpoint": "correctness_rate",
+      "endpoint_role": "secondary",
+      "reference_condition": "STATIC_LARGE",
+      "test": {
+        "alternative": "two_sided",
+        "binary_outcome": false,
+        "binary_outcome_detected": true,
+        "effect_direction": "second_minus_first",
+        "effective_family_n": 20,
+        "inference_status": "ELIGIBLE",
+        "non_zero_pairs": 0,
+        "p_value_holm_within_endpoint": 1.0,
+        "p_value_raw": 1.0,
+        "pairs": 20,
+        "statistic": 0.0,
+        "test_method": "wilcoxon_signed_rank",
+        "w_negative": 0.0,
+        "w_positive": 0.0,
+        "warning_codes": [],
+        "z_score": 0.0
+      }
+    },
+    {
+      "candidate_condition": "P2_DYNAMIC",
+      "ci_95_candidate_minus_reference": [
+        0.0,
+        0.0
+      ],
+      "effect": {
+        "cohens_dz": null,
+        "effect_direction": "second_minus_first",
+        "matched_pairs_rank_biserial": 0.0,
+        "mean_difference": 0.0,
+        "median_paired_difference": 0.0,
+        "pairs": 19,
+        "risk_difference": 0.0
+      },
+      "effect_direction": "candidate_minus_reference",
+      "effective_family_n": 19,
+      "endpoint": "correctness_rate",
+      "endpoint_role": "secondary",
+      "reference_condition": "STATIC_LARGE",
+      "test": {
+        "alternative": "two_sided",
+        "binary_outcome": false,
+        "binary_outcome_detected": true,
+        "effect_direction": "second_minus_first",
+        "effective_family_n": 19,
+        "inference_status": "ELIGIBLE",
+        "non_zero_pairs": 0,
+        "p_value_holm_within_endpoint": 1.0,
+        "p_value_raw": 1.0,
+        "pairs": 19,
+        "statistic": 0.0,
+        "test_method": "wilcoxon_signed_rank",
+        "w_negative": 0.0,
+        "w_positive": 0.0,
+        "warning_codes": [
+          "SMALL_EFFECTIVE_FAMILY_N"
+        ],
+        "z_score": 0.0
+      }
+    },
+    {
+      "candidate_condition": "P2_DYNAMIC",
+      "ci_95_candidate_minus_reference": [
+        0.0,
+        0.0
+      ],
+      "effect": {
+        "cohens_dz": null,
+        "effect_direction": "second_minus_first",
+        "matched_pairs_rank_biserial": 0.0,
+        "mean_difference": 0.0,
+        "median_paired_difference": 0.0,
+        "pairs": 19,
+        "risk_difference": 0.0
+      },
+      "effect_direction": "candidate_minus_reference",
+      "effective_family_n": 19,
+      "endpoint": "correctness_rate",
+      "endpoint_role": "secondary",
+      "reference_condition": "P2_CATALOG",
+      "test": {
+        "alternative": "two_sided",
+        "binary_outcome": false,
+        "binary_outcome_detected": true,
+        "effect_direction": "second_minus_first",
+        "effective_family_n": 19,
+        "inference_status": "ELIGIBLE",
+        "non_zero_pairs": 0,
+        "p_value_holm_within_endpoint": 1.0,
+        "p_value_raw": 1.0,
+        "pairs": 19,
+        "statistic": 0.0,
+        "test_method": "wilcoxon_signed_rank",
+        "w_negative": 0.0,
+        "w_positive": 0.0,
+        "warning_codes": [
+          "SMALL_EFFECTIVE_FAMILY_N"
+        ],
+        "z_score": 0.0
+      }
+    },
+    {
+      "candidate_condition": "P2_CATALOG",
+      "ci_95_candidate_minus_reference": [
+        0.0,
+        0.0
+      ],
+      "effect": {
+        "cohens_dz": null,
+        "effect_direction": "second_minus_first",
+        "matched_pairs_rank_biserial": 0.0,
+        "mean_difference": 0.0,
+        "median_paired_difference": 0.0,
+        "pairs": 18,
+        "risk_difference": 0.0
+      },
+      "effect_direction": "candidate_minus_reference",
+      "effective_family_n": 18,
+      "endpoint": "correctness_rate",
+      "endpoint_role": "secondary",
+      "reference_condition": "P1_CATALOG",
+      "test": {
+        "alternative": "two_sided",
+        "binary_outcome": false,
+        "binary_outcome_detected": true,
+        "effect_direction": "second_minus_first",
+        "effective_family_n": 18,
+        "inference_status": "ELIGIBLE",
+        "non_zero_pairs": 0,
+        "p_value_holm_within_endpoint": 1.0,
+        "p_value_raw": 1.0,
+        "pairs": 18,
+        "statistic": 0.0,
+        "test_method": "wilcoxon_signed_rank",
+        "w_negative": 0.0,
+        "w_positive": 0.0,
+        "warning_codes": [
+          "SMALL_EFFECTIVE_FAMILY_N"
+        ],
+        "z_score": 0.0
+      }
+    },
+    {
+      "candidate_condition": "P2_CATALOG",
+      "ci_95_candidate_minus_reference": [
+        0.0,
+        0.0
+      ],
+      "effect": {
+        "cohens_dz": null,
+        "effect_direction": "second_minus_first",
+        "matched_pairs_rank_biserial": 0.0,
+        "mean_difference": 0.0,
+        "median_paired_difference": 0.0,
+        "pairs": 20,
+        "risk_difference": 0.0
+      },
+      "effect_direction": "candidate_minus_reference",
+      "effective_family_n": 20,
+      "endpoint": "correct_completion_rate",
+      "endpoint_role": "secondary",
+      "reference_condition": "STATIC_LARGE",
+      "test": {
+        "alternative": "two_sided",
+        "binary_outcome": false,
+        "binary_outcome_detected": true,
+        "effect_direction": "second_minus_first",
+        "effective_family_n": 20,
+        "inference_status": "ELIGIBLE",
+        "non_zero_pairs": 0,
+        "p_value_holm_within_endpoint": 1.0,
+        "p_value_raw": 1.0,
+        "pairs": 20,
+        "statistic": 0.0,
+        "test_method": "wilcoxon_signed_rank",
+        "w_negative": 0.0,
+        "w_positive": 0.0,
+        "warning_codes": [],
+        "z_score": 0.0
+      }
+    },
+    {
+      "candidate_condition": "P2_DYNAMIC",
+      "ci_95_candidate_minus_reference": [
+        -0.15000000000000002,
+        0.0
+      ],
+      "effect": {
+        "cohens_dz": -0.223606797749979,
+        "effect_direction": "second_minus_first",
+        "matched_pairs_rank_biserial": -1.0,
+        "mean_difference": -0.05,
+        "median_paired_difference": 0.0,
+        "pairs": 20,
+        "risk_difference": -0.05
+      },
+      "effect_direction": "candidate_minus_reference",
+      "effective_family_n": 20,
+      "endpoint": "correct_completion_rate",
+      "endpoint_role": "secondary",
+      "reference_condition": "STATIC_LARGE",
+      "test": {
+        "alternative": "two_sided",
+        "binary_outcome": false,
+        "binary_outcome_detected": true,
+        "effect_direction": "second_minus_first",
+        "effective_family_n": 20,
+        "inference_status": "ELIGIBLE",
+        "non_zero_pairs": 1,
+        "p_value_holm_within_endpoint": 1.0,
+        "p_value_raw": 1.0,
+        "pairs": 20,
+        "statistic": 0,
+        "test_method": "wilcoxon_signed_rank",
+        "w_negative": 1.0,
+        "w_positive": 0,
+        "warning_codes": [],
+        "z_score": 0.0
+      }
+    },
+    {
+      "candidate_condition": "P2_DYNAMIC",
+      "ci_95_candidate_minus_reference": [
+        -0.15000000000000002,
+        0.0
+      ],
+      "effect": {
+        "cohens_dz": -0.223606797749979,
+        "effect_direction": "second_minus_first",
+        "matched_pairs_rank_biserial": -1.0,
+        "mean_difference": -0.05,
+        "median_paired_difference": 0.0,
+        "pairs": 20,
+        "risk_difference": -0.05
+      },
+      "effect_direction": "candidate_minus_reference",
+      "effective_family_n": 20,
+      "endpoint": "correct_completion_rate",
+      "endpoint_role": "secondary",
+      "reference_condition": "P2_CATALOG",
+      "test": {
+        "alternative": "two_sided",
+        "binary_outcome": false,
+        "binary_outcome_detected": true,
+        "effect_direction": "second_minus_first",
+        "effective_family_n": 20,
+        "inference_status": "ELIGIBLE",
+        "non_zero_pairs": 1,
+        "p_value_holm_within_endpoint": 1.0,
+        "p_value_raw": 1.0,
+        "pairs": 20,
+        "statistic": 0,
+        "test_method": "wilcoxon_signed_rank",
+        "w_negative": 1.0,
+        "w_positive": 0,
+        "warning_codes": [],
+        "z_score": 0.0
+      }
+    },
+    {
+      "candidate_condition": "P2_CATALOG",
+      "ci_95_candidate_minus_reference": [
+        0.0,
+        0.25
+      ],
+      "effect": {
+        "cohens_dz": 0.32489314482696546,
+        "effect_direction": "second_minus_first",
+        "matched_pairs_rank_biserial": 1.0,
+        "mean_difference": 0.1,
+        "median_paired_difference": 0.0,
+        "pairs": 20,
+        "risk_difference": 0.1
+      },
+      "effect_direction": "candidate_minus_reference",
+      "effective_family_n": 20,
+      "endpoint": "correct_completion_rate",
+      "endpoint_role": "secondary",
+      "reference_condition": "P1_CATALOG",
+      "test": {
+        "alternative": "two_sided",
+        "binary_outcome": false,
+        "binary_outcome_detected": true,
+        "effect_direction": "second_minus_first",
+        "effective_family_n": 20,
+        "inference_status": "ELIGIBLE",
+        "non_zero_pairs": 2,
+        "p_value_holm_within_endpoint": 1.0,
+        "p_value_raw": 0.5,
+        "pairs": 20,
+        "statistic": 0,
+        "test_method": "wilcoxon_signed_rank",
+        "w_negative": 0,
+        "w_positive": 3.0,
+        "warning_codes": [],
+        "z_score": 0.0
+      }
+    },
+    {
+      "candidate_condition": "P2_CATALOG",
+      "ci_95_candidate_minus_reference": [
+        0.0,
+        0.0
+      ],
+      "effect": {
+        "cohens_dz": null,
+        "effect_direction": "second_minus_first",
+        "matched_pairs_rank_biserial": 0.0,
+        "mean_difference": 0.0,
+        "median_paired_difference": 0.0,
+        "pairs": 20,
+        "risk_difference": 0.0
+      },
+      "effect_direction": "candidate_minus_reference",
+      "effective_family_n": 20,
+      "endpoint": "incorrect_rate",
+      "endpoint_role": "secondary",
+      "reference_condition": "STATIC_LARGE",
+      "test": {
+        "alternative": "two_sided",
+        "binary_outcome": false,
+        "binary_outcome_detected": true,
+        "effect_direction": "second_minus_first",
+        "effective_family_n": 20,
+        "inference_status": "ELIGIBLE",
+        "non_zero_pairs": 0,
+        "p_value_holm_within_endpoint": 1.0,
+        "p_value_raw": 1.0,
+        "pairs": 20,
+        "statistic": 0.0,
+        "test_method": "wilcoxon_signed_rank",
+        "w_negative": 0.0,
+        "w_positive": 0.0,
+        "warning_codes": [],
+        "z_score": 0.0
+      }
+    },
+    {
+      "candidate_condition": "P2_DYNAMIC",
+      "ci_95_candidate_minus_reference": [
+        0.0,
+        0.0
+      ],
+      "effect": {
+        "cohens_dz": null,
+        "effect_direction": "second_minus_first",
+        "matched_pairs_rank_biserial": 0.0,
+        "mean_difference": 0.0,
+        "median_paired_difference": 0.0,
+        "pairs": 20,
+        "risk_difference": 0.0
+      },
+      "effect_direction": "candidate_minus_reference",
+      "effective_family_n": 20,
+      "endpoint": "incorrect_rate",
+      "endpoint_role": "secondary",
+      "reference_condition": "STATIC_LARGE",
+      "test": {
+        "alternative": "two_sided",
+        "binary_outcome": false,
+        "binary_outcome_detected": true,
+        "effect_direction": "second_minus_first",
+        "effective_family_n": 20,
+        "inference_status": "ELIGIBLE",
+        "non_zero_pairs": 0,
+        "p_value_holm_within_endpoint": 1.0,
+        "p_value_raw": 1.0,
+        "pairs": 20,
+        "statistic": 0.0,
+        "test_method": "wilcoxon_signed_rank",
+        "w_negative": 0.0,
+        "w_positive": 0.0,
+        "warning_codes": [],
+        "z_score": 0.0
+      }
+    },
+    {
+      "candidate_condition": "P2_DYNAMIC",
+      "ci_95_candidate_minus_reference": [
+        0.0,
+        0.0
+      ],
+      "effect": {
+        "cohens_dz": null,
+        "effect_direction": "second_minus_first",
+        "matched_pairs_rank_biserial": 0.0,
+        "mean_difference": 0.0,
+        "median_paired_difference": 0.0,
+        "pairs": 20,
+        "risk_difference": 0.0
+      },
+      "effect_direction": "candidate_minus_reference",
+      "effective_family_n": 20,
+      "endpoint": "incorrect_rate",
+      "endpoint_role": "secondary",
+      "reference_condition": "P2_CATALOG",
+      "test": {
+        "alternative": "two_sided",
+        "binary_outcome": false,
+        "binary_outcome_detected": true,
+        "effect_direction": "second_minus_first",
+        "effective_family_n": 20,
+        "inference_status": "ELIGIBLE",
+        "non_zero_pairs": 0,
+        "p_value_holm_within_endpoint": 1.0,
+        "p_value_raw": 1.0,
+        "pairs": 20,
+        "statistic": 0.0,
+        "test_method": "wilcoxon_signed_rank",
+        "w_negative": 0.0,
+        "w_positive": 0.0,
+        "warning_codes": [],
+        "z_score": 0.0
+      }
+    },
+    {
+      "candidate_condition": "P2_CATALOG",
+      "ci_95_candidate_minus_reference": [
+        0.0,
+        0.0
+      ],
+      "effect": {
+        "cohens_dz": null,
+        "effect_direction": "second_minus_first",
+        "matched_pairs_rank_biserial": 0.0,
+        "mean_difference": 0.0,
+        "median_paired_difference": 0.0,
+        "pairs": 20,
+        "risk_difference": 0.0
+      },
+      "effect_direction": "candidate_minus_reference",
+      "effective_family_n": 20,
+      "endpoint": "incorrect_rate",
+      "endpoint_role": "secondary",
+      "reference_condition": "P1_CATALOG",
+      "test": {
+        "alternative": "two_sided",
+        "binary_outcome": false,
+        "binary_outcome_detected": true,
+        "effect_direction": "second_minus_first",
+        "effective_family_n": 20,
+        "inference_status": "ELIGIBLE",
+        "non_zero_pairs": 0,
+        "p_value_holm_within_endpoint": 1.0,
+        "p_value_raw": 1.0,
+        "pairs": 20,
+        "statistic": 0.0,
+        "test_method": "wilcoxon_signed_rank",
+        "w_negative": 0.0,
+        "w_positive": 0.0,
+        "warning_codes": [],
+        "z_score": 0.0
+      }
+    },
+    {
+      "candidate_condition": "P2_CATALOG",
+      "ci_95_candidate_minus_reference": [
+        0.03746816737499994,
+        3.0129047369999995
+      ],
+      "effect": {
+        "cohens_dz": 0.3382266259120481,
+        "effect_direction": "second_minus_first",
+        "matched_pairs_rank_biserial": 0.6952380952380952,
+        "mean_difference": 1.2378629399999999,
+        "median_paired_difference": 0.0053939,
+        "pairs": 20,
+        "risk_difference": null
+      },
+      "effect_direction": "candidate_minus_reference",
+      "effective_family_n": 20,
+      "endpoint": "runtime_seconds",
+      "endpoint_role": "secondary",
+      "reference_condition": "STATIC_LARGE",
+      "test": {
+        "alternative": "two_sided",
+        "binary_outcome": false,
+        "binary_outcome_detected": false,
+        "effect_direction": "second_minus_first",
+        "effective_family_n": 20,
+        "inference_status": "ELIGIBLE",
+        "non_zero_pairs": 20,
+        "p_value_holm_within_endpoint": 0.02718892348904,
+        "p_value_raw": 0.00679723087226,
+        "pairs": 20,
+        "statistic": 32.0,
+        "test_method": "wilcoxon_signed_rank",
+        "w_negative": 32.0,
+        "w_positive": 178.0,
+        "warning_codes": [],
+        "z_score": 2.706619
+      }
+    },
+    {
+      "candidate_condition": "P2_DYNAMIC",
+      "ci_95_candidate_minus_reference": [
+        -0.17058592012500026,
+        0.046916755874999945
+      ],
+      "effect": {
+        "cohens_dz": -0.1308492145383668,
+        "effect_direction": "second_minus_first",
+        "matched_pairs_rank_biserial": 0.26666666666666666,
+        "mean_difference": -0.03526156,
+        "median_paired_difference": 0.0009410000000000043,
+        "pairs": 20,
+        "risk_difference": null
+      },
+      "effect_direction": "candidate_minus_reference",
+      "effective_family_n": 20,
+      "endpoint": "runtime_seconds",
+      "endpoint_role": "secondary",
+      "reference_condition": "STATIC_LARGE",
+      "test": {
+        "alternative": "two_sided",
+        "binary_outcome": false,
+        "binary_outcome_detected": false,
+        "effect_direction": "second_minus_first",
+        "effective_family_n": 20,
+        "inference_status": "ELIGIBLE",
+        "non_zero_pairs": 20,
+        "p_value_holm_within_endpoint": 0.60917209507,
+        "p_value_raw": 0.304586047535,
+        "pairs": 20,
+        "statistic": 77.0,
+        "test_method": "wilcoxon_signed_rank",
+        "w_negative": 77.0,
+        "w_positive": 133.0,
+        "warning_codes": [],
+        "z_score": 1.026648
+      }
+    },
+    {
+      "candidate_condition": "P2_DYNAMIC",
+      "ci_95_candidate_minus_reference": [
+        -3.040863897875,
+        -0.017562094124999993
+      ],
+      "effect": {
+        "cohens_dz": -0.3464295396121271,
+        "effect_direction": "second_minus_first",
+        "matched_pairs_rank_biserial": -0.5523809523809524,
+        "mean_difference": -1.2731244999999998,
+        "median_paired_difference": -0.0011792999999999925,
+        "pairs": 20,
+        "risk_difference": null
+      },
+      "effect_direction": "candidate_minus_reference",
+      "effective_family_n": 20,
+      "endpoint": "runtime_seconds",
+      "endpoint_role": "secondary",
+      "reference_condition": "P2_CATALOG",
+      "test": {
+        "alternative": "two_sided",
+        "binary_outcome": false,
+        "binary_outcome_detected": false,
+        "effect_direction": "second_minus_first",
+        "effective_family_n": 20,
+        "inference_status": "ELIGIBLE",
+        "non_zero_pairs": 20,
+        "p_value_holm_within_endpoint": 0.09546860620380002,
+        "p_value_raw": 0.0318228687346,
+        "pairs": 20,
+        "statistic": 47.0,
+        "test_method": "wilcoxon_signed_rank",
+        "w_negative": 163.0,
+        "w_positive": 47.0,
+        "warning_codes": [],
+        "z_score": 2.146629
+      }
+    },
+    {
+      "candidate_condition": "P2_CATALOG",
+      "ci_95_candidate_minus_reference": [
+        -0.05780262049999987,
+        0.4799757652499998
+      ],
+      "effect": {
+        "cohens_dz": 0.2120703565194578,
+        "effect_direction": "second_minus_first",
+        "matched_pairs_rank_biserial": -0.19047619047619047,
+        "mean_difference": 0.14047950499999978,
+        "median_paired_difference": -0.013068149999999994,
+        "pairs": 20,
+        "risk_difference": null
+      },
+      "effect_direction": "candidate_minus_reference",
+      "effective_family_n": 20,
+      "endpoint": "runtime_seconds",
+      "endpoint_role": "secondary",
+      "reference_condition": "P1_CATALOG",
+      "test": {
+        "alternative": "two_sided",
+        "binary_outcome": false,
+        "binary_outcome_detected": false,
+        "effect_direction": "second_minus_first",
+        "effective_family_n": 20,
+        "inference_status": "ELIGIBLE",
+        "non_zero_pairs": 20,
+        "p_value_holm_within_endpoint": 0.60917209507,
+        "p_value_raw": 0.466621508657,
+        "pairs": 20,
+        "statistic": 85.0,
+        "test_method": "wilcoxon_signed_rank",
+        "w_negative": 125.0,
+        "w_positive": 85.0,
+        "warning_codes": [],
+        "z_score": 0.727987
+      }
+    },
+    {
+      "candidate_condition": "P2_CATALOG",
+      "ci_95_candidate_minus_reference": [
+        1.3476732133069167,
+        2.9307688562687497
+      ],
+      "effect": {
+        "cohens_dz": 1.2010084413362652,
+        "effect_direction": "second_minus_first",
+        "matched_pairs_rank_biserial": 0.9619047619047619,
+        "mean_difference": 2.1485924895766666,
+        "median_paired_difference": 1.3408898395333333,
+        "pairs": 20,
+        "risk_difference": null
+      },
+      "effect_direction": "candidate_minus_reference",
+      "effective_family_n": 20,
+      "endpoint": "cpu_request_ratio",
+      "endpoint_role": "secondary",
+      "reference_condition": "STATIC_LARGE",
+      "test": {
+        "alternative": "two_sided",
+        "binary_outcome": false,
+        "binary_outcome_detected": false,
+        "effect_direction": "second_minus_first",
+        "effective_family_n": 20,
+        "inference_status": "ELIGIBLE",
+        "non_zero_pairs": 20,
+        "p_value_holm_within_endpoint": 0.000572080293572,
+        "p_value_raw": 0.000175476155216,
+        "pairs": 20,
+        "statistic": 4.0,
+        "test_method": "wilcoxon_signed_rank",
+        "w_negative": 4.0,
+        "w_positive": 206.0,
+        "warning_codes": [],
+        "z_score": 3.751933
+      }
+    },
+    {
+      "candidate_condition": "P2_DYNAMIC",
+      "ci_95_candidate_minus_reference": [
+        0.4625819318145215,
+        1.9197113945953663
+      ],
+      "effect": {
+        "cohens_dz": 0.6359494239682891,
+        "effect_direction": "second_minus_first",
+        "matched_pairs_rank_biserial": 1.0,
+        "mean_difference": 1.1604184627888359,
+        "median_paired_difference": 0.24365300581818183,
+        "pairs": 19,
+        "risk_difference": null
+      },
+      "effect_direction": "candidate_minus_reference",
+      "effective_family_n": 19,
+      "endpoint": "cpu_request_ratio",
+      "endpoint_role": "secondary",
+      "reference_condition": "STATIC_LARGE",
+      "test": {
+        "alternative": "two_sided",
+        "binary_outcome": false,
+        "binary_outcome_detected": false,
+        "effect_direction": "second_minus_first",
+        "effective_family_n": 19,
+        "inference_status": "ELIGIBLE",
+        "non_zero_pairs": 19,
+        "p_value_holm_within_endpoint": 0.000572080293572,
+        "p_value_raw": 0.000143020073393,
+        "pairs": 19,
+        "statistic": 0,
+        "test_method": "wilcoxon_signed_rank",
+        "w_negative": 0,
+        "w_positive": 190.0,
+        "warning_codes": [
+          "SMALL_EFFECTIVE_FAMILY_N"
+        ],
+        "z_score": 3.802886
+      }
+    },
+    {
+      "candidate_condition": "P2_DYNAMIC",
+      "ci_95_candidate_minus_reference": [
+        -1.7763286450816111,
+        -0.5294697783793063
+      ],
+      "effect": {
+        "cohens_dz": -0.7841122923404078,
+        "effect_direction": "second_minus_first",
+        "matched_pairs_rank_biserial": -0.7368421052631579,
+        "mean_difference": -1.1012496267444976,
+        "median_paired_difference": -1.091196582763636,
+        "pairs": 19,
+        "risk_difference": null
+      },
+      "effect_direction": "candidate_minus_reference",
+      "effective_family_n": 19,
+      "endpoint": "cpu_request_ratio",
+      "endpoint_role": "secondary",
+      "reference_condition": "P2_CATALOG",
+      "test": {
+        "alternative": "two_sided",
+        "binary_outcome": false,
+        "binary_outcome_detected": false,
+        "effect_direction": "second_minus_first",
+        "effective_family_n": 19,
+        "inference_status": "ELIGIBLE",
+        "non_zero_pairs": 19,
+        "p_value_holm_within_endpoint": 0.00516064176792,
+        "p_value_raw": 0.00516064176792,
+        "pairs": 19,
+        "statistic": 25.0,
+        "test_method": "wilcoxon_signed_rank",
+        "w_negative": 165.0,
+        "w_positive": 25.0,
+        "warning_codes": [
+          "SMALL_EFFECTIVE_FAMILY_N"
+        ],
+        "z_score": 2.796832
+      }
+    },
+    {
+      "candidate_condition": "P2_CATALOG",
+      "ci_95_candidate_minus_reference": [
+        -3.365826287338333,
+        -1.3738585451632412
+      ],
+      "effect": {
+        "cohens_dz": -1.0221272502833616,
+        "effect_direction": "second_minus_first",
+        "matched_pairs_rank_biserial": -0.8245614035087719,
+        "mean_difference": -2.2843158210074077,
+        "median_paired_difference": -3.0542419849,
+        "pairs": 18,
+        "risk_difference": null
+      },
+      "effect_direction": "candidate_minus_reference",
+      "effective_family_n": 18,
+      "endpoint": "cpu_request_ratio",
+      "endpoint_role": "secondary",
+      "reference_condition": "P1_CATALOG",
+      "test": {
+        "alternative": "two_sided",
+        "binary_outcome": false,
+        "binary_outcome_detected": false,
+        "effect_direction": "second_minus_first",
+        "effective_family_n": 18,
+        "inference_status": "ELIGIBLE",
+        "non_zero_pairs": 18,
+        "p_value_holm_within_endpoint": 0.00459935716882,
+        "p_value_raw": 0.00229967858441,
+        "pairs": 18,
+        "statistic": 15.0,
+        "test_method": "wilcoxon_signed_rank",
+        "w_negative": 156.0,
+        "w_positive": 15.0,
+        "warning_codes": [
+          "SMALL_EFFECTIVE_FAMILY_N"
+        ],
+        "z_score": 3.048525
+      }
+    },
+    {
+      "candidate_condition": "P2_CATALOG",
+      "ci_95_candidate_minus_reference": [
+        0.014670147239013671,
+        0.04215512444075522
+      ],
+      "effect": {
+        "cohens_dz": 0.8830418943664039,
+        "effect_direction": "second_minus_first",
+        "matched_pairs_rank_biserial": 0.9809523809523809,
+        "mean_difference": 0.028379910820312503,
+        "median_paired_difference": 0.008753840039062499,
+        "pairs": 20,
+        "risk_difference": null
+      },
+      "effect_direction": "candidate_minus_reference",
+      "effective_family_n": 20,
+      "endpoint": "memory_request_ratio",
+      "endpoint_role": "secondary",
+      "reference_condition": "STATIC_LARGE",
+      "test": {
+        "alternative": "two_sided",
+        "binary_outcome": false,
+        "binary_outcome_detected": false,
+        "effect_direction": "second_minus_first",
+        "effective_family_n": 20,
+        "inference_status": "ELIGIBLE",
+        "non_zero_pairs": 20,
+        "p_value_holm_within_endpoint": 0.000519704401336,
+        "p_value_raw": 0.000129926100334,
+        "pairs": 20,
+        "statistic": 2.0,
+        "test_method": "wilcoxon_signed_rank",
+        "w_negative": 2.0,
+        "w_positive": 208.0,
+        "warning_codes": [],
+        "z_score": 3.826599
+      }
+    },
+    {
+      "candidate_condition": "P2_DYNAMIC",
+      "ci_95_candidate_minus_reference": [
+        0.008962783426003975,
+        0.04930348614273233
+      ],
+      "effect": {
+        "cohens_dz": 0.5529503020989641,
+        "effect_direction": "second_minus_first",
+        "matched_pairs_rank_biserial": 1.0,
+        "mean_difference": 0.026846227896792762,
+        "median_paired_difference": 0.001988779934895832,
+        "pairs": 19,
+        "risk_difference": null
+      },
+      "effect_direction": "candidate_minus_reference",
+      "effective_family_n": 19,
+      "endpoint": "memory_request_ratio",
+      "endpoint_role": "secondary",
+      "reference_condition": "STATIC_LARGE",
+      "test": {
+        "alternative": "two_sided",
+        "binary_outcome": false,
+        "binary_outcome_detected": false,
+        "effect_direction": "second_minus_first",
+        "effective_family_n": 19,
+        "inference_status": "ELIGIBLE",
+        "non_zero_pairs": 19,
+        "p_value_holm_within_endpoint": 0.000519704401336,
+        "p_value_raw": 0.000143020073393,
+        "pairs": 19,
+        "statistic": 0,
+        "test_method": "wilcoxon_signed_rank",
+        "w_negative": 0,
+        "w_positive": 190.0,
+        "warning_codes": [
+          "SMALL_EFFECTIVE_FAMILY_N"
+        ],
+        "z_score": 3.802886
+      }
+    },
+    {
+      "candidate_condition": "P2_DYNAMIC",
+      "ci_95_candidate_minus_reference": [
+        -0.020895736353447096,
+        0.02226986721198261
+      ],
+      "effect": {
+        "cohens_dz": -0.0592534297360393,
+        "effect_direction": "second_minus_first",
+        "matched_pairs_rank_biserial": -0.5368421052631579,
+        "mean_difference": -0.002954213948053725,
+        "median_paired_difference": -0.006173807864583332,
+        "pairs": 19,
+        "risk_difference": null
+      },
+      "effect_direction": "candidate_minus_reference",
+      "effective_family_n": 19,
+      "endpoint": "memory_request_ratio",
+      "endpoint_role": "secondary",
+      "reference_condition": "P2_CATALOG",
+      "test": {
+        "alternative": "two_sided",
+        "binary_outcome": false,
+        "binary_outcome_detected": false,
+        "effect_direction": "second_minus_first",
+        "effective_family_n": 19,
+        "inference_status": "ELIGIBLE",
+        "non_zero_pairs": 19,
+        "p_value_holm_within_endpoint": 0.0421303587106,
+        "p_value_raw": 0.0421303587106,
+        "pairs": 19,
+        "statistic": 44.0,
+        "test_method": "wilcoxon_signed_rank",
+        "w_negative": 146.0,
+        "w_positive": 44.0,
+        "warning_codes": [
+          "SMALL_EFFECTIVE_FAMILY_N"
+        ],
+        "z_score": 2.03223
+      }
+    },
+    {
+      "candidate_condition": "P2_CATALOG",
+      "ci_95_candidate_minus_reference": [
+        -0.028385030886049625,
+        -0.010783181078649446
+      ],
+      "effect": {
+        "cohens_dz": -0.9814807625373236,
+        "effect_direction": "second_minus_first",
+        "matched_pairs_rank_biserial": -0.7426900584795322,
+        "mean_difference": -0.019619242209201387,
+        "median_paired_difference": -0.03093694049479167,
+        "pairs": 18,
+        "risk_difference": null
+      },
+      "effect_direction": "candidate_minus_reference",
+      "effective_family_n": 18,
+      "endpoint": "memory_request_ratio",
+      "endpoint_role": "secondary",
+      "reference_condition": "P1_CATALOG",
+      "test": {
+        "alternative": "two_sided",
+        "binary_outcome": false,
+        "binary_outcome_detected": false,
+        "effect_direction": "second_minus_first",
+        "effective_family_n": 18,
+        "inference_status": "ELIGIBLE",
+        "non_zero_pairs": 18,
+        "p_value_holm_within_endpoint": 0.012151227089,
+        "p_value_raw": 0.0060756135445,
+        "pairs": 18,
+        "statistic": 22.0,
+        "test_method": "wilcoxon_signed_rank",
+        "w_negative": 149.0,
+        "w_positive": 22.0,
+        "warning_codes": [
+          "SMALL_EFFECTIVE_FAMILY_N"
+        ],
+        "z_score": 2.743672
+      }
+    },
+    {
+      "candidate_condition": "P2_CATALOG",
+      "ci_95_candidate_minus_reference": [
+        -1240.0,
+        -773.3333333333333
+      ],
+      "effect": {
+        "cohens_dz": -2.236822641030388,
+        "effect_direction": "second_minus_first",
+        "matched_pairs_rank_biserial": -1.0,
+        "mean_difference": -1026.6666666666667,
+        "median_paired_difference": -1000.0,
+        "pairs": 15,
+        "risk_difference": null
+      },
+      "effect_direction": "candidate_minus_reference",
+      "effective_family_n": 15,
+      "endpoint": "cpu_request_error_signed",
+      "endpoint_role": "secondary",
+      "reference_condition": "STATIC_LARGE",
+      "test": {
+        "alternative": "two_sided",
+        "binary_outcome": false,
+        "binary_outcome_detected": false,
+        "effect_direction": "second_minus_first",
+        "effective_family_n": 15,
+        "inference_status": "ELIGIBLE",
+        "non_zero_pairs": 13,
+        "p_value_holm_within_endpoint": 0.000732421875,
+        "p_value_raw": 0.000244140625,
+        "pairs": 15,
+        "statistic": 0,
+        "test_method": "wilcoxon_signed_rank",
+        "w_negative": 91.0,
+        "w_positive": 0,
+        "warning_codes": [
+          "SMALL_EFFECTIVE_FAMILY_N"
+        ],
+        "z_score": 0.0
+      }
+    },
+    {
+      "candidate_condition": "P2_DYNAMIC",
+      "ci_95_candidate_minus_reference": [
+        -866.6666666666667,
+        -466.6666666666667
+      ],
+      "effect": {
+        "cohens_dz": -1.456438162508838,
+        "effect_direction": "second_minus_first",
+        "matched_pairs_rank_biserial": -1.0,
+        "mean_difference": -666.6666666666666,
+        "median_paired_difference": -400.0,
+        "pairs": 15,
+        "risk_difference": null
+      },
+      "effect_direction": "candidate_minus_reference",
+      "effective_family_n": 15,
+      "endpoint": "cpu_request_error_signed",
+      "endpoint_role": "secondary",
+      "reference_condition": "STATIC_LARGE",
+      "test": {
+        "alternative": "two_sided",
+        "binary_outcome": false,
+        "binary_outcome_detected": false,
+        "effect_direction": "second_minus_first",
+        "effective_family_n": 15,
+        "inference_status": "ELIGIBLE",
+        "non_zero_pairs": 15,
+        "p_value_holm_within_endpoint": 0.000244140625,
+        "p_value_raw": 6.103515625e-05,
+        "pairs": 15,
+        "statistic": 0,
+        "test_method": "wilcoxon_signed_rank",
+        "w_negative": 120.0,
+        "w_positive": 0,
+        "warning_codes": [
+          "SMALL_EFFECTIVE_FAMILY_N"
+        ],
+        "z_score": 0.0
+      }
+    },
+    {
+      "candidate_condition": "P2_DYNAMIC",
+      "ci_95_candidate_minus_reference": [
+        146.66666666666666,
+        573.3333333333334
+      ],
+      "effect": {
+        "cohens_dz": 0.791529744871647,
+        "effect_direction": "second_minus_first",
+        "matched_pairs_rank_biserial": 0.9090909090909091,
+        "mean_difference": 360.0,
+        "median_paired_difference": 600.0,
+        "pairs": 15,
+        "risk_difference": null
+      },
+      "effect_direction": "candidate_minus_reference",
+      "effective_family_n": 15,
+      "endpoint": "cpu_request_error_signed",
+      "endpoint_role": "secondary",
+      "reference_condition": "P2_CATALOG",
+      "test": {
+        "alternative": "two_sided",
+        "binary_outcome": false,
+        "binary_outcome_detected": false,
+        "effect_direction": "second_minus_first",
+        "effective_family_n": 15,
+        "inference_status": "ELIGIBLE",
+        "non_zero_pairs": 11,
+        "p_value_holm_within_endpoint": 0.0078125,
+        "p_value_raw": 0.00390625,
+        "pairs": 15,
+        "statistic": 3.0,
+        "test_method": "wilcoxon_signed_rank",
+        "w_negative": 3.0,
+        "w_positive": 63.0,
+        "warning_codes": [
+          "SMALL_EFFECTIVE_FAMILY_N"
+        ],
+        "z_score": 0.0
+      }
+    },
+    {
+      "candidate_condition": "P2_CATALOG",
+      "ci_95_candidate_minus_reference": [
+        133.33333333333337,
+        573.6666666666664
+      ],
+      "effect": {
+        "cohens_dz": 0.7394159795113898,
+        "effect_direction": "second_minus_first",
+        "matched_pairs_rank_biserial": 1.0,
+        "mean_difference": 346.6666666666667,
+        "median_paired_difference": 400.0,
+        "pairs": 15,
+        "risk_difference": null
+      },
+      "effect_direction": "candidate_minus_reference",
+      "effective_family_n": 15,
+      "endpoint": "cpu_request_error_signed",
+      "endpoint_role": "secondary",
+      "reference_condition": "P1_CATALOG",
+      "test": {
+        "alternative": "two_sided",
+        "binary_outcome": false,
+        "binary_outcome_detected": false,
+        "effect_direction": "second_minus_first",
+        "effective_family_n": 15,
+        "inference_status": "ELIGIBLE",
+        "non_zero_pairs": 8,
+        "p_value_holm_within_endpoint": 0.0078125,
+        "p_value_raw": 0.0078125,
+        "pairs": 15,
+        "statistic": 0,
+        "test_method": "wilcoxon_signed_rank",
+        "w_negative": 0,
+        "w_positive": 36.0,
+        "warning_codes": [
+          "SMALL_EFFECTIVE_FAMILY_N"
+        ],
+        "z_score": 0.0
+      }
+    },
+    {
+      "candidate_condition": "P2_CATALOG",
+      "ci_95_candidate_minus_reference": [
+        -1075.2,
+        -648.5333333333333
+      ],
+      "effect": {
+        "cohens_dz": -2.0216005260359147,
+        "effect_direction": "second_minus_first",
+        "matched_pairs_rank_biserial": -1.0,
+        "mean_difference": -870.4,
+        "median_paired_difference": -768.0,
+        "pairs": 15,
+        "risk_difference": null
+      },
+      "effect_direction": "candidate_minus_reference",
+      "effective_family_n": 15,
+      "endpoint": "memory_request_error_signed",
+      "endpoint_role": "secondary",
+      "reference_condition": "STATIC_LARGE",
+      "test": {
+        "alternative": "two_sided",
+        "binary_outcome": false,
+        "binary_outcome_detected": false,
+        "effect_direction": "second_minus_first",
+        "effective_family_n": 15,
+        "inference_status": "ELIGIBLE",
+        "non_zero_pairs": 13,
+        "p_value_holm_within_endpoint": 0.000732421875,
+        "p_value_raw": 0.000244140625,
+        "pairs": 15,
+        "statistic": 0,
+        "test_method": "wilcoxon_signed_rank",
+        "w_negative": 91.0,
+        "w_positive": 0,
+        "warning_codes": [
+          "SMALL_EFFECTIVE_FAMILY_N"
+        ],
+        "z_score": 0.0
+      }
+    },
+    {
+      "candidate_condition": "P2_DYNAMIC",
+      "ci_95_candidate_minus_reference": [
+        -733.8666666666667,
+        -324.26666666666665
+      ],
+      "effect": {
+        "cohens_dz": -1.1287395759443497,
+        "effect_direction": "second_minus_first",
+        "matched_pairs_rank_biserial": -1.0,
+        "mean_difference": -529.0666666666667,
+        "median_paired_difference": -256.0,
+        "pairs": 15,
+        "risk_difference": null
+      },
+      "effect_direction": "candidate_minus_reference",
+      "effective_family_n": 15,
+      "endpoint": "memory_request_error_signed",
+      "endpoint_role": "secondary",
+      "reference_condition": "STATIC_LARGE",
+      "test": {
+        "alternative": "two_sided",
+        "binary_outcome": false,
+        "binary_outcome_detected": false,
+        "effect_direction": "second_minus_first",
+        "effective_family_n": 15,
+        "inference_status": "ELIGIBLE",
+        "non_zero_pairs": 15,
+        "p_value_holm_within_endpoint": 0.000244140625,
+        "p_value_raw": 6.103515625e-05,
+        "pairs": 15,
+        "statistic": 0,
+        "test_method": "wilcoxon_signed_rank",
+        "w_negative": 120.0,
+        "w_positive": 0,
+        "warning_codes": [
+          "SMALL_EFFECTIVE_FAMILY_N"
+        ],
+        "z_score": 0.0
+      }
+    },
+    {
+      "candidate_condition": "P2_DYNAMIC",
+      "ci_95_candidate_minus_reference": [
+        153.60000000000002,
+        546.1333333333332
+      ],
+      "effect": {
+        "cohens_dz": 0.8392869090622529,
+        "effect_direction": "second_minus_first",
+        "matched_pairs_rank_biserial": 0.9090909090909091,
+        "mean_difference": 341.3333333333333,
+        "median_paired_difference": 512.0,
+        "pairs": 15,
+        "risk_difference": null
+      },
+      "effect_direction": "candidate_minus_reference",
+      "effective_family_n": 15,
+      "endpoint": "memory_request_error_signed",
+      "endpoint_role": "secondary",
+      "reference_condition": "P2_CATALOG",
+      "test": {
+        "alternative": "two_sided",
+        "binary_outcome": false,
+        "binary_outcome_detected": false,
+        "effect_direction": "second_minus_first",
+        "effective_family_n": 15,
+        "inference_status": "ELIGIBLE",
+        "non_zero_pairs": 11,
+        "p_value_holm_within_endpoint": 0.0078125,
+        "p_value_raw": 0.00390625,
+        "pairs": 15,
+        "statistic": 3.0,
+        "test_method": "wilcoxon_signed_rank",
+        "w_negative": 3.0,
+        "w_positive": 63.0,
+        "warning_codes": [
+          "SMALL_EFFECTIVE_FAMILY_N"
+        ],
+        "z_score": 0.0
+      }
+    },
+    {
+      "candidate_condition": "P2_CATALOG",
+      "ci_95_candidate_minus_reference": [
+        187.73333333333335,
+        597.7599999999996
+      ],
+      "effect": {
+        "cohens_dz": 0.8494814555621464,
+        "effect_direction": "second_minus_first",
+        "matched_pairs_rank_biserial": 1.0,
+        "mean_difference": 375.46666666666664,
+        "median_paired_difference": 512.0,
+        "pairs": 15,
+        "risk_difference": null
+      },
+      "effect_direction": "candidate_minus_reference",
+      "effective_family_n": 15,
+      "endpoint": "memory_request_error_signed",
+      "endpoint_role": "secondary",
+      "reference_condition": "P1_CATALOG",
+      "test": {
+        "alternative": "two_sided",
+        "binary_outcome": false,
+        "binary_outcome_detected": false,
+        "effect_direction": "second_minus_first",
+        "effective_family_n": 15,
+        "inference_status": "ELIGIBLE",
+        "non_zero_pairs": 8,
+        "p_value_holm_within_endpoint": 0.0078125,
+        "p_value_raw": 0.0078125,
+        "pairs": 15,
+        "statistic": 0,
+        "test_method": "wilcoxon_signed_rank",
+        "w_negative": 0,
+        "w_positive": 36.0,
+        "warning_codes": [
+          "SMALL_EFFECTIVE_FAMILY_N"
+        ],
+        "z_score": 0.0
+      }
+    },
+    {
+      "candidate_condition": "P2_CATALOG",
+      "ci_95_candidate_minus_reference": [
+        -1266.6666666666667,
+        -832.5000000000008
+      ],
+      "effect": {
+        "cohens_dz": -2.1539457283430448,
+        "effect_direction": "second_minus_first",
+        "matched_pairs_rank_biserial": -1.0,
+        "mean_difference": -1066.6666666666667,
+        "median_paired_difference": -1000.0,
+        "pairs": 15,
+        "risk_difference": null
+      },
+      "effect_direction": "candidate_minus_reference",
+      "effective_family_n": 15,
+      "endpoint": "cpu_limit_error_signed",
+      "endpoint_role": "secondary",
+      "reference_condition": "STATIC_LARGE",
+      "test": {
+        "alternative": "two_sided",
+        "binary_outcome": false,
+        "binary_outcome_detected": false,
+        "effect_direction": "second_minus_first",
+        "effective_family_n": 15,
+        "inference_status": "ELIGIBLE",
+        "non_zero_pairs": 13,
+        "p_value_holm_within_endpoint": 0.000732421875,
+        "p_value_raw": 0.000244140625,
+        "pairs": 15,
+        "statistic": 0,
+        "test_method": "wilcoxon_signed_rank",
+        "w_negative": 91.0,
+        "w_positive": 0,
+        "warning_codes": [
+          "SMALL_EFFECTIVE_FAMILY_N"
+        ],
+        "z_score": 0.0
+      }
+    },
+    {
+      "candidate_condition": "P2_DYNAMIC",
+      "ci_95_candidate_minus_reference": [
+        -1033.3333333333333,
+        -566.6666666666667
+      ],
+      "effect": {
+        "cohens_dz": -1.6749038868851638,
+        "effect_direction": "second_minus_first",
+        "matched_pairs_rank_biserial": -1.0,
+        "mean_difference": -766.6666666666666,
+        "median_paired_difference": -500.0,
+        "pairs": 15,
+        "risk_difference": null
+      },
+      "effect_direction": "candidate_minus_reference",
+      "effective_family_n": 15,
+      "endpoint": "cpu_limit_error_signed",
+      "endpoint_role": "secondary",
+      "reference_condition": "STATIC_LARGE",
+      "test": {
+        "alternative": "two_sided",
+        "binary_outcome": false,
+        "binary_outcome_detected": false,
+        "effect_direction": "second_minus_first",
+        "effective_family_n": 15,
+        "inference_status": "ELIGIBLE",
+        "non_zero_pairs": 15,
+        "p_value_holm_within_endpoint": 0.000244140625,
+        "p_value_raw": 6.103515625e-05,
+        "pairs": 15,
+        "statistic": 0,
+        "test_method": "wilcoxon_signed_rank",
+        "w_negative": 120.0,
+        "w_positive": 0,
+        "warning_codes": [
+          "SMALL_EFFECTIVE_FAMILY_N"
+        ],
+        "z_score": 0.0
+      }
+    },
+    {
+      "candidate_condition": "P2_DYNAMIC",
+      "ci_95_candidate_minus_reference": [
+        66.66666666666667,
+        500.0
+      ],
+      "effect": {
+        "cohens_dz": 0.6591530616030618,
+        "effect_direction": "second_minus_first",
+        "matched_pairs_rank_biserial": 0.696969696969697,
+        "mean_difference": 300.0,
+        "median_paired_difference": 500.0,
+        "pairs": 15,
+        "risk_difference": null
+      },
+      "effect_direction": "candidate_minus_reference",
+      "effective_family_n": 15,
+      "endpoint": "cpu_limit_error_signed",
+      "endpoint_role": "secondary",
+      "reference_condition": "P2_CATALOG",
+      "test": {
+        "alternative": "two_sided",
+        "binary_outcome": false,
+        "binary_outcome_detected": false,
+        "effect_direction": "second_minus_first",
+        "effective_family_n": 15,
+        "inference_status": "ELIGIBLE",
+        "non_zero_pairs": 11,
+        "p_value_holm_within_endpoint": 0.044921875,
+        "p_value_raw": 0.044921875,
+        "pairs": 15,
+        "statistic": 10.0,
+        "test_method": "wilcoxon_signed_rank",
+        "w_negative": 10.0,
+        "w_positive": 56.0,
+        "warning_codes": [
+          "SMALL_EFFECTIVE_FAMILY_N"
+        ],
+        "z_score": 0.0
+      }
+    },
+    {
+      "candidate_condition": "P2_CATALOG",
+      "ci_95_candidate_minus_reference": [
+        199.99999999999997,
+        667.4999999999993
+      ],
+      "effect": {
+        "cohens_dz": 0.7888106377466155,
+        "effect_direction": "second_minus_first",
+        "matched_pairs_rank_biserial": 1.0,
+        "mean_difference": 400.0,
+        "median_paired_difference": 500.0,
+        "pairs": 15,
+        "risk_difference": null
+      },
+      "effect_direction": "candidate_minus_reference",
+      "effective_family_n": 15,
+      "endpoint": "cpu_limit_error_signed",
+      "endpoint_role": "secondary",
+      "reference_condition": "P1_CATALOG",
+      "test": {
+        "alternative": "two_sided",
+        "binary_outcome": false,
+        "binary_outcome_detected": false,
+        "effect_direction": "second_minus_first",
+        "effective_family_n": 15,
+        "inference_status": "ELIGIBLE",
+        "non_zero_pairs": 8,
+        "p_value_holm_within_endpoint": 0.015625,
+        "p_value_raw": 0.0078125,
+        "pairs": 15,
+        "statistic": 0,
+        "test_method": "wilcoxon_signed_rank",
+        "w_negative": 0,
+        "w_positive": 36.0,
+        "warning_codes": [
+          "SMALL_EFFECTIVE_FAMILY_N"
+        ],
+        "z_score": 0.0
+      }
+    },
+    {
+      "candidate_condition": "P2_CATALOG",
+      "ci_95_candidate_minus_reference": [
+        -1408.0,
+        -836.2666666666667
+      ],
+      "effect": {
+        "cohens_dz": -2.0535687897820023,
+        "effect_direction": "second_minus_first",
+        "matched_pairs_rank_biserial": -1.0,
+        "mean_difference": -1143.4666666666667,
+        "median_paired_difference": -1024.0,
+        "pairs": 15,
+        "risk_difference": null
+      },
+      "effect_direction": "candidate_minus_reference",
+      "effective_family_n": 15,
+      "endpoint": "memory_limit_error_signed",
+      "endpoint_role": "secondary",
+      "reference_condition": "STATIC_LARGE",
+      "test": {
+        "alternative": "two_sided",
+        "binary_outcome": false,
+        "binary_outcome_detected": false,
+        "effect_direction": "second_minus_first",
+        "effective_family_n": 15,
+        "inference_status": "ELIGIBLE",
+        "non_zero_pairs": 13,
+        "p_value_holm_within_endpoint": 0.000732421875,
+        "p_value_raw": 0.000244140625,
+        "pairs": 15,
+        "statistic": 0,
+        "test_method": "wilcoxon_signed_rank",
+        "w_negative": 91.0,
+        "w_positive": 0,
+        "warning_codes": [
+          "SMALL_EFFECTIVE_FAMILY_N"
+        ],
+        "z_score": 0.0
+      }
+    },
+    {
+      "candidate_condition": "P2_DYNAMIC",
+      "ci_95_candidate_minus_reference": [
+        -989.8666666666667,
+        -580.2666666666667
+      ],
+      "effect": {
+        "cohens_dz": -1.6749038868851642,
+        "effect_direction": "second_minus_first",
+        "matched_pairs_rank_biserial": -1.0,
+        "mean_difference": -785.0666666666667,
+        "median_paired_difference": -512.0,
+        "pairs": 15,
+        "risk_difference": null
+      },
+      "effect_direction": "candidate_minus_reference",
+      "effective_family_n": 15,
+      "endpoint": "memory_limit_error_signed",
+      "endpoint_role": "secondary",
+      "reference_condition": "STATIC_LARGE",
+      "test": {
+        "alternative": "two_sided",
+        "binary_outcome": false,
+        "binary_outcome_detected": false,
+        "effect_direction": "second_minus_first",
+        "effective_family_n": 15,
+        "inference_status": "ELIGIBLE",
+        "non_zero_pairs": 15,
+        "p_value_holm_within_endpoint": 0.000244140625,
+        "p_value_raw": 6.103515625e-05,
+        "pairs": 15,
+        "statistic": 0,
+        "test_method": "wilcoxon_signed_rank",
+        "w_negative": 120.0,
+        "w_positive": 0,
+        "warning_codes": [
+          "SMALL_EFFECTIVE_FAMILY_N"
+        ],
+        "z_score": 0.0
+      }
+    },
+    {
+      "candidate_condition": "P2_DYNAMIC",
+      "ci_95_candidate_minus_reference": [
+        128.0,
+        589.0133333333332
+      ],
+      "effect": {
+        "cohens_dz": 0.7553000532756305,
+        "effect_direction": "second_minus_first",
+        "matched_pairs_rank_biserial": 0.7,
+        "mean_difference": 358.4,
+        "median_paired_difference": 512.0,
+        "pairs": 15,
+        "risk_difference": null
+      },
+      "effect_direction": "candidate_minus_reference",
+      "effective_family_n": 15,
+      "endpoint": "memory_limit_error_signed",
+      "endpoint_role": "secondary",
+      "reference_condition": "P2_CATALOG",
+      "test": {
+        "alternative": "two_sided",
+        "binary_outcome": false,
+        "binary_outcome_detected": false,
+        "effect_direction": "second_minus_first",
+        "effective_family_n": 15,
+        "inference_status": "ELIGIBLE",
+        "non_zero_pairs": 15,
+        "p_value_holm_within_endpoint": 0.015625,
+        "p_value_raw": 0.0120239257812,
+        "pairs": 15,
+        "statistic": 18.0,
+        "test_method": "wilcoxon_signed_rank",
+        "w_negative": 18.0,
+        "w_positive": 102.0,
+        "warning_codes": [
+          "SMALL_EFFECTIVE_FAMILY_N"
+        ],
+        "z_score": 0.0
+      }
+    },
+    {
+      "candidate_condition": "P2_CATALOG",
+      "ci_95_candidate_minus_reference": [
+        213.33333333333337,
+        785.0666666666666
+      ],
+      "effect": {
+        "cohens_dz": 0.8363933619770124,
+        "effect_direction": "second_minus_first",
+        "matched_pairs_rank_biserial": 1.0,
+        "mean_difference": 477.8666666666667,
+        "median_paired_difference": 640.0,
+        "pairs": 15,
+        "risk_difference": null
+      },
+      "effect_direction": "candidate_minus_reference",
+      "effective_family_n": 15,
+      "endpoint": "memory_limit_error_signed",
+      "endpoint_role": "secondary",
+      "reference_condition": "P1_CATALOG",
+      "test": {
+        "alternative": "two_sided",
+        "binary_outcome": false,
+        "binary_outcome_detected": false,
+        "effect_direction": "second_minus_first",
+        "effective_family_n": 15,
+        "inference_status": "ELIGIBLE",
+        "non_zero_pairs": 8,
+        "p_value_holm_within_endpoint": 0.015625,
+        "p_value_raw": 0.0078125,
+        "pairs": 15,
+        "statistic": 0,
+        "test_method": "wilcoxon_signed_rank",
+        "w_negative": 0,
+        "w_positive": 36.0,
+        "warning_codes": [
+          "SMALL_EFFECTIVE_FAMILY_N"
+        ],
+        "z_score": 0.0
+      }
+    }
+  ],
+  "schema_version": "protocol-v5-resource-efficiency-statistics-v1.0.0"
+}

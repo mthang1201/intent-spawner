@@ -1,0 +1,8 @@
+category,color,count,fraction_of_failures,fraction_of_total,label
+EXTRACTION_ERROR,#7c3aed,0,0.0,0.0,Extraction
+RETRIEVAL_MISS,#2563eb,0,0.0,0.0,Retrieval
+CONSTRAINT_ERROR,#d97706,0,0.0,0.0,Constraint
+RANKING_ERROR,#e11d48,0,0.0,0.0,Ranking
+UNSUPPORTED_CATALOG,#64748b,0,0.0,0.0,Unsupported
+PROVIDER_FAILURE,#e2e8f0,0,0.0,0.0,Provider
+OTHER,#475569,0,0.0,0.0,Other

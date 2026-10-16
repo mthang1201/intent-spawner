@@ -1,0 +1,30 @@
+[
+  {
+    "count": 1,
+    "stage": "assignments_issued"
+  },
+  {
+    "count": 1,
+    "stage": "session_records"
+  },
+  {
+    "count": 1,
+    "stage": "consent_acknowledged"
+  },
+  {
+    "count": 1,
+    "stage": "completed_sessions"
+  },
+  {
+    "count": 0,
+    "stage": "excluded_sessions"
+  },
+  {
+    "count": 0,
+    "stage": "incomplete_sessions"
+  },
+  {
+    "count": 1,
+    "stage": "analyzable_participants"
+  }
+]

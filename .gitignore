@@ -12,7 +12,6 @@ experiments/summaries/*
 !experiments/summaries/README.md
 helm/generated-values.yaml
 results/
-results_v5/
 
 # Presentation & inspection files
 *.pptx

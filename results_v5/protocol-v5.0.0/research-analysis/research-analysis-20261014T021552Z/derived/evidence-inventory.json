@@ -1,0 +1,2018 @@
+{
+  "candidate_count": 6,
+  "candidates": [
+    {
+      "artifacts": [
+        {
+          "package_relative_path": "manifest.json",
+          "path": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/run-e5-functional-orbstack/manifest.json",
+          "sha256": "8bc3912e751da6ffa6ea0e04bbdb1b084b4afb2899dd7378d1d5b49647045ca8"
+        },
+        {
+          "package_relative_path": "derived/functional_metrics.json",
+          "path": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/run-e5-functional-orbstack/derived/functional_metrics.json",
+          "sha256": "022f082ed834b81a9f5962d86b637c83bc1cc5c44f71247be3fd772e8472f0a8"
+        },
+        {
+          "package_relative_path": "raw/probe_manifest.json",
+          "path": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/run-e5-functional-orbstack/raw/probe_manifest.json",
+          "sha256": "613a88e0f796318f0cf31d3ef1f56d7d96b24b4571bd7cfbba9ff1ae509d702f"
+        },
+        {
+          "package_relative_path": "raw/probe_results.jsonl",
+          "path": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/run-e5-functional-orbstack/raw/probe_results.jsonl",
+          "sha256": "f236866e71f91b263a22bfcf16602baf163a73b7957766e078afca56fb2c5a61"
+        },
+        {
+          "package_relative_path": "report/status.json",
+          "path": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/run-e5-functional-orbstack/report/status.json",
+          "sha256": "81d32aeeaf413b24586f7820abf90f5e8b8574ca50c8d6ef5a4630c4e487e0c1"
+        }
+      ],
+      "authentication": {
+        "collector_authentic": true,
+        "collector_origins": [
+          "LIVE_DOCKER"
+        ],
+        "package_validator": "validate_e5_evidence",
+        "recommendation_provenance_verified": true,
+        "source_checksums_verified": true,
+        "validator_status": "CURRENT_VALID"
+      },
+      "claim_eligibility": "INELIGIBLE",
+      "claims_permitted": false,
+      "evidence_class": "E5",
+      "execution_status": "OBSERVED",
+      "experiment_id": "E5_IMAGE_FUNCTIONAL",
+      "manifest_path": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/run-e5-functional-orbstack/manifest.json",
+      "manifest_sha256": "8bc3912e751da6ffa6ea0e04bbdb1b084b4afb2899dd7378d1d5b49647045ca8",
+      "metadata": {
+        "catalog_underclaim_count": 6,
+        "collector_origins": [
+          "LIVE_DOCKER"
+        ],
+        "environment": {
+          "environment_id": "e5-docker-darwin",
+          "execution_mode": "docker",
+          "git_info": {
+            "git_dirty": true,
+            "git_revision": "f7a4426472043d4652bede07556656800605ad95"
+          },
+          "platform": "macOS-15.3.2-arm64-arm-64bit-Mach-O",
+          "python_version": "3.14.6 (main, Jun 10 2026, 10:03:53) [Clang 17.0.0 (clang-1700.6.4.2)]",
+          "runtime_detected": "docker",
+          "source_recommendation_run_id": "run-e1-offline",
+          "source_recommendation_run_sha256": "832ab0e3500e9e368b7d3336f89a520a7165ab121aa0f79e6f0709412cd9a153"
+        },
+        "image_count": 4,
+        "probe_count": 17,
+        "required_probe_not_defined_count": 7
+      },
+      "metric_lineage": {
+        "H7F": {
+          "all_digests_immutable": [
+            {
+              "artifact_sha256": "022f082ed834b81a9f5962d86b637c83bc1cc5c44f71247be3fd772e8472f0a8",
+              "evidence_schema_version": "protocol-v5-manifest-v1.0.0",
+              "locator": {
+                "format": "json",
+                "json_pointers": [
+                  "/systems/P2/conservative_functional_success_rate",
+                  "/systems/P2/operational_adequacy_rate",
+                  "/systems/P2/required_probe_not_defined_count",
+                  "/systems/P2/execution_unavailable_count",
+                  "/probe_summary/probes_failed"
+                ],
+                "matched_record_count": 1
+              },
+              "requirement_id": "image_functional",
+              "source_artifact": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/run-e5-functional-orbstack/derived/functional_metrics.json",
+              "transformation": "Apply the exact all-required-capability-probes criterion to P2 functional metrics."
+            },
+            {
+              "artifact_sha256": "613a88e0f796318f0cf31d3ef1f56d7d96b24b4571bd7cfbba9ff1ae509d702f",
+              "evidence_schema_version": "protocol-v5-manifest-v1.0.0",
+              "locator": {
+                "format": "json",
+                "json_pointers": [
+                  "/images"
+                ],
+                "matched_record_count": 1
+              },
+              "requirement_id": "image_functional",
+              "source_artifact": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/run-e5-functional-orbstack/raw/probe_manifest.json",
+              "transformation": "Verify every evaluated image reference is bound to its immutable sha256 digest."
+            }
+          ],
+          "conservative_success": [
+            {
+              "artifact_sha256": "022f082ed834b81a9f5962d86b637c83bc1cc5c44f71247be3fd772e8472f0a8",
+              "evidence_schema_version": "protocol-v5-manifest-v1.0.0",
+              "locator": {
+                "format": "json",
+                "json_pointers": [
+                  "/systems/P2/conservative_functional_success_rate",
+                  "/systems/P2/operational_adequacy_rate",
+                  "/systems/P2/required_probe_not_defined_count",
+                  "/systems/P2/execution_unavailable_count",
+                  "/probe_summary/probes_failed"
+                ],
+                "matched_record_count": 1
+              },
+              "requirement_id": "image_functional",
+              "source_artifact": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/run-e5-functional-orbstack/derived/functional_metrics.json",
+              "transformation": "Apply the exact all-required-capability-probes criterion to P2 functional metrics."
+            },
+            {
+              "artifact_sha256": "613a88e0f796318f0cf31d3ef1f56d7d96b24b4571bd7cfbba9ff1ae509d702f",
+              "evidence_schema_version": "protocol-v5-manifest-v1.0.0",
+              "locator": {
+                "format": "json",
+                "json_pointers": [
+                  "/images"
+                ],
+                "matched_record_count": 1
+              },
+              "requirement_id": "image_functional",
+              "source_artifact": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/run-e5-functional-orbstack/raw/probe_manifest.json",
+              "transformation": "Verify every evaluated image reference is bound to its immutable sha256 digest."
+            }
+          ],
+          "execution_unavailable_count": [
+            {
+              "artifact_sha256": "022f082ed834b81a9f5962d86b637c83bc1cc5c44f71247be3fd772e8472f0a8",
+              "evidence_schema_version": "protocol-v5-manifest-v1.0.0",
+              "locator": {
+                "format": "json",
+                "json_pointers": [
+                  "/systems/P2/conservative_functional_success_rate",
+                  "/systems/P2/operational_adequacy_rate",
+                  "/systems/P2/required_probe_not_defined_count",
+                  "/systems/P2/execution_unavailable_count",
+                  "/probe_summary/probes_failed"
+                ],
+                "matched_record_count": 1
+              },
+              "requirement_id": "image_functional",
+              "source_artifact": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/run-e5-functional-orbstack/derived/functional_metrics.json",
+              "transformation": "Apply the exact all-required-capability-probes criterion to P2 functional metrics."
+            },
+            {
+              "artifact_sha256": "613a88e0f796318f0cf31d3ef1f56d7d96b24b4571bd7cfbba9ff1ae509d702f",
+              "evidence_schema_version": "protocol-v5-manifest-v1.0.0",
+              "locator": {
+                "format": "json",
+                "json_pointers": [
+                  "/images"
+                ],
+                "matched_record_count": 1
+              },
+              "requirement_id": "image_functional",
+              "source_artifact": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/run-e5-functional-orbstack/raw/probe_manifest.json",
+              "transformation": "Verify every evaluated image reference is bound to its immutable sha256 digest."
+            }
+          ],
+          "failed_probe_count": [
+            {
+              "artifact_sha256": "022f082ed834b81a9f5962d86b637c83bc1cc5c44f71247be3fd772e8472f0a8",
+              "evidence_schema_version": "protocol-v5-manifest-v1.0.0",
+              "locator": {
+                "format": "json",
+                "json_pointers": [
+                  "/systems/P2/conservative_functional_success_rate",
+                  "/systems/P2/operational_adequacy_rate",
+                  "/systems/P2/required_probe_not_defined_count",
+                  "/systems/P2/execution_unavailable_count",
+                  "/probe_summary/probes_failed"
+                ],
+                "matched_record_count": 1
+              },
+              "requirement_id": "image_functional",
+              "source_artifact": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/run-e5-functional-orbstack/derived/functional_metrics.json",
+              "transformation": "Apply the exact all-required-capability-probes criterion to P2 functional metrics."
+            },
+            {
+              "artifact_sha256": "613a88e0f796318f0cf31d3ef1f56d7d96b24b4571bd7cfbba9ff1ae509d702f",
+              "evidence_schema_version": "protocol-v5-manifest-v1.0.0",
+              "locator": {
+                "format": "json",
+                "json_pointers": [
+                  "/images"
+                ],
+                "matched_record_count": 1
+              },
+              "requirement_id": "image_functional",
+              "source_artifact": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/run-e5-functional-orbstack/raw/probe_manifest.json",
+              "transformation": "Verify every evaluated image reference is bound to its immutable sha256 digest."
+            }
+          ],
+          "operational_adequacy": [
+            {
+              "artifact_sha256": "022f082ed834b81a9f5962d86b637c83bc1cc5c44f71247be3fd772e8472f0a8",
+              "evidence_schema_version": "protocol-v5-manifest-v1.0.0",
+              "locator": {
+                "format": "json",
+                "json_pointers": [
+                  "/systems/P2/conservative_functional_success_rate",
+                  "/systems/P2/operational_adequacy_rate",
+                  "/systems/P2/required_probe_not_defined_count",
+                  "/systems/P2/execution_unavailable_count",
+                  "/probe_summary/probes_failed"
+                ],
+                "matched_record_count": 1
+              },
+              "requirement_id": "image_functional",
+              "source_artifact": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/run-e5-functional-orbstack/derived/functional_metrics.json",
+              "transformation": "Apply the exact all-required-capability-probes criterion to P2 functional metrics."
+            },
+            {
+              "artifact_sha256": "613a88e0f796318f0cf31d3ef1f56d7d96b24b4571bd7cfbba9ff1ae509d702f",
+              "evidence_schema_version": "protocol-v5-manifest-v1.0.0",
+              "locator": {
+                "format": "json",
+                "json_pointers": [
+                  "/images"
+                ],
+                "matched_record_count": 1
+              },
+              "requirement_id": "image_functional",
+              "source_artifact": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/run-e5-functional-orbstack/raw/probe_manifest.json",
+              "transformation": "Verify every evaluated image reference is bound to its immutable sha256 digest."
+            }
+          ],
+          "required_probe_not_defined_count": [
+            {
+              "artifact_sha256": "022f082ed834b81a9f5962d86b637c83bc1cc5c44f71247be3fd772e8472f0a8",
+              "evidence_schema_version": "protocol-v5-manifest-v1.0.0",
+              "locator": {
+                "format": "json",
+                "json_pointers": [
+                  "/systems/P2/conservative_functional_success_rate",
+                  "/systems/P2/operational_adequacy_rate",
+                  "/systems/P2/required_probe_not_defined_count",
+                  "/systems/P2/execution_unavailable_count",
+                  "/probe_summary/probes_failed"
+                ],
+                "matched_record_count": 1
+              },
+              "requirement_id": "image_functional",
+              "source_artifact": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/run-e5-functional-orbstack/derived/functional_metrics.json",
+              "transformation": "Apply the exact all-required-capability-probes criterion to P2 functional metrics."
+            },
+            {
+              "artifact_sha256": "613a88e0f796318f0cf31d3ef1f56d7d96b24b4571bd7cfbba9ff1ae509d702f",
+              "evidence_schema_version": "protocol-v5-manifest-v1.0.0",
+              "locator": {
+                "format": "json",
+                "json_pointers": [
+                  "/images"
+                ],
+                "matched_record_count": 1
+              },
+              "requirement_id": "image_functional",
+              "source_artifact": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/run-e5-functional-orbstack/raw/probe_manifest.json",
+              "transformation": "Verify every evaluated image reference is bound to its immutable sha256 digest."
+            }
+          ]
+        }
+      },
+      "metrics": {
+        "H7F": {
+          "all_digests_immutable": true,
+          "catalog_underclaim_count": 6,
+          "conservative_success": 0.9157,
+          "execution_unavailable_count": 0,
+          "failed_probe_count": 0,
+          "functional_execution_coverage": 1.0,
+          "operational_adequacy": 0.8434,
+          "required_probe_not_defined_count": 7
+        }
+      },
+      "package_path": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/run-e5-functional-orbstack",
+      "provenance": {
+        "collector_origins": [
+          "LIVE_DOCKER"
+        ],
+        "dataset": {
+          "dataset_id": "v5-development-reconstructed-v1",
+          "dataset_sha256": "71f57daafe319afea1b5ce23e9e1a762105c31f2f756f55abbd06b551c4eed6c"
+        },
+        "environment": {
+          "environment_id": "e5-docker-darwin",
+          "execution_mode": "docker",
+          "git_info": {
+            "git_dirty": true,
+            "git_revision": "f7a4426472043d4652bede07556656800605ad95"
+          },
+          "platform": "macOS-15.3.2-arm64-arm-64bit-Mach-O",
+          "python_version": "3.14.6 (main, Jun 10 2026, 10:03:53) [Clang 17.0.0 (clang-1700.6.4.2)]",
+          "runtime_detected": "docker",
+          "source_recommendation_run_id": "run-e1-offline",
+          "source_recommendation_run_sha256": "832ab0e3500e9e368b7d3336f89a520a7165ab121aa0f79e6f0709412cd9a153"
+        },
+        "git_revision": "f7a4426472043d4652bede07556656800605ad95",
+        "random_seeds": []
+      },
+      "reason_codes": [
+        "CLAIMS_NOT_PERMITTED",
+        "NON_CONFIRMATORY_EVIDENCE"
+      ],
+      "requirement_id": "image_functional",
+      "schema_version": "protocol-v5-manifest-v1.0.0",
+      "semantic_provenance": {
+        "catalog.file_sha256": "bd2211d5fd769b5addec3c41e8cbd48bb0d9cd1c958aa554ada9bf88c29509f3",
+        "catalog.version": "2026-08-06.1",
+        "constraints.evaluator_version": null,
+        "constraints.ranker_version": "p2-deterministic-ranker-v2.0.0",
+        "corpus.sha256": "987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444",
+        "indexes.dense.sha256": "c0561bcd1ee6ec5153b710aef3deae88bd259a011ddd454513cbb1c675118387",
+        "indexes.hybrid.sha256": "45ea08f29492d796189920713636b3a9cae2f0fb264e023124eb38c8cfad83a4",
+        "indexes.sparse.sha256": "931fac84b818cb934a37bfbfa76092a89626cd5eaffc869887de8558bc6fa747",
+        "p1.backend_version": {
+          "adapter_version": "protocol-v5-p1-frozen-adapter-v1",
+          "backend_name": "rule_based",
+          "backend_version": "rule-based-v1"
+        },
+        "p2.pipeline_version": {
+          "adapter_version": "protocol-v5-p2-frozen-adapter-v1",
+          "backend_name": "p2",
+          "backend_version": "p2-hybrid-v1.0.0"
+        }
+      },
+      "stage": "development",
+      "tests": {
+        "criterion": "EXACT_ALL_REQUIRED_PROBES",
+        "validator": {
+          "eligible_as_current_e5_evidence": true,
+          "evidence_dir": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/run-e5-functional-orbstack",
+          "execution_status": "OBSERVED",
+          "experiment_id": "E5",
+          "files_checked": 10,
+          "limitations": [],
+          "probes_executed": 17,
+          "probes_functionally_unavailable": 1,
+          "probes_unavailable": 0,
+          "recommendations_evaluated": 166,
+          "status": "PASS",
+          "total_probes_configured": 17,
+          "validation_profile": "CURRENT_V1_4_SEALED_RECOMMENDATION_PROVENANCE",
+          "validator_status": "CURRENT_VALID"
+        }
+      },
+      "validation_error": null,
+      "validation_status": "PASS"
+    },
+    {
+      "artifacts": [
+        {
+          "package_relative_path": "derived/storage_metrics.json",
+          "path": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/run-e5-storage-orbstack/derived/storage_metrics.json",
+          "sha256": "7cdf05eb7d69372d54279f1387aea94d972f693c1bfad55e54b983492c3eda0a"
+        }
+      ],
+      "authentication": {
+        "collector_authentic": true,
+        "collector_origin": "REAL_REGISTRY",
+        "package_validator": "validate_e5_storage_evidence",
+        "recommendation_provenance_verified": true,
+        "source_checksums_verified": true,
+        "validator_status": "CURRENT_VALID"
+      },
+      "claim_eligibility": "INELIGIBLE",
+      "claims_permitted": false,
+      "evidence_class": "E5",
+      "execution_status": "OBSERVED",
+      "experiment_id": "E5_IMAGE_STORAGE",
+      "manifest_path": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/run-e5-storage-orbstack/derived/storage_metrics.json",
+      "manifest_sha256": "7cdf05eb7d69372d54279f1387aea94d972f693c1bfad55e54b983492c3eda0a",
+      "metadata": {
+        "catalog_prefix_count": 4,
+        "collector_origin": "REAL_REGISTRY",
+        "environment": {
+          "architecture": "arm64",
+          "environment_id": "e5-storage-darwin-arm64",
+          "operating_system": "linux",
+          "runtime": "docker"
+        },
+        "measurement_method": "docker manifest inspect OCI layer digest accounting (platform: linux/arm64)"
+      },
+      "metric_lineage": {
+        "H7": {
+          "all_prefixes_nonexpanding": [
+            {
+              "artifact_sha256": "7cdf05eb7d69372d54279f1387aea94d972f693c1bfad55e54b983492c3eda0a",
+              "evidence_schema_version": "protocol-v5-image-storage-evidence-v1.1.0",
+              "locator": {
+                "format": "json",
+                "json_pointers": [
+                  "/catalog/ordered_image_digests",
+                  "/prefixes/0/naive_logical_bytes",
+                  "/prefixes/0/unique_layer_bytes",
+                  "/prefixes/3/naive_logical_bytes",
+                  "/prefixes/3/unique_layer_bytes",
+                  "/prefixes"
+                ],
+                "matched_record_count": 1
+              },
+              "requirement_id": "image_storage",
+              "source_artifact": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/run-e5-storage-orbstack/derived/storage_metrics.json",
+              "transformation": "Validate every frozen ordered catalog prefix, then compare post-baseline cumulative UniqueLayerBytes growth with LogicalImageBytes growth; a one-scale saving is insufficient."
+            }
+          ],
+          "catalog_prefix_count": [
+            {
+              "artifact_sha256": "7cdf05eb7d69372d54279f1387aea94d972f693c1bfad55e54b983492c3eda0a",
+              "evidence_schema_version": "protocol-v5-image-storage-evidence-v1.1.0",
+              "locator": {
+                "format": "json",
+                "json_pointers": [
+                  "/catalog/ordered_image_digests",
+                  "/prefixes/0/naive_logical_bytes",
+                  "/prefixes/0/unique_layer_bytes",
+                  "/prefixes/3/naive_logical_bytes",
+                  "/prefixes/3/unique_layer_bytes",
+                  "/prefixes"
+                ],
+                "matched_record_count": 1
+              },
+              "requirement_id": "image_storage",
+              "source_artifact": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/run-e5-storage-orbstack/derived/storage_metrics.json",
+              "transformation": "Validate every frozen ordered catalog prefix, then compare post-baseline cumulative UniqueLayerBytes growth with LogicalImageBytes growth; a one-scale saving is insufficient."
+            }
+          ],
+          "expansion_growth_difference": [
+            {
+              "artifact_sha256": "7cdf05eb7d69372d54279f1387aea94d972f693c1bfad55e54b983492c3eda0a",
+              "evidence_schema_version": "protocol-v5-image-storage-evidence-v1.1.0",
+              "locator": {
+                "format": "json",
+                "json_pointers": [
+                  "/catalog/ordered_image_digests",
+                  "/prefixes/0/naive_logical_bytes",
+                  "/prefixes/0/unique_layer_bytes",
+                  "/prefixes/3/naive_logical_bytes",
+                  "/prefixes/3/unique_layer_bytes",
+                  "/prefixes"
+                ],
+                "matched_record_count": 1
+              },
+              "requirement_id": "image_storage",
+              "source_artifact": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/run-e5-storage-orbstack/derived/storage_metrics.json",
+              "transformation": "Validate every frozen ordered catalog prefix, then compare post-baseline cumulative UniqueLayerBytes growth with LogicalImageBytes growth; a one-scale saving is insufficient."
+            }
+          ],
+          "expansion_naive_bytes": [
+            {
+              "artifact_sha256": "7cdf05eb7d69372d54279f1387aea94d972f693c1bfad55e54b983492c3eda0a",
+              "evidence_schema_version": "protocol-v5-image-storage-evidence-v1.1.0",
+              "locator": {
+                "format": "json",
+                "json_pointers": [
+                  "/catalog/ordered_image_digests",
+                  "/prefixes/0/naive_logical_bytes",
+                  "/prefixes/0/unique_layer_bytes",
+                  "/prefixes/3/naive_logical_bytes",
+                  "/prefixes/3/unique_layer_bytes",
+                  "/prefixes"
+                ],
+                "matched_record_count": 1
+              },
+              "requirement_id": "image_storage",
+              "source_artifact": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/run-e5-storage-orbstack/derived/storage_metrics.json",
+              "transformation": "Validate every frozen ordered catalog prefix, then compare post-baseline cumulative UniqueLayerBytes growth with LogicalImageBytes growth; a one-scale saving is insufficient."
+            }
+          ],
+          "final_savings_bytes": [
+            {
+              "artifact_sha256": "7cdf05eb7d69372d54279f1387aea94d972f693c1bfad55e54b983492c3eda0a",
+              "evidence_schema_version": "protocol-v5-image-storage-evidence-v1.1.0",
+              "locator": {
+                "format": "json",
+                "json_pointers": [
+                  "/catalog/ordered_image_digests",
+                  "/prefixes/0/naive_logical_bytes",
+                  "/prefixes/0/unique_layer_bytes",
+                  "/prefixes/3/naive_logical_bytes",
+                  "/prefixes/3/unique_layer_bytes",
+                  "/prefixes"
+                ],
+                "matched_record_count": 1
+              },
+              "requirement_id": "image_storage",
+              "source_artifact": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/run-e5-storage-orbstack/derived/storage_metrics.json",
+              "transformation": "Validate every frozen ordered catalog prefix, then compare post-baseline cumulative UniqueLayerBytes growth with LogicalImageBytes growth; a one-scale saving is insufficient."
+            }
+          ],
+          "prefix_order_valid": [
+            {
+              "artifact_sha256": "7cdf05eb7d69372d54279f1387aea94d972f693c1bfad55e54b983492c3eda0a",
+              "evidence_schema_version": "protocol-v5-image-storage-evidence-v1.1.0",
+              "locator": {
+                "format": "json",
+                "json_pointers": [
+                  "/catalog/ordered_image_digests",
+                  "/prefixes/0/naive_logical_bytes",
+                  "/prefixes/0/unique_layer_bytes",
+                  "/prefixes/3/naive_logical_bytes",
+                  "/prefixes/3/unique_layer_bytes",
+                  "/prefixes"
+                ],
+                "matched_record_count": 1
+              },
+              "requirement_id": "image_storage",
+              "source_artifact": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/run-e5-storage-orbstack/derived/storage_metrics.json",
+              "transformation": "Validate every frozen ordered catalog prefix, then compare post-baseline cumulative UniqueLayerBytes growth with LogicalImageBytes growth; a one-scale saving is insufficient."
+            }
+          ],
+          "strictly_slower_catalog_expansion": [
+            {
+              "artifact_sha256": "7cdf05eb7d69372d54279f1387aea94d972f693c1bfad55e54b983492c3eda0a",
+              "evidence_schema_version": "protocol-v5-image-storage-evidence-v1.1.0",
+              "locator": {
+                "format": "json",
+                "json_pointers": [
+                  "/catalog/ordered_image_digests",
+                  "/prefixes/0/naive_logical_bytes",
+                  "/prefixes/0/unique_layer_bytes",
+                  "/prefixes/3/naive_logical_bytes",
+                  "/prefixes/3/unique_layer_bytes",
+                  "/prefixes"
+                ],
+                "matched_record_count": 1
+              },
+              "requirement_id": "image_storage",
+              "source_artifact": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/run-e5-storage-orbstack/derived/storage_metrics.json",
+              "transformation": "Validate every frozen ordered catalog prefix, then compare post-baseline cumulative UniqueLayerBytes growth with LogicalImageBytes growth; a one-scale saving is insufficient."
+            }
+          ]
+        }
+      },
+      "metrics": {
+        "H7": {
+          "all_prefixes_nonexpanding": true,
+          "catalog_prefix_count": 4,
+          "expansion_growth_difference": -3145504209,
+          "expansion_naive_bytes": 10818303357,
+          "expansion_unique_bytes": 7672799148,
+          "final_savings_bytes": 3145504497,
+          "final_savings_ratio": 0.27609253918149224,
+          "marginal_growth": [
+            {
+              "naive_bytes_added": 574632165,
+              "prefix_size": 1,
+              "unique_layer_bytes_added": 574631877
+            },
+            {
+              "naive_bytes_added": 1285435926,
+              "prefix_size": 2,
+              "unique_layer_bytes_added": 710803665
+            },
+            {
+              "naive_bytes_added": 4942856043,
+              "prefix_size": 3,
+              "unique_layer_bytes_added": 3657420085
+            },
+            {
+              "naive_bytes_added": 4590011388,
+              "prefix_size": 4,
+              "unique_layer_bytes_added": 3304575398
+            }
+          ],
+          "prefix_order_valid": true,
+          "prefixes": [
+            {
+              "image_digests": [
+                "sha256:a153ceb6b41db4f86b7d7dc20c7b63d08e75e2038d5e8758b954fda50ed2e18d"
+              ],
+              "naive_logical_bytes": 574632165,
+              "prefix_size": 1,
+              "unique_layer_bytes": 574631877
+            },
+            {
+              "image_digests": [
+                "sha256:a153ceb6b41db4f86b7d7dc20c7b63d08e75e2038d5e8758b954fda50ed2e18d",
+                "sha256:1a91a693c8cb086f3607f2ed38a2743ecd53dd1dac2d3e84e6cd647b33fd2bba"
+              ],
+              "naive_logical_bytes": 1860068091,
+              "prefix_size": 2,
+              "unique_layer_bytes": 1285435542
+            },
+            {
+              "image_digests": [
+                "sha256:a153ceb6b41db4f86b7d7dc20c7b63d08e75e2038d5e8758b954fda50ed2e18d",
+                "sha256:1a91a693c8cb086f3607f2ed38a2743ecd53dd1dac2d3e84e6cd647b33fd2bba",
+                "sha256:69c72823a4e0dbee17114bbe44d0377bc9a39504a76f6314995f7d5bfaa98d60"
+              ],
+              "naive_logical_bytes": 6802924134,
+              "prefix_size": 3,
+              "unique_layer_bytes": 4942855627
+            },
+            {
+              "image_digests": [
+                "sha256:a153ceb6b41db4f86b7d7dc20c7b63d08e75e2038d5e8758b954fda50ed2e18d",
+                "sha256:1a91a693c8cb086f3607f2ed38a2743ecd53dd1dac2d3e84e6cd647b33fd2bba",
+                "sha256:69c72823a4e0dbee17114bbe44d0377bc9a39504a76f6314995f7d5bfaa98d60",
+                "sha256:25ddc4f73bea5a252335775b59c0e1d4969bbf70ee78d3c6d1d9da02ce58fb68"
+              ],
+              "naive_logical_bytes": 11392935522,
+              "prefix_size": 4,
+              "unique_layer_bytes": 8247431025
+            }
+          ],
+          "strictly_slower_catalog_expansion": true
+        }
+      },
+      "package_path": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/run-e5-storage-orbstack",
+      "provenance": {
+        "backend_system_versions": {
+          "P2": "p2-pipeline-v1.0.0"
+        },
+        "collector_origin": "REAL_REGISTRY",
+        "dataset_sha256": "f45b04efc2ea6f271d49c6806b58bfc0f30503cb68944930609f6e0f71882a71",
+        "git_revision": "f7a4426472043d4652bede07556656800605ad95",
+        "storage_collector_origin": "REAL_REGISTRY"
+      },
+      "reason_codes": [
+        "CLAIMS_NOT_PERMITTED",
+        "NON_CONFIRMATORY_EVIDENCE"
+      ],
+      "requirement_id": "image_storage",
+      "schema_version": "protocol-v5-image-storage-evidence-v1.1.0",
+      "semantic_provenance": {
+        "catalog.file_sha256": "f45b04efc2ea6f271d49c6806b58bfc0f30503cb68944930609f6e0f71882a71",
+        "catalog.version": "2026-08-06.1",
+        "p2.pipeline_version": "p2-pipeline-v1.0.0"
+      },
+      "stage": "development",
+      "tests": {
+        "criterion": "EXACT_ORDERED_PREFIX_STORAGE",
+        "package_validator": {
+          "claim_eligibility": "NOT_ELIGIBLE",
+          "claims_permitted": false,
+          "collector_authentic": true,
+          "collector_origin": "REAL_REGISTRY",
+          "complete_multiscale": false,
+          "configured_scales": [
+            4,
+            8,
+            16
+          ],
+          "eligible_as_current_e5_evidence": false,
+          "evidence_dir": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/run-e5-storage-orbstack",
+          "execution_status": "OBSERVED",
+          "experiment_id": "E5",
+          "files_checked": 26,
+          "final_storage_savings_bytes": 3145504497,
+          "full_scalability_claim_eligible": false,
+          "immutable_catalog_valid": true,
+          "partial_scalability_valid": true,
+          "recommendation_split_valid": true,
+          "requirement_id": "image_storage",
+          "size_domain_valid": true,
+          "split_stage": "development",
+          "status": "PASS",
+          "storage_dedup_valid": true,
+          "storage_metric_valid": true,
+          "storage_structurally_valid": true,
+          "total_prefixes": 4,
+          "validation_profile": "STORAGE_SCALABILITY_V1_1_AUTHENTICATED",
+          "validator_status": "CURRENT_VALID"
+        }
+      },
+      "validation_error": null,
+      "validation_status": "PASS"
+    },
+    {
+      "artifacts": [
+        {
+          "package_relative_path": "derived/statistical_analysis/analysis-manifest.json",
+          "path": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E1/run-e1-llm-gemini-3.5-flash-lite/derived/statistical_analysis/analysis-manifest.json",
+          "sha256": "008848753589e4bbd4d2d3c6d16b597473fd5da3a37f36cd435472649b6c52b3"
+        },
+        {
+          "package_relative_path": "raw/offline-run-provenance.json",
+          "path": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E1/run-e1-llm-gemini-3.5-flash-lite/raw/offline-run-provenance.json",
+          "sha256": "6fcc62b655e42a951c5da3d3e78f2a57944d40745eb0032a2034bc62a61cfb60"
+        },
+        {
+          "package_relative_path": "raw/recommendations.jsonl",
+          "path": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E1/run-e1-llm-gemini-3.5-flash-lite/raw/recommendations.jsonl",
+          "sha256": "3c39b7acd1855d889111d6625e4a275e3fa6fa8ee9fee8147620797f9a351beb"
+        },
+        {
+          "package_relative_path": "report/offline-run-completion.json",
+          "path": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E1/run-e1-llm-gemini-3.5-flash-lite/report/offline-run-completion.json",
+          "sha256": "c8e4dd0f424b587bb71ce4beed01dfa1697d421d70ad80a340c9f27479ed5bdd"
+        },
+        {
+          "package_relative_path": "derived/statistical_analysis/family-estimates.jsonl",
+          "path": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E1/run-e1-llm-gemini-3.5-flash-lite/derived/statistical_analysis/family-estimates.jsonl",
+          "sha256": "52d31f96d74998396292f4ab1615056123f74fcfeba2295cf75aa0cfb3aedd22"
+        },
+        {
+          "package_relative_path": "derived/statistical_analysis/paired-comparisons.jsonl",
+          "path": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E1/run-e1-llm-gemini-3.5-flash-lite/derived/statistical_analysis/paired-comparisons.jsonl",
+          "sha256": "4c3c3ef6d626e504ca93d3afc33916e6d0e4057e9975fb68e5a0eda61b0b6ea1"
+        }
+      ],
+      "authentication": {
+        "package_validator": "validate_statistical_package+source_checksum_binding",
+        "source_checksums_verified": true,
+        "split_custody_verified": true
+      },
+      "claim_eligibility": "INELIGIBLE",
+      "claims_permitted": false,
+      "evidence_class": "E2",
+      "execution_status": "DERIVED_EVIDENCE_COMPLETE",
+      "experiment_id": "E1",
+      "manifest_path": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E1/run-e1-llm-gemini-3.5-flash-lite/derived/statistical_analysis/analysis-manifest.json",
+      "manifest_sha256": "008848753589e4bbd4d2d3c6d16b597473fd5da3a37f36cd435472649b6c52b3",
+      "metadata": {
+        "family_n": 18,
+        "repeat_policy": {
+          "accuracy_eligibility": "feasible requests only",
+          "cross_family_handling": "equal-weight macro mean",
+          "independent_unit": "workload_family",
+          "latency_includes": [
+            "completed_attempts",
+            "recorded_fallback_attempts",
+            "recorded_error_attempts",
+            "recorded_timeout_attempts"
+          ],
+          "latency_missing_duration_policy": "full validated packages reject missing durations; direct in-memory rows are unavailable",
+          "latency_population": "all_validated_recommendation_attempts_with_recorded_duration",
+          "repeat_handling": "mean within variant",
+          "repeated_calls_are_accuracy_samples": false,
+          "robustness_eligibility": "non-canonical reviewed_equivalent variants",
+          "variant_handling": "mean within family"
+        },
+        "split_role": "development",
+        "variant_n": 83
+      },
+      "metric_lineage": {
+        "H2": {
+          "ci_high": [
+            {
+              "artifact_sha256": "52d31f96d74998396292f4ab1615056123f74fcfeba2295cf75aa0cfb3aedd22",
+              "evidence_schema_version": "protocol-v5-statistical-analysis-v1.0.0",
+              "locator": {
+                "format": "jsonl",
+                "json_pointers": [
+                  "/family_id",
+                  "/system_id",
+                  "/endpoint_variant_denominators/joint_accept_at_1",
+                  "/endpoint_variant_denominators/robustness_rate",
+                  "/endpoint_variant_sums/joint_accept_at_1",
+                  "/endpoint_variant_sums/robustness_rate"
+                ],
+                "matched_record_count": 36,
+                "record_selector": {
+                  "system_id": {
+                    "in": [
+                      "P1",
+                      "P2"
+                    ]
+                  }
+                }
+              },
+              "requirement_id": "natural_language_robustness",
+              "source_artifact": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E1/run-e1-llm-gemini-3.5-flash-lite/derived/statistical_analysis/family-estimates.jsonl",
+              "transformation": "Aggregate repeats within variants, derive canonical-minus-reviewed-equivalent JointAccept@1 loss per system and family, then run one paired family-level P2-loss-minus-P1-loss test and bootstrap CI."
+            }
+          ],
+          "ci_low": [
+            {
+              "artifact_sha256": "52d31f96d74998396292f4ab1615056123f74fcfeba2295cf75aa0cfb3aedd22",
+              "evidence_schema_version": "protocol-v5-statistical-analysis-v1.0.0",
+              "locator": {
+                "format": "jsonl",
+                "json_pointers": [
+                  "/family_id",
+                  "/system_id",
+                  "/endpoint_variant_denominators/joint_accept_at_1",
+                  "/endpoint_variant_denominators/robustness_rate",
+                  "/endpoint_variant_sums/joint_accept_at_1",
+                  "/endpoint_variant_sums/robustness_rate"
+                ],
+                "matched_record_count": 36,
+                "record_selector": {
+                  "system_id": {
+                    "in": [
+                      "P1",
+                      "P2"
+                    ]
+                  }
+                }
+              },
+              "requirement_id": "natural_language_robustness",
+              "source_artifact": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E1/run-e1-llm-gemini-3.5-flash-lite/derived/statistical_analysis/family-estimates.jsonl",
+              "transformation": "Aggregate repeats within variants, derive canonical-minus-reviewed-equivalent JointAccept@1 loss per system and family, then run one paired family-level P2-loss-minus-P1-loss test and bootstrap CI."
+            }
+          ],
+          "effect": [
+            {
+              "artifact_sha256": "52d31f96d74998396292f4ab1615056123f74fcfeba2295cf75aa0cfb3aedd22",
+              "evidence_schema_version": "protocol-v5-statistical-analysis-v1.0.0",
+              "locator": {
+                "format": "jsonl",
+                "json_pointers": [
+                  "/family_id",
+                  "/system_id",
+                  "/endpoint_variant_denominators/joint_accept_at_1",
+                  "/endpoint_variant_denominators/robustness_rate",
+                  "/endpoint_variant_sums/joint_accept_at_1",
+                  "/endpoint_variant_sums/robustness_rate"
+                ],
+                "matched_record_count": 36,
+                "record_selector": {
+                  "system_id": {
+                    "in": [
+                      "P1",
+                      "P2"
+                    ]
+                  }
+                }
+              },
+              "requirement_id": "natural_language_robustness",
+              "source_artifact": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E1/run-e1-llm-gemini-3.5-flash-lite/derived/statistical_analysis/family-estimates.jsonl",
+              "transformation": "Aggregate repeats within variants, derive canonical-minus-reviewed-equivalent JointAccept@1 loss per system and family, then run one paired family-level P2-loss-minus-P1-loss test and bootstrap CI."
+            }
+          ],
+          "p_value": [
+            {
+              "artifact_sha256": "52d31f96d74998396292f4ab1615056123f74fcfeba2295cf75aa0cfb3aedd22",
+              "evidence_schema_version": "protocol-v5-statistical-analysis-v1.0.0",
+              "locator": {
+                "format": "jsonl",
+                "json_pointers": [
+                  "/family_id",
+                  "/system_id",
+                  "/endpoint_variant_denominators/joint_accept_at_1",
+                  "/endpoint_variant_denominators/robustness_rate",
+                  "/endpoint_variant_sums/joint_accept_at_1",
+                  "/endpoint_variant_sums/robustness_rate"
+                ],
+                "matched_record_count": 36,
+                "record_selector": {
+                  "system_id": {
+                    "in": [
+                      "P1",
+                      "P2"
+                    ]
+                  }
+                }
+              },
+              "requirement_id": "natural_language_robustness",
+              "source_artifact": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E1/run-e1-llm-gemini-3.5-flash-lite/derived/statistical_analysis/family-estimates.jsonl",
+              "transformation": "Aggregate repeats within variants, derive canonical-minus-reviewed-equivalent JointAccept@1 loss per system and family, then run one paired family-level P2-loss-minus-P1-loss test and bootstrap CI."
+            }
+          ],
+          "test_available": [
+            {
+              "artifact_sha256": "52d31f96d74998396292f4ab1615056123f74fcfeba2295cf75aa0cfb3aedd22",
+              "evidence_schema_version": "protocol-v5-statistical-analysis-v1.0.0",
+              "locator": {
+                "format": "jsonl",
+                "json_pointers": [
+                  "/family_id",
+                  "/system_id",
+                  "/endpoint_variant_denominators/joint_accept_at_1",
+                  "/endpoint_variant_denominators/robustness_rate",
+                  "/endpoint_variant_sums/joint_accept_at_1",
+                  "/endpoint_variant_sums/robustness_rate"
+                ],
+                "matched_record_count": 36,
+                "record_selector": {
+                  "system_id": {
+                    "in": [
+                      "P1",
+                      "P2"
+                    ]
+                  }
+                }
+              },
+              "requirement_id": "natural_language_robustness",
+              "source_artifact": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E1/run-e1-llm-gemini-3.5-flash-lite/derived/statistical_analysis/family-estimates.jsonl",
+              "transformation": "Aggregate repeats within variants, derive canonical-minus-reviewed-equivalent JointAccept@1 loss per system and family, then run one paired family-level P2-loss-minus-P1-loss test and bootstrap CI."
+            }
+          ]
+        }
+      },
+      "metrics": {
+        "H2": {
+          "ci_high": 0.21212121212121215,
+          "ci_low": -0.08333333333333333,
+          "derivation": "canonical JointAccept@1 minus mean reviewed-equivalent JointAccept@1; P2 loss minus P1 loss",
+          "effect": 0.05303030303030303,
+          "effective_family_n": 11,
+          "p_value": 0.625,
+          "test_available": true,
+          "test_method": "wilcoxon_signed_rank"
+        }
+      },
+      "package_path": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E1/run-e1-llm-gemini-3.5-flash-lite",
+      "provenance": {
+        "analysis_environment": {
+          "platform": "Darwin",
+          "platform_release": "24.3.0",
+          "python_version": "3.14.6"
+        },
+        "dataset": {
+          "dataset_canonical_sha256": "079ca97e88719b2edd259ef8e252f09bc481d6d579d2f00136f694ebc4a2046e",
+          "dataset_id": "v5-development-reconstructed-v1",
+          "dataset_schema_version": "protocol-v5-split-bundle-v2.0.0",
+          "dataset_source_file_sha256": "71f57daafe319afea1b5ce23e9e1a762105c31f2f756f55abbd06b551c4eed6c",
+          "freeze_identity": {
+            "freeze_id": null,
+            "frozen_at_utc": "2026-09-21T06:38:01Z",
+            "frozen_by": "protocol-v5-v4-importer+agent-authored-p2-supplement",
+            "source": "development_split_manifest"
+          },
+          "gold_catalog_identity": {
+            "candidate_corpus_sha256": "987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444",
+            "candidate_corpus_version": "environment-candidate-corpus-v1",
+            "image_catalog_sha256": "bd2211d5fd769b5addec3c41e8cbd48bb0d9cd1c958aa554ada9bf88c29509f3",
+            "image_catalog_version": "2026-08-06.1",
+            "profile_catalog_sha256": "c8f797b9c4d30459da99dad8d6d1c28e07e6803d76fab7cf88cdcd0f6c679348"
+          },
+          "offline_completion_sha256": "c8e4dd0f424b587bb71ce4beed01dfa1697d421d70ad80a340c9f27479ed5bdd",
+          "offline_provenance_fingerprint": "f4853498bbcdbc32f86915d2d34aa842d0466caf4edb7a03d9b93b6994a68b71",
+          "offline_provenance_sha256": "6fcc62b655e42a951c5da3d3e78f2a57944d40745eb0032a2034bc62a61cfb60",
+          "offline_recommendations_sha256": "3c39b7acd1855d889111d6625e4a275e3fa6fa8ee9fee8147620797f9a351beb",
+          "offline_run_id": "run-e1-llm-gemini-3.5-flash-lite",
+          "offline_split_identity": {
+            "bundle_checksum": "079ca97e88719b2edd259ef8e252f09bc481d6d579d2f00136f694ebc4a2046e",
+            "case_count": 83,
+            "dataset_id": "v5-development-reconstructed-v1",
+            "dataset_sha256": "71f57daafe319afea1b5ce23e9e1a762105c31f2f756f55abbd06b551c4eed6c",
+            "family_count": 18,
+            "role": "development",
+            "split_id": "v5-development"
+          },
+          "split_checksum": "079ca97e88719b2edd259ef8e252f09bc481d6d579d2f00136f694ebc4a2046e",
+          "split_id": "v5-development",
+          "split_role": "development"
+        },
+        "freeze_identity": {
+          "freeze_id": null,
+          "frozen_at_utc": "2026-09-21T06:38:01Z",
+          "frozen_by": "protocol-v5-v4-importer+agent-authored-p2-supplement",
+          "source": "development_split_manifest"
+        },
+        "git_dirty": null,
+        "git_revision": "9f513666ea51d3bd9113be33d9d7707dd5fe6636",
+        "source_environment": {
+          "platform": "darwin",
+          "platform_release": "24.3.0",
+          "python_version": "3.14.6"
+        }
+      },
+      "reason_codes": [
+        "CLAIMS_NOT_PERMITTED",
+        "NON_CONFIRMATORY_EVIDENCE"
+      ],
+      "requirement_id": "natural_language_robustness",
+      "schema_version": "protocol-v5-statistical-analysis-v1.0.0",
+      "semantic_provenance": {
+        "benchmark.dataset_sha256": null,
+        "benchmark.split_id": "v5-development",
+        "catalog.version": "2026-08-06.1",
+        "constraints.evaluator_version": "p2-deterministic-constraint-evaluator-v1.1.0",
+        "constraints.policy_version": "p2-constraint-policy-v1.0.0",
+        "constraints.ranker_version": "p2-deterministic-ranker-v2.0.0",
+        "corpus.sha256": "987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444",
+        "corpus.version": "environment-candidate-corpus-v1",
+        "extractor.prompt_sha256": "aa607821b326ce94aad5e44197f230b919f37fc50897489adf3932aba9056195",
+        "indexes.dense.sha256": "c0561bcd1ee6ec5153b710aef3deae88bd259a011ddd454513cbb1c675118387",
+        "indexes.hybrid.sha256": "45ea08f29492d796189920713636b3a9cae2f0fb264e023124eb38c8cfad83a4",
+        "indexes.sparse.sha256": "931fac84b818cb934a37bfbfa76092a89626cd5eaffc869887de8558bc6fa747",
+        "p1.backend_version": "rule-based-v1",
+        "p2.backend_version": "p2-hybrid-v1.0.0",
+        "p2.config_version": "p2-config-v1.1.0",
+        "p2.pipeline_version": "p2-pipeline-v1.0.0",
+        "p3.pipeline_version": null,
+        "p3.prompt_sha256": null,
+        "p3.reranker_version": null
+      },
+      "stage": "development",
+      "tests": {
+        "statistical_package": {
+          "analysis_status": "DERIVED_EVIDENCE_COMPLETE",
+          "comparison_rows_validated": 16,
+          "family_rows_validated": 36,
+          "outputs_validated": 4,
+          "schema_version": "protocol-v5-statistical-analysis-v1.0.0",
+          "status": "PASS"
+        },
+        "testing_policy": {
+          "alpha": 0.05,
+          "binary_family_outcomes": "exact_mcnemar",
+          "fractional_or_continuous_family_outcomes": "paired_wilcoxon_signed_rank",
+          "significance_withheld_below": 10,
+          "small_n_warning_below": 20,
+          "stratified_hypothesis_tests": false,
+          "two_sided": true
+        }
+      },
+      "validation_error": null,
+      "validation_status": "PASS"
+    },
+    {
+      "artifacts": [
+        {
+          "package_relative_path": "derived/statistical_analysis/analysis-manifest.json",
+          "path": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E1/run-e1-local/derived/statistical_analysis/analysis-manifest.json",
+          "sha256": "1a8c8636823515e3ac5bc84bd32ef48b995840a044729c6b818fe14458fcd044"
+        },
+        {
+          "package_relative_path": "raw/offline-run-provenance.json",
+          "path": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E1/run-e1-local/raw/offline-run-provenance.json",
+          "sha256": "94f97da9d543976a32cec72713749fa193e27a5537d32e27aaefdde057d1abe5"
+        },
+        {
+          "package_relative_path": "raw/recommendations.jsonl",
+          "path": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E1/run-e1-local/raw/recommendations.jsonl",
+          "sha256": "9214066f4ecb27e386479cc723dccc9ee5bd7a8d0732fa0c088192297fba9d1f"
+        },
+        {
+          "package_relative_path": "report/offline-run-completion.json",
+          "path": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E1/run-e1-local/report/offline-run-completion.json",
+          "sha256": "cf837168b5b0b248effe5a7cc5c9d4ec7c08c2b0bb128b51fcde0842e0fc909e"
+        },
+        {
+          "package_relative_path": "derived/statistical_analysis/family-estimates.jsonl",
+          "path": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E1/run-e1-local/derived/statistical_analysis/family-estimates.jsonl",
+          "sha256": "a92997e874b46fc6f8382e6a82543775fad2311cd942a7015edc99daedd9f5b1"
+        },
+        {
+          "package_relative_path": "derived/statistical_analysis/paired-comparisons.jsonl",
+          "path": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E1/run-e1-local/derived/statistical_analysis/paired-comparisons.jsonl",
+          "sha256": "2a2de6f6347be49a371a0886243483106acbccf2ba4bbb4e6c49d5873a90420d"
+        }
+      ],
+      "authentication": {
+        "package_validator": "validate_statistical_package+source_checksum_binding",
+        "source_checksums_verified": true,
+        "split_custody_verified": true
+      },
+      "claim_eligibility": "INELIGIBLE",
+      "claims_permitted": false,
+      "evidence_class": "E2",
+      "execution_status": "DERIVED_EVIDENCE_COMPLETE",
+      "experiment_id": "E1",
+      "manifest_path": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E1/run-e1-local/derived/statistical_analysis/analysis-manifest.json",
+      "manifest_sha256": "1a8c8636823515e3ac5bc84bd32ef48b995840a044729c6b818fe14458fcd044",
+      "metadata": {
+        "family_n": 18,
+        "repeat_policy": {
+          "accuracy_eligibility": "feasible requests only",
+          "cross_family_handling": "equal-weight macro mean",
+          "independent_unit": "workload_family",
+          "latency_includes": [
+            "completed_attempts",
+            "recorded_fallback_attempts",
+            "recorded_error_attempts",
+            "recorded_timeout_attempts"
+          ],
+          "latency_missing_duration_policy": "full validated packages reject missing durations; direct in-memory rows are unavailable",
+          "latency_population": "all_validated_recommendation_attempts_with_recorded_duration",
+          "repeat_handling": "mean within variant",
+          "repeated_calls_are_accuracy_samples": false,
+          "robustness_eligibility": "non-canonical reviewed_equivalent variants",
+          "variant_handling": "mean within family"
+        },
+        "split_role": "development",
+        "variant_n": 83
+      },
+      "metric_lineage": {
+        "H2": {
+          "ci_high": [
+            {
+              "artifact_sha256": "a92997e874b46fc6f8382e6a82543775fad2311cd942a7015edc99daedd9f5b1",
+              "evidence_schema_version": "protocol-v5-statistical-analysis-v1.0.0",
+              "locator": {
+                "format": "jsonl",
+                "json_pointers": [
+                  "/family_id",
+                  "/system_id",
+                  "/endpoint_variant_denominators/joint_accept_at_1",
+                  "/endpoint_variant_denominators/robustness_rate",
+                  "/endpoint_variant_sums/joint_accept_at_1",
+                  "/endpoint_variant_sums/robustness_rate"
+                ],
+                "matched_record_count": 36,
+                "record_selector": {
+                  "system_id": {
+                    "in": [
+                      "P1",
+                      "P2"
+                    ]
+                  }
+                }
+              },
+              "requirement_id": "natural_language_robustness",
+              "source_artifact": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E1/run-e1-local/derived/statistical_analysis/family-estimates.jsonl",
+              "transformation": "Aggregate repeats within variants, derive canonical-minus-reviewed-equivalent JointAccept@1 loss per system and family, then run one paired family-level P2-loss-minus-P1-loss test and bootstrap CI."
+            }
+          ],
+          "ci_low": [
+            {
+              "artifact_sha256": "a92997e874b46fc6f8382e6a82543775fad2311cd942a7015edc99daedd9f5b1",
+              "evidence_schema_version": "protocol-v5-statistical-analysis-v1.0.0",
+              "locator": {
+                "format": "jsonl",
+                "json_pointers": [
+                  "/family_id",
+                  "/system_id",
+                  "/endpoint_variant_denominators/joint_accept_at_1",
+                  "/endpoint_variant_denominators/robustness_rate",
+                  "/endpoint_variant_sums/joint_accept_at_1",
+                  "/endpoint_variant_sums/robustness_rate"
+                ],
+                "matched_record_count": 36,
+                "record_selector": {
+                  "system_id": {
+                    "in": [
+                      "P1",
+                      "P2"
+                    ]
+                  }
+                }
+              },
+              "requirement_id": "natural_language_robustness",
+              "source_artifact": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E1/run-e1-local/derived/statistical_analysis/family-estimates.jsonl",
+              "transformation": "Aggregate repeats within variants, derive canonical-minus-reviewed-equivalent JointAccept@1 loss per system and family, then run one paired family-level P2-loss-minus-P1-loss test and bootstrap CI."
+            }
+          ],
+          "effect": [
+            {
+              "artifact_sha256": "a92997e874b46fc6f8382e6a82543775fad2311cd942a7015edc99daedd9f5b1",
+              "evidence_schema_version": "protocol-v5-statistical-analysis-v1.0.0",
+              "locator": {
+                "format": "jsonl",
+                "json_pointers": [
+                  "/family_id",
+                  "/system_id",
+                  "/endpoint_variant_denominators/joint_accept_at_1",
+                  "/endpoint_variant_denominators/robustness_rate",
+                  "/endpoint_variant_sums/joint_accept_at_1",
+                  "/endpoint_variant_sums/robustness_rate"
+                ],
+                "matched_record_count": 36,
+                "record_selector": {
+                  "system_id": {
+                    "in": [
+                      "P1",
+                      "P2"
+                    ]
+                  }
+                }
+              },
+              "requirement_id": "natural_language_robustness",
+              "source_artifact": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E1/run-e1-local/derived/statistical_analysis/family-estimates.jsonl",
+              "transformation": "Aggregate repeats within variants, derive canonical-minus-reviewed-equivalent JointAccept@1 loss per system and family, then run one paired family-level P2-loss-minus-P1-loss test and bootstrap CI."
+            }
+          ],
+          "p_value": [
+            {
+              "artifact_sha256": "a92997e874b46fc6f8382e6a82543775fad2311cd942a7015edc99daedd9f5b1",
+              "evidence_schema_version": "protocol-v5-statistical-analysis-v1.0.0",
+              "locator": {
+                "format": "jsonl",
+                "json_pointers": [
+                  "/family_id",
+                  "/system_id",
+                  "/endpoint_variant_denominators/joint_accept_at_1",
+                  "/endpoint_variant_denominators/robustness_rate",
+                  "/endpoint_variant_sums/joint_accept_at_1",
+                  "/endpoint_variant_sums/robustness_rate"
+                ],
+                "matched_record_count": 36,
+                "record_selector": {
+                  "system_id": {
+                    "in": [
+                      "P1",
+                      "P2"
+                    ]
+                  }
+                }
+              },
+              "requirement_id": "natural_language_robustness",
+              "source_artifact": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E1/run-e1-local/derived/statistical_analysis/family-estimates.jsonl",
+              "transformation": "Aggregate repeats within variants, derive canonical-minus-reviewed-equivalent JointAccept@1 loss per system and family, then run one paired family-level P2-loss-minus-P1-loss test and bootstrap CI."
+            }
+          ],
+          "test_available": [
+            {
+              "artifact_sha256": "a92997e874b46fc6f8382e6a82543775fad2311cd942a7015edc99daedd9f5b1",
+              "evidence_schema_version": "protocol-v5-statistical-analysis-v1.0.0",
+              "locator": {
+                "format": "jsonl",
+                "json_pointers": [
+                  "/family_id",
+                  "/system_id",
+                  "/endpoint_variant_denominators/joint_accept_at_1",
+                  "/endpoint_variant_denominators/robustness_rate",
+                  "/endpoint_variant_sums/joint_accept_at_1",
+                  "/endpoint_variant_sums/robustness_rate"
+                ],
+                "matched_record_count": 36,
+                "record_selector": {
+                  "system_id": {
+                    "in": [
+                      "P1",
+                      "P2"
+                    ]
+                  }
+                }
+              },
+              "requirement_id": "natural_language_robustness",
+              "source_artifact": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E1/run-e1-local/derived/statistical_analysis/family-estimates.jsonl",
+              "transformation": "Aggregate repeats within variants, derive canonical-minus-reviewed-equivalent JointAccept@1 loss per system and family, then run one paired family-level P2-loss-minus-P1-loss test and bootstrap CI."
+            }
+          ]
+        }
+      },
+      "metrics": {
+        "H2": {
+          "ci_high": 0.33333333333333337,
+          "ci_low": -0.24242424242424243,
+          "derivation": "canonical JointAccept@1 minus mean reviewed-equivalent JointAccept@1; P2 loss minus P1 loss",
+          "effect": 0.05303030303030303,
+          "effective_family_n": 11,
+          "p_value": 0.78125,
+          "test_available": true,
+          "test_method": "wilcoxon_signed_rank"
+        }
+      },
+      "package_path": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E1/run-e1-local",
+      "provenance": {
+        "analysis_environment": {
+          "platform": "Darwin",
+          "platform_release": "24.3.0",
+          "python_version": "3.14.6"
+        },
+        "dataset": {
+          "dataset_canonical_sha256": "079ca97e88719b2edd259ef8e252f09bc481d6d579d2f00136f694ebc4a2046e",
+          "dataset_id": "v5-development-reconstructed-v1",
+          "dataset_schema_version": "protocol-v5-split-bundle-v2.0.0",
+          "dataset_source_file_sha256": "71f57daafe319afea1b5ce23e9e1a762105c31f2f756f55abbd06b551c4eed6c",
+          "freeze_identity": {
+            "freeze_id": null,
+            "frozen_at_utc": "2026-09-21T06:38:01Z",
+            "frozen_by": "protocol-v5-v4-importer+agent-authored-p2-supplement",
+            "source": "development_split_manifest"
+          },
+          "gold_catalog_identity": {
+            "candidate_corpus_sha256": "987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444",
+            "candidate_corpus_version": "environment-candidate-corpus-v1",
+            "image_catalog_sha256": "bd2211d5fd769b5addec3c41e8cbd48bb0d9cd1c958aa554ada9bf88c29509f3",
+            "image_catalog_version": "2026-08-06.1",
+            "profile_catalog_sha256": "c8f797b9c4d30459da99dad8d6d1c28e07e6803d76fab7cf88cdcd0f6c679348"
+          },
+          "offline_completion_sha256": "cf837168b5b0b248effe5a7cc5c9d4ec7c08c2b0bb128b51fcde0842e0fc909e",
+          "offline_provenance_fingerprint": "5fa81eced88e4c7badc8d0865cd9fddd7a5514e616e9a5e1652b86b864887d80",
+          "offline_provenance_sha256": "94f97da9d543976a32cec72713749fa193e27a5537d32e27aaefdde057d1abe5",
+          "offline_recommendations_sha256": "9214066f4ecb27e386479cc723dccc9ee5bd7a8d0732fa0c088192297fba9d1f",
+          "offline_run_id": "run-e1-local",
+          "offline_split_identity": {
+            "bundle_checksum": "079ca97e88719b2edd259ef8e252f09bc481d6d579d2f00136f694ebc4a2046e",
+            "case_count": 83,
+            "dataset_id": "v5-development-reconstructed-v1",
+            "dataset_sha256": "71f57daafe319afea1b5ce23e9e1a762105c31f2f756f55abbd06b551c4eed6c",
+            "family_count": 18,
+            "role": "development",
+            "split_id": "v5-development"
+          },
+          "split_checksum": "079ca97e88719b2edd259ef8e252f09bc481d6d579d2f00136f694ebc4a2046e",
+          "split_id": "v5-development",
+          "split_role": "development"
+        },
+        "freeze_identity": {
+          "freeze_id": null,
+          "frozen_at_utc": "2026-09-21T06:38:01Z",
+          "frozen_by": "protocol-v5-v4-importer+agent-authored-p2-supplement",
+          "source": "development_split_manifest"
+        },
+        "git_dirty": null,
+        "git_revision": "9f513666ea51d3bd9113be33d9d7707dd5fe6636",
+        "source_environment": {
+          "platform": "darwin",
+          "platform_release": "24.3.0",
+          "python_version": "3.14.6"
+        }
+      },
+      "reason_codes": [
+        "CLAIMS_NOT_PERMITTED",
+        "NON_CONFIRMATORY_EVIDENCE"
+      ],
+      "requirement_id": "natural_language_robustness",
+      "schema_version": "protocol-v5-statistical-analysis-v1.0.0",
+      "semantic_provenance": {
+        "benchmark.dataset_sha256": null,
+        "benchmark.split_id": "v5-development",
+        "catalog.version": "2026-08-06.1",
+        "constraints.evaluator_version": "p2-deterministic-constraint-evaluator-v1.1.0",
+        "constraints.policy_version": "p2-constraint-policy-v1.0.0",
+        "constraints.ranker_version": "p2-deterministic-ranker-v2.0.0",
+        "corpus.sha256": "987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444",
+        "corpus.version": "environment-candidate-corpus-v1",
+        "extractor.prompt_sha256": "8be330fe52b1b6b1520997309746b6b6b7e5e24867d962846ccf68a2af7256d9",
+        "indexes.dense.sha256": "c0561bcd1ee6ec5153b710aef3deae88bd259a011ddd454513cbb1c675118387",
+        "indexes.hybrid.sha256": "45ea08f29492d796189920713636b3a9cae2f0fb264e023124eb38c8cfad83a4",
+        "indexes.sparse.sha256": "931fac84b818cb934a37bfbfa76092a89626cd5eaffc869887de8558bc6fa747",
+        "p1.backend_version": "rule-based-v1",
+        "p2.backend_version": "p2-hybrid-v1.0.0",
+        "p2.config_version": "p2-config-v1.1.0",
+        "p2.pipeline_version": "p2-pipeline-v1.0.0",
+        "p3.pipeline_version": null,
+        "p3.prompt_sha256": null,
+        "p3.reranker_version": null
+      },
+      "stage": "development",
+      "tests": {
+        "statistical_package": {
+          "analysis_status": "DERIVED_EVIDENCE_COMPLETE",
+          "comparison_rows_validated": 16,
+          "family_rows_validated": 36,
+          "outputs_validated": 4,
+          "schema_version": "protocol-v5-statistical-analysis-v1.0.0",
+          "status": "PASS"
+        },
+        "testing_policy": {
+          "alpha": 0.05,
+          "binary_family_outcomes": "exact_mcnemar",
+          "fractional_or_continuous_family_outcomes": "paired_wilcoxon_signed_rank",
+          "significance_withheld_below": 10,
+          "small_n_warning_below": 20,
+          "stratified_hypothesis_tests": false,
+          "two_sided": true
+        }
+      },
+      "validation_error": null,
+      "validation_status": "PASS"
+    },
+    {
+      "artifacts": [
+        {
+          "package_relative_path": "derived/statistical_analysis/analysis-manifest.json",
+          "path": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E1/run-e1-llm-gemini-3.5-flash-lite/derived/statistical_analysis/analysis-manifest.json",
+          "sha256": "008848753589e4bbd4d2d3c6d16b597473fd5da3a37f36cd435472649b6c52b3"
+        },
+        {
+          "package_relative_path": "raw/offline-run-provenance.json",
+          "path": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E1/run-e1-llm-gemini-3.5-flash-lite/raw/offline-run-provenance.json",
+          "sha256": "6fcc62b655e42a951c5da3d3e78f2a57944d40745eb0032a2034bc62a61cfb60"
+        },
+        {
+          "package_relative_path": "raw/recommendations.jsonl",
+          "path": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E1/run-e1-llm-gemini-3.5-flash-lite/raw/recommendations.jsonl",
+          "sha256": "3c39b7acd1855d889111d6625e4a275e3fa6fa8ee9fee8147620797f9a351beb"
+        },
+        {
+          "package_relative_path": "report/offline-run-completion.json",
+          "path": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E1/run-e1-llm-gemini-3.5-flash-lite/report/offline-run-completion.json",
+          "sha256": "c8e4dd0f424b587bb71ce4beed01dfa1697d421d70ad80a340c9f27479ed5bdd"
+        },
+        {
+          "package_relative_path": "derived/statistical_analysis/family-estimates.jsonl",
+          "path": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E1/run-e1-llm-gemini-3.5-flash-lite/derived/statistical_analysis/family-estimates.jsonl",
+          "sha256": "52d31f96d74998396292f4ab1615056123f74fcfeba2295cf75aa0cfb3aedd22"
+        },
+        {
+          "package_relative_path": "derived/statistical_analysis/paired-comparisons.jsonl",
+          "path": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E1/run-e1-llm-gemini-3.5-flash-lite/derived/statistical_analysis/paired-comparisons.jsonl",
+          "sha256": "4c3c3ef6d626e504ca93d3afc33916e6d0e4057e9975fb68e5a0eda61b0b6ea1"
+        }
+      ],
+      "authentication": {
+        "package_validator": "validate_statistical_package+source_checksum_binding",
+        "source_checksums_verified": true,
+        "split_custody_verified": true
+      },
+      "claim_eligibility": "INELIGIBLE",
+      "claims_permitted": false,
+      "evidence_class": "E1",
+      "execution_status": "DERIVED_EVIDENCE_COMPLETE",
+      "experiment_id": "E1",
+      "manifest_path": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E1/run-e1-llm-gemini-3.5-flash-lite/derived/statistical_analysis/analysis-manifest.json",
+      "manifest_sha256": "008848753589e4bbd4d2d3c6d16b597473fd5da3a37f36cd435472649b6c52b3",
+      "metadata": {
+        "family_n": 18,
+        "repeat_policy": {
+          "accuracy_eligibility": "feasible requests only",
+          "cross_family_handling": "equal-weight macro mean",
+          "independent_unit": "workload_family",
+          "latency_includes": [
+            "completed_attempts",
+            "recorded_fallback_attempts",
+            "recorded_error_attempts",
+            "recorded_timeout_attempts"
+          ],
+          "latency_missing_duration_policy": "full validated packages reject missing durations; direct in-memory rows are unavailable",
+          "latency_population": "all_validated_recommendation_attempts_with_recorded_duration",
+          "repeat_handling": "mean within variant",
+          "repeated_calls_are_accuracy_samples": false,
+          "robustness_eligibility": "non-canonical reviewed_equivalent variants",
+          "variant_handling": "mean within family"
+        },
+        "split_role": "development",
+        "variant_n": 83
+      },
+      "metric_lineage": {
+        "H1": {
+          "ci_high": [
+            {
+              "artifact_sha256": "4c3c3ef6d626e504ca93d3afc33916e6d0e4057e9975fb68e5a0eda61b0b6ea1",
+              "evidence_schema_version": "protocol-v5-statistical-analysis-v1.0.0",
+              "locator": {
+                "format": "jsonl",
+                "json_pointers": [
+                  "/effect_sizes/mean_difference",
+                  "/effect_ci_low",
+                  "/effect_ci_high",
+                  "/p_value_holm",
+                  "/p_value_raw",
+                  "/hypothesis_status",
+                  "/statistical_decision",
+                  "/test_method",
+                  "/effective_family_n"
+                ],
+                "matched_record_count": 1,
+                "record_selector": {
+                  "comparison_id": "P2_minus_P1",
+                  "endpoint": "joint_accept_at_1"
+                }
+              },
+              "requirement_id": "offline_recommendation",
+              "source_artifact": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E1/run-e1-llm-gemini-3.5-flash-lite/derived/statistical_analysis/paired-comparisons.jsonl",
+              "transformation": "Select the unique P2-minus-P1 JointAccept@1 paired-family comparison; prefer its Holm p-value when present."
+            }
+          ],
+          "ci_low": [
+            {
+              "artifact_sha256": "4c3c3ef6d626e504ca93d3afc33916e6d0e4057e9975fb68e5a0eda61b0b6ea1",
+              "evidence_schema_version": "protocol-v5-statistical-analysis-v1.0.0",
+              "locator": {
+                "format": "jsonl",
+                "json_pointers": [
+                  "/effect_sizes/mean_difference",
+                  "/effect_ci_low",
+                  "/effect_ci_high",
+                  "/p_value_holm",
+                  "/p_value_raw",
+                  "/hypothesis_status",
+                  "/statistical_decision",
+                  "/test_method",
+                  "/effective_family_n"
+                ],
+                "matched_record_count": 1,
+                "record_selector": {
+                  "comparison_id": "P2_minus_P1",
+                  "endpoint": "joint_accept_at_1"
+                }
+              },
+              "requirement_id": "offline_recommendation",
+              "source_artifact": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E1/run-e1-llm-gemini-3.5-flash-lite/derived/statistical_analysis/paired-comparisons.jsonl",
+              "transformation": "Select the unique P2-minus-P1 JointAccept@1 paired-family comparison; prefer its Holm p-value when present."
+            }
+          ],
+          "effect": [
+            {
+              "artifact_sha256": "4c3c3ef6d626e504ca93d3afc33916e6d0e4057e9975fb68e5a0eda61b0b6ea1",
+              "evidence_schema_version": "protocol-v5-statistical-analysis-v1.0.0",
+              "locator": {
+                "format": "jsonl",
+                "json_pointers": [
+                  "/effect_sizes/mean_difference",
+                  "/effect_ci_low",
+                  "/effect_ci_high",
+                  "/p_value_holm",
+                  "/p_value_raw",
+                  "/hypothesis_status",
+                  "/statistical_decision",
+                  "/test_method",
+                  "/effective_family_n"
+                ],
+                "matched_record_count": 1,
+                "record_selector": {
+                  "comparison_id": "P2_minus_P1",
+                  "endpoint": "joint_accept_at_1"
+                }
+              },
+              "requirement_id": "offline_recommendation",
+              "source_artifact": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E1/run-e1-llm-gemini-3.5-flash-lite/derived/statistical_analysis/paired-comparisons.jsonl",
+              "transformation": "Select the unique P2-minus-P1 JointAccept@1 paired-family comparison; prefer its Holm p-value when present."
+            }
+          ],
+          "p_value": [
+            {
+              "artifact_sha256": "4c3c3ef6d626e504ca93d3afc33916e6d0e4057e9975fb68e5a0eda61b0b6ea1",
+              "evidence_schema_version": "protocol-v5-statistical-analysis-v1.0.0",
+              "locator": {
+                "format": "jsonl",
+                "json_pointers": [
+                  "/effect_sizes/mean_difference",
+                  "/effect_ci_low",
+                  "/effect_ci_high",
+                  "/p_value_holm",
+                  "/p_value_raw",
+                  "/hypothesis_status",
+                  "/statistical_decision",
+                  "/test_method",
+                  "/effective_family_n"
+                ],
+                "matched_record_count": 1,
+                "record_selector": {
+                  "comparison_id": "P2_minus_P1",
+                  "endpoint": "joint_accept_at_1"
+                }
+              },
+              "requirement_id": "offline_recommendation",
+              "source_artifact": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E1/run-e1-llm-gemini-3.5-flash-lite/derived/statistical_analysis/paired-comparisons.jsonl",
+              "transformation": "Select the unique P2-minus-P1 JointAccept@1 paired-family comparison; prefer its Holm p-value when present."
+            }
+          ],
+          "test_available": [
+            {
+              "artifact_sha256": "4c3c3ef6d626e504ca93d3afc33916e6d0e4057e9975fb68e5a0eda61b0b6ea1",
+              "evidence_schema_version": "protocol-v5-statistical-analysis-v1.0.0",
+              "locator": {
+                "format": "jsonl",
+                "json_pointers": [
+                  "/effect_sizes/mean_difference",
+                  "/effect_ci_low",
+                  "/effect_ci_high",
+                  "/p_value_holm",
+                  "/p_value_raw",
+                  "/hypothesis_status",
+                  "/statistical_decision",
+                  "/test_method",
+                  "/effective_family_n"
+                ],
+                "matched_record_count": 1,
+                "record_selector": {
+                  "comparison_id": "P2_minus_P1",
+                  "endpoint": "joint_accept_at_1"
+                }
+              },
+              "requirement_id": "offline_recommendation",
+              "source_artifact": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E1/run-e1-llm-gemini-3.5-flash-lite/derived/statistical_analysis/paired-comparisons.jsonl",
+              "transformation": "Select the unique P2-minus-P1 JointAccept@1 paired-family comparison; prefer its Holm p-value when present."
+            }
+          ]
+        }
+      },
+      "metrics": {
+        "H1": {
+          "ci_high": 0.17272727272727278,
+          "ci_low": -0.259090909090909,
+          "effect": -0.04090909090909091,
+          "effective_family_n": 11,
+          "p_value": 0.875,
+          "test_available": true,
+          "test_method": "wilcoxon_signed_rank"
+        }
+      },
+      "package_path": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E1/run-e1-llm-gemini-3.5-flash-lite",
+      "provenance": {
+        "analysis_environment": {
+          "platform": "Darwin",
+          "platform_release": "24.3.0",
+          "python_version": "3.14.6"
+        },
+        "dataset": {
+          "dataset_canonical_sha256": "079ca97e88719b2edd259ef8e252f09bc481d6d579d2f00136f694ebc4a2046e",
+          "dataset_id": "v5-development-reconstructed-v1",
+          "dataset_schema_version": "protocol-v5-split-bundle-v2.0.0",
+          "dataset_source_file_sha256": "71f57daafe319afea1b5ce23e9e1a762105c31f2f756f55abbd06b551c4eed6c",
+          "freeze_identity": {
+            "freeze_id": null,
+            "frozen_at_utc": "2026-09-21T06:38:01Z",
+            "frozen_by": "protocol-v5-v4-importer+agent-authored-p2-supplement",
+            "source": "development_split_manifest"
+          },
+          "gold_catalog_identity": {
+            "candidate_corpus_sha256": "987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444",
+            "candidate_corpus_version": "environment-candidate-corpus-v1",
+            "image_catalog_sha256": "bd2211d5fd769b5addec3c41e8cbd48bb0d9cd1c958aa554ada9bf88c29509f3",
+            "image_catalog_version": "2026-08-06.1",
+            "profile_catalog_sha256": "c8f797b9c4d30459da99dad8d6d1c28e07e6803d76fab7cf88cdcd0f6c679348"
+          },
+          "offline_completion_sha256": "c8e4dd0f424b587bb71ce4beed01dfa1697d421d70ad80a340c9f27479ed5bdd",
+          "offline_provenance_fingerprint": "f4853498bbcdbc32f86915d2d34aa842d0466caf4edb7a03d9b93b6994a68b71",
+          "offline_provenance_sha256": "6fcc62b655e42a951c5da3d3e78f2a57944d40745eb0032a2034bc62a61cfb60",
+          "offline_recommendations_sha256": "3c39b7acd1855d889111d6625e4a275e3fa6fa8ee9fee8147620797f9a351beb",
+          "offline_run_id": "run-e1-llm-gemini-3.5-flash-lite",
+          "offline_split_identity": {
+            "bundle_checksum": "079ca97e88719b2edd259ef8e252f09bc481d6d579d2f00136f694ebc4a2046e",
+            "case_count": 83,
+            "dataset_id": "v5-development-reconstructed-v1",
+            "dataset_sha256": "71f57daafe319afea1b5ce23e9e1a762105c31f2f756f55abbd06b551c4eed6c",
+            "family_count": 18,
+            "role": "development",
+            "split_id": "v5-development"
+          },
+          "split_checksum": "079ca97e88719b2edd259ef8e252f09bc481d6d579d2f00136f694ebc4a2046e",
+          "split_id": "v5-development",
+          "split_role": "development"
+        },
+        "freeze_identity": {
+          "freeze_id": null,
+          "frozen_at_utc": "2026-09-21T06:38:01Z",
+          "frozen_by": "protocol-v5-v4-importer+agent-authored-p2-supplement",
+          "source": "development_split_manifest"
+        },
+        "git_dirty": null,
+        "git_revision": "9f513666ea51d3bd9113be33d9d7707dd5fe6636",
+        "source_environment": {
+          "platform": "darwin",
+          "platform_release": "24.3.0",
+          "python_version": "3.14.6"
+        }
+      },
+      "reason_codes": [
+        "CLAIMS_NOT_PERMITTED",
+        "NON_CONFIRMATORY_EVIDENCE"
+      ],
+      "requirement_id": "offline_recommendation",
+      "schema_version": "protocol-v5-statistical-analysis-v1.0.0",
+      "semantic_provenance": {
+        "benchmark.dataset_sha256": null,
+        "benchmark.split_id": "v5-development",
+        "catalog.version": "2026-08-06.1",
+        "constraints.evaluator_version": "p2-deterministic-constraint-evaluator-v1.1.0",
+        "constraints.policy_version": "p2-constraint-policy-v1.0.0",
+        "constraints.ranker_version": "p2-deterministic-ranker-v2.0.0",
+        "corpus.sha256": "987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444",
+        "corpus.version": "environment-candidate-corpus-v1",
+        "extractor.prompt_sha256": "aa607821b326ce94aad5e44197f230b919f37fc50897489adf3932aba9056195",
+        "indexes.dense.sha256": "c0561bcd1ee6ec5153b710aef3deae88bd259a011ddd454513cbb1c675118387",
+        "indexes.hybrid.sha256": "45ea08f29492d796189920713636b3a9cae2f0fb264e023124eb38c8cfad83a4",
+        "indexes.sparse.sha256": "931fac84b818cb934a37bfbfa76092a89626cd5eaffc869887de8558bc6fa747",
+        "p1.backend_version": "rule-based-v1",
+        "p2.backend_version": "p2-hybrid-v1.0.0",
+        "p2.config_version": "p2-config-v1.1.0",
+        "p2.pipeline_version": "p2-pipeline-v1.0.0",
+        "p3.pipeline_version": null,
+        "p3.prompt_sha256": null,
+        "p3.reranker_version": null
+      },
+      "stage": "development",
+      "tests": {
+        "statistical_package": {
+          "analysis_status": "DERIVED_EVIDENCE_COMPLETE",
+          "comparison_rows_validated": 16,
+          "family_rows_validated": 36,
+          "outputs_validated": 4,
+          "schema_version": "protocol-v5-statistical-analysis-v1.0.0",
+          "status": "PASS"
+        },
+        "testing_policy": {
+          "alpha": 0.05,
+          "binary_family_outcomes": "exact_mcnemar",
+          "fractional_or_continuous_family_outcomes": "paired_wilcoxon_signed_rank",
+          "significance_withheld_below": 10,
+          "small_n_warning_below": 20,
+          "stratified_hypothesis_tests": false,
+          "two_sided": true
+        }
+      },
+      "validation_error": null,
+      "validation_status": "PASS"
+    },
+    {
+      "artifacts": [
+        {
+          "package_relative_path": "derived/statistical_analysis/analysis-manifest.json",
+          "path": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E1/run-e1-local/derived/statistical_analysis/analysis-manifest.json",
+          "sha256": "1a8c8636823515e3ac5bc84bd32ef48b995840a044729c6b818fe14458fcd044"
+        },
+        {
+          "package_relative_path": "raw/offline-run-provenance.json",
+          "path": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E1/run-e1-local/raw/offline-run-provenance.json",
+          "sha256": "94f97da9d543976a32cec72713749fa193e27a5537d32e27aaefdde057d1abe5"
+        },
+        {
+          "package_relative_path": "raw/recommendations.jsonl",
+          "path": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E1/run-e1-local/raw/recommendations.jsonl",
+          "sha256": "9214066f4ecb27e386479cc723dccc9ee5bd7a8d0732fa0c088192297fba9d1f"
+        },
+        {
+          "package_relative_path": "report/offline-run-completion.json",
+          "path": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E1/run-e1-local/report/offline-run-completion.json",
+          "sha256": "cf837168b5b0b248effe5a7cc5c9d4ec7c08c2b0bb128b51fcde0842e0fc909e"
+        },
+        {
+          "package_relative_path": "derived/statistical_analysis/family-estimates.jsonl",
+          "path": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E1/run-e1-local/derived/statistical_analysis/family-estimates.jsonl",
+          "sha256": "a92997e874b46fc6f8382e6a82543775fad2311cd942a7015edc99daedd9f5b1"
+        },
+        {
+          "package_relative_path": "derived/statistical_analysis/paired-comparisons.jsonl",
+          "path": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E1/run-e1-local/derived/statistical_analysis/paired-comparisons.jsonl",
+          "sha256": "2a2de6f6347be49a371a0886243483106acbccf2ba4bbb4e6c49d5873a90420d"
+        }
+      ],
+      "authentication": {
+        "package_validator": "validate_statistical_package+source_checksum_binding",
+        "source_checksums_verified": true,
+        "split_custody_verified": true
+      },
+      "claim_eligibility": "INELIGIBLE",
+      "claims_permitted": false,
+      "evidence_class": "E1",
+      "execution_status": "DERIVED_EVIDENCE_COMPLETE",
+      "experiment_id": "E1",
+      "manifest_path": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E1/run-e1-local/derived/statistical_analysis/analysis-manifest.json",
+      "manifest_sha256": "1a8c8636823515e3ac5bc84bd32ef48b995840a044729c6b818fe14458fcd044",
+      "metadata": {
+        "family_n": 18,
+        "repeat_policy": {
+          "accuracy_eligibility": "feasible requests only",
+          "cross_family_handling": "equal-weight macro mean",
+          "independent_unit": "workload_family",
+          "latency_includes": [
+            "completed_attempts",
+            "recorded_fallback_attempts",
+            "recorded_error_attempts",
+            "recorded_timeout_attempts"
+          ],
+          "latency_missing_duration_policy": "full validated packages reject missing durations; direct in-memory rows are unavailable",
+          "latency_population": "all_validated_recommendation_attempts_with_recorded_duration",
+          "repeat_handling": "mean within variant",
+          "repeated_calls_are_accuracy_samples": false,
+          "robustness_eligibility": "non-canonical reviewed_equivalent variants",
+          "variant_handling": "mean within family"
+        },
+        "split_role": "development",
+        "variant_n": 83
+      },
+      "metric_lineage": {
+        "H1": {
+          "ci_high": [
+            {
+              "artifact_sha256": "2a2de6f6347be49a371a0886243483106acbccf2ba4bbb4e6c49d5873a90420d",
+              "evidence_schema_version": "protocol-v5-statistical-analysis-v1.0.0",
+              "locator": {
+                "format": "jsonl",
+                "json_pointers": [
+                  "/effect_sizes/mean_difference",
+                  "/effect_ci_low",
+                  "/effect_ci_high",
+                  "/p_value_holm",
+                  "/p_value_raw",
+                  "/hypothesis_status",
+                  "/statistical_decision",
+                  "/test_method",
+                  "/effective_family_n"
+                ],
+                "matched_record_count": 1,
+                "record_selector": {
+                  "comparison_id": "P2_minus_P1",
+                  "endpoint": "joint_accept_at_1"
+                }
+              },
+              "requirement_id": "offline_recommendation",
+              "source_artifact": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E1/run-e1-local/derived/statistical_analysis/paired-comparisons.jsonl",
+              "transformation": "Select the unique P2-minus-P1 JointAccept@1 paired-family comparison; prefer its Holm p-value when present."
+            }
+          ],
+          "ci_low": [
+            {
+              "artifact_sha256": "2a2de6f6347be49a371a0886243483106acbccf2ba4bbb4e6c49d5873a90420d",
+              "evidence_schema_version": "protocol-v5-statistical-analysis-v1.0.0",
+              "locator": {
+                "format": "jsonl",
+                "json_pointers": [
+                  "/effect_sizes/mean_difference",
+                  "/effect_ci_low",
+                  "/effect_ci_high",
+                  "/p_value_holm",
+                  "/p_value_raw",
+                  "/hypothesis_status",
+                  "/statistical_decision",
+                  "/test_method",
+                  "/effective_family_n"
+                ],
+                "matched_record_count": 1,
+                "record_selector": {
+                  "comparison_id": "P2_minus_P1",
+                  "endpoint": "joint_accept_at_1"
+                }
+              },
+              "requirement_id": "offline_recommendation",
+              "source_artifact": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E1/run-e1-local/derived/statistical_analysis/paired-comparisons.jsonl",
+              "transformation": "Select the unique P2-minus-P1 JointAccept@1 paired-family comparison; prefer its Holm p-value when present."
+            }
+          ],
+          "effect": [
+            {
+              "artifact_sha256": "2a2de6f6347be49a371a0886243483106acbccf2ba4bbb4e6c49d5873a90420d",
+              "evidence_schema_version": "protocol-v5-statistical-analysis-v1.0.0",
+              "locator": {
+                "format": "jsonl",
+                "json_pointers": [
+                  "/effect_sizes/mean_difference",
+                  "/effect_ci_low",
+                  "/effect_ci_high",
+                  "/p_value_holm",
+                  "/p_value_raw",
+                  "/hypothesis_status",
+                  "/statistical_decision",
+                  "/test_method",
+                  "/effective_family_n"
+                ],
+                "matched_record_count": 1,
+                "record_selector": {
+                  "comparison_id": "P2_minus_P1",
+                  "endpoint": "joint_accept_at_1"
+                }
+              },
+              "requirement_id": "offline_recommendation",
+              "source_artifact": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E1/run-e1-local/derived/statistical_analysis/paired-comparisons.jsonl",
+              "transformation": "Select the unique P2-minus-P1 JointAccept@1 paired-family comparison; prefer its Holm p-value when present."
+            }
+          ],
+          "p_value": [
+            {
+              "artifact_sha256": "2a2de6f6347be49a371a0886243483106acbccf2ba4bbb4e6c49d5873a90420d",
+              "evidence_schema_version": "protocol-v5-statistical-analysis-v1.0.0",
+              "locator": {
+                "format": "jsonl",
+                "json_pointers": [
+                  "/effect_sizes/mean_difference",
+                  "/effect_ci_low",
+                  "/effect_ci_high",
+                  "/p_value_holm",
+                  "/p_value_raw",
+                  "/hypothesis_status",
+                  "/statistical_decision",
+                  "/test_method",
+                  "/effective_family_n"
+                ],
+                "matched_record_count": 1,
+                "record_selector": {
+                  "comparison_id": "P2_minus_P1",
+                  "endpoint": "joint_accept_at_1"
+                }
+              },
+              "requirement_id": "offline_recommendation",
+              "source_artifact": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E1/run-e1-local/derived/statistical_analysis/paired-comparisons.jsonl",
+              "transformation": "Select the unique P2-minus-P1 JointAccept@1 paired-family comparison; prefer its Holm p-value when present."
+            }
+          ],
+          "test_available": [
+            {
+              "artifact_sha256": "2a2de6f6347be49a371a0886243483106acbccf2ba4bbb4e6c49d5873a90420d",
+              "evidence_schema_version": "protocol-v5-statistical-analysis-v1.0.0",
+              "locator": {
+                "format": "jsonl",
+                "json_pointers": [
+                  "/effect_sizes/mean_difference",
+                  "/effect_ci_low",
+                  "/effect_ci_high",
+                  "/p_value_holm",
+                  "/p_value_raw",
+                  "/hypothesis_status",
+                  "/statistical_decision",
+                  "/test_method",
+                  "/effective_family_n"
+                ],
+                "matched_record_count": 1,
+                "record_selector": {
+                  "comparison_id": "P2_minus_P1",
+                  "endpoint": "joint_accept_at_1"
+                }
+              },
+              "requirement_id": "offline_recommendation",
+              "source_artifact": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E1/run-e1-local/derived/statistical_analysis/paired-comparisons.jsonl",
+              "transformation": "Select the unique P2-minus-P1 JointAccept@1 paired-family comparison; prefer its Holm p-value when present."
+            }
+          ]
+        }
+      },
+      "metrics": {
+        "H1": {
+          "ci_high": 0.4363636363636364,
+          "ci_low": -0.32727272727272727,
+          "effect": 0.049999999999999996,
+          "effective_family_n": 11,
+          "p_value": 0.76171875,
+          "test_available": true,
+          "test_method": "wilcoxon_signed_rank"
+        }
+      },
+      "package_path": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E1/run-e1-local",
+      "provenance": {
+        "analysis_environment": {
+          "platform": "Darwin",
+          "platform_release": "24.3.0",
+          "python_version": "3.14.6"
+        },
+        "dataset": {
+          "dataset_canonical_sha256": "079ca97e88719b2edd259ef8e252f09bc481d6d579d2f00136f694ebc4a2046e",
+          "dataset_id": "v5-development-reconstructed-v1",
+          "dataset_schema_version": "protocol-v5-split-bundle-v2.0.0",
+          "dataset_source_file_sha256": "71f57daafe319afea1b5ce23e9e1a762105c31f2f756f55abbd06b551c4eed6c",
+          "freeze_identity": {
+            "freeze_id": null,
+            "frozen_at_utc": "2026-09-21T06:38:01Z",
+            "frozen_by": "protocol-v5-v4-importer+agent-authored-p2-supplement",
+            "source": "development_split_manifest"
+          },
+          "gold_catalog_identity": {
+            "candidate_corpus_sha256": "987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444",
+            "candidate_corpus_version": "environment-candidate-corpus-v1",
+            "image_catalog_sha256": "bd2211d5fd769b5addec3c41e8cbd48bb0d9cd1c958aa554ada9bf88c29509f3",
+            "image_catalog_version": "2026-08-06.1",
+            "profile_catalog_sha256": "c8f797b9c4d30459da99dad8d6d1c28e07e6803d76fab7cf88cdcd0f6c679348"
+          },
+          "offline_completion_sha256": "cf837168b5b0b248effe5a7cc5c9d4ec7c08c2b0bb128b51fcde0842e0fc909e",
+          "offline_provenance_fingerprint": "5fa81eced88e4c7badc8d0865cd9fddd7a5514e616e9a5e1652b86b864887d80",
+          "offline_provenance_sha256": "94f97da9d543976a32cec72713749fa193e27a5537d32e27aaefdde057d1abe5",
+          "offline_recommendations_sha256": "9214066f4ecb27e386479cc723dccc9ee5bd7a8d0732fa0c088192297fba9d1f",
+          "offline_run_id": "run-e1-local",
+          "offline_split_identity": {
+            "bundle_checksum": "079ca97e88719b2edd259ef8e252f09bc481d6d579d2f00136f694ebc4a2046e",
+            "case_count": 83,
+            "dataset_id": "v5-development-reconstructed-v1",
+            "dataset_sha256": "71f57daafe319afea1b5ce23e9e1a762105c31f2f756f55abbd06b551c4eed6c",
+            "family_count": 18,
+            "role": "development",
+            "split_id": "v5-development"
+          },
+          "split_checksum": "079ca97e88719b2edd259ef8e252f09bc481d6d579d2f00136f694ebc4a2046e",
+          "split_id": "v5-development",
+          "split_role": "development"
+        },
+        "freeze_identity": {
+          "freeze_id": null,
+          "frozen_at_utc": "2026-09-21T06:38:01Z",
+          "frozen_by": "protocol-v5-v4-importer+agent-authored-p2-supplement",
+          "source": "development_split_manifest"
+        },
+        "git_dirty": null,
+        "git_revision": "9f513666ea51d3bd9113be33d9d7707dd5fe6636",
+        "source_environment": {
+          "platform": "darwin",
+          "platform_release": "24.3.0",
+          "python_version": "3.14.6"
+        }
+      },
+      "reason_codes": [
+        "CLAIMS_NOT_PERMITTED",
+        "NON_CONFIRMATORY_EVIDENCE"
+      ],
+      "requirement_id": "offline_recommendation",
+      "schema_version": "protocol-v5-statistical-analysis-v1.0.0",
+      "semantic_provenance": {
+        "benchmark.dataset_sha256": null,
+        "benchmark.split_id": "v5-development",
+        "catalog.version": "2026-08-06.1",
+        "constraints.evaluator_version": "p2-deterministic-constraint-evaluator-v1.1.0",
+        "constraints.policy_version": "p2-constraint-policy-v1.0.0",
+        "constraints.ranker_version": "p2-deterministic-ranker-v2.0.0",
+        "corpus.sha256": "987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444",
+        "corpus.version": "environment-candidate-corpus-v1",
+        "extractor.prompt_sha256": "8be330fe52b1b6b1520997309746b6b6b7e5e24867d962846ccf68a2af7256d9",
+        "indexes.dense.sha256": "c0561bcd1ee6ec5153b710aef3deae88bd259a011ddd454513cbb1c675118387",
+        "indexes.hybrid.sha256": "45ea08f29492d796189920713636b3a9cae2f0fb264e023124eb38c8cfad83a4",
+        "indexes.sparse.sha256": "931fac84b818cb934a37bfbfa76092a89626cd5eaffc869887de8558bc6fa747",
+        "p1.backend_version": "rule-based-v1",
+        "p2.backend_version": "p2-hybrid-v1.0.0",
+        "p2.config_version": "p2-config-v1.1.0",
+        "p2.pipeline_version": "p2-pipeline-v1.0.0",
+        "p3.pipeline_version": null,
+        "p3.prompt_sha256": null,
+        "p3.reranker_version": null
+      },
+      "stage": "development",
+      "tests": {
+        "statistical_package": {
+          "analysis_status": "DERIVED_EVIDENCE_COMPLETE",
+          "comparison_rows_validated": 16,
+          "family_rows_validated": 36,
+          "outputs_validated": 4,
+          "schema_version": "protocol-v5-statistical-analysis-v1.0.0",
+          "status": "PASS"
+        },
+        "testing_policy": {
+          "alpha": 0.05,
+          "binary_family_outcomes": "exact_mcnemar",
+          "fractional_or_continuous_family_outcomes": "paired_wilcoxon_signed_rank",
+          "significance_withheld_below": 10,
+          "small_n_warning_below": 20,
+          "stratified_hypothesis_tests": false,
+          "two_sided": true
+        }
+      },
+      "validation_error": null,
+      "validation_status": "PASS"
+    }
+  ],
+  "observations_are_copied": false,
+  "protocol_version": "5.0.0",
+  "results_root": "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0",
+  "schema_version": "protocol-v5-research-evidence-inventory-v1.1.0"
+}

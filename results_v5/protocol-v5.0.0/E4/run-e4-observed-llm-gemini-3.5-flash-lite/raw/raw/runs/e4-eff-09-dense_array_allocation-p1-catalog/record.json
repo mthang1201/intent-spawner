@@ -1,0 +1,105 @@
+{
+  "admission_or_scheduling_reason": "UNKNOWN",
+  "cgroup_metrics": {},
+  "collector_origin": "REAL_KUBERNETES_COLLECTOR",
+  "condition": "P1_CATALOG",
+  "container_runtime_seconds": 0.0,
+  "correctness": null,
+  "correctness_details": {},
+  "correctness_invariants_ok": null,
+  "deterministic_seed": 8117,
+  "exclusion_reason": null,
+  "expected_marker_sha256": "75d7473572cf42d67223fe64a28a4a6bba8ae280b385484df30b72f1c1693dcf",
+  "family_id": "dense_array_allocation",
+  "infrastructure_invalid": false,
+  "kubernetes": {
+    "cleanup_status": "succeeded",
+    "events": [
+      {
+        "count": null,
+        "first_timestamp": null,
+        "last_timestamp": null,
+        "message": "Successfully assigned z2jh-context-demo/e4e-1976044923f9e2f90572bcec to orbstack",
+        "reason": "Scheduled",
+        "type": "Normal"
+      },
+      {
+        "count": 1,
+        "first_timestamp": "2026-10-13T10:15:44Z",
+        "last_timestamp": "2026-10-13T10:15:44Z",
+        "message": "Container image \"intent-spawner-resource-v5:latest\" already present on machine",
+        "reason": "Pulled",
+        "type": "Normal"
+      },
+      {
+        "count": 1,
+        "first_timestamp": "2026-10-13T10:15:44Z",
+        "last_timestamp": "2026-10-13T10:15:44Z",
+        "message": "Created container: workload",
+        "reason": "Created",
+        "type": "Normal"
+      },
+      {
+        "count": 1,
+        "first_timestamp": "2026-10-13T10:15:44Z",
+        "last_timestamp": "2026-10-13T10:15:44Z",
+        "message": "Started container workload",
+        "reason": "Started",
+        "type": "Normal"
+      }
+    ],
+    "exit_code": 137,
+    "finished_at": "2026-10-13T10:15:44Z",
+    "image_id": "docker://sha256:84554666609638527f99c47ca139d29daf41ce3aef3f5f2c955421aa72842beb",
+    "image_reference": "intent-spawner-resource-v5:latest",
+    "node_name": "orbstack",
+    "phase": "Failed",
+    "pod_name": "e4e-1976044923f9e2f90572bcec",
+    "pod_uid": "4c25fa47-8256-4e9b-94b7-ef155ebc184c",
+    "reason": "OOMKilled",
+    "restart_count": 0,
+    "started_at": "2026-10-13T10:15:44Z",
+    "terminated_reason": "OOMKilled",
+    "waiting_reason": null
+  },
+  "observed_marker_sha256": null,
+  "observed_resources": {
+    "cpu_limit_m": 500,
+    "cpu_request_m": 100,
+    "gpu_count": 0,
+    "gpu_resource": null,
+    "memory_limit_mib": 384,
+    "memory_request_mib": 256
+  },
+  "oom": true,
+  "pending_or_admission_failure": false,
+  "plan_index": 699,
+  "planned_resources": {
+    "cpu_limit_m": 500,
+    "cpu_request_m": 100,
+    "gpu_count": 0,
+    "gpu_resource": null,
+    "memory_limit_mib": 384,
+    "memory_request_mib": 256
+  },
+  "pod_created": true,
+  "primary_outcome": "OOM",
+  "primary_trial_id": "e4-eff-09-dense_array_allocation-p1-catalog",
+  "recorded_at_utc": "2026-10-13T10:15:47.331249Z",
+  "repetition": 9,
+  "replacement_of": null,
+  "runtime_error": false,
+  "scheduled": true,
+  "schema_version": "protocol-v5-resource-efficiency-trial-v1.0.0",
+  "sidecar_paths": {
+    "record": "raw/runs/e4-eff-09-dense_array_allocation-p1-catalog/record.json"
+  },
+  "success": false,
+  "timeout": false,
+  "timeout_seconds": 120,
+  "trial_id": "e4-eff-09-dense_array_allocation-p1-catalog",
+  "workload_fingerprint": "95557cab44677af36ee07a3f3829fe3b56e06cc8ed117deca63f5c7ed9e98c4c",
+  "workload_instance_id": "dense-array-allocation-v1-elements-180000000-seed-8117",
+  "workload_output_exists": false,
+  "workload_runtime_seconds": null
+}

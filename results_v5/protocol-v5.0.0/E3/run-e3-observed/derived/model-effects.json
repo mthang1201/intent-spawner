@@ -1,0 +1,664 @@
+{
+  "correction_count": {
+    "actual_method": "participant_paired_count_difference",
+    "confidence_interval_95": [
+      null,
+      null
+    ],
+    "converged": null,
+    "dispersion_method": "pearson_scale_estimated_from_fit",
+    "dispersion_scale": null,
+    "eligibility": {
+      "complete_matched_pair_count": null,
+      "effective_participant_count": 1,
+      "eligible_row_count": 6
+    },
+    "fallback_reason": "insufficient_participants",
+    "incidence_rate_ratio": null,
+    "method": "participant_paired_count_difference",
+    "p_value_raw": null,
+    "p_value_sidedness": "two_sided",
+    "paired_effect": {
+      "bootstrap": {
+        "base_seed": 20260827,
+        "ci_available": false,
+        "ci_construction": "percentile_equal_tailed_95",
+        "effective_seed": 20261145,
+        "failed_replicates_discarded": 2000,
+        "minimum_success_fraction": 0.95,
+        "requested_replicates": 2000,
+        "resampling_unit": "participant_all_rows_together",
+        "rng_algorithm": "numpy.random.PCG64",
+        "seed_offset": 318,
+        "successful_fraction": 0.0,
+        "successful_replicates": 0
+      },
+      "ci_method": "participant_percentile_bootstrap",
+      "cohens_dz": null,
+      "complete_participant_count": 1,
+      "confidence_interval_95": [
+        null,
+        null
+      ],
+      "effect_direction": "P2_minus_B0",
+      "mean_difference": 0.3333333333333333,
+      "median_difference": 0.3333333333333333,
+      "standardized_effect_definition": "cohens_dz=mean_participant_difference/sd_participant_difference"
+    },
+    "requested_method": "participant_clustered_quasipoisson_gee_exchangeable",
+    "response_variable": "correction_count",
+    "status": "FALLBACK"
+  },
+  "custom_items": {
+    "custom_confidence_selected_environment": {
+      "actual_method": "participant_paired_difference",
+      "bootstrap": {
+        "base_seed": 20260827,
+        "ci_available": false,
+        "ci_construction": "percentile_equal_tailed_95",
+        "effective_seed": 20261037,
+        "failed_replicates_discarded": 2000,
+        "minimum_success_fraction": 0.95,
+        "requested_replicates": 2000,
+        "resampling_unit": "participant_all_rows_together",
+        "rng_algorithm": "numpy.random.PCG64",
+        "seed_offset": 210,
+        "successful_fraction": 0.0,
+        "successful_replicates": 0
+      },
+      "ci_method": "participant_percentile_bootstrap",
+      "cohens_dz": null,
+      "complete_participant_count": 1,
+      "confidence_interval_95": [
+        null,
+        null
+      ],
+      "converged": null,
+      "effect_direction": "P2_minus_B0",
+      "eligibility": {
+        "complete_matched_pair_count": 1,
+        "effective_participant_count": 1,
+        "eligible_row_count": 2
+      },
+      "fallback_reason": null,
+      "mean_difference": 0.0,
+      "median_difference": 0.0,
+      "method": "participant_paired_difference",
+      "p_value_raw": null,
+      "p_value_sidedness": "two_sided",
+      "participant_dependence": "one_P2_minus_B0_difference_per_participant",
+      "requested_method": "participant_paired_difference",
+      "response_variable": "custom_confidence_selected_environment",
+      "standardized_effect_definition": "cohens_dz=mean_participant_difference/sd_participant_difference",
+      "status": "COMPUTED",
+      "task_pair_fixed_effect": false
+    },
+    "custom_natural_workload_expression": {
+      "actual_method": "participant_paired_difference",
+      "bootstrap": {
+        "base_seed": 20260827,
+        "ci_available": false,
+        "ci_construction": "percentile_equal_tailed_95",
+        "effective_seed": 20261038,
+        "failed_replicates_discarded": 2000,
+        "minimum_success_fraction": 0.95,
+        "requested_replicates": 2000,
+        "resampling_unit": "participant_all_rows_together",
+        "rng_algorithm": "numpy.random.PCG64",
+        "seed_offset": 211,
+        "successful_fraction": 0.0,
+        "successful_replicates": 0
+      },
+      "ci_method": "participant_percentile_bootstrap",
+      "cohens_dz": null,
+      "complete_participant_count": 1,
+      "confidence_interval_95": [
+        null,
+        null
+      ],
+      "converged": null,
+      "effect_direction": "P2_minus_B0",
+      "eligibility": {
+        "complete_matched_pair_count": 1,
+        "effective_participant_count": 1,
+        "eligible_row_count": 2
+      },
+      "fallback_reason": null,
+      "mean_difference": 0.0,
+      "median_difference": 0.0,
+      "method": "participant_paired_difference",
+      "p_value_raw": null,
+      "p_value_sidedness": "two_sided",
+      "participant_dependence": "one_P2_minus_B0_difference_per_participant",
+      "requested_method": "participant_paired_difference",
+      "response_variable": "custom_natural_workload_expression",
+      "standardized_effect_definition": "cohens_dz=mean_participant_difference/sd_participant_difference",
+      "status": "COMPUTED",
+      "task_pair_fixed_effect": false
+    },
+    "custom_selection_convenience": {
+      "actual_method": "participant_paired_difference",
+      "bootstrap": {
+        "base_seed": 20260827,
+        "ci_available": false,
+        "ci_construction": "percentile_equal_tailed_95",
+        "effective_seed": 20261039,
+        "failed_replicates_discarded": 2000,
+        "minimum_success_fraction": 0.95,
+        "requested_replicates": 2000,
+        "resampling_unit": "participant_all_rows_together",
+        "rng_algorithm": "numpy.random.PCG64",
+        "seed_offset": 212,
+        "successful_fraction": 0.0,
+        "successful_replicates": 0
+      },
+      "ci_method": "participant_percentile_bootstrap",
+      "cohens_dz": null,
+      "complete_participant_count": 1,
+      "confidence_interval_95": [
+        null,
+        null
+      ],
+      "converged": null,
+      "effect_direction": "P2_minus_B0",
+      "eligibility": {
+        "complete_matched_pair_count": 1,
+        "effective_participant_count": 1,
+        "eligible_row_count": 2
+      },
+      "fallback_reason": null,
+      "mean_difference": 0.0,
+      "median_difference": 0.0,
+      "method": "participant_paired_difference",
+      "p_value_raw": null,
+      "p_value_sidedness": "two_sided",
+      "participant_dependence": "one_P2_minus_B0_difference_per_participant",
+      "requested_method": "participant_paired_difference",
+      "response_variable": "custom_selection_convenience",
+      "standardized_effect_definition": "cohens_dz=mean_participant_difference/sd_participant_difference",
+      "status": "COMPUTED",
+      "task_pair_fixed_effect": false
+    }
+  },
+  "decision_time_seconds": {
+    "actual_method": "participant_paired_robust_raw_scale",
+    "clock_definition": "confirmed_environment_timestamp_minus_task_shown_timestamp",
+    "converged": null,
+    "effective_participant_count": 1,
+    "eligibility": {
+      "complete_matched_pair_count": 3,
+      "effective_participant_count": 1,
+      "eligible_row_count": 6
+    },
+    "estimand": "conditional_on_matched_task_pairs_with_valid_positive_confirmation_times_in_both_B0_and_P2",
+    "estimand_population": "matched_task_pairs_with_valid_positive_confirmation_times_in_both_conditions",
+    "fallback_reason": "insufficient_participants",
+    "geometric_mean_ratio": null,
+    "geometric_mean_ratio_ci_95": [
+      null,
+      null
+    ],
+    "method": "participant_paired_robust_raw_scale",
+    "nonconfirmation_policy": "outcome_unavailable_not_participant_or_task_exclusion",
+    "p_value_holm": null,
+    "p_value_raw": null,
+    "p_value_sidedness": "two_sided",
+    "percent_change": null,
+    "population_accounting": {
+      "all_assigned_measured_trials_retained_in_flow_and_missingness": true,
+      "assigned_measured_trial_count": 6,
+      "condition_denominators": {
+        "B0": {
+          "assigned_measured_trial_count": 3,
+          "confirmed_trial_count": 3,
+          "decision_time_available_count": 3,
+          "decision_time_unavailable_count": 0,
+          "nonconfirmed_trial_count": 0
+        },
+        "P2": {
+          "assigned_measured_trial_count": 3,
+          "confirmed_trial_count": 3,
+          "decision_time_available_count": 3,
+          "decision_time_unavailable_count": 0,
+          "nonconfirmed_trial_count": 0
+        }
+      },
+      "nonconfirmation_is_exclusion": false,
+      "primary_eligible_matched_pair_count": 3,
+      "primary_eligible_trial_row_count": 6,
+      "primary_timeout_or_pseudotime_used": false
+    },
+    "primary_timeout_or_pseudotime_policy": "none",
+    "raw_paired_effect": {
+      "bootstrap": {
+        "base_seed": 20260827,
+        "ci_available": false,
+        "ci_construction": "percentile_equal_tailed_95",
+        "effective_seed": 20261028,
+        "failed_replicates_discarded": 2000,
+        "minimum_success_fraction": 0.95,
+        "requested_replicates": 2000,
+        "resampling_unit": "participant_all_rows_together",
+        "rng_algorithm": "numpy.random.PCG64",
+        "seed_offset": 201,
+        "successful_fraction": 0.0,
+        "successful_replicates": 0
+      },
+      "ci_method": "participant_percentile_bootstrap",
+      "cohens_dz": null,
+      "complete_participant_count": 1,
+      "confidence_interval_95": [
+        null,
+        null
+      ],
+      "effect_direction": "P2_minus_B0",
+      "mean_difference": -10.145568541716784,
+      "median_difference": -10.145568541716784,
+      "standardized_effect_definition": "cohens_dz=mean_participant_difference/sd_participant_difference"
+    },
+    "requested_method": "log_time_participant_random_intercept_mixedlm",
+    "response_variable": "decision_time_seconds",
+    "status": "FALLBACK"
+  },
+  "decision_time_timeout_sensitivity": {
+    "actual_method": "participant_paired_difference",
+    "analysis_plan_sha256": "1874b426666111362ef79f4e23315dc8f51a97b10827ae2e596cc70523b1a3ce",
+    "analysis_plan_version": "protocol-v5-user-study-analysis-plan-v1.2.0",
+    "bootstrap": {
+      "base_seed": 20260827,
+      "ci_available": false,
+      "ci_construction": "percentile_equal_tailed_95",
+      "effective_seed": 20261032,
+      "failed_replicates_discarded": 2000,
+      "minimum_success_fraction": 0.95,
+      "requested_replicates": 2000,
+      "resampling_unit": "participant_all_rows_together",
+      "rng_algorithm": "numpy.random.PCG64",
+      "seed_offset": 205,
+      "successful_fraction": 0.0,
+      "successful_replicates": 0
+    },
+    "ci_method": "participant_percentile_bootstrap",
+    "cohens_dz": null,
+    "complete_participant_count": 1,
+    "confidence_interval_95": [
+      null,
+      null
+    ],
+    "converged": null,
+    "effect_direction": "P2_minus_B0",
+    "eligibility": {
+      "complete_matched_pair_count": 1,
+      "effective_participant_count": 1,
+      "eligible_row_count": 6
+    },
+    "estimand": "timeout_bound_decision_completion_composite_P2_minus_B0",
+    "fallback_reason": null,
+    "mean_difference": -10.145568541716784,
+    "median_difference": -10.145568541716784,
+    "method": "participant_paired_difference",
+    "p_value_raw": null,
+    "p_value_sidedness": "two_sided",
+    "participant_dependence": "one_P2_minus_B0_difference_per_participant",
+    "primary_holm_family": false,
+    "requested_method": "participant_paired_difference",
+    "response_variable": "decision_time_timeout_sensitivity_seconds",
+    "standardized_effect_definition": "cohens_dz=mean_participant_difference/sd_participant_difference",
+    "status": "COMPUTED",
+    "task_pair_fixed_effect": false,
+    "timeout_bound_seconds": 600.0,
+    "timeout_bound_semantics": "server_enforced_task_decision_limit_and_secondary_analysis_bound_only",
+    "timing_contract_sha256": "3a1cbe7ea27d0c52eb909770d8c72f6b7a6c566e049692cae647569dd47e055d",
+    "timing_contract_version": "protocol-v5-user-study-timing-contract-v1.0.0"
+  },
+  "end_to_end_launch_time": {
+    "actual_method": "participant_paired_robust_raw_scale",
+    "clock_definition": "notebook_ready_timestamp_minus_task_shown_timestamp",
+    "converged": null,
+    "effective_participant_count": 1,
+    "eligibility": {
+      "complete_matched_pair_count": 3,
+      "effective_participant_count": 1,
+      "eligible_row_count": 6
+    },
+    "fallback_reason": "insufficient_participants",
+    "geometric_mean_ratio": null,
+    "geometric_mean_ratio_ci_95": [
+      null,
+      null
+    ],
+    "method": "participant_paired_robust_raw_scale",
+    "p_value_raw": null,
+    "p_value_sidedness": "two_sided",
+    "percent_change": null,
+    "raw_paired_effect": {
+      "bootstrap": {
+        "base_seed": 20260827,
+        "ci_available": false,
+        "ci_construction": "percentile_equal_tailed_95",
+        "effective_seed": 20261033,
+        "failed_replicates_discarded": 2000,
+        "minimum_success_fraction": 0.95,
+        "requested_replicates": 2000,
+        "resampling_unit": "participant_all_rows_together",
+        "rng_algorithm": "numpy.random.PCG64",
+        "seed_offset": 206,
+        "successful_fraction": 0.0,
+        "successful_replicates": 0
+      },
+      "ci_method": "participant_percentile_bootstrap",
+      "cohens_dz": null,
+      "complete_participant_count": 1,
+      "confidence_interval_95": [
+        null,
+        null
+      ],
+      "effect_direction": "P2_minus_B0",
+      "mean_difference": -10.140321917055795,
+      "median_difference": -10.140321917055795,
+      "standardized_effect_definition": "cohens_dz=mean_participant_difference/sd_participant_difference"
+    },
+    "requested_method": "log_time_participant_random_intercept_mixedlm",
+    "response_variable": "end_to_end_seconds",
+    "status": "FALLBACK"
+  },
+  "holm_family": {
+    "alpha": 0.05,
+    "family": [
+      "selection_success",
+      "decision_time_seconds"
+    ],
+    "method": "holm_two_sided"
+  },
+  "interaction_count": {
+    "actual_method": "participant_paired_count_difference",
+    "confidence_interval_95": [
+      null,
+      null
+    ],
+    "converged": null,
+    "dispersion_method": "pearson_scale_estimated_from_fit",
+    "dispersion_scale": null,
+    "eligibility": {
+      "complete_matched_pair_count": null,
+      "effective_participant_count": 1,
+      "eligible_row_count": 6
+    },
+    "fallback_reason": "insufficient_participants",
+    "incidence_rate_ratio": null,
+    "method": "participant_paired_count_difference",
+    "p_value_raw": null,
+    "p_value_sidedness": "two_sided",
+    "paired_effect": {
+      "bootstrap": {
+        "base_seed": 20260827,
+        "ci_available": false,
+        "ci_construction": "percentile_equal_tailed_95",
+        "effective_seed": 20261146,
+        "failed_replicates_discarded": 2000,
+        "minimum_success_fraction": 0.95,
+        "requested_replicates": 2000,
+        "resampling_unit": "participant_all_rows_together",
+        "rng_algorithm": "numpy.random.PCG64",
+        "seed_offset": 319,
+        "successful_fraction": 0.0,
+        "successful_replicates": 0
+      },
+      "ci_method": "participant_percentile_bootstrap",
+      "cohens_dz": null,
+      "complete_participant_count": 1,
+      "confidence_interval_95": [
+        null,
+        null
+      ],
+      "effect_direction": "P2_minus_B0",
+      "mean_difference": 0.6666666666666665,
+      "median_difference": 0.6666666666666665,
+      "standardized_effect_definition": "cohens_dz=mean_participant_difference/sd_participant_difference"
+    },
+    "requested_method": "participant_clustered_quasipoisson_gee_exchangeable",
+    "response_variable": "interaction_count",
+    "status": "FALLBACK"
+  },
+  "notebook_ready_time": {
+    "actual_method": "participant_paired_robust_raw_scale",
+    "clock_definition": "notebook_ready_timestamp_minus_confirmed_environment_timestamp",
+    "converged": null,
+    "effective_participant_count": 1,
+    "eligibility": {
+      "complete_matched_pair_count": 3,
+      "effective_participant_count": 1,
+      "eligible_row_count": 6
+    },
+    "fallback_reason": "insufficient_participants",
+    "geometric_mean_ratio": null,
+    "geometric_mean_ratio_ci_95": [
+      null,
+      null
+    ],
+    "method": "participant_paired_robust_raw_scale",
+    "p_value_raw": null,
+    "p_value_sidedness": "two_sided",
+    "percent_change": null,
+    "raw_paired_effect": {
+      "bootstrap": {
+        "base_seed": 20260827,
+        "ci_available": false,
+        "ci_construction": "percentile_equal_tailed_95",
+        "effective_seed": 20261029,
+        "failed_replicates_discarded": 2000,
+        "minimum_success_fraction": 0.95,
+        "requested_replicates": 2000,
+        "resampling_unit": "participant_all_rows_together",
+        "rng_algorithm": "numpy.random.PCG64",
+        "seed_offset": 202,
+        "successful_fraction": 0.0,
+        "successful_replicates": 0
+      },
+      "ci_method": "participant_percentile_bootstrap",
+      "cohens_dz": null,
+      "complete_participant_count": 1,
+      "confidence_interval_95": [
+        null,
+        null
+      ],
+      "effect_direction": "P2_minus_B0",
+      "mean_difference": 0.005246624660988648,
+      "median_difference": 0.005246624660988648,
+      "standardized_effect_definition": "cohens_dz=mean_participant_difference/sd_participant_difference"
+    },
+    "requested_method": "log_time_participant_random_intercept_mixedlm",
+    "response_variable": "notebook_ready_time_seconds",
+    "status": "FALLBACK"
+  },
+  "selection_success": {
+    "actual_method": "participant_paired_risk_difference",
+    "bootstrap": {
+      "base_seed": 20260827,
+      "ci_available": false,
+      "ci_construction": "percentile_equal_tailed_95",
+      "effective_seed": 20260929,
+      "failed_replicates_discarded": 2000,
+      "minimum_success_fraction": 0.95,
+      "requested_replicates": 2000,
+      "resampling_unit": "participant_all_rows_together",
+      "rng_algorithm": "numpy.random.PCG64",
+      "seed_offset": 102,
+      "successful_fraction": 0.0,
+      "successful_replicates": 0
+    },
+    "converged": null,
+    "effective_participant_count": 1,
+    "eligibility": {
+      "complete_matched_pair_count": null,
+      "effective_participant_count": 1,
+      "eligible_row_count": 6
+    },
+    "fallback_reason": "insufficient_clusters_or_outcome_variation",
+    "method": "participant_paired_risk_difference",
+    "odds_ratio": null,
+    "odds_ratio_ci_95": [
+      null,
+      null
+    ],
+    "p_value_holm": null,
+    "p_value_raw": null,
+    "p_value_sidedness": "two_sided",
+    "requested_method": "participant_clustered_binomial_gee_exchangeable",
+    "risk_difference": -0.3333333333333333,
+    "risk_difference_ci_95": [
+      null,
+      null
+    ],
+    "risk_difference_estimand": "mean_participant_P2_minus_B0_success_probability",
+    "status": "FALLBACK"
+  },
+  "seq_ease": {
+    "actual_method": "participant_paired_scale_difference",
+    "adjusted_mean_difference": -0.666666666666667,
+    "adjusted_mean_difference_ci_95": [
+      null,
+      null
+    ],
+    "converged": null,
+    "eligibility": {
+      "complete_matched_pair_count": 3,
+      "effective_participant_count": 1,
+      "eligible_row_count": 6
+    },
+    "fallback_reason": "insufficient_participants",
+    "method": "participant_paired_scale_difference",
+    "p_value_raw": null,
+    "p_value_sidedness": "two_sided",
+    "paired_effect": {
+      "bootstrap": {
+        "base_seed": 20260827,
+        "ci_available": false,
+        "ci_construction": "percentile_equal_tailed_95",
+        "effective_seed": 20261030,
+        "failed_replicates_discarded": 2000,
+        "minimum_success_fraction": 0.95,
+        "requested_replicates": 2000,
+        "resampling_unit": "participant_all_rows_together",
+        "rng_algorithm": "numpy.random.PCG64",
+        "seed_offset": 203,
+        "successful_fraction": 0.0,
+        "successful_replicates": 0
+      },
+      "ci_method": "participant_percentile_bootstrap",
+      "cohens_dz": null,
+      "complete_participant_count": 1,
+      "confidence_interval_95": [
+        null,
+        null
+      ],
+      "effect_direction": "P2_minus_B0",
+      "mean_difference": -0.666666666666667,
+      "median_difference": -0.666666666666667,
+      "standardized_effect_definition": "cohens_dz=mean_participant_difference/sd_participant_difference"
+    },
+    "participant_cluster_bootstrap_ci_95": [
+      null,
+      null
+    ],
+    "requested_method": "participant_random_intercept_mixedlm_pair_fixed",
+    "response_variable": "seq_ease",
+    "standardized_effect_definition": "cohens_dz=mean_participant_difference/sd_participant_difference",
+    "standardized_paired_effect": null,
+    "status": "FALLBACK"
+  },
+  "sus": {
+    "actual_method": "participant_paired_difference",
+    "bootstrap": {
+      "base_seed": 20260827,
+      "ci_available": false,
+      "ci_construction": "percentile_equal_tailed_95",
+      "effective_seed": 20261031,
+      "failed_replicates_discarded": 2000,
+      "minimum_success_fraction": 0.95,
+      "requested_replicates": 2000,
+      "resampling_unit": "participant_all_rows_together",
+      "rng_algorithm": "numpy.random.PCG64",
+      "seed_offset": 204,
+      "successful_fraction": 0.0,
+      "successful_replicates": 0
+    },
+    "ci_method": "participant_percentile_bootstrap",
+    "cohens_dz": null,
+    "complete_participant_count": 1,
+    "confidence_interval_95": [
+      null,
+      null
+    ],
+    "converged": null,
+    "effect_direction": "P2_minus_B0",
+    "eligibility": {
+      "complete_matched_pair_count": 1,
+      "effective_participant_count": 1,
+      "eligible_row_count": 2
+    },
+    "fallback_reason": null,
+    "mean_difference": -5.0,
+    "median_difference": -5.0,
+    "method": "participant_paired_difference",
+    "p_value_raw": null,
+    "p_value_sidedness": "two_sided",
+    "participant_dependence": "one_P2_minus_B0_difference_per_participant",
+    "requested_method": "participant_paired_difference",
+    "response_variable": "sus_score",
+    "standardized_effect_definition": "cohens_dz=mean_participant_difference/sd_participant_difference",
+    "status": "COMPUTED",
+    "task_pair_fixed_effect": false
+  },
+  "total_action_count": {
+    "actual_method": "participant_paired_count_difference",
+    "compatibility_alias_for": "interaction_count",
+    "confidence_interval_95": [
+      null,
+      null
+    ],
+    "converged": null,
+    "dispersion_method": "pearson_scale_estimated_from_fit",
+    "dispersion_scale": null,
+    "eligibility": {
+      "complete_matched_pair_count": null,
+      "effective_participant_count": 1,
+      "eligible_row_count": 6
+    },
+    "fallback_reason": "insufficient_participants",
+    "incidence_rate_ratio": null,
+    "method": "participant_paired_count_difference",
+    "p_value_raw": null,
+    "p_value_sidedness": "two_sided",
+    "paired_effect": {
+      "bootstrap": {
+        "base_seed": 20260827,
+        "ci_available": false,
+        "ci_construction": "percentile_equal_tailed_95",
+        "effective_seed": 20261146,
+        "failed_replicates_discarded": 2000,
+        "minimum_success_fraction": 0.95,
+        "requested_replicates": 2000,
+        "resampling_unit": "participant_all_rows_together",
+        "rng_algorithm": "numpy.random.PCG64",
+        "seed_offset": 319,
+        "successful_fraction": 0.0,
+        "successful_replicates": 0
+      },
+      "ci_method": "participant_percentile_bootstrap",
+      "cohens_dz": null,
+      "complete_participant_count": 1,
+      "confidence_interval_95": [
+        null,
+        null
+      ],
+      "effect_direction": "P2_minus_B0",
+      "mean_difference": 0.6666666666666665,
+      "median_difference": 0.6666666666666665,
+      "standardized_effect_definition": "cohens_dz=mean_participant_difference/sd_participant_difference"
+    },
+    "requested_method": "participant_clustered_quasipoisson_gee_exchangeable",
+    "response_variable": "interaction_count",
+    "status": "FALLBACK"
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "capacity_source": "KUBERNETES_NODE_STATUS_ALLOCATABLE",
+  "concurrent_cluster_evidence": false,
+  "evidence_label": "SIMULATED_DETERMINISTIC_REQUEST_PACKING",
+  "evidence_type": "SIMULATED_CAPACITY",
+  "reason": "NODE_CAPACITY_NOT_FROZEN",
+  "scheduler_input": "OBSERVED_POD_RESOURCE_REQUESTS",
+  "schema_version": "protocol-v5-resource-efficiency-capacity-result-v1.0.0",
+  "status": "NOT_EXECUTED"
+}

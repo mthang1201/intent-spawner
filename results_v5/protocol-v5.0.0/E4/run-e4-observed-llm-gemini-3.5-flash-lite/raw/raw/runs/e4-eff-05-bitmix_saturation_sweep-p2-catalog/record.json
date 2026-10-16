@@ -1,0 +1,150 @@
+{
+  "admission_or_scheduling_reason": "UNKNOWN",
+  "cgroup_metrics": {
+    "cgroup_version": "v2",
+    "controllers": [
+      "cpuset",
+      "cpu",
+      "io",
+      "memory",
+      "pids"
+    ],
+    "cpu_full_window_average_m": 500.059171,
+    "cpu_interval_sample_max_m": 686.872579,
+    "cpu_max": "50000 100000",
+    "cpu_nr_periods_delta": 236,
+    "cpu_nr_throttled_delta": 236,
+    "cpu_throttled_usec_delta": 5940212,
+    "cpu_usage_usec_delta": 11799760,
+    "memory_current_sample_max_mib": 16.136719,
+    "memory_events_delta": {
+      "high": 0,
+      "low": 0,
+      "max": 0,
+      "oom": 0,
+      "oom_group_kill": 0,
+      "oom_kill": 0,
+      "sock_throttled": 0
+    },
+    "memory_high": "max",
+    "memory_max": "402653184",
+    "memory_peak_mib": 16.136719,
+    "sample_count": 167,
+    "sample_interval_seconds": 0.1,
+    "source": "cgroup_v2_in_container"
+  },
+  "collector_origin": "REAL_KUBERNETES_COLLECTOR",
+  "condition": "P2_CATALOG",
+  "container_runtime_seconds": 24.0,
+  "correctness": true,
+  "correctness_details": {
+    "all_invariants_match": true,
+    "checker_version": "frozen-invariant-checker-v1.0.0",
+    "expected_invariants": {
+      "checksum": 8571833068596674850,
+      "iterations": 22000000,
+      "tail": 828146324709760116
+    },
+    "observed_invariants": {
+      "checksum": 8571833068596674850,
+      "iterations": 22000000,
+      "tail": 828146324709760116
+    }
+  },
+  "correctness_invariants_ok": true,
+  "deterministic_seed": 8120,
+  "exclusion_reason": null,
+  "expected_marker_sha256": "9dc6fa6cac809ed06b2b2fa339ddd27bd4b4d95a630c22bb980f1539a5721c23",
+  "family_id": "bitmix_saturation_sweep",
+  "infrastructure_invalid": false,
+  "kubernetes": {
+    "cleanup_status": "succeeded",
+    "events": [
+      {
+        "count": null,
+        "first_timestamp": null,
+        "last_timestamp": null,
+        "message": "Successfully assigned z2jh-context-demo/e4e-7d60f4c1469e57747c1c48f5 to orbstack",
+        "reason": "Scheduled",
+        "type": "Normal"
+      },
+      {
+        "count": 1,
+        "first_timestamp": "2026-10-13T09:50:08Z",
+        "last_timestamp": "2026-10-13T09:50:08Z",
+        "message": "Container image \"intent-spawner-resource-v5:latest\" already present on machine",
+        "reason": "Pulled",
+        "type": "Normal"
+      },
+      {
+        "count": 1,
+        "first_timestamp": "2026-10-13T09:50:08Z",
+        "last_timestamp": "2026-10-13T09:50:08Z",
+        "message": "Created container: workload",
+        "reason": "Created",
+        "type": "Normal"
+      },
+      {
+        "count": 1,
+        "first_timestamp": "2026-10-13T09:50:08Z",
+        "last_timestamp": "2026-10-13T09:50:08Z",
+        "message": "Started container workload",
+        "reason": "Started",
+        "type": "Normal"
+      }
+    ],
+    "exit_code": 0,
+    "finished_at": "2026-10-13T09:50:32Z",
+    "image_id": "docker://sha256:84554666609638527f99c47ca139d29daf41ce3aef3f5f2c955421aa72842beb",
+    "image_reference": "intent-spawner-resource-v5:latest",
+    "node_name": "orbstack",
+    "phase": "Succeeded",
+    "pod_name": "e4e-7d60f4c1469e57747c1c48f5",
+    "pod_uid": "44ae9d95-1528-4e0e-8896-cbcbe7c7dd5d",
+    "reason": "Completed",
+    "restart_count": 0,
+    "started_at": "2026-10-13T09:50:08Z",
+    "terminated_reason": "Completed",
+    "waiting_reason": null
+  },
+  "observed_marker_sha256": "9dc6fa6cac809ed06b2b2fa339ddd27bd4b4d95a630c22bb980f1539a5721c23",
+  "observed_resources": {
+    "cpu_limit_m": 500,
+    "cpu_request_m": 100,
+    "gpu_count": 0,
+    "gpu_resource": null,
+    "memory_limit_mib": 384,
+    "memory_request_mib": 256
+  },
+  "oom": false,
+  "pending_or_admission_failure": false,
+  "plan_index": 350,
+  "planned_resources": {
+    "cpu_limit_m": 500,
+    "cpu_request_m": 100,
+    "gpu_count": 0,
+    "gpu_resource": null,
+    "memory_limit_mib": 384,
+    "memory_request_mib": 256
+  },
+  "pod_created": true,
+  "primary_outcome": "SUCCESS",
+  "primary_trial_id": "e4-eff-05-bitmix_saturation_sweep-p2-catalog",
+  "recorded_at_utc": "2026-10-13T09:50:34.380274Z",
+  "repetition": 5,
+  "replacement_of": null,
+  "runtime_error": false,
+  "scheduled": true,
+  "schema_version": "protocol-v5-resource-efficiency-trial-v1.0.0",
+  "sidecar_paths": {
+    "record": "raw/runs/e4-eff-05-bitmix_saturation_sweep-p2-catalog/record.json"
+  },
+  "success": true,
+  "timeout": false,
+  "timeout_seconds": 120,
+  "trial_id": "e4-eff-05-bitmix_saturation_sweep-p2-catalog",
+  "workload_fingerprint": "956e3165aa190551c79533f70e5b507f0cfd05b819676fa90ae1a06273ffb87e",
+  "workload_instance_id": "bitmix-saturation-v1-iterations-22000000-seed-8120",
+  "workload_output_exists": true,
+  "workload_runtime_seconds": 23.596972
+}

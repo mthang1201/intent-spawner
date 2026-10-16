@@ -1,0 +1,75 @@
+{
+  "description": "Recall@K comparison for Sparse, Dense, and Hybrid retrieval channels. These are P2 ablations, not primary system IDs.",
+  "ks": [
+    1,
+    3,
+    5
+  ],
+  "results": [
+    {
+      "channel": "Sparse",
+      "is_ablation": true,
+      "is_proposed": false,
+      "k": 1,
+      "recall_at_k": 0.4636363636363636
+    },
+    {
+      "channel": "Sparse",
+      "is_ablation": true,
+      "is_proposed": false,
+      "k": 3,
+      "recall_at_k": 0.8340909090909091
+    },
+    {
+      "channel": "Sparse",
+      "is_ablation": true,
+      "is_proposed": false,
+      "k": 5,
+      "recall_at_k": 0.8454545454545456
+    },
+    {
+      "channel": "Dense",
+      "is_ablation": true,
+      "is_proposed": false,
+      "k": 1,
+      "recall_at_k": 0.2431818181818182
+    },
+    {
+      "channel": "Dense",
+      "is_ablation": true,
+      "is_proposed": false,
+      "k": 3,
+      "recall_at_k": 0.5772727272727273
+    },
+    {
+      "channel": "Dense",
+      "is_ablation": true,
+      "is_proposed": false,
+      "k": 5,
+      "recall_at_k": 0.6818181818181818
+    },
+    {
+      "channel": "Hybrid",
+      "is_ablation": false,
+      "is_proposed": true,
+      "k": 1,
+      "recall_at_k": 0.3409090909090909
+    },
+    {
+      "channel": "Hybrid",
+      "is_ablation": false,
+      "is_proposed": true,
+      "k": 3,
+      "recall_at_k": 0.6909090909090909
+    },
+    {
+      "channel": "Hybrid",
+      "is_ablation": false,
+      "is_proposed": true,
+      "k": 5,
+      "recall_at_k": 0.7772727272727273
+    }
+  ],
+  "schema_version": "protocol-v5-offline-reporting-v1.0.0",
+  "title": "P2 Retrieval Ablation: Recall@K"
+}

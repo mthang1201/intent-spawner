@@ -1,0 +1,38 @@
+[
+  {
+    "answered_denominator": 1,
+    "count": 0,
+    "interval_method": "bonferroni_adjusted_wilson",
+    "missing_response_count": 0,
+    "percentage": 0.0,
+    "preference": "B0",
+    "simultaneous_confidence_interval_95": [
+      0.0,
+      85.14367392926796
+    ]
+  },
+  {
+    "answered_denominator": 1,
+    "count": 0,
+    "interval_method": "bonferroni_adjusted_wilson",
+    "missing_response_count": 0,
+    "percentage": 0.0,
+    "preference": "P2",
+    "simultaneous_confidence_interval_95": [
+      0.0,
+      85.14367392926796
+    ]
+  },
+  {
+    "answered_denominator": 1,
+    "count": 1,
+    "interval_method": "bonferroni_adjusted_wilson",
+    "missing_response_count": 0,
+    "percentage": 100.0,
+    "preference": "NO_PREFERENCE",
+    "simultaneous_confidence_interval_95": [
+      14.85632607073204,
+      100.0
+    ]
+  }
+]

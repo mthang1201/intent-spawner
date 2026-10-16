@@ -1,0 +1,2357 @@
+{
+  "claims": [
+    {
+      "claim_id": "H1",
+      "claim_status": "NOT_EXECUTED",
+      "claimable": false,
+      "decision_rule": {
+        "conditions": [
+          {
+            "operator": "gt",
+            "path": "metrics.effect",
+            "value": 0
+          },
+          {
+            "operator": "gt",
+            "path": "metrics.ci_low",
+            "value": 0
+          },
+          {
+            "operator": "lt",
+            "path": "metrics.p_value",
+            "value": 0.05
+          },
+          {
+            "operator": "eq",
+            "path": "metrics.test_available",
+            "value": true
+          }
+        ],
+        "logic": "ALL_OF",
+        "registry_schema_version": "protocol-v5-claim-registry-v1.2.0"
+      },
+      "evidence": [],
+      "evidence_status": [
+        {
+          "claim_eligibility": "UNAVAILABLE",
+          "execution_status": null,
+          "requirement_id": "offline_recommendation",
+          "selection_mode": "REJECTED_AUTHENTICATION",
+          "stage": null,
+          "validation_status": null
+        }
+      ],
+      "experiments": [
+        "E1"
+      ],
+      "hypothesis": "P2 has higher JointAccept@1 than P1.",
+      "limitations": [
+        {
+          "affected_claims": [
+            "H1"
+          ],
+          "affected_evidence_requirements": [
+            "offline_recommendation"
+          ],
+          "category": "statistical_conclusion",
+          "code": "REQUIRED_EVIDENCE_UNAVAILABLE",
+          "observed_value": {
+            "candidate_count": 2,
+            "eligible_candidate_count": 2,
+            "reason_codes": [
+              "AUTO_SELECTED_LATEST_DEVELOPMENT_CANDIDATE",
+              "SOURCE_PROVENANCE_MISMATCH"
+            ]
+          },
+          "severity": "blocking",
+          "source_artifact": "derived/evidence-selection.json",
+          "source_pointer": "/requirements/0",
+          "statement": "The required confirmatory evidence was unavailable or unselected, so the linked claim cannot be decided.",
+          "threat_id": "TV-001"
+        },
+        {
+          "affected_claims": [
+            "H1"
+          ],
+          "affected_evidence_requirements": [
+            "offline_recommendation"
+          ],
+          "category": "benchmark_contamination",
+          "code": "NON_CONFIRMATORY_EVIDENCE_PRESENT",
+          "observed_value": {
+            "count": 2,
+            "manifests": [
+              "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E1/run-e1-llm-gemini-3.5-flash-lite/derived/statistical_analysis/analysis-manifest.json",
+              "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E1/run-e1-local/derived/statistical_analysis/analysis-manifest.json"
+            ],
+            "stages": [
+              "development"
+            ]
+          },
+          "severity": "boundary",
+          "source_artifact": "derived/evidence-inventory.json",
+          "source_pointer": "/candidates",
+          "statement": "Development, historical, or unknown-stage packages are inventoried but excluded from confirmatory claim decisions.",
+          "threat_id": "TV-011"
+        },
+        {
+          "affected_claims": [
+            "H1"
+          ],
+          "affected_evidence_requirements": [
+            "offline_recommendation"
+          ],
+          "category": "internal",
+          "code": "SEMANTIC_PROVENANCE_MISSING",
+          "observed_value": {
+            "digest_namespace": "offline_benchmark_dataset_bytes",
+            "expected": "PRESENT",
+            "freeze_digest_namespace": null,
+            "observed": null,
+            "semantic_key": "benchmark.dataset_sha256"
+          },
+          "severity": "blocking",
+          "source_artifact": "derived/provenance-consistency.json",
+          "source_pointer": "/semantic_comparisons/0",
+          "statement": "Recorded semantic provenance is missing, contradictory, or uses an incompatible digest namespace; affected claims are blocked.",
+          "threat_id": "TV-015"
+        },
+        {
+          "affected_claims": [
+            "H1",
+            "H2",
+            "H5",
+            "H6",
+            "H7F"
+          ],
+          "affected_evidence_requirements": [
+            "image_functional",
+            "natural_language_robustness",
+            "offline_recommendation",
+            "resource_efficiency"
+          ],
+          "category": "internal",
+          "code": "SEMANTIC_PROVENANCE_MISMATCH",
+          "observed_value": {
+            "digest_namespace": null,
+            "expected": "rule-based-v1",
+            "freeze_digest_namespace": null,
+            "observed": {
+              "image_functional": {
+                "adapter_version": "protocol-v5-p1-frozen-adapter-v1",
+                "backend_name": "rule_based",
+                "backend_version": "rule-based-v1"
+              },
+              "natural_language_robustness": "rule-based-v1",
+              "offline_recommendation": "rule-based-v1",
+              "resource_efficiency": "rule-based-v1"
+            },
+            "semantic_key": "p1.backend_version"
+          },
+          "severity": "blocking",
+          "source_artifact": "derived/provenance-consistency.json",
+          "source_pointer": "/semantic_comparisons/16",
+          "statement": "Recorded semantic provenance is missing, contradictory, or uses an incompatible digest namespace; affected claims are blocked.",
+          "threat_id": "TV-018"
+        },
+        {
+          "affected_claims": [
+            "H1",
+            "H2",
+            "H5",
+            "H6",
+            "H7",
+            "H7F"
+          ],
+          "affected_evidence_requirements": [
+            "image_functional",
+            "image_storage",
+            "natural_language_robustness",
+            "offline_recommendation",
+            "resource_efficiency"
+          ],
+          "category": "internal",
+          "code": "SEMANTIC_PROVENANCE_MISMATCH",
+          "observed_value": {
+            "digest_namespace": null,
+            "expected": "p2-pipeline-v1.0.0",
+            "freeze_digest_namespace": null,
+            "observed": {
+              "image_functional": {
+                "adapter_version": "protocol-v5-p2-frozen-adapter-v1",
+                "backend_name": "p2",
+                "backend_version": "p2-hybrid-v1.0.0"
+              },
+              "image_storage": "p2-pipeline-v1.0.0",
+              "natural_language_robustness": "p2-pipeline-v1.0.0",
+              "offline_recommendation": "p2-pipeline-v1.0.0",
+              "resource_efficiency": "p2-pipeline-v1.0.0"
+            },
+            "semantic_key": "p2.pipeline_version"
+          },
+          "severity": "blocking",
+          "source_artifact": "derived/provenance-consistency.json",
+          "source_pointer": "/semantic_comparisons/19",
+          "statement": "Recorded semantic provenance is missing, contradictory, or uses an incompatible digest namespace; affected claims are blocked.",
+          "threat_id": "TV-019"
+        }
+      ],
+      "metrics": [
+        {
+          "direction": "higher",
+          "id": "joint_accept_at_1_difference",
+          "label": "P2 minus P1 JointAccept@1",
+          "source_endpoints": [
+            "joint_accept_at_1"
+          ],
+          "systems": [
+            "P1",
+            "P2"
+          ],
+          "unit": "proportion"
+        }
+      ],
+      "reason_codes": [
+        "AUTO_SELECTED_LATEST_DEVELOPMENT_CANDIDATE",
+        "REQUIRED_METRIC_OR_TEST_UNAVAILABLE",
+        "SOURCE_PROVENANCE_MISMATCH"
+      ],
+      "research_question": {
+        "id": "RQ1",
+        "question": "Does P2 improve top-one recommendation quality relative to frozen P1?"
+      },
+      "result": {
+        "all_support_conditions_passed": null,
+        "decision_checks": [
+          {
+            "expected": 0,
+            "observed": null,
+            "operator": "gt",
+            "passed": null,
+            "path": "metrics.effect"
+          },
+          {
+            "expected": 0,
+            "observed": null,
+            "operator": "gt",
+            "passed": null,
+            "path": "metrics.ci_low"
+          },
+          {
+            "expected": 0.05,
+            "observed": null,
+            "operator": "lt",
+            "passed": null,
+            "path": "metrics.p_value"
+          },
+          {
+            "expected": true,
+            "observed": null,
+            "operator": "eq",
+            "passed": null,
+            "path": "metrics.test_available"
+          }
+        ],
+        "metric_lineage": {},
+        "normalized_metrics": {}
+      },
+      "schema_version": "protocol-v5-evaluated-claim-v1.1.0",
+      "statistical_tests": [
+        {
+          "alpha": 0.05,
+          "id": "h1_paired_family_test",
+          "independent_unit": "workload_family",
+          "method": "exact McNemar when family outcomes are binary, otherwise paired Wilcoxon; family bootstrap CI",
+          "multiplicity": null,
+          "observed_evidence_tests": []
+        }
+      ]
+    },
+    {
+      "claim_id": "H2",
+      "claim_status": "NOT_EXECUTED",
+      "claimable": false,
+      "decision_rule": {
+        "conditions": [
+          {
+            "operator": "lt",
+            "path": "metrics.effect",
+            "value": 0
+          },
+          {
+            "operator": "lt",
+            "path": "metrics.ci_high",
+            "value": 0
+          },
+          {
+            "operator": "lt",
+            "path": "metrics.p_value",
+            "value": 0.05
+          },
+          {
+            "operator": "eq",
+            "path": "metrics.test_available",
+            "value": true
+          }
+        ],
+        "logic": "ALL_OF",
+        "registry_schema_version": "protocol-v5-claim-registry-v1.2.0"
+      },
+      "evidence": [],
+      "evidence_status": [
+        {
+          "claim_eligibility": "UNAVAILABLE",
+          "execution_status": null,
+          "requirement_id": "natural_language_robustness",
+          "selection_mode": "REJECTED_AUTHENTICATION",
+          "stage": null,
+          "validation_status": null
+        }
+      ],
+      "experiments": [
+        "E2"
+      ],
+      "hypothesis": "P2 loses less JointAccept@1 under reviewed-equivalent surface-form changes than P1.",
+      "limitations": [
+        {
+          "affected_claims": [
+            "H2"
+          ],
+          "affected_evidence_requirements": [
+            "natural_language_robustness"
+          ],
+          "category": "statistical_conclusion",
+          "code": "REQUIRED_EVIDENCE_UNAVAILABLE",
+          "observed_value": {
+            "candidate_count": 2,
+            "eligible_candidate_count": 2,
+            "reason_codes": [
+              "AUTO_SELECTED_LATEST_DEVELOPMENT_CANDIDATE",
+              "SOURCE_PROVENANCE_MISMATCH"
+            ]
+          },
+          "severity": "blocking",
+          "source_artifact": "derived/evidence-selection.json",
+          "source_pointer": "/requirements/1",
+          "statement": "The required confirmatory evidence was unavailable or unselected, so the linked claim cannot be decided.",
+          "threat_id": "TV-002"
+        },
+        {
+          "affected_claims": [
+            "H2"
+          ],
+          "affected_evidence_requirements": [
+            "natural_language_robustness"
+          ],
+          "category": "benchmark_contamination",
+          "code": "NON_CONFIRMATORY_EVIDENCE_PRESENT",
+          "observed_value": {
+            "count": 2,
+            "manifests": [
+              "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E1/run-e1-llm-gemini-3.5-flash-lite/derived/statistical_analysis/analysis-manifest.json",
+              "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E1/run-e1-local/derived/statistical_analysis/analysis-manifest.json"
+            ],
+            "stages": [
+              "development"
+            ]
+          },
+          "severity": "boundary",
+          "source_artifact": "derived/evidence-inventory.json",
+          "source_pointer": "/candidates",
+          "statement": "Development, historical, or unknown-stage packages are inventoried but excluded from confirmatory claim decisions.",
+          "threat_id": "TV-010"
+        },
+        {
+          "affected_claims": [
+            "H2"
+          ],
+          "affected_evidence_requirements": [
+            "natural_language_robustness"
+          ],
+          "category": "internal",
+          "code": "SEMANTIC_PROVENANCE_MISSING",
+          "observed_value": {
+            "digest_namespace": "offline_benchmark_dataset_bytes",
+            "expected": "PRESENT",
+            "freeze_digest_namespace": null,
+            "observed": null,
+            "semantic_key": "benchmark.dataset_sha256"
+          },
+          "severity": "blocking",
+          "source_artifact": "derived/provenance-consistency.json",
+          "source_pointer": "/semantic_comparisons/1",
+          "statement": "Recorded semantic provenance is missing, contradictory, or uses an incompatible digest namespace; affected claims are blocked.",
+          "threat_id": "TV-016"
+        },
+        {
+          "affected_claims": [
+            "H1",
+            "H2",
+            "H5",
+            "H6",
+            "H7F"
+          ],
+          "affected_evidence_requirements": [
+            "image_functional",
+            "natural_language_robustness",
+            "offline_recommendation",
+            "resource_efficiency"
+          ],
+          "category": "internal",
+          "code": "SEMANTIC_PROVENANCE_MISMATCH",
+          "observed_value": {
+            "digest_namespace": null,
+            "expected": "rule-based-v1",
+            "freeze_digest_namespace": null,
+            "observed": {
+              "image_functional": {
+                "adapter_version": "protocol-v5-p1-frozen-adapter-v1",
+                "backend_name": "rule_based",
+                "backend_version": "rule-based-v1"
+              },
+              "natural_language_robustness": "rule-based-v1",
+              "offline_recommendation": "rule-based-v1",
+              "resource_efficiency": "rule-based-v1"
+            },
+            "semantic_key": "p1.backend_version"
+          },
+          "severity": "blocking",
+          "source_artifact": "derived/provenance-consistency.json",
+          "source_pointer": "/semantic_comparisons/16",
+          "statement": "Recorded semantic provenance is missing, contradictory, or uses an incompatible digest namespace; affected claims are blocked.",
+          "threat_id": "TV-018"
+        },
+        {
+          "affected_claims": [
+            "H1",
+            "H2",
+            "H5",
+            "H6",
+            "H7",
+            "H7F"
+          ],
+          "affected_evidence_requirements": [
+            "image_functional",
+            "image_storage",
+            "natural_language_robustness",
+            "offline_recommendation",
+            "resource_efficiency"
+          ],
+          "category": "internal",
+          "code": "SEMANTIC_PROVENANCE_MISMATCH",
+          "observed_value": {
+            "digest_namespace": null,
+            "expected": "p2-pipeline-v1.0.0",
+            "freeze_digest_namespace": null,
+            "observed": {
+              "image_functional": {
+                "adapter_version": "protocol-v5-p2-frozen-adapter-v1",
+                "backend_name": "p2",
+                "backend_version": "p2-hybrid-v1.0.0"
+              },
+              "image_storage": "p2-pipeline-v1.0.0",
+              "natural_language_robustness": "p2-pipeline-v1.0.0",
+              "offline_recommendation": "p2-pipeline-v1.0.0",
+              "resource_efficiency": "p2-pipeline-v1.0.0"
+            },
+            "semantic_key": "p2.pipeline_version"
+          },
+          "severity": "blocking",
+          "source_artifact": "derived/provenance-consistency.json",
+          "source_pointer": "/semantic_comparisons/19",
+          "statement": "Recorded semantic provenance is missing, contradictory, or uses an incompatible digest namespace; affected claims are blocked.",
+          "threat_id": "TV-019"
+        }
+      ],
+      "metrics": [
+        {
+          "direction": "lower",
+          "id": "surface_form_loss_difference",
+          "label": "P2 minus P1 canonical-to-equivalent loss",
+          "source_endpoints": [
+            "joint_accept_at_1",
+            "robustness_rate"
+          ],
+          "systems": [
+            "P1",
+            "P2"
+          ],
+          "unit": "proportion"
+        }
+      ],
+      "reason_codes": [
+        "AUTO_SELECTED_LATEST_DEVELOPMENT_CANDIDATE",
+        "REQUIRED_METRIC_OR_TEST_UNAVAILABLE",
+        "SOURCE_PROVENANCE_MISMATCH"
+      ],
+      "research_question": {
+        "id": "RQ2",
+        "question": "Is P2 more robust than P1 to semantically equivalent natural-language surface forms?"
+      },
+      "result": {
+        "all_support_conditions_passed": null,
+        "decision_checks": [
+          {
+            "expected": 0,
+            "observed": null,
+            "operator": "lt",
+            "passed": null,
+            "path": "metrics.effect"
+          },
+          {
+            "expected": 0,
+            "observed": null,
+            "operator": "lt",
+            "passed": null,
+            "path": "metrics.ci_high"
+          },
+          {
+            "expected": 0.05,
+            "observed": null,
+            "operator": "lt",
+            "passed": null,
+            "path": "metrics.p_value"
+          },
+          {
+            "expected": true,
+            "observed": null,
+            "operator": "eq",
+            "passed": null,
+            "path": "metrics.test_available"
+          }
+        ],
+        "metric_lineage": {},
+        "normalized_metrics": {}
+      },
+      "schema_version": "protocol-v5-evaluated-claim-v1.1.0",
+      "statistical_tests": [
+        {
+          "alpha": 0.05,
+          "id": "h2_paired_family_test",
+          "independent_unit": "workload_family",
+          "method": "paired Wilcoxon over family losses with family bootstrap CI",
+          "multiplicity": null,
+          "observed_evidence_tests": []
+        }
+      ]
+    },
+    {
+      "claim_id": "H3",
+      "claim_status": "NOT_EXECUTED",
+      "claimable": false,
+      "decision_rule": {
+        "conditions": [
+          {
+            "operator": "gt",
+            "path": "metrics.selection_effect",
+            "value": 0
+          },
+          {
+            "operator": "gt",
+            "path": "metrics.selection_ci_low",
+            "value": 0
+          },
+          {
+            "operator": "lt",
+            "path": "metrics.selection_p_holm",
+            "value": 0.05
+          },
+          {
+            "operator": "lt",
+            "path": "metrics.time_effect",
+            "value": 0
+          },
+          {
+            "operator": "lt",
+            "path": "metrics.time_ci_high",
+            "value": 0
+          },
+          {
+            "operator": "lt",
+            "path": "metrics.time_p_holm",
+            "value": 0.05
+          },
+          {
+            "operator": "eq",
+            "path": "metrics.tests_available",
+            "value": true
+          }
+        ],
+        "logic": "ALL_OF",
+        "registry_schema_version": "protocol-v5-claim-registry-v1.2.0"
+      },
+      "evidence": [],
+      "evidence_status": [
+        {
+          "claim_eligibility": "UNAVAILABLE",
+          "execution_status": null,
+          "requirement_id": "user_study",
+          "selection_mode": "NONE",
+          "stage": null,
+          "validation_status": null
+        }
+      ],
+      "experiments": [
+        "E3"
+      ],
+      "hypothesis": "Users achieve acceptable selections more often and faster with P2 than B0.",
+      "limitations": [
+        {
+          "affected_claims": [
+            "H3",
+            "H4"
+          ],
+          "affected_evidence_requirements": [
+            "user_study"
+          ],
+          "category": "statistical_conclusion",
+          "code": "REQUIRED_EVIDENCE_UNAVAILABLE",
+          "observed_value": {
+            "candidate_count": 0,
+            "eligible_candidate_count": 0,
+            "reason_codes": [
+              "NO_ELIGIBLE_CONFIRMATORY_EVIDENCE"
+            ]
+          },
+          "severity": "blocking",
+          "source_artifact": "derived/evidence-selection.json",
+          "source_pointer": "/requirements/2",
+          "statement": "The required confirmatory evidence was unavailable or unselected, so the linked claim cannot be decided.",
+          "threat_id": "TV-003"
+        }
+      ],
+      "metrics": [
+        {
+          "direction": "higher",
+          "id": "selection_success_risk_difference",
+          "label": "P2 minus B0 SelectionSuccess",
+          "source_endpoints": [
+            "selection_success"
+          ],
+          "systems": [
+            "B0",
+            "P2"
+          ],
+          "unit": "proportion"
+        },
+        {
+          "direction": "lower",
+          "id": "decision_time_difference",
+          "label": "P2 minus B0 DecisionTime",
+          "source_endpoints": [
+            "decision_time_seconds"
+          ],
+          "systems": [
+            "B0",
+            "P2"
+          ],
+          "unit": "seconds"
+        }
+      ],
+      "reason_codes": [
+        "NO_ELIGIBLE_CONFIRMATORY_EVIDENCE",
+        "REQUIRED_METRIC_OR_TEST_UNAVAILABLE"
+      ],
+      "research_question": {
+        "id": "RQ3",
+        "question": "Does P2 improve real-user selection effectiveness, speed, and perceived usability relative to B0?"
+      },
+      "result": {
+        "all_support_conditions_passed": null,
+        "decision_checks": [
+          {
+            "expected": 0,
+            "observed": null,
+            "operator": "gt",
+            "passed": null,
+            "path": "metrics.selection_effect"
+          },
+          {
+            "expected": 0,
+            "observed": null,
+            "operator": "gt",
+            "passed": null,
+            "path": "metrics.selection_ci_low"
+          },
+          {
+            "expected": 0.05,
+            "observed": null,
+            "operator": "lt",
+            "passed": null,
+            "path": "metrics.selection_p_holm"
+          },
+          {
+            "expected": 0,
+            "observed": null,
+            "operator": "lt",
+            "passed": null,
+            "path": "metrics.time_effect"
+          },
+          {
+            "expected": 0,
+            "observed": null,
+            "operator": "lt",
+            "passed": null,
+            "path": "metrics.time_ci_high"
+          },
+          {
+            "expected": 0.05,
+            "observed": null,
+            "operator": "lt",
+            "passed": null,
+            "path": "metrics.time_p_holm"
+          },
+          {
+            "expected": true,
+            "observed": null,
+            "operator": "eq",
+            "passed": null,
+            "path": "metrics.tests_available"
+          }
+        ],
+        "metric_lineage": {},
+        "normalized_metrics": {}
+      },
+      "schema_version": "protocol-v5-evaluated-claim-v1.1.0",
+      "statistical_tests": [
+        {
+          "alpha": 0.05,
+          "id": "e3_co_primary",
+          "independent_unit": "participant",
+          "method": "frozen participant-clustered models or predeclared fallbacks",
+          "multiplicity": "Holm across SelectionSuccess and DecisionTime",
+          "observed_evidence_tests": []
+        }
+      ]
+    },
+    {
+      "claim_id": "H4",
+      "claim_status": "NOT_EXECUTED",
+      "claimable": false,
+      "decision_rule": {
+        "conditions": [
+          {
+            "operator": "gt",
+            "path": "metrics.seq_effect",
+            "value": 0
+          },
+          {
+            "operator": "gt",
+            "path": "metrics.seq_ci_low",
+            "value": 0
+          },
+          {
+            "operator": "gt",
+            "path": "metrics.sus_effect",
+            "value": 0
+          },
+          {
+            "operator": "gt",
+            "path": "metrics.sus_ci_low",
+            "value": 0
+          },
+          {
+            "operator": "eq",
+            "path": "metrics.estimates_available",
+            "value": true
+          }
+        ],
+        "logic": "ALL_OF",
+        "registry_schema_version": "protocol-v5-claim-registry-v1.2.0"
+      },
+      "evidence": [],
+      "evidence_status": [
+        {
+          "claim_eligibility": "UNAVAILABLE",
+          "execution_status": null,
+          "requirement_id": "user_study",
+          "selection_mode": "NONE",
+          "stage": null,
+          "validation_status": null
+        }
+      ],
+      "experiments": [
+        "E3"
+      ],
+      "hypothesis": "Users report greater task ease and usability with P2 than B0.",
+      "limitations": [
+        {
+          "affected_claims": [
+            "H3",
+            "H4"
+          ],
+          "affected_evidence_requirements": [
+            "user_study"
+          ],
+          "category": "statistical_conclusion",
+          "code": "REQUIRED_EVIDENCE_UNAVAILABLE",
+          "observed_value": {
+            "candidate_count": 0,
+            "eligible_candidate_count": 0,
+            "reason_codes": [
+              "NO_ELIGIBLE_CONFIRMATORY_EVIDENCE"
+            ]
+          },
+          "severity": "blocking",
+          "source_artifact": "derived/evidence-selection.json",
+          "source_pointer": "/requirements/2",
+          "statement": "The required confirmatory evidence was unavailable or unselected, so the linked claim cannot be decided.",
+          "threat_id": "TV-003"
+        }
+      ],
+      "metrics": [
+        {
+          "direction": "higher",
+          "id": "seq_difference",
+          "label": "P2 minus B0 SEQ ease",
+          "source_endpoints": [
+            "seq_ease"
+          ],
+          "systems": [
+            "B0",
+            "P2"
+          ],
+          "unit": "scale_points"
+        },
+        {
+          "direction": "higher",
+          "id": "sus_difference",
+          "label": "P2 minus B0 SUS",
+          "source_endpoints": [
+            "sus"
+          ],
+          "systems": [
+            "B0",
+            "P2"
+          ],
+          "unit": "scale_points"
+        }
+      ],
+      "reason_codes": [
+        "NO_ELIGIBLE_CONFIRMATORY_EVIDENCE",
+        "REQUIRED_METRIC_OR_TEST_UNAVAILABLE"
+      ],
+      "research_question": {
+        "id": "RQ3",
+        "question": "Does P2 improve real-user selection effectiveness, speed, and perceived usability relative to B0?"
+      },
+      "result": {
+        "all_support_conditions_passed": null,
+        "decision_checks": [
+          {
+            "expected": 0,
+            "observed": null,
+            "operator": "gt",
+            "passed": null,
+            "path": "metrics.seq_effect"
+          },
+          {
+            "expected": 0,
+            "observed": null,
+            "operator": "gt",
+            "passed": null,
+            "path": "metrics.seq_ci_low"
+          },
+          {
+            "expected": 0,
+            "observed": null,
+            "operator": "gt",
+            "passed": null,
+            "path": "metrics.sus_effect"
+          },
+          {
+            "expected": 0,
+            "observed": null,
+            "operator": "gt",
+            "passed": null,
+            "path": "metrics.sus_ci_low"
+          },
+          {
+            "expected": true,
+            "observed": null,
+            "operator": "eq",
+            "passed": null,
+            "path": "metrics.estimates_available"
+          }
+        ],
+        "metric_lineage": {},
+        "normalized_metrics": {}
+      },
+      "schema_version": "protocol-v5-evaluated-claim-v1.1.0",
+      "statistical_tests": [
+        {
+          "alpha": 0.05,
+          "id": "e3_secondary_intervals",
+          "independent_unit": "participant",
+          "method": "frozen participant bootstrap intervals; CUSTOM items descriptive only",
+          "multiplicity": null,
+          "observed_evidence_tests": []
+        }
+      ]
+    },
+    {
+      "claim_id": "H5",
+      "claim_status": "NOT_EXECUTED",
+      "claimable": false,
+      "decision_rule": {
+        "conditions": [
+          {
+            "operator": "eq",
+            "path": "metrics.pareto_classification",
+            "value": "STRICT_FRONTIER_IMPROVEMENT"
+          },
+          {
+            "operator": "eq",
+            "path": "metrics.pareto_report_consistent",
+            "value": true
+          },
+          {
+            "operator": "eq",
+            "path": "metrics.reliability_preserved",
+            "value": true
+          },
+          {
+            "operator": "lt",
+            "path": "metrics.cpu_effect",
+            "value": 0
+          },
+          {
+            "operator": "lt",
+            "path": "metrics.cpu_ci_high",
+            "value": 0
+          },
+          {
+            "operator": "lt",
+            "path": "metrics.cpu_p_holm",
+            "value": 0.05
+          },
+          {
+            "operator": "lt",
+            "path": "metrics.memory_effect",
+            "value": 0
+          },
+          {
+            "operator": "lt",
+            "path": "metrics.memory_ci_high",
+            "value": 0
+          },
+          {
+            "operator": "lt",
+            "path": "metrics.memory_p_holm",
+            "value": 0.05
+          },
+          {
+            "operator": "eq",
+            "path": "metrics.tests_available",
+            "value": true
+          }
+        ],
+        "logic": "ALL_OF",
+        "registry_schema_version": "protocol-v5-claim-registry-v1.2.0"
+      },
+      "evidence": [],
+      "evidence_status": [
+        {
+          "claim_eligibility": "UNAVAILABLE",
+          "execution_status": null,
+          "requirement_id": "resource_efficiency",
+          "selection_mode": "REJECTED_AUTHENTICATION",
+          "stage": null,
+          "validation_status": null
+        }
+      ],
+      "experiments": [
+        "E4"
+      ],
+      "hypothesis": "P2 Catalog reduces requested-resource cost per successful workload while preserving reliability relative to Static Large.",
+      "limitations": [
+        {
+          "affected_claims": [
+            "H5",
+            "H6"
+          ],
+          "affected_evidence_requirements": [
+            "resource_efficiency"
+          ],
+          "category": "statistical_conclusion",
+          "code": "REQUIRED_EVIDENCE_UNAVAILABLE",
+          "observed_value": {
+            "candidate_count": 2,
+            "eligible_candidate_count": 2,
+            "reason_codes": [
+              "AUTO_SELECTED_LATEST_DEVELOPMENT_CANDIDATE",
+              "SOURCE_PROVENANCE_MISMATCH"
+            ]
+          },
+          "severity": "blocking",
+          "source_artifact": "derived/evidence-selection.json",
+          "source_pointer": "/requirements/3",
+          "statement": "The required confirmatory evidence was unavailable or unselected, so the linked claim cannot be decided.",
+          "threat_id": "TV-004"
+        },
+        {
+          "affected_claims": [
+            "H5",
+            "H6"
+          ],
+          "affected_evidence_requirements": [
+            "resource_efficiency"
+          ],
+          "category": "benchmark_contamination",
+          "code": "NON_CONFIRMATORY_EVIDENCE_PRESENT",
+          "observed_value": {
+            "count": 2,
+            "manifests": [
+              "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E4/run-e4-observed-llm-gemini-3.5-flash-lite-analysis/manifest.json",
+              "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E4/run-e4-observed-local-analysis/manifest.json"
+            ],
+            "stages": [
+              "development"
+            ]
+          },
+          "severity": "boundary",
+          "source_artifact": "derived/evidence-inventory.json",
+          "source_pointer": "/candidates",
+          "statement": "Development, historical, or unknown-stage packages are inventoried but excluded from confirmatory claim decisions.",
+          "threat_id": "TV-012"
+        },
+        {
+          "affected_claims": [
+            "H1",
+            "H2",
+            "H5",
+            "H6",
+            "H7F"
+          ],
+          "affected_evidence_requirements": [
+            "image_functional",
+            "natural_language_robustness",
+            "offline_recommendation",
+            "resource_efficiency"
+          ],
+          "category": "internal",
+          "code": "SEMANTIC_PROVENANCE_MISMATCH",
+          "observed_value": {
+            "digest_namespace": null,
+            "expected": "rule-based-v1",
+            "freeze_digest_namespace": null,
+            "observed": {
+              "image_functional": {
+                "adapter_version": "protocol-v5-p1-frozen-adapter-v1",
+                "backend_name": "rule_based",
+                "backend_version": "rule-based-v1"
+              },
+              "natural_language_robustness": "rule-based-v1",
+              "offline_recommendation": "rule-based-v1",
+              "resource_efficiency": "rule-based-v1"
+            },
+            "semantic_key": "p1.backend_version"
+          },
+          "severity": "blocking",
+          "source_artifact": "derived/provenance-consistency.json",
+          "source_pointer": "/semantic_comparisons/16",
+          "statement": "Recorded semantic provenance is missing, contradictory, or uses an incompatible digest namespace; affected claims are blocked.",
+          "threat_id": "TV-018"
+        },
+        {
+          "affected_claims": [
+            "H1",
+            "H2",
+            "H5",
+            "H6",
+            "H7",
+            "H7F"
+          ],
+          "affected_evidence_requirements": [
+            "image_functional",
+            "image_storage",
+            "natural_language_robustness",
+            "offline_recommendation",
+            "resource_efficiency"
+          ],
+          "category": "internal",
+          "code": "SEMANTIC_PROVENANCE_MISMATCH",
+          "observed_value": {
+            "digest_namespace": null,
+            "expected": "p2-pipeline-v1.0.0",
+            "freeze_digest_namespace": null,
+            "observed": {
+              "image_functional": {
+                "adapter_version": "protocol-v5-p2-frozen-adapter-v1",
+                "backend_name": "p2",
+                "backend_version": "p2-hybrid-v1.0.0"
+              },
+              "image_storage": "p2-pipeline-v1.0.0",
+              "natural_language_robustness": "p2-pipeline-v1.0.0",
+              "offline_recommendation": "p2-pipeline-v1.0.0",
+              "resource_efficiency": "p2-pipeline-v1.0.0"
+            },
+            "semantic_key": "p2.pipeline_version"
+          },
+          "severity": "blocking",
+          "source_artifact": "derived/provenance-consistency.json",
+          "source_pointer": "/semantic_comparisons/19",
+          "statement": "Recorded semantic provenance is missing, contradictory, or uses an incompatible digest namespace; affected claims are blocked.",
+          "threat_id": "TV-019"
+        }
+      ],
+      "metrics": [
+        {
+          "direction": "lower",
+          "id": "cpu_cost_per_success_difference",
+          "label": "P2 Catalog minus Static Large CPU cost per success",
+          "source_endpoints": [
+            "cpu_cost_per_success"
+          ],
+          "systems": [
+            "STATIC_LARGE",
+            "P2_CATALOG"
+          ],
+          "unit": "cpu_seconds"
+        },
+        {
+          "direction": "lower",
+          "id": "memory_cost_per_success_difference",
+          "label": "P2 Catalog minus Static Large memory cost per success",
+          "source_endpoints": [
+            "memory_cost_per_success"
+          ],
+          "systems": [
+            "STATIC_LARGE",
+            "P2_CATALOG"
+          ],
+          "unit": "MiB_seconds"
+        },
+        {
+          "direction": "exact",
+          "id": "frozen_reliability_preservation",
+          "label": "No worse frozen reliability objective",
+          "source_endpoints": [
+            "success_rate",
+            "correct_completion_rate",
+            "oom_rate",
+            "timeout_rate",
+            "pending_or_admission_rate",
+            "runtime_error_rate",
+            "incorrect_rate"
+          ],
+          "systems": [
+            "STATIC_LARGE",
+            "P2_CATALOG"
+          ],
+          "unit": "boolean"
+        },
+        {
+          "confirmatory": false,
+          "direction": "lower",
+          "id": "cpu_cost_per_success_difference_vs_p1_catalog",
+          "label": "(exploratory, vs P1 Catalog) P2 Catalog minus P1 Catalog CPU cost per success",
+          "source_endpoints": [
+            "cpu_cost_per_success"
+          ],
+          "systems": [
+            "P1_CATALOG",
+            "P2_CATALOG"
+          ],
+          "unit": "cpu_seconds"
+        },
+        {
+          "confirmatory": false,
+          "direction": "lower",
+          "id": "memory_cost_per_success_difference_vs_p1_catalog",
+          "label": "(exploratory, vs P1 Catalog) P2 Catalog minus P1 Catalog memory cost per success",
+          "source_endpoints": [
+            "memory_cost_per_success"
+          ],
+          "systems": [
+            "P1_CATALOG",
+            "P2_CATALOG"
+          ],
+          "unit": "MiB_seconds"
+        }
+      ],
+      "reason_codes": [
+        "AUTO_SELECTED_LATEST_DEVELOPMENT_CANDIDATE",
+        "REQUIRED_METRIC_OR_TEST_UNAVAILABLE",
+        "SOURCE_PROVENANCE_MISMATCH"
+      ],
+      "research_question": {
+        "id": "RQ4",
+        "question": "Does P2 improve resource efficiency and oracle calibration under the frozen Kubernetes protocol?"
+      },
+      "result": {
+        "all_support_conditions_passed": null,
+        "decision_checks": [
+          {
+            "expected": "STRICT_FRONTIER_IMPROVEMENT",
+            "observed": null,
+            "operator": "eq",
+            "passed": null,
+            "path": "metrics.pareto_classification"
+          },
+          {
+            "expected": true,
+            "observed": null,
+            "operator": "eq",
+            "passed": null,
+            "path": "metrics.pareto_report_consistent"
+          },
+          {
+            "expected": true,
+            "observed": null,
+            "operator": "eq",
+            "passed": null,
+            "path": "metrics.reliability_preserved"
+          },
+          {
+            "expected": 0,
+            "observed": null,
+            "operator": "lt",
+            "passed": null,
+            "path": "metrics.cpu_effect"
+          },
+          {
+            "expected": 0,
+            "observed": null,
+            "operator": "lt",
+            "passed": null,
+            "path": "metrics.cpu_ci_high"
+          },
+          {
+            "expected": 0.05,
+            "observed": null,
+            "operator": "lt",
+            "passed": null,
+            "path": "metrics.cpu_p_holm"
+          },
+          {
+            "expected": 0,
+            "observed": null,
+            "operator": "lt",
+            "passed": null,
+            "path": "metrics.memory_effect"
+          },
+          {
+            "expected": 0,
+            "observed": null,
+            "operator": "lt",
+            "passed": null,
+            "path": "metrics.memory_ci_high"
+          },
+          {
+            "expected": 0.05,
+            "observed": null,
+            "operator": "lt",
+            "passed": null,
+            "path": "metrics.memory_p_holm"
+          },
+          {
+            "expected": true,
+            "observed": null,
+            "operator": "eq",
+            "passed": null,
+            "path": "metrics.tests_available"
+          }
+        ],
+        "metric_lineage": {},
+        "normalized_metrics": {}
+      },
+      "schema_version": "protocol-v5-evaluated-claim-v1.1.0",
+      "statistical_tests": [
+        {
+          "alpha": 0.05,
+          "id": "e4_family_cost_tests",
+          "independent_unit": "workload_family",
+          "method": "paired Wilcoxon with family bootstrap CIs plus exact frozen Pareto reliability safeguard",
+          "multiplicity": "Holm within endpoint",
+          "observed_evidence_tests": []
+        }
+      ]
+    },
+    {
+      "claim_id": "H6",
+      "claim_status": "NOT_EXECUTED",
+      "claimable": false,
+      "decision_rule": {
+        "conditions": [
+          {
+            "operator": "eq",
+            "path": "metrics.oracle_independence_verified",
+            "value": true
+          },
+          {
+            "operator": "lt",
+            "path": "metrics.cpu_effect",
+            "value": 0
+          },
+          {
+            "operator": "lt",
+            "path": "metrics.cpu_ci_high",
+            "value": 0
+          },
+          {
+            "operator": "lt",
+            "path": "metrics.cpu_p_holm",
+            "value": 0.05
+          },
+          {
+            "operator": "lt",
+            "path": "metrics.memory_effect",
+            "value": 0
+          },
+          {
+            "operator": "lt",
+            "path": "metrics.memory_ci_high",
+            "value": 0
+          },
+          {
+            "operator": "lt",
+            "path": "metrics.memory_p_holm",
+            "value": 0.05
+          },
+          {
+            "operator": "eq",
+            "path": "metrics.tests_available",
+            "value": true
+          }
+        ],
+        "logic": "ALL_OF",
+        "registry_schema_version": "protocol-v5-claim-registry-v1.2.0"
+      },
+      "evidence": [],
+      "evidence_status": [
+        {
+          "claim_eligibility": "UNAVAILABLE",
+          "execution_status": null,
+          "requirement_id": "resource_efficiency",
+          "selection_mode": "REJECTED_AUTHENTICATION",
+          "stage": null,
+          "validation_status": null
+        }
+      ],
+      "experiments": [
+        "E4"
+      ],
+      "hypothesis": "P2 Dynamic has lower CPU-request and memory-request absolute oracle error than P2 Catalog.",
+      "limitations": [
+        {
+          "affected_claims": [
+            "H5",
+            "H6"
+          ],
+          "affected_evidence_requirements": [
+            "resource_efficiency"
+          ],
+          "category": "statistical_conclusion",
+          "code": "REQUIRED_EVIDENCE_UNAVAILABLE",
+          "observed_value": {
+            "candidate_count": 2,
+            "eligible_candidate_count": 2,
+            "reason_codes": [
+              "AUTO_SELECTED_LATEST_DEVELOPMENT_CANDIDATE",
+              "SOURCE_PROVENANCE_MISMATCH"
+            ]
+          },
+          "severity": "blocking",
+          "source_artifact": "derived/evidence-selection.json",
+          "source_pointer": "/requirements/3",
+          "statement": "The required confirmatory evidence was unavailable or unselected, so the linked claim cannot be decided.",
+          "threat_id": "TV-004"
+        },
+        {
+          "affected_claims": [
+            "H5",
+            "H6"
+          ],
+          "affected_evidence_requirements": [
+            "resource_efficiency"
+          ],
+          "category": "benchmark_contamination",
+          "code": "NON_CONFIRMATORY_EVIDENCE_PRESENT",
+          "observed_value": {
+            "count": 2,
+            "manifests": [
+              "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E4/run-e4-observed-llm-gemini-3.5-flash-lite-analysis/manifest.json",
+              "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E4/run-e4-observed-local-analysis/manifest.json"
+            ],
+            "stages": [
+              "development"
+            ]
+          },
+          "severity": "boundary",
+          "source_artifact": "derived/evidence-inventory.json",
+          "source_pointer": "/candidates",
+          "statement": "Development, historical, or unknown-stage packages are inventoried but excluded from confirmatory claim decisions.",
+          "threat_id": "TV-012"
+        },
+        {
+          "affected_claims": [
+            "H1",
+            "H2",
+            "H5",
+            "H6",
+            "H7F"
+          ],
+          "affected_evidence_requirements": [
+            "image_functional",
+            "natural_language_robustness",
+            "offline_recommendation",
+            "resource_efficiency"
+          ],
+          "category": "internal",
+          "code": "SEMANTIC_PROVENANCE_MISMATCH",
+          "observed_value": {
+            "digest_namespace": null,
+            "expected": "rule-based-v1",
+            "freeze_digest_namespace": null,
+            "observed": {
+              "image_functional": {
+                "adapter_version": "protocol-v5-p1-frozen-adapter-v1",
+                "backend_name": "rule_based",
+                "backend_version": "rule-based-v1"
+              },
+              "natural_language_robustness": "rule-based-v1",
+              "offline_recommendation": "rule-based-v1",
+              "resource_efficiency": "rule-based-v1"
+            },
+            "semantic_key": "p1.backend_version"
+          },
+          "severity": "blocking",
+          "source_artifact": "derived/provenance-consistency.json",
+          "source_pointer": "/semantic_comparisons/16",
+          "statement": "Recorded semantic provenance is missing, contradictory, or uses an incompatible digest namespace; affected claims are blocked.",
+          "threat_id": "TV-018"
+        },
+        {
+          "affected_claims": [
+            "H1",
+            "H2",
+            "H5",
+            "H6",
+            "H7",
+            "H7F"
+          ],
+          "affected_evidence_requirements": [
+            "image_functional",
+            "image_storage",
+            "natural_language_robustness",
+            "offline_recommendation",
+            "resource_efficiency"
+          ],
+          "category": "internal",
+          "code": "SEMANTIC_PROVENANCE_MISMATCH",
+          "observed_value": {
+            "digest_namespace": null,
+            "expected": "p2-pipeline-v1.0.0",
+            "freeze_digest_namespace": null,
+            "observed": {
+              "image_functional": {
+                "adapter_version": "protocol-v5-p2-frozen-adapter-v1",
+                "backend_name": "p2",
+                "backend_version": "p2-hybrid-v1.0.0"
+              },
+              "image_storage": "p2-pipeline-v1.0.0",
+              "natural_language_robustness": "p2-pipeline-v1.0.0",
+              "offline_recommendation": "p2-pipeline-v1.0.0",
+              "resource_efficiency": "p2-pipeline-v1.0.0"
+            },
+            "semantic_key": "p2.pipeline_version"
+          },
+          "severity": "blocking",
+          "source_artifact": "derived/provenance-consistency.json",
+          "source_pointer": "/semantic_comparisons/19",
+          "statement": "Recorded semantic provenance is missing, contradictory, or uses an incompatible digest namespace; affected claims are blocked.",
+          "threat_id": "TV-019"
+        }
+      ],
+      "metrics": [
+        {
+          "direction": "lower",
+          "id": "absolute_cpu_request_error_difference",
+          "label": "P2 Dynamic minus P2 Catalog absolute CPU request error",
+          "source_endpoints": [
+            "cpu_request_allocation_error_absolute"
+          ],
+          "systems": [
+            "P2_CATALOG",
+            "P2_DYNAMIC"
+          ],
+          "unit": "millicores"
+        },
+        {
+          "direction": "lower",
+          "id": "absolute_memory_request_error_difference",
+          "label": "P2 Dynamic minus P2 Catalog absolute memory request error",
+          "source_endpoints": [
+            "memory_request_allocation_error_absolute"
+          ],
+          "systems": [
+            "P2_CATALOG",
+            "P2_DYNAMIC"
+          ],
+          "unit": "MiB"
+        },
+        {
+          "direction": "exact",
+          "id": "independent_oracle_provenance",
+          "label": "Allocation decisions are independent of the sealed oracle",
+          "source_endpoints": [
+            "oracle_package_sha256",
+            "oracle_data_permitted"
+          ],
+          "systems": [
+            "P2_CATALOG",
+            "P2_DYNAMIC"
+          ],
+          "unit": "boolean"
+        }
+      ],
+      "reason_codes": [
+        "AUTO_SELECTED_LATEST_DEVELOPMENT_CANDIDATE",
+        "REQUIRED_METRIC_OR_TEST_UNAVAILABLE",
+        "SOURCE_PROVENANCE_MISMATCH"
+      ],
+      "research_question": {
+        "id": "RQ4",
+        "question": "Does P2 improve resource efficiency and oracle calibration under the frozen Kubernetes protocol?"
+      },
+      "result": {
+        "all_support_conditions_passed": null,
+        "decision_checks": [
+          {
+            "expected": true,
+            "observed": null,
+            "operator": "eq",
+            "passed": null,
+            "path": "metrics.oracle_independence_verified"
+          },
+          {
+            "expected": 0,
+            "observed": null,
+            "operator": "lt",
+            "passed": null,
+            "path": "metrics.cpu_effect"
+          },
+          {
+            "expected": 0,
+            "observed": null,
+            "operator": "lt",
+            "passed": null,
+            "path": "metrics.cpu_ci_high"
+          },
+          {
+            "expected": 0.05,
+            "observed": null,
+            "operator": "lt",
+            "passed": null,
+            "path": "metrics.cpu_p_holm"
+          },
+          {
+            "expected": 0,
+            "observed": null,
+            "operator": "lt",
+            "passed": null,
+            "path": "metrics.memory_effect"
+          },
+          {
+            "expected": 0,
+            "observed": null,
+            "operator": "lt",
+            "passed": null,
+            "path": "metrics.memory_ci_high"
+          },
+          {
+            "expected": 0.05,
+            "observed": null,
+            "operator": "lt",
+            "passed": null,
+            "path": "metrics.memory_p_holm"
+          },
+          {
+            "expected": true,
+            "observed": null,
+            "operator": "eq",
+            "passed": null,
+            "path": "metrics.tests_available"
+          }
+        ],
+        "metric_lineage": {},
+        "normalized_metrics": {}
+      },
+      "schema_version": "protocol-v5-evaluated-claim-v1.1.0",
+      "statistical_tests": [
+        {
+          "alpha": 0.05,
+          "id": "e4_oracle_error_tests",
+          "independent_unit": "workload_family",
+          "method": "paired Wilcoxon with family bootstrap CIs",
+          "multiplicity": "Holm across CPU and memory request axes",
+          "observed_evidence_tests": []
+        }
+      ]
+    },
+    {
+      "claim_id": "H7F",
+      "claim_status": "NOT_EXECUTED",
+      "claimable": false,
+      "decision_rule": {
+        "conditions": [
+          {
+            "operator": "eq",
+            "path": "metrics.conservative_success",
+            "value": 1.0
+          },
+          {
+            "operator": "eq",
+            "path": "metrics.operational_adequacy",
+            "value": 1.0
+          },
+          {
+            "operator": "eq",
+            "path": "metrics.required_probe_not_defined_count",
+            "value": 0
+          },
+          {
+            "operator": "eq",
+            "path": "metrics.execution_unavailable_count",
+            "value": 0
+          },
+          {
+            "operator": "eq",
+            "path": "metrics.failed_probe_count",
+            "value": 0
+          },
+          {
+            "operator": "eq",
+            "path": "metrics.all_digests_immutable",
+            "value": true
+          }
+        ],
+        "logic": "ALL_OF",
+        "registry_schema_version": "protocol-v5-claim-registry-v1.2.0"
+      },
+      "evidence": [],
+      "evidence_status": [
+        {
+          "claim_eligibility": "UNAVAILABLE",
+          "execution_status": null,
+          "requirement_id": "image_functional",
+          "selection_mode": "REJECTED_AUTHENTICATION",
+          "stage": null,
+          "validation_status": null
+        }
+      ],
+      "experiments": [
+        "E5-functional"
+      ],
+      "hypothesis": "P2 recommended images satisfy every required functional capability probe at immutable digests.",
+      "limitations": [
+        {
+          "affected_claims": [
+            "H7F"
+          ],
+          "affected_evidence_requirements": [
+            "image_functional"
+          ],
+          "category": "statistical_conclusion",
+          "code": "REQUIRED_EVIDENCE_UNAVAILABLE",
+          "observed_value": {
+            "candidate_count": 1,
+            "eligible_candidate_count": 1,
+            "reason_codes": [
+              "SOURCE_PROVENANCE_MISMATCH"
+            ]
+          },
+          "severity": "blocking",
+          "source_artifact": "derived/evidence-selection.json",
+          "source_pointer": "/requirements/4",
+          "statement": "The required confirmatory evidence was unavailable or unselected, so the linked claim cannot be decided.",
+          "threat_id": "TV-005"
+        },
+        {
+          "affected_claims": [
+            "H7F"
+          ],
+          "affected_evidence_requirements": [
+            "image_functional"
+          ],
+          "category": "benchmark_contamination",
+          "code": "NON_CONFIRMATORY_EVIDENCE_PRESENT",
+          "observed_value": {
+            "count": 1,
+            "manifests": [
+              "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/run-e5-functional-orbstack/manifest.json"
+            ],
+            "stages": [
+              "development"
+            ]
+          },
+          "severity": "boundary",
+          "source_artifact": "derived/evidence-inventory.json",
+          "source_pointer": "/candidates",
+          "statement": "Development, historical, or unknown-stage packages are inventoried but excluded from confirmatory claim decisions.",
+          "threat_id": "TV-008"
+        },
+        {
+          "affected_claims": [
+            "H7",
+            "H7F"
+          ],
+          "affected_evidence_requirements": [
+            "image_functional",
+            "image_storage"
+          ],
+          "category": "internal",
+          "code": "SEMANTIC_PROVENANCE_MISMATCH",
+          "observed_value": {
+            "digest_namespace": "catalog_file_bytes",
+            "expected": "bd2211d5fd769b5addec3c41e8cbd48bb0d9cd1c958aa554ada9bf88c29509f3",
+            "freeze_digest_namespace": null,
+            "observed": {
+              "image_functional": "bd2211d5fd769b5addec3c41e8cbd48bb0d9cd1c958aa554ada9bf88c29509f3",
+              "image_storage": "f45b04efc2ea6f271d49c6806b58bfc0f30503cb68944930609f6e0f71882a71"
+            },
+            "semantic_key": "catalog.file_sha256"
+          },
+          "severity": "blocking",
+          "source_artifact": "derived/provenance-consistency.json",
+          "source_pointer": "/semantic_comparisons/5",
+          "statement": "Recorded semantic provenance is missing, contradictory, or uses an incompatible digest namespace; affected claims are blocked.",
+          "threat_id": "TV-017"
+        },
+        {
+          "affected_claims": [
+            "H1",
+            "H2",
+            "H5",
+            "H6",
+            "H7F"
+          ],
+          "affected_evidence_requirements": [
+            "image_functional",
+            "natural_language_robustness",
+            "offline_recommendation",
+            "resource_efficiency"
+          ],
+          "category": "internal",
+          "code": "SEMANTIC_PROVENANCE_MISMATCH",
+          "observed_value": {
+            "digest_namespace": null,
+            "expected": "rule-based-v1",
+            "freeze_digest_namespace": null,
+            "observed": {
+              "image_functional": {
+                "adapter_version": "protocol-v5-p1-frozen-adapter-v1",
+                "backend_name": "rule_based",
+                "backend_version": "rule-based-v1"
+              },
+              "natural_language_robustness": "rule-based-v1",
+              "offline_recommendation": "rule-based-v1",
+              "resource_efficiency": "rule-based-v1"
+            },
+            "semantic_key": "p1.backend_version"
+          },
+          "severity": "blocking",
+          "source_artifact": "derived/provenance-consistency.json",
+          "source_pointer": "/semantic_comparisons/16",
+          "statement": "Recorded semantic provenance is missing, contradictory, or uses an incompatible digest namespace; affected claims are blocked.",
+          "threat_id": "TV-018"
+        },
+        {
+          "affected_claims": [
+            "H1",
+            "H2",
+            "H5",
+            "H6",
+            "H7",
+            "H7F"
+          ],
+          "affected_evidence_requirements": [
+            "image_functional",
+            "image_storage",
+            "natural_language_robustness",
+            "offline_recommendation",
+            "resource_efficiency"
+          ],
+          "category": "internal",
+          "code": "SEMANTIC_PROVENANCE_MISMATCH",
+          "observed_value": {
+            "digest_namespace": null,
+            "expected": "p2-pipeline-v1.0.0",
+            "freeze_digest_namespace": null,
+            "observed": {
+              "image_functional": {
+                "adapter_version": "protocol-v5-p2-frozen-adapter-v1",
+                "backend_name": "p2",
+                "backend_version": "p2-hybrid-v1.0.0"
+              },
+              "image_storage": "p2-pipeline-v1.0.0",
+              "natural_language_robustness": "p2-pipeline-v1.0.0",
+              "offline_recommendation": "p2-pipeline-v1.0.0",
+              "resource_efficiency": "p2-pipeline-v1.0.0"
+            },
+            "semantic_key": "p2.pipeline_version"
+          },
+          "severity": "blocking",
+          "source_artifact": "derived/provenance-consistency.json",
+          "source_pointer": "/semantic_comparisons/19",
+          "statement": "Recorded semantic provenance is missing, contradictory, or uses an incompatible digest namespace; affected claims are blocked.",
+          "threat_id": "TV-019"
+        }
+      ],
+      "metrics": [
+        {
+          "direction": "exact",
+          "id": "conservative_functional_success_rate",
+          "label": "P2 conservative functional success",
+          "source_endpoints": [
+            "conservative_functional_success_rate"
+          ],
+          "systems": [
+            "P2"
+          ],
+          "unit": "proportion"
+        },
+        {
+          "direction": "exact",
+          "id": "operational_adequacy_rate",
+          "label": "P2 operational adequacy",
+          "source_endpoints": [
+            "operational_adequacy_rate"
+          ],
+          "systems": [
+            "P2"
+          ],
+          "unit": "proportion"
+        }
+      ],
+      "reason_codes": [
+        "REQUIRED_METRIC_OR_TEST_UNAVAILABLE",
+        "SOURCE_PROVENANCE_MISMATCH"
+      ],
+      "research_question": {
+        "id": "RQ5",
+        "question": "Are P2 image selections functionally correct and is shared-layer storage lower than naive catalog storage?"
+      },
+      "result": {
+        "all_support_conditions_passed": null,
+        "decision_checks": [
+          {
+            "expected": 1.0,
+            "observed": null,
+            "operator": "eq",
+            "passed": null,
+            "path": "metrics.conservative_success"
+          },
+          {
+            "expected": 1.0,
+            "observed": null,
+            "operator": "eq",
+            "passed": null,
+            "path": "metrics.operational_adequacy"
+          },
+          {
+            "expected": 0,
+            "observed": null,
+            "operator": "eq",
+            "passed": null,
+            "path": "metrics.required_probe_not_defined_count"
+          },
+          {
+            "expected": 0,
+            "observed": null,
+            "operator": "eq",
+            "passed": null,
+            "path": "metrics.execution_unavailable_count"
+          },
+          {
+            "expected": 0,
+            "observed": null,
+            "operator": "eq",
+            "passed": null,
+            "path": "metrics.failed_probe_count"
+          },
+          {
+            "expected": true,
+            "observed": null,
+            "operator": "eq",
+            "passed": null,
+            "path": "metrics.all_digests_immutable"
+          }
+        ],
+        "metric_lineage": {},
+        "normalized_metrics": {}
+      },
+      "schema_version": "protocol-v5-evaluated-claim-v1.1.0",
+      "statistical_tests": [
+        {
+          "alpha": null,
+          "id": "exact_probe_coverage",
+          "independent_unit": "image_digest_and_required_probe",
+          "method": "exact deterministic all-required-probes criterion",
+          "multiplicity": null,
+          "observed_evidence_tests": []
+        }
+      ]
+    },
+    {
+      "claim_id": "H7",
+      "claim_status": "NOT_EXECUTED",
+      "claimable": false,
+      "decision_rule": {
+        "conditions": [
+          {
+            "operator": "ge",
+            "path": "metrics.catalog_prefix_count",
+            "value": 2
+          },
+          {
+            "operator": "eq",
+            "path": "metrics.all_prefixes_nonexpanding",
+            "value": true
+          },
+          {
+            "operator": "gt",
+            "path": "metrics.final_savings_bytes",
+            "value": 0
+          },
+          {
+            "operator": "gt",
+            "path": "metrics.expansion_naive_bytes",
+            "value": 0
+          },
+          {
+            "operator": "lt",
+            "path": "metrics.expansion_growth_difference",
+            "value": 0
+          },
+          {
+            "operator": "eq",
+            "path": "metrics.strictly_slower_catalog_expansion",
+            "value": true
+          },
+          {
+            "operator": "eq",
+            "path": "metrics.prefix_order_valid",
+            "value": true
+          }
+        ],
+        "logic": "ALL_OF",
+        "registry_schema_version": "protocol-v5-claim-registry-v1.2.0"
+      },
+      "evidence": [],
+      "evidence_status": [
+        {
+          "claim_eligibility": "UNAVAILABLE",
+          "execution_status": null,
+          "requirement_id": "image_storage",
+          "selection_mode": "REJECTED_AUTHENTICATION",
+          "stage": null,
+          "validation_status": null
+        }
+      ],
+      "experiments": [
+        "E5-storage"
+      ],
+      "hypothesis": "UniqueLayerBytes grows more slowly than naive LogicalImageBytes over the frozen ordered catalog expansion.",
+      "limitations": [
+        {
+          "affected_claims": [
+            "H7"
+          ],
+          "affected_evidence_requirements": [
+            "image_storage"
+          ],
+          "category": "statistical_conclusion",
+          "code": "REQUIRED_EVIDENCE_UNAVAILABLE",
+          "observed_value": {
+            "candidate_count": 1,
+            "eligible_candidate_count": 1,
+            "reason_codes": [
+              "SOURCE_PROVENANCE_MISMATCH"
+            ]
+          },
+          "severity": "blocking",
+          "source_artifact": "derived/evidence-selection.json",
+          "source_pointer": "/requirements/5",
+          "statement": "The required confirmatory evidence was unavailable or unselected, so the linked claim cannot be decided.",
+          "threat_id": "TV-006"
+        },
+        {
+          "affected_claims": [
+            "H7"
+          ],
+          "affected_evidence_requirements": [
+            "image_storage"
+          ],
+          "category": "benchmark_contamination",
+          "code": "NON_CONFIRMATORY_EVIDENCE_PRESENT",
+          "observed_value": {
+            "count": 1,
+            "manifests": [
+              "/Users/mthang1201/Documents/datn/intent-spawner/results_v5/protocol-v5.0.0/E5/run-e5-storage-orbstack/derived/storage_metrics.json"
+            ],
+            "stages": [
+              "development"
+            ]
+          },
+          "severity": "boundary",
+          "source_artifact": "derived/evidence-inventory.json",
+          "source_pointer": "/candidates",
+          "statement": "Development, historical, or unknown-stage packages are inventoried but excluded from confirmatory claim decisions.",
+          "threat_id": "TV-009"
+        },
+        {
+          "affected_claims": [
+            "H7",
+            "H7F"
+          ],
+          "affected_evidence_requirements": [
+            "image_functional",
+            "image_storage"
+          ],
+          "category": "internal",
+          "code": "SEMANTIC_PROVENANCE_MISMATCH",
+          "observed_value": {
+            "digest_namespace": "catalog_file_bytes",
+            "expected": "bd2211d5fd769b5addec3c41e8cbd48bb0d9cd1c958aa554ada9bf88c29509f3",
+            "freeze_digest_namespace": null,
+            "observed": {
+              "image_functional": "bd2211d5fd769b5addec3c41e8cbd48bb0d9cd1c958aa554ada9bf88c29509f3",
+              "image_storage": "f45b04efc2ea6f271d49c6806b58bfc0f30503cb68944930609f6e0f71882a71"
+            },
+            "semantic_key": "catalog.file_sha256"
+          },
+          "severity": "blocking",
+          "source_artifact": "derived/provenance-consistency.json",
+          "source_pointer": "/semantic_comparisons/5",
+          "statement": "Recorded semantic provenance is missing, contradictory, or uses an incompatible digest namespace; affected claims are blocked.",
+          "threat_id": "TV-017"
+        },
+        {
+          "affected_claims": [
+            "H1",
+            "H2",
+            "H5",
+            "H6",
+            "H7",
+            "H7F"
+          ],
+          "affected_evidence_requirements": [
+            "image_functional",
+            "image_storage",
+            "natural_language_robustness",
+            "offline_recommendation",
+            "resource_efficiency"
+          ],
+          "category": "internal",
+          "code": "SEMANTIC_PROVENANCE_MISMATCH",
+          "observed_value": {
+            "digest_namespace": null,
+            "expected": "p2-pipeline-v1.0.0",
+            "freeze_digest_namespace": null,
+            "observed": {
+              "image_functional": {
+                "adapter_version": "protocol-v5-p2-frozen-adapter-v1",
+                "backend_name": "p2",
+                "backend_version": "p2-hybrid-v1.0.0"
+              },
+              "image_storage": "p2-pipeline-v1.0.0",
+              "natural_language_robustness": "p2-pipeline-v1.0.0",
+              "offline_recommendation": "p2-pipeline-v1.0.0",
+              "resource_efficiency": "p2-pipeline-v1.0.0"
+            },
+            "semantic_key": "p2.pipeline_version"
+          },
+          "severity": "blocking",
+          "source_artifact": "derived/provenance-consistency.json",
+          "source_pointer": "/semantic_comparisons/19",
+          "statement": "Recorded semantic provenance is missing, contradictory, or uses an incompatible digest namespace; affected claims are blocked.",
+          "threat_id": "TV-019"
+        }
+      ],
+      "metrics": [
+        {
+          "direction": "lower",
+          "id": "ordered_prefix_storage_growth",
+          "label": "Unique-layer versus naive logical bytes across all ordered catalog prefixes",
+          "source_endpoints": [
+            "prefixes.naive_logical_bytes",
+            "prefixes.unique_layer_bytes"
+          ],
+          "systems": [
+            "P2"
+          ],
+          "unit": "bytes"
+        }
+      ],
+      "reason_codes": [
+        "REQUIRED_METRIC_OR_TEST_UNAVAILABLE",
+        "SOURCE_PROVENANCE_MISMATCH"
+      ],
+      "research_question": {
+        "id": "RQ5",
+        "question": "Are P2 image selections functionally correct and is shared-layer storage lower than naive catalog storage?"
+      },
+      "result": {
+        "all_support_conditions_passed": null,
+        "decision_checks": [
+          {
+            "expected": 2,
+            "observed": null,
+            "operator": "ge",
+            "passed": null,
+            "path": "metrics.catalog_prefix_count"
+          },
+          {
+            "expected": true,
+            "observed": null,
+            "operator": "eq",
+            "passed": null,
+            "path": "metrics.all_prefixes_nonexpanding"
+          },
+          {
+            "expected": 0,
+            "observed": null,
+            "operator": "gt",
+            "passed": null,
+            "path": "metrics.final_savings_bytes"
+          },
+          {
+            "expected": 0,
+            "observed": null,
+            "operator": "gt",
+            "passed": null,
+            "path": "metrics.expansion_naive_bytes"
+          },
+          {
+            "expected": 0,
+            "observed": null,
+            "operator": "lt",
+            "passed": null,
+            "path": "metrics.expansion_growth_difference"
+          },
+          {
+            "expected": true,
+            "observed": null,
+            "operator": "eq",
+            "passed": null,
+            "path": "metrics.strictly_slower_catalog_expansion"
+          },
+          {
+            "expected": true,
+            "observed": null,
+            "operator": "eq",
+            "passed": null,
+            "path": "metrics.prefix_order_valid"
+          }
+        ],
+        "metric_lineage": {},
+        "normalized_metrics": {}
+      },
+      "schema_version": "protocol-v5-evaluated-claim-v1.1.0",
+      "statistical_tests": [
+        {
+          "alpha": null,
+          "id": "exact_storage_criterion",
+          "independent_unit": "frozen_catalog_prefix",
+          "method": "exact deterministic ordered-prefix and post-baseline catalog-growth criterion; no sampling inference",
+          "multiplicity": null,
+          "observed_evidence_tests": []
+        }
+      ]
+    },
+    {
+      "claim_id": "H8",
+      "claim_status": "NOT_EXECUTED",
+      "claimable": false,
+      "decision_rule": {
+        "conditions": [
+          {
+            "operator": "eq",
+            "path": "metrics.gate_retained",
+            "value": true
+          },
+          {
+            "operator": "eq",
+            "path": "metrics.threshold_frozen",
+            "value": true
+          },
+          {
+            "operator": "gt",
+            "path": "metrics.quality_effect",
+            "value": 0
+          },
+          {
+            "operator": "gt",
+            "path": "metrics.quality_ci_low",
+            "value": 0
+          },
+          {
+            "operator": "lt",
+            "path": "metrics.quality_p_value",
+            "value": 0.05
+          },
+          {
+            "operator": "eq",
+            "path": "metrics.all_overhead_ci_within_limits",
+            "value": true
+          },
+          {
+            "operator": "eq",
+            "path": "metrics.tests_available",
+            "value": true
+          }
+        ],
+        "logic": "ALL_OF",
+        "registry_schema_version": "protocol-v5-claim-registry-v1.2.0"
+      },
+      "evidence": [],
+      "evidence_status": [
+        {
+          "claim_eligibility": "UNAVAILABLE",
+          "execution_status": null,
+          "requirement_id": "p2_p3",
+          "selection_mode": "NONE",
+          "stage": null,
+          "validation_status": null
+        }
+      ],
+      "experiments": [
+        "P2-vs-P3"
+      ],
+      "hypothesis": "Retained P3 improves JointAccept@1 over P2 while remaining within a separately frozen practical-overhead budget.",
+      "limitations": [
+        {
+          "affected_claims": [
+            "H8"
+          ],
+          "affected_evidence_requirements": [
+            "p2_p3"
+          ],
+          "category": "statistical_conclusion",
+          "code": "REQUIRED_EVIDENCE_UNAVAILABLE",
+          "observed_value": {
+            "candidate_count": 0,
+            "eligible_candidate_count": 0,
+            "reason_codes": [
+              "NO_ELIGIBLE_CONFIRMATORY_EVIDENCE",
+              "P3_NOT_RETAINED_OR_NOT_PRESENT"
+            ]
+          },
+          "severity": "blocking",
+          "source_artifact": "derived/evidence-selection.json",
+          "source_pointer": "/requirements/6",
+          "statement": "The required confirmatory evidence was unavailable or unselected, so the linked claim cannot be decided.",
+          "threat_id": "TV-007"
+        }
+      ],
+      "metrics": [
+        {
+          "direction": "higher",
+          "id": "p3_joint_accept_difference",
+          "label": "P3 minus P2 JointAccept@1",
+          "source_endpoints": [
+            "joint_accept_at_1"
+          ],
+          "systems": [
+            "P2",
+            "P3"
+          ],
+          "unit": "proportion"
+        },
+        {
+          "direction": "bounded",
+          "id": "p3_overhead_budget",
+          "label": "P3 minus P2 overhead against frozen limits",
+          "source_endpoints": [
+            "frozen_overhead_limits"
+          ],
+          "systems": [
+            "P2",
+            "P3"
+          ],
+          "unit": "contract_defined"
+        }
+      ],
+      "reason_codes": [
+        "NO_ELIGIBLE_CONFIRMATORY_EVIDENCE",
+        "P3_NOT_RETAINED_OR_NOT_PRESENT",
+        "REQUIRED_METRIC_OR_TEST_UNAVAILABLE"
+      ],
+      "research_question": {
+        "id": "RQ6",
+        "question": "If retained, does P3 improve recommendation quality enough to remain within its frozen practical-overhead budget?"
+      },
+      "result": {
+        "all_support_conditions_passed": null,
+        "decision_checks": [
+          {
+            "expected": true,
+            "observed": null,
+            "operator": "eq",
+            "passed": null,
+            "path": "metrics.gate_retained"
+          },
+          {
+            "expected": true,
+            "observed": null,
+            "operator": "eq",
+            "passed": null,
+            "path": "metrics.threshold_frozen"
+          },
+          {
+            "expected": 0,
+            "observed": null,
+            "operator": "gt",
+            "passed": null,
+            "path": "metrics.quality_effect"
+          },
+          {
+            "expected": 0,
+            "observed": null,
+            "operator": "gt",
+            "passed": null,
+            "path": "metrics.quality_ci_low"
+          },
+          {
+            "expected": 0.05,
+            "observed": null,
+            "operator": "lt",
+            "passed": null,
+            "path": "metrics.quality_p_value"
+          },
+          {
+            "expected": true,
+            "observed": null,
+            "operator": "eq",
+            "passed": null,
+            "path": "metrics.all_overhead_ci_within_limits"
+          },
+          {
+            "expected": true,
+            "observed": null,
+            "operator": "eq",
+            "passed": null,
+            "path": "metrics.tests_available"
+          }
+        ],
+        "metric_lineage": {},
+        "normalized_metrics": {}
+      },
+      "schema_version": "protocol-v5-evaluated-claim-v1.1.0",
+      "statistical_tests": [
+        {
+          "alpha": 0.05,
+          "id": "p3_quality_and_overhead_gate",
+          "independent_unit": "workload_family",
+          "method": "paired family quality inference plus frozen per-metric overhead limits",
+          "multiplicity": null,
+          "observed_evidence_tests": []
+        }
+      ]
+    }
+  ],
+  "protocol_version": "5.0.0",
+  "schema_version": "protocol-v5-evaluated-claim-registry-v1.1.0"
+}

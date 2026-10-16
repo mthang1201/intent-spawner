@@ -1,0 +1,65 @@
+{
+  "categories": [
+    {
+      "category": "EXTRACTION_ERROR",
+      "color": "#7c3aed",
+      "count": 0,
+      "fraction_of_failures": 0.0,
+      "fraction_of_total": 0.0,
+      "label": "Extraction"
+    },
+    {
+      "category": "RETRIEVAL_MISS",
+      "color": "#2563eb",
+      "count": 0,
+      "fraction_of_failures": 0.0,
+      "fraction_of_total": 0.0,
+      "label": "Retrieval"
+    },
+    {
+      "category": "CONSTRAINT_ERROR",
+      "color": "#d97706",
+      "count": 0,
+      "fraction_of_failures": 0.0,
+      "fraction_of_total": 0.0,
+      "label": "Constraint"
+    },
+    {
+      "category": "RANKING_ERROR",
+      "color": "#e11d48",
+      "count": 0,
+      "fraction_of_failures": 0.0,
+      "fraction_of_total": 0.0,
+      "label": "Ranking"
+    },
+    {
+      "category": "UNSUPPORTED_CATALOG",
+      "color": "#64748b",
+      "count": 0,
+      "fraction_of_failures": 0.0,
+      "fraction_of_total": 0.0,
+      "label": "Unsupported"
+    },
+    {
+      "category": "PROVIDER_FAILURE",
+      "color": "#e2e8f0",
+      "count": 0,
+      "fraction_of_failures": 0.0,
+      "fraction_of_total": 0.0,
+      "label": "Provider"
+    },
+    {
+      "category": "OTHER",
+      "color": "#475569",
+      "count": 0,
+      "fraction_of_failures": 0.0,
+      "fraction_of_total": 0.0,
+      "label": "Other"
+    }
+  ],
+  "failed_recommendations": 0,
+  "schema_version": "protocol-v5-offline-reporting-v1.0.0",
+  "system_id": "P2",
+  "title": "P2 Earliest-Failure Taxonomy",
+  "total_recommendations": 0
+}

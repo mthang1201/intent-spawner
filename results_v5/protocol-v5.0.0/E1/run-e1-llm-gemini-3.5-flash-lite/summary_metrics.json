@@ -1,0 +1,26 @@
+{
+  "P1": {
+    "total_cases": 83,
+    "profile_match_count": 44,
+    "profile_accuracy_pct": 53.01,
+    "image_match_count": 34,
+    "image_accuracy_pct": 40.96,
+    "joint_match_count": 32,
+    "joint_accuracy_pct": 38.55,
+    "fallback_count": 0,
+    "fallback_rate_pct": 0.0,
+    "median_latency_ms": 0.06
+  },
+  "P2": {
+    "total_cases": 83,
+    "profile_match_count": 41,
+    "profile_accuracy_pct": 49.4,
+    "image_match_count": 35,
+    "image_accuracy_pct": 42.17,
+    "joint_match_count": 29,
+    "joint_accuracy_pct": 34.94,
+    "fallback_count": 64,
+    "fallback_rate_pct": 77.11,
+    "median_latency_ms": 1439.06
+  }
+}

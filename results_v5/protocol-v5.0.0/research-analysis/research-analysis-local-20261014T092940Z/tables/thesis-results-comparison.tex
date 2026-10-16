@@ -1,0 +1,20 @@
+\begin{table}[htbp]
+\centering
+\caption{Cross-Experiment Evaluation Results: Local Rule-Based vs. LLM (Gemini 3.5 Flash-Lite)}
+\label{tab:thesis_results_comparison}
+\begin{tabular}{lllcc}
+\hline
+\textbf{Claim} & \textbf{RQ} & \textbf{Hypothesis Summary} & \textbf{Local Mode} & \textbf{LLM Mode} \\
+\hline
+H1 & RQ1 & P2 has higher JointAccept@1 than P1. & NOT\_SUPPORTED ($\Delta=+0.050, p=0.762$) & NOT\_SUPPORTED ($\Delta=-0.041, p=0.875$) \\
+H2 & RQ2 & P2 loses less JointAccept@1 under reviewed-equivalent sur... & NOT\_SUPPORTED ($\Delta=+0.053, p=0.781$) & NOT\_SUPPORTED ($\Delta=+0.053, p=0.625$) \\
+H3 & RQ3 & Users achieve acceptable selections more often and faster... & NOT\_EXECUTED & NOT\_EXECUTED \\
+H4 & RQ3 & Users report greater task ease and usability with P2 than... & NOT\_EXECUTED & NOT\_EXECUTED \\
+H5 & RQ4 & P2 Catalog reduces requested-resource cost per successful... & \textbf{SUPPORTED} (Strict Pareto) & \textbf{SUPPORTED} (Strict Pareto) \\
+H6 & RQ4 & P2 Dynamic has lower CPU-request and memory-request absol... & NOT\_SUPPORTED (CPU: -480m, RAM: +495MiB) & NOT\_SUPPORTED (CPU: -347m, RAM: +375MiB) \\
+H7F & RQ5 & P2 recommended images satisfy every required functional c... & NOT\_SUPPORTED (Success: 91.6\%) & NOT\_SUPPORTED (Success: 91.6\%) \\
+H7 & RQ5 & UniqueLayerBytes grows more slowly than naive LogicalImag... & \textbf{SUPPORTED} (Saved 27.6\%) & \textbf{SUPPORTED} (Saved 27.6\%) \\
+H8 & RQ6 & Retained P3 improves JointAccept@1 over P2 while remainin... & NOT\_EXECUTED & NOT\_EXECUTED \\
+\hline
+\end{tabular}
+\end{table}

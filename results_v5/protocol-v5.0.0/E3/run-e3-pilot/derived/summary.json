@@ -1,0 +1,274 @@
+{
+  "analysis_unit": "participant",
+  "cluster_id": "participant_id",
+  "complete_matched_pair_count": 3,
+  "condition_distributions": {
+    "B0": {
+      "cancellation_rate": 0.0,
+      "cancelled_count": 0,
+      "completion_rate": 1.0,
+      "confirmed_count": 3,
+      "control_action_count": {
+        "count": 3,
+        "maximum": 3.0,
+        "mean": 3.0,
+        "median": 3.0,
+        "minimum": 3.0
+      },
+      "correct_count": 2,
+      "correct_selection_rate": 0.6666666666666666,
+      "correction_count": {
+        "count": 3,
+        "maximum": 0.0,
+        "mean": 0.0,
+        "median": 0.0,
+        "minimum": 0.0
+      },
+      "decision_time_missing_count": 0,
+      "decision_time_seconds": {
+        "count": 3,
+        "maximum": 30.8554029581137,
+        "mean": 23.702210194431245,
+        "median": 29.202865208964795,
+        "minimum": 11.048362416215241
+      },
+      "decision_time_timeout_sensitivity_seconds": {
+        "count": 3,
+        "maximum": 30.8554029581137,
+        "mean": 23.702210194431245,
+        "median": 29.202865208964795,
+        "minimum": 11.048362416215241
+      },
+      "decision_time_unavailability_reasons": {},
+      "edit_count": {
+        "count": 3,
+        "maximum": 0.0,
+        "mean": 0.0,
+        "median": 0.0,
+        "minimum": 0.0
+      },
+      "end_to_end_missing_count": 0,
+      "end_to_end_seconds": {
+        "count": 3,
+        "maximum": 30.861598333343863,
+        "mean": 23.710097458524007,
+        "median": 29.211222792044282,
+        "minimum": 11.05747125018388
+      },
+      "final_override_count": null,
+      "final_override_observed_count": null,
+      "interaction_count": {
+        "count": 3,
+        "maximum": 3.0,
+        "mean": 3.0,
+        "median": 3.0,
+        "minimum": 3.0
+      },
+      "notebook_ready_count": 3,
+      "notebook_ready_time_seconds": {
+        "count": 3,
+        "maximum": 0.009108833968639374,
+        "mean": 0.007887264092763266,
+        "median": 0.008357583079487085,
+        "minimum": 0.006195375230163336
+      },
+      "override_count": null,
+      "participant_count": 1,
+      "readiness_rate_among_confirmed": 1.0,
+      "selection_acceptable_count": 2,
+      "selection_acceptable_rate": 0.6666666666666666,
+      "selection_correct_count": 2,
+      "selection_correct_rate": 0.6666666666666666,
+      "selection_success_count": 2,
+      "selection_success_rate": 0.6666666666666666,
+      "task_count": 3,
+      "total_action_count": {
+        "count": 3,
+        "maximum": 3.0,
+        "mean": 3.0,
+        "median": 3.0,
+        "minimum": 3.0
+      }
+    },
+    "P2": {
+      "cancellation_rate": 0.0,
+      "cancelled_count": 0,
+      "completion_rate": 1.0,
+      "confirmed_count": 3,
+      "control_action_count": {
+        "count": 3,
+        "maximum": 4.0,
+        "mean": 2.6666666666666665,
+        "median": 2.0,
+        "minimum": 2.0
+      },
+      "correct_count": 1,
+      "correct_selection_rate": 0.3333333333333333,
+      "correction_count": {
+        "count": 3,
+        "maximum": 1.0,
+        "mean": 0.3333333333333333,
+        "median": 0.0,
+        "minimum": 0.0
+      },
+      "decision_time_missing_count": 0,
+      "decision_time_seconds": {
+        "count": 3,
+        "maximum": 15.859526833053678,
+        "mean": 13.556641652714461,
+        "median": 13.411552499979734,
+        "minimum": 11.39884562510997
+      },
+      "decision_time_timeout_sensitivity_seconds": {
+        "count": 3,
+        "maximum": 15.859526833053678,
+        "mean": 13.556641652714461,
+        "median": 13.411552499979734,
+        "minimum": 11.39884562510997
+      },
+      "decision_time_unavailability_reasons": {},
+      "edit_count": {
+        "count": 3,
+        "maximum": 1.0,
+        "mean": 1.0,
+        "median": 1.0,
+        "minimum": 1.0
+      },
+      "end_to_end_missing_count": 0,
+      "end_to_end_seconds": {
+        "count": 3,
+        "maximum": 15.875904999673367,
+        "mean": 13.569775541468212,
+        "median": 13.421048666350543,
+        "minimum": 11.412372958380729
+      },
+      "final_override_count": 1,
+      "final_override_observed_count": 3,
+      "interaction_count": {
+        "count": 3,
+        "maximum": 5.0,
+        "mean": 3.6666666666666665,
+        "median": 3.0,
+        "minimum": 3.0
+      },
+      "notebook_ready_count": 3,
+      "notebook_ready_time_seconds": {
+        "count": 3,
+        "maximum": 0.016378166619688272,
+        "mean": 0.013133888753751913,
+        "median": 0.01352733327075839,
+        "minimum": 0.009496166370809078
+      },
+      "override_count": {
+        "count": 3,
+        "maximum": 1.0,
+        "mean": 0.3333333333333333,
+        "median": 0.0,
+        "minimum": 0.0
+      },
+      "participant_count": 1,
+      "readiness_rate_among_confirmed": 1.0,
+      "selection_acceptable_count": 1,
+      "selection_acceptable_rate": 0.3333333333333333,
+      "selection_correct_count": 1,
+      "selection_correct_rate": 0.3333333333333333,
+      "selection_success_count": 1,
+      "selection_success_rate": 0.3333333333333333,
+      "task_count": 3,
+      "total_action_count": {
+        "count": 3,
+        "maximum": 5.0,
+        "mean": 3.6666666666666665,
+        "median": 3.0,
+        "minimum": 3.0
+      }
+    }
+  },
+  "exclusions": {
+    "by_reason": {},
+    "count": 0
+  },
+  "execution_status": "INCOMPLETE",
+  "formal_inference": {
+    "reason": "Descriptive derivation does not test the two co-primary hypotheses or emit significance claims.",
+    "status": "NOT_COMPUTED"
+  },
+  "matched_pair_row_count": 3,
+  "measured_task_count": 6,
+  "outcomes_generated": true,
+  "paired_delta_distributions": {
+    "correctness_delta_p2_minus_b0": {
+      "count": 3,
+      "maximum": 0.0,
+      "mean": -0.3333333333333333,
+      "median": 0.0,
+      "minimum": -1.0
+    },
+    "decision_time_delta_p2_minus_b0": {
+      "count": 3,
+      "maximum": 4.811164416838437,
+      "mean": -10.145568541716784,
+      "median": -17.443850458133966,
+      "minimum": -17.804019583854824
+    },
+    "decision_time_timeout_sensitivity_delta_p2_minus_b0": {
+      "count": 3,
+      "maximum": 4.811164416838437,
+      "mean": -10.145568541716784,
+      "median": -17.443850458133966,
+      "minimum": -17.804019583854824
+    },
+    "end_to_end_delta_p2_minus_b0": {
+      "count": 3,
+      "maximum": 4.818433749489486,
+      "mean": -10.140321917055795,
+      "median": -17.44054966699332,
+      "minimum": -17.798849833663553
+    },
+    "interaction_delta_p2_minus_b0": {
+      "count": 3,
+      "maximum": 2.0,
+      "mean": 0.6666666666666666,
+      "median": 0.0,
+      "minimum": 0.0
+    },
+    "notebook_ready_time_delta_p2_minus_b0": {
+      "count": 3,
+      "maximum": 0.007269332651048899,
+      "mean": 0.0052466246609886484,
+      "median": 0.005169750191271305,
+      "minimum": 0.0033007911406457424
+    },
+    "total_action_delta_p2_minus_b0": {
+      "count": 3,
+      "maximum": 2.0,
+      "mean": 0.6666666666666666,
+      "median": 0.0,
+      "minimum": 0.0
+    }
+  },
+  "participant_count": 1,
+  "participant_level_paired_deltas": [
+    {
+      "complete_pair_count": 3,
+      "mean_correctness_delta_p2_minus_b0": -0.3333333333333333,
+      "mean_decision_time_delta_p2_minus_b0": -10.145568541716784,
+      "mean_decision_time_timeout_sensitivity_delta_p2_minus_b0": -10.145568541716784,
+      "mean_end_to_end_delta_p2_minus_b0": -10.140321917055795,
+      "mean_interaction_delta_p2_minus_b0": 0.6666666666666666,
+      "mean_notebook_ready_time_delta_p2_minus_b0": 0.0052466246609886484,
+      "mean_total_action_delta_p2_minus_b0": 0.6666666666666666,
+      "observed_pair_count": 3,
+      "participant_id": "P-dc4cd3a2f7ef"
+    }
+  ],
+  "schema_version": "protocol-v5-user-study-summary-v1.2.0",
+  "selection_scoring_version": "protocol-v5-user-study-final-selection-scoring-v1.0.0",
+  "session_coverage": {
+    "analyzable_event_session_count": 1,
+    "complete_session_count": 1,
+    "excluded_session_count": 0,
+    "incomplete_session_count": 0,
+    "session_record_count": 1
+  }
+}

@@ -1,0 +1,106 @@
+{
+  "estimates": [
+    {
+      "P1": {
+        "ci_high": 0.8181818181818182,
+        "ci_low": 0.34545454545454546,
+        "estimate": 0.6
+      },
+      "P2": {
+        "ci_high": 0.7454545454545454,
+        "ci_low": 0.36363636363636365,
+        "estimate": 0.5590909090909091
+      },
+      "diff_P2_minus_P1": {
+        "ci_high": null,
+        "ci_low": null,
+        "decision": "TESTED",
+        "estimate": null
+      },
+      "metric_key": "joint_accept_at_1",
+      "metric_name": "JointAccept@1"
+    },
+    {
+      "P1": {
+        "ci_high": 1.0,
+        "ci_low": 0.6363636363636364,
+        "estimate": 0.8363636363636363
+      },
+      "P2": {
+        "ci_high": 0.9636363636363636,
+        "ci_low": 0.5636363636363636,
+        "estimate": 0.7818181818181817
+      },
+      "diff_P2_minus_P1": {
+        "ci_high": null,
+        "ci_low": null,
+        "decision": "TESTED",
+        "estimate": null
+      },
+      "metric_key": "profile_acceptable_accuracy",
+      "metric_name": "Profile Acceptable"
+    },
+    {
+      "P1": {
+        "ci_high": 0.8727272727272727,
+        "ci_low": 0.38181818181818183,
+        "estimate": 0.6363636363636364
+      },
+      "P2": {
+        "ci_high": 0.85,
+        "ci_low": 0.4727272727272727,
+        "estimate": 0.6681818181818181
+      },
+      "diff_P2_minus_P1": {
+        "ci_high": null,
+        "ci_low": null,
+        "decision": "TESTED",
+        "estimate": null
+      },
+      "metric_key": "image_acceptable_accuracy",
+      "metric_name": "Image Acceptable"
+    },
+    {
+      "P1": {
+        "ci_high": 0.6363636363636364,
+        "ci_low": 0.16363636363636364,
+        "estimate": 0.38181818181818183
+      },
+      "P2": {
+        "ci_high": 0.5318181818181819,
+        "ci_low": 0.17272727272727273,
+        "estimate": 0.35000000000000003
+      },
+      "diff_P2_minus_P1": {
+        "ci_high": null,
+        "ci_low": null,
+        "decision": "TESTED",
+        "estimate": null
+      },
+      "metric_key": "hard_constraint_violation_rate",
+      "metric_name": "Constraint Violations"
+    },
+    {
+      "P1": {
+        "ci_high": 0.7954545454545454,
+        "ci_low": 0.3181818181818182,
+        "estimate": 0.5681818181818182
+      },
+      "P2": {
+        "ci_high": 0.7045454545454546,
+        "ci_low": 0.3333333333333333,
+        "estimate": 0.5151515151515151
+      },
+      "diff_P2_minus_P1": {
+        "ci_high": null,
+        "ci_low": null,
+        "decision": "TESTED",
+        "estimate": null
+      },
+      "metric_key": "robustness_rate",
+      "metric_name": "Robustness (SRR)"
+    }
+  ],
+  "schema_version": "protocol-v5-offline-reporting-v1.0.0",
+  "title": "Protocol-v5 Confidence Intervals and Effect Sizes"
+}

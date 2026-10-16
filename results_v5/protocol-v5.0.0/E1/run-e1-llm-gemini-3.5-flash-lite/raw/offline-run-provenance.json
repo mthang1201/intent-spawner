@@ -1,0 +1,405 @@
+{
+  "benchmark_prompt_policy": {
+    "operational_logging": "prohibited",
+    "stored_in_raw_evidence": false
+  },
+  "candidate_catalog": {
+    "candidates": [
+      {
+        "candidate_id": "large-minimal-python",
+        "catalog_version": "2026-08-06.1",
+        "image_id": "minimal-python",
+        "policy_version": "resource-image-policy-v1",
+        "profile_id": "large"
+      },
+      {
+        "candidate_id": "large-pytorch-deep-learning",
+        "catalog_version": "2026-08-06.1",
+        "image_id": "pytorch-deep-learning",
+        "policy_version": "resource-image-policy-v1",
+        "profile_id": "large"
+      },
+      {
+        "candidate_id": "large-scipy-data-science",
+        "catalog_version": "2026-08-06.1",
+        "image_id": "scipy-data-science",
+        "policy_version": "resource-image-policy-v1",
+        "profile_id": "large"
+      },
+      {
+        "candidate_id": "large-tensorflow-deep-learning",
+        "catalog_version": "2026-08-06.1",
+        "image_id": "tensorflow-deep-learning",
+        "policy_version": "resource-image-policy-v1",
+        "profile_id": "large"
+      },
+      {
+        "candidate_id": "medium-minimal-python",
+        "catalog_version": "2026-08-06.1",
+        "image_id": "minimal-python",
+        "policy_version": "resource-image-policy-v1",
+        "profile_id": "medium"
+      },
+      {
+        "candidate_id": "medium-pytorch-deep-learning",
+        "catalog_version": "2026-08-06.1",
+        "image_id": "pytorch-deep-learning",
+        "policy_version": "resource-image-policy-v1",
+        "profile_id": "medium"
+      },
+      {
+        "candidate_id": "medium-scipy-data-science",
+        "catalog_version": "2026-08-06.1",
+        "image_id": "scipy-data-science",
+        "policy_version": "resource-image-policy-v1",
+        "profile_id": "medium"
+      },
+      {
+        "candidate_id": "medium-tensorflow-deep-learning",
+        "catalog_version": "2026-08-06.1",
+        "image_id": "tensorflow-deep-learning",
+        "policy_version": "resource-image-policy-v1",
+        "profile_id": "medium"
+      },
+      {
+        "candidate_id": "small-minimal-python",
+        "catalog_version": "2026-08-06.1",
+        "image_id": "minimal-python",
+        "policy_version": "resource-image-policy-v1",
+        "profile_id": "small"
+      },
+      {
+        "candidate_id": "small-pytorch-deep-learning",
+        "catalog_version": "2026-08-06.1",
+        "image_id": "pytorch-deep-learning",
+        "policy_version": "resource-image-policy-v1",
+        "profile_id": "small"
+      },
+      {
+        "candidate_id": "small-scipy-data-science",
+        "catalog_version": "2026-08-06.1",
+        "image_id": "scipy-data-science",
+        "policy_version": "resource-image-policy-v1",
+        "profile_id": "small"
+      },
+      {
+        "candidate_id": "small-tensorflow-deep-learning",
+        "catalog_version": "2026-08-06.1",
+        "image_id": "tensorflow-deep-learning",
+        "policy_version": "resource-image-policy-v1",
+        "profile_id": "small"
+      }
+    ],
+    "catalog_sha256": "bd2211d5fd769b5addec3c41e8cbd48bb0d9cd1c958aa554ada9bf88c29509f3",
+    "catalog_version": "2026-08-06.1",
+    "corpus_sha256": "987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444",
+    "corpus_version": "environment-candidate-corpus-v1"
+  },
+  "created_utc": "2026-10-13T08:44:42.723208Z",
+  "effective_repeats": {
+    "P1": 1,
+    "P2": 1
+  },
+  "environment_identity": {
+    "platform": "darwin",
+    "platform_release": "24.3.0",
+    "python_version": "3.14.6"
+  },
+  "experiment_id": "E1",
+  "freeze_identity": {
+    "freeze_id": null,
+    "frozen_at_utc": "2026-09-21T06:38:01Z",
+    "frozen_by": "protocol-v5-v4-importer+agent-authored-p2-supplement",
+    "source": "development_split_manifest"
+  },
+  "frozen_configuration": {
+    "configuration": "default-auto-generated",
+    "description": "Streamlined evaluation configuration",
+    "schema_version": "protocol-v5-evaluation-configuration-v1.0.0"
+  },
+  "git_revision": "9f513666ea51d3bd9113be33d9d7707dd5fe6636",
+  "git_worktree_dirty": true,
+  "p3_explicitly_enabled": false,
+  "planned_record_count": 166,
+  "protocol_version": "5.0.0",
+  "provenance_fingerprint": "f4853498bbcdbc32f86915d2d34aa842d0466caf4edb7a03d9b93b6994a68b71",
+  "repeat_policy": {
+    "deterministic_effective_repeats": 1,
+    "deterministic_systems": [
+      "P1"
+    ],
+    "requested_repeats_apply_only_to_stochastic_systems": true,
+    "stochastic_systems": [
+      "P2"
+    ],
+    "version": "protocol-v5-repeat-policy-v1.0.0"
+  },
+  "requested_repeats": 1,
+  "run_id": "run-e1-llm-gemini-3.5-flash-lite",
+  "schema_version": "protocol-v5-offline-recommendation-provenance-v1.0.0",
+  "seed": 20260824,
+  "split": {
+    "bundle_checksum": "079ca97e88719b2edd259ef8e252f09bc481d6d579d2f00136f694ebc4a2046e",
+    "case_count": 83,
+    "dataset_id": "v5-development-reconstructed-v1",
+    "dataset_sha256": "71f57daafe319afea1b5ce23e9e1a762105c31f2f756f55abbd06b551c4eed6c",
+    "family_count": 18,
+    "role": "development",
+    "split_id": "v5-development"
+  },
+  "system_frozen_provenance": {
+    "P1": {
+      "adapter_version": "protocol-v5-p1-frozen-adapter-v1",
+      "backend_name": "rule_based",
+      "backend_version": "rule-based-v1",
+      "candidate_catalog": {
+        "candidates": [
+          {
+            "candidate_id": "large-minimal-python",
+            "catalog_version": "2026-08-06.1",
+            "image_id": "minimal-python",
+            "policy_version": "resource-image-policy-v1",
+            "profile_id": "large"
+          },
+          {
+            "candidate_id": "large-pytorch-deep-learning",
+            "catalog_version": "2026-08-06.1",
+            "image_id": "pytorch-deep-learning",
+            "policy_version": "resource-image-policy-v1",
+            "profile_id": "large"
+          },
+          {
+            "candidate_id": "large-scipy-data-science",
+            "catalog_version": "2026-08-06.1",
+            "image_id": "scipy-data-science",
+            "policy_version": "resource-image-policy-v1",
+            "profile_id": "large"
+          },
+          {
+            "candidate_id": "large-tensorflow-deep-learning",
+            "catalog_version": "2026-08-06.1",
+            "image_id": "tensorflow-deep-learning",
+            "policy_version": "resource-image-policy-v1",
+            "profile_id": "large"
+          },
+          {
+            "candidate_id": "medium-minimal-python",
+            "catalog_version": "2026-08-06.1",
+            "image_id": "minimal-python",
+            "policy_version": "resource-image-policy-v1",
+            "profile_id": "medium"
+          },
+          {
+            "candidate_id": "medium-pytorch-deep-learning",
+            "catalog_version": "2026-08-06.1",
+            "image_id": "pytorch-deep-learning",
+            "policy_version": "resource-image-policy-v1",
+            "profile_id": "medium"
+          },
+          {
+            "candidate_id": "medium-scipy-data-science",
+            "catalog_version": "2026-08-06.1",
+            "image_id": "scipy-data-science",
+            "policy_version": "resource-image-policy-v1",
+            "profile_id": "medium"
+          },
+          {
+            "candidate_id": "medium-tensorflow-deep-learning",
+            "catalog_version": "2026-08-06.1",
+            "image_id": "tensorflow-deep-learning",
+            "policy_version": "resource-image-policy-v1",
+            "profile_id": "medium"
+          },
+          {
+            "candidate_id": "small-minimal-python",
+            "catalog_version": "2026-08-06.1",
+            "image_id": "minimal-python",
+            "policy_version": "resource-image-policy-v1",
+            "profile_id": "small"
+          },
+          {
+            "candidate_id": "small-pytorch-deep-learning",
+            "catalog_version": "2026-08-06.1",
+            "image_id": "pytorch-deep-learning",
+            "policy_version": "resource-image-policy-v1",
+            "profile_id": "small"
+          },
+          {
+            "candidate_id": "small-scipy-data-science",
+            "catalog_version": "2026-08-06.1",
+            "image_id": "scipy-data-science",
+            "policy_version": "resource-image-policy-v1",
+            "profile_id": "small"
+          },
+          {
+            "candidate_id": "small-tensorflow-deep-learning",
+            "catalog_version": "2026-08-06.1",
+            "image_id": "tensorflow-deep-learning",
+            "policy_version": "resource-image-policy-v1",
+            "profile_id": "small"
+          }
+        ],
+        "catalog_sha256": "bd2211d5fd769b5addec3c41e8cbd48bb0d9cd1c958aa554ada9bf88c29509f3",
+        "catalog_version": "2026-08-06.1",
+        "corpus_sha256": "987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444",
+        "corpus_version": "environment-candidate-corpus-v1"
+      },
+      "catalog_version": "2026-08-06.1"
+    },
+    "P2": {
+      "adapter_version": "protocol-v5-p2-frozen-adapter-v1",
+      "backend_name": "p2",
+      "backend_version": "p2-hybrid-v1.0.0",
+      "candidate_catalog": {
+        "candidates": [
+          {
+            "candidate_id": "large-minimal-python",
+            "catalog_version": "2026-08-06.1",
+            "image_id": "minimal-python",
+            "policy_version": "resource-image-policy-v1",
+            "profile_id": "large"
+          },
+          {
+            "candidate_id": "large-pytorch-deep-learning",
+            "catalog_version": "2026-08-06.1",
+            "image_id": "pytorch-deep-learning",
+            "policy_version": "resource-image-policy-v1",
+            "profile_id": "large"
+          },
+          {
+            "candidate_id": "large-scipy-data-science",
+            "catalog_version": "2026-08-06.1",
+            "image_id": "scipy-data-science",
+            "policy_version": "resource-image-policy-v1",
+            "profile_id": "large"
+          },
+          {
+            "candidate_id": "large-tensorflow-deep-learning",
+            "catalog_version": "2026-08-06.1",
+            "image_id": "tensorflow-deep-learning",
+            "policy_version": "resource-image-policy-v1",
+            "profile_id": "large"
+          },
+          {
+            "candidate_id": "medium-minimal-python",
+            "catalog_version": "2026-08-06.1",
+            "image_id": "minimal-python",
+            "policy_version": "resource-image-policy-v1",
+            "profile_id": "medium"
+          },
+          {
+            "candidate_id": "medium-pytorch-deep-learning",
+            "catalog_version": "2026-08-06.1",
+            "image_id": "pytorch-deep-learning",
+            "policy_version": "resource-image-policy-v1",
+            "profile_id": "medium"
+          },
+          {
+            "candidate_id": "medium-scipy-data-science",
+            "catalog_version": "2026-08-06.1",
+            "image_id": "scipy-data-science",
+            "policy_version": "resource-image-policy-v1",
+            "profile_id": "medium"
+          },
+          {
+            "candidate_id": "medium-tensorflow-deep-learning",
+            "catalog_version": "2026-08-06.1",
+            "image_id": "tensorflow-deep-learning",
+            "policy_version": "resource-image-policy-v1",
+            "profile_id": "medium"
+          },
+          {
+            "candidate_id": "small-minimal-python",
+            "catalog_version": "2026-08-06.1",
+            "image_id": "minimal-python",
+            "policy_version": "resource-image-policy-v1",
+            "profile_id": "small"
+          },
+          {
+            "candidate_id": "small-pytorch-deep-learning",
+            "catalog_version": "2026-08-06.1",
+            "image_id": "pytorch-deep-learning",
+            "policy_version": "resource-image-policy-v1",
+            "profile_id": "small"
+          },
+          {
+            "candidate_id": "small-scipy-data-science",
+            "catalog_version": "2026-08-06.1",
+            "image_id": "scipy-data-science",
+            "policy_version": "resource-image-policy-v1",
+            "profile_id": "small"
+          },
+          {
+            "candidate_id": "small-tensorflow-deep-learning",
+            "catalog_version": "2026-08-06.1",
+            "image_id": "tensorflow-deep-learning",
+            "policy_version": "resource-image-policy-v1",
+            "profile_id": "small"
+          }
+        ],
+        "catalog_sha256": "bd2211d5fd769b5addec3c41e8cbd48bb0d9cd1c958aa554ada9bf88c29509f3",
+        "catalog_version": "2026-08-06.1",
+        "corpus_sha256": "987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444",
+        "corpus_version": "environment-candidate-corpus-v1"
+      },
+      "config": {
+        "config_version": "p2-config-v1.1.0",
+        "dense_top_k": 10,
+        "dense_weight": 1.0,
+        "extractor_mode": "llm",
+        "max_concurrent_recommendations": 4,
+        "rrf_k": 60.0,
+        "sparse_top_k": 10,
+        "sparse_weight": 1.0,
+        "top_k": 10,
+        "total_timeout": 30.0
+      },
+      "constraint_ranking_configuration": {
+        "constraint_evaluator_version": "p2-deterministic-constraint-evaluator-v1.1.0",
+        "constraint_policy_version": "p2-constraint-policy-v1.0.0",
+        "ranker_version": "p2-deterministic-ranker-v2.0.0",
+        "retrieval_rank_weight": 0.6,
+        "soft_preference_weight": 0.25
+      },
+      "dense_index_sha256": "c0561bcd1ee6ec5153b710aef3deae88bd259a011ddd454513cbb1c675118387",
+      "dense_index_version": "environment-dense-index-v1",
+      "embedding_model_id": "intent-spawner-local-feature-hash",
+      "embedding_model_revision": "feature-hash-embedding-v1.0.0",
+      "extractor_model_id": "gemini-3.5-flash-lite",
+      "extractor_name": "p2-structured-intent-llm",
+      "extractor_prompt_sha256": "aa607821b326ce94aad5e44197f230b919f37fc50897489adf3932aba9056195",
+      "extractor_prompt_version": "structured-intent-prompt-v1.0.0",
+      "extractor_version": "structured-intent-extractor-v1.0.0",
+      "generation": {
+        "p2_backend_version": "p2-hybrid-v1.0.0",
+        "p2_corpus_checksum": "987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444",
+        "p2_corpus_version": "environment-candidate-corpus-v1",
+        "p2_dense_index_checksum": "c0561bcd1ee6ec5153b710aef3deae88bd259a011ddd454513cbb1c675118387",
+        "p2_dense_index_version": "environment-dense-index-v1",
+        "p2_hybrid_index_checksum": "45ea08f29492d796189920713636b3a9cae2f0fb264e023124eb38c8cfad83a4",
+        "p2_hybrid_index_version": "environment-hybrid-index-v1",
+        "p2_sparse_index_checksum": "931fac84b818cb934a37bfbfa76092a89626cd5eaffc869887de8558bc6fa747",
+        "p2_sparse_index_version": "environment-sparse-index-v1"
+      },
+      "hybrid_index_sha256": "45ea08f29492d796189920713636b3a9cae2f0fb264e023124eb38c8cfad83a4",
+      "hybrid_index_version": "environment-hybrid-index-v1",
+      "pipeline_version": "p2-pipeline-v1.0.0",
+      "retrieval_configuration": {
+        "dense_top_k": 10,
+        "dense_weight": 1.0,
+        "retriever_version": "reciprocal-rank-fusion-hybrid-retriever-v1",
+        "rrf_k": 60.0,
+        "sparse_top_k": 10,
+        "sparse_weight": 1.0,
+        "top_k": 10
+      },
+      "sparse_index_sha256": "931fac84b818cb934a37bfbfa76092a89626cd5eaffc869887de8558bc6fa747",
+      "sparse_index_version": "environment-sparse-index-v1",
+      "structured_intent_schema_version": "structured-intent-v1"
+    }
+  },
+  "systems": [
+    "P1",
+    "P2"
+  ]
+}

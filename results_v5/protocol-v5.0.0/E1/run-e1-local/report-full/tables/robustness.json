@@ -1,0 +1,115 @@
+{
+  "experiment": "E2",
+  "rows": [
+    {
+      "canonical": {
+        "ci_high": null,
+        "ci_low": null,
+        "estimate": 0.0,
+        "formatted": "0.0% N/A"
+      },
+      "code_centric": {
+        "ci_high": null,
+        "ci_low": null,
+        "estimate": null,
+        "formatted": "N/A"
+      },
+      "noisy": {
+        "ci_high": null,
+        "ci_low": null,
+        "estimate": null,
+        "formatted": "N/A"
+      },
+      "overall_srr": {
+        "ci_high": 0.7954545454545454,
+        "ci_low": 0.3181818181818182,
+        "estimate": 0.5681818181818182,
+        "formatted": "56.8% [31.8%, 79.5%]"
+      },
+      "paraphrase": {
+        "ci_high": null,
+        "ci_low": null,
+        "estimate": null,
+        "formatted": "N/A"
+      },
+      "system_id": "P1",
+      "vietnamese": {
+        "ci_high": null,
+        "ci_low": null,
+        "estimate": 0.0,
+        "formatted": "0.0% N/A"
+      },
+      "worst_case_family_robustness": {
+        "estimate": 0.0,
+        "formatted": "0.0%"
+      }
+    },
+    {
+      "canonical": {
+        "ci_high": null,
+        "ci_low": null,
+        "estimate": 0.0,
+        "formatted": "0.0% N/A"
+      },
+      "code_centric": {
+        "ci_high": null,
+        "ci_low": null,
+        "estimate": null,
+        "formatted": "N/A"
+      },
+      "noisy": {
+        "ci_high": null,
+        "ci_low": null,
+        "estimate": null,
+        "formatted": "N/A"
+      },
+      "overall_srr": {
+        "ci_high": 0.8333333333333333,
+        "ci_low": 0.3634469696969697,
+        "estimate": 0.6060606060606061,
+        "formatted": "60.6% [36.3%, 83.3%]"
+      },
+      "paraphrase": {
+        "ci_high": null,
+        "ci_low": null,
+        "estimate": null,
+        "formatted": "N/A"
+      },
+      "system_id": "P2",
+      "vietnamese": {
+        "ci_high": null,
+        "ci_low": null,
+        "estimate": 0.2,
+        "formatted": "20.0% N/A"
+      },
+      "worst_case_family_robustness": {
+        "estimate": 0.45454545454545453,
+        "formatted": "45.5%"
+      }
+    }
+  ],
+  "schema_version": "protocol-v5-offline-reporting-v1.0.0",
+  "strata": [
+    [
+      "canonical",
+      "Canonical"
+    ],
+    [
+      "paraphrase",
+      "Paraphrase"
+    ],
+    [
+      "vietnamese",
+      "Vietnamese"
+    ],
+    [
+      "noisy",
+      "Noisy"
+    ],
+    [
+      "code_centric",
+      "Code-Centric"
+    ]
+  ],
+  "title": "Natural-Language Robustness (E2)"
+}
