@@ -33,6 +33,15 @@ singleuser:
   storage:
     type: dynamic
     capacity: 1Gi
+    extraVolumes:
+      - name: demo-workload
+        configMap:
+          name: demo-workload
+          defaultMode: 493
+    extraVolumeMounts:
+      - name: demo-workload
+        mountPath: /home/jovyan/demo/workload
+        readOnly: true
   # Safe fallback only; the confirmed allowlisted catalog reference replaces it.
   image:
     name: quay.io/jupyter/minimal-notebook

@@ -1,11 +1,8 @@
 # Protocol-v5 Unified Research Analysis
 
-> For complete evidence auditing and portable reproduction, run `make v5-audit`
-> and read [PROTOCOL_V5_FINAL_REPORT.md](PROTOCOL_V5_FINAL_REPORT.md).
-> `frozen-configuration.json` is a design snapshot, not an authoritative
-> production freeze. Claim analysis rejects it. Confirmatory analysis requires
-> the canonical `freezes/<freeze-id>/freeze-manifest.json` artifact produced and
-> source-reverified by `evaluation_v5.freeze`.
+> For research claim evaluation across experiments, run `make research-analysis`
+> or `python scripts/run_experiments.py --experiment research`. Results, claim matrices,
+> and threats to validity are stored under `results_v5/protocol-v5.0.0/research-analysis/`.
 
 ## Purpose and claim boundary
 
@@ -44,21 +41,19 @@ when every required confirmatory input and test was available.
 
 ## Commands
 
-Discover and validate candidates without writing an analysis package:
+Run the cross-experiment research analysis via the unified runner:
 
 ```bash
-PYTHONPATH=. .venv/bin/python -m evaluation_v5.analysis.research_analysis discover \
-  --results-root results_v5/protocol-v5.0.0 \
-  --freeze results_v5/protocol-v5.0.0/freezes/<freeze-id>/freeze-manifest.json
+make research-analysis
+# or: python scripts/run_experiments.py --experiment research
 ```
 
-Generate an immutable package:
+Or run the analysis module directly:
 
 ```bash
 PYTHONPATH=. .venv/bin/python -m evaluation_v5.analysis.research_analysis analyze \
   --results-root results_v5/protocol-v5.0.0 \
-  --freeze results_v5/protocol-v5.0.0/freezes/<freeze-id>/freeze-manifest.json \
-  --output-root results_v5/protocol-v5.0.0/analysis \
+  --output-root results_v5/protocol-v5.0.0/research-analysis \
   --run-id research-analysis-YYYYMMDDTHHMMSSZ
 ```
 

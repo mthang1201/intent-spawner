@@ -290,3 +290,18 @@ Algorithm~\ref{alg:prespawn_enforcement} describes the hook's validation and bin
 When JupyterHub initiates pod creation, the pre-spawn hook executes before the Pod manifest reaches the Kubernetes API. The hook extracts the preview token, checks its user ID and TTL, confirms allowlist membership, and writes the CPU/memory limits and digest-pinned image directly into the spawner object. It also attaches structured audit annotations (event ID, profile, and image) to the pod metadata.
 
 Crucially, the pre-spawn hook performs no NLP parsing, vector inference, or candidate ranking. It only applies the previously accepted configuration. This zero-recomputation design avoids Time-of-Check to Time-of-Use (TOCTOU) discrepancies: the pod that starts in the cluster is guaranteed to match what the user approved during preview. In addition, removing inference from the critical launch path keeps pod startup fast, predictable, and resilient against external model outages.
+
+\subsection{Policy-bounded dynamic resource overlay}
+\label{subsec:dynamic_resource_overlay}
+
+While P2 defaults to mapping user intent onto discrete, administrator-curated profiles from catalog $\mathcal{P}$ (\textbf{Catalog Mode}), the architecture also provides an opt-in extension for fine-grained resource tailoring (\textbf{Dynamic Mode}). 
+
+In standard Catalog Mode, P2 assigns one of the fixed, pre-configured profile tiers (such as \texttt{Small}, \texttt{Medium}, or \texttt{Large}). While this discrete mapping guarantees high operational predictability and strict adherence to administrator-certified resource templates, it can lead to memory over-allocation when workload requirements fall between coarse profile tiers.
+
+To address cluster multi-tenancy and optimize physical memory footprint, Dynamic Mode introduces a policy-bounded resource generation overlay layered directly onto the resolved recommendation. Rather than binding static profile quantities, the dynamic engine estimates continuous CPU and memory bounds from the validated intent contract $I$ (specifically exploiting extracted task categories, estimated dataset scale $I.\mathrm{dataset\_size\_gb}$, and explicit UI resource hints $H_{\mathrm{user}}$). To guarantee infrastructure stability and prevent arbitrary resource injections, the dynamic generator enforces three administrative safeguards:
+\begin{enumerate}
+    \item \textbf{Stepped Quantity Bounds:} All dynamically generated CPU millicores and memory megabytes must fall within administrator-configured minimums and maximums, aligned upward to discrete step intervals ($[\mathrm{min}, \mathrm{max}]$ with step $\Delta$) defined in the resource policy.
+    \item \textbf{Cluster Quota Caps and Ratios:} Generated quantities must satisfy strict limit-to-request ratios and cannot exceed the active Kubernetes namespace quota headroom.
+    \item \textbf{Cryptographic Policy Provenance:} Every dynamic allocation binds a cryptographic SHA-256 digest of the governing policy file into the preview record, ensuring that policy alterations immediately invalidate stale or unverified spawn requests.
+\end{enumerate}
+This dual-mode design establishes a flexible operational spectrum: cluster administrators can maintain Catalog Mode for guaranteed workload containment and zero out-of-memory risk, or activate Dynamic Mode to maximize cluster packing density and eliminate idle capacity stranding.

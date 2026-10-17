@@ -1,15 +1,15 @@
 # Protocol-v5 Experiment Architecture
 
-> Historical architecture/design snapshot. Its original execution-status
-> statements describe implementation time. For the audited current evidence,
-> defects and unavailable experiments, use
-> [PROTOCOL_V5_FINAL_REPORT.md](PROTOCOL_V5_FINAL_REPORT.md).
+> Protocol-v5 experiment architecture and specification. For the practical
+> experiment execution runbook and tracked results, see
+> [PROTOCOL_V5_EXPERIMENT_GUIDE.md](../PROTOCOL_V5_EXPERIMENT_GUIDE.md) and
+> [results_v5/README.md](../../results_v5/README.md).
 
 Protocol version: `5.0.0`
 
 Manifest schema: `protocol-v5-manifest-v1.0.0`
 
-Status: architecture implemented; Protocol-v5 experiments not executed
+Status: Architecture implemented; Protocol-v5 experiments executed and tracked under `results_v5/protocol-v5.0.0/`
 
 Data-isolation contract:
 [PROTOCOL_V5_DATA_ISOLATION.md](PROTOCOL_V5_DATA_ISOLATION.md)
@@ -30,10 +30,8 @@ experiment families. P2 is the main proposed method. The primary systems are:
   development gate.
 
 The repository contains the visible `v5-development` bundle for formative
-work, but no confirmatory cases or labels. It contains no Protocol-v5
-participant records, recommendation outputs, cluster measurements, image-size
-measurements, or confirmatory results. The validation-only offline entry point
-does not evaluate any case or emit sealed contents. Protocol-v4
+work, along with tracked observed evidence across all Protocol-v5 experiment
+streams (E1–E5) under `results_v5/protocol-v5.0.0/`. Historical Protocol-v4
 evidence remains historical/formative evidence and is not rewritten or
 relabeled as Protocol-v5 evidence.
 

@@ -159,12 +159,13 @@ and [dynamic sizing](DYNAMIC_PROFILE_GENERATION.md) have dedicated operational g
 
 ## 6. Evidence Status
 
-Experiments E1-E5 are being re-run after removing the freeze/audit/human-review
-layer that previously sat on top of the evaluation harness under
-`evaluation_v5/`. Each experiment now just runs and writes a plain run manifest
-under `results_v5/` — no separate freeze/audit step and no manual approval gate.
-No results currently exist for any of E1-E5; previously collected evidence was
-wiped ahead of this cleanup and no experiment has been re-executed yet.
+Experiments E1–E5 and cross-experiment research analysis have been executed and
+tracked under `results_v5/protocol-v5.0.0/`. The harness supports both local
+deterministic regex extraction and LLM semantic extraction, storing outputs
+in dedicated partitioned directories (e.g., `run-e1-local`, `run-e1-llm-*`).
+Results for all 5 streams (E1 recommendation quality, E2 robustness, E3 user study,
+E4 Kubernetes resource sizing, E5 image storage & functional probes) are fully
+recorded with their manifests, metrics, and synthesis reports.
 
 Historical Protocol-v4 evidence and P2 integration evaluation remain
 historical/formative evidence. Their samples, comparators, and RQ numbering must
@@ -183,18 +184,17 @@ analysis follows its participant/task pairing; B0 has no ranking metrics.
 
 ## 7. Remaining Research and Production Boundaries
 
-The backend is implemented. Research completion requires evidence that the
-current repository does not supply:
+The backend is implemented. Research boundaries to keep in mind:
 
-- Executed E1-E5 evidence. The evaluation harness under `evaluation_v5/` is
-  implemented and its data-leakage protection (train/confirmatory split
-  isolation, contamination checks) is enforced at runtime, but no experiment
-  has produced results yet. Follow the
-  [v5 isolation contract](evaluation/PROTOCOL_V5_DATA_ISOLATION.md); sealed
-  cases must never enter implementation or tuning.
+- Executed E1-E5 evidence: The evaluation harness under `evaluation_v5/` and
+  runner `scripts/run_experiments.py` have executed the benchmark matrix, user
+  study, cluster resource profiling, and image probes, tracked under `results_v5/`.
+  Follow the [v5 isolation contract](evaluation/PROTOCOL_V5_DATA_ISOLATION.md)
+  for any further external confirmatory splits; sealed cases must never enter
+  implementation or tuning.
 - Real B0-versus-P2 sessions under the [E3 study contract](evaluation/PROTOCOL_V5_USER_STUDY.md),
-  retaining privacy and declared crossover pairing. E3 corresponds to v5 RQ3.
-- Eligible cluster and oracle evidence for E4/E5.
+  retaining privacy and declared crossover pairing (results recorded in `run-e3-observed`). E3 corresponds to v5 RQ3.
+- Eligible cluster and oracle evidence for E4/E5 (recorded in `run-e4-observed-*` and `run-e5-*-orbstack`).
 - Documented resolution of any integrity/provenance issues found once
   experiments are executed. Any correction must be a separate linked artifact;
   original source evidence and contradictory results stay preserved.

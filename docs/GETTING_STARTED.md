@@ -44,14 +44,35 @@ bash scripts/setup.sh
 ## Protocol-v5 experiments
 
 Each experiment lives under `evaluation_v5/` and writes a plain run manifest
-under `results_v5/` when it runs — there is no separate freeze/audit step and
-no manual approval gate to pass first.
+under `results_v5/protocol-v5.0.0/` when it runs.
 
-Run the full software test suite for the evaluation harness:
+### Run Unified Experiment Runner (Interactive or Direct)
+
+The recommended entry point to run or reproduce experiments E1–E5 is:
 
 ```bash
-make v5-test
+# Interactive menu (E1–E5, local/LLM selection, reporting, research claims):
+make experiments
+# or: python scripts/run_experiments.py
+
+# Direct offline evaluations (E1):
+make eval-offline-local   # Local regex mode (zero API cost, ~1ms)
+make eval-offline-llm     # LLM semantic extractor mode
+
+# Robustness analysis (E2):
+make eval-robustness
+
+# Cross-experiment claim adjudication & synthesis:
+make research-analysis
 ```
+
+Run the core software test suite for recommender logic:
+
+```bash
+make test
+```
+
+See [**Protocol-v5 Experiment Guide**](PROTOCOL_V5_EXPERIMENT_GUIDE.md) for the complete runbook.
 
 Run an individual experiment module directly, for example:
 
@@ -195,11 +216,12 @@ reproduce its headline analysis without private services:
 To validate the frozen bilingual benchmark and preview its original matrices:
 
 ```bash
-make v4-validate
+.venv/bin/python -m evaluation_v4.run_recommenders --dry-run
+.venv/bin/python -m evaluation_v4.plan_system --dry-run
 ```
 
-This target runs the recommendation and system planners with `--dry-run`; it
-collects no new model responses or cluster measurements.
+These commands run the recommendation and system planners with `--dry-run`; they
+collect no new model responses or cluster measurements.
 
 The authoritative observed matrices are already complete. Do not overwrite or present a new dry run as those results.
 

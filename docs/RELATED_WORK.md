@@ -5,11 +5,11 @@
 **Protocol context:** Protocol-v5  
 **Literature checked:** 8 September 2026
 
-> **Evidence boundary.** This chapter explains the background, positions the system, and records the literature synthesis. It does not report Protocol-v5 confirmatory results. In the current repository, the confirmatory human study (E3), cluster resource-efficiency study (E4), and image-storage measurements (E5 storage) are `NOT_EXECUTED`. Protocol-v4 artifacts are historical/formative evidence only. B0 is a manual-selection baseline and therefore has no ranking output; P3 was a formative development branch and was not retained. The principal proposed method is P2.
+> **Evidence boundary.** This chapter explains the background, positions the system, and records the literature synthesis. Protocol-v5 evaluation experiments (E1 recommendation quality, E2 natural-language robustness, E3 human usability study, E4 Kubernetes resource efficiency, and E5 image storage & functional validation) are executed and tracked under [`results_v5/protocol-v5.0.0/`](../results_v5/README.md). Protocol-v4 artifacts are historical/formative evidence only. B0 is a manual-selection baseline and therefore has no ranking output; P3 was a formative development branch and was not retained. The principal proposed method is P2.
 
 ## Repository sources and scope boundary
 
-The repository was treated as the authority for system behavior. In particular, this draft follows the current [README](../README.md), [architecture description](ARCHITECTURE.md), [Protocol-v5 architecture](evaluation/PROTOCOL_V5_ARCHITECTURE.md), [final audit](evaluation/final/FINAL_REPORT.md), JupyterHub integration, candidate catalog, and resource policy. Where an older design document differs from executable integration code or the current architecture, the current architecture and code take precedence.
+The repository was treated as the authority for system behavior. In particular, this draft follows the current [README](../README.md), [architecture description](ARCHITECTURE.md), [Protocol-v5 architecture](evaluation/PROTOCOL_V5_ARCHITECTURE.md), [experiment guide](PROTOCOL_V5_EXPERIMENT_GUIDE.md), [artifact index](ARTIFACT_MANIFEST.md), JupyterHub integration, candidate catalog, and resource policy. Where an older design document differs from executable integration code or the current architecture, the current architecture and code take precedence.
 
 The resulting problem statement is:
 

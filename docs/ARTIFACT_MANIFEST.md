@@ -23,15 +23,15 @@ identities of the repository snapshots they describe.
 
 The freeze/final-audit system and the manual human-review approval gate that
 previously sat on top of the Protocol-v5 evaluation harness have been removed.
-Each experiment (E1-E5) is now just "run it, get results": it executes and
-writes a plain run manifest, with no separate immutable-freeze step and no
-approval gate blocking it. No results currently exist for any experiment —
-previously collected evidence was wiped ahead of this cleanup, and no
-experiment has been re-executed yet.
+Each experiment (E1-E5) executes via the streamlined runner (`scripts/run_experiments.py`
+or `make experiments`) and writes its run manifest under `results_v5/protocol-v5.0.0/`.
+Observed experimental evidence has been collected, validated, and partitioned by extractor
+mode (`run-*-local` vs `run-*-llm-*`) across all five experiment streams (E1–E5) and
+cross-experiment thesis claims synthesis (`research-analysis/`).
 
 | Document or artifact | Purpose and evidence boundary |
 | --- | --- |
-| [Evidence packaging](../results_v5/README.md) | Portable allowlist and offline workflow for whatever a run produces. |
+| [Evidence packaging](../results_v5/README.md) | Structure, layout, and summary of tracked Protocol-v5 results (E1–E5). |
 | [Experiment architecture](evaluation/PROTOCOL_V5_ARCHITECTURE.md) | Protocol design and manifest contracts; historical status statements are not current execution results. |
 | [Data isolation](evaluation/PROTOCOL_V5_DATA_ISOLATION.md) | Development/confirmatory split, custody, and loader boundaries enforced by `evaluation_v5/isolation.py`. |
 | [Isolation verification](evaluation/PROTOCOL_V5_ISOLATION_VERIFICATION.md) | Adversarial software checks; no proof of external custody. |

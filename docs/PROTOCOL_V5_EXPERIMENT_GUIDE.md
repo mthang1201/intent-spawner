@@ -53,7 +53,7 @@ make eval-offline-llm
   * **Khớp đồng thời (Joint):** Tỉ lệ đúng cả Profile và Image.
   * **Thời gian xử lý (Median Latency):** Độ trễ phản hồi (ms).
   * **Phân tích theo ngôn ngữ (English vs Vietnamese):** Đo độ chính xác trên câu prompt tiếng Anh và tiếng Việt.
-* **Đầu ra:** Bảng Markdown in trực tiếp ra màn hình và lưu tại `results_v5/protocol-v5.0.0/E1/run-e1-offline/SUMMARY.md` cùng `summary_metrics.json`.
+* **Đầu ra:** Bảng Markdown in trực tiếp ra màn hình và lưu tại `results_v5/protocol-v5.0.0/E1/run-e1-local/SUMMARY.md` (hoặc `run-e1-llm-<model>/SUMMARY.md`) cùng `summary_metrics.json`.
 
 ---
 
@@ -161,7 +161,7 @@ make eval-offline-llm
        ```bash
        PYTHONPATH=. .venv/bin/python -m evaluation_v5.image_storage \
          --experiment functional \
-         --recommendation-run results_v5/protocol-v5.0.0/E1/run-e1-offline \
+         --recommendation-run results_v5/protocol-v5.0.0/E1/run-e1-local \
          --mode dry-run \
          --output-dir results_v5/protocol-v5.0.0/E5/run-e5-functional-dry-run
        ```
@@ -169,7 +169,7 @@ make eval-offline-llm
        ```bash
        PYTHONPATH=. .venv/bin/python -m evaluation_v5.image_storage \
          --experiment functional \
-         --recommendation-run results_v5/protocol-v5.0.0/E1/run-e1-offline \
+         --recommendation-run results_v5/protocol-v5.0.0/E1/run-e1-local \
          --mode docker \
          --pull-policy missing \
          --output-dir results_v5/protocol-v5.0.0/E5/run-e5-functional-orbstack
