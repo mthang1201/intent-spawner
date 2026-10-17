@@ -15,6 +15,8 @@ reprovisioning with PVC retention and opt-in policy-bounded resource sizing.
 
 ## Quickstart
 
+### 1. Local Setup & Experiments
+
 From a local checkout:
 
 ```bash
@@ -31,6 +33,42 @@ make experiments
 # 4. Quick offline evaluation
 make eval-offline-local
 ```
+
+### 2. Interactive Demo Deployment & Method Switching
+
+To deploy or switch methods on a local Kubernetes cluster (namespace `z2jh-context-demo`):
+
+```bash
+# Baseline (B0: Small / Medium / Large static hardware selection)
+bash scripts/install-baseline.sh
+
+# P1 Rule-Based (Heuristic profile recommender)
+bash scripts/install-proposed.sh
+
+# P2 Local (Main proposed hybrid method: BM25 + dense retrieval + deterministic constraints)
+BACKEND_VALUES=helm/recommender-p2-values.yaml bash scripts/install-proposed.sh
+
+# P2 LLM (Hybrid method with external LLM structured intent extractor)
+BACKEND_VALUES=helm/recommender-p2-llm-values.yaml bash scripts/install-proposed.sh
+
+# P1 Dynamic (Continuous CPU/RAM sizing with rule-based heuristics)
+bash scripts/install-dynamic.sh
+
+# P2 Dynamic (Continuous policy-bounded resource sizing with P2 backend)
+BACKEND_VALUES=helm/recommender-p2-values.yaml bash scripts/install-dynamic.sh
+
+# Access UI at http://127.0.0.1:8000
+bash scripts/port-forward.sh
+```
+
+| Method / Mode | Deployment Command | Description |
+| :--- | :--- | :--- |
+| **B0 Baseline** | `bash scripts/install-baseline.sh` | Static Small/Medium/Large profile guessing |
+| **P1 Rule-Based** | `bash scripts/install-proposed.sh` | Fast zero-dependency heuristic recommender |
+| **P2 Local** | `BACKEND_VALUES=helm/recommender-p2-values.yaml bash scripts/install-proposed.sh` | **Main proposed method**: local regex extractor + hybrid retrieval |
+| **P2 LLM** | `BACKEND_VALUES=helm/recommender-p2-llm-values.yaml bash scripts/install-proposed.sh` | Proposed hybrid method with LLM semantic extractor |
+| **P1 Dynamic** | `bash scripts/install-dynamic.sh` | Continuous resource sizing with rule-based heuristics |
+| **P2 Dynamic** | `BACKEND_VALUES=helm/recommender-p2-values.yaml bash scripts/install-dynamic.sh` | Continuous policy-bounded resource sizing with P2 |
 
 ## Documentation
 

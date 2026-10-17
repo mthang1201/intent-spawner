@@ -1,0 +1,11 @@
+# P2: Structured Intent + Hybrid Retrieval + Deterministic Constraints.
+# This overlay enables the external LLM structured intent extractor.
+# Replace the endpoint, model, and API key with your provider configuration (e.g., Gemini or OpenAI).
+
+hub:
+  extraEnv:
+    RECOMMENDER_BACKEND: p2
+    P2_STRUCTURED_EXTRACTOR: llm
+    EXTERNAL_LLM_ENDPOINT: "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions"
+    EXTERNAL_LLM_MODEL: "gemini-2.5-flash-lite"
+    EXTERNAL_LLM_API_KEY: "replace-with-your-api-key"
