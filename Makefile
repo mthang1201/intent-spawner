@@ -3,7 +3,7 @@ E4_RESOURCE_EFFICIENCY_DRY_RUN_ID := e4-resource-efficiency-dry-run-$(shell date
 V5_PYTHON ?= $(shell if [ -x .venv/bin/python ]; then echo .venv/bin/python; elif [ -x ../intent-spawner/.venv/bin/python ]; then echo ../intent-spawner/.venv/bin/python; else echo python3; fi)
 
 .PHONY: test eval-offline eval-offline-local eval-offline-llm eval-dataset eval-robustness experiments report research-analysis check validate-cluster-results validate-raw-integrity v5-test v5-resource-validate v5-resource-test v5-resource-dry-run v5-resource-efficiency-validate v5-resource-efficiency-test v5-resource-efficiency-dry-run v5-user-study-test v5-user-study-smoke v5-isolation-check
-.PHONY: v5-e4-preflight v5-resource-preflight v5-resource-efficiency-preflight
+.PHONY: v5-e4-preflight v5-resource-preflight v5-resource-efficiency-preflight simulate-large-cluster
 
 test:
 	PYTHONPATH=. $(V5_PYTHON) -m pytest -q \
@@ -120,4 +120,8 @@ v5-user-study-smoke:
 
 v5-isolation-check:
 	PYTHONPATH=. $(V5_PYTHON) -m pytest -q tests/test_evaluation_v5_isolation.py
+
+simulate-large-cluster:
+	PYTHONPATH=. $(V5_PYTHON) scripts/simulate_large_cluster.py
+
 

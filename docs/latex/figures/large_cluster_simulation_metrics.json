@@ -1,0 +1,99 @@
+{
+  "cluster_config": {
+    "num_nodes": 50,
+    "cpu_per_node_milli": 20000,
+    "ram_per_node_mib": 40960,
+    "gpu_per_node": 2
+  },
+  "trace_parameters": {
+    "total_sessions": 800,
+    "duration_hours": 8.0,
+    "mean_duration_minutes": 45.0,
+    "arrival_pattern": "diurnal",
+    "seed": 42
+  },
+  "results": {
+    "B0": {
+      "strategy": "B0",
+      "total_submitted_sessions": 800,
+      "completed_sessions": 800,
+      "unserved_pending_at_end": 0,
+      "oom_count": 0,
+      "oom_rate_pct": 0.0,
+      "peak_running_concurrency": 100,
+      "avg_running_concurrency": 78.88,
+      "peak_pending_queue": 49,
+      "avg_pending_queue": 9.05,
+      "queued_jobs_count": 405,
+      "queued_jobs_pct": 50.62,
+      "mean_wait_time_minutes": 10.73,
+      "p95_wait_time_minutes": 21.3,
+      "cluster_capacity_stranding_pct": {
+        "cpu": 24.48,
+        "ram": 30.8,
+        "gpu": 70.34
+      },
+      "allocation_slack_pct": {
+        "cpu": 77.58,
+        "ram": 97.6,
+        "gpu": 89.17
+      }
+    },
+    "P1": {
+      "strategy": "P1",
+      "total_submitted_sessions": 800,
+      "completed_sessions": 800,
+      "unserved_pending_at_end": 0,
+      "oom_count": 84,
+      "oom_rate_pct": 10.5,
+      "peak_running_concurrency": 121,
+      "avg_running_concurrency": 71.3,
+      "peak_pending_queue": 0,
+      "avg_pending_queue": 0.0,
+      "queued_jobs_count": 0,
+      "queued_jobs_pct": 0.0,
+      "mean_wait_time_minutes": 0.0,
+      "p95_wait_time_minutes": 0.0,
+      "cluster_capacity_stranding_pct": {
+        "cpu": 4.44,
+        "ram": 6.74,
+        "gpu": 0.0
+      },
+      "allocation_slack_pct": {
+        "cpu": 41.31,
+        "ram": 98.72,
+        "gpu": 0.0
+      }
+    },
+    "P2": {
+      "strategy": "P2",
+      "total_submitted_sessions": 800,
+      "completed_sessions": 800,
+      "unserved_pending_at_end": 0,
+      "oom_count": 0,
+      "oom_rate_pct": 0.0,
+      "peak_running_concurrency": 130,
+      "avg_running_concurrency": 79.51,
+      "peak_pending_queue": 0,
+      "avg_pending_queue": 0.0,
+      "queued_jobs_count": 0,
+      "queued_jobs_pct": 0.0,
+      "mean_wait_time_minutes": 0.0,
+      "p95_wait_time_minutes": 0.0,
+      "cluster_capacity_stranding_pct": {
+        "cpu": 0.82,
+        "ram": 0.97,
+        "gpu": 0.0
+      },
+      "allocation_slack_pct": {
+        "cpu": 10.3,
+        "ram": 55.79,
+        "gpu": 0.0
+      }
+    }
+  },
+  "multi_tenancy_multiplier": {
+    "observed_peak_multiplier": 1.3,
+    "theoretical_saturation_multiplier": 5.56
+  }
+}
