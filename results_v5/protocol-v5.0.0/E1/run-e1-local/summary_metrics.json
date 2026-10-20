@@ -13,14 +13,14 @@
   },
   "P2": {
     "total_cases": 83,
-    "profile_match_count": 39,
-    "profile_accuracy_pct": 46.99,
-    "image_match_count": 46,
-    "image_accuracy_pct": 55.42,
-    "joint_match_count": 34,
-    "joint_accuracy_pct": 40.96,
-    "fallback_count": 14,
-    "fallback_rate_pct": 16.87,
-    "median_latency_ms": 2.23
+    "profile_match_count": 45,
+    "profile_accuracy_pct": 54.22,
+    "image_match_count": 45,
+    "image_accuracy_pct": 54.22,
+    "joint_match_count": 39,
+    "joint_accuracy_pct": 46.99,
+    "fallback_count": 28,
+    "fallback_rate_pct": 33.73,
+    "median_latency_ms": 2.63
   }
 }

@@ -1,0 +1,5 @@
+System,Total_Families,Macro_SRR_pct,Micro_SRR_pct,Worst_Case_Families_Pass,Worst_Case_Rate_pct,EN_Paraphrase_Acc_pct,VI_Acc_pct,Canonical_Acc_pct
+P1 (Rule-based Baseline),18,36.76,40.0,4/17,23.53,66.67,35.29,44.44
+P2 (Pre-upgrade Regex),18,57.35,56.67,8/17,47.06,55.56,56.86,77.78
+P2 (Post-upgrade Local NLP),18,69.12,66.67,8/17,47.06,44.44,70.59,72.22
+P2 (External LLM Gemini Flash Lite),18,40.69,35.0,6/17,35.29,11.11,39.22,38.89

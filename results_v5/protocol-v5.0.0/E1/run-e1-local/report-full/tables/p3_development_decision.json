@@ -8,12 +8,12 @@
     "rule": "P3 is retained only if development evidence exhibits sufficient ranking headroom."
   },
   "observed_development_evidence": {
-    "eligible_families": 11,
+    "eligible_families": 10,
     "ranking_error_families": 0,
     "ranking_error_rate": 0.0,
     "total_ranking_error_recommendations": 0
   },
-  "rationale": "Predefined development gate evaluated 11 eligible families. Observed 0 ranking-error families (0.0% of eligible families). Gate decision is 'NOT_RETAINED'.",
+  "rationale": "Predefined development gate evaluated 10 eligible families. Observed 0 ranking-error families (0.0% of eligible families). Gate decision is 'NOT_RETAINED'.",
   "schema_version": "protocol-v5-offline-reporting-v1.0.0",
   "source_split_role": "development",
   "source_type": "evaluated_split"

@@ -64,10 +64,10 @@
         "formatted": "N/A"
       },
       "overall_srr": {
-        "ci_high": 0.8333333333333333,
-        "ci_low": 0.3634469696969697,
-        "estimate": 0.6060606060606061,
-        "formatted": "60.6% [36.3%, 83.3%]"
+        "ci_high": 0.8787878787878788,
+        "ci_low": 0.553030303030303,
+        "estimate": 0.7196969696969697,
+        "formatted": "72.0% [55.3%, 87.9%]"
       },
       "paraphrase": {
         "ci_high": null,
@@ -83,8 +83,8 @@
         "formatted": "20.0% N/A"
       },
       "worst_case_family_robustness": {
-        "estimate": 0.45454545454545453,
-        "formatted": "45.5%"
+        "estimate": 0.2727272727272727,
+        "formatted": "27.3%"
       }
     }
   ],

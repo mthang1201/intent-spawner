@@ -95,7 +95,7 @@
     "corpus_sha256": "987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444",
     "corpus_version": "environment-candidate-corpus-v1"
   },
-  "created_utc": "2026-10-13T01:19:38.679566Z",
+  "created_utc": "2026-10-20T06:57:39.085065Z",
   "effective_repeats": {
     "P1": 1,
     "P2": 1
@@ -117,12 +117,12 @@
     "description": "Streamlined evaluation configuration",
     "schema_version": "protocol-v5-evaluation-configuration-v1.0.0"
   },
-  "git_revision": "9f513666ea51d3bd9113be33d9d7707dd5fe6636",
-  "git_worktree_dirty": false,
+  "git_revision": "132dc448b79d93a204599472952d8e4760a6afa6",
+  "git_worktree_dirty": true,
   "p3_explicitly_enabled": false,
   "planned_record_count": 166,
   "protocol_version": "5.0.0",
-  "provenance_fingerprint": "5fa81eced88e4c7badc8d0865cd9fddd7a5514e616e9a5e1652b86b864887d80",
+  "provenance_fingerprint": "3fa225009ead72839e99b2217d0c6e19f3c33ae7a93e5b870c80a52799119534",
   "repeat_policy": {
     "deterministic_effective_repeats": 1,
     "deterministic_systems": [
@@ -364,11 +364,11 @@
       "dense_index_version": "environment-dense-index-v1",
       "embedding_model_id": "intent-spawner-local-feature-hash",
       "embedding_model_revision": "feature-hash-embedding-v1.0.0",
-      "extractor_model_id": "deterministic-explicit-parser-v1.1.0-python-3.14",
-      "extractor_name": "p2-local-structured-parser",
-      "extractor_prompt_sha256": "8be330fe52b1b6b1520997309746b6b6b7e5e24867d962846ccf68a2af7256d9",
-      "extractor_prompt_version": "local-parser-contract-v1.1.0",
-      "extractor_version": "local-structured-parser-v1.1.0",
+      "extractor_model_id": "lightweight-nlp-pipeline-v2.0.0-python-3.14",
+      "extractor_name": "p2-local-nlp-extractor",
+      "extractor_prompt_sha256": "eda2685c931a53246c4a430443365bedba99c5040213aea640689a12b467ac4a",
+      "extractor_prompt_version": "local-nlp-contract-v2.0.0",
+      "extractor_version": "local-nlp-extractor-v2.0.0",
       "generation": {
         "p2_backend_version": "p2-hybrid-v1.0.0",
         "p2_corpus_checksum": "987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444",

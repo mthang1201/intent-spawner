@@ -11,63 +11,63 @@
       "is_ablation": true,
       "is_proposed": false,
       "k": 1,
-      "recall_at_k": 0.4636363636363636
+      "recall_at_k": 0.4727272727272727
     },
     {
       "channel": "Sparse",
       "is_ablation": true,
       "is_proposed": false,
       "k": 3,
-      "recall_at_k": 0.8340909090909091
+      "recall_at_k": 0.825
     },
     {
       "channel": "Sparse",
       "is_ablation": true,
       "is_proposed": false,
       "k": 5,
-      "recall_at_k": 0.8454545454545456
+      "recall_at_k": 0.8636363636363636
     },
     {
       "channel": "Dense",
       "is_ablation": true,
       "is_proposed": false,
       "k": 1,
-      "recall_at_k": 0.2431818181818182
+      "recall_at_k": 0.32272727272727275
     },
     {
       "channel": "Dense",
       "is_ablation": true,
       "is_proposed": false,
       "k": 3,
-      "recall_at_k": 0.5772727272727273
+      "recall_at_k": 0.6863636363636364
     },
     {
       "channel": "Dense",
       "is_ablation": true,
       "is_proposed": false,
       "k": 5,
-      "recall_at_k": 0.6818181818181818
+      "recall_at_k": 0.7522727272727273
     },
     {
       "channel": "Hybrid",
       "is_ablation": false,
       "is_proposed": true,
       "k": 1,
-      "recall_at_k": 0.3409090909090909
+      "recall_at_k": 0.3909090909090909
     },
     {
       "channel": "Hybrid",
       "is_ablation": false,
       "is_proposed": true,
       "k": 3,
-      "recall_at_k": 0.6909090909090909
+      "recall_at_k": 0.7727272727272727
     },
     {
       "channel": "Hybrid",
       "is_ablation": false,
       "is_proposed": true,
       "k": 5,
-      "recall_at_k": 0.7772727272727273
+      "recall_at_k": 0.8
     }
   ],
   "schema_version": "protocol-v5-offline-reporting-v1.0.0",

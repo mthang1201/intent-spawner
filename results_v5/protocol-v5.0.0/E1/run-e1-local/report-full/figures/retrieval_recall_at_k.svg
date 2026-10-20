@@ -30,26 +30,26 @@
   <line x1="80" y1="80.0" x2="700" y2="80.0" class="grid"/>
   <text x="70" y="84.0" text-anchor="end" class="tick">1.0</text>
   <text x="25" y="205.0" transform="rotate(-90 25 205.0)" text-anchor="middle" class="label">Macro Recall@K</text>
-  <rect x="123.3" y="214.1" width="36.0" height="115.9" fill="#2563eb" rx="3"/>
-  <text x="141.3" y="208.1" text-anchor="middle" class="val">0.464</text>
-  <rect x="165.3" y="269.2" width="36.0" height="60.8" fill="#d97706" rx="3"/>
-  <text x="183.3" y="263.2" text-anchor="middle" class="val">0.243</text>
-  <rect x="207.3" y="244.8" width="36.0" height="85.2" fill="#059669" rx="3"/>
-  <text x="225.3" y="238.8" text-anchor="middle" class="val">0.341</text>
+  <rect x="123.3" y="211.8" width="36.0" height="118.2" fill="#2563eb" rx="3"/>
+  <text x="141.3" y="205.8" text-anchor="middle" class="val">0.473</text>
+  <rect x="165.3" y="249.3" width="36.0" height="80.7" fill="#d97706" rx="3"/>
+  <text x="183.3" y="243.3" text-anchor="middle" class="val">0.323</text>
+  <rect x="207.3" y="232.3" width="36.0" height="97.7" fill="#059669" rx="3"/>
+  <text x="225.3" y="226.3" text-anchor="middle" class="val">0.391</text>
   <text x="183.3" y="352" text-anchor="middle" class="label">K = 1</text>
-  <rect x="330.0" y="121.5" width="36.0" height="208.5" fill="#2563eb" rx="3"/>
-  <text x="348.0" y="115.5" text-anchor="middle" class="val">0.834</text>
-  <rect x="372.0" y="185.7" width="36.0" height="144.3" fill="#d97706" rx="3"/>
-  <text x="390.0" y="179.7" text-anchor="middle" class="val">0.577</text>
-  <rect x="414.0" y="157.3" width="36.0" height="172.7" fill="#059669" rx="3"/>
-  <text x="432.0" y="151.3" text-anchor="middle" class="val">0.691</text>
+  <rect x="330.0" y="123.8" width="36.0" height="206.2" fill="#2563eb" rx="3"/>
+  <text x="348.0" y="117.8" text-anchor="middle" class="val">0.825</text>
+  <rect x="372.0" y="158.4" width="36.0" height="171.6" fill="#d97706" rx="3"/>
+  <text x="390.0" y="152.4" text-anchor="middle" class="val">0.686</text>
+  <rect x="414.0" y="136.8" width="36.0" height="193.2" fill="#059669" rx="3"/>
+  <text x="432.0" y="130.8" text-anchor="middle" class="val">0.773</text>
   <text x="390.0" y="352" text-anchor="middle" class="label">K = 3</text>
-  <rect x="536.7" y="118.6" width="36.0" height="211.4" fill="#2563eb" rx="3"/>
-  <text x="554.7" y="112.6" text-anchor="middle" class="val">0.845</text>
-  <rect x="578.7" y="159.5" width="36.0" height="170.5" fill="#d97706" rx="3"/>
-  <text x="596.7" y="153.5" text-anchor="middle" class="val">0.682</text>
-  <rect x="620.7" y="135.7" width="36.0" height="194.3" fill="#059669" rx="3"/>
-  <text x="638.7" y="129.7" text-anchor="middle" class="val">0.777</text>
+  <rect x="536.7" y="114.1" width="36.0" height="215.9" fill="#2563eb" rx="3"/>
+  <text x="554.7" y="108.1" text-anchor="middle" class="val">0.864</text>
+  <rect x="578.7" y="141.9" width="36.0" height="188.1" fill="#d97706" rx="3"/>
+  <text x="596.7" y="135.9" text-anchor="middle" class="val">0.752</text>
+  <rect x="620.7" y="130.0" width="36.0" height="200.0" fill="#059669" rx="3"/>
+  <text x="638.7" y="124.0" text-anchor="middle" class="val">0.800</text>
   <text x="596.7" y="352" text-anchor="middle" class="label">K = 5</text>
   <rect x="220" y="380" width="14" height="14" fill="#2563eb" rx="2"/>
   <text x="240" y="392" class="legend">Sparse (Ablation)</text>

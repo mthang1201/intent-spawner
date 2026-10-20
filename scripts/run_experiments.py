@@ -113,7 +113,7 @@ def run_e2(mode: str, base_dir: Path, e1_dir: Path | None = None) -> Path:
     if summary_file.exists():
         content = summary_file.read_text(encoding="utf-8")
         if "Language Robustness" in content or "Phân Tích Độ Bền Ngôn Ngữ" in content:
-            marker = "### 🌐 Phân Tích Độ Bền Ngôn Ngữ" if "### 🌐 Phân Tích Độ Bền Ngữ" in content else "### 🌐 Language Robustness"
+            marker = "### 🌐 Phân Tích Độ Bền Ngôn Ngữ" if "### 🌐 Phân Tích Độ Bền Ngôn Ngữ" in content else "### 🌐 Language Robustness"
             sections = content.split(marker)
             if len(sections) > 1:
                 e2_report = marker + sections[1]

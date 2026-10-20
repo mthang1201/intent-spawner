@@ -2,7 +2,7 @@
 
 > [!WARNING]
 > **P3 Development Gate Decision: `NOT_RETAINED`** (Source: `evaluated_split`)
-> Predefined development gate evaluated 11 eligible families. Observed 0 ranking-error families (0.0% of eligible families). Gate decision is 'NOT_RETAINED'.
+> Predefined development gate evaluated 10 eligible families. Observed 0 ranking-error families (0.0% of eligible families). Gate decision is 'NOT_RETAINED'.
 
 > [!IMPORTANT]
 > **CONFIRMATORY ISOLATION ACTIVE**: Confirmatory observations are strictly isolated and did not influence the P3 development gate decision.
@@ -14,7 +14,7 @@
 
 ### Observed Development Evidence
 
-- **Eligible Workload Families**: `11`
+- **Eligible Workload Families**: `10`
 - **Observed Ranking-Error Families**: `0`
 - **Observed Ranking-Error Rate**: `0.0%`
 - **Total Ranking-Error Attempts**: `0`

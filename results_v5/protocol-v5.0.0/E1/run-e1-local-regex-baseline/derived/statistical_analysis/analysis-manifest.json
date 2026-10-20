@@ -1,0 +1,1036 @@
+{
+  "aggregation_policy": {
+    "accuracy_eligibility": "feasible requests only",
+    "cross_family_handling": "equal-weight macro mean",
+    "independent_unit": "workload_family",
+    "latency_includes": [
+      "completed_attempts",
+      "recorded_fallback_attempts",
+      "recorded_error_attempts",
+      "recorded_timeout_attempts"
+    ],
+    "latency_missing_duration_policy": "full validated packages reject missing durations; direct in-memory rows are unavailable",
+    "latency_population": "all_validated_recommendation_attempts_with_recorded_duration",
+    "repeat_handling": "mean within variant",
+    "repeated_calls_are_accuracy_samples": false,
+    "robustness_eligibility": "non-canonical reviewed_equivalent variants",
+    "variant_handling": "mean within family"
+  },
+  "analysis_environment_identity": {
+    "platform": "Darwin",
+    "platform_release": "24.3.0",
+    "python_version": "3.14.6"
+  },
+  "backend_changed": false,
+  "backend_system_versions": {
+    "P1": {
+      "adapter_version": "protocol-v5-p1-frozen-adapter-v1",
+      "backend_name": "rule_based",
+      "backend_version": "rule-based-v1",
+      "candidate_catalog": {
+        "candidates": [
+          {
+            "candidate_id": "large-minimal-python",
+            "catalog_version": "2026-08-06.1",
+            "image_id": "minimal-python",
+            "policy_version": "resource-image-policy-v1",
+            "profile_id": "large"
+          },
+          {
+            "candidate_id": "large-pytorch-deep-learning",
+            "catalog_version": "2026-08-06.1",
+            "image_id": "pytorch-deep-learning",
+            "policy_version": "resource-image-policy-v1",
+            "profile_id": "large"
+          },
+          {
+            "candidate_id": "large-scipy-data-science",
+            "catalog_version": "2026-08-06.1",
+            "image_id": "scipy-data-science",
+            "policy_version": "resource-image-policy-v1",
+            "profile_id": "large"
+          },
+          {
+            "candidate_id": "large-tensorflow-deep-learning",
+            "catalog_version": "2026-08-06.1",
+            "image_id": "tensorflow-deep-learning",
+            "policy_version": "resource-image-policy-v1",
+            "profile_id": "large"
+          },
+          {
+            "candidate_id": "medium-minimal-python",
+            "catalog_version": "2026-08-06.1",
+            "image_id": "minimal-python",
+            "policy_version": "resource-image-policy-v1",
+            "profile_id": "medium"
+          },
+          {
+            "candidate_id": "medium-pytorch-deep-learning",
+            "catalog_version": "2026-08-06.1",
+            "image_id": "pytorch-deep-learning",
+            "policy_version": "resource-image-policy-v1",
+            "profile_id": "medium"
+          },
+          {
+            "candidate_id": "medium-scipy-data-science",
+            "catalog_version": "2026-08-06.1",
+            "image_id": "scipy-data-science",
+            "policy_version": "resource-image-policy-v1",
+            "profile_id": "medium"
+          },
+          {
+            "candidate_id": "medium-tensorflow-deep-learning",
+            "catalog_version": "2026-08-06.1",
+            "image_id": "tensorflow-deep-learning",
+            "policy_version": "resource-image-policy-v1",
+            "profile_id": "medium"
+          },
+          {
+            "candidate_id": "small-minimal-python",
+            "catalog_version": "2026-08-06.1",
+            "image_id": "minimal-python",
+            "policy_version": "resource-image-policy-v1",
+            "profile_id": "small"
+          },
+          {
+            "candidate_id": "small-pytorch-deep-learning",
+            "catalog_version": "2026-08-06.1",
+            "image_id": "pytorch-deep-learning",
+            "policy_version": "resource-image-policy-v1",
+            "profile_id": "small"
+          },
+          {
+            "candidate_id": "small-scipy-data-science",
+            "catalog_version": "2026-08-06.1",
+            "image_id": "scipy-data-science",
+            "policy_version": "resource-image-policy-v1",
+            "profile_id": "small"
+          },
+          {
+            "candidate_id": "small-tensorflow-deep-learning",
+            "catalog_version": "2026-08-06.1",
+            "image_id": "tensorflow-deep-learning",
+            "policy_version": "resource-image-policy-v1",
+            "profile_id": "small"
+          }
+        ],
+        "catalog_sha256": "bd2211d5fd769b5addec3c41e8cbd48bb0d9cd1c958aa554ada9bf88c29509f3",
+        "catalog_version": "2026-08-06.1",
+        "corpus_sha256": "987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444",
+        "corpus_version": "environment-candidate-corpus-v1"
+      },
+      "catalog_version": "2026-08-06.1"
+    },
+    "P2": {
+      "adapter_version": "protocol-v5-p2-frozen-adapter-v1",
+      "backend_name": "p2",
+      "backend_version": "p2-hybrid-v1.0.0",
+      "candidate_catalog": {
+        "candidates": [
+          {
+            "candidate_id": "large-minimal-python",
+            "catalog_version": "2026-08-06.1",
+            "image_id": "minimal-python",
+            "policy_version": "resource-image-policy-v1",
+            "profile_id": "large"
+          },
+          {
+            "candidate_id": "large-pytorch-deep-learning",
+            "catalog_version": "2026-08-06.1",
+            "image_id": "pytorch-deep-learning",
+            "policy_version": "resource-image-policy-v1",
+            "profile_id": "large"
+          },
+          {
+            "candidate_id": "large-scipy-data-science",
+            "catalog_version": "2026-08-06.1",
+            "image_id": "scipy-data-science",
+            "policy_version": "resource-image-policy-v1",
+            "profile_id": "large"
+          },
+          {
+            "candidate_id": "large-tensorflow-deep-learning",
+            "catalog_version": "2026-08-06.1",
+            "image_id": "tensorflow-deep-learning",
+            "policy_version": "resource-image-policy-v1",
+            "profile_id": "large"
+          },
+          {
+            "candidate_id": "medium-minimal-python",
+            "catalog_version": "2026-08-06.1",
+            "image_id": "minimal-python",
+            "policy_version": "resource-image-policy-v1",
+            "profile_id": "medium"
+          },
+          {
+            "candidate_id": "medium-pytorch-deep-learning",
+            "catalog_version": "2026-08-06.1",
+            "image_id": "pytorch-deep-learning",
+            "policy_version": "resource-image-policy-v1",
+            "profile_id": "medium"
+          },
+          {
+            "candidate_id": "medium-scipy-data-science",
+            "catalog_version": "2026-08-06.1",
+            "image_id": "scipy-data-science",
+            "policy_version": "resource-image-policy-v1",
+            "profile_id": "medium"
+          },
+          {
+            "candidate_id": "medium-tensorflow-deep-learning",
+            "catalog_version": "2026-08-06.1",
+            "image_id": "tensorflow-deep-learning",
+            "policy_version": "resource-image-policy-v1",
+            "profile_id": "medium"
+          },
+          {
+            "candidate_id": "small-minimal-python",
+            "catalog_version": "2026-08-06.1",
+            "image_id": "minimal-python",
+            "policy_version": "resource-image-policy-v1",
+            "profile_id": "small"
+          },
+          {
+            "candidate_id": "small-pytorch-deep-learning",
+            "catalog_version": "2026-08-06.1",
+            "image_id": "pytorch-deep-learning",
+            "policy_version": "resource-image-policy-v1",
+            "profile_id": "small"
+          },
+          {
+            "candidate_id": "small-scipy-data-science",
+            "catalog_version": "2026-08-06.1",
+            "image_id": "scipy-data-science",
+            "policy_version": "resource-image-policy-v1",
+            "profile_id": "small"
+          },
+          {
+            "candidate_id": "small-tensorflow-deep-learning",
+            "catalog_version": "2026-08-06.1",
+            "image_id": "tensorflow-deep-learning",
+            "policy_version": "resource-image-policy-v1",
+            "profile_id": "small"
+          }
+        ],
+        "catalog_sha256": "bd2211d5fd769b5addec3c41e8cbd48bb0d9cd1c958aa554ada9bf88c29509f3",
+        "catalog_version": "2026-08-06.1",
+        "corpus_sha256": "987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444",
+        "corpus_version": "environment-candidate-corpus-v1"
+      },
+      "config": {
+        "config_version": "p2-config-v1.1.0",
+        "dense_top_k": 10,
+        "dense_weight": 1.0,
+        "extractor_mode": "local",
+        "max_concurrent_recommendations": 4,
+        "rrf_k": 60.0,
+        "sparse_top_k": 10,
+        "sparse_weight": 1.0,
+        "top_k": 10,
+        "total_timeout": 30.0
+      },
+      "constraint_ranking_configuration": {
+        "constraint_evaluator_version": "p2-deterministic-constraint-evaluator-v1.1.0",
+        "constraint_policy_version": "p2-constraint-policy-v1.0.0",
+        "ranker_version": "p2-deterministic-ranker-v2.0.0",
+        "retrieval_rank_weight": 0.6,
+        "soft_preference_weight": 0.25
+      },
+      "dense_index_sha256": "c0561bcd1ee6ec5153b710aef3deae88bd259a011ddd454513cbb1c675118387",
+      "dense_index_version": "environment-dense-index-v1",
+      "embedding_model_id": "intent-spawner-local-feature-hash",
+      "embedding_model_revision": "feature-hash-embedding-v1.0.0",
+      "extractor_model_id": "deterministic-explicit-parser-v1.1.0-python-3.14",
+      "extractor_name": "p2-local-structured-parser",
+      "extractor_prompt_sha256": "8be330fe52b1b6b1520997309746b6b6b7e5e24867d962846ccf68a2af7256d9",
+      "extractor_prompt_version": "local-parser-contract-v1.1.0",
+      "extractor_version": "local-structured-parser-v1.1.0",
+      "generation": {
+        "p2_backend_version": "p2-hybrid-v1.0.0",
+        "p2_corpus_checksum": "987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444",
+        "p2_corpus_version": "environment-candidate-corpus-v1",
+        "p2_dense_index_checksum": "c0561bcd1ee6ec5153b710aef3deae88bd259a011ddd454513cbb1c675118387",
+        "p2_dense_index_version": "environment-dense-index-v1",
+        "p2_hybrid_index_checksum": "45ea08f29492d796189920713636b3a9cae2f0fb264e023124eb38c8cfad83a4",
+        "p2_hybrid_index_version": "environment-hybrid-index-v1",
+        "p2_sparse_index_checksum": "931fac84b818cb934a37bfbfa76092a89626cd5eaffc869887de8558bc6fa747",
+        "p2_sparse_index_version": "environment-sparse-index-v1"
+      },
+      "hybrid_index_sha256": "45ea08f29492d796189920713636b3a9cae2f0fb264e023124eb38c8cfad83a4",
+      "hybrid_index_version": "environment-hybrid-index-v1",
+      "pipeline_version": "p2-pipeline-v1.0.0",
+      "retrieval_configuration": {
+        "dense_top_k": 10,
+        "dense_weight": 1.0,
+        "retriever_version": "reciprocal-rank-fusion-hybrid-retriever-v1",
+        "rrf_k": 60.0,
+        "sparse_top_k": 10,
+        "sparse_weight": 1.0,
+        "top_k": 10
+      },
+      "sparse_index_sha256": "931fac84b818cb934a37bfbfa76092a89626cd5eaffc869887de8558bc6fa747",
+      "sparse_index_version": "environment-sparse-index-v1",
+      "structured_intent_schema_version": "structured-intent-v1"
+    }
+  },
+  "bootstrap": {
+    "base_seed": 20260824,
+    "ci_level": 0.95,
+    "derived_seeds": {
+      "comparison|P2_minus_P1|hard_constraint_violation_rate|overall": 6425747043718748024,
+      "comparison|P2_minus_P1|image_acceptable_accuracy|overall": 13967146419062425421,
+      "comparison|P2_minus_P1|joint_accept_at_1|overall": 2346739725260891429,
+      "comparison|P2_minus_P1|latency_seconds|overall": 2126730601348352042,
+      "comparison|P2_minus_P1|profile_acceptable_accuracy|overall": 1898723972702038648,
+      "comparison|P2_minus_P1|robustness_rate|overall": 14870254735853875175,
+      "stratum|P1|ambiguity_detection_accuracy|variant_stratum|canonical": 6952067069206448220,
+      "stratum|P1|ambiguity_detection_accuracy|variant_stratum|vietnamese": 4158572818679026236,
+      "stratum|P1|ambiguity_detection_accuracy|workload_stratum|machine_learning": 3210101070669101246,
+      "stratum|P1|hard_constraint_violation_rate|variant_stratum|canonical": 49546963589145202,
+      "stratum|P1|hard_constraint_violation_rate|variant_stratum|paraphrase": 5343309663233967478,
+      "stratum|P1|hard_constraint_violation_rate|variant_stratum|vietnamese": 3574713931315472746,
+      "stratum|P1|hard_constraint_violation_rate|workload_stratum|boundary": 1410758926592158569,
+      "stratum|P1|hard_constraint_violation_rate|workload_stratum|data_processing": 6014291941634957954,
+      "stratum|P1|hard_constraint_violation_rate|workload_stratum|deep_learning": 11378994947727175226,
+      "stratum|P1|hard_constraint_violation_rate|workload_stratum|light": 17269120890013452273,
+      "stratum|P1|hard_constraint_violation_rate|workload_stratum|machine_learning": 10075731600287037673,
+      "stratum|P1|image_acceptable_accuracy|variant_stratum|canonical": 8305800716192534363,
+      "stratum|P1|image_acceptable_accuracy|variant_stratum|paraphrase": 3839678620623944983,
+      "stratum|P1|image_acceptable_accuracy|variant_stratum|vietnamese": 606622022431906655,
+      "stratum|P1|image_acceptable_accuracy|workload_stratum|boundary": 16666111670373343336,
+      "stratum|P1|image_acceptable_accuracy|workload_stratum|data_processing": 8093729206316933801,
+      "stratum|P1|image_acceptable_accuracy|workload_stratum|deep_learning": 7208203182065990965,
+      "stratum|P1|image_acceptable_accuracy|workload_stratum|light": 1198177802796058810,
+      "stratum|P1|image_acceptable_accuracy|workload_stratum|machine_learning": 4540105356431891705,
+      "stratum|P1|infeasible_detection_accuracy|variant_stratum|canonical": 12363766607617002987,
+      "stratum|P1|infeasible_detection_accuracy|variant_stratum|vietnamese": 4497537914453106940,
+      "stratum|P1|infeasible_detection_accuracy|workload_stratum|deep_learning": 14389611619686201527,
+      "stratum|P1|infeasible_detection_accuracy|workload_stratum|machine_learning": 8948928855219479913,
+      "stratum|P1|infeasible_detection_accuracy|workload_stratum|numerical_computing": 16168820247684509676,
+      "stratum|P1|infeasible_detection_accuracy|workload_stratum|policy": 11683415635179116955,
+      "stratum|P1|joint_accept_at_1|variant_stratum|canonical": 1817861749871432695,
+      "stratum|P1|joint_accept_at_1|variant_stratum|paraphrase": 11866060141915030723,
+      "stratum|P1|joint_accept_at_1|variant_stratum|vietnamese": 8824210902032696979,
+      "stratum|P1|joint_accept_at_1|workload_stratum|boundary": 4197307571359379,
+      "stratum|P1|joint_accept_at_1|workload_stratum|data_processing": 6651023454458865029,
+      "stratum|P1|joint_accept_at_1|workload_stratum|deep_learning": 14673730263687903803,
+      "stratum|P1|joint_accept_at_1|workload_stratum|light": 16542776646140824112,
+      "stratum|P1|joint_accept_at_1|workload_stratum|machine_learning": 4792368766157601448,
+      "stratum|P1|latency_seconds|variant_stratum|canonical": 14263721756255263146,
+      "stratum|P1|latency_seconds|variant_stratum|paraphrase": 17542365787146778194,
+      "stratum|P1|latency_seconds|variant_stratum|vietnamese": 1608803204069629170,
+      "stratum|P1|latency_seconds|workload_stratum|boundary": 10811364152229308754,
+      "stratum|P1|latency_seconds|workload_stratum|data_processing": 7431630197183776418,
+      "stratum|P1|latency_seconds|workload_stratum|deep_learning": 10911786938329869177,
+      "stratum|P1|latency_seconds|workload_stratum|light": 3306079967394093738,
+      "stratum|P1|latency_seconds|workload_stratum|machine_learning": 17880580267298150545,
+      "stratum|P1|latency_seconds|workload_stratum|numerical_computing": 16884638448219604539,
+      "stratum|P1|latency_seconds|workload_stratum|policy": 1327360752040147251,
+      "stratum|P1|profile_acceptable_accuracy|variant_stratum|canonical": 3753003635790759764,
+      "stratum|P1|profile_acceptable_accuracy|variant_stratum|paraphrase": 12791788699420698612,
+      "stratum|P1|profile_acceptable_accuracy|variant_stratum|vietnamese": 13576715358590149649,
+      "stratum|P1|profile_acceptable_accuracy|workload_stratum|boundary": 10170244216210813382,
+      "stratum|P1|profile_acceptable_accuracy|workload_stratum|data_processing": 10820801810713838313,
+      "stratum|P1|profile_acceptable_accuracy|workload_stratum|deep_learning": 8707674038428353010,
+      "stratum|P1|profile_acceptable_accuracy|workload_stratum|light": 8836225112799957911,
+      "stratum|P1|profile_acceptable_accuracy|workload_stratum|machine_learning": 3378235413240783123,
+      "stratum|P1|robustness_rate|variant_stratum|paraphrase": 18038762230200672565,
+      "stratum|P1|robustness_rate|variant_stratum|vietnamese": 14485641511695593799,
+      "stratum|P1|robustness_rate|workload_stratum|boundary": 1661804952145573389,
+      "stratum|P1|robustness_rate|workload_stratum|data_processing": 12277601187901215480,
+      "stratum|P1|robustness_rate|workload_stratum|deep_learning": 1855511650208679254,
+      "stratum|P1|robustness_rate|workload_stratum|light": 15326540163727444322,
+      "stratum|P1|robustness_rate|workload_stratum|machine_learning": 17073267256965827319,
+      "stratum|P1|selection_coverage|variant_stratum|canonical": 8279288493680163032,
+      "stratum|P1|selection_coverage|variant_stratum|paraphrase": 558878721127274331,
+      "stratum|P1|selection_coverage|variant_stratum|vietnamese": 15209679630293629453,
+      "stratum|P1|selection_coverage|workload_stratum|boundary": 2213138203045429913,
+      "stratum|P1|selection_coverage|workload_stratum|data_processing": 17099040038212551705,
+      "stratum|P1|selection_coverage|workload_stratum|deep_learning": 17305671112947387223,
+      "stratum|P1|selection_coverage|workload_stratum|light": 16492680557473320112,
+      "stratum|P1|selection_coverage|workload_stratum|machine_learning": 11045717994987383133,
+      "stratum|P2|ambiguity_detection_accuracy|variant_stratum|canonical": 16144112933548350422,
+      "stratum|P2|ambiguity_detection_accuracy|variant_stratum|vietnamese": 8161745708586279297,
+      "stratum|P2|ambiguity_detection_accuracy|workload_stratum|machine_learning": 8689569175672611421,
+      "stratum|P2|hard_constraint_violation_rate|variant_stratum|canonical": 13600718039737786715,
+      "stratum|P2|hard_constraint_violation_rate|variant_stratum|paraphrase": 5398856570548800850,
+      "stratum|P2|hard_constraint_violation_rate|variant_stratum|vietnamese": 8438088691426746896,
+      "stratum|P2|hard_constraint_violation_rate|workload_stratum|boundary": 5857274185354844698,
+      "stratum|P2|hard_constraint_violation_rate|workload_stratum|data_processing": 18234589418593552869,
+      "stratum|P2|hard_constraint_violation_rate|workload_stratum|deep_learning": 3575205141533389733,
+      "stratum|P2|hard_constraint_violation_rate|workload_stratum|light": 16106196787840508705,
+      "stratum|P2|hard_constraint_violation_rate|workload_stratum|machine_learning": 6346439390705645494,
+      "stratum|P2|image_acceptable_accuracy|variant_stratum|canonical": 10699172720103180863,
+      "stratum|P2|image_acceptable_accuracy|variant_stratum|paraphrase": 1998581378462922269,
+      "stratum|P2|image_acceptable_accuracy|variant_stratum|vietnamese": 16289519545489609232,
+      "stratum|P2|image_acceptable_accuracy|workload_stratum|boundary": 16653010202574863297,
+      "stratum|P2|image_acceptable_accuracy|workload_stratum|data_processing": 11830181120631039728,
+      "stratum|P2|image_acceptable_accuracy|workload_stratum|deep_learning": 16492409987836701653,
+      "stratum|P2|image_acceptable_accuracy|workload_stratum|light": 13539311057254398914,
+      "stratum|P2|image_acceptable_accuracy|workload_stratum|machine_learning": 5721743164002580335,
+      "stratum|P2|infeasible_detection_accuracy|variant_stratum|canonical": 18440084061536872704,
+      "stratum|P2|infeasible_detection_accuracy|variant_stratum|vietnamese": 10493247844862754765,
+      "stratum|P2|infeasible_detection_accuracy|workload_stratum|deep_learning": 12413322744689522687,
+      "stratum|P2|infeasible_detection_accuracy|workload_stratum|machine_learning": 8581299087619473488,
+      "stratum|P2|infeasible_detection_accuracy|workload_stratum|numerical_computing": 14045052263649270604,
+      "stratum|P2|infeasible_detection_accuracy|workload_stratum|policy": 10209570623436673398,
+      "stratum|P2|joint_accept_at_1|variant_stratum|canonical": 16477433304316452620,
+      "stratum|P2|joint_accept_at_1|variant_stratum|paraphrase": 15376168340756907768,
+      "stratum|P2|joint_accept_at_1|variant_stratum|vietnamese": 1640403835844157799,
+      "stratum|P2|joint_accept_at_1|workload_stratum|boundary": 10015742816169503428,
+      "stratum|P2|joint_accept_at_1|workload_stratum|data_processing": 5747451343953604372,
+      "stratum|P2|joint_accept_at_1|workload_stratum|deep_learning": 17186607157691569016,
+      "stratum|P2|joint_accept_at_1|workload_stratum|light": 9149784901339626605,
+      "stratum|P2|joint_accept_at_1|workload_stratum|machine_learning": 237826769813532034,
+      "stratum|P2|latency_seconds|variant_stratum|canonical": 15886480346839326810,
+      "stratum|P2|latency_seconds|variant_stratum|paraphrase": 15517222517680819954,
+      "stratum|P2|latency_seconds|variant_stratum|vietnamese": 6232183671912153653,
+      "stratum|P2|latency_seconds|workload_stratum|boundary": 4287681100079156272,
+      "stratum|P2|latency_seconds|workload_stratum|data_processing": 834340051140394388,
+      "stratum|P2|latency_seconds|workload_stratum|deep_learning": 10207691180109063890,
+      "stratum|P2|latency_seconds|workload_stratum|light": 12271174531852268662,
+      "stratum|P2|latency_seconds|workload_stratum|machine_learning": 774476650085499784,
+      "stratum|P2|latency_seconds|workload_stratum|numerical_computing": 6708889313613065405,
+      "stratum|P2|latency_seconds|workload_stratum|policy": 16823356687664774058,
+      "stratum|P2|profile_acceptable_accuracy|variant_stratum|canonical": 1179196438813352674,
+      "stratum|P2|profile_acceptable_accuracy|variant_stratum|paraphrase": 7202889684315688426,
+      "stratum|P2|profile_acceptable_accuracy|variant_stratum|vietnamese": 4725103280275009861,
+      "stratum|P2|profile_acceptable_accuracy|workload_stratum|boundary": 6283140946312645704,
+      "stratum|P2|profile_acceptable_accuracy|workload_stratum|data_processing": 7476086438680516304,
+      "stratum|P2|profile_acceptable_accuracy|workload_stratum|deep_learning": 6672965460788907384,
+      "stratum|P2|profile_acceptable_accuracy|workload_stratum|light": 9011156588036027724,
+      "stratum|P2|profile_acceptable_accuracy|workload_stratum|machine_learning": 5357722653952203714,
+      "stratum|P2|retrieval_hit_at_1|variant_stratum|canonical": 13294653843163277049,
+      "stratum|P2|retrieval_hit_at_1|variant_stratum|paraphrase": 1557559743252839684,
+      "stratum|P2|retrieval_hit_at_1|variant_stratum|vietnamese": 17822130215503025504,
+      "stratum|P2|retrieval_hit_at_1|workload_stratum|boundary": 12071780206965016666,
+      "stratum|P2|retrieval_hit_at_1|workload_stratum|data_processing": 16437422121330764376,
+      "stratum|P2|retrieval_hit_at_1|workload_stratum|deep_learning": 8630298772136349421,
+      "stratum|P2|retrieval_hit_at_1|workload_stratum|light": 3214271743510235616,
+      "stratum|P2|retrieval_hit_at_1|workload_stratum|machine_learning": 9906666612451377266,
+      "stratum|P2|retrieval_hit_at_3|variant_stratum|canonical": 10721504687545732697,
+      "stratum|P2|retrieval_hit_at_3|variant_stratum|paraphrase": 10848122270254212972,
+      "stratum|P2|retrieval_hit_at_3|variant_stratum|vietnamese": 18342836622543395232,
+      "stratum|P2|retrieval_hit_at_3|workload_stratum|boundary": 8474700450266978404,
+      "stratum|P2|retrieval_hit_at_3|workload_stratum|data_processing": 15607522178355318509,
+      "stratum|P2|retrieval_hit_at_3|workload_stratum|deep_learning": 5359503166979424485,
+      "stratum|P2|retrieval_hit_at_3|workload_stratum|light": 14866475011871883609,
+      "stratum|P2|retrieval_hit_at_3|workload_stratum|machine_learning": 9155670235347835738,
+      "stratum|P2|retrieval_hit_at_5|variant_stratum|canonical": 15710227422632736277,
+      "stratum|P2|retrieval_hit_at_5|variant_stratum|paraphrase": 15078546553611497220,
+      "stratum|P2|retrieval_hit_at_5|variant_stratum|vietnamese": 2043685003074722274,
+      "stratum|P2|retrieval_hit_at_5|workload_stratum|boundary": 9411059635338245963,
+      "stratum|P2|retrieval_hit_at_5|workload_stratum|data_processing": 8764115455855760171,
+      "stratum|P2|retrieval_hit_at_5|workload_stratum|deep_learning": 8255764270463926801,
+      "stratum|P2|retrieval_hit_at_5|workload_stratum|light": 7923637805800018134,
+      "stratum|P2|retrieval_hit_at_5|workload_stratum|machine_learning": 17225655125562730850,
+      "stratum|P2|retrieval_mrr|variant_stratum|canonical": 6206051377598371845,
+      "stratum|P2|retrieval_mrr|variant_stratum|paraphrase": 1575501111511903761,
+      "stratum|P2|retrieval_mrr|variant_stratum|vietnamese": 10037583922993314689,
+      "stratum|P2|retrieval_mrr|workload_stratum|boundary": 13207362335665431108,
+      "stratum|P2|retrieval_mrr|workload_stratum|data_processing": 3233076106029591299,
+      "stratum|P2|retrieval_mrr|workload_stratum|deep_learning": 13271704576023703508,
+      "stratum|P2|retrieval_mrr|workload_stratum|light": 6236397294846240110,
+      "stratum|P2|retrieval_mrr|workload_stratum|machine_learning": 12832209353891800750,
+      "stratum|P2|retrieval_ndcg_at_1|variant_stratum|canonical": 9719822663355024122,
+      "stratum|P2|retrieval_ndcg_at_1|variant_stratum|paraphrase": 12734172475157258812,
+      "stratum|P2|retrieval_ndcg_at_1|variant_stratum|vietnamese": 2663002992843532023,
+      "stratum|P2|retrieval_ndcg_at_1|workload_stratum|boundary": 5473945728466376159,
+      "stratum|P2|retrieval_ndcg_at_1|workload_stratum|data_processing": 1446393889799207620,
+      "stratum|P2|retrieval_ndcg_at_1|workload_stratum|deep_learning": 7877451949996604813,
+      "stratum|P2|retrieval_ndcg_at_1|workload_stratum|light": 9209994503863754855,
+      "stratum|P2|retrieval_ndcg_at_1|workload_stratum|machine_learning": 8528385849959967069,
+      "stratum|P2|retrieval_ndcg_at_3|variant_stratum|canonical": 11449623333949009290,
+      "stratum|P2|retrieval_ndcg_at_3|variant_stratum|paraphrase": 14105071523572467864,
+      "stratum|P2|retrieval_ndcg_at_3|variant_stratum|vietnamese": 1748656664655684189,
+      "stratum|P2|retrieval_ndcg_at_3|workload_stratum|boundary": 11256673133838189499,
+      "stratum|P2|retrieval_ndcg_at_3|workload_stratum|data_processing": 15760810478322861342,
+      "stratum|P2|retrieval_ndcg_at_3|workload_stratum|deep_learning": 12365812111323935688,
+      "stratum|P2|retrieval_ndcg_at_3|workload_stratum|light": 9709321279246724239,
+      "stratum|P2|retrieval_ndcg_at_3|workload_stratum|machine_learning": 2875024862128353496,
+      "stratum|P2|retrieval_ndcg_at_5|variant_stratum|canonical": 13041042789633576060,
+      "stratum|P2|retrieval_ndcg_at_5|variant_stratum|paraphrase": 7888488521227991097,
+      "stratum|P2|retrieval_ndcg_at_5|variant_stratum|vietnamese": 2973833498116090200,
+      "stratum|P2|retrieval_ndcg_at_5|workload_stratum|boundary": 16145237375983772182,
+      "stratum|P2|retrieval_ndcg_at_5|workload_stratum|data_processing": 14018719824224571937,
+      "stratum|P2|retrieval_ndcg_at_5|workload_stratum|deep_learning": 11625893325017229916,
+      "stratum|P2|retrieval_ndcg_at_5|workload_stratum|light": 4567921585366694944,
+      "stratum|P2|retrieval_ndcg_at_5|workload_stratum|machine_learning": 13744212916995864315,
+      "stratum|P2|retrieval_recall_at_1|variant_stratum|canonical": 9987928925460214748,
+      "stratum|P2|retrieval_recall_at_1|variant_stratum|paraphrase": 3813123124445927622,
+      "stratum|P2|retrieval_recall_at_1|variant_stratum|vietnamese": 13989051009158461807,
+      "stratum|P2|retrieval_recall_at_1|workload_stratum|boundary": 6765558343947876317,
+      "stratum|P2|retrieval_recall_at_1|workload_stratum|data_processing": 10163589093091567457,
+      "stratum|P2|retrieval_recall_at_1|workload_stratum|deep_learning": 3636479958987782733,
+      "stratum|P2|retrieval_recall_at_1|workload_stratum|light": 17146907718639007176,
+      "stratum|P2|retrieval_recall_at_1|workload_stratum|machine_learning": 1112208413329761357,
+      "stratum|P2|retrieval_recall_at_3|variant_stratum|canonical": 3384252432224070301,
+      "stratum|P2|retrieval_recall_at_3|variant_stratum|paraphrase": 7039779090592729591,
+      "stratum|P2|retrieval_recall_at_3|variant_stratum|vietnamese": 1963914420502196852,
+      "stratum|P2|retrieval_recall_at_3|workload_stratum|boundary": 17061964074245641295,
+      "stratum|P2|retrieval_recall_at_3|workload_stratum|data_processing": 3687673657688219197,
+      "stratum|P2|retrieval_recall_at_3|workload_stratum|deep_learning": 12207019634696028545,
+      "stratum|P2|retrieval_recall_at_3|workload_stratum|light": 4589949619267454646,
+      "stratum|P2|retrieval_recall_at_3|workload_stratum|machine_learning": 7835152892158695121,
+      "stratum|P2|retrieval_recall_at_5|variant_stratum|canonical": 1003212233912887298,
+      "stratum|P2|retrieval_recall_at_5|variant_stratum|paraphrase": 2951045422130059098,
+      "stratum|P2|retrieval_recall_at_5|variant_stratum|vietnamese": 13296830080114849013,
+      "stratum|P2|retrieval_recall_at_5|workload_stratum|boundary": 1029834447000363818,
+      "stratum|P2|retrieval_recall_at_5|workload_stratum|data_processing": 9028493455222612750,
+      "stratum|P2|retrieval_recall_at_5|workload_stratum|deep_learning": 9037113025128382493,
+      "stratum|P2|retrieval_recall_at_5|workload_stratum|light": 7697448551882399753,
+      "stratum|P2|retrieval_recall_at_5|workload_stratum|machine_learning": 9824835159149567568,
+      "stratum|P2|robustness_rate|variant_stratum|paraphrase": 9876256285551381679,
+      "stratum|P2|robustness_rate|variant_stratum|vietnamese": 1974719025513414459,
+      "stratum|P2|robustness_rate|workload_stratum|boundary": 14711900963160047553,
+      "stratum|P2|robustness_rate|workload_stratum|data_processing": 3684281602079000152,
+      "stratum|P2|robustness_rate|workload_stratum|deep_learning": 14405857453146177836,
+      "stratum|P2|robustness_rate|workload_stratum|light": 11865205757757093478,
+      "stratum|P2|robustness_rate|workload_stratum|machine_learning": 15583414991578642488,
+      "stratum|P2|selection_coverage|variant_stratum|canonical": 17038589953709646832,
+      "stratum|P2|selection_coverage|variant_stratum|paraphrase": 3805035243264885934,
+      "stratum|P2|selection_coverage|variant_stratum|vietnamese": 8150014437078617665,
+      "stratum|P2|selection_coverage|workload_stratum|boundary": 4766573117023998923,
+      "stratum|P2|selection_coverage|workload_stratum|data_processing": 2113070014766956536,
+      "stratum|P2|selection_coverage|workload_stratum|deep_learning": 14185170642790909209,
+      "stratum|P2|selection_coverage|workload_stratum|light": 6472016705883395706,
+      "stratum|P2|selection_coverage|workload_stratum|machine_learning": 3365331697047324459,
+      "system|P1|ambiguity_detection_accuracy|overall": 14782378546371899881,
+      "system|P1|hard_constraint_violation_rate|overall": 2401055547469386274,
+      "system|P1|image_acceptable_accuracy|overall": 4878901160115871109,
+      "system|P1|infeasible_detection_accuracy|overall": 17829820738843956105,
+      "system|P1|joint_accept_at_1|overall": 8326052474044753463,
+      "system|P1|latency_seconds|overall": 16266771892421111792,
+      "system|P1|profile_acceptable_accuracy|overall": 9447661439196493125,
+      "system|P1|robustness_rate|overall": 2107306725656349636,
+      "system|P1|selection_coverage|overall": 11210552389170347877,
+      "system|P2|ambiguity_detection_accuracy|overall": 1156164441540634264,
+      "system|P2|hard_constraint_violation_rate|overall": 8992040487688647176,
+      "system|P2|image_acceptable_accuracy|overall": 3566912690519389308,
+      "system|P2|infeasible_detection_accuracy|overall": 9779037678174806275,
+      "system|P2|joint_accept_at_1|overall": 1372604505838346353,
+      "system|P2|latency_seconds|overall": 16176116677435314479,
+      "system|P2|profile_acceptable_accuracy|overall": 4875626719317920256,
+      "system|P2|retrieval_hit_at_1|overall": 12095534958006208216,
+      "system|P2|retrieval_hit_at_3|overall": 1519348086582663317,
+      "system|P2|retrieval_hit_at_5|overall": 11101867620966337956,
+      "system|P2|retrieval_mrr|overall": 14711580926643314406,
+      "system|P2|retrieval_ndcg_at_1|overall": 415063542006542797,
+      "system|P2|retrieval_ndcg_at_3|overall": 10696387170210451761,
+      "system|P2|retrieval_ndcg_at_5|overall": 14215366544802690851,
+      "system|P2|retrieval_recall_at_1|overall": 2507360767903944908,
+      "system|P2|retrieval_recall_at_3|overall": 3360272215663141284,
+      "system|P2|retrieval_recall_at_5|overall": 1110679478812759693,
+      "system|P2|robustness_rate|overall": 4354731581593063815,
+      "system|P2|selection_coverage|overall": 9705152554439819254
+    },
+    "method": "workload_family_percentile_bootstrap",
+    "replicates": 2000,
+    "seed_derivation": "sha256-canonical-json-first-64-bits-v1"
+  },
+  "candidate_catalog": {
+    "candidates": [
+      {
+        "candidate_id": "large-minimal-python",
+        "catalog_version": "2026-08-06.1",
+        "image_id": "minimal-python",
+        "policy_version": "resource-image-policy-v1",
+        "profile_id": "large"
+      },
+      {
+        "candidate_id": "large-pytorch-deep-learning",
+        "catalog_version": "2026-08-06.1",
+        "image_id": "pytorch-deep-learning",
+        "policy_version": "resource-image-policy-v1",
+        "profile_id": "large"
+      },
+      {
+        "candidate_id": "large-scipy-data-science",
+        "catalog_version": "2026-08-06.1",
+        "image_id": "scipy-data-science",
+        "policy_version": "resource-image-policy-v1",
+        "profile_id": "large"
+      },
+      {
+        "candidate_id": "large-tensorflow-deep-learning",
+        "catalog_version": "2026-08-06.1",
+        "image_id": "tensorflow-deep-learning",
+        "policy_version": "resource-image-policy-v1",
+        "profile_id": "large"
+      },
+      {
+        "candidate_id": "medium-minimal-python",
+        "catalog_version": "2026-08-06.1",
+        "image_id": "minimal-python",
+        "policy_version": "resource-image-policy-v1",
+        "profile_id": "medium"
+      },
+      {
+        "candidate_id": "medium-pytorch-deep-learning",
+        "catalog_version": "2026-08-06.1",
+        "image_id": "pytorch-deep-learning",
+        "policy_version": "resource-image-policy-v1",
+        "profile_id": "medium"
+      },
+      {
+        "candidate_id": "medium-scipy-data-science",
+        "catalog_version": "2026-08-06.1",
+        "image_id": "scipy-data-science",
+        "policy_version": "resource-image-policy-v1",
+        "profile_id": "medium"
+      },
+      {
+        "candidate_id": "medium-tensorflow-deep-learning",
+        "catalog_version": "2026-08-06.1",
+        "image_id": "tensorflow-deep-learning",
+        "policy_version": "resource-image-policy-v1",
+        "profile_id": "medium"
+      },
+      {
+        "candidate_id": "small-minimal-python",
+        "catalog_version": "2026-08-06.1",
+        "image_id": "minimal-python",
+        "policy_version": "resource-image-policy-v1",
+        "profile_id": "small"
+      },
+      {
+        "candidate_id": "small-pytorch-deep-learning",
+        "catalog_version": "2026-08-06.1",
+        "image_id": "pytorch-deep-learning",
+        "policy_version": "resource-image-policy-v1",
+        "profile_id": "small"
+      },
+      {
+        "candidate_id": "small-scipy-data-science",
+        "catalog_version": "2026-08-06.1",
+        "image_id": "scipy-data-science",
+        "policy_version": "resource-image-policy-v1",
+        "profile_id": "small"
+      },
+      {
+        "candidate_id": "small-tensorflow-deep-learning",
+        "catalog_version": "2026-08-06.1",
+        "image_id": "tensorflow-deep-learning",
+        "policy_version": "resource-image-policy-v1",
+        "profile_id": "small"
+      }
+    ],
+    "catalog_sha256": "bd2211d5fd769b5addec3c41e8cbd48bb0d9cd1c958aa554ada9bf88c29509f3",
+    "catalog_version": "2026-08-06.1",
+    "corpus_sha256": "987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444",
+    "corpus_version": "environment-candidate-corpus-v1"
+  },
+  "claim_scope": "development_formative_only",
+  "claims_permitted": false,
+  "configuration": {
+    "optional_comparison": "P3_minus_P2",
+    "primary_comparison": "P2_minus_P1",
+    "retrieval_ks": [
+      1,
+      3,
+      5
+    ],
+    "variant_strata": [
+      "canonical",
+      "paraphrase",
+      "vietnamese",
+      "noisy",
+      "code_centric"
+    ],
+    "workload_strata": [
+      "boundary",
+      "data_processing",
+      "deep_learning",
+      "light",
+      "machine_learning",
+      "numerical_computing",
+      "policy"
+    ]
+  },
+  "created_at_utc": "2026-10-13T07:23:20Z",
+  "evidence_validation": {
+    "analysis_reads_gold_downstream_only": true,
+    "full_split_bound_offline_validation": "PASS",
+    "raw_completion_verified_before_external_gold_load": true
+  },
+  "git_revision": "9f513666ea51d3bd9113be33d9d7707dd5fe6636",
+  "holm_registry": {
+    "alpha": 0.05,
+    "comparison_families": {
+      "P2_minus_P1": {
+        "latency": {
+          "planned_hypotheses": [
+            "latency_seconds"
+          ],
+          "tested_hypotheses": [
+            "latency_seconds"
+          ],
+          "untested_hypotheses": []
+        },
+        "quality_safety": {
+          "planned_hypotheses": [
+            "hard_constraint_violation_rate",
+            "image_acceptable_accuracy",
+            "profile_acceptable_accuracy"
+          ],
+          "tested_hypotheses": [
+            "hard_constraint_violation_rate",
+            "image_acceptable_accuracy",
+            "profile_acceptable_accuracy"
+          ],
+          "untested_hypotheses": []
+        },
+        "retrieval": {
+          "planned_hypotheses": [
+            "retrieval_hit_at_1",
+            "retrieval_hit_at_3",
+            "retrieval_hit_at_5",
+            "retrieval_mrr",
+            "retrieval_ndcg_at_1",
+            "retrieval_ndcg_at_3",
+            "retrieval_ndcg_at_5",
+            "retrieval_recall_at_1",
+            "retrieval_recall_at_3",
+            "retrieval_recall_at_5"
+          ],
+          "tested_hypotheses": [],
+          "untested_hypotheses": [
+            {
+              "endpoint": "retrieval_hit_at_1",
+              "reason": "P1_HAS_NO_RETRIEVAL_STAGE",
+              "status": "UNTESTED_NOT_APPLICABLE"
+            },
+            {
+              "endpoint": "retrieval_hit_at_3",
+              "reason": "P1_HAS_NO_RETRIEVAL_STAGE",
+              "status": "UNTESTED_NOT_APPLICABLE"
+            },
+            {
+              "endpoint": "retrieval_hit_at_5",
+              "reason": "P1_HAS_NO_RETRIEVAL_STAGE",
+              "status": "UNTESTED_NOT_APPLICABLE"
+            },
+            {
+              "endpoint": "retrieval_mrr",
+              "reason": "P1_HAS_NO_RETRIEVAL_STAGE",
+              "status": "UNTESTED_NOT_APPLICABLE"
+            },
+            {
+              "endpoint": "retrieval_ndcg_at_1",
+              "reason": "P1_HAS_NO_RETRIEVAL_STAGE",
+              "status": "UNTESTED_NOT_APPLICABLE"
+            },
+            {
+              "endpoint": "retrieval_ndcg_at_3",
+              "reason": "P1_HAS_NO_RETRIEVAL_STAGE",
+              "status": "UNTESTED_NOT_APPLICABLE"
+            },
+            {
+              "endpoint": "retrieval_ndcg_at_5",
+              "reason": "P1_HAS_NO_RETRIEVAL_STAGE",
+              "status": "UNTESTED_NOT_APPLICABLE"
+            },
+            {
+              "endpoint": "retrieval_recall_at_1",
+              "reason": "P1_HAS_NO_RETRIEVAL_STAGE",
+              "status": "UNTESTED_NOT_APPLICABLE"
+            },
+            {
+              "endpoint": "retrieval_recall_at_3",
+              "reason": "P1_HAS_NO_RETRIEVAL_STAGE",
+              "status": "UNTESTED_NOT_APPLICABLE"
+            },
+            {
+              "endpoint": "retrieval_recall_at_5",
+              "reason": "P1_HAS_NO_RETRIEVAL_STAGE",
+              "status": "UNTESTED_NOT_APPLICABLE"
+            }
+          ]
+        },
+        "robustness": {
+          "planned_hypotheses": [
+            "robustness_rate"
+          ],
+          "tested_hypotheses": [
+            "robustness_rate"
+          ],
+          "untested_hypotheses": []
+        }
+      }
+    },
+    "comparisons_separate": true,
+    "ineligible_comparisons": {},
+    "membership_rule": "predeclared_by_comparison_endpoint_and_domain; activation depends only on structural applicability and test computability, never on p-value magnitude",
+    "registry_version": "protocol-v5-holm-registry-v1.0.0"
+  },
+  "metric_registry": {
+    "ambiguity_detection_accuracy": {
+      "direction": "higher_is_better",
+      "effect_definition": "second_system_minus_first_system",
+      "higher_is_better": true,
+      "holm_domain": "diagnostic",
+      "metric": "ambiguity_detection_accuracy",
+      "null_value": 0.0,
+      "unit": "proportion"
+    },
+    "hard_constraint_violation_rate": {
+      "direction": "lower_is_better",
+      "effect_definition": "second_system_minus_first_system",
+      "higher_is_better": false,
+      "holm_domain": "quality_safety",
+      "metric": "hard_constraint_violation_rate",
+      "null_value": 0.0,
+      "unit": "proportion"
+    },
+    "image_acceptable_accuracy": {
+      "direction": "higher_is_better",
+      "effect_definition": "second_system_minus_first_system",
+      "higher_is_better": true,
+      "holm_domain": "quality_safety",
+      "metric": "image_acceptable_accuracy",
+      "null_value": 0.0,
+      "unit": "proportion"
+    },
+    "infeasible_detection_accuracy": {
+      "direction": "higher_is_better",
+      "effect_definition": "second_system_minus_first_system",
+      "higher_is_better": true,
+      "holm_domain": "diagnostic",
+      "metric": "infeasible_detection_accuracy",
+      "null_value": 0.0,
+      "unit": "proportion"
+    },
+    "joint_accept_at_1": {
+      "direction": "higher_is_better",
+      "effect_definition": "second_system_minus_first_system",
+      "higher_is_better": true,
+      "holm_domain": "primary",
+      "metric": "joint_accept_at_1",
+      "null_value": 0.0,
+      "unit": "proportion"
+    },
+    "latency_seconds": {
+      "direction": "lower_is_better",
+      "effect_definition": "second_system_minus_first_system",
+      "higher_is_better": false,
+      "holm_domain": "latency",
+      "metric": "latency_seconds",
+      "null_value": 0.0,
+      "unit": "seconds"
+    },
+    "profile_acceptable_accuracy": {
+      "direction": "higher_is_better",
+      "effect_definition": "second_system_minus_first_system",
+      "higher_is_better": true,
+      "holm_domain": "quality_safety",
+      "metric": "profile_acceptable_accuracy",
+      "null_value": 0.0,
+      "unit": "proportion"
+    },
+    "retrieval_hit_at_1": {
+      "direction": "higher_is_better",
+      "effect_definition": "second_system_minus_first_system",
+      "higher_is_better": true,
+      "holm_domain": "retrieval",
+      "metric": "retrieval_hit_at_1",
+      "null_value": 0.0,
+      "unit": "proportion"
+    },
+    "retrieval_hit_at_3": {
+      "direction": "higher_is_better",
+      "effect_definition": "second_system_minus_first_system",
+      "higher_is_better": true,
+      "holm_domain": "retrieval",
+      "metric": "retrieval_hit_at_3",
+      "null_value": 0.0,
+      "unit": "proportion"
+    },
+    "retrieval_hit_at_5": {
+      "direction": "higher_is_better",
+      "effect_definition": "second_system_minus_first_system",
+      "higher_is_better": true,
+      "holm_domain": "retrieval",
+      "metric": "retrieval_hit_at_5",
+      "null_value": 0.0,
+      "unit": "proportion"
+    },
+    "retrieval_mrr": {
+      "direction": "higher_is_better",
+      "effect_definition": "second_system_minus_first_system",
+      "higher_is_better": true,
+      "holm_domain": "retrieval",
+      "metric": "retrieval_mrr",
+      "null_value": 0.0,
+      "unit": "unit_interval_score"
+    },
+    "retrieval_ndcg_at_1": {
+      "direction": "higher_is_better",
+      "effect_definition": "second_system_minus_first_system",
+      "higher_is_better": true,
+      "holm_domain": "retrieval",
+      "metric": "retrieval_ndcg_at_1",
+      "null_value": 0.0,
+      "unit": "unit_interval_score"
+    },
+    "retrieval_ndcg_at_3": {
+      "direction": "higher_is_better",
+      "effect_definition": "second_system_minus_first_system",
+      "higher_is_better": true,
+      "holm_domain": "retrieval",
+      "metric": "retrieval_ndcg_at_3",
+      "null_value": 0.0,
+      "unit": "unit_interval_score"
+    },
+    "retrieval_ndcg_at_5": {
+      "direction": "higher_is_better",
+      "effect_definition": "second_system_minus_first_system",
+      "higher_is_better": true,
+      "holm_domain": "retrieval",
+      "metric": "retrieval_ndcg_at_5",
+      "null_value": 0.0,
+      "unit": "unit_interval_score"
+    },
+    "retrieval_recall_at_1": {
+      "direction": "higher_is_better",
+      "effect_definition": "second_system_minus_first_system",
+      "higher_is_better": true,
+      "holm_domain": "retrieval",
+      "metric": "retrieval_recall_at_1",
+      "null_value": 0.0,
+      "unit": "proportion"
+    },
+    "retrieval_recall_at_3": {
+      "direction": "higher_is_better",
+      "effect_definition": "second_system_minus_first_system",
+      "higher_is_better": true,
+      "holm_domain": "retrieval",
+      "metric": "retrieval_recall_at_3",
+      "null_value": 0.0,
+      "unit": "proportion"
+    },
+    "retrieval_recall_at_5": {
+      "direction": "higher_is_better",
+      "effect_definition": "second_system_minus_first_system",
+      "higher_is_better": true,
+      "holm_domain": "retrieval",
+      "metric": "retrieval_recall_at_5",
+      "null_value": 0.0,
+      "unit": "proportion"
+    },
+    "robustness_rate": {
+      "direction": "higher_is_better",
+      "effect_definition": "second_system_minus_first_system",
+      "higher_is_better": true,
+      "holm_domain": "robustness",
+      "metric": "robustness_rate",
+      "null_value": 0.0,
+      "unit": "proportion"
+    },
+    "selection_coverage": {
+      "direction": "higher_is_better",
+      "effect_definition": "second_system_minus_first_system",
+      "higher_is_better": true,
+      "holm_domain": "diagnostic",
+      "metric": "selection_coverage",
+      "null_value": 0.0,
+      "unit": "proportion"
+    }
+  },
+  "offline_frozen_configuration": {
+    "configuration": "default-auto-generated",
+    "description": "Streamlined evaluation configuration",
+    "schema_version": "protocol-v5-evaluation-configuration-v1.0.0"
+  },
+  "outputs": {
+    "family_estimates": {
+      "path": "family-estimates.jsonl",
+      "row_count": 36,
+      "sha256": "a92997e874b46fc6f8382e6a82543775fad2311cd942a7015edc99daedd9f5b1"
+    },
+    "paired_comparisons": {
+      "path": "paired-comparisons.jsonl",
+      "row_count": 16,
+      "sha256": "2a2de6f6347be49a371a0886243483106acbccf2ba4bbb4e6c49d5873a90420d"
+    },
+    "stratified_estimates": {
+      "path": "stratified-estimates.jsonl",
+      "row_count": 456,
+      "sha256": "1deeb5e2c9fbe567196cac877d20354a1c9c873c2181e5ea6b33682a140518c9"
+    },
+    "system_estimates": {
+      "path": "system-estimates.jsonl",
+      "row_count": 38,
+      "sha256": "699e5e7819fa128599908c39d90dce9b159c5b914e16c33b7412c511ca1c4cc6"
+    }
+  },
+  "p3_inference": {
+    "evidence_present": false,
+    "gate_status": "not_applicable",
+    "inference_permitted": false,
+    "reason_code": "P3_EVIDENCE_ABSENT",
+    "source": null
+  },
+  "protocol_version": "5.0.0",
+  "raw_evidence_unchanged": true,
+  "schema_version": "protocol-v5-statistical-analysis-v1.0.0",
+  "source": {
+    "dataset_canonical_sha256": "079ca97e88719b2edd259ef8e252f09bc481d6d579d2f00136f694ebc4a2046e",
+    "dataset_id": "v5-development-reconstructed-v1",
+    "dataset_schema_version": "protocol-v5-split-bundle-v2.0.0",
+    "dataset_source_file_sha256": "71f57daafe319afea1b5ce23e9e1a762105c31f2f756f55abbd06b551c4eed6c",
+    "freeze_identity": {
+      "freeze_id": null,
+      "frozen_at_utc": "2026-09-21T06:38:01Z",
+      "frozen_by": "protocol-v5-v4-importer+agent-authored-p2-supplement",
+      "source": "development_split_manifest"
+    },
+    "gold_catalog_identity": {
+      "candidate_corpus_sha256": "987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444",
+      "candidate_corpus_version": "environment-candidate-corpus-v1",
+      "image_catalog_sha256": "bd2211d5fd769b5addec3c41e8cbd48bb0d9cd1c958aa554ada9bf88c29509f3",
+      "image_catalog_version": "2026-08-06.1",
+      "profile_catalog_sha256": "c8f797b9c4d30459da99dad8d6d1c28e07e6803d76fab7cf88cdcd0f6c679348"
+    },
+    "offline_completion_sha256": "cf837168b5b0b248effe5a7cc5c9d4ec7c08c2b0bb128b51fcde0842e0fc909e",
+    "offline_provenance_fingerprint": "5fa81eced88e4c7badc8d0865cd9fddd7a5514e616e9a5e1652b86b864887d80",
+    "offline_provenance_sha256": "94f97da9d543976a32cec72713749fa193e27a5537d32e27aaefdde057d1abe5",
+    "offline_recommendations_sha256": "9214066f4ecb27e386479cc723dccc9ee5bd7a8d0732fa0c088192297fba9d1f",
+    "offline_run_id": "run-e1-local",
+    "offline_split_identity": {
+      "bundle_checksum": "079ca97e88719b2edd259ef8e252f09bc481d6d579d2f00136f694ebc4a2046e",
+      "case_count": 83,
+      "dataset_id": "v5-development-reconstructed-v1",
+      "dataset_sha256": "71f57daafe319afea1b5ce23e9e1a762105c31f2f756f55abbd06b551c4eed6c",
+      "family_count": 18,
+      "role": "development",
+      "split_id": "v5-development"
+    },
+    "split_checksum": "079ca97e88719b2edd259ef8e252f09bc481d6d579d2f00136f694ebc4a2046e",
+    "split_id": "v5-development",
+    "split_role": "development"
+  },
+  "source_environment_identity": {
+    "platform": "darwin",
+    "platform_release": "24.3.0",
+    "python_version": "3.14.6"
+  },
+  "source_systems": [
+    "P1",
+    "P2"
+  ],
+  "statistics_schema_version": "protocol-v5-statistics-v1.0.0",
+  "status": "DERIVED_EVIDENCE_COMPLETE",
+  "systems": [
+    "P1",
+    "P2"
+  ],
+  "testing_policy": {
+    "alpha": 0.05,
+    "binary_family_outcomes": "exact_mcnemar",
+    "fractional_or_continuous_family_outcomes": "paired_wilcoxon_signed_rank",
+    "significance_withheld_below": 10,
+    "small_n_warning_below": 20,
+    "stratified_hypothesis_tests": false,
+    "two_sided": true
+  }
+}

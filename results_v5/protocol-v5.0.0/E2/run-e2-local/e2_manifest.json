@@ -1,0 +1,13 @@
+{
+  "protocol_version": "5.0.0",
+  "schema_version": "protocol-v5-e2-robustness-manifest-v1.0.0",
+  "created_at_utc": "2026-10-20T07:00:21.323525+00:00",
+  "source_evidence": "results_v5/protocol-v5.0.0/E1/run-e1-local/raw/recommendations.jsonl",
+  "outputs": {
+    "ROBUSTNESS_REPORT.md": "b198a6b5ff586bbc6b85db7d3f794b4bb9304a3d985093a40422a9aa534985c1",
+    "dataset_summary.txt": "c17c6c0eb948306cc3f2ef29765fd6d3e86f7c7d865e6cb051b8443566199f1a",
+    "robustness_summary.csv": "1f7c1d0a2cff7e936a2de96553451042479617cf1ebfb52b170310b86a603312",
+    "family_robustness_breakdown.csv": "8c8f7bb97939e31334d901ecd38d6993724ceb961ebe29ba9785ee5c03599df8",
+    "robustness_evaluation_v5.json": "59d42b6fbb207b6e73935443319907b2c2f70f9659ab09d812f153959a532d33"
+  }
+}

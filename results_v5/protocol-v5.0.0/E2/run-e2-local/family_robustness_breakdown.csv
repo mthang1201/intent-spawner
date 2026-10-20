@@ -1,0 +1,18 @@
+Family_ID,Family_Title,Equivalent_Variants,P1_Success,P1_Robustness_Rate,P2_Regex_Success,P2_Regex_Robustness_Rate,P2_NLP_Success,P2_NLP_Robustness_Rate,P2_LLM_Success,P2_LLM_Robustness_Rate
+basic-python,Basic Python,4,PASS,100.0,FAIL,0,FAIL,25.0,FAIL,0
+deep-learning-gpu-infeasible,Deep Learning GPU Infeasible,3,FAIL,0,PASS,100.0,PASS,100.0,PASS,100.0
+ml-memory-bound-infeasible,ML Memory Bound Infeasible,3,FAIL,0,FAIL,33.3,PASS,100.0,PASS,100.0
+negative-constraint-cpu-ml,Negative Constraint CPU Machine Learning,4,FAIL,0,PASS,100.0,PASS,100.0,FAIL,0
+negative-constraint-minimal-python,Negative Constraint Minimal Python Data Analysis,4,FAIL,0,PASS,100.0,FAIL,75.0,FAIL,0
+p2-cpu-only-pandas-feasible,P2 Cpu Only Pandas Feasible,3,FAIL,0,PASS,100.0,PASS,100.0,FAIL,66.7
+p2-minimum-eight-cpu,P2 Minimum Eight Cpu,3,FAIL,0,FAIL,0,FAIL,66.7,PASS,100.0
+p2-minimum-eight-memory,P2 Minimum Eight Memory,3,FAIL,0,FAIL,33.3,PASS,100.0,PASS,100.0
+p2-required-gpu-unavailable,P2 Required Gpu Unavailable,3,FAIL,0,PASS,100.0,PASS,100.0,PASS,100.0
+p2-required-rapids-unsupported,P2 Required Rapids Unsupported,3,FAIL,0,PASS,100.0,PASS,100.0,PASS,100.0
+p2-tensorflow-inference-feasible,P2 Tensorflow Inference Feasible,3,PASS,100.0,FAIL,33.3,FAIL,33.3,FAIL,0
+pandas-transform,Pandas Transform,4,FAIL,75.0,PASS,100.0,PASS,100.0,FAIL,0
+pytorch-mnist-cpu-feasible,PyTorch MNIST CPU Feasible Training,4,PASS,100.0,PASS,100.0,FAIL,50.0,FAIL,0
+pytorch-nlp-cpu-training,PyTorch NLP CPU Training,4,FAIL,75.0,FAIL,0,FAIL,0,FAIL,0
+sklearn-small,Sklearn Small,4,FAIL,50.0,FAIL,50.0,FAIL,75.0,FAIL,0
+tabular-ml-classification,Tabular ML Classification,4,FAIL,25.0,FAIL,0,FAIL,25.0,FAIL,0
+threshold-below,Threshold Below,4,PASS,100.0,FAIL,25.0,FAIL,25.0,FAIL,25.0

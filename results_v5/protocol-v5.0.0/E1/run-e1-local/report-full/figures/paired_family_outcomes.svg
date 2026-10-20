@@ -14,7 +14,7 @@
     .note { font-size: 10px; font-style: italic; fill: #475569; }
   </style>
   <text x="50" y="32" class="title">Paired Family JointAccept@1 Outcomes (P1 vs P2)</text>
-  <text x="50" y="52" class="subtitle">Family-by-family delta: 4 P2 Wins, 2 Ties, 5 P1 Wins across 11 families.</text>
+  <text x="50" y="52" class="subtitle">Family-by-family delta: 5 P2 Wins, 3 Ties, 3 P1 Wins across 11 families.</text>
   <line x1="140" y1="85" x2="140" y2="410" class="axis"/>
   <line x1="140.0" y1="85" x2="140.0" y2="410" class="grid"/>
   <text x="140.0" y="428" text-anchor="middle" class="tick">-1.0</text>
@@ -29,14 +29,14 @@
   <line x1="425.0" y1="85" x2="425.0" y2="410" stroke="#94a3b8" stroke-width="2"/>
   <text x="425.0" y="448" text-anchor="middle" class="label">Paired Difference (P2 - P1 JointAccept@1)</text>
   <text x="130" y="103.8" text-anchor="end" class="tick">basic-python</text>
-  <rect x="197.0" y="95.8" width="228.0" height="8" fill="#e11d48" rx="2"/>
-  <circle cx="197.0" cy="99.8" r="4" fill="#e11d48"/>
+  <rect x="254.0" y="95.8" width="171.0" height="8" fill="#e11d48" rx="2"/>
+  <circle cx="254.0" cy="99.8" r="4" fill="#e11d48"/>
   <text x="130" y="133.3" text-anchor="end" class="tick">negative-const..</text>
   <rect x="425.0" y="125.3" width="285.0" height="8" fill="#059669" rx="2"/>
   <circle cx="710.0" cy="129.3" r="4" fill="#059669"/>
   <text x="130" y="162.9" text-anchor="end" class="tick">negative-const..</text>
-  <rect x="425.0" y="154.9" width="285.0" height="8" fill="#059669" rx="2"/>
-  <circle cx="710.0" cy="158.9" r="4" fill="#059669"/>
+  <rect x="425.0" y="154.9" width="171.0" height="8" fill="#059669" rx="2"/>
+  <circle cx="596.0" cy="158.9" r="4" fill="#059669"/>
   <text x="130" y="192.4" text-anchor="end" class="tick">p2-cpu-only-pa..</text>
   <rect x="425.0" y="184.4" width="285.0" height="8" fill="#059669" rx="2"/>
   <circle cx="710.0" cy="188.4" r="4" fill="#059669"/>
@@ -50,14 +50,14 @@
   <rect x="425.0" y="273.0" width="0.0" height="8" fill="#64748b" rx="2"/>
   <circle cx="425.0" cy="277.0" r="4" fill="#64748b"/>
   <text x="130" y="310.6" text-anchor="end" class="tick">pytorch-nlp-cp..</text>
-  <rect x="197.0" y="302.6" width="228.0" height="8" fill="#e11d48" rx="2"/>
-  <circle cx="197.0" cy="306.6" r="4" fill="#e11d48"/>
+  <rect x="425.0" y="302.6" width="0.0" height="8" fill="#64748b" rx="2"/>
+  <circle cx="425.0" cy="306.6" r="4" fill="#64748b"/>
   <text x="130" y="340.1" text-anchor="end" class="tick">sklearn-small</text>
-  <rect x="368.0" y="332.1" width="57.0" height="8" fill="#e11d48" rx="2"/>
-  <circle cx="368.0" cy="336.1" r="4" fill="#e11d48"/>
+  <rect x="425.0" y="332.1" width="0.0" height="8" fill="#64748b" rx="2"/>
+  <circle cx="425.0" cy="336.1" r="4" fill="#64748b"/>
   <text x="130" y="369.7" text-anchor="end" class="tick">tabular-ml-cla..</text>
-  <rect x="425.0" y="361.7" width="0.0" height="8" fill="#64748b" rx="2"/>
-  <circle cx="425.0" cy="365.7" r="4" fill="#64748b"/>
+  <rect x="425.0" y="361.7" width="57.0" height="8" fill="#059669" rx="2"/>
+  <circle cx="482.0" cy="365.7" r="4" fill="#059669"/>
   <text x="130" y="399.2" text-anchor="end" class="tick">threshold-below</text>
   <rect x="254.0" y="391.2" width="171.0" height="8" fill="#e11d48" rx="2"/>
   <circle cx="254.0" cy="395.2" r="4" fill="#e11d48"/>

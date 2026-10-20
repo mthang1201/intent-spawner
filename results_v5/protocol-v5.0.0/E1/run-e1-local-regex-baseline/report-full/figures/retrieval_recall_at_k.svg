@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="760" height="420" viewBox="0 0 760 420">
+  <rect width="100%" height="100%" fill="#ffffff"/>
+  <style>
+    text { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
+    .title { font-size: 18px; font-weight: 700; fill: #0f172a; }
+    .subtitle { font-size: 12px; fill: #475569; }
+    .axis { stroke: #94a3b8; stroke-width: 1; }
+    .grid { stroke: #e2e8f0; stroke-width: 1; stroke-dasharray: 2 2; }
+    .tick { font-size: 11px; fill: #475569; }
+    .label { font-size: 12px; font-weight: 600; fill: #0f172a; }
+    .val { font-size: 11px; font-weight: 600; fill: #0f172a; }
+    .val-light { font-size: 10px; fill: #475569; }
+    .legend { font-size: 11px; fill: #0f172a; }
+    .note { font-size: 10px; font-style: italic; fill: #475569; }
+  </style>
+  <text x="50" y="32" class="title">P2 Retrieval Channel Ablation: Recall@K</text>
+  <text x="50" y="52" class="subtitle">Pre-constraint retrieval recall across Sparse, Dense, and Hybrid (RRF) channels. These are P2 ablations, not primary system IDs.</text>
+  <line x1="80" y1="330" x2="700" y2="330" class="axis"/>
+  <line x1="80" y1="80" x2="80" y2="330" class="axis"/>
+  <line x1="80" y1="330.0" x2="700" y2="330.0" class="grid"/>
+  <text x="70" y="334.0" text-anchor="end" class="tick">0.0</text>
+  <line x1="80" y1="280.0" x2="700" y2="280.0" class="grid"/>
+  <text x="70" y="284.0" text-anchor="end" class="tick">0.2</text>
+  <line x1="80" y1="230.0" x2="700" y2="230.0" class="grid"/>
+  <text x="70" y="234.0" text-anchor="end" class="tick">0.4</text>
+  <line x1="80" y1="180.0" x2="700" y2="180.0" class="grid"/>
+  <text x="70" y="184.0" text-anchor="end" class="tick">0.6</text>
+  <line x1="80" y1="130.0" x2="700" y2="130.0" class="grid"/>
+  <text x="70" y="134.0" text-anchor="end" class="tick">0.8</text>
+  <line x1="80" y1="80.0" x2="700" y2="80.0" class="grid"/>
+  <text x="70" y="84.0" text-anchor="end" class="tick">1.0</text>
+  <text x="25" y="205.0" transform="rotate(-90 25 205.0)" text-anchor="middle" class="label">Macro Recall@K</text>
+  <rect x="123.3" y="214.1" width="36.0" height="115.9" fill="#2563eb" rx="3"/>
+  <text x="141.3" y="208.1" text-anchor="middle" class="val">0.464</text>
+  <rect x="165.3" y="269.2" width="36.0" height="60.8" fill="#d97706" rx="3"/>
+  <text x="183.3" y="263.2" text-anchor="middle" class="val">0.243</text>
+  <rect x="207.3" y="244.8" width="36.0" height="85.2" fill="#059669" rx="3"/>
+  <text x="225.3" y="238.8" text-anchor="middle" class="val">0.341</text>
+  <text x="183.3" y="352" text-anchor="middle" class="label">K = 1</text>
+  <rect x="330.0" y="121.5" width="36.0" height="208.5" fill="#2563eb" rx="3"/>
+  <text x="348.0" y="115.5" text-anchor="middle" class="val">0.834</text>
+  <rect x="372.0" y="185.7" width="36.0" height="144.3" fill="#d97706" rx="3"/>
+  <text x="390.0" y="179.7" text-anchor="middle" class="val">0.577</text>
+  <rect x="414.0" y="157.3" width="36.0" height="172.7" fill="#059669" rx="3"/>
+  <text x="432.0" y="151.3" text-anchor="middle" class="val">0.691</text>
+  <text x="390.0" y="352" text-anchor="middle" class="label">K = 3</text>
+  <rect x="536.7" y="118.6" width="36.0" height="211.4" fill="#2563eb" rx="3"/>
+  <text x="554.7" y="112.6" text-anchor="middle" class="val">0.845</text>
+  <rect x="578.7" y="159.5" width="36.0" height="170.5" fill="#d97706" rx="3"/>
+  <text x="596.7" y="153.5" text-anchor="middle" class="val">0.682</text>
+  <rect x="620.7" y="135.7" width="36.0" height="194.3" fill="#059669" rx="3"/>
+  <text x="638.7" y="129.7" text-anchor="middle" class="val">0.777</text>
+  <text x="596.7" y="352" text-anchor="middle" class="label">K = 5</text>
+  <rect x="220" y="380" width="14" height="14" fill="#2563eb" rx="2"/>
+  <text x="240" y="392" class="legend">Sparse (Ablation)</text>
+  <rect x="380" y="380" width="14" height="14" fill="#d97706" rx="2"/>
+  <text x="400" y="392" class="legend">Dense (Ablation)</text>
+  <rect x="540" y="380" width="14" height="14" fill="#059669" rx="2"/>
+  <text x="560" y="392" class="legend">Hybrid (P2 Default)</text>
+</svg>
