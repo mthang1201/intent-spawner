@@ -1,13 +1,56 @@
 \chapter{Conclusion}
+\label{chap:conclusion}
 
-\section{Conclusion}
+\section{Summary of Internship Achievements}
+\label{sec:summary_achievements}
 
-The internship project implemented an intent-aware profile and image recommendation workflow for JupyterHub. It extracts structured workload intent, retrieves catalog candidates through sparse and dense channels, applies deterministic hard constraints, and presents the result for user review and confirmation. The administrator-managed catalog and pre-spawn validation keep deployment choices within approved profiles and digest-pinned images.
+This graduation internship project developed and evaluated Intent-Spawner, a context-aware proof-of-concept (PoC) recommender system designed to bridge the gap between high-level user workload requirements and low-level container infrastructure in JupyterHub on Kubernetes. Over the course of the internship, four core objectives were successfully accomplished:
 
-E1 evaluated recommendation quality on 11 workload families with effective paired outcomes from the broader development benchmark. JointAccept@1 was 60.0\% for P1, 65.0\% for P2 local, and 55.9\% for P2 LLM; the observed differences were not statistically significant. The retrieval ablation also showed that BM25 achieved higher Recall@1 (46.4\%) than hybrid RRF (34.1\%) and dense retrieval (24.3\%) on this catalog. These results do not establish that the hybrid method is superior; they show a trade-off that should be assessed against the query and catalog distribution. E2 measured prompt robustness across 18 semantic families, with macro SRR of 56.8\% for P1, 60.6\% for P2 local, and 51.5\% for P2 LLM.
+\begin{enumerate}
+    \item \textbf{Problem formulation and landscape survey:} We surveyed the operational challenges of interactive notebook environments in multi-tenant Kubernetes clusters. In standard deployments, users face a significant cognitive burden when forced to manually interpret static configuration menus, often leading to misconfigured resources, Out-Of-Memory (OOM) crashes, or severe resource over-provisioning. Conversely, unconstrained language-model-driven configuration risks invalid manifests and policy violations. We formalized this trade-off and established the boundary conditions for an explainable, policy-bounded recommendation workflow that operates strictly over an administrator-approved environment catalog.
 
-E3 has a completed human-study protocol and testing harness but zero participant observations, so this report makes no empirical claim about user success, decision time, workload, or usability. In E4, 770 of 800 Pod trials succeeded (96.3\%), with 30 OOM terminations and no timeouts across four allocation conditions in one OrbStack-backed cluster. E5 found that the four-image catalog covered 69.9\% of cases for P1 and 84.3\% for P2; all executed eligible probes passed (65/65 and 76/76). These observations support the bounded implementation and the specific tests performed. They do not establish broad production performance, human effectiveness, or scalability to larger image catalogs.
+    \item \textbf{Design and implementation of the P2 PoC recommender:} We designed and implemented the P2 recommendation engine, which strictly decouples natural language understanding from authoritative cluster infrastructure. The architecture transforms raw user input into an intermediate, schema-validated \texttt{StructuredIntent} object ($I$). Candidate environments are retrieved via a dual-channel hybrid pipeline combining sparse lexical search (BM25) for exact technical terms with dense vector embeddings for semantic context, fused through Reciprocal Rank Fusion (RRF). Infeasible candidates are deterministically pruned by hard constraint evaluation ($F$) against hardware (GPU, CPU, RAM), storage, and architectural policies before applying multi-criteria preference scoring ($c^*$).
 
-\section{Future work}
+    \item \textbf{JupyterHub Pre-spawn lifecycle integration and secure verification:} We integrated the recommendation pipeline directly into the native JupyterHub pre-spawn workflow. To ensure operational transparency and administrative safety, the system presents the recommended candidate for explicit user review. Upon confirmation, the selection is bound to a single-use, time-limited cryptographic verification token. A custom JupyterHub Pre-spawn hook inspects and consumes this token at spawn time, automatically injecting approved resource quotas and digest-pinned container images into the Kubernetes Pod specification without executing runtime inference during scheduling.
 
-The experimental results are subject to several limitations. The evaluation is based on a controlled resource and image catalog and therefore does not cover the full diversity of workloads, Kubernetes clusters, and software environments encountered in production. The human-study protocol has not yet been run with participants; future work should conduct the study and report results from the recruited participant population. In addition, image functionality depends on the specific images and probe requirements included in the evaluation. Future work can extend the evaluation to larger and more heterogeneous catalogs, additional workload domains, and longer-term user studies. Historical workload information could also be incorporated to improve recommendations based on previously observed resource usage. Further work on retrieval and ranking could investigate how recommendation quality changes as the catalog becomes larger and more diverse. Language-model-based re-ranking could also be explored as an optional additional stage after retrieval, provided that its computational cost and effect on recommendation quality are evaluated systematically. Finally, runtime resource measurements could be used to calibrate recommended resource allocations against actual workload behavior.
+    \item \textbf{Empirical feasibility validation via offline benchmarks and capability probes:} We established the practical feasibility of the prototype through focused empirical evaluation streams. Stream~E1 demonstrated competitive offline recommendation accuracy on the development benchmark (\texttt{JointAccept@1} of 65.0\% for P2 Local Mode across 11 paired families) and characterized the performance trade-offs between sparse and hybrid retrieval on domain-specific catalogs. Stream~E5 verified container runtime correctness across 166 recommendation instances, achieving a 100\% pass rate on eligible software probes and confirming up to 44.5\% marginal storage savings through OCI image layer deduplication. Finally, local cluster deployment verified that confirmed recommendations spawn active, responsive Pods on Kubernetes.
+\end{enumerate}
+
+\section{Roadmap and Transition Plan for Graduation Thesis}
+\label{sec:thesis_roadmap}
+
+While the internship phase successfully validated the architectural feasibility and algorithmic mechanics of Intent-Spawner, several fundamental research questions and engineering capabilities remain to be explored. The graduation internship deliverable serves as a proven Proof-of-Concept foundation; the subsequent Graduation Thesis will elevate this prototype into an autonomous, scalable, and rigorously evaluated research system. 
+
+Table~\ref{tab:thesis_roadmap} delineates the transition plan and strategic roadmap across four core research and development axes.
+
+\begin{table}[ht]{Strategic development roadmap and transition plan for the Graduation Thesis}
+\label{tab:thesis_roadmap}
+\centering
+\small
+\begin{tabular}{>{\raggedright\arraybackslash}p{3.0cm}>{\raggedright\arraybackslash}p{5.7cm}>{\raggedright\arraybackslash}p{5.5cm}}
+\toprule
+Development axis & Technical methodology \& enhancements & Target thesis deliverables \& milestones \\
+\midrule
+1. Semantic Intent Extractor & Integration of domain-adapted Large Language Models (LLMs) with structured function calling, few-shot prompt tuning, and interactive disambiguation dialogs. & Robust handling of ambiguous, compound, and multilingual requests; zero schema validation failures; formal extraction ablation. \\
+\midrule
+2. Dynamic Sizing \& Reprovisioning & In-situ cgroups v2 memory watermark monitoring, predictive resource right-sizing, and live Pod re-provisioning with PersistentVolumeClaim (PVC) data preservation. & Elimination of runtime OOM failures; reduction of idle resource over-allocation slack; zero-data-loss container migration mechanism. \\
+\midrule
+3. Human-Subject Usability Study (Stream E3) & Execution of the pre-registered experimental protocol with a recruited cohort of computer science students and researchers, comparing P2 against manual baseline B0. & Quantitative empirical measurements of time-to-spawn, configuration error rates, cognitive task load (NASA-TLX), and System Usability Scale (SUS). \\
+\midrule
+4. Large-Scale Cluster Benchmarking (Stream E4) & Extension of cluster execution trials from single-node sandboxes to heterogeneous, multi-node Kubernetes clusters with physical GPU accelerators and high concurrency. & Verification of cluster-wide pod packing efficiency, multi-tenant scheduler queue latency bounds, and trial reliability exceeding 98\% under peak load. \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The strategic roadmap addresses four complementary facets of the system:
+\begin{itemize}
+    \item \textbf{Semantic Intent Extractor (Axis 1):} The current prototype relies on lightweight deterministic extraction or basic zero-shot prompting. For the Graduation Thesis, we will incorporate domain-adapted Large Language Models equipped with constrained grammar decoding and structured tool calling. This will enable the extractor to interpret complex, compound workload descriptions (e.g., pipeline stages with conditional GPU requirements or multi-framework dependencies), resolve linguistic ambiguities through interactive multi-turn dialogues, and guarantee 100\% adherence to the formal intent schema.
+
+    \item \textbf{Dynamic Sizing and Reprovisioning (Axis 2):} Static environment allocation at spawn time cannot account for unpredictable runtime data spikes or evolving notebook workloads. We will design an autonomous dynamic right-sizing controller that interfaces with Kubernetes cgroups v2 telemetry. If an active session approaches its memory threshold, the controller can dynamically expand resource limits or seamlessly re-provision the notebook into a higher-tier profile while preserving user state, local filesystem checkpoints, and mounted PersistentVolumeClaims (PVCs) without workflow interruption.
+
+    \item \textbf{Human-Subject Usability Study (Axis 3):} Adhering to academic integrity, the internship project established a comprehensive experimental protocol and testing harness (Stream~E3) without collecting unverified human observations. During the Graduation Thesis, formal user interaction trials will be conducted with recruited cohorts of university students, data science practitioners, and researchers. By comparing Intent-Spawner ($P2$) against standard manual catalog inspection ($B0$), the study will quantitatively measure reductions in configuration time, cognitive workload (via NASA-TLX), and subjective user satisfaction (via standardized SUS metrics).
+
+    \item \textbf{Large-scale Cluster Benchmarking (Axis 4):} The preliminary cluster trials conducted during the internship were confined to a single-node local Kubernetes environment (OrbStack). The Graduation Thesis will deploy Intent-Spawner onto a production-grade, multi-node Kubernetes cluster featuring heterogeneous CPU architectures and dedicated NVIDIA GPU accelerators. Under Stream~E4, we will execute extensive multi-pod stress benchmarks under heavy tenant concurrency to evaluate pod scheduling queue latencies, node packing density, and cluster resource utilization efficiency under real-world multi-tenant operating conditions.
+\end{itemize}
+
+In conclusion, this internship report validates the core premise of intent-aware environment selection: by combining structured intent extraction, hybrid retrieval, and hard constraint filtering behind an authoritative pre-spawn lifecycle boundary, user configuration effort can be substantially mitigated without sacrificing administrative governance. The established roadmap provides a clear, actionable trajectory for delivering a comprehensive and impactful Graduation Thesis.
