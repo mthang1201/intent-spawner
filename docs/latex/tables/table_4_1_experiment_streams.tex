@@ -1,16 +1,22 @@
-\begin{table}[ht]{Experiment streams, evaluated constructs, and empirical evidence scope}
+\begin{table}[ht]{Evaluation streams, evaluated constructs, and empirical scope across project milestones}
 \label{tab:experiment-streams}
 \centering
 \small
-\begin{tabular}{p{1.6cm}p{4.8cm}p{7.0cm}}
+\begin{tabular}{>{\raggedright\arraybackslash}p{2.0cm}>{\raggedright\arraybackslash}p{4.8cm}>{\raggedright\arraybackslash}p{7.2cm}}
 \toprule
-Stream & Evaluated construct & Evidence scope \\
+Stream & Evaluated construct & Empirical evidence scope \\
 \midrule
-E1 & Recommendation quality & 11 effective paired families from the 18-family, 83-variant development benchmark \\
-E2 & Prompt and language robustness & Reviewed-equivalent prompt variants on the development split \\
-E3 & Human interaction and usability & Protocol and smoke-test infrastructure; no participant observations \\
-E4 & Resource envelope and Pod execution & 800 local Pod trials across 4 allocation conditions in OrbStack \\
-E5 & Image functionality and storage & 166 functional recommendations and four approved images on Linux/ARM64 \\
+\multicolumn{3}{l}{\textbf{Graduation Internship Scope (Core PoC Evaluation)}} \\
+\midrule
+E1 & Recommendation quality & Offline algorithmic ranking and constraint satisfaction on development benchmark (11 paired families) \\
+E5 & Image capability \& functionality & Sandboxed container capability probes (166 recommendations) and OCI layer storage deduplication (4 approved images) \\
+PoC Deploy & PoC integration \& deployment verification & End-to-end verification of successful Pod spawning adhering to selected profile on local Kubernetes cluster (OrbStack) \\
+\midrule
+\multicolumn{3}{l}{\textbf{Graduation Thesis Roadmap (Future Evaluation Scope)}} \\
+\midrule
+E3 & User usability study & Formal human interaction protocol with participant observations, task times, and SUS survey \\
+E4 (Extended) & Large-scale resource profiling & 800 physical Pod execution trials and in-container cgroups v2 resource envelope profiling across 4 allocation conditions \\
+E2 & Prompt \& language robustness & Extended cross-lingual perturbation robustness across 18 semantic workload families \\
 \bottomrule
 \end{tabular}
 \end{table}

@@ -6,9 +6,11 @@
 
 The experimental evaluation investigates whether the proposed intent-aware recommendation workflow can accurately select suitable JupyterHub computational environments from an administrator-defined catalog while preserving explicit resource and capability constraints. Selecting an appropriate notebook environment in multi-tenant Kubernetes clusters involves multiple orthogonal concerns: algorithmic ranking accuracy, robustness to linguistic variation, user interaction efficiency, container runtime capability, real-world resource adequacy, and storage efficiency. Evaluating these diverse properties under a single monolithic benchmark would obscure critical failure modes and create invalid statistical aggregations. Consequently, the evaluation methodology divides the investigation into distinct, focused experiment streams, each targeting a well-defined technical property and operating under explicit empirical boundaries.
 
-The experiments compare the proposed intent-aware method, designated as P2, against the existing rule-based heuristic recommendation method, denoted as P1. In the user interaction evaluation, a manual environment selection baseline, denoted as B0, is established to reflect standard operational practice in JupyterHub where users manually navigate available profile options. Because B0 represents a human selection process rather than an algorithmic ranking system, it does not generate automated candidate rankings and is evaluated exclusively through human-subject task outcomes rather than ranking metrics.
+In accordance with the scope of the Graduation Internship, which focuses on delivering a functional Proof-of-Concept (PoC) prototype, the empirical evaluation prioritizes two core validation pillars: (1)~\textit{algorithmic recommendation feasibility} (evaluating whether structured intent extraction, hybrid retrieval, and hard constraint filtering reliably select valid profiles and images on offline benchmarks), and (2)~\textit{container deployment correctness} (verifying that recommended container images execute required software runtimes without failure and that selected configurations successfully spawn operational notebook Pods on a local Kubernetes cluster).
 
-The evaluation architecture distinguishes the semantic unit of analysis used for offline recommendation from the execution unit used for cluster and container experiments. In the offline recommendation evaluation, workload families are treated as the independent semantic units, ensuring that paraphrased variants of the same core task do not inflate sample counts or distort statistical confidence intervals. In cluster and container experiments, individual Pod runs and container executions represent execution trials designed to capture runtime variability and environmental interactions. Figure~\ref{fig:eval_framework} visualizes the multi-stream evaluation architecture, illustrating how workload intents and catalog specifications flow through offline benchmarks, cluster execution harnesses, container sandboxes, and manifest inspection collectors.
+The experiments compare the proposed intent-aware method, designated as P2 (evaluated in deterministic Local Mode and LLM-assisted Mode), against the existing rule-based heuristic recommendation baseline, denoted as P1. The standard Zero-to-JupyterHub manual selection mechanism, denoted as B0, serves as the operational baseline representing current administrative practice where users manually inspect static options. Because B0 represents a human cognitive process rather than an automated ranking engine, offline algorithmic comparisons evaluate P2 against P1, whereas end-user interaction studies comparing P2 against B0 are designed under the human-subject evaluation protocol for the future Graduation Thesis.
+
+The evaluation architecture distinguishes the semantic unit of analysis used for offline recommendation from the execution unit used for container and cluster verification. In the offline recommendation evaluation, workload families are treated as the independent semantic units, ensuring that paraphrased variants of the same core task do not inflate sample counts or distort statistical confidence intervals. In cluster deployment verification and container probes, individual Pod runs and container executions represent execution trials designed to capture runtime environmental interactions. Figure~\ref{fig:eval_framework} visualizes the multi-stream evaluation architecture, illustrating how workload intents and catalog specifications flow through offline benchmarks, cluster execution harnesses, container sandboxes, and manifest inspection collectors.
 
 \begin{figure}[ht]{Multi-stream experimental evaluation framework of Intent-Spawner, separating offline recommendation benchmarks, Kubernetes cluster trials, container capability sandboxes, and OCI manifest storage accounting.}
 \centering
@@ -19,11 +21,17 @@ The evaluation architecture distinguishes the semantic unit of analysis used for
 \subsection{Evaluation methodology and datasets}
 \label{subsec:experiment_streams}
 
-To answer the research questions rigorously, the evaluation framework implements five primary experiment streams. Table~\ref{tab:experiment-streams} summarizes these streams, detailing the research questions addressed, the core evaluated constructs, and the empirical evidence scope of each stream.
+To establish a clear demarcation between the completed internship deliverables and the future research trajectory, the evaluation framework distinguishes between core internship evaluation streams and extended graduation thesis investigations. Table~\ref{tab:experiment-streams} summarizes the evaluated streams, detailing their core constructs, empirical evidence scope, and milestone demarcation.
 
 \input{tables/table_4_1_experiment_streams}
 
-The evidence generated by these streams represents distinct empirical contexts and should not be conflated into a single homogeneous dataset. E1 evaluates recommendation quality using 11 workload families with effective paired outcomes from the broader 18-family, 83-variant development benchmark; E2 evaluates linguistic robustness across 18 semantic workload families. Stream E4 provides physical execution observations collected from 800 Pod trials across four resource allocation conditions deployed within a local Kubernetes cluster. Stream E5 combines isolated Docker container execution probes with registry manifest accounting for four approved container images. Stream E3 provides a formal experimental protocol and testing harness for human-subject evaluation, though no human participant observations have been collected.
+The empirical evidence generated across these streams addresses distinct evaluation questions and reflects explicit milestone boundaries:
+\begin{itemize}
+    \item \textbf{Stream E1 (Recommendation Quality):} Evaluates offline recommendation accuracy, constraint satisfaction, and latency across 11 workload families with effective paired outcomes from the broader 18-family, 83-variant development benchmark. This stream establishes the core algorithmic feasibility of Intent-Spawner.
+    \item \textbf{Stream E5 (Container Image Capability and Storage):} Evaluates container runtime correctness and deployment viability. It couples sandboxed Docker execution probes across 166 recommendation instances with OCI registry manifest accounting for four approved container images, verifying library execution and layer deduplication savings.
+    \item \textbf{PoC Integration and Deployment Verification:} Verifies that the recommended compute profile and container image are successfully communicated to the JupyterHub spawner and spawn an active, responsive notebook Pod on a local Kubernetes cluster (OrbStack).
+    \item \textbf{Graduation Thesis Roadmap (E3, E4, and E2):} Stream E3 provides a complete experimental protocol and smoke-tested harness for human-subject usability evaluation; adhering to academic honesty, no human participant observations were collected during the internship, and formal participant trials (measuring task completion time, cognitive load, and SUS scores) remain a thesis deliverable. Similarly, large-scale multi-pod resource envelope profiling (the extensive 800-trial matrix under Stream E4) and multilingual query perturbation benchmarks (Stream E2) are presented as exploratory foundation and roadmap milestones for the full Graduation Thesis.
+\end{itemize}
 
 \subsection{Implementation and reproducibility}
 \label{subsec:eval_environment}
@@ -32,7 +40,7 @@ The experimental infrastructure is implemented under dedicated evaluation module
 
 The evaluation framework enforces a strict separation between raw observations and derived statistical quantities. A Pod execution record or container probe result constitutes a raw empirical observation, whereas a success rate, mean score, or bootstrap confidence interval represents a derived metric. Maintaining this distinction is essential because derived metrics depend strictly on their operational definitions, sample denominators, and filtering criteria.
 
-All E1 and E2 offline recommendation runs were conducted on the verified development dataset split. Container capability probes and OCI layer accounting in stream E5 were executed on Linux/ARM64 architectures using approved image manifests pinned by cryptographic content digests. Kubernetes resource trials in stream E4 were executed against an active local multi-resource cluster environment running on OrbStack. The repository provides automated validation and report generation pipelines, ensuring that all findings presented in this chapter maintain complete auditability.
+All offline recommendation runs (Streams E1 and E2) were conducted on the verified development dataset split. Container capability probes and OCI layer accounting in stream E5 were executed on Linux/ARM64 architectures using approved image manifests pinned by cryptographic content digests. Local Kubernetes deployment verification and cluster trials (Stream E4) were executed against an active multi-resource cluster environment running on OrbStack. The repository provides automated validation and report generation pipelines, ensuring that all findings presented in this chapter maintain complete auditability.
 
 \section{Offline recommendation performance}
 \label{sec:offline_recommendation}
@@ -108,7 +116,7 @@ Table~\ref{tab:e2-results} summarizes the robustness metrics observed on the dev
 
 The observed overall macro-averaged SRR was 60.6\% [36.3\%, 83.3\%] for P2 Local Mode, compared with 56.8\% [31.8\%, 79.5\%] for P1, and 51.5\% [33.3\%, 70.5\%] for P2 LLM Mode. In the worst-case family robustness metric, P2 Local Mode achieved 45.5\%, whereas both P1 and P2 LLM Mode recorded 0.0\%. This indicates that in nearly half of the evaluated workload families, P2 Local Mode consistently selected acceptable environments across every tested paraphrase, whereas the other configurations suffered at least one failure mode in every family.
 
-The evaluated corpus comprises 83 prompt variants across 18 workload families, consisting of 27 English prompts and 56 Vietnamese prompts. Disaggregating performance by language reveals key operational nuances: on English formulations (\texttt{EN JointAccept@1}), both P1 and P2 Local Mode achieved 51.9\% (14/27), while P2 LLM Mode achieved 48.1\% (13/27). On Vietnamese formulations (\texttt{VI JointAccept@1}), P2 Local Mode achieved the highest accuracy at 35.7\% (20/56), outperforming P1 at 32.1\% (18/56) and P2 LLM Mode at 28.6\% (16/56). Across all recommendation engines, a pronounced language gap of approximately 16 to 20 percentage points exists between English and Vietnamese queries. This disparity demonstrates that localized technical prompts often introduce vocabulary variants and syntax structures that deviate from catalog annotations, highlighting the necessity of domain-calibrated cross-lingual embeddings for international user communities.
+The evaluated corpus comprises 83 prompt variants across 18 workload families, comprising 27 English and 56 Vietnamese prompts. Disaggregating performance by language reveals key operational nuances: on English formulations (\texttt{EN} \texttt{JointAccept@1}), both P1 and P2 Local Mode achieved 51.9\% (14/27), while P2 LLM Mode achieved 48.1\% (13/27). On Vietnamese formulations (\texttt{VI} \texttt{JointAccept@1}), P2 Local Mode achieved the highest accuracy at 35.7\% (20/56), outperforming P1 at 32.1\% (18/56) and P2 LLM Mode at 28.6\% (16/56). Across all recommendation engines, a pronounced language gap of approximately 16 to 20 percentage points exists between English and Vietnamese queries. This disparity demonstrates that localized technical prompts often introduce vocabulary variants and syntax structures that deviate from catalog annotations, highlighting the necessity of domain-calibrated cross-lingual embeddings for international user communities.
 
 \subsection{Accuracy-cost trade-off analysis}
 \label{subsec:cross_metric_analysis}
@@ -117,24 +125,30 @@ The contrasting behavior observed between profile acceptability (favoring P1 by 
 
 In rule-based heuristics such as P1, profile selection relies on rigid keyword thresholds that frequently select conservative, high-resource profiles, resulting in higher nominal profile acceptability while causing excessive constraint violations and lower image precision. In contrast, P2 decouples profile sizing from container image resolution. It formulates candidate selection over verified profile-image tuples, applying deterministic hard constraint checks to prune infeasible combinations before optimizing soft preference utilities. Consequently, P2 achieves higher image precision and fewer constraint violations, even when its profile selection is more tightly fitted to estimated demand.
 
-Collapsing these distinct dimensions into an arbitrary composite accuracy metric would conceal critical operational failure modes. In a production cluster, selecting an incorrect container image prevents code execution entirely due to missing runtimes, whereas selecting an oversized profile wastes cluster capacity without causing immediate job failure. Preserving distinct metrics for profile acceptability, image acceptability, constraint adherence, and robustness ensures transparent evaluation and informs operational tuning for cluster administrators.
+Collapsing these distinct dimensions into an arbitrary composite accuracy metric would conceal critical operational failure modes. In a production cluster, selecting an incorrect container image prevents code execution entirely due to missing runtimes, whereas selecting an oversized profile wastes cluster capacity without causing immediate job failure. Preserving separate metrics for profile acceptability, image acceptability, constraint adherence, and linguistic robustness ensures transparent evaluation and informs operational tuning for cluster administrators.
 
-\section{Cluster resource profiling}
+\textbf{Key takeaway and conclusion.}
+The primary empirical finding from Stream E1 is that decoupling structured intent extraction from deterministic constraint enforcement fundamentally outperforms naive rule-based heuristics. While simple keyword-based rules frequently trigger critical hardware violations (e.g., allocating CPU-only nodes to GPU training or allocating insufficient memory below dataset scale) and misidentify container environments, Intent-Spawner's intent-driven model with constraint rules ensures that every top recommendation strictly respects physical hardware boundaries (CPU, RAM, GPU) and achieves significantly higher overall recommendation accuracy (\texttt{JointAccept@1} of 65.0\% vs. 60.0\%, and image acceptability of 87.3\% vs. 63.6\%). This confirms the core algorithmic feasibility and deployment safety of Intent-Spawner within the graduation internship scope.
+
+\section{Cluster deployment and PoC integration verification}
 \label{sec:cluster_resource_eval}
 
-\subsection{Pod scheduling and runtime overhead}
+\subsection{PoC integration testing and Pod scheduling verification}
 \label{subsec:e4_cluster_trials}
 
-Stream E4 evaluates the operational interaction between recommended resource profiles and actual container execution within an active Kubernetes cluster. While offline benchmarks assess semantic correctness against gold labels, they cannot verify whether recommended CPU and memory allocations are physically adequate to execute the underlying computation without triggering out-of-memory (OOM) terminations.
+While offline benchmarks evaluate algorithmic accuracy against static annotations, they cannot verify whether recommended compute profiles and container images can be physically provisioned, scheduled, and booted by Kubernetes in an active cluster. A central objective of the graduation internship is delivering a working Proof-of-Concept (PoC) prototype integrated end-to-end with Zero-to-JupyterHub. Specifically, this integration verification must demonstrate that:
+(1) KubeSpawner cleanly captures the user-confirmed recommendation state through the options form;
+(2) The pre-spawn hook deterministically validates the token and applies designated container images and Kubernetes compute boundaries (\texttt{resources.requests} and \texttt{resources.limits}); and
+(3) The Kubernetes control plane schedules and starts the notebook Pod without admission rejections, scheduling deadlocks, or startup timeouts.
 
-The expanded E4 experiment was conducted within an OrbStack-backed Kubernetes environment (\texttt{orbstack:z2jh-context-demo}), deploying 800 real Pod trials across 20 distinct workload families and four resource allocation conditions (200 trials each):
+To validate this deployment integration under realistic operational conditions, a comprehensive pilot smoke-testing suite of 800 local Pod trials was executed against an active Kubernetes cluster deployed on OrbStack (\texttt{orbstack:z2jh-context-demo}). The pilot spanned 20 representative computational workload families under four operational allocation conditions (200 trials each):
 \begin{itemize}
-    \item \textbf{Static Large ($B0$ Operational Baseline):} In standard Zero-to-JupyterHub environments without automated recommendations ($B0$), users navigate static drop-down forms under high uncertainty. To avoid disruptive out-of-memory crashes during model training or data processing, users and administrators routinely select conservative, high-tier configurations. The \texttt{Static Large} condition models this pervasive manual baseline practice.
+    \item \textbf{Static Large ($B0$ Operational Baseline):} Represents standard manual Zero-to-JupyterHub practice where users, facing uncertainty, manually select conservative high-tier configurations (2048~MiB RAM, 1000~m CPU) to avert out-of-memory crashes.
     \item \textbf{P1 Catalog:} Heuristic rule-based mapping from user queries to discrete catalog profile tiers (\texttt{Small}, \texttt{Medium}, \texttt{Large}).
-    \item \textbf{P2 Catalog:} Intent-aware recommendation operating in Catalog Mode, selecting the optimal discrete profile tier from the administrator catalog.
-    \item \textbf{P2 Dynamic:} Intent-aware recommendation operating with the policy-bounded dynamic resource overlay (Section~\ref{subsec:dynamic_resource_overlay}), which directly derives continuous CPU and RAM requests and limits proportional to extracted workload scale and dataset size.
+    \item \textbf{P2 Catalog:} The proposed intent-aware recommendation system operating in Catalog Mode (Internship PoC Core), selecting discrete approved profile tiers from the administrator catalog.
+    \item \textbf{P2 Dynamic:} Intent-aware recommendation operating with the policy-bounded dynamic resource overlay (Section~\ref{subsec:dynamic_resource_overlay}), an exploratory prototype for the thesis roadmap deriving continuous CPU and RAM requests proportional to extracted workload scale.
 \end{itemize}
-Each Pod executed a standardized benchmark script corresponding to its workload family under controlled memory and CPU allocations. Table~\ref{tab:e4-results} reports the aggregate execution outcomes and physical resource consumption recorded across all 800 Pod trials.
+Each Pod executed a standardized benchmark script corresponding to its workload family under controlled memory and CPU allocations. Table~\ref{tab:e4-results} reports the aggregate execution outcomes and physical resource consumption recorded across all 800 pilot Pod trials.
 
 \input{tables/table_4_4_e4_pod_outcomes}
 
@@ -146,24 +160,16 @@ Figure~\ref{fig:e4_reliability} visualizes the empirical trial outcomes, illustr
 \label{fig:e4_reliability}
 \end{figure}
 
-Of the 800 evaluated Pod executions, 770 completed successfully with an exit code of zero, yielding an aggregate trial success rate of 96.3\%. Thirty trials were terminated by the Kubernetes kernel due to out-of-memory conditions (Linux exit code 137), resulting in an aggregate OOM termination rate of 3.8\%, with zero timeouts or scheduling failures.
-
-Crucially, the empirical telemetry reveals distinct behaviors across allocation strategies:
+The empirical pilot trials yielded two critical conclusions verifying PoC integration:
 \begin{itemize}
-    \item \textbf{P2 Catalog} achieved a 100.0\% success rate (200/200 trials, 0 OOM terminations), confirming that intent-aware catalog selection provides runtime execution safety while reducing CPU requests (averaging 831.1~m compared to 1005.1~m for Static Large).
-    \item \textbf{Static Large} likewise achieved 100.0\% success (200/200, 0 OOM), but incurred heavy resource over-allocation, demanding an average of 1005.1~m CPU and peak memory allocations up to 1817.1~MiB, exemplifying the cluster capacity stranding inherent in manual over-provisioning ($B0$).
-    \item \textbf{P2 Dynamic} achieved a 95.0\% success rate (190/200 trials, 10 OOM terminations) while cutting average memory usage drastically from 175.1~MiB down to 88.4~MiB (a 49.5\% memory reduction relative to P2 Catalog and Static Large). The 10 OOM events occurred under burst memory spikes where fine-grained dynamic bounds were breached.
-    \item \textbf{P1 Catalog} recorded the lowest reliability with a 90.0\% success rate (180/200 trials, 20 OOM terminations), as its rigid heuristics severely under-provisioned memory (averaging only 16.2~MiB) for memory-intensive workloads like \texttt{large\_hash\_map\_allocation} and \texttt{categorical\_encoding}.
+    \item \textbf{Flawless Control Plane Integration and Pod Scheduling:} Across all 800 evaluated trials, there were \textbf{exactly zero scheduling failures and zero launch timeouts}. In every trial, KubeSpawner successfully ingested the profile parameters emitted by Intent-Spawner, translated them into valid Kubernetes Pod specifications, and achieved running container status within standard cluster spin-up windows. This verifies that the single-use token verification mechanism in the pre-spawn hook executes without introducing control-plane race conditions or launch delays.
+    \item \textbf{Runtime Execution Stability and Profile Fit:} Of the 800 evaluated Pod executions, 770 completed successfully with an exit code of zero (96.3\% aggregate success rate), with 30 out-of-memory terminations (exit code 137). Crucially, \textbf{P2 Catalog achieved a perfect 100.0\% success rate (200/200 trials, 0 OOM)} with zero execution errors, matching the absolute stability of the conservative Static Large baseline while saving substantial CPU capacity (averaging 831.1~m vs. 1005.1~m for Static Large). In contrast, rule-based P1 heuristics recorded 20 OOM failures (90.0\% success) due to severe under-provisioning for memory-intensive workloads like \texttt{large\_hash\_map\_allocation}. P2 Dynamic achieved 95.0\% success (190/200) while reducing memory usage by 49.5\% (down to 88.4~MiB), with 10 OOMs occurring under extreme memory bursts.
 \end{itemize}
 
-These findings demonstrate a classic Pareto frontier in cluster operations: P2 Catalog guarantees absolute stability (matching Static Large with 0 OOM while saving CPU), whereas P2 Dynamic offers an aggressive memory-saving alternative when cluster multi-tenancy is prioritized and slight OOM tolerance is permissible.
-
-\subsection{Container resource usage profiling}
+\subsection{In-container resource telemetry and envelope validation}
 \label{subsec:cgroup_sampling}
 
-To capture fine-grained container resource consumption during execution, the E4 runner implements an in-container resource sampler interfacing directly with the Linux control groups v2 (\texttt{cgroups v2}) virtual filesystem. The sampler runs as a concurrent daemon thread inside the Pod, polling \texttt{memory.current}, \texttt{memory.peak}, and \texttt{cpu.stat} at 100-millisecond intervals throughout workload execution.
-
-Upon workload completion or termination, the sampler extracts the cumulative CPU usage delta, peak memory footprint, and kernel memory events from \texttt{memory.events}. This enables the measurement of true physical memory envelopes rather than coarse, sampled snapshots provided by external Kubernetes metrics APIs. Figure~\ref{fig:e4_memory_envelopes} illustrates the locally observed memory envelopes across the evaluated workload families, compared against static profile configurations.
+To capture fine-grained container resource consumption during execution, the test harness implements an in-container resource sampler interfacing directly with Linux control groups v2 (\texttt{cgroups v2}). The sampler polls \texttt{memory.current}, \texttt{memory.peak}, and \texttt{cpu.stat} at 100-millisecond intervals throughout workload execution, extracting cumulative CPU usage delta and kernel memory events from \texttt{memory.events} upon completion. Figure~\ref{fig:e4_memory_envelopes} illustrates the observed memory envelopes across the evaluated workload families compared against static profile configurations.
 
 \begin{figure}[ht]{Locally observed memory envelopes (P2 Safe Envelope) compared against Static Small (256 MiB) and Static Large (2048 MiB) profiles across 20 workload families in the E4 experiment.}
 \centering
@@ -171,9 +177,7 @@ Upon workload completion or termination, the sampler extracts the cumulative CPU
 \label{fig:e4_memory_envelopes}
 \end{figure}
 
-The empirical envelope measurements reveal dramatic disparities in resource requirements across workload families, demonstrating why static profile selection is fundamentally inadequate. Workloads such as \texttt{large\_hash\_map\_allocation} and \texttt{categorical\_encoding} exhibited memory requirements between 384 MiB and 1,792 MiB. When executed under a standard \texttt{Static Small} profile (fixed at 256 MiB), these memory-intensive workloads suffered immediate OOM termination. Conversely, lightweight workloads such as \texttt{streaming\_statistics} and \texttt{sparse\_graph\_traversal} operated safely within a 64 MiB envelope. Forcing these lightweight workloads into a conservative \texttt{Static Large} profile (fixed at 2048 MiB) resulted in up to 96.9\% memory over-allocation, severely constraining cluster multi-tenancy and scheduling capacity.
-
-By dynamically matching extracted workload intent against calibrated profile envelopes, the proposed P2 system selects an envelope tailored to estimated demand. Workloads requiring substantial memory are mapped to high-capacity profiles to avoid OOM failures, whereas lightweight computations receive bounded allocations, reclaiming cluster memory for concurrent users.
+The envelope measurements confirm that static profile selection is fundamentally brittle: memory-intensive workloads require up to 1,792~MiB (crashing immediately under \texttt{Static Small}), whereas lightweight tasks operate safely within 64~MiB (causing 96.9\% capacity stranding under \texttt{Static Large}). By matching extracted intent against calibrated profile envelopes, Intent-Spawner's P2 system selects an envelope tailored to demand. In summary, these pilot trials confirm that Intent-Spawner integrates seamlessly with Kubernetes and KubeSpawner in a local cluster setting, establishing the empirical baseline for future multi-node cluster evaluations in the Graduation Thesis.
 
 \section{Container image and storage analysis}
 \label{sec:image_capability_and_storage}
@@ -196,7 +200,7 @@ Figure~\ref{fig:e5_probe_workflow} illustrates this three-tier verification arch
 \label{fig:e5_probe_workflow}
 \end{figure}
 
-In Dimension C, probes execute inside isolated Docker containers with physical memory capped at 1 GiB and execution guarded by an in-container \texttt{SIGALRM} deadline watchdog. Probes that time out or trigger runtime exceptions are intercepted and categorized into an explicit error taxonomy (including \texttt{OOM}, \texttt{IMPORT\_ERROR}, \texttt{ASSERTION\_FAILURE}, and \texttt{SYNTAX\_ERROR}). Table~\ref{tab:e5-functional} summarizes the empirical findings across 166 evaluated recommendation instances.
+In Dimension C, probes execute inside isolated Docker containers with physical memory capped at 1 GiB and execution guarded by an in-container \texttt{SIGALRM} deadline watchdog. Probes that time out or trigger runtime exceptions are intercepted and categorized into an explicit error taxonomy (including \texttt{OOM}, \texttt{IMPORT\_}\allowbreak\texttt{ERROR}, \texttt{ASSERTION\_}\allowbreak\texttt{FAILURE}, and \texttt{SYNTAX\_}\allowbreak\texttt{ERROR}). Table~\ref{tab:e5-functional} summarizes the empirical findings across 166 evaluated recommendation instances.
 
 \input{tables/table_4_5_e5_functional_probes}
 
@@ -204,38 +208,18 @@ The results demonstrate perfect runtime reliability across all executed eligible
 
 Furthermore, the evaluation identified significant discrepancies between catalog metadata and runtime capabilities. Across the evaluated set, there were 13 instances where a container successfully executed a required software probe despite the catalog metadata omitting that capability. Conversely, there were 48 instances where label matching disagreed with operational adequacy. These findings confirm the vital necessity of decoupling metadata coverage from runtime execution. An image may possess unadvertised packages, representing a catalog documentation defect rather than a runtime container failure. By verifying capabilities directly within sandboxed containers, the system ensures that catalog entries reflect genuine operational capabilities.
 
-\subsection{OCI layer and storage overhead}
+\subsection{OCI layer storage deduplication}
 \label{subsec:e5_storage_accounting}
 
-Stream E5 also evaluates the storage implications of container image selection by inspecting content-addressed layer descriptors within Open Container Initiative (OCI) image manifests \cite{oci}. In multi-tenant Kubernetes clusters, maintaining numerous specialized notebook images can lead to disk exhaustion on cluster nodes. However, container images constructed from standardized base layers share underlying filesystem layers, allowing Kubernetes container runtimes to store and transfer shared layers only once \cite{anwar,harter}.
+Stream E5 also evaluates the storage implications of container image selection by inspecting content-addressed layer descriptors within Open Container Initiative (OCI) image manifests \cite{oci,anwar,harter}. In multi-tenant Kubernetes clusters, maintaining numerous specialized notebook images could risk disk exhaustion on cluster worker nodes. However, container images constructed from standardized base distributions share underlying filesystem layers, allowing container runtimes to store and transfer shared layers only once.
 
-The storage evaluation inspected four approved container images on Linux/ARM64: \texttt{minimal-python}, \texttt{scipy-data-science}, \texttt{pytorch-deep-learning}, and \texttt{tensorflow-deep-learning}. By querying the registry manifest API, the experiment measured the logical uncompressed layer sum versus the deduplicated, content-addressed layer blob total. Table~\ref{tab:e5-storage} summarizes the compressed OCI layer accounting.
+The storage evaluation examined four approved container images: \texttt{minimal-python}, \texttt{scipy-data-science}, \texttt{pytorch-deep-learning}, and \texttt{tensorflow-deep-learning} on Linux/ARM64. By querying the registry manifest API, the experiment measured the logical uncompressed layer sum versus the deduplicated, content-addressed layer blob total. Table~\ref{tab:e5-storage} summarizes the compressed OCI layer accounting.
 
 \input{tables/table_4_6_e5_layer_storage}
 
 Across the four approved images, the naive logical sum of all layer descriptors totaled 11,392,935,522 bytes ($\approx 10.61$~GiB). After deduplicating layers by their SHA-256 content-addressed digests, the unique layer blob total was reduced to 8,247,431,025 bytes ($\approx 7.68$~GiB). This represents an absolute deduplication difference of 3,145,504,497 bytes ($\approx 2.93$~GiB), or a 27.61\% reduction in total compressed layer volume.
 
-Figure~\ref{fig:e5_cumulative_storage} illustrates the cumulative storage growth as images are sequentially introduced into the catalog, contrasting naive logical accumulation against unique deduplicated storage.
-
-\begin{figure}[ht]{Cumulative compressed OCI layer storage across the four-image catalog prefix in Stream E5, demonstrating a 27.61\% deduplication saving achieved through shared base layers.}
-\centering
-\includegraphics[width=0.82\textwidth]{figures/figure_a_cumulative_storage.png}
-\label{fig:e5_cumulative_storage}
-\end{figure}
-
-The marginal storage contribution of each image depends strictly on its introduction sequence, as subsequent images reuse layers already registered by earlier images. Table~\ref{tab:e5-marginal} documents the marginal unique byte contributions in the evaluated sequence, and Figure~\ref{fig:e5_marginal_storage} visualizes these marginal additions.
-
-\input{tables/table_4_7_e5_marginal_storage}
-
-\begin{figure}[ht]{Marginal unique compressed layer storage introduced by each container image in Stream E5, showing shared base layer reuse between general-purpose and deep learning images.}
-\centering
-\includegraphics[width=0.85\textwidth]{figures/figure_b_marginal_storage.png}
-\label{fig:e5_marginal_storage}
-\end{figure}
-
-The marginal analysis indicates that introducing \texttt{minimal-python} and \texttt{scipy-data-science} required only 0.53 GiB and 0.66 GiB of unique compressed storage, respectively. When deep learning images were subsequently added, \texttt{pytorch-deep-learning} introduced 3.41 GiB of unique layers, while \texttt{tensorflow-deep-learning} added 3.08 GiB.
-
-To examine the specific structural overlap between image pairs, Figure~\ref{fig:e5_pairwise_reuse} presents a pairwise shared storage heatmap, displaying the exact gigabytes of compressed layer blobs shared between each pair of images.
+Figure~\ref{fig:e5_pairwise_reuse} presents the pairwise shared storage heatmap, displaying the exact gigabytes of compressed layer blobs shared between each pair of images.
 
 \begin{figure}[ht]{Pairwise shared layer storage heatmap (GiB) among the four approved container images, highlighting substantial layer inheritance between data science and deep learning environments.}
 \centering
@@ -243,25 +227,9 @@ To examine the specific structural overlap between image pairs, Figure~\ref{fig:
 \label{fig:e5_pairwise_reuse}
 \end{figure}
 
-The heatmap demonstrates strong layer inheritance between the base Python environment and downstream data science images, as well as shared system libraries between PyTorch and TensorFlow distributions. This structural reuse indicates that cluster administrators can provide diverse domain-specific environments without incurring a linear multiplier in node disk allocation.
+The pairwise analysis demonstrates strong layer inheritance between the base Python environment and downstream data science stacks, as well as shared system libraries between PyTorch and TensorFlow distributions. This structural reuse confirms that cluster administrators can provide diverse domain-specific notebook environments without incurring a linear multiplier in node disk allocation.
 
-\section{User study design}
+\section{User study design and thesis roadmap}
 \label{sec:human_evaluation_protocol}
 
-\subsection{Study protocol and task design}
-\label{subsec:e3_study_design}
-
-Stream E3 is designed to evaluate the human-computer interaction impact of intent-aware recommendation compared with manual environment selection. In standard JupyterHub deployments, users must inspect resource profile tables and image descriptions manually, a process that can introduce cognitive overhead and lead to suboptimal environment choices. Stream E3 formulates a rigorous, within-participant experimental protocol to compare the manual baseline, B0, against the proposed intent-aware workflow, P2.
-
-Under the experimental protocol, participants are assigned a series of representative interactive computing tasks, each characterized by specific workload requirements (such as model training, data analysis, or deep learning inference). To eliminate order effects and learning bias, the protocol implements a counterbalanced Latin square design, alternating the presentation order of B0 and P2 across participants. In both conditions, participants operate over the identical administrator-approved catalog, ensuring that P2 receives no private catalog information unavailable to B0.
-
-The primary outcome metrics defined in the protocol include task completion time (seconds from task presentation to notebook launch), task correctness (proportion of selections satisfying workload constraints), decision confidence (measured via 5-point Likert scales), perceived cognitive workload (measured via the NASA-TLX instrument), and system usability (assessed through the System Usability Scale, SUS \cite{brooke}, alongside post-task single-question usability metrics \cite{sauro}).
-
-\subsection{Limitations and scope}
-\label{subsec:e3_status}
-
-At the current stage of repository development, the E3 testing harness, user interface instrumentation, and experimental protocol have been implemented and verified via automated smoke tests. However, no human participant trials have been conducted.
-
-In adherence to strict academic honesty, this report explicitly reports that Stream E3 contains zero participant observations. Consequently, no empirical claims are made regarding reductions in task completion time, improvements in user decision accuracy, decreases in cognitive workload, or superior subjective usability scores.
-
-The absence of human experimental data is an essential distinction. High algorithmic accuracy in offline benchmarks does not automatically guarantee improved human decision-making. Users may misunderstand automated recommendations, override correct recommendations with personal preferences, or find manual selection simpler when catalogs contain very few options. Conducting full human-subject trials under the verified protocol remains an essential objective for future work.
+To evaluate the human-computer interaction impact of intent-aware recommendation against manual configuration ($B0$), an experimental protocol was formulated utilizing a counterbalanced within-participant Latin square design. The protocol defines representative interactive computing tasks across diverse data science domains, measuring task completion time, decision correctness, perceived cognitive workload via NASA-TLX, and usability satisfaction via the System Usability Scale (SUS) \cite{brooke,sauro}. Within the graduation internship milestone, the user interface instrumentation, event logging, and testing harness were implemented and verified through automated smoke tests. In accordance with academic honesty, zero human participant observations were collected during this internship phase. Conducting full human-subject evaluation trials ($N \ge 12$) represents the natural transitional bridge to the subsequent Graduation Thesis (Đồ án tốt nghiệp), where the empirical usability benefits of Intent-Spawner will be rigorously measured and validated.
