@@ -9,6 +9,7 @@ identities of the repository snapshots they describe.
 | Document | Purpose |
 | --- | --- |
 | [Getting Started](GETTING_STARTED.md) | Running the Protocol-v5 experiments, software checks, and optional demo deployment. |
+| [Internship Scope](INTERNSHIP_SCOPE.md) | Formal demarcation between Graduation Internship PoC prototype (~50%) and Graduation Thesis roadmap. |
 | [Architecture](ARCHITECTURE.md) | B0/P1/P2/P3 contracts, implemented capabilities, and remaining research/production boundaries. |
 | [Demo script](DEMO_SCRIPT.md) | Interactive presentation scenes; demonstrations are separate from confirmatory evidence. |
 | [Helm backend deployment](HELM_BACKEND_DEPLOYMENT.md) | Runtime packaging, backend overlays, Secret references, and rollout identities. |

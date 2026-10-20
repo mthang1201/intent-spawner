@@ -1,101 +1,106 @@
-# Getting Started
+# Getting Started: Intent-Spawner Prototype
 
-Start with the Protocol-v5 experiments (E1-E5 under `evaluation_v5/`). Each one
-is just "run it, get results": there is no freeze/audit gate or human-review
-approval step blocking execution anymore. Demo deployment and synthetic
-benchmarks are separate workflows and do not supply missing research results.
-Run commands from the repository root.
+This guide provides step-by-step instructions for running, testing, evaluating, and deploying the **Intent-Spawner Proof-of-Concept Prototype**.
+
+> **Scope Notice:** This project represents the **Graduation Internship (~50% scope milestone)**. The core deliverable centers on local offline hybrid recommendation (P2 Local), unit testing, and offline evaluation (E1, E5). Extended features such as external LLM extractors (P2 LLM), dynamic resource rightsizing, multi-node live scheduling (E4), and human user studies (E3) are preserved as previews for the future **Graduation Thesis roadmap**.
+>
+> For full demarcation details, see [**Graduation Internship Scope & Demarcation**](INTERNSHIP_SCOPE.md).
+
+---
 
 ## Quick Navigation
 
-| Goal | Guide section | Cluster required |
-| --- | --- | --- |
-| Run the Protocol-v5 experiments | [Protocol-v5 experiments](#protocol-v5-experiments) | Depends on experiment |
-| Run software checks or unit tests | [Local checks](#path-a-local-synthetic-benchmark--unit-tests) | No |
-| Deploy P1/P2 context-aware form | [Interactive demo](#path-b-interactive-jupyterhub-demo) | Disposable demo cluster |
-| Try reprovisioning or dynamic resources | [Reprovisioning](#path-b3-storage-preserving-notebook-re-provisioning), [dynamic sizing](#path-b4-policy-bounded-dynamic-resource-sizing) | Disposable demo cluster |
-| Inspect historical evidence | [Protocol-v4 reproduction](#path-d-historical-protocol-v4-reproduction) | No |
+| Scope Category | Goal | Guide Section | Prerequisites / Cluster |
+| :--- | :--- | :--- | :--- |
+| **Internship Core** | Setup Python virtual environment & dependencies | [1. Prerequisites & Setup](#1-prerequisites--local-environment-setup) | None (Local machine) |
+| **Internship Core** | Run recommender logic & constraint unit tests | [Local Unit Tests](#a2-run-software-tests) | None (Local machine) |
+| **Internship Core** | Run offline recommendation quality benchmark (E1 Local) | [Offline Evaluation: E1 Local](#protocol-v5-experiments-internship-focus) | None (Local machine) |
+| **Internship Core** | Analyze image deduplication & functional probes (E5) | [Image Evaluation: E5 Probes](#offline-evaluation-e5-container-image-storage--functional-probes) | Local Docker daemon |
+| **Internship Core** | Inspect standalone recommender via CLI | [CLI Recommender Check](#a1-inspect-the-standalone-recommender) | None (Local machine) |
+| **Internship Core** | Deploy JupyterHub with P1 or P2 Local | [Interactive Demo (B0, P1, P2 Local)](#path-b-interactive-jupyterhub-demo-internship-core) | Local disposable cluster |
+| *Thesis Preview* | Evaluate LLM extractor mode (E1 LLM) | [E1 with LLM Extractor](#e1-llm-mode-thesis-preview) | OpenAI / Gemini API key |
+| *Thesis Preview* | Natural language robustness analysis (E2) | [Robustness Analysis: E2](#e2-natural-language-robustness-analysis) | None (Local machine) |
+| *Thesis Preview* | Human usability evaluation (E3) | [Human Usability: E3](#e3-human-usability-study-thesis-preview) | Human participants |
+| *Thesis Preview* | Live cluster resource envelope & efficiency (E4) | [Cluster Scheduling: E4](#e4-live-cluster-resource-scheduling-thesis-preview) | Disposable Kubernetes cluster |
+| *Thesis Preview* | Storage-preserving notebook reprovisioning | [Notebook Reprovisioning](#path-b3-storage-preserving-notebook-re-provisioning-thesis-preview) | Disposable demo cluster |
+| *Thesis Preview* | Continuous dynamic CPU/RAM sizing | [Dynamic Resource Sizing](#path-b4-policy-bounded-dynamic-resource-sizing-thesis-preview) | Disposable demo cluster |
 
-See the [artifact index](ARTIFACT_MANIFEST.md) for detailed contracts.
+---
 
 ## 1. Prerequisites & Local Environment Setup
 
-### Local Tools Required:
-
-* Python 3.11+
-* Git and Bash
+### Local Tools Required (Internship Core):
+* **Python 3.11+**
+* **Git** and **Bash**
 * `pip` and Python `venv` support
+* Local **Docker daemon** (required for container image inspections in E5)
 
-### Optional Tools for the Interactive Demo:
+### Optional Tools for Cluster Demos (Internship Core & Thesis Preview):
+* `kubectl` and **Helm 3**
+* A disposable local Kubernetes cluster (OrbStack, Docker Desktop, Minikube, or k3d)
 
-* `kubectl` and Helm 3
-* A disposable local Kubernetes cluster (Minikube, Docker Desktop, k3d, kind, or OrbStack)
-
-### Clone & Install Dependencies:
+### Clone & Install:
 
 ```bash
 git clone https://github.com/mthang1201/intent-spawner.git
 cd intent-spawner
 
-# Create virtual environment and install dependencies
+# Create virtual environment and install all dependencies
 bash scripts/setup.sh
 ```
 
-## Protocol-v5 experiments
+---
 
-Each experiment lives under `evaluation_v5/` and writes a plain run manifest
-under `results_v5/protocol-v5.0.0/` when it runs.
+## 2. Core Offline Evaluation & Unit Tests (Internship Core)
 
-### Run Unified Experiment Runner (Interactive or Direct)
+The core internship verification is entirely executable offline without external cloud API dependencies or expensive cluster configurations.
 
-The recommended entry point to run or reproduce experiments E1–E5 is:
+### Protocol-v5 Experiments: Internship Focus
+
+The primary empirical evaluations for the internship are **E1 (Recommendation Quality)** and **E5 (Image Storage & Functional Probes)**:
+
+#### E1 Local Mode: Offline Recommendation Quality Benchmark
+Runs the deterministic local regex extractor against the hybrid retrieval pipeline (P2 Local) and compares it against the rule-based baseline (P1):
 
 ```bash
-# Interactive menu (E1–E5, local/LLM selection, reporting, research claims):
+# Direct make target (zero API cost, sub-second execution):
+make eval-offline-local
+```
+Results are saved to `results_v5/protocol-v5.0.0/E1/run-e1-local/`.
+
+#### Offline Evaluation: E5 Container Image Storage & Functional Probes
+Evaluates container layer deduplication across the allowlisted catalog and verifies that recommended images satisfy workload software constraints:
+
+```bash
+# 1. Analyze container layer sharing and catalog disk footprint:
+.venv/bin/python -m evaluation_v5.image_storage \
+  --experiment storage \
+  --mode docker \
+  --stage development
+
+# 2. Run functional container probes against E1 local recommendations:
+.venv/bin/python -m evaluation_v5.image_storage \
+  --experiment functional \
+  --recommendation-run results_v5/protocol-v5.0.0/E1/run-e1-local \
+  --mode docker \
+  --pull-policy missing
+```
+
+#### Run Unified Experiment Runner
+To interactively explore experiments:
+
+```bash
 make experiments
-# or: python scripts/run_experiments.py
-
-# Direct offline evaluations (E1):
-make eval-offline-local   # Local regex mode (zero API cost, ~1ms)
-make eval-offline-llm     # LLM semantic extractor mode
-
-# Robustness analysis (E2):
-make eval-robustness
-
-# Cross-experiment claim adjudication & synthesis:
-make research-analysis
+# or directly: python scripts/run_experiments.py
 ```
 
-Run the core software test suite for recommender logic:
-
-```bash
-make test
-```
-
-See [**Protocol-v5 Experiment Guide**](PROTOCOL_V5_EXPERIMENT_GUIDE.md) for the complete runbook.
-
-Run an individual experiment module directly, for example:
-
-```bash
-.venv/bin/python -m evaluation_v5.offline.runner --help
-.venv/bin/python -m evaluation_v5.resource --help
-.venv/bin/python -m evaluation_v5.image_storage --help
-```
-
-Development-split runs need no external inputs. Confirmatory runs need an
-external, isolation-verified dataset (see `evaluation_v5/isolation.py` and
-`--dataset`/`PROTOCOL_V5_CONFIRMATORY_DATASET`) — this check exists to prevent
-train/confirmatory-split data leakage, not to gate approval.
-
-E3 (user study) needs real participants and E4/E5 cluster runs need a
-disposable Kubernetes cluster; see the module-specific `--help` output for
-each experiment's exact requirements.
+---
 
 ## Path A: Local Synthetic Benchmark & Unit Tests
 
 ### A1. Inspect the Standalone Recommender
 
-Test intent and code-context parsing directly from the command line:
+Test structured intent parsing, BM25 + dense retrieval, and hard constraint checking directly from the CLI:
 
 ```bash
 .venv/bin/python -m recommender.recommender \
@@ -106,130 +111,122 @@ Test intent and code-context parsing directly from the command line:
 
 ### A2. Run Software Tests
 
-Run the full Python test suite, including P1, P2, and evaluation harness checks:
+Run the core unit test suite verifying the P2 backend, hybrid retrieval, single-input workflow, and constraint evaluator:
+
+```bash
+make test
+```
+
+To run the complete pytest suite including evaluation harness tests:
 
 ```bash
 .venv/bin/python -m pytest
 ```
 
-For the focused Protocol-v5 evaluation-harness tests, use `make v5-test`. The
-broader `bash scripts/check.sh` runs tests, synthetic smoke checks, evidence
-validators, and optional Helm/Kubernetes checks; Helm may fetch charts and
-Kubernetes client checks may need API access.
-
-### A3. Run Local Matrix Benchmark Dry-Run
-
-```bash
-.venv/bin/python -m experiments.runner \
-  --full-matrix \
-  --repeats 5 \
-  --seed 20260719 \
-  --dry-run \
-  --environment-id local-dry-run
-```
-
 ---
 
-## Path B: Interactive JupyterHub Demo
+## Path B: Interactive JupyterHub Demo (Internship Core)
 
-> **Safety Notice:** Run only on a disposable local Kubernetes cluster. The scripts create and mutate resources inside namespace `z2jh-context-demo`.
+> **Safety Notice:** Run only on a disposable local Kubernetes cluster (e.g. OrbStack, Minikube). The scripts create and mutate resources inside the namespace `z2jh-context-demo`.
 
-### B1. Install Baseline (Static Hardware Profiles)
+### B1. Install Baseline (Static Hardware Profiles - B0)
+
+Demonstrates the default unguided JupyterHub user experience:
 
 ```bash
-# Check cluster context
+# 1. Verify cluster connection
 kubectl config current-context
 
-# Install static baseline
+# 2. Install baseline JupyterHub
 bash scripts/install-baseline.sh
 
-# Start port forwarding (in a separate terminal)
+# 3. Forward port to localhost (run in separate terminal)
 bash scripts/port-forward.sh
 ```
-Open `http://127.0.0.1:8000` and log in with any credentials. Notice the baseline asks you to choose raw hardware (Small, Medium, Large) without guidance.
+Open `http://127.0.0.1:8000` and log in with any dummy username. Notice that users must manually guess hardware profiles (Small, Medium, Large) without guidance.
 
-### B2. Install the Context-Aware Form with P1 or P2
+### B2. Install the Context-Aware Spawner (P1 or P2 Local)
 
-The default installer selects the P1 rule-based backend:
+Deploy the heuristic recommender (P1):
 
 ```bash
 bash scripts/install-proposed.sh
 ```
 
-To select the main proposed P2 backend explicitly:
+Or deploy the **Core Proposed Method (P2 Local)** featuring local regex intent extraction and hybrid retrieval:
 
 ```bash
 BACKEND_VALUES=helm/recommender-p2-values.yaml bash scripts/install-proposed.sh
 ```
 
-The installer packages the runtime, verifies configuration, and applies its
-rollout checksum. See [Helm backend deployment](HELM_BACKEND_DEPLOYMENT.md).
-
-Open `http://127.0.0.1:8000`. You will see the new **Workload Intent Form**:
-1. Describe your workload in natural language (e.g., `I will train a scikit-learn model on a 1.5GB CSV dataset`).
-2. Click **Preview recommendation**: Inspect the returned profile, image, explanation, and any fallback/manual-selection notice for the selected backend.
-3. (Optional) Open **Manual Override** if you wish to choose an explicit profile or image from the administrator-allowlisted options.
-4. Click **Confirm recommendation**: KubeSpawner applies the configuration and creates the user pod.
+Open `http://127.0.0.1:8000`:
+1. **Workload Intent Form**: Enter a workload description (e.g., `Train a PyTorch vision model with CUDA GPU acceleration`).
+2. **Preview recommendation**: Inspect the retrieved profile, allowlisted container image, generated justification, and constraint checks.
+3. **Manual Override (Optional)**: Adjust or select an alternative profile/image from the administrator catalog if desired.
+4. **Confirm recommendation**: KubeSpawner spawns the configured user pod.
 
 ---
 
-## Path B3: Storage-Preserving Notebook Re-Provisioning
+## Extended / Thesis Roadmap Features (Preview)
 
-Test changing workloads on an already-running notebook session:
+The following capabilities represent extended research and evaluation tracks designed for the subsequent Graduation Thesis.
 
-1. Inside your running JupyterLab terminal, save a persistent file:
+### E1 LLM Mode (Thesis Preview)
+Evaluates P2 using external large language models (OpenAI or Gemini) for semantic intent extraction:
+
+```bash
+make eval-offline-llm
+```
+
+### E2: Natural Language Robustness Analysis
+Measures recommender resilience against adversarial perturbations, typos, and phrasing variations:
+
+```bash
+make eval-robustness
+```
+
+### E3: Human Usability Study (Thesis Preview)
+Measures user completion time, cognitive friction, and System Usability Scale (SUS) scores comparing B0 against P2:
+
+```bash
+# Automated smoke verification of study protocol:
+make v5-user-study-smoke
+```
+
+### E4: Live Cluster Resource Scheduling (Thesis Preview)
+Measures actual multi-pod Kubernetes resource envelopes, scheduling latencies, and allocation efficiency under 20 synthetic workload families:
+
+```bash
+# Dry-run resource envelope simulation:
+make v5-resource-dry-run
+```
+
+### Path B3: Storage-Preserving Notebook Re-Provisioning (Thesis Preview)
+
+Allows users to reconfigure resource profiles on a running session without losing PVC data:
+
+1. Create a marker file in your running notebook terminal:
    ```bash
    printf 'persistent marker\n' > /home/jovyan/reprovision-marker.txt
    ```
-2. In your browser, navigate to: `http://127.0.0.1:8000/hub/reprovision`
-3. Enter your new workload (e.g., deep learning with PyTorch).
-4. Click **Preview replacement**: Notice the comparison between current and proposed profiles and the red restart warning.
-5. Check the acknowledgement checkbox and click **Stop old pod and create replacement**.
-6. Observe in your terminal:
-   ```bash
-   kubectl get pods,pvc -n z2jh-context-demo -w
-   ```
-   The old pod terminates, a new pod with the new profile/image is created, and `/home/jovyan/reprovision-marker.txt` is retained on the PVC.
+2. Navigate to: `http://127.0.0.1:8000/hub/reprovision`
+3. Enter new workload requirements, preview changes, and confirm replacement.
+4. Verify that the new pod mounts the existing PVC and retains `/home/jovyan/reprovision-marker.txt`.
 
----
+### Path B4: Policy-Bounded Dynamic Resource Sizing (Thesis Preview)
 
-## Path B4: Policy-Bounded Dynamic Resource Sizing
-
-To enable fine-grained continuous CPU/RAM sizing instead of fixed profile tiers:
+Enables fine-grained, continuous CPU/RAM rightsizing instead of static profile tiers:
 
 ```bash
-bash scripts/install-dynamic.sh
+BACKEND_VALUES=helm/recommender-p2-values.yaml bash scripts/install-dynamic.sh
 ```
-This activates [`helm/dynamic-values.yaml`](../helm/dynamic-values.yaml) and applies administrator min/max/step, GPU allowlist, and static per-spawn cap checks. It does not query live quota headroom; Kubernetes admission remains authoritative.
-
----
-
-## Path D: Historical Protocol-v4 Reproduction
-
-Protocol-v4 is historical/formative evidence. Validate its portable core and
-reproduce its headline analysis without private services:
-
-```bash
-.venv/bin/python scripts/validate-portable-evidence.py
-```
-
-To validate the frozen bilingual benchmark and preview its original matrices:
-
-```bash
-.venv/bin/python -m evaluation_v4.run_recommenders --dry-run
-.venv/bin/python -m evaluation_v4.plan_system --dry-run
-```
-
-These commands run the recommendation and system planners with `--dry-run`; they
-collect no new model responses or cluster measurements.
-
-The authoritative observed matrices are already complete. Do not overwrite or present a new dry run as those results.
-
-Live external or Stage C reproduction requires an explicit operator decision, frozen configuration, credentials, and a disposable cluster; never point a new run at an authoritative result directory.
 
 ---
 
 ## Cleanup
 
-Follow the [cleanup runbook](CLEANUP.md) for the exact demo namespace and local
-artifact lifecycle. Namespace deletion can delete notebook PVC data.
+Follow the [cleanup runbook](CLEANUP.md) to safely delete demo namespaces and local artifacts:
+
+```bash
+bash scripts/cleanup.sh
+```
