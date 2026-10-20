@@ -44,16 +44,16 @@
 \begin{document}
 \studentname{Bui Minh Thang}
 \title{Design and Evaluation of a Context-Aware Resource Profile Selection Extension for JupyterHub on Kubernetes}
-\documenttype{Graduation Thesis}
+\documenttype{Graduation Internship}
 \major{Computer Networks and Data Communications}
 \year{2026}
 \supervisor{Dr. Hoang Xuan Tung}
 \makecovers
 \addcontentsline{toc}{chapter}{Abstract}
 \begin{preamble}{Abstract}
-JupyterHub provides a flexible platform for interactive computing, but selecting an appropriate computational environment remains a manual configuration task. Users are typically required to understand available resource profiles, software environments, and notebook images before starting a session. As the number and diversity of available environments increase, manual selection can introduce unnecessary configuration effort and may result in unsuitable resource or software choices. This thesis investigates the use of workload intent and context to assist users in selecting an appropriate JupyterHub environment while preserving administrator-defined resource and deployment policies.
+JupyterHub provides a flexible platform for interactive computing, but selecting an appropriate computational environment remains a manual configuration task. Users are typically required to understand available resource profiles, software environments, and notebook images before starting a session. As the number and diversity of available environments increase, manual selection can introduce unnecessary configuration effort and may result in unsuitable resource or software choices. This internship project investigates the use of workload intent and context to assist users in selecting an appropriate JupyterHub environment while preserving administrator-defined resource and deployment policies.
 
-The problem addressed in this thesis is the selection of a suitable resource profile and notebook environment from a bounded, administrator-managed catalog based on a user's natural-language workload description. The objective is not to allow an automated model to generate arbitrary Kubernetes configurations, but to determine whether natural-language intent can be transformed into a structured representation, used to retrieve relevant approved environments, and subsequently filtered and ranked according to explicit technical constraints. A further objective is to establish a system architecture in which recommendation remains explainable, policy-bounded, reproducible, and subject to user confirmation before deployment.
+The problem addressed in this internship report is the selection of a suitable resource profile and notebook environment from a bounded, administrator-managed catalog based on a user's natural-language workload description. The objective is not to allow an automated model to generate arbitrary Kubernetes configurations, but to determine whether natural-language intent can be transformed into a structured representation, used to retrieve relevant approved environments, and subsequently filtered and ranked according to explicit technical constraints. A further objective is to establish a system architecture in which recommendation remains explainable, policy-bounded, reproducible, and subject to user confirmation before deployment.
 
 The proposed approach, implemented as Intent-Spawner, combines structured intent extraction, hybrid information retrieval, deterministic constraint evaluation, and trusted catalog resolution. A user's workload description is converted into a schema-validated structured intent containing task characteristics, software requirements, resource constraints, and preferences. Candidate environments are then retrieved using two complementary retrieval channels: BM25-based sparse retrieval for exact technical terminology and dense semantic retrieval for semantically related workload descriptions. Their ranked results are combined using Reciprocal Rank Fusion (RRF). Retrieved candidates are subsequently evaluated against hard constraints, including GPU availability, minimum CPU and memory requirements, dataset size, and forbidden features. Candidates that violate hard constraints are excluded before deterministic preference ranking is applied.
 
@@ -67,14 +67,14 @@ These results indicate that intent-aware environment selection can be integrated
 \end{preamble}
 \addcontentsline{toc}{chapter}{Authorship}
 \begin{preamble}{Authorship}
-I hereby declare that the work contained in this thesis is of my own and has not been previously submitted for a degree or diploma at this or any other higher education institution. To the best of my knowledge and belief, the thesis contains no materials previously published or written by another person except where due reference or acknowledgement is made.\par\vspace{1cm}
+I hereby declare that the work contained in this report is of my own and has not been previously submitted for a degree or diploma at this or any other higher education institution. To the best of my knowledge and belief, the report contains no materials previously published or written by another person except where due reference or acknowledgement is made.\par\vspace{1cm}
 Signature: \rule{6cm}{0.4pt}
 \end{preamble}
 \addcontentsline{toc}{chapter}{Acknowledgements}
 \begin{preamble}{Acknowledgements}
-I would like to express my sincere gratitude to my thesis supervisor, Dr. Hoang Xuan Tung, for guidance, critical feedback, and encouragement throughout the development and evaluation of this work. I am also grateful to the lecturers and staff of the Faculty of Information Technology, for the technical and academic foundation that made this project possible.
+I would like to express my sincere gratitude to my internship supervisor, Dr. Hoang Xuan Tung, for guidance, critical feedback, and encouragement throughout the development and evaluation of this work. I am also grateful to the lecturers and staff of the Faculty of Information Technology, for the technical and academic foundation that made this project possible.
 
-I would also like to thank my friends, and family for their valuable discussions, encouragement, and practical support throughout this iterative process. I take full responsibility for any remaining errors, limitations, or interpretation choices in this thesis.
+I would also like to thank my friends, and family for their valuable discussions, encouragement, and practical support throughout this iterative process. I take full responsibility for any remaining errors, limitations, or interpretation choices in this report.
 \end{preamble}
 \begin{contentlisting}
 \tableofcontents
