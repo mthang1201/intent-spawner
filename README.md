@@ -27,6 +27,33 @@ The prototype establishes a progression of recommendation mechanisms, categorizi
 | **Dynamic Sizing** | Continuous policy-bounded CPU/RAM rightsizing (`helm/dynamic-values.yaml`). | Fine-grained resource envelope generation previewing future scheduler-level rightsizing. |
 | **Reprovisioning** | Storage-preserving notebook reprovisioning with PVC retention (`/hub/reprovision`). | Dynamic workload switching without data loss across notebook lifecycles. |
 
+## Internship Prototype Verification
+
+Dành cho giảng viên và người chấm thẩm định nhanh sản phẩm Thực tập tốt nghiệp (nhánh `adapt_thesis_to_internship`):
+
+```bash
+# 1. Chạy unit test cốt lõi của P2 (Backend integration, Structured intent, Constraint evaluator, Hybrid retrieval)
+make internship-test
+# hoặc: bash scripts/test-internship.sh
+
+# 2. Chạy nhanh đánh giá offline Stream E1 (P1 Heuristic vs. P2 Local) và kiểm tra schema kết quả
+make internship-eval
+# hoặc: bash scripts/eval-internship.sh
+
+# 3. Tự động biên dịch tài liệu báo cáo ra file docs/latex/main.pdf bằng lualatex và bibtex
+make internship-build-doc
+# hoặc: bash scripts/build-internship-doc.sh
+
+# 4. (Tùy chọn) Chạy trọn gói cả test và eval trong 1 câu lệnh duy nhất:
+make internship-verify
+# hoặc: bash scripts/verify-internship.sh
+```
+
+### Chi tiết các Make Targets kiểm thử:
+- **`make internship-test`**: Thực thi 96 unit test cốt lõi bao phủ trọn vẹn thành phần đề xuất P2: tích hợp backend P2, trích xuất intent có cấu trúc (`StructuredIntentExtractor`), bộ đánh giá ràng buộc cứng/mềm (`ConstraintEvaluator`), và bộ máy truy hồi kết hợp BM25 + Dense semantic vector retrieval (`HybridRetriever`).
+- **`make internship-eval`**: Chạy đánh giá offline E1 trên tập development split (83 test cases tiếng Anh & tiếng Việt, 166 lượt chạy), so sánh độ chính xác giữa P1 Heuristic và P2 Local, sau đó tự động xác thực fail-closed schema và tính toàn vẹn của artifacts tại `results_v5/protocol-v5.0.0/E1/run-e1-local`. Target này không chạy các benchmark nặng 800 trials của E4 nên hoàn tất chỉ trong ~10 giây.
+- **`make internship-build-doc`**: Tự động thực thi pipeline biên dịch tài liệu LaTeX (`lualatex` $\rightarrow$ `bibtex` $\rightarrow$ `lualatex` $\times 2$), dọn dẹp các tệp phụ trợ tạm thời để tránh xung đột counter, và xuất ra file báo cáo chính thức `docs/latex/main.pdf` hoàn chỉnh mục lục, danh mục bảng biểu và tài liệu tham khảo.
+
 ## Quickstart
 
 ### 1. Local Environment Setup & Software Tests

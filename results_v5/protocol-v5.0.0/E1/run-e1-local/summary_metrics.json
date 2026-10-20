@@ -21,6 +21,6 @@
     "joint_accuracy_pct": 40.96,
     "fallback_count": 14,
     "fallback_rate_pct": 16.87,
-    "median_latency_ms": 2.23
+    "median_latency_ms": 2.3
   }
 }

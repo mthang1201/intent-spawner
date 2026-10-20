@@ -3,7 +3,7 @@
 | Hệ Thống (System) | Tổng số mẫu | Profile Match (Top-1) | Image Match | Khớp Đồng Thời (Joint) | Tỉ lệ Fallback | Thời gian xử lý (Median) |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: |
 | **P1 (Rule-based Baseline)** | 83 | 53.0% (44/83) | 41.0% (34/83) | **38.6%** (32/83) | 0.0% | 0.06 ms |
-| **P2 (Intent + Hybrid Retrieval)** | 83 | 47.0% (39/83) | 55.4% (46/83) | **41.0%** (34/83) | 16.9% | 2.23 ms |
+| **P2 (Intent + Hybrid Retrieval)** | 83 | 47.0% (39/83) | 55.4% (46/83) | **41.0%** (34/83) | 16.9% | 2.30 ms |
 
 ### 🌐 Phân Tích Độ Bền Ngôn Ngữ (Language Robustness: English vs Vietnamese)
 

@@ -95,7 +95,7 @@
     "corpus_sha256": "987d78fb0a0ad9d692ee9cfb3561988b1b537595670407d944abc74dc4437444",
     "corpus_version": "environment-candidate-corpus-v1"
   },
-  "created_utc": "2026-10-13T01:19:38.679566Z",
+  "created_utc": "2026-10-20T07:26:16.666295Z",
   "effective_repeats": {
     "P1": 1,
     "P2": 1
@@ -117,12 +117,12 @@
     "description": "Streamlined evaluation configuration",
     "schema_version": "protocol-v5-evaluation-configuration-v1.0.0"
   },
-  "git_revision": "9f513666ea51d3bd9113be33d9d7707dd5fe6636",
-  "git_worktree_dirty": false,
+  "git_revision": "8367b27767710df23fc628b95b2da64227727c88",
+  "git_worktree_dirty": true,
   "p3_explicitly_enabled": false,
   "planned_record_count": 166,
   "protocol_version": "5.0.0",
-  "provenance_fingerprint": "5fa81eced88e4c7badc8d0865cd9fddd7a5514e616e9a5e1652b86b864887d80",
+  "provenance_fingerprint": "1005746144254acd71654daaab3f08fe214ae5a9cd8479b5cfa9024b55f14685",
   "repeat_policy": {
     "deterministic_effective_repeats": 1,
     "deterministic_systems": [
