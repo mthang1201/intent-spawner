@@ -1,0 +1,73 @@
+{
+  "schema_version": "protocol-v5-benchmark-v1.0.0",
+  "dataset_name": "Protocol-v5 Ground-Truth Benchmark",
+  "gold_families_source": "benchmarks_v5/gold_families_unified_v5.yaml",
+  "total_families": 1051,
+  "total_cases": 3153,
+  "seed": 42,
+  "splits": {
+    "train": {
+      "file": "train.jsonl",
+      "sha256": "38a5cbbd8b4b95a2013ad62a82f307469549d80b3b5b4a4378321a542545c59e",
+      "case_count": 2217,
+      "family_count": 739,
+      "profile_distribution": {
+        "large": 30,
+        "medium": 354,
+        "small": 1833
+      },
+      "library_distribution": {
+        "arcade": 219,
+        "matplotlib": 324,
+        "numpy": 456,
+        "pandas": 549,
+        "pytorch": 138,
+        "scikit-learn": 225,
+        "scipy": 213,
+        "tensorflow": 93
+      }
+    },
+    "dev": {
+      "file": "dev.jsonl",
+      "sha256": "97059b12e47c4f9d19633cf1cc0331e174c01d71cd2a3d2144b6eb165c031876",
+      "case_count": 465,
+      "family_count": 155,
+      "profile_distribution": {
+        "large": 3,
+        "medium": 75,
+        "small": 387
+      },
+      "library_distribution": {
+        "arcade": 39,
+        "matplotlib": 69,
+        "numpy": 99,
+        "pandas": 114,
+        "pytorch": 30,
+        "scikit-learn": 48,
+        "scipy": 45,
+        "tensorflow": 21
+      }
+    },
+    "test": {
+      "file": "test.jsonl",
+      "sha256": "28ed3166d32d81a0f0e7e065817d1cc33bddcf9c216a6a2ffa38009767ffadb6",
+      "case_count": 471,
+      "family_count": 157,
+      "profile_distribution": {
+        "large": 3,
+        "medium": 78,
+        "small": 390
+      },
+      "library_distribution": {
+        "arcade": 42,
+        "matplotlib": 72,
+        "numpy": 99,
+        "pandas": 114,
+        "pytorch": 30,
+        "scikit-learn": 48,
+        "scipy": 45,
+        "tensorflow": 21
+      }
+    }
+  }
+}
