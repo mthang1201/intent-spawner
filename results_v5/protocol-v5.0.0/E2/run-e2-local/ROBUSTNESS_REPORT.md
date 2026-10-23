@@ -1,8 +1,9 @@
-### 🌐 Phân Tích Độ Bền Ngôn Ngữ (Language Robustness: English vs Vietnamese)
+# E2 Natural Language Robustness Report
 
-| Hệ Thống | Ngôn Ngữ | Số mẫu | Top-1 Profile | Image Match | Khớp Đồng Thời |
-| :--- | :---: | :---: | :---: | :---: | :---: |
-| **P1** | EN | 27 | 63.0% (17/27) | 55.6% (15/27) | **51.9%** (14/27) |
-| **P1** | VI | 56 | 48.2% (27/56) | 33.9% (19/56) | **32.1%** (18/56) |
-| **P2** | EN | 27 | 63.0% (17/27) | 66.7% (18/27) | **55.6%** (15/27) |
-| **P2** | VI | 56 | 50.0% (28/56) | 48.2% (27/56) | **42.9%** (24/56) |
+## 4. Linguistic Variant Breakdown (Robustness)
+
+| Variant Class | Count | P1 Cand Acc@1 | P2 Cand Acc@1 | P1 Joint Accept | P2 Joint Accept |
+|---|---|---|---|---|---|
+| `canonical_en` | 157 | 25.5% | 22.3% | 84.1% | 66.9% |
+| `informal_or_noisy` | 157 | 26.1% | 24.8% | 84.1% | 65.0% |
+| `vietnamese` | 157 | 27.4% | 23.6% | 84.7% | 66.2% |

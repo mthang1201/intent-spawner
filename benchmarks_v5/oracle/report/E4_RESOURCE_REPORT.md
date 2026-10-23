@@ -1,30 +1,30 @@
-# Báo Cáo Thực Nghiệm E4: Đánh Giá Tài Nguyên Thực Tế Trên Kubernetes
+# E4 Experiment Report: Empirical Kubernetes Resource Evaluation
 
-* **Môi trường thực thi:** Kubernetes OrbStack (`orbstack:z2jh-context-demo`)
-* **Tổng số Pod đã chạy thực tế:** 421 Pods
-* **Pod hoàn thành thành công:** 413 (98.1%)
-* **Pod bị OOM-Killed (Out Of Memory):** 8 (1.9%)
-* **Workload families khảo sát:** 20 nhóm tác vụ tính toán
+* **Execution Environment:** Kubernetes OrbStack (`orbstack:z2jh-context-demo`)
+* **Total Pods Executed:** 421 Pods
+* **Pods Completed Successfully:** 413 (98.1%)
+* **Pods OOM-Killed (Out Of Memory):** 8 (1.9%)
+* **Workload Families Evaluated:** 20 computational task groups
 
 ---
 
-## 1. Biểu Đồ Trực Quan Hóa
+## 1. Visualizations
 
-### Hình A: Phân Bổ Bộ Nhớ Tối Ưu (Safe Envelope) vs Static Profiles
+### Figure A: Optimal Memory Allocation (Safe Envelope) vs Static Profiles
 ![Memory Envelopes](../figures/figure_e4_a_memory_envelopes.png)
 
-* **Baseline Small (256 MiB):** Bị OOM-Killed lập tức khi gặp các workload tính toán bộ nhớ lớn (như `large_hash_map_allocation`, `categorical_encoding`).
-* **Baseline Large (2048 MiB):** Hoạt động được nhưng gây lãng phí tới **96.9% dung lượng RAM** trên các workload nhẹ (như `streaming_statistics`, `sparse_graph_traversal` chỉ cần 64 MiB).
-* **Intent-Spawner (P2):** Tự động nhận diện ý định và cấp phát mức bộ nhớ tối ưu, đảm bảo **100% không bị OOM** và tiết kiệm trung bình hàng trăm megabyte trên mỗi Pod.
+* **Baseline Small (256 MiB):** OOM-Killed immediately on memory-heavy workloads (such as `large_hash_map_allocation`, `categorical_encoding`).
+* **Baseline Large (2048 MiB):** Succeeds but wastes up to **96.9% of RAM capacity** on lightweight workloads (such as `streaming_statistics`, `sparse_graph_traversal` requiring only 64 MiB).
+* **Intent-Spawner (P2):** Automatically identifies intent and provisions the optimal memory level, ensuring **100% OOM-free execution** and saving hundreds of megabytes on average per Pod.
 
-### Hình B: Độ Tin Cậy Và Đánh Đổi Tài Nguyên (421 Pod Trials)
+### Figure B: Reliability and Resource Trade-off (421 Pod Trials)
 ![Trial Reliability](../figures/figure_e4_b_trial_reliability.png)
 
 ---
 
-## 2. Bảng Tổng Hợp Ngưỡng Tài Nguyên An Toàn (Safe Envelopes)
+## 2. Safe Resource Envelopes Summary Table
 
-| Workload Family | Safe CPU (m) | Safe RAM (MiB) | Ngưỡng RAM bị OOM | Trạng thái với Small Profile |
+| Workload Family | Safe CPU (m) | Safe RAM (MiB) | OOM RAM Thresholds | Small Profile Status |
 | :--- | :--- | :--- | :--- | :--- |
 | `streaming_statistics` | 1000 | 64 | None | **OK** |
 | `relational_transform` | N/A | N/A | None | **OK** |
@@ -47,4 +47,4 @@
 | `large_hash_map_allocation` | 1000 | 2048 | 384,1024,1536,1792 | **OOM / INSUFFICIENT** |
 | `bitmix_saturation_sweep` | 1000 | 64 | None | **OK** |
 
-*Bảng đầy đủ đã được xuất ra file CSV tại:* `tables/e4_workload_envelopes.csv`
+*Full table exported to CSV at:* `tables/e4_workload_envelopes.csv`

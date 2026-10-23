@@ -1,0 +1,240 @@
+{
+  "benchmark_source": "data/benchmark/v1/test.jsonl",
+  "evaluation_timestamp_utc": "2026-10-23T07:12:50.242175+00:00",
+  "git_commit": "ec96ea3c58387d205f47087bfd97b50e23d65c49",
+  "sample_count": 471,
+  "p1_rule_based": {
+    "system_id": "P1",
+    "sample_count": 471,
+    "accuracy_at_1": {
+      "profile": 33.97,
+      "image": 91.72,
+      "candidate": 26.327
+    },
+    "accuracy_at_3": {
+      "profile": 33.97,
+      "image": 91.72,
+      "candidate": 26.327
+    },
+    "acceptability_at_1": {
+      "profile_acceptable": 91.932,
+      "image_acceptable": 91.72,
+      "joint_acceptable": 84.289
+    },
+    "safety_risk": {
+      "under_provision_rate_pct": 3.185,
+      "under_provision_count": 15,
+      "over_provision_rate_pct": 62.845,
+      "over_provision_count": 296
+    },
+    "confusion_matrix": {
+      "small": {
+        "small": 151,
+        "medium": 216,
+        "large": 23
+      },
+      "medium": {
+        "small": 12,
+        "medium": 9,
+        "large": 57
+      },
+      "large": {
+        "small": 1,
+        "medium": 2,
+        "large": 0
+      }
+    },
+    "by_library": {
+      "arcade": {
+        "count": 42,
+        "candidate_acc_at_1": 21.43,
+        "joint_accept_at_1": 52.38,
+        "under_prov_rate": 28.57,
+        "over_prov_rate": 35.71
+      },
+      "matplotlib": {
+        "count": 72,
+        "candidate_acc_at_1": 16.67,
+        "joint_accept_at_1": 100.0,
+        "under_prov_rate": 0.0,
+        "over_prov_rate": 83.33
+      },
+      "numpy": {
+        "count": 99,
+        "candidate_acc_at_1": 75.76,
+        "joint_accept_at_1": 78.79,
+        "under_prov_rate": 0.0,
+        "over_prov_rate": 3.03
+      },
+      "pandas": {
+        "count": 114,
+        "candidate_acc_at_1": 0.88,
+        "joint_accept_at_1": 92.11,
+        "under_prov_rate": 0.0,
+        "over_prov_rate": 93.86
+      },
+      "pytorch": {
+        "count": 30,
+        "candidate_acc_at_1": 0.0,
+        "joint_accept_at_1": 90.0,
+        "under_prov_rate": 10.0,
+        "over_prov_rate": 90.0
+      },
+      "scikit-learn": {
+        "count": 48,
+        "candidate_acc_at_1": 0.0,
+        "joint_accept_at_1": 62.5,
+        "under_prov_rate": 0.0,
+        "over_prov_rate": 100.0
+      },
+      "scipy": {
+        "count": 45,
+        "candidate_acc_at_1": 60.0,
+        "joint_accept_at_1": 93.33,
+        "under_prov_rate": 0.0,
+        "over_prov_rate": 33.33
+      },
+      "tensorflow": {
+        "count": 21,
+        "candidate_acc_at_1": 0.0,
+        "joint_accept_at_1": 100.0,
+        "under_prov_rate": 0.0,
+        "over_prov_rate": 100.0
+      }
+    },
+    "by_variant_class": {
+      "canonical_en": {
+        "count": 157,
+        "candidate_acc_at_1": 25.48,
+        "joint_accept_at_1": 84.08
+      },
+      "informal_or_noisy": {
+        "count": 157,
+        "candidate_acc_at_1": 26.11,
+        "joint_accept_at_1": 84.08
+      },
+      "vietnamese": {
+        "count": 157,
+        "candidate_acc_at_1": 27.39,
+        "joint_accept_at_1": 84.71
+      }
+    }
+  },
+  "p2_intent_spawner": {
+    "system_id": "P2",
+    "sample_count": 471,
+    "accuracy_at_1": {
+      "profile": 26.752,
+      "image": 85.138,
+      "candidate": 23.567
+    },
+    "accuracy_at_3": {
+      "profile": 81.316,
+      "image": 90.234,
+      "candidate": 73.461
+    },
+    "acceptability_at_1": {
+      "profile_acceptable": 74.522,
+      "image_acceptable": 85.138,
+      "joint_acceptable": 66.03
+    },
+    "safety_risk": {
+      "under_provision_rate_pct": 4.671,
+      "under_provision_count": 22,
+      "over_provision_rate_pct": 68.577,
+      "over_provision_count": 323
+    },
+    "confusion_matrix": {
+      "small": {
+        "small": 96,
+        "medium": 196,
+        "large": 98
+      },
+      "medium": {
+        "small": 19,
+        "medium": 30,
+        "large": 29
+      },
+      "large": {
+        "small": 0,
+        "medium": 3,
+        "large": 0
+      }
+    },
+    "by_library": {
+      "arcade": {
+        "count": 42,
+        "candidate_acc_at_1": 28.57,
+        "joint_accept_at_1": 47.62,
+        "under_prov_rate": 9.52,
+        "over_prov_rate": 47.62
+      },
+      "matplotlib": {
+        "count": 72,
+        "candidate_acc_at_1": 8.33,
+        "joint_accept_at_1": 100.0,
+        "under_prov_rate": 0.0,
+        "over_prov_rate": 91.67
+      },
+      "numpy": {
+        "count": 99,
+        "candidate_acc_at_1": 23.23,
+        "joint_accept_at_1": 56.57,
+        "under_prov_rate": 0.0,
+        "over_prov_rate": 70.71
+      },
+      "pandas": {
+        "count": 114,
+        "candidate_acc_at_1": 18.42,
+        "joint_accept_at_1": 56.14,
+        "under_prov_rate": 0.0,
+        "over_prov_rate": 78.95
+      },
+      "pytorch": {
+        "count": 30,
+        "candidate_acc_at_1": 20.0,
+        "joint_accept_at_1": 60.0,
+        "under_prov_rate": 30.0,
+        "over_prov_rate": 50.0
+      },
+      "scikit-learn": {
+        "count": 48,
+        "candidate_acc_at_1": 31.25,
+        "joint_accept_at_1": 62.5,
+        "under_prov_rate": 0.0,
+        "over_prov_rate": 68.75
+      },
+      "scipy": {
+        "count": 45,
+        "candidate_acc_at_1": 55.56,
+        "joint_accept_at_1": 86.67,
+        "under_prov_rate": 0.0,
+        "over_prov_rate": 44.44
+      },
+      "tensorflow": {
+        "count": 21,
+        "candidate_acc_at_1": 14.29,
+        "joint_accept_at_1": 57.14,
+        "under_prov_rate": 42.86,
+        "over_prov_rate": 42.86
+      }
+    },
+    "by_variant_class": {
+      "canonical_en": {
+        "count": 157,
+        "candidate_acc_at_1": 22.29,
+        "joint_accept_at_1": 66.88
+      },
+      "informal_or_noisy": {
+        "count": 157,
+        "candidate_acc_at_1": 24.84,
+        "joint_accept_at_1": 64.97
+      },
+      "vietnamese": {
+        "count": 157,
+        "candidate_acc_at_1": 23.57,
+        "joint_accept_at_1": 66.24
+      }
+    }
+  }
+}
