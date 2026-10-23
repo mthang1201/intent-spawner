@@ -249,7 +249,7 @@ def generate_draft_variant(
         expected_equiv = EquivalenceStatus.CONTROLLED_AMBIGUITY
     elif perturbation_class == PerturbationClass.VIETNAMESE:
         # Template draft in Vietnamese
-        intent = f"[Bản nháp tiếng Việt] {base_text}"
+        intent = f"[Vietnamese draft] {base_text}"
         language = "vi"
         differences = "Vietnamese language translation draft"
     else:

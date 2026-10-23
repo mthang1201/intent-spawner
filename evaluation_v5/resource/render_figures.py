@@ -169,40 +169,40 @@ def render_e4_reports_and_figures(
 
     # 5. Write Markdown summary report
     report_md = report_dir / "E4_RESOURCE_REPORT.md"
-    md_content = f"""# Báo Cáo Thực Nghiệm E4: Đánh Giá Tài Nguyên Thực Tế Trên Kubernetes
+    md_content = f"""# E4 Experiment Report: Empirical Kubernetes Resource Evaluation
 
-* **Môi trường thực thi:** Kubernetes OrbStack (`orbstack:z2jh-context-demo`)
-* **Tổng số Pod đã chạy thực tế:** {total_trials} Pods
-* **Pod hoàn thành thành công:** {success_trials} ({success_trials/total_trials*100:.1f}%)
-* **Pod bị OOM-Killed (Out Of Memory):** {oom_trials} ({oom_trials/total_trials*100:.1f}%)
-* **Workload families khảo sát:** {len(envelopes)} nhóm tác vụ tính toán
+* **Execution Environment:** Kubernetes OrbStack (`orbstack:z2jh-context-demo`)
+* **Total Pods Executed:** {total_trials} Pods
+* **Pods Completed Successfully:** {success_trials} ({success_trials/total_trials*100:.1f}%)
+* **Pods OOM-Killed (Out Of Memory):** {oom_trials} ({oom_trials/total_trials*100:.1f}%)
+* **Workload Families Evaluated:** {len(envelopes)} computational task groups
 
 ---
 
-## 1. Biểu Đồ Trực Quan Hóa
+## 1. Visualizations
 
-### Hình A: Phân Bổ Bộ Nhớ Tối Ưu (Safe Envelope) vs Static Profiles
+### Figure A: Optimal Memory Allocation (Safe Envelope) vs Static Profiles
 ![Memory Envelopes](../figures/figure_e4_a_memory_envelopes.png)
 
-* **Baseline Small (256 MiB):** Bị OOM-Killed lập tức khi gặp các workload tính toán bộ nhớ lớn (như `large_hash_map_allocation`, `categorical_encoding`).
-* **Baseline Large (2048 MiB):** Hoạt động được nhưng gây lãng phí tới **96.9% dung lượng RAM** trên các workload nhẹ (như `streaming_statistics`, `sparse_graph_traversal` chỉ cần 64 MiB).
-* **Intent-Spawner (P2):** Tự động nhận diện ý định và cấp phát mức bộ nhớ tối ưu, đảm bảo **100% không bị OOM** và tiết kiệm trung bình hàng trăm megabyte trên mỗi Pod.
+* **Baseline Small (256 MiB):** OOM-Killed immediately on memory-heavy workloads (such as `large_hash_map_allocation`, `categorical_encoding`).
+* **Baseline Large (2048 MiB):** Succeeds but wastes up to **96.9% of RAM capacity** on lightweight workloads (such as `streaming_statistics`, `sparse_graph_traversal` requiring only 64 MiB).
+* **Intent-Spawner (P2):** Automatically identifies intent and provisions the optimal memory level, ensuring **100% OOM-free execution** and saving hundreds of megabytes on average per Pod.
 
-### Hình B: Độ Tin Cậy Và Đánh Đổi Tài Nguyên (421 Pod Trials)
+### Figure B: Reliability and Resource Trade-off (421 Pod Trials)
 ![Trial Reliability](../figures/figure_e4_b_trial_reliability.png)
 
 ---
 
-## 2. Bảng Tổng Hợp Ngưỡng Tài Nguyên An Toàn (Safe Envelopes)
+## 2. Safe Resource Envelopes Summary Table
 
-| Workload Family | Safe CPU (m) | Safe RAM (MiB) | Ngưỡng RAM bị OOM | Trạng thái với Small Profile |
+| Workload Family | Safe CPU (m) | Safe RAM (MiB) | OOM RAM Thresholds | Small Profile Status |
 | :--- | :--- | :--- | :--- | :--- |
 """
     for r in table_rows:
         md_content += f"| `{r['family_id']}` | {r['safe_cpu_millicores']} | {r['safe_memory_mib']} | {r['rejected_memory_tests']} | **{r['small_profile_vulnerable']}** |\n"
 
     md_content += f"""
-*Bảng đầy đủ đã được xuất ra file CSV tại:* `tables/e4_workload_envelopes.csv`
+*Full table exported to CSV at:* `tables/e4_workload_envelopes.csv`
 """
 
     report_md.write_text(md_content, encoding="utf-8")

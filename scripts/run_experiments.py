@@ -35,6 +35,9 @@ from evaluation_v5.credentials import configure_extractor_mode, ensure_llm_crede
 BANNER = """
 ======================================================================
        🚀 INTENT-SPAWNER EXPERIMENTAL EVALUATION HARNESS (E1-E5)
+       Pillar 1: Quality (E1) & Robustness (E2)
+       Pillar 2: Resources & Safety (E4 Live K8s & Alibaba Simulation)
+       Pillar 3: Capabilities & Storage (E5 Probes & OCI Deduplication)
 ======================================================================
 """
 
@@ -56,38 +59,76 @@ def prompt_choice(prompt: str, choices: list[str], default_index: int = 0) -> st
         print(f"Invalid option. Please choose from: {choices}")
 
 
-def run_e1(mode: str, base_dir: Path) -> Path:
+def run_e1(mode: str, base_dir: Path, dataset_version: str = "benchmark-v1") -> Path:
     mode_tag = get_mode_tag(mode)
     out_dir = base_dir / "E1" / f"run-e1-{mode_tag}"
     print(f"\n========================================================")
-    print(f"📊 [E1] RUNNING RECOMMENDATION QUALITY BENCHMARK (TAG: {mode_tag})")
+    print(f"📊 [E1] RUNNING RECOMMENDATION QUALITY BENCHMARK (DATASET: {dataset_version.upper()}, TAG: {mode_tag})")
     print(f"📁 Target output directory: {out_dir}")
     print(f"========================================================")
 
-    cmd = [
-        sys.executable,
-        "-m",
-        "evaluation_v5.offline.runner",
-        "--systems",
-        "P1,P2",
-        "--extractor-mode",
-        mode,
-        "--result-dir",
-        str(out_dir),
-    ]
-    subprocess.run(cmd, cwd=str(REPO_ROOT), check=True)
+    if dataset_version == "kaggle":
+        run_kaggle_audit(base_dir)
+        return out_dir
+
+    if dataset_version == "benchmark-v1":
+        cmd = [
+            sys.executable,
+            "scripts/evaluate_baseline_benchmark.py",
+            "--test-file",
+            "data/benchmark/v1/test.jsonl",
+            "--output-dir",
+            str(out_dir),
+            "--extractor-mode",
+            mode,
+        ]
+        subprocess.run(cmd, cwd=str(REPO_ROOT), check=True)
+    else:
+        cmd = [
+            sys.executable,
+            "-m",
+            "evaluation_v5.offline.runner",
+            "--systems",
+            "P1,P2",
+            "--extractor-mode",
+            mode,
+            "--result-dir",
+            str(out_dir),
+        ]
+        subprocess.run(cmd, cwd=str(REPO_ROOT), check=True)
     return out_dir
 
 
-def run_e2(mode: str, base_dir: Path, e1_dir: Path | None = None) -> Path:
+def run_e2(mode: str, base_dir: Path, e1_dir: Path | None = None, dataset_version: str = "benchmark-v1") -> Path:
     mode_tag = get_mode_tag(mode) if mode != "local" else "local"
     # If e1_dir is provided or exists for this mode, use that tag, else fallback to latest available E1 run
     out_dir = base_dir / "E2" / f"run-e2-{mode_tag}"
     out_dir.mkdir(parents=True, exist_ok=True)
     print(f"\n========================================================")
-    print(f"🛡️ [E2] RUNNING NATURAL LANGUAGE ROBUSTNESS ANALYSIS")
+    print(f"🛡️ [E2] RUNNING NATURAL LANGUAGE ROBUSTNESS ANALYSIS (DATASET: {dataset_version.upper()})")
     print(f"📁 Target output directory: {out_dir}")
     print(f"========================================================")
+
+    if dataset_version == "benchmark-v1":
+        ref_e1 = e1_dir or (base_dir / "E1" / f"run-e1-{mode_tag}")
+        summary_file = ref_e1 / "SUMMARY.md"
+        if not summary_file.exists():
+            ref_e1 = run_e1(mode, base_dir, dataset_version="benchmark-v1")
+            summary_file = ref_e1 / "SUMMARY.md"
+        if summary_file.exists():
+            content = summary_file.read_text(encoding="utf-8")
+            if "## 4. Linguistic Variant Breakdown" in content:
+                sections = content.split("## 4. Linguistic Variant Breakdown")
+                part = sections[1].split("\n## 5")[0]
+                if "\n---\n" in part:
+                    part = part.split("\n---\n")[0]
+                e2_report = "# E2 Natural Language Robustness Report\n\n## 4. Linguistic Variant Breakdown" + part
+                (out_dir / "ROBUSTNESS_REPORT.md").write_text(e2_report.strip() + "\n", encoding="utf-8")
+                print("\n" + e2_report.strip() + "\n")
+            else:
+                (out_dir / "ROBUSTNESS_REPORT.md").write_text(content, encoding="utf-8")
+        print(f"✅ E2 finished: Report saved to {out_dir}")
+        return out_dir
 
     # 1. Dataset summary
     print("-> Summarizing robustness perturbations and perturbation taxonomy...")
@@ -113,7 +154,7 @@ def run_e2(mode: str, base_dir: Path, e1_dir: Path | None = None) -> Path:
     if summary_file.exists():
         content = summary_file.read_text(encoding="utf-8")
         if "Language Robustness" in content or "Phân Tích Độ Bền Ngôn Ngữ" in content:
-            marker = "### 🌐 Phân Tích Độ Bền Ngôn Ngữ" if "### 🌐 Phân Tích Độ Bền Ngôn Ngữ" in content else "### 🌐 Language Robustness"
+            marker = "### 🌐 Language Robustness" if "### 🌐 Language Robustness" in content else "### 🌐 Phân Tích Độ Bền Ngôn Ngữ"
             sections = content.split(marker)
             if len(sections) > 1:
                 e2_report = marker + sections[1]
@@ -355,15 +396,19 @@ def run_e3(base_dir: Path, mode: str = "local") -> Path:
 def run_e4(mode: str, base_dir: Path) -> Path:
     mode_tag = get_mode_tag(mode)
     print(f"\n========================================================")
-    print(f"☸️ [E4] K8S RESOURCE ALLOCATION & ENVELOPE (TAG: {mode_tag})")
+    print(f"☸️ [E4] RESOURCE ALLOCATION & SAFETY ENVELOPE (TAG: {mode_tag})")
     print(f"========================================================")
 
     print("\nSelect E4 Execution Target:")
-    print("  1. dry-run  - Fast simulated planning (Offline envelope, zero cluster load) [Default]")
-    print("  2. live     - Real Kubernetes execution (Spawns real Pods on K8s cluster)")
-    exec_target = input("Selection ([1] / 2): ").strip()
+    print("  1. dry-run     - Fast simulated planning (Offline envelope, zero cluster load) [Default]")
+    print("  2. simulation  - Large-Scale Cluster Simulation (Alibaba PAI GPU Trace, 50 nodes)")
+    print("  3. live        - Live Kubernetes execution (Spawns real Pods on physical/virtual K8s)")
+    exec_target = input("Selection ([1] / 2 / 3): ").strip()
 
-    if exec_target == "2":
+    if exec_target == "2" or exec_target.lower() in ["sim", "simulation", "alibaba"]:
+        return run_simulation(base_dir)
+
+    if exec_target == "3" or exec_target.lower() in ["live", "k8s"]:
         # Live execution workflow
         contexts: list[str] = []
         current_context = ""
@@ -671,10 +716,10 @@ def run_reporting_e1_e2(base_dir: Path, e1_dir: Path | None = None) -> Path | No
         if summary_file.exists():
             content = summary_file.read_text(encoding="utf-8")
             marker = None
-            if "### 🌐 Phân Tích Độ Bền Ngôn Ngữ" in content:
-                marker = "### 🌐 Phân Tích Độ Bền Ngôn Ngữ"
-            elif "### 🌐 Language Robustness" in content:
+            if "### 🌐 Language Robustness" in content:
                 marker = "### 🌐 Language Robustness"
+            elif "### 🌐 Phân Tích Độ Bền Ngôn Ngữ" in content:
+                marker = "### 🌐 Phân Tích Độ Bền Ngôn Ngữ"
             if marker:
                 sections = content.split(marker)
                 if len(sections) > 1:
@@ -1226,14 +1271,40 @@ def _generate_thesis_comparison(pkg_local: Path, pkg_llm: Path, dest_dir: Path) 
     tex_out.write_text("\n".join(tex_lines) + "\n", encoding="utf-8")
 
 
+def run_simulation(base_dir: Path | None = None) -> Path:
+    out_dir = (base_dir or (REPO_ROOT / "results_v5" / "protocol-v5.0.0")) / "E4" / "run-e4-simulation"
+    out_dir.mkdir(parents=True, exist_ok=True)
+    print(f"\n========================================================")
+    print(f"🖥️ [SIMULATION] RUNNING LARGE-SCALE CLUSTER MULTI-TENANCY SIMULATOR")
+    print(f"   Trace source: Alibaba PAI GPU clusterdata (50 nodes, 100 GPUs, 800 sessions)")
+    print(f"   Target output: {out_dir}")
+    print(f"========================================================")
+    cmd = [sys.executable, "scripts/simulate_large_cluster.py"]
+    subprocess.run(cmd, cwd=str(REPO_ROOT), check=True)
+    return out_dir
+
+
+def run_kaggle_audit(base_dir: Path | None = None) -> Path:
+    out_dir = (base_dir or (REPO_ROOT / "results_v5" / "protocol-v5.0.0")) / "E1" / "run-e1-kaggle"
+    out_dir.mkdir(parents=True, exist_ok=True)
+    print(f"\n========================================================")
+    print(f"📓 [DISTILKAGGLE] RUNNING VOCABULARY OVERLAP & RETRIEVAL AUDIT")
+    print(f"   Corpus source: DistilKaggle 1,000 curated notebooks (CC BY 4.0)")
+    print(f"   Target output: {out_dir}")
+    print(f"========================================================")
+    cmd = [sys.executable, "scripts/datasets/build_retrieval_corpus_kaggle.py"]
+    subprocess.run(cmd, cwd=str(REPO_ROOT), check=True)
+    return out_dir
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "--experiment",
         "-e",
-        choices=("e1", "e2", "e3", "e4", "e5", "report", "research", "all"),
+        choices=("e1", "e2", "e3", "e4", "e5", "report", "research", "sim", "kaggle", "all"),
         default=None,
-        help="Experiment to run (e1, e2, e3, e4, e5, report, research, or all). If omitted, an interactive menu will be displayed.",
+        help="Experiment to run (e1, e2, e3, e4, e5, report, research, sim, kaggle, or all). If omitted, an interactive menu will be displayed.",
     )
     parser.add_argument(
         "--report-target",
@@ -1265,6 +1336,12 @@ def main(argv: Sequence[str] | None = None) -> int:
         help="LLM model name (used when mode is 'llm').",
     )
     parser.add_argument(
+        "--dataset-version",
+        choices=("benchmark-v1", "v5-dev"),
+        default=None,
+        help="Dataset version for E1/E2: 'benchmark-v1' (Standardized DS-1000 + ARCADE, 471 cases, default) or 'v5-dev' (historical 83 cases).",
+    )
+    parser.add_argument(
         "--base-dir",
         type=Path,
         default=REPO_ROOT / "results_v5" / "protocol-v5.0.0",
@@ -1278,36 +1355,51 @@ def main(argv: Sequence[str] | None = None) -> int:
     exp_choice = args.experiment
     if exp_choice is None:
         print("Select experiment to execute:")
-        print("  1. [E1]       Offline Recommendation Quality (Top-1 Profile, Image Match, Latency)")
-        print("  2. [E2]       Natural Language Robustness (Paraphrase & English vs Vietnamese)")
-        print("  3. [E3]       Human Usability Study (User Study / Smoke Test)")
-        print("  4. [E4]       Kubernetes Resource Allocation (Resource Efficiency & Envelope)")
-        print("  5. [E5]       Container Image Storage & Functional Probes")
-        print("  6. [Report]   Full Statistical Reporting & LaTeX Tables (report-full/ generation)")
-        print("  7. [Research] Cross-Experiment Research Claims & Threats to Validity")
-        print("  8. [ALL]      Run Complete Evaluation, Reporting & Research Pipeline")
+        print("  1. [E1]       Recommendation Quality & Retrieval (Benchmark v1, DistilKaggle)")
+        print("  2. [E2]       Linguistic Robustness (EN Canonical, Informal/Noisy, Vietnamese)")
+        print("  3. [E4]       K8s Resource Allocation & Envelopes (Live Pods, Alibaba Simulation, Dry-run)")
+        print("  4. [E5]       Container Image Storage & Functional Probes (OCI layer deduplication)")
+        print("  5. [Report]   Full Statistical Reporting & LaTeX Tables (report-full/ generation)")
+        print("  6. [Research] Cross-Experiment Research Claims & Evidence Boundaries")
+        print("  7. [E3]       Human Usability Protocol Smoke Test (Archived Protocol)")
+        print("  8. [ALL]      Run Complete 4-Stream Evaluation Pipeline (E1, E2, E4, E5)")
         raw_choice = prompt_choice("Selection", ["1", "2", "3", "4", "5", "6", "7", "8"], default_index=0)
         mapping = {
             "1": "e1",
             "2": "e2",
-            "3": "e3",
-            "4": "e4",
-            "5": "e5",
-            "6": "report",
-            "7": "research",
+            "3": "e4",
+            "4": "e5",
+            "5": "report",
+            "6": "research",
+            "7": "e3",
             "8": "all",
         }
         exp_choice = mapping.get(raw_choice, "e1")
 
-    # 2. Select extractor mode (Needed for E1, E3, E4, or ALL)
+    # 2. Select dataset version (Needed for E1, E2, or ALL)
+    needs_dataset = exp_choice in {"e1", "e2", "all"}
+    ds_choice = args.dataset_version
+    if needs_dataset:
+        if ds_choice is None:
+            print("\nSelect Evaluation Benchmark for Pillar 1 (E1/E2):")
+            print("  1. benchmark-v1 - Standardized Empirical Benchmark (DS-1000 + ARCADE, 471 cases, cgroups v2 ground-truth) [Default]")
+            print("  2. kaggle       - DistilKaggle Real-World Retrieval Evaluation (1,000 real-world DS queries)")
+            print("  3. v5-dev       - Historical Development Split (18 families, 83 cases)")
+            raw_ds = prompt_choice("Selection", ["1", "2", "3"], default_index=0)
+            ds_map = {"1": "benchmark-v1", "2": "kaggle", "3": "v5-dev"}
+            ds_choice = ds_map.get(raw_ds, "benchmark-v1")
+    else:
+        ds_choice = ds_choice or "benchmark-v1"
+
+    # 3. Select extractor mode (Needed for E1, E3, E4, or ALL)
     needs_mode = exp_choice in {"e1", "e3", "e4", "all"}
     mode_choice = args.mode
 
     if needs_mode:
         if mode_choice is None:
             print("\nSelect Intent Extractor Mode for P2:")
-            print("  1. local  - Deterministic parser (Regex & heuristics, zero token cost, fast, offline)")
-            print("  2. llm    - Large Language Model (Semantic parsing, requires API key or endpoint)")
+            print("  1. local  - Local NLP Pipeline (Clause tokenizer, Ontology gazetteer, Modality scope, sub-5ms, offline) [Default]")
+            print("  2. llm    - Large Language Model (Remote generative semantic parsing, requires API key or endpoint)")
             raw_mode = prompt_choice("Selection", ["local", "llm"], default_index=0)
             mode_choice = raw_mode
 
@@ -1331,19 +1423,19 @@ def main(argv: Sequence[str] | None = None) -> int:
     mode_desc = f"{mode_choice.upper()} [{model_name}]" if mode_choice == "llm" and model_name else mode_choice.upper()
 
     if needs_mode:
-        print(f"\n🚀 LAUNCHING: EXPERIMENT [{exp_choice.upper()}] UNDER MODE [{mode_desc}]")
+        print(f"\n🚀 LAUNCHING: EXPERIMENT [{exp_choice.upper()}] UNDER MODE [{mode_desc}] (DATASET: {ds_choice.upper()})")
     else:
-        print(f"\n🚀 LAUNCHING: EXPERIMENT [{exp_choice.upper()}]")
+        print(f"\n🚀 LAUNCHING: EXPERIMENT [{exp_choice.upper()}] (DATASET: {ds_choice.upper()})")
     print(f"📂 Base result directory: {base_dir}\n")
 
     e1_dir = None
     if exp_choice in {"e1", "all"}:
-        e1_dir = run_e1(mode_choice, base_dir)
+        e1_dir = run_e1(mode_choice, base_dir, dataset_version=ds_choice)
 
     if exp_choice in {"e2", "all"}:
-        run_e2(mode_choice, base_dir, e1_dir=e1_dir)
+        run_e2(mode_choice, base_dir, e1_dir=e1_dir, dataset_version=ds_choice)
 
-    if exp_choice in {"e3", "all"}:
+    if exp_choice == "e3":
         run_e3(base_dir, mode=mode_choice)
 
     if exp_choice in {"e4", "all"}:
@@ -1358,6 +1450,12 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     if exp_choice in {"research", "all"}:
         run_research_analysis(base_dir)
+
+    if exp_choice in {"sim", "all"}:
+        run_simulation()
+
+    if exp_choice in {"kaggle", "all"}:
+        run_kaggle_audit()
 
     print("\n" + "=" * 60)
     print(f"🎉 ALL TASKS COMPLETED SUCCESSFULLY FOR: {mode_desc}!")

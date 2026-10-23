@@ -38,7 +38,7 @@ class ProgressTracker:
         self.current = 0
         self.start_time = time.monotonic()
         self.last_log_time = self.start_time
-        self.is_tty = sys.stdout.isatty()
+        self.is_tty = sys.stderr.isatty()
         self._current_item_desc = ""
         self._item_start_time = self.start_time
 
@@ -89,13 +89,13 @@ class ProgressTracker:
         )
 
         if self.is_tty:
-            sys.stdout.write(f"\r{line}")
-            sys.stdout.flush()
+            sys.stderr.write(f"\r{line}")
+            sys.stderr.flush()
             if self.current % max(1, self.total // 5) == 0 or self.current == self.total:
-                sys.stdout.write("\n")
-                sys.stdout.flush()
+                sys.stderr.write("\n")
+                sys.stderr.flush()
         elif should_log_non_tty:
-            print(f"[{_timestamp()}] {line}", flush=True)
+            print(f"[{_timestamp()}] {line}", file=sys.stderr, flush=True)
             self.last_log_time = now
 
     def _heartbeat_loop(self) -> None:
@@ -105,16 +105,16 @@ class ProgressTracker:
             if item_elapsed >= self.heartbeat_interval and self.current < self.total:
                 desc = self._current_item_desc or self.description
                 msg = f"\n  ⏳ [{_timestamp()}] Still processing: {desc} (current item: {format_duration(item_elapsed)}, overall: {format_duration(now - self.start_time)})..."
-                sys.stdout.write(msg + "\n")
-                sys.stdout.flush()
+                sys.stderr.write(msg + "\n")
+                sys.stderr.flush()
 
     def close(self) -> None:
         self._stop_event.set()
         if self._thread.is_alive():
             self._thread.join(timeout=0.5)
         if self.is_tty:
-            sys.stdout.write("\n")
-            sys.stdout.flush()
+            sys.stderr.write("\n")
+            sys.stderr.flush()
 
     def __enter__(self) -> ProgressTracker:
         return self

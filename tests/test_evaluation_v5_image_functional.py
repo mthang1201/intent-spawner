@@ -1115,7 +1115,7 @@ def test_end_to_end_with_verified_recommendation_run(
     )
 
     metrics_raw = json.loads((out_dir / "derived" / "functional_metrics.json").read_text(encoding="utf-8"))
-    assert metrics_raw["total_evaluations"] == 36
+    assert metrics_raw["total_evaluations"] == len(load_development_split().bundle.cases) * 2
     assert "P1" in metrics_raw["systems"]
     assert "P2" in metrics_raw["systems"]
 

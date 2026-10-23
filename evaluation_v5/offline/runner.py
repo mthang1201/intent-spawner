@@ -1211,7 +1211,7 @@ def run_offline_recommendations(
         executed = 0
         skipped = 0
         total_matrix = len(matrix)
-        print(f"\n⏳ Executing recommendation evaluation matrix ({total_matrix} total cases across {list(selected_adapters.keys())})...", flush=True)
+        print(f"\n⏳ Executing recommendation evaluation matrix ({total_matrix} total cases across {list(selected_adapters.keys())})...", file=sys.stderr, flush=True)
 
         with ProgressTracker(total=total_matrix, description="Recommendation Matrix", heartbeat_interval=30.0) as tracker:
             for entry in matrix:
@@ -1304,9 +1304,9 @@ def compute_and_save_summary_metrics(
 
     summary: dict[str, Any] = {}
     lines = [
-        "## 📊 Kết Quả Đánh Giá Chất Lượng Gợi Ý (Recommendation Quality)",
+        "## 📊 Recommendation Quality Evaluation Results",
         "",
-        "| Hệ Thống (System) | Tổng số mẫu | Profile Match (Top-1) | Image Match | Khớp Đồng Thời (Joint) | Tỉ lệ Fallback | Thời gian xử lý (Median) |",
+        "| System | Total Cases | Profile Match (Top-1) | Image Match | Joint Match | Fallback Rate | Median Latency |",
         "| :--- | :---: | :---: | :---: | :---: | :---: | :---: |",
     ]
 
@@ -1384,9 +1384,9 @@ def compute_and_save_summary_metrics(
 
     if len(languages) > 1:
         lines.append("")
-        lines.append("### 🌐 Phân Tích Độ Bền Ngôn Ngữ (Language Robustness: English vs Vietnamese)")
+        lines.append("### 🌐 Language Robustness Analysis (English vs Vietnamese)")
         lines.append("")
-        lines.append("| Hệ Thống | Ngôn Ngữ | Số mẫu | Top-1 Profile | Image Match | Khớp Đồng Thời |")
+        lines.append("| System | Language | Cases | Top-1 Profile | Image Match | Joint Match |")
         lines.append("| :--- | :---: | :---: | :---: | :---: | :---: |")
         for sys_id in sorted(by_system):
             records = by_system[sys_id]
