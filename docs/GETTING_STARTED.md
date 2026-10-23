@@ -55,12 +55,15 @@ The recommended entry point to run or reproduce experiments E1–E5 is:
 make experiments
 # or: python scripts/run_experiments.py
 
-# Direct offline evaluations (E1):
-make eval-offline-local   # Local regex mode (zero API cost, ~1ms)
+# Direct offline evaluations (E1 on Benchmark v1):
+make eval-offline-local   # Local NLP mode (zero API cost, ~1ms)
 make eval-offline-llm     # LLM semantic extractor mode
 
-# Robustness analysis (E2):
+# Natural language robustness analysis (E2):
 make eval-robustness
+
+# Large-scale multi-tenancy cluster simulation (E4):
+make simulate-large-cluster
 
 # Cross-experiment claim adjudication & synthesis:
 make research-analysis
