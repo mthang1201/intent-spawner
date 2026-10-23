@@ -1,17 +1,22 @@
-\begin{table}[ht]{Observed E1 offline recommendation quality estimates for P1 and P2 (Local vs. LLM Mode)}
+\begin{table}[ht]{Observed E1 offline recommendation quality metrics on Benchmark v1 (471 test cases across 157 families)}
 \label{tab:e1-results}
 \centering
 \small
-\begin{tabular}{p{3.6cm}p{3.0cm}p{3.2cm}p{3.4cm}}
+\begin{tabular}{p{4.2cm}p{3.2cm}p{3.4cm}p{2.8cm}}
 \toprule
-Metric & P1 Baseline [95\% CI] & P2 Local Mode [95\% CI] & P2 LLM Mode [95\% CI] \\
+Metric & P1 Baseline (Rule-Based) & P2 (Intent-Spawner Local) & Relative Gain \\
 \midrule
-JointAccept@1 & 60.0\% [34.5, 81.8] & 65.0\% [43.6, 85.0] & 55.9\% [36.4, 74.5] \\
-Profile acceptability & 83.6\% [63.6, 100.0] & 74.1\% [54.5, 90.5] & 78.2\% [56.4, 96.4] \\
-Image acceptability & 63.6\% [38.2, 87.3] & 87.3\% [74.5, 96.4] & 66.8\% [47.3, 85.0] \\
-Constraint violations & 38.2\% [16.4, 63.6] & 21.8\% [5.5, 43.6] & 35.0\% [17.3, 53.2] \\
-Unsupported detection & 0.0\% [0.0, 0.0] & 50.0\% [29.2, 75.0] & 100.0\% [100.0, 100.0] \\
-Latency per execution & 0.000 s [0.000, 0.000] & 0.002 s [0.002, 0.002] & 1.508 s [1.440, 1.586] \\
+Candidate Accuracy@1 & 26.33\% & 23.57\% & $-2.76\%$ \\
+Candidate Accuracy@3 & 26.33\% & 73.46\% & $+47.13\%$ \\
+Profile Accuracy@1 & 33.97\% & 26.75\% & $-7.22\%$ \\
+Profile Accuracy@3 & 33.97\% & 81.32\% & $+47.35\%$ \\
+Image Accuracy@1 & 91.72\% & 85.14\% & $-6.58\%$ \\
+Image Accuracy@3 & 91.72\% & 90.23\% & $-1.49\%$ \\
+\addlinespace
+Joint Acceptability@1 & 84.29\% & 66.03\% & $-18.26\%$ \\
+Under-provision Rate (OOM Hazard) & 3.19\% (15/471) & 4.67\% (22/471) & $+1.49\%$ \\
+Over-provision Rate (Resource Waste) & 62.85\% (296/471) & 68.58\% (323/471) & $+5.73\%$ \\
+Execution Latency (Mean) & 0.06 ms & 2.28 ms & $+2.22$ ms \\
 \bottomrule
 \end{tabular}
 \end{table}

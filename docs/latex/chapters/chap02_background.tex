@@ -1,6 +1,6 @@
 \chapter{Background}
 
-This chapter introduces the technical concepts and methods required to understand the design of the proposed system. The discussion starts with interactive computational environments and their multi-user management through JupyterHub. It then describes Kubernetes-based execution, resource profiles, and notebook container images. The chapter subsequently introduces workload intent representation and the information retrieval techniques used for matching a natural-language request against a catalog of computational environments. Finally, constraint-based recommendation is discussed as the mechanism for ensuring that retrieved candidates satisfy explicit resource and environment requirements. The purpose of this chapter is to establish the concepts used later in the system design and evaluation. The implementation-specific architecture of the proposed system is presented separately in Chapter 3.
+This chapter introduces the technical concepts and methods required to understand the design of the proposed system. The discussion starts with interactive computational environments and their multi-user management through JupyterHub. It then describes Kubernetes-based execution, resource profiles, and notebook container images. The chapter subsequently introduces workload intent representation, natural language processing for information extraction, and the information retrieval techniques used for matching a natural-language request against a catalog of computational environments. Finally, constraint-based recommendation is discussed as the mechanism for ensuring that retrieved candidates satisfy explicit resource and environment requirements. The purpose of this chapter is to establish the concepts used later in the system design and evaluation. The implementation-specific architecture of the proposed system is presented separately in Chapter 3.
 
 \section{JupyterHub}
 
@@ -59,6 +59,46 @@ Allowing an automated system to freely generate or pull arbitrary container imag
 Traditional resource-profile selection exposes infrastructure concepts directly to the end user. A user must determine whether a workload requires a small, medium, or large environment and separately identify which container image contains the appropriate software packages. This approach assumes that users can accurately translate their computational requirements into infrastructure specifications. In practice, users describe their goals in terms of the task they wish to perform. For example, a user may describe a workload as ``I want to train a PyTorch model on a large dataset.'' Such a description conveys information regarding the computational task, framework, and relative data scale, but it does not specify concrete Kubernetes CPU or memory allocations. The central abstraction used by the proposed system is therefore \emph{workload intent}, drawing on the principles of intent-based computing where high-level user goals are translated into system configurations \cite{rfc9315,leivadeas,wu}. Workload intent provides a structured representation of what the user wants to accomplish and what operational properties the resulting computational environment must satisfy.
 
 Natural-language expressions provided by human users are inherently heterogeneous, unstructured, and ambiguous. A user describing a computational goal typically focuses on domain objectives (such as the machine learning framework, analytical procedure, or estimated dataset size) rather than low-level infrastructure attributes. Translating such unstructured natural-language requests into executable system configurations or platform commands is a recognized challenge in systems interfaces \cite{nl2bash}. Intent-based computing formalizes this paradigm by decoupling user intent specification from underlying execution configuration \cite{rfc9315,leivadeas}. Under this framework, high-level intent is translated into a validated, declarative contract that captures functional goals, explicit constraints, and user preferences. By establishing a structured intermediate representation, intent-based systems isolate the stochastic nature of natural language interpretation from deterministic execution engines. This structured bridge enables automated systems to parse user goals, validate semantic consistency, and apply rigorous policy enforcement without giving natural-language interfaces direct access to infrastructure provisioning mechanisms \cite{wu}.
+
+\section{Natural language processing for intent extraction}
+\label{sec:nlp_background}
+
+Natural Language Processing (NLP) provides computational methods for analyzing, understanding, and transforming human language into machine-usable representations \cite{jurafsky2023slp}. In user-facing computing systems, natural language serves as an intuitive interface that frees users from memorizing low-level system syntax. However, deploying NLP in systems engineering requires bridging the gap between ambiguous human text and the deterministic guarantees required by infrastructure orchestrators.
+
+\subsection{Information extraction and slot-filling}
+\label{subsec:ie_slot_filling}
+
+Within applied NLP, \emph{Information Extraction} (IE) focuses on extracting structured relational data from unstructured text \cite{jurafsky2023slp}. A foundational task in task-oriented dialogue systems and command interfaces is \emph{slot-filling}. Formally, given a predefined schema of named slots $\mathcal{K} = \{k_1, k_2, \ldots, k_m\}$, slot-filling identifies relevant text spans within a user utterance and binds them to their corresponding slot types:
+\[
+    \operatorname{Extract}(x) = \{(k_i, v_i) \mid k_i \in \mathcal{K}, \, v_i \in \mathcal{V}_{k_i}\},
+\]
+where $\mathcal{V}_{k_i}$ represents the domain of valid typed values for slot $k_i$. For notebook environment selection, slot-filling translates user descriptions into concrete operational slots, such as required machine learning frameworks, domain libraries, hardware accelerators (GPUs), and quantitative resource demands (CPU cores and memory bounds).
+
+A major challenge in slot-filling for systems software is handling syntactic variation, clause structure, and propositional modality. Natural language frequently uses discourse markers, modal auxiliary verbs, and negation operators that alter the semantic polarity of a statement \cite{morante2012modality}. For example, the sentence \emph{``Train a model using PyTorch, but do not use TensorFlow or GPU''} contains both affirmative requirements and explicit negative constraints. An effective extraction system must recognize \emph{negation scope} and \emph{modality cues} so that negated entities are categorized as forbidden exclusions rather than false-positive requirements.
+
+\subsection{Rule-based and finite-state methods}
+\label{subsec:finite_state_nlp}
+
+Traditional NLP relies heavily on rule-based and finite-state methods, including regular expressions, lexical gazetteers, and Deterministic Finite Automata (DFA) \cite{jurafsky2023slp}. A gazetteer is a compiled vocabulary or ontology of known named entities (such as package names \texttt{pytorch}, \texttt{scikit-learn}, and \texttt{pandas}). When compiled into finite-state matchers, entity recognition operates in linear time $O(|x|)$ relative to input string length.
+
+In the context of Kubernetes controllers and microservices, deterministic rule-based NLP offers significant systems advantages:
+\begin{itemize}
+    \item \textbf{Sub-millisecond Latency:} Finite-state pattern matching executes instantaneously without GPU acceleration or network round-trips.
+    \item \textbf{Minimal Memory Footprint:} Unlike deep neural networks that require gigabytes of memory, compiled automaton tables require only a few kilobytes of RAM, preventing memory pressure in the central JupyterHub spawner process.
+    \item \textbf{Complete Determinism:} Given an input string and ontology, the output is bit-for-bit identical across executions, satisfying strict auditability and compliance requirements.
+\end{itemize}
+However, pure lexical pattern matching is inherently sensitive to vocabulary mismatch and grammatical variations. When a user describes a goal using synonyms, typos, or abstract colloquial terms, keyword rules may fail to recognize the underlying intent.
+
+\subsection{Dense neural representations and language models}
+\label{subsec:neural_nlp}
+
+To overcome the vocabulary mismatch problem, modern NLP employs deep neural representation models and transformer architectures \cite{sentencebert}.
+
+\textbf{Sentence Embeddings and Bi-Encoders:} Rather than treating words as discrete tokens, sentence-embedding models (such as Sentence-BERT \cite{sentencebert} and compact bi-encoder variants like \texttt{all-MiniLM-L6-v2}) map variable-length sentences into fixed-dimensional continuous vector spaces $\mathbb{R}^D$. These embeddings are trained via Siamese networks such that semantically similar sentences are positioned close together under cosine distance, even when they share few surface words. In an environment catalog, sentence embeddings enable semantic retrieval: an informal query such as \emph{``clustering high-dimensional points''} can be matched against an environment annotated with \emph{``unsupervised machine learning with scikit-learn''}.
+
+\textbf{Large Language Models (LLMs) and Structured Output:} Modern Large Language Models (LLMs) pre-trained on massive web-scale corpora possess extensive world knowledge and few-shot reasoning capabilities. When prompted with schema definitions, LLMs can perform complex zero-shot semantic extraction, resolving ambiguous colloquial queries and cross-lingual phrasings that evade hand-crafted rules. However, generative LLMs present distinct engineering risks in systems infrastructure: they can hallucinate non-existent package dependencies, produce non-deterministic outputs, introduce high API invocation latencies (1--2 seconds), and become unavailable during network disruptions \cite{ji2023hallucination,greshake2023prompt,dziri2023transformers}.
+
+\textbf{Architectural Synthesis for Systems Infrastructure:} The contrasting strengths of deterministic finite-state parsing (speed, safety, low footprint) and neural representations (semantic generalization, synonym tolerance) suggest a hybrid, tiered approach. In this thesis, natural language processing is restricted strictly to semantic understanding: extracting a structured, typed intent contract. Authoritative infrastructure decisions (Kubernetes Pod configurations, resource limits, and image digests) are never delegated directly to generative models; instead, they are governed by deterministic catalog matching and hard constraint verification.
 
 \section{Information retrieval}\label{sec:ir_background}
 

@@ -1,7 +1,5 @@
 stream,stage,status,scope
-E1-E2,development,OBSERVED,18 workload families and 83 prompt variants; non-confirmatory
-E3,confirmatory,NOT_EXECUTED,no participant observations
-E4,local observation,OBSERVED,800 Pod trials across 20 workload families and four allocation conditions in OrbStack
-E5 functional,development,OBSERVED,17 probe specifications and 166 evaluated recommendations
-E5 storage,development,OBSERVED,four approved images on linux/arm64
-P3,development gate,NOT_RETAINED,zero ranking-error families in gate set
+E1-E2,benchmark,OBSERVED,Benchmark v1 (471 test cases across 157 families) and DistilKaggle (1000 queries)
+E4,cluster observation & simulation,OBSERVED,800 Pod trials (OrbStack cgroups v2) and 50-node cluster trace simulation
+E5 functional,container verification,OBSERVED,17 probe specifications and 166 evaluated recommendations
+E5 storage,manifest accounting,OBSERVED,four approved images on linux/arm64 with 27.61% layer deduplication

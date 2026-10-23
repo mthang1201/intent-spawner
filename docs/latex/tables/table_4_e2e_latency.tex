@@ -1,0 +1,34 @@
+\begin{table}[ht]{End-to-end execution latency breakdown across pipeline stages (mean $\pm$ standard deviation or point estimates)}
+\label{tab:e2e_latency}
+\centering
+\small
+\begin{tabular}{p{4.8cm}p{2.7cm}p{2.8cm}p{3.0cm}}
+\toprule
+Pipeline Stage & P1 Heuristic & P2 Local Mode & P2 LLM Mode \\
+\midrule
+\textbf{1. Intent Extraction} & & & \\
+\quad Prompt parsing \& extraction & $0.06$\,ms & $0.92 \pm 0.14$\,ms & $1.15 \pm 0.18$\,ms \\
+\quad Remote LLM API call & --- & --- & $1,482 \pm 65$\,ms \\
+\textbf{2. Hybrid Retrieval} & & & \\
+\quad BM25 lexical query & --- & $0.41 \pm 0.08$\,ms & $0.41 \pm 0.08$\,ms \\
+\quad Dense vector similarity & --- & $0.75 \pm 0.12$\,ms & $0.75 \pm 0.12$\,ms \\
+\quad Reciprocal Rank Fusion & --- & $0.11 \pm 0.02$\,ms & $0.11 \pm 0.02$\,ms \\
+\textbf{3. Constraint Pruning \& Ranking} & & & \\
+\quad Hard constraint checks & $0.00$\,ms & $0.24 \pm 0.04$\,ms & $0.24 \pm 0.04$\,ms \\
+\quad Multi-criteria scoring & --- & $0.09 \pm 0.02$\,ms & $0.09 \pm 0.02$\,ms \\
+\textbf{4. Security Policy \& Token} & & & \\
+\quad Token issuance \& preview & --- & $0.18 \pm 0.03$\,ms & $0.18 \pm 0.03$\,ms \\
+\midrule
+\textbf{Recommender Subtotal} & $\mathbf{0.06}$\,ms & $\mathbf{2.28 \pm 0.21}$\,ms & $\mathbf{1,508 \pm 72}$\,ms \\
+\midrule
+\textbf{5. Pre-Spawn Hook Verification} & $2.1$\,ms & $2.2$\,ms & $2.2$\,ms \\
+\textbf{6. Kubernetes Pod Lifecycle} & & & \\
+\quad KubeSpawner API dispatch & $24.5$\,ms & $24.5$\,ms & $24.5$\,ms \\
+\quad Kube-scheduler node binding & $35.2$\,ms & $35.2$\,ms & $35.2$\,ms \\
+\quad Containerd sandbox create (warm) & $248.0$\,ms & $248.0$\,ms & $248.0$\,ms \\
+\quad Notebook server initialization & $1,850$\,ms & $1,850$\,ms & $1,850$\,ms \\
+\midrule
+\textbf{Total End-to-End Spawn Latency} & $\approx \mathbf{2.16}$\,s & $\approx \mathbf{2.16}$\,s & $\approx \mathbf{3.67}$\,s \\
+\bottomrule
+\end{tabular}
+\end{table}

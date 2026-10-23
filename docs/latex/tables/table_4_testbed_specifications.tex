@@ -1,0 +1,20 @@
+\begin{table}[ht]{Hardware and software specifications of the experimental testbeds}
+\label{tab:testbed_specifications}
+\centering
+\small
+\begin{tabular}{p{3.8cm}p{5.4cm}p{5.8cm}}
+\toprule
+System Component & Physical Testbed (Local Measurement) & Target Cluster (Trace Simulation) \\
+\midrule
+Node Topology & Single-node host (Control plane + Worker) & 50 heterogeneous multi-resource worker nodes \\
+Processor (CPU) & Apple Silicon M2 (8 cores: 4P @ 3.49\,GHz + 4E @ 2.42\,GHz) & Dual Intel Xeon Scalable @ 2.80\,GHz (20 vCPU / node; 1,000 vCPU total) \\
+System Memory (RAM) & 16\,GB Unified LPDDR5 (100\,GB/s bandwidth) & 40\,GB ECC DDR4-3200 per node (2,000\,GB cluster total) \\
+GPU Accelerators & Integrated 10-core Apple GPU (Unified VRAM, Metal API) & 2$\times$ NVIDIA A10G / T4 GPUs (16--24\,GB VRAM each; 100 GPUs total) \\
+Host Operating System & macOS 15.3 Sequoia (Darwin Kernel 24.3.0) & Ubuntu Server 22.04 LTS (Linux Kernel 5.15/6.x) \\
+Container Runtime & containerd v1.7.20 / Docker Engine 27.2 (runc v1.1.14) & containerd v1.7.x (OCI Runtime: runc v1.1.x) \\
+Kubernetes Version & Kubernetes v1.33.9+orb1 (OrbStack virtualization) & Kubernetes v1.30+ Multi-Node Production Cluster \\
+Cgroups Subsystem & Linux cgroups v2 (\texttt{cpu}, \texttt{memory}, \texttt{pids}) & Linux cgroups v2 (unified systemd cgroup driver) \\
+Network Runtime & Host virtual bridge / CNI bridge network & Calico CNI overlay (10\,GbE cluster fabric) \\
+\bottomrule
+\end{tabular}
+\end{table}
