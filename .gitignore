@@ -41,9 +41,22 @@ docs/BACKEND_CURRENT_STATE.md
 # Protocol-v5 sealed inputs and generated development artifacts
 .protocol-v5-private/
 benchmarks_v5/sealed/
+benchmarks_v5/raw_sources/
 benchmarks_v5/v5-confirmatory.*
 benchmarks_v5/*confirmatory*
 evaluation_v5/cache/
 evaluation_v5/indexes/
+evaluation_v5/outputs/
 output/
 tmp/
+archive_v5/
+
+# Logs and runtime PIDs
+*.log
+*.pid
+
+# Presentation & export build artifacts
+deliverables/
+presentation_output/
+.presentation_output/
+
