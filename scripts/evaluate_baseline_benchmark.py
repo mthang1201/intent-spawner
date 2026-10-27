@@ -32,6 +32,7 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
+from evaluation_v5.progress import ProgressTracker
 from evaluation_v5.offline.recommenders import (
     OfflineAdapterResult,
     OfflineCaseInput,
@@ -88,118 +89,130 @@ def evaluate_system(
         "joint_accept": 0, "under_prov": 0, "over_prov": 0
     })
 
-    for item in test_cases:
-        case_input = OfflineCaseInput(
-            case_id=item["id"],
-            family_id=item["family_id"],
-            variant_id=item["variant_id"],
-            language=item["language"],
-            prompt=item["prompt"],
-            dataset_size_gb=item.get("dataset_size_gb", 0.0),
-            code_context_hints=tuple(item.get("code_context", [])),
-        )
+    with ProgressTracker(
+        total=total,
+        description=f"Evaluating {system_name}",
+        heartbeat_interval=30.0,
+    ) as tracker:
+        for idx, item in enumerate(test_cases, 1):
+            tracker.update_item_start(f"Case {idx}/{total}: {item.get('id', 'unknown')}")
+            case_input = OfflineCaseInput(
+                case_id=item["id"],
+                family_id=item["family_id"],
+                variant_id=item["variant_id"],
+                language=item["language"],
+                prompt=item["prompt"],
+                dataset_size_gb=item.get("dataset_size_gb", 0.0),
+                code_context_hints=tuple(item.get("code_context", [])),
+            )
 
-        res: OfflineAdapterResult = adapter.recommend(case_input, seed=seed)
+            res: OfflineAdapterResult = adapter.recommend(case_input, seed=seed)
 
-        pred_cand = res.predicted_candidate_id or ""
-        pred_prof = res.predicted_profile_id or ""
-        pred_img = res.predicted_image_id or ""
+            pred_cand = res.predicted_candidate_id or ""
+            pred_prof = res.predicted_profile_id or ""
+            pred_img = res.predicted_image_id or ""
 
-        gt_cand = item["gt_candidate"]
-        gt_prof = item["gt_profile"]
-        gt_img = item["gt_image"]
+            gt_cand = item["gt_candidate"]
+            gt_prof = item["gt_profile"]
+            gt_img = item["gt_image"]
 
-        accept_profs = set(item.get("acceptable_profiles", [gt_prof]))
-        accept_imgs = set(item.get("acceptable_images", [gt_img]))
-        accept_cands = set(item.get("acceptable_candidates", [gt_cand]))
+            accept_profs = set(item.get("acceptable_profiles", [gt_prof]))
+            accept_imgs = set(item.get("acceptable_images", [gt_img]))
+            accept_cands = set(item.get("acceptable_candidates", [gt_cand]))
 
-        # Top-3 extraction
-        top3_cands = [pred_cand]
-        top3_profs = [pred_prof]
-        top3_imgs = [pred_img]
+            # Top-3 extraction
+            top3_cands = [pred_cand]
+            top3_profs = [pred_prof]
+            top3_imgs = [pred_img]
 
-        if res.final_ranking:
-            top3_cands = [r.get("candidate_id", "") for r in res.final_ranking[:3]]
-            top3_profs = [c.split("-")[0] for c in top3_cands if "-" in c]
-            top3_imgs = ["-".join(c.split("-")[1:]) for c in top3_cands if "-" in c]
+            if res.final_ranking:
+                top3_cands = [r.get("candidate_id", "") for r in res.final_ranking[:3]]
+                top3_profs = [c.split("-")[0] for c in top3_cands if "-" in c]
+                top3_imgs = ["-".join(c.split("-")[1:]) for c in top3_cands if "-" in c]
 
-        # Accuracy@1
-        match_p1 = (pred_prof == gt_prof)
-        match_i1 = (pred_img == gt_img)
-        match_c1 = (pred_cand == gt_cand)
-        if match_p1: prof_exact_1 += 1
-        if match_i1: img_exact_1 += 1
-        if match_c1: cand_exact_1 += 1
+            # Accuracy@1
+            match_p1 = (pred_prof == gt_prof)
+            match_i1 = (pred_img == gt_img)
+            match_c1 = (pred_cand == gt_cand)
+            if match_p1: prof_exact_1 += 1
+            if match_i1: img_exact_1 += 1
+            if match_c1: cand_exact_1 += 1
 
-        # Accuracy@3
-        match_p3 = (gt_prof in top3_profs)
-        match_i3 = (gt_img in top3_imgs)
-        match_c3 = (gt_cand in top3_cands)
-        if match_p3: prof_acc_3 += 1
-        if match_i3: img_acc_3 += 1
-        if match_c3: cand_acc_3 += 1
+            # Accuracy@3
+            match_p3 = (gt_prof in top3_profs)
+            match_i3 = (gt_img in top3_imgs)
+            match_c3 = (gt_cand in top3_cands)
+            if match_p3: prof_acc_3 += 1
+            if match_i3: img_acc_3 += 1
+            if match_c3: cand_acc_3 += 1
 
-        # Acceptability@1
-        p_ok = (pred_prof in accept_profs)
-        i_ok = (pred_img in accept_imgs)
-        j_ok = (p_ok and i_ok)
-        if p_ok: prof_accept_1 += 1
-        if i_ok: img_accept_1 += 1
-        if j_ok: joint_accept_1 += 1
+            # Acceptability@1
+            p_ok = (pred_prof in accept_profs)
+            i_ok = (pred_img in accept_imgs)
+            j_ok = (p_ok and i_ok)
+            if p_ok: prof_accept_1 += 1
+            if i_ok: img_accept_1 += 1
+            if j_ok: joint_accept_1 += 1
 
-        # Provisioning safety
-        gt_lvl = PROFILE_LEVELS.get(gt_prof, 1)
-        pred_lvl = PROFILE_LEVELS.get(pred_prof, 1)
+            # Provisioning safety
+            gt_lvl = PROFILE_LEVELS.get(gt_prof, 1)
+            pred_lvl = PROFILE_LEVELS.get(pred_prof, 1)
 
-        is_under = (pred_lvl < gt_lvl)
-        is_over = (pred_lvl > gt_lvl)
-        if is_under: under_prov_count += 1
-        if is_over: over_prov_count += 1
+            is_under = (pred_lvl < gt_lvl)
+            is_over = (pred_lvl > gt_lvl)
+            if is_under: under_prov_count += 1
+            if is_over: over_prov_count += 1
 
-        # Confusion
-        if gt_prof in confusion and pred_prof in confusion[gt_prof]:
-            confusion[gt_prof][pred_prof] += 1
+            # Confusion
+            if gt_prof in confusion and pred_prof in confusion[gt_prof]:
+                confusion[gt_prof][pred_prof] += 1
 
-        # Breakdowns
-        lib = item.get("library", "unknown")
-        by_lib[lib]["count"] += 1
-        if match_p1: by_lib[lib]["correct_profile"] += 1
-        if match_i1: by_lib[lib]["correct_image"] += 1
-        if match_c1: by_lib[lib]["correct_candidate"] += 1
-        if j_ok: by_lib[lib]["joint_accept"] += 1
-        if is_under: by_lib[lib]["under_prov"] += 1
-        if is_over: by_lib[lib]["over_prov"] += 1
+            # Breakdowns
+            lib = item.get("library", "unknown")
+            by_lib[lib]["count"] += 1
+            if match_p1: by_lib[lib]["correct_profile"] += 1
+            if match_i1: by_lib[lib]["correct_image"] += 1
+            if match_c1: by_lib[lib]["correct_candidate"] += 1
+            if j_ok: by_lib[lib]["joint_accept"] += 1
+            if is_under: by_lib[lib]["under_prov"] += 1
+            if is_over: by_lib[lib]["over_prov"] += 1
 
-        vclass = item.get("variant_class", "unknown")
-        by_variant[vclass]["count"] += 1
-        if match_p1: by_variant[vclass]["correct_profile"] += 1
-        if match_i1: by_variant[vclass]["correct_image"] += 1
-        if match_c1: by_variant[vclass]["correct_candidate"] += 1
-        if j_ok: by_variant[vclass]["joint_accept"] += 1
-        if is_under: by_variant[vclass]["under_prov"] += 1
-        if is_over: by_variant[vclass]["over_prov"] += 1
+            vclass = item.get("variant_class", "unknown")
+            by_variant[vclass]["count"] += 1
+            if match_p1: by_variant[vclass]["correct_profile"] += 1
+            if match_i1: by_variant[vclass]["correct_image"] += 1
+            if match_c1: by_variant[vclass]["correct_candidate"] += 1
+            if j_ok: by_variant[vclass]["joint_accept"] += 1
+            if is_under: by_variant[vclass]["under_prov"] += 1
+            if is_over: by_variant[vclass]["over_prov"] += 1
 
-        records.append({
-            "system_id": system_name,
-            "case_id": item["id"],
-            "family_id": item["family_id"],
-            "library": lib,
-            "variant_class": vclass,
-            "prompt": item["prompt"],
-            "gt_profile": gt_prof,
-            "gt_image": gt_img,
-            "gt_candidate": gt_cand,
-            "predicted_profile": pred_prof,
-            "predicted_image": pred_img,
-            "predicted_candidate": pred_cand,
-            "top3_candidates": top3_cands,
-            "match_profile_at_1": match_p1,
-            "match_image_at_1": match_i1,
-            "match_candidate_at_1": match_c1,
-            "joint_acceptable_at_1": j_ok,
-            "is_under_provisioned": is_under,
-            "is_over_provisioned": is_over,
-        })
+            records.append({
+                "system_id": system_name,
+                "case_id": item["id"],
+                "family_id": item["family_id"],
+                "library": lib,
+                "variant_class": vclass,
+                "prompt": item["prompt"],
+                "gt_profile": gt_prof,
+                "gt_image": gt_img,
+                "gt_candidate": gt_cand,
+                "predicted_profile": pred_prof,
+                "predicted_image": pred_img,
+                "predicted_candidate": pred_cand,
+                "top3_candidates": top3_cands,
+                "match_profile_at_1": match_p1,
+                "match_image_at_1": match_i1,
+                "match_candidate_at_1": match_c1,
+                "joint_acceptable_at_1": j_ok,
+                "is_under_provisioned": is_under,
+                "is_over_provisioned": is_over,
+            })
+
+            tracker.advance(
+                1,
+                item_desc=f"{item.get('id', '')}",
+                extra_info=f"pred: {pred_prof}/{pred_img}",
+            )
 
     def pct(count: int) -> float:
         return round((count / total) * 100.0, 3) if total > 0 else 0.0
