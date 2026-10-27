@@ -19,6 +19,7 @@ results/
 Context_Aware_Profile_Selection_Extension_JupyterHub_*/
 .codex-tmp/
 .codex-work/
+.codex-build*/
 assets/
 .chart-data-*/
 .presentation_build*/
@@ -50,6 +51,8 @@ evaluation_v5/outputs/
 output/
 tmp/
 archive_v5/
+results_v5/protocol-v5.0.0/E5/e5-image-validation-*/
+results_v5/protocol-v5.0.0/E5/e5-storage-scalability-*/
 
 # Logs and runtime PIDs
 *.log
