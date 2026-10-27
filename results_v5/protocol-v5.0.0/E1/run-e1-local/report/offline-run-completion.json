@@ -1,9 +1,9 @@
 {
   "claims_permitted": false,
-  "completed_utc": "2026-10-20T07:26:17.329576Z",
+  "completed_utc": "2026-10-27T08:17:57.021497Z",
   "error_records": 0,
-  "provenance_fingerprint": "1005746144254acd71654daaab3f08fe214ae5a9cd8479b5cfa9024b55f14685",
-  "recommendations_jsonl_sha256": "5fcef52c990fb6a547cd7da3fcdfb41f46ad3a840fcc06c650f55f75d598b047",
+  "provenance_fingerprint": "11b2e9caee28edc8bba0e4a74f62bd634a5cef153bc7fa6ca320a31a60ff0653",
+  "recommendations_jsonl_sha256": "231e3fc15ebe4ec333376f84983ddeeb32246ecf99cb39129720bb28291a3688",
   "records": 166,
   "schema_version": "protocol-v5-offline-recommendation-completion-v1.0.0",
   "status": "RAW_EVIDENCE_COMPLETE"
