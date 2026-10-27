@@ -1,0 +1,252 @@
+catalog_version: "2026-10-24.1"
+default_image: minimal-python
+images:
+  minimal-python:
+    display_name: Minimal Python
+    reference: quay.io/jupyter/minimal-notebook@sha256:a153ceb6b41db4f86b7d7dc20c7b63d08e75e2038d5e8758b954fda50ed2e18d
+    description: Lightweight Python, JupyterLab, and common command-line tools.
+    capabilities:
+      - python
+      - jupyterlab
+    match_terms: []
+    priority: 0
+  scipy-data-science:
+    display_name: SciPy Data Science
+    reference: quay.io/jupyter/scipy-notebook@sha256:1a91a693c8cb086f3607f2ed38a2743ecd53dd1dac2d3e84e6cd647b33fd2bba
+    description: NumPy, pandas, SciPy, scikit-learn, and visualization packages.
+    capabilities:
+      - numpy
+      - pandas
+      - scipy
+      - scikit-learn
+      - visualization
+    match_terms:
+      - pandas
+      - read_csv
+      - dataframe
+      - csv
+      - parquet
+      - train
+      - training
+      - fit
+      - .fit(
+      - sklearn
+      - scikit-learn
+      - xgboost
+      - model
+      - numpy
+      - scipy
+      - matplotlib
+      - seaborn
+    priority: 100
+  pytorch-deep-learning:
+    display_name: PyTorch Deep Learning
+    reference: quay.io/jupyter/pytorch-notebook@sha256:69c72823a4e0dbee17114bbe44d0377bc9a39504a76f6314995f7d5bfaa98d60
+    description: PyTorch and CUDA user-space libraries; this demo still grants no GPU device.
+    capabilities:
+      - pytorch
+      - cuda-userspace
+      - data-science
+    match_terms:
+      - torch
+      - pytorch
+      - cuda
+      - gpu
+      - deep learning
+      - resnet
+      - bert
+    priority: 200
+  tensorflow-deep-learning:
+    display_name: TensorFlow Deep Learning
+    reference: quay.io/jupyter/tensorflow-notebook@sha256:25ddc4f73bea5a252335775b59c0e1d4969bbf70ee78d3c6d1d9da02ce58fb68
+    description: TensorFlow and CUDA user-space libraries; this demo still grants no GPU device.
+    capabilities:
+      - tensorflow
+      - keras
+      - cuda-userspace
+      - data-science
+    match_terms:
+      - tensorflow
+      - keras
+    priority: 300
+  base-notebook:
+    display_name: Base Notebook
+    reference: quay.io/jupyter/base-notebook@sha256:cc7aa7b4f008920a301a72d50b2523490a9f918e9a32c427b7a890a4a35afe24
+    description: Minimal foundation with conda, Python, and JupyterHub singleuser.
+    capabilities:
+      - python
+      - jupyterlab
+    match_terms:
+      - base
+      - basic
+      - python
+      - jupyter
+    priority: 400
+  r-data-science:
+    display_name: R Data Science
+    reference: quay.io/jupyter/r-notebook@sha256:9a3cd29ccb1c4399d4cef51d4da7f0de319a2223a46b36520eab4b521e7ca044
+    description: R statistical computing environment with tidyverse and IRkernel.
+    capabilities:
+      - python
+      - jupyterlab
+      - r
+    match_terms:
+      - r
+      - rlang
+      - tidyverse
+      - ggplot2
+      - rstats
+    priority: 500
+  datascience-notebook:
+    display_name: Data Science Multi-Language
+    reference: quay.io/jupyter/datascience-notebook@sha256:f67d85ca84554300afa4e755c993e3cc8a8c02c433a319187e9cad4cc7907ed1
+    description: Polyglot data science environment with Python, R, and Julia.
+    capabilities:
+      - numpy
+      - pandas
+      - scipy
+      - scikit-learn
+      - visualization
+      - r
+      - julia
+    match_terms:
+      - julia
+      - r
+      - polyglot
+      - datascience
+      - multimodal
+    priority: 600
+  pyspark-notebook:
+    display_name: PySpark Notebook
+    reference: quay.io/jupyter/pyspark-notebook@sha256:23791276fb4faf2b879e3cac898c07e9570738f573d9c379e54033bf9a350e46
+    description: Apache Spark and Hadoop integration with Python and SciPy stack.
+    capabilities:
+      - numpy
+      - pandas
+      - scipy
+      - spark
+    match_terms:
+      - spark
+      - pyspark
+      - hadoop
+      - rdd
+      - spark-sql
+    priority: 700
+  all-spark-notebook:
+    display_name: All-Spark Distributed Notebook
+    reference: quay.io/jupyter/all-spark-notebook@sha256:e451d23c14f3754c0877fc44c035f52f77220208152dd9431b4859c887b6392d
+    description: Full Spark distribution with Scala, R, and PySpark bindings.
+    capabilities:
+      - numpy
+      - pandas
+      - scipy
+      - spark
+      - r
+    match_terms:
+      - spark
+      - pyspark
+      - scala
+      - distributed
+      - spark-submit
+    priority: 800
+  docker-stacks-foundation:
+    display_name: Docker Stacks Foundation
+    reference: quay.io/jupyter/docker-stacks-foundation@sha256:c5f8bbc0c63e59732b276b4b0d6ca2d569695106d45b1ad4beec169513620da0
+    description: Base Ubuntu container foundation with package management.
+    capabilities:
+      - python
+    match_terms:
+      - foundation
+      - os-base
+      - minimal
+    priority: 900
+  julia-notebook:
+    display_name: Julia High-Performance Computing
+    reference: quay.io/jupyter/julia-notebook@sha256:a881516f6103e3d10d0a6f8d4e5528a7d9fbd5b8e0b3ef8b89c798e0b2f00dde
+    description: Julia environment for high-performance numerical computing.
+    capabilities:
+      - python
+      - jupyterlab
+      - julia
+    match_terms:
+      - julia
+      - julialang
+      - diffEq
+      - numerical
+    priority: 1000
+  pytorch-cuda:
+    display_name: PyTorch CUDA Accelerated
+    reference: quay.io/jupyter/pytorch-notebook@sha256:133a7fc7ad0e569b0d4aa90fd6ec64e9f15126ae355bb0a086760b7270217926
+    description: PyTorch 2.x with CUDA 12 userspace acceleration libraries.
+    capabilities:
+      - pytorch
+      - cuda-userspace
+      - data-science
+    match_terms:
+      - torch
+      - pytorch
+      - cuda
+      - cuda12
+      - gpu
+      - deep-learning
+    priority: 1100
+  tensorflow-cuda:
+    display_name: TensorFlow CUDA Accelerated
+    reference: quay.io/jupyter/tensorflow-notebook@sha256:79e91ff9b50f4ca4b7b88df0dafe88cff79598c062d16521f808c7b5e5a1ced5
+    description: TensorFlow 2.x with CUDA userspace libraries and Keras.
+    capabilities:
+      - tensorflow
+      - keras
+      - cuda-userspace
+      - data-science
+    match_terms:
+      - tensorflow
+      - keras
+      - tf
+      - cuda
+      - gpu
+    priority: 1200
+  scipy-python313:
+    display_name: SciPy Notebook Modern Python 3.13
+    reference: quay.io/jupyter/scipy-notebook@sha256:987bbee395831e8a2b1ee4e989cb41122cc79099ca8052681dc2af5948d64f86
+    description: Modern Python 3.13 SciPy scientific stack.
+    capabilities:
+      - numpy
+      - pandas
+      - scipy
+      - scikit-learn
+      - visualization
+    match_terms:
+      - scipy
+      - numpy
+      - pandas
+      - py313
+    priority: 1300
+  minimal-python313:
+    display_name: Minimal Python Modern Python 3.13
+    reference: quay.io/jupyter/minimal-notebook@sha256:9e94dfc5e4e794791b923bea89084530020f6bcb1c1236066d847e477ba21503
+    description: Lightweight Python 3.13 with JupyterLab and command-line tools.
+    capabilities:
+      - python
+      - jupyterlab
+    match_terms:
+      - minimal
+      - py313
+      - fast
+    priority: 1400
+  scipy-notebook-legacy:
+    display_name: SciPy Notebook Long-Term Support
+    reference: quay.io/jupyter/scipy-notebook@sha256:6cd9b6bad850b10a34777702e3ecb8e610e9ecf25cb50200ffbf02de9095f60a
+    description: Proven SciPy LTS stable release stack.
+    capabilities:
+      - numpy
+      - pandas
+      - scipy
+      - scikit-learn
+      - visualization
+    match_terms:
+      - scipy
+      - lts
+      - legacy
+      - stable
+    priority: 1500

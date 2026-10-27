@@ -348,22 +348,31 @@ class DockerManifestStorageRunner(BaseStorageRunner):
         digest = validate_approved_image_reference(image_reference, self.catalog)
 
         cmd = ["docker", "manifest", "inspect", "--verbose", image_reference]
-        try:
-            res = subprocess.run(
-                cmd,
-                capture_output=True,
-                text=True,
-                timeout=self.timeout_seconds,
-                check=False,
-            )
-        except Exception as exc:
-            raise RuntimeError(
-                f"Failed to execute docker manifest inspect for {image_reference}: {exc}"
-            ) from exc
+        max_attempts = 4
+        res = None
+        for attempt in range(1, max_attempts + 1):
+            try:
+                res = subprocess.run(
+                    cmd,
+                    capture_output=True,
+                    text=True,
+                    timeout=self.timeout_seconds,
+                    check=False,
+                )
+                if res.returncode == 0:
+                    break
+            except Exception as exc:
+                if attempt == max_attempts:
+                    raise RuntimeError(
+                        f"Failed to execute docker manifest inspect for {image_reference}: {exc}"
+                    ) from exc
+            if attempt < max_attempts:
+                time.sleep(2.0 * attempt)
 
-        if res.returncode != 0:
+        if res is None or res.returncode != 0:
+            err_msg = res.stderr.strip() if res else "Unknown execution error"
             raise RuntimeError(
-                f"docker manifest inspect failed for {image_reference} (exit {res.returncode}): {res.stderr.strip()}"
+                f"docker manifest inspect failed for {image_reference}: {err_msg}"
             )
 
         raw_response = res.stdout.encode("utf-8")

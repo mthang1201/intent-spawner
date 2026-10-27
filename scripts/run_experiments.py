@@ -19,6 +19,7 @@ import argparse
 import os
 from datetime import datetime, timezone
 from pathlib import Path
+import platform
 import shutil
 import subprocess
 import sys
@@ -593,17 +594,29 @@ def run_e5(base_dir: Path, e1_dir: Path | None = None) -> Path:
     env = os.environ.copy()
 
     # 1. Image Storage measurement (Catalog-based)
-    print("-> Analyzing container layer sharing and disk footprint...\n")
+    print("-> Analyzing container layer sharing and disk footprint across scales 4, 8, 16...\n")
+    catalog_16 = REPO_ROOT / "recommender" / "image-catalog-16.yaml"
+    catalog_path = catalog_16 if catalog_16.exists() else (REPO_ROOT / "recommender" / "image-catalog.yaml")
+    arch = "arm64" if platform.machine() in ("arm64", "aarch64") else "amd64"
     storage_cmd = [
         sys.executable,
         "-m",
         "evaluation_v5.image_storage",
         "--experiment",
         "storage",
+        "--catalog",
+        str(catalog_path),
+        "--scales",
+        "4",
+        "8",
+        "16",
+        "--arch",
+        arch,
         "--mode",
         "docker",
         "--stage",
         "development",
+        "--no-recommendation-eval",
     ]
     code_storage = _run_and_stream(storage_cmd, out_dir / "storage_evidence.txt", env=env)
     if code_storage == 0:

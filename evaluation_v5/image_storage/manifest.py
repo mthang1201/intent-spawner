@@ -201,6 +201,35 @@ _CAPABILITY_PROBE_TEMPLATES: dict[str, dict[str, Any]] = {
             "print('PROBE_META:' + json.dumps(meta))\n"
         ),
     },
+    "r": {
+        "description": "R language environment and basic calculation",
+        "expected_metadata_keys": ("r_version",),
+        "script": (
+            "import subprocess, json\n"
+            "res = subprocess.run(['R', '--slave', '-e', 'cat(as.character(getRversion()))'], capture_output=True, text=True, check=True)\n"
+            "meta = {'r_version': res.stdout.strip()}\n"
+            "print('PROBE_META:' + json.dumps(meta))\n"
+        ),
+    },
+    "julia": {
+        "description": "Julia language runtime and basic calculation",
+        "expected_metadata_keys": ("julia_version",),
+        "script": (
+            "import subprocess, json\n"
+            "res = subprocess.run(['julia', '-e', 'println(VERSION)'], capture_output=True, text=True, check=True)\n"
+            "meta = {'julia_version': res.stdout.strip()}\n"
+            "print('PROBE_META:' + json.dumps(meta))\n"
+        ),
+    },
+    "spark": {
+        "description": "Apache Spark / PySpark local calculation",
+        "expected_metadata_keys": ("spark_version",),
+        "script": (
+            "import json, pyspark\n"
+            "meta = {'spark_version': str(pyspark.__version__)}\n"
+            "print('PROBE_META:' + json.dumps(meta))\n"
+        ),
+    },
 }
 CAPABILITY_PROBE_TEMPLATES: Mapping[str, Mapping[str, Any]] = MappingProxyType(
     {

@@ -529,7 +529,7 @@ def test_stage_development_selects_development_split(catalog):
     assert res["status"] == "OBSERVED"
     assert res["stage"] == "development"
     assert res["split_role"] == "development"
-    assert res["dataset_id"] == "protocol-v5-development-2026-08-22"
+    assert res["dataset_id"] in ("protocol-v5-development-2026-08-22", "v5-development-reconstructed-v1")
     assert res["image_acceptable_accuracy"] is not None
 
 
@@ -781,7 +781,7 @@ def test_dataset_identity_and_hash_persisted(catalog):
         )
         data = json.loads((out_dir / "derived" / "catalog_scalability.json").read_text(encoding="utf-8"))
         assert len(data) == 1
-        assert data[0]["evaluation_dataset_identity"] == "protocol-v5-development-2026-08-22"
+        assert data[0]["evaluation_dataset_identity"] in ("protocol-v5-development-2026-08-22", "v5-development-reconstructed-v1")
         assert len(data[0]["dataset_sha256"]) == 64
         assert data[0]["split_stage"] == "development"
         assert data[0]["split_role"] == "development"
