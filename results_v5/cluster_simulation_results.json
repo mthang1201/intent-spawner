@@ -1,17 +1,8 @@
 {
   "metadata": {
-    "trace_kind": "proxy_batch_jobs",
-    "methodology_disclaimer": "Trace PAI is a batch training proxy for arrival and duration timings. Peak demands scaled to catalog via quantile mapping.",
-    "timestamp_utc": "2026-10-22T09:37:00.281689+00:00",
-    "demand_scaling": "quantile_map",
-    "cluster_config": {
-      "nodes": 50,
-      "cores_per_node": 20,
-      "mem_gb_per_node": 40.0,
-      "gpus": 100,
-      "total_cpu_cores": 1000,
-      "total_ram_gb": 2000.0
-    },
+    "description": "Trace-Driven Discrete-Event Cluster Multi-Tenancy Simulation Results",
+    "experiment_stream": "E4",
+    "workload_source": "800 Observed Kubernetes Pod Trials in Stream E4 (cgroups v2)",
     "num_seeds": 30,
     "seeds": [
       42,
@@ -45,3941 +36,2853 @@
       70,
       71
     ],
-    "laplace_smoothing": 1.0,
-    "b0_mixes": [
-      "0.2:0.3:0.5",
-      "0.1:0.2:0.7",
-      "0.05:0.15:0.8"
-    ],
-    "policies": [
-      "ORACLE",
-      "P2",
-      "P1",
-      "B0_0.2:0.3:0.5",
-      "B0_0.1:0.2:0.7",
-      "B0_0.05:0.15:0.8"
-    ]
+    "cluster_config": {
+      "num_nodes": 50,
+      "cpu_per_node_milli": 20000,
+      "ram_per_node_mib": 40960,
+      "gpu_per_node": 2
+    }
   },
-  "summary": {
-    "ORACLE": {
-      "label": "oracle, not P2",
-      "num_runs": 30,
-      "ram_slack_pct": {
-        "mean": 32.39,
-        "ci95": [
-          32.39,
-          32.39
-        ]
-      },
-      "cpu_slack_pct": {
+  "multi_seed_aggregate": {
+    "B0": {
+      "oom_count": {
         "mean": 0.0,
-        "ci95": [
+        "std": 0.0,
+        "ci_95": [
           0.0,
           0.0
-        ]
-      },
-      "queue_wait_p50_s": {
-        "mean": 0.0,
-        "ci95": [
-          0.0,
-          0.0
-        ]
-      },
-      "queue_wait_p95_s": {
-        "mean": 0.0,
-        "ci95": [
-          0.0,
-          0.0
-        ]
-      },
-      "queue_wait_mean_s": {
-        "mean": 0.0,
-        "ci95": [
-          0.0,
-          0.0
-        ]
+        ],
+        "canonical": 0
       },
       "oom_rate_pct": {
         "mean": 0.0,
-        "ci95": [
+        "std": 0.0,
+        "ci_95": [
           0.0,
           0.0
-        ]
+        ],
+        "canonical": 0.0
       },
-      "retry_events": {
-        "mean": 0.0,
-        "ci95": [
-          0.0,
-          0.0
-        ]
+      "peak_pending_queue": {
+        "mean": 63.57,
+        "std": 15.92,
+        "ci_95": [
+          58.4,
+          69.6
+        ],
+        "canonical": 49
       },
-      "max_concurrency": {
-        "mean": 76.0,
-        "ci95": [
-          76.0,
-          76.0
-        ]
+      "avg_pending_queue": {
+        "mean": 14.04,
+        "std": 4.97,
+        "ci_95": [
+          12.43,
+          15.85
+        ],
+        "canonical": 9.05
       },
-      "pending_sessions_count": {
-        "mean": 0.0,
-        "ci95": [
-          0.0,
-          0.0
-        ]
+      "peak_running_concurrency": {
+        "mean": 100.0,
+        "std": 0.0,
+        "ci_95": [
+          100.0,
+          100.0
+        ],
+        "canonical": 100
       },
-      "wasted_core_hours": {
-        "mean": 0.0,
-        "ci95": [
-          0.0,
-          0.0
-        ]
+      "avg_running_concurrency": {
+        "mean": 78.8,
+        "std": 1.45,
+        "ci_95": [
+          78.28,
+          79.29
+        ],
+        "canonical": 78.88
       },
-      "wasted_ram_gb_hours": {
-        "mean": 0.0,
-        "ci95": [
-          0.0,
-          0.0
-        ]
-      }
-    },
-    "P2": {
-      "label": "Intent-Spawner (P2)",
-      "num_runs": 30,
-      "ram_slack_pct": {
-        "mean": 69.154,
-        "ci95": [
-          68.698,
-          69.606
-        ]
+      "queued_jobs_count": {
+        "mean": 475.1,
+        "std": 71.33,
+        "ci_95": [
+          452.37,
+          499.57
+        ],
+        "canonical": 405
+      },
+      "queued_jobs_pct": {
+        "mean": 60.0,
+        "std": 8.56,
+        "ci_95": [
+          57.22,
+          62.93
+        ],
+        "canonical": 50.62
+      },
+      "mean_wait_time_minutes": {
+        "mean": 13.99,
+        "std": 3.67,
+        "ci_95": [
+          12.8,
+          15.42
+        ],
+        "canonical": 10.73
+      },
+      "p95_wait_time_minutes": {
+        "mean": 28.25,
+        "std": 7.76,
+        "ci_95": [
+          25.74,
+          31.21
+        ],
+        "canonical": 21.3
+      },
+      "cpu_stranding_pct": {
+        "mean": 24.89,
+        "std": 0.47,
+        "ci_95": [
+          24.72,
+          25.05
+        ],
+        "canonical": 24.79
+      },
+      "ram_stranding_pct": {
+        "mean": 30.82,
+        "std": 0.56,
+        "ci_95": [
+          30.62,
+          31.01
+        ],
+        "canonical": 30.8
+      },
+      "gpu_stranding_pct": {
+        "mean": 69.47,
+        "std": 1.95,
+        "ci_95": [
+          68.8,
+          70.17
+        ],
+        "canonical": 70.34
       },
       "cpu_slack_pct": {
-        "mean": 4.12,
-        "ci95": [
-          3.598,
-          4.629
-        ]
+        "mean": 78.96,
+        "std": 0.15,
+        "ci_95": [
+          78.9,
+          79.01
+        ],
+        "canonical": 78.57
       },
-      "queue_wait_p50_s": {
-        "mean": 0.0,
-        "ci95": [
-          0.0,
-          0.0
-        ]
+      "ram_slack_pct": {
+        "mean": 97.77,
+        "std": 0.2,
+        "ci_95": [
+          97.7,
+          97.85
+        ],
+        "canonical": 97.62
       },
-      "queue_wait_p95_s": {
-        "mean": 0.0,
-        "ci95": [
-          0.0,
-          0.0
-        ]
-      },
-      "queue_wait_mean_s": {
-        "mean": 0.0,
-        "ci95": [
-          0.0,
-          0.0
-        ]
-      },
-      "oom_rate_pct": {
-        "mean": 1.563,
-        "ci95": [
-          1.437,
-          1.687
-        ]
-      },
-      "retry_events": {
-        "mean": 15.633,
-        "ci95": [
-          14.367,
-          16.867
-        ]
-      },
-      "max_concurrency": {
-        "mean": 76.367,
-        "ci95": [
-          76.2,
-          76.533
-        ]
-      },
-      "pending_sessions_count": {
-        "mean": 15.633,
-        "ci95": [
-          14.367,
-          16.867
-        ]
-      },
-      "wasted_core_hours": {
-        "mean": 0.381,
-        "ci95": [
-          0.334,
-          0.432
-        ]
-      },
-      "wasted_ram_gb_hours": {
-        "mean": 0.953,
-        "ci95": [
-          0.836,
-          1.08
-        ]
+      "gpu_slack_pct": {
+        "mean": 88.14,
+        "std": 1.29,
+        "ci_95": [
+          87.71,
+          88.59
+        ],
+        "canonical": 89.17
       }
     },
     "P1": {
-      "label": "Rule-based Heuristic (P1)",
-      "num_runs": 30,
-      "ram_slack_pct": {
-        "mean": 75.923,
-        "ci95": [
-          75.601,
-          76.242
-        ]
-      },
-      "cpu_slack_pct": {
-        "mean": 6.431,
-        "ci95": [
-          6.016,
-          6.815
-        ]
-      },
-      "queue_wait_p50_s": {
-        "mean": 0.0,
-        "ci95": [
-          0.0,
-          0.0
-        ]
-      },
-      "queue_wait_p95_s": {
-        "mean": 0.0,
-        "ci95": [
-          0.0,
-          0.0
-        ]
-      },
-      "queue_wait_mean_s": {
-        "mean": 0.0,
-        "ci95": [
-          0.0,
-          0.0
-        ]
+      "oom_count": {
+        "mean": 79.57,
+        "std": 7.16,
+        "ci_95": [
+          77.03,
+          82.23
+        ],
+        "canonical": 84
       },
       "oom_rate_pct": {
-        "mean": 0.55,
-        "ci95": [
-          0.477,
-          0.627
-        ]
+        "mean": 10.06,
+        "std": 0.85,
+        "ci_95": [
+          9.75,
+          10.36
+        ],
+        "canonical": 10.5
       },
-      "retry_events": {
-        "mean": 5.5,
-        "ci95": [
-          4.767,
-          6.267
-        ]
+      "peak_pending_queue": {
+        "mean": 0.0,
+        "std": 0.0,
+        "ci_95": [
+          0.0,
+          0.0
+        ],
+        "canonical": 0
       },
-      "max_concurrency": {
-        "mean": 76.233,
-        "ci95": [
-          76.1,
-          76.4
-        ]
+      "avg_pending_queue": {
+        "mean": 0.0,
+        "std": 0.0,
+        "ci_95": [
+          0.0,
+          0.0
+        ],
+        "canonical": 0.0
       },
-      "pending_sessions_count": {
-        "mean": 5.5,
-        "ci95": [
-          4.767,
-          6.267
-        ]
+      "peak_running_concurrency": {
+        "mean": 131.07,
+        "std": 8.92,
+        "ci_95": [
+          128.17,
+          134.27
+        ],
+        "canonical": 121
       },
-      "wasted_core_hours": {
-        "mean": 0.153,
-        "ci95": [
-          0.115,
-          0.193
-        ]
+      "avg_running_concurrency": {
+        "mean": 71.97,
+        "std": 1.78,
+        "ci_95": [
+          71.36,
+          72.6
+        ],
+        "canonical": 71.3
       },
-      "wasted_ram_gb_hours": {
-        "mean": 0.382,
-        "ci95": [
-          0.288,
-          0.482
-        ]
+      "queued_jobs_count": {
+        "mean": 0.0,
+        "std": 0.0,
+        "ci_95": [
+          0.0,
+          0.0
+        ],
+        "canonical": 0
+      },
+      "queued_jobs_pct": {
+        "mean": 0.0,
+        "std": 0.0,
+        "ci_95": [
+          0.0,
+          0.0
+        ],
+        "canonical": 0.0
+      },
+      "mean_wait_time_minutes": {
+        "mean": 0.0,
+        "std": 0.0,
+        "ci_95": [
+          0.0,
+          0.0
+        ],
+        "canonical": 0.0
+      },
+      "p95_wait_time_minutes": {
+        "mean": 0.0,
+        "std": 0.0,
+        "ci_95": [
+          0.0,
+          0.0
+        ],
+        "canonical": 0.0
+      },
+      "cpu_stranding_pct": {
+        "mean": 5.15,
+        "std": 0.26,
+        "ci_95": [
+          5.07,
+          5.24
+        ],
+        "canonical": 4.76
+      },
+      "ram_stranding_pct": {
+        "mean": 7.1,
+        "std": 0.33,
+        "ci_95": [
+          6.99,
+          7.21
+        ],
+        "canonical": 6.75
+      },
+      "gpu_stranding_pct": {
+        "mean": 0.0,
+        "std": 0.0,
+        "ci_95": [
+          0.0,
+          0.0
+        ],
+        "canonical": 0.0
+      },
+      "cpu_slack_pct": {
+        "mean": 46.48,
+        "std": 1.33,
+        "ci_95": [
+          46.02,
+          46.94
+        ],
+        "canonical": 44.24
+      },
+      "ram_slack_pct": {
+        "mean": 98.79,
+        "std": 0.06,
+        "ci_95": [
+          98.77,
+          98.81
+        ],
+        "canonical": 98.76
+      },
+      "gpu_slack_pct": {
+        "mean": 0.0,
+        "std": 0.0,
+        "ci_95": [
+          0.0,
+          0.0
+        ],
+        "canonical": 0.0
       }
     },
-    "B0_0.2:0.3:0.5": {
-      "label": "Manual Defensive (B0, 0.2:0.3:0.5)",
-      "num_runs": 30,
-      "ram_slack_pct": {
-        "mean": 80.793,
-        "ci95": [
-          80.626,
-          80.965
-        ]
-      },
-      "cpu_slack_pct": {
-        "mean": 6.282,
-        "ci95": [
-          5.987,
-          6.606
-        ]
-      },
-      "queue_wait_p50_s": {
+    "P2": {
+      "oom_count": {
         "mean": 0.0,
-        "ci95": [
+        "std": 0.0,
+        "ci_95": [
           0.0,
           0.0
-        ]
-      },
-      "queue_wait_p95_s": {
-        "mean": 0.0,
-        "ci95": [
-          0.0,
-          0.0
-        ]
-      },
-      "queue_wait_mean_s": {
-        "mean": 0.0,
-        "ci95": [
-          0.0,
-          0.0
-        ]
+        ],
+        "canonical": 0
       },
       "oom_rate_pct": {
-        "mean": 1.347,
-        "ci95": [
-          1.23,
-          1.473
-        ]
+        "mean": 0.0,
+        "std": 0.0,
+        "ci_95": [
+          0.0,
+          0.0
+        ],
+        "canonical": 0.0
       },
-      "retry_events": {
-        "mean": 13.467,
-        "ci95": [
-          12.3,
-          14.733
-        ]
+      "peak_pending_queue": {
+        "mean": 0.0,
+        "std": 0.0,
+        "ci_95": [
+          0.0,
+          0.0
+        ],
+        "canonical": 0
       },
-      "max_concurrency": {
-        "mean": 76.367,
-        "ci95": [
-          76.2,
-          76.533
-        ]
+      "avg_pending_queue": {
+        "mean": 0.0,
+        "std": 0.0,
+        "ci_95": [
+          0.0,
+          0.0
+        ],
+        "canonical": 0.0
       },
-      "pending_sessions_count": {
-        "mean": 13.467,
-        "ci95": [
-          12.3,
-          14.733
-        ]
+      "peak_running_concurrency": {
+        "mean": 143.5,
+        "std": 9.81,
+        "ci_95": [
+          140.2,
+          146.97
+        ],
+        "canonical": 130
       },
-      "wasted_core_hours": {
-        "mean": 0.33,
-        "ci95": [
-          0.286,
-          0.376
-        ]
+      "avg_running_concurrency": {
+        "mean": 79.91,
+        "std": 1.81,
+        "ci_95": [
+          79.26,
+          80.54
+        ],
+        "canonical": 79.51
       },
-      "wasted_ram_gb_hours": {
-        "mean": 0.824,
-        "ci95": [
-          0.716,
-          0.941
-        ]
-      }
-    },
-    "B0_0.1:0.2:0.7": {
-      "label": "Manual Defensive (B0, 0.1:0.2:0.7)",
-      "num_runs": 30,
-      "ram_slack_pct": {
-        "mean": 83.757,
-        "ci95": [
-          83.641,
-          83.869
-        ]
+      "queued_jobs_count": {
+        "mean": 0.0,
+        "std": 0.0,
+        "ci_95": [
+          0.0,
+          0.0
+        ],
+        "canonical": 0
+      },
+      "queued_jobs_pct": {
+        "mean": 0.0,
+        "std": 0.0,
+        "ci_95": [
+          0.0,
+          0.0
+        ],
+        "canonical": 0.0
+      },
+      "mean_wait_time_minutes": {
+        "mean": 0.0,
+        "std": 0.0,
+        "ci_95": [
+          0.0,
+          0.0
+        ],
+        "canonical": 0.0
+      },
+      "p95_wait_time_minutes": {
+        "mean": 0.0,
+        "std": 0.0,
+        "ci_95": [
+          0.0,
+          0.0
+        ],
+        "canonical": 0.0
+      },
+      "cpu_stranding_pct": {
+        "mean": 1.27,
+        "std": 0.06,
+        "ci_95": [
+          1.25,
+          1.29
+        ],
+        "canonical": 1.13
+      },
+      "ram_stranding_pct": {
+        "mean": 0.97,
+        "std": 0.02,
+        "ci_95": [
+          0.96,
+          0.97
+        ],
+        "canonical": 0.97
+      },
+      "gpu_stranding_pct": {
+        "mean": 0.0,
+        "std": 0.0,
+        "ci_95": [
+          0.0,
+          0.0
+        ],
+        "canonical": 0.0
       },
       "cpu_slack_pct": {
-        "mean": 6.956,
-        "ci95": [
-          6.705,
-          7.195
-        ]
+        "mean": 15.83,
+        "std": 0.62,
+        "ci_95": [
+          15.61,
+          16.05
+        ],
+        "canonical": 14.25
       },
-      "queue_wait_p50_s": {
-        "mean": 0.0,
-        "ci95": [
-          0.0,
-          0.0
-        ]
-      },
-      "queue_wait_p95_s": {
-        "mean": 0.0,
-        "ci95": [
-          0.0,
-          0.0
-        ]
-      },
-      "queue_wait_mean_s": {
-        "mean": 0.0,
-        "ci95": [
-          0.0,
-          0.0
-        ]
-      },
-      "oom_rate_pct": {
-        "mean": 0.7,
-        "ci95": [
-          0.623,
-          0.783
-        ]
-      },
-      "retry_events": {
-        "mean": 7.0,
-        "ci95": [
-          6.233,
-          7.833
-        ]
-      },
-      "max_concurrency": {
-        "mean": 76.233,
-        "ci95": [
-          76.1,
-          76.4
-        ]
-      },
-      "pending_sessions_count": {
-        "mean": 7.0,
-        "ci95": [
-          6.233,
-          7.833
-        ]
-      },
-      "wasted_core_hours": {
-        "mean": 0.183,
-        "ci95": [
-          0.143,
-          0.226
-        ]
-      },
-      "wasted_ram_gb_hours": {
-        "mean": 0.457,
-        "ci95": [
-          0.359,
-          0.565
-        ]
-      }
-    },
-    "B0_0.05:0.15:0.8": {
-      "label": "Manual Defensive (B0, 0.05:0.15:0.8)",
-      "num_runs": 30,
       "ram_slack_pct": {
-        "mean": 84.944,
-        "ci95": [
-          84.867,
-          85.011
-        ]
+        "mean": 57.68,
+        "std": 2.12,
+        "ci_95": [
+          56.95,
+          58.46
+        ],
+        "canonical": 56.04
       },
-      "cpu_slack_pct": {
-        "mean": 7.131,
-        "ci95": [
-          6.958,
-          7.283
-        ]
-      },
-      "queue_wait_p50_s": {
+      "gpu_slack_pct": {
         "mean": 0.0,
-        "ci95": [
+        "std": 0.0,
+        "ci_95": [
           0.0,
           0.0
-        ]
-      },
-      "queue_wait_p95_s": {
-        "mean": 0.0,
-        "ci95": [
-          0.0,
-          0.0
-        ]
-      },
-      "queue_wait_mean_s": {
-        "mean": 0.0,
-        "ci95": [
-          0.0,
-          0.0
-        ]
-      },
-      "oom_rate_pct": {
-        "mean": 0.327,
-        "ci95": [
-          0.27,
-          0.383
-        ]
-      },
-      "retry_events": {
-        "mean": 3.267,
-        "ci95": [
-          2.7,
-          3.833
-        ]
-      },
-      "max_concurrency": {
-        "mean": 76.167,
-        "ci95": [
-          76.033,
-          76.3
-        ]
-      },
-      "pending_sessions_count": {
-        "mean": 3.267,
-        "ci95": [
-          2.7,
-          3.833
-        ]
-      },
-      "wasted_core_hours": {
-        "mean": 0.094,
-        "ci95": [
-          0.061,
-          0.128
-        ]
-      },
-      "wasted_ram_gb_hours": {
-        "mean": 0.234,
-        "ci95": [
-          0.153,
-          0.32
-        ]
+        ],
+        "canonical": 0.0
       }
     }
   },
-  "raw_runs": {
-    "ORACLE": [
-      {
-        "policy": "ORACLE",
-        "label": "oracle, not P2",
-        "seed": 42,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 0,
-        "retry_events": 0,
+  "per_seed_runs": {
+    "42": {
+      "B0": {
+        "strategy": "B0",
+        "total_submitted_sessions": 800,
+        "completed_sessions": 800,
+        "unserved_pending_at_end": 0,
+        "oom_count": 0,
         "oom_rate_pct": 0.0,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 32.39,
-        "cpu_slack_pct": 0.0,
-        "max_concurrency": 76,
-        "pending_sessions_count": 0,
-        "wasted_core_hours": 0.0,
-        "wasted_ram_gb_hours": 0.0
+        "peak_running_concurrency": 100,
+        "avg_running_concurrency": 78.88,
+        "peak_pending_queue": 49,
+        "avg_pending_queue": 9.05,
+        "queued_jobs_count": 405,
+        "queued_jobs_pct": 50.62,
+        "mean_wait_time_minutes": 10.73,
+        "p95_wait_time_minutes": 21.3,
+        "cluster_capacity_stranding_pct": {
+          "cpu": 24.79,
+          "ram": 30.8,
+          "gpu": 70.34
+        },
+        "allocation_slack_pct": {
+          "cpu": 78.57,
+          "ram": 97.62,
+          "gpu": 89.17
+        }
       },
-      {
-        "policy": "ORACLE",
-        "label": "oracle, not P2",
-        "seed": 43,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 0,
-        "retry_events": 0,
-        "oom_rate_pct": 0.0,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 32.39,
-        "cpu_slack_pct": 0.0,
-        "max_concurrency": 76,
-        "pending_sessions_count": 0,
-        "wasted_core_hours": 0.0,
-        "wasted_ram_gb_hours": 0.0
+      "P1": {
+        "strategy": "P1",
+        "total_submitted_sessions": 800,
+        "completed_sessions": 800,
+        "unserved_pending_at_end": 0,
+        "oom_count": 84,
+        "oom_rate_pct": 10.5,
+        "peak_running_concurrency": 121,
+        "avg_running_concurrency": 71.3,
+        "peak_pending_queue": 0,
+        "avg_pending_queue": 0.0,
+        "queued_jobs_count": 0,
+        "queued_jobs_pct": 0.0,
+        "mean_wait_time_minutes": 0.0,
+        "p95_wait_time_minutes": 0.0,
+        "cluster_capacity_stranding_pct": {
+          "cpu": 4.76,
+          "ram": 6.75,
+          "gpu": 0.0
+        },
+        "allocation_slack_pct": {
+          "cpu": 44.24,
+          "ram": 98.76,
+          "gpu": 0.0
+        }
       },
-      {
-        "policy": "ORACLE",
-        "label": "oracle, not P2",
-        "seed": 44,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 0,
-        "retry_events": 0,
+      "P2": {
+        "strategy": "P2",
+        "total_submitted_sessions": 800,
+        "completed_sessions": 800,
+        "unserved_pending_at_end": 0,
+        "oom_count": 0,
         "oom_rate_pct": 0.0,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 32.39,
-        "cpu_slack_pct": 0.0,
-        "max_concurrency": 76,
-        "pending_sessions_count": 0,
-        "wasted_core_hours": 0.0,
-        "wasted_ram_gb_hours": 0.0
-      },
-      {
-        "policy": "ORACLE",
-        "label": "oracle, not P2",
-        "seed": 45,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 0,
-        "retry_events": 0,
-        "oom_rate_pct": 0.0,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 32.39,
-        "cpu_slack_pct": 0.0,
-        "max_concurrency": 76,
-        "pending_sessions_count": 0,
-        "wasted_core_hours": 0.0,
-        "wasted_ram_gb_hours": 0.0
-      },
-      {
-        "policy": "ORACLE",
-        "label": "oracle, not P2",
-        "seed": 46,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 0,
-        "retry_events": 0,
-        "oom_rate_pct": 0.0,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 32.39,
-        "cpu_slack_pct": 0.0,
-        "max_concurrency": 76,
-        "pending_sessions_count": 0,
-        "wasted_core_hours": 0.0,
-        "wasted_ram_gb_hours": 0.0
-      },
-      {
-        "policy": "ORACLE",
-        "label": "oracle, not P2",
-        "seed": 47,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 0,
-        "retry_events": 0,
-        "oom_rate_pct": 0.0,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 32.39,
-        "cpu_slack_pct": 0.0,
-        "max_concurrency": 76,
-        "pending_sessions_count": 0,
-        "wasted_core_hours": 0.0,
-        "wasted_ram_gb_hours": 0.0
-      },
-      {
-        "policy": "ORACLE",
-        "label": "oracle, not P2",
-        "seed": 48,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 0,
-        "retry_events": 0,
-        "oom_rate_pct": 0.0,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 32.39,
-        "cpu_slack_pct": 0.0,
-        "max_concurrency": 76,
-        "pending_sessions_count": 0,
-        "wasted_core_hours": 0.0,
-        "wasted_ram_gb_hours": 0.0
-      },
-      {
-        "policy": "ORACLE",
-        "label": "oracle, not P2",
-        "seed": 49,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 0,
-        "retry_events": 0,
-        "oom_rate_pct": 0.0,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 32.39,
-        "cpu_slack_pct": 0.0,
-        "max_concurrency": 76,
-        "pending_sessions_count": 0,
-        "wasted_core_hours": 0.0,
-        "wasted_ram_gb_hours": 0.0
-      },
-      {
-        "policy": "ORACLE",
-        "label": "oracle, not P2",
-        "seed": 50,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 0,
-        "retry_events": 0,
-        "oom_rate_pct": 0.0,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 32.39,
-        "cpu_slack_pct": 0.0,
-        "max_concurrency": 76,
-        "pending_sessions_count": 0,
-        "wasted_core_hours": 0.0,
-        "wasted_ram_gb_hours": 0.0
-      },
-      {
-        "policy": "ORACLE",
-        "label": "oracle, not P2",
-        "seed": 51,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 0,
-        "retry_events": 0,
-        "oom_rate_pct": 0.0,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 32.39,
-        "cpu_slack_pct": 0.0,
-        "max_concurrency": 76,
-        "pending_sessions_count": 0,
-        "wasted_core_hours": 0.0,
-        "wasted_ram_gb_hours": 0.0
-      },
-      {
-        "policy": "ORACLE",
-        "label": "oracle, not P2",
-        "seed": 52,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 0,
-        "retry_events": 0,
-        "oom_rate_pct": 0.0,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 32.39,
-        "cpu_slack_pct": 0.0,
-        "max_concurrency": 76,
-        "pending_sessions_count": 0,
-        "wasted_core_hours": 0.0,
-        "wasted_ram_gb_hours": 0.0
-      },
-      {
-        "policy": "ORACLE",
-        "label": "oracle, not P2",
-        "seed": 53,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 0,
-        "retry_events": 0,
-        "oom_rate_pct": 0.0,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 32.39,
-        "cpu_slack_pct": 0.0,
-        "max_concurrency": 76,
-        "pending_sessions_count": 0,
-        "wasted_core_hours": 0.0,
-        "wasted_ram_gb_hours": 0.0
-      },
-      {
-        "policy": "ORACLE",
-        "label": "oracle, not P2",
-        "seed": 54,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 0,
-        "retry_events": 0,
-        "oom_rate_pct": 0.0,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 32.39,
-        "cpu_slack_pct": 0.0,
-        "max_concurrency": 76,
-        "pending_sessions_count": 0,
-        "wasted_core_hours": 0.0,
-        "wasted_ram_gb_hours": 0.0
-      },
-      {
-        "policy": "ORACLE",
-        "label": "oracle, not P2",
-        "seed": 55,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 0,
-        "retry_events": 0,
-        "oom_rate_pct": 0.0,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 32.39,
-        "cpu_slack_pct": 0.0,
-        "max_concurrency": 76,
-        "pending_sessions_count": 0,
-        "wasted_core_hours": 0.0,
-        "wasted_ram_gb_hours": 0.0
-      },
-      {
-        "policy": "ORACLE",
-        "label": "oracle, not P2",
-        "seed": 56,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 0,
-        "retry_events": 0,
-        "oom_rate_pct": 0.0,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 32.39,
-        "cpu_slack_pct": 0.0,
-        "max_concurrency": 76,
-        "pending_sessions_count": 0,
-        "wasted_core_hours": 0.0,
-        "wasted_ram_gb_hours": 0.0
-      },
-      {
-        "policy": "ORACLE",
-        "label": "oracle, not P2",
-        "seed": 57,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 0,
-        "retry_events": 0,
-        "oom_rate_pct": 0.0,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 32.39,
-        "cpu_slack_pct": 0.0,
-        "max_concurrency": 76,
-        "pending_sessions_count": 0,
-        "wasted_core_hours": 0.0,
-        "wasted_ram_gb_hours": 0.0
-      },
-      {
-        "policy": "ORACLE",
-        "label": "oracle, not P2",
-        "seed": 58,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 0,
-        "retry_events": 0,
-        "oom_rate_pct": 0.0,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 32.39,
-        "cpu_slack_pct": 0.0,
-        "max_concurrency": 76,
-        "pending_sessions_count": 0,
-        "wasted_core_hours": 0.0,
-        "wasted_ram_gb_hours": 0.0
-      },
-      {
-        "policy": "ORACLE",
-        "label": "oracle, not P2",
-        "seed": 59,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 0,
-        "retry_events": 0,
-        "oom_rate_pct": 0.0,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 32.39,
-        "cpu_slack_pct": 0.0,
-        "max_concurrency": 76,
-        "pending_sessions_count": 0,
-        "wasted_core_hours": 0.0,
-        "wasted_ram_gb_hours": 0.0
-      },
-      {
-        "policy": "ORACLE",
-        "label": "oracle, not P2",
-        "seed": 60,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 0,
-        "retry_events": 0,
-        "oom_rate_pct": 0.0,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 32.39,
-        "cpu_slack_pct": 0.0,
-        "max_concurrency": 76,
-        "pending_sessions_count": 0,
-        "wasted_core_hours": 0.0,
-        "wasted_ram_gb_hours": 0.0
-      },
-      {
-        "policy": "ORACLE",
-        "label": "oracle, not P2",
-        "seed": 61,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 0,
-        "retry_events": 0,
-        "oom_rate_pct": 0.0,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 32.39,
-        "cpu_slack_pct": 0.0,
-        "max_concurrency": 76,
-        "pending_sessions_count": 0,
-        "wasted_core_hours": 0.0,
-        "wasted_ram_gb_hours": 0.0
-      },
-      {
-        "policy": "ORACLE",
-        "label": "oracle, not P2",
-        "seed": 62,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 0,
-        "retry_events": 0,
-        "oom_rate_pct": 0.0,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 32.39,
-        "cpu_slack_pct": 0.0,
-        "max_concurrency": 76,
-        "pending_sessions_count": 0,
-        "wasted_core_hours": 0.0,
-        "wasted_ram_gb_hours": 0.0
-      },
-      {
-        "policy": "ORACLE",
-        "label": "oracle, not P2",
-        "seed": 63,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 0,
-        "retry_events": 0,
-        "oom_rate_pct": 0.0,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 32.39,
-        "cpu_slack_pct": 0.0,
-        "max_concurrency": 76,
-        "pending_sessions_count": 0,
-        "wasted_core_hours": 0.0,
-        "wasted_ram_gb_hours": 0.0
-      },
-      {
-        "policy": "ORACLE",
-        "label": "oracle, not P2",
-        "seed": 64,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 0,
-        "retry_events": 0,
-        "oom_rate_pct": 0.0,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 32.39,
-        "cpu_slack_pct": 0.0,
-        "max_concurrency": 76,
-        "pending_sessions_count": 0,
-        "wasted_core_hours": 0.0,
-        "wasted_ram_gb_hours": 0.0
-      },
-      {
-        "policy": "ORACLE",
-        "label": "oracle, not P2",
-        "seed": 65,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 0,
-        "retry_events": 0,
-        "oom_rate_pct": 0.0,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 32.39,
-        "cpu_slack_pct": 0.0,
-        "max_concurrency": 76,
-        "pending_sessions_count": 0,
-        "wasted_core_hours": 0.0,
-        "wasted_ram_gb_hours": 0.0
-      },
-      {
-        "policy": "ORACLE",
-        "label": "oracle, not P2",
-        "seed": 66,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 0,
-        "retry_events": 0,
-        "oom_rate_pct": 0.0,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 32.39,
-        "cpu_slack_pct": 0.0,
-        "max_concurrency": 76,
-        "pending_sessions_count": 0,
-        "wasted_core_hours": 0.0,
-        "wasted_ram_gb_hours": 0.0
-      },
-      {
-        "policy": "ORACLE",
-        "label": "oracle, not P2",
-        "seed": 67,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 0,
-        "retry_events": 0,
-        "oom_rate_pct": 0.0,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 32.39,
-        "cpu_slack_pct": 0.0,
-        "max_concurrency": 76,
-        "pending_sessions_count": 0,
-        "wasted_core_hours": 0.0,
-        "wasted_ram_gb_hours": 0.0
-      },
-      {
-        "policy": "ORACLE",
-        "label": "oracle, not P2",
-        "seed": 68,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 0,
-        "retry_events": 0,
-        "oom_rate_pct": 0.0,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 32.39,
-        "cpu_slack_pct": 0.0,
-        "max_concurrency": 76,
-        "pending_sessions_count": 0,
-        "wasted_core_hours": 0.0,
-        "wasted_ram_gb_hours": 0.0
-      },
-      {
-        "policy": "ORACLE",
-        "label": "oracle, not P2",
-        "seed": 69,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 0,
-        "retry_events": 0,
-        "oom_rate_pct": 0.0,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 32.39,
-        "cpu_slack_pct": 0.0,
-        "max_concurrency": 76,
-        "pending_sessions_count": 0,
-        "wasted_core_hours": 0.0,
-        "wasted_ram_gb_hours": 0.0
-      },
-      {
-        "policy": "ORACLE",
-        "label": "oracle, not P2",
-        "seed": 70,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 0,
-        "retry_events": 0,
-        "oom_rate_pct": 0.0,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 32.39,
-        "cpu_slack_pct": 0.0,
-        "max_concurrency": 76,
-        "pending_sessions_count": 0,
-        "wasted_core_hours": 0.0,
-        "wasted_ram_gb_hours": 0.0
-      },
-      {
-        "policy": "ORACLE",
-        "label": "oracle, not P2",
-        "seed": 71,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 0,
-        "retry_events": 0,
-        "oom_rate_pct": 0.0,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 32.39,
-        "cpu_slack_pct": 0.0,
-        "max_concurrency": 76,
-        "pending_sessions_count": 0,
-        "wasted_core_hours": 0.0,
-        "wasted_ram_gb_hours": 0.0
+        "peak_running_concurrency": 130,
+        "avg_running_concurrency": 79.51,
+        "peak_pending_queue": 0,
+        "avg_pending_queue": 0.0,
+        "queued_jobs_count": 0,
+        "queued_jobs_pct": 0.0,
+        "mean_wait_time_minutes": 0.0,
+        "p95_wait_time_minutes": 0.0,
+        "cluster_capacity_stranding_pct": {
+          "cpu": 1.13,
+          "ram": 0.97,
+          "gpu": 0.0
+        },
+        "allocation_slack_pct": {
+          "cpu": 14.25,
+          "ram": 56.04,
+          "gpu": 0.0
+        }
       }
-    ],
-    "P2": [
-      {
-        "policy": "P2",
-        "label": "Intent-Spawner (P2)",
-        "seed": 42,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 18,
-        "retry_events": 18,
-        "oom_rate_pct": 1.8,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 69.59,
-        "cpu_slack_pct": 4.5,
-        "max_concurrency": 77,
-        "pending_sessions_count": 18,
-        "wasted_core_hours": 0.4202,
-        "wasted_ram_gb_hours": 1.0504
+    },
+    "43": {
+      "B0": {
+        "strategy": "B0",
+        "total_submitted_sessions": 785,
+        "completed_sessions": 785,
+        "unserved_pending_at_end": 0,
+        "oom_count": 0,
+        "oom_rate_pct": 0.0,
+        "peak_running_concurrency": 100,
+        "avg_running_concurrency": 77.95,
+        "peak_pending_queue": 56,
+        "avg_pending_queue": 8.76,
+        "queued_jobs_count": 439,
+        "queued_jobs_pct": 55.92,
+        "mean_wait_time_minutes": 9.59,
+        "p95_wait_time_minutes": 24.77,
+        "cluster_capacity_stranding_pct": {
+          "cpu": 24.62,
+          "ram": 30.48,
+          "gpu": 67.35
+        },
+        "allocation_slack_pct": {
+          "cpu": 78.98,
+          "ram": 97.75,
+          "gpu": 86.41
+        }
       },
-      {
-        "policy": "P2",
-        "label": "Intent-Spawner (P2)",
-        "seed": 43,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 17,
-        "retry_events": 17,
-        "oom_rate_pct": 1.7,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 67.25,
-        "cpu_slack_pct": 3.41,
-        "max_concurrency": 77,
-        "pending_sessions_count": 17,
-        "wasted_core_hours": 0.4752,
-        "wasted_ram_gb_hours": 1.1881
+      "P1": {
+        "strategy": "P1",
+        "total_submitted_sessions": 785,
+        "completed_sessions": 785,
+        "unserved_pending_at_end": 0,
+        "oom_count": 81,
+        "oom_rate_pct": 10.318471337579618,
+        "peak_running_concurrency": 126,
+        "avg_running_concurrency": 70.74,
+        "peak_pending_queue": 0,
+        "avg_pending_queue": 0.0,
+        "queued_jobs_count": 0,
+        "queued_jobs_pct": 0.0,
+        "mean_wait_time_minutes": 0.0,
+        "p95_wait_time_minutes": 0.0,
+        "cluster_capacity_stranding_pct": {
+          "cpu": 5.57,
+          "ram": 7.64,
+          "gpu": 0.0
+        },
+        "allocation_slack_pct": {
+          "cpu": 48.9,
+          "ram": 98.89,
+          "gpu": 0.0
+        }
       },
-      {
-        "policy": "P2",
-        "label": "Intent-Spawner (P2)",
-        "seed": 44,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 16,
-        "retry_events": 16,
-        "oom_rate_pct": 1.6,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 69.46,
-        "cpu_slack_pct": 4.87,
-        "max_concurrency": 77,
-        "pending_sessions_count": 16,
-        "wasted_core_hours": 0.3367,
-        "wasted_ram_gb_hours": 0.8418
-      },
-      {
-        "policy": "P2",
-        "label": "Intent-Spawner (P2)",
-        "seed": 45,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 16,
-        "retry_events": 16,
-        "oom_rate_pct": 1.6,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 68.77,
-        "cpu_slack_pct": 2.98,
-        "max_concurrency": 76,
-        "pending_sessions_count": 16,
-        "wasted_core_hours": 0.438,
-        "wasted_ram_gb_hours": 1.095
-      },
-      {
-        "policy": "P2",
-        "label": "Intent-Spawner (P2)",
-        "seed": 46,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 20,
-        "retry_events": 20,
-        "oom_rate_pct": 2.0,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 70.39,
-        "cpu_slack_pct": 5.02,
-        "max_concurrency": 76,
-        "pending_sessions_count": 20,
-        "wasted_core_hours": 0.4917,
-        "wasted_ram_gb_hours": 1.2293
-      },
-      {
-        "policy": "P2",
-        "label": "Intent-Spawner (P2)",
-        "seed": 47,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 15,
-        "retry_events": 15,
-        "oom_rate_pct": 1.5,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 69.14,
-        "cpu_slack_pct": 2.53,
-        "max_concurrency": 76,
-        "pending_sessions_count": 15,
-        "wasted_core_hours": 0.2028,
-        "wasted_ram_gb_hours": 0.507
-      },
-      {
-        "policy": "P2",
-        "label": "Intent-Spawner (P2)",
-        "seed": 48,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 14,
-        "retry_events": 14,
-        "oom_rate_pct": 1.4,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 70.82,
-        "cpu_slack_pct": 3.67,
-        "max_concurrency": 77,
-        "pending_sessions_count": 14,
-        "wasted_core_hours": 0.2958,
-        "wasted_ram_gb_hours": 0.7394
-      },
-      {
-        "policy": "P2",
-        "label": "Intent-Spawner (P2)",
-        "seed": 49,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 18,
-        "retry_events": 18,
-        "oom_rate_pct": 1.8,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 68.76,
-        "cpu_slack_pct": 4.77,
-        "max_concurrency": 76,
-        "pending_sessions_count": 18,
-        "wasted_core_hours": 0.5842,
-        "wasted_ram_gb_hours": 1.4604
-      },
-      {
-        "policy": "P2",
-        "label": "Intent-Spawner (P2)",
-        "seed": 50,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 14,
-        "retry_events": 14,
-        "oom_rate_pct": 1.4,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 70.48,
-        "cpu_slack_pct": 6.47,
-        "max_concurrency": 76,
-        "pending_sessions_count": 14,
-        "wasted_core_hours": 0.3479,
-        "wasted_ram_gb_hours": 0.8699
-      },
-      {
-        "policy": "P2",
-        "label": "Intent-Spawner (P2)",
-        "seed": 51,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 16,
-        "retry_events": 16,
-        "oom_rate_pct": 1.6,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 67.43,
-        "cpu_slack_pct": 2.94,
-        "max_concurrency": 77,
-        "pending_sessions_count": 16,
-        "wasted_core_hours": 0.4436,
-        "wasted_ram_gb_hours": 1.1091
-      },
-      {
-        "policy": "P2",
-        "label": "Intent-Spawner (P2)",
-        "seed": 52,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 9,
-        "retry_events": 9,
-        "oom_rate_pct": 0.9,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 69.39,
-        "cpu_slack_pct": 3.66,
-        "max_concurrency": 76,
-        "pending_sessions_count": 9,
-        "wasted_core_hours": 0.1957,
-        "wasted_ram_gb_hours": 0.4892
-      },
-      {
-        "policy": "P2",
-        "label": "Intent-Spawner (P2)",
-        "seed": 53,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 15,
-        "retry_events": 15,
-        "oom_rate_pct": 1.5,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 70.15,
-        "cpu_slack_pct": 6.12,
-        "max_concurrency": 77,
-        "pending_sessions_count": 15,
-        "wasted_core_hours": 0.3409,
-        "wasted_ram_gb_hours": 0.8523
-      },
-      {
-        "policy": "P2",
-        "label": "Intent-Spawner (P2)",
-        "seed": 54,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 8,
-        "retry_events": 8,
-        "oom_rate_pct": 0.8,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 70.73,
-        "cpu_slack_pct": 5.41,
-        "max_concurrency": 76,
-        "pending_sessions_count": 8,
-        "wasted_core_hours": 0.1645,
-        "wasted_ram_gb_hours": 0.4112
-      },
-      {
-        "policy": "P2",
-        "label": "Intent-Spawner (P2)",
-        "seed": 55,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 21,
-        "retry_events": 21,
-        "oom_rate_pct": 2.1,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 68.76,
-        "cpu_slack_pct": 6.65,
-        "max_concurrency": 77,
-        "pending_sessions_count": 21,
-        "wasted_core_hours": 0.5484,
-        "wasted_ram_gb_hours": 1.371
-      },
-      {
-        "policy": "P2",
-        "label": "Intent-Spawner (P2)",
-        "seed": 56,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 14,
-        "retry_events": 14,
-        "oom_rate_pct": 1.4,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 69.16,
-        "cpu_slack_pct": 2.12,
-        "max_concurrency": 76,
-        "pending_sessions_count": 14,
-        "wasted_core_hours": 0.2423,
-        "wasted_ram_gb_hours": 0.6057
-      },
-      {
-        "policy": "P2",
-        "label": "Intent-Spawner (P2)",
-        "seed": 57,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 17,
-        "retry_events": 17,
-        "oom_rate_pct": 1.7,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 70.58,
-        "cpu_slack_pct": 3.33,
-        "max_concurrency": 77,
-        "pending_sessions_count": 17,
-        "wasted_core_hours": 0.4871,
-        "wasted_ram_gb_hours": 1.2177
-      },
-      {
-        "policy": "P2",
-        "label": "Intent-Spawner (P2)",
-        "seed": 58,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 11,
-        "retry_events": 11,
-        "oom_rate_pct": 1.1,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 67.75,
-        "cpu_slack_pct": 3.01,
-        "max_concurrency": 77,
-        "pending_sessions_count": 11,
-        "wasted_core_hours": 0.2332,
-        "wasted_ram_gb_hours": 0.583
-      },
-      {
-        "policy": "P2",
-        "label": "Intent-Spawner (P2)",
-        "seed": 59,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 12,
-        "retry_events": 12,
-        "oom_rate_pct": 1.2,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 70.9,
-        "cpu_slack_pct": 4.79,
-        "max_concurrency": 76,
-        "pending_sessions_count": 12,
-        "wasted_core_hours": 0.5232,
-        "wasted_ram_gb_hours": 1.308
-      },
-      {
-        "policy": "P2",
-        "label": "Intent-Spawner (P2)",
-        "seed": 60,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 18,
-        "retry_events": 18,
-        "oom_rate_pct": 1.8,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 67.87,
-        "cpu_slack_pct": 5.07,
-        "max_concurrency": 77,
-        "pending_sessions_count": 18,
-        "wasted_core_hours": 0.294,
-        "wasted_ram_gb_hours": 0.7349
-      },
-      {
-        "policy": "P2",
-        "label": "Intent-Spawner (P2)",
-        "seed": 61,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 13,
-        "retry_events": 13,
-        "oom_rate_pct": 1.3,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 67.89,
-        "cpu_slack_pct": 2.86,
-        "max_concurrency": 76,
-        "pending_sessions_count": 13,
-        "wasted_core_hours": 0.2931,
-        "wasted_ram_gb_hours": 0.7328
-      },
-      {
-        "policy": "P2",
-        "label": "Intent-Spawner (P2)",
-        "seed": 62,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 19,
-        "retry_events": 19,
-        "oom_rate_pct": 1.9,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 70.88,
-        "cpu_slack_pct": 5.56,
-        "max_concurrency": 76,
-        "pending_sessions_count": 19,
-        "wasted_core_hours": 0.5923,
-        "wasted_ram_gb_hours": 1.4807
-      },
-      {
-        "policy": "P2",
-        "label": "Intent-Spawner (P2)",
-        "seed": 63,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 19,
-        "retry_events": 19,
-        "oom_rate_pct": 1.9,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 67.69,
-        "cpu_slack_pct": 2.77,
-        "max_concurrency": 76,
-        "pending_sessions_count": 19,
-        "wasted_core_hours": 0.2193,
-        "wasted_ram_gb_hours": 0.5483
-      },
-      {
-        "policy": "P2",
-        "label": "Intent-Spawner (P2)",
-        "seed": 64,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 20,
-        "retry_events": 20,
-        "oom_rate_pct": 2.0,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 68.48,
-        "cpu_slack_pct": 5.44,
-        "max_concurrency": 77,
-        "pending_sessions_count": 20,
-        "wasted_core_hours": 0.5279,
-        "wasted_ram_gb_hours": 1.3198
-      },
-      {
-        "policy": "P2",
-        "label": "Intent-Spawner (P2)",
-        "seed": 65,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 18,
-        "retry_events": 18,
-        "oom_rate_pct": 1.8,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 69.33,
-        "cpu_slack_pct": 6.96,
-        "max_concurrency": 76,
-        "pending_sessions_count": 18,
-        "wasted_core_hours": 0.5808,
-        "wasted_ram_gb_hours": 1.452
-      },
-      {
-        "policy": "P2",
-        "label": "Intent-Spawner (P2)",
-        "seed": 66,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 12,
-        "retry_events": 12,
-        "oom_rate_pct": 1.2,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 68.48,
-        "cpu_slack_pct": 3.35,
-        "max_concurrency": 76,
-        "pending_sessions_count": 12,
-        "wasted_core_hours": 0.3847,
-        "wasted_ram_gb_hours": 0.9618
-      },
-      {
-        "policy": "P2",
-        "label": "Intent-Spawner (P2)",
-        "seed": 67,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 17,
-        "retry_events": 17,
-        "oom_rate_pct": 1.7,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 68.94,
-        "cpu_slack_pct": 3.62,
-        "max_concurrency": 76,
-        "pending_sessions_count": 17,
-        "wasted_core_hours": 0.2211,
-        "wasted_ram_gb_hours": 0.5527
-      },
-      {
-        "policy": "P2",
-        "label": "Intent-Spawner (P2)",
-        "seed": 68,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 18,
-        "retry_events": 18,
-        "oom_rate_pct": 1.8,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 70.57,
-        "cpu_slack_pct": 2.36,
-        "max_concurrency": 76,
-        "pending_sessions_count": 18,
-        "wasted_core_hours": 0.5554,
-        "wasted_ram_gb_hours": 1.3885
-      },
-      {
-        "policy": "P2",
-        "label": "Intent-Spawner (P2)",
-        "seed": 69,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 13,
-        "retry_events": 13,
-        "oom_rate_pct": 1.3,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 67.46,
-        "cpu_slack_pct": 2.91,
-        "max_concurrency": 76,
-        "pending_sessions_count": 13,
-        "wasted_core_hours": 0.3282,
-        "wasted_ram_gb_hours": 0.8205
-      },
-      {
-        "policy": "P2",
-        "label": "Intent-Spawner (P2)",
-        "seed": 70,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 10,
-        "retry_events": 10,
-        "oom_rate_pct": 1.0,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 66.43,
-        "cpu_slack_pct": 1.84,
-        "max_concurrency": 76,
-        "pending_sessions_count": 10,
-        "wasted_core_hours": 0.2233,
-        "wasted_ram_gb_hours": 0.5583
-      },
-      {
-        "policy": "P2",
-        "label": "Intent-Spawner (P2)",
-        "seed": 71,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 21,
-        "retry_events": 21,
-        "oom_rate_pct": 2.1,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 71.09,
-        "cpu_slack_pct": 4.62,
-        "max_concurrency": 76,
-        "pending_sessions_count": 21,
-        "wasted_core_hours": 0.4424,
-        "wasted_ram_gb_hours": 1.106
+      "P2": {
+        "strategy": "P2",
+        "total_submitted_sessions": 785,
+        "completed_sessions": 785,
+        "unserved_pending_at_end": 0,
+        "oom_count": 0,
+        "oom_rate_pct": 0.0,
+        "peak_running_concurrency": 145,
+        "avg_running_concurrency": 78.54,
+        "peak_pending_queue": 0,
+        "avg_pending_queue": 0.0,
+        "queued_jobs_count": 0,
+        "queued_jobs_pct": 0.0,
+        "mean_wait_time_minutes": 0.0,
+        "p95_wait_time_minutes": 0.0,
+        "cluster_capacity_stranding_pct": {
+          "cpu": 1.25,
+          "ram": 0.95,
+          "gpu": 0.0
+        },
+        "allocation_slack_pct": {
+          "cpu": 15.9,
+          "ram": 57.39,
+          "gpu": 0.0
+        }
       }
-    ],
-    "P1": [
-      {
-        "policy": "P1",
-        "label": "Rule-based Heuristic (P1)",
-        "seed": 42,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 7,
-        "retry_events": 7,
-        "oom_rate_pct": 0.7,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 76.47,
-        "cpu_slack_pct": 7.82,
-        "max_concurrency": 77,
-        "pending_sessions_count": 7,
-        "wasted_core_hours": 0.2615,
-        "wasted_ram_gb_hours": 0.6538
+    },
+    "44": {
+      "B0": {
+        "strategy": "B0",
+        "total_submitted_sessions": 800,
+        "completed_sessions": 800,
+        "unserved_pending_at_end": 0,
+        "oom_count": 0,
+        "oom_rate_pct": 0.0,
+        "peak_running_concurrency": 100,
+        "avg_running_concurrency": 80.13,
+        "peak_pending_queue": 70,
+        "avg_pending_queue": 19.5,
+        "queued_jobs_count": 494,
+        "queued_jobs_pct": 61.75,
+        "mean_wait_time_minutes": 18.97,
+        "p95_wait_time_minutes": 34.36,
+        "cluster_capacity_stranding_pct": {
+          "cpu": 25.34,
+          "ram": 31.37,
+          "gpu": 70.08
+        },
+        "allocation_slack_pct": {
+          "cpu": 79.07,
+          "ram": 97.88,
+          "gpu": 87.46
+        }
       },
-      {
-        "policy": "P1",
-        "label": "Rule-based Heuristic (P1)",
-        "seed": 43,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 3,
-        "retry_events": 3,
-        "oom_rate_pct": 0.3,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 74.83,
-        "cpu_slack_pct": 6.34,
-        "max_concurrency": 76,
-        "pending_sessions_count": 3,
-        "wasted_core_hours": 0.0696,
-        "wasted_ram_gb_hours": 0.1741
+      "P1": {
+        "strategy": "P1",
+        "total_submitted_sessions": 800,
+        "completed_sessions": 800,
+        "unserved_pending_at_end": 0,
+        "oom_count": 76,
+        "oom_rate_pct": 9.5,
+        "peak_running_concurrency": 135,
+        "avg_running_concurrency": 74.74,
+        "peak_pending_queue": 0,
+        "avg_pending_queue": 0.0,
+        "queued_jobs_count": 0,
+        "queued_jobs_pct": 0.0,
+        "mean_wait_time_minutes": 0.0,
+        "p95_wait_time_minutes": 0.0,
+        "cluster_capacity_stranding_pct": {
+          "cpu": 5.5,
+          "ram": 7.51,
+          "gpu": 0.0
+        },
+        "allocation_slack_pct": {
+          "cpu": 47.27,
+          "ram": 98.82,
+          "gpu": 0.0
+        }
       },
-      {
-        "policy": "P1",
-        "label": "Rule-based Heuristic (P1)",
-        "seed": 44,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 5,
-        "retry_events": 5,
-        "oom_rate_pct": 0.5,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 75.98,
-        "cpu_slack_pct": 7.54,
-        "max_concurrency": 76,
-        "pending_sessions_count": 5,
-        "wasted_core_hours": 0.1124,
-        "wasted_ram_gb_hours": 0.281
-      },
-      {
-        "policy": "P1",
-        "label": "Rule-based Heuristic (P1)",
-        "seed": 45,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 3,
-        "retry_events": 3,
-        "oom_rate_pct": 0.3,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 76.25,
-        "cpu_slack_pct": 5.21,
-        "max_concurrency": 76,
-        "pending_sessions_count": 3,
-        "wasted_core_hours": 0.0868,
-        "wasted_ram_gb_hours": 0.217
-      },
-      {
-        "policy": "P1",
-        "label": "Rule-based Heuristic (P1)",
-        "seed": 46,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 9,
-        "retry_events": 9,
-        "oom_rate_pct": 0.9,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 76.29,
-        "cpu_slack_pct": 5.5,
-        "max_concurrency": 76,
-        "pending_sessions_count": 9,
-        "wasted_core_hours": 0.3578,
-        "wasted_ram_gb_hours": 0.8944
-      },
-      {
-        "policy": "P1",
-        "label": "Rule-based Heuristic (P1)",
-        "seed": 47,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 7,
-        "retry_events": 7,
-        "oom_rate_pct": 0.7,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 75.35,
-        "cpu_slack_pct": 4.56,
-        "max_concurrency": 76,
-        "pending_sessions_count": 7,
-        "wasted_core_hours": 0.0114,
-        "wasted_ram_gb_hours": 0.0285
-      },
-      {
-        "policy": "P1",
-        "label": "Rule-based Heuristic (P1)",
-        "seed": 48,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 5,
-        "retry_events": 5,
-        "oom_rate_pct": 0.5,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 76.37,
-        "cpu_slack_pct": 4.71,
-        "max_concurrency": 76,
-        "pending_sessions_count": 5,
-        "wasted_core_hours": 0.0822,
-        "wasted_ram_gb_hours": 0.2054
-      },
-      {
-        "policy": "P1",
-        "label": "Rule-based Heuristic (P1)",
-        "seed": 49,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 7,
-        "retry_events": 7,
-        "oom_rate_pct": 0.7,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 75.09,
-        "cpu_slack_pct": 6.83,
-        "max_concurrency": 76,
-        "pending_sessions_count": 7,
-        "wasted_core_hours": 0.3737,
-        "wasted_ram_gb_hours": 0.9344
-      },
-      {
-        "policy": "P1",
-        "label": "Rule-based Heuristic (P1)",
-        "seed": 50,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 6,
-        "retry_events": 6,
-        "oom_rate_pct": 0.6,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 76.36,
-        "cpu_slack_pct": 7.46,
-        "max_concurrency": 76,
-        "pending_sessions_count": 6,
-        "wasted_core_hours": 0.1516,
-        "wasted_ram_gb_hours": 0.379
-      },
-      {
-        "policy": "P1",
-        "label": "Rule-based Heuristic (P1)",
-        "seed": 51,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 6,
-        "retry_events": 6,
-        "oom_rate_pct": 0.6,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 74.13,
-        "cpu_slack_pct": 6.0,
-        "max_concurrency": 77,
-        "pending_sessions_count": 6,
-        "wasted_core_hours": 0.208,
-        "wasted_ram_gb_hours": 0.52
-      },
-      {
-        "policy": "P1",
-        "label": "Rule-based Heuristic (P1)",
-        "seed": 52,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 2,
-        "retry_events": 2,
-        "oom_rate_pct": 0.2,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 76.13,
-        "cpu_slack_pct": 7.07,
-        "max_concurrency": 76,
-        "pending_sessions_count": 2,
-        "wasted_core_hours": 0.0102,
-        "wasted_ram_gb_hours": 0.0255
-      },
-      {
-        "policy": "P1",
-        "label": "Rule-based Heuristic (P1)",
-        "seed": 53,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 9,
-        "retry_events": 9,
-        "oom_rate_pct": 0.9,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 76.43,
-        "cpu_slack_pct": 7.83,
-        "max_concurrency": 77,
-        "pending_sessions_count": 9,
-        "wasted_core_hours": 0.2042,
-        "wasted_ram_gb_hours": 0.5104
-      },
-      {
-        "policy": "P1",
-        "label": "Rule-based Heuristic (P1)",
-        "seed": 54,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 1,
-        "retry_events": 1,
-        "oom_rate_pct": 0.1,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 76.65,
-        "cpu_slack_pct": 6.19,
-        "max_concurrency": 76,
-        "pending_sessions_count": 1,
-        "wasted_core_hours": 0.002,
-        "wasted_ram_gb_hours": 0.0049
-      },
-      {
-        "policy": "P1",
-        "label": "Rule-based Heuristic (P1)",
-        "seed": 55,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 5,
-        "retry_events": 5,
-        "oom_rate_pct": 0.5,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 76.34,
-        "cpu_slack_pct": 7.28,
-        "max_concurrency": 76,
-        "pending_sessions_count": 5,
-        "wasted_core_hours": 0.2212,
-        "wasted_ram_gb_hours": 0.553
-      },
-      {
-        "policy": "P1",
-        "label": "Rule-based Heuristic (P1)",
-        "seed": 56,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 6,
-        "retry_events": 6,
-        "oom_rate_pct": 0.6,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 76.72,
-        "cpu_slack_pct": 4.61,
-        "max_concurrency": 76,
-        "pending_sessions_count": 6,
-        "wasted_core_hours": 0.0585,
-        "wasted_ram_gb_hours": 0.1462
-      },
-      {
-        "policy": "P1",
-        "label": "Rule-based Heuristic (P1)",
-        "seed": 57,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 7,
-        "retry_events": 7,
-        "oom_rate_pct": 0.7,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 76.34,
-        "cpu_slack_pct": 4.79,
-        "max_concurrency": 77,
-        "pending_sessions_count": 7,
-        "wasted_core_hours": 0.1587,
-        "wasted_ram_gb_hours": 0.3967
-      },
-      {
-        "policy": "P1",
-        "label": "Rule-based Heuristic (P1)",
-        "seed": 58,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 4,
-        "retry_events": 4,
-        "oom_rate_pct": 0.4,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 74.97,
-        "cpu_slack_pct": 5.56,
-        "max_concurrency": 77,
-        "pending_sessions_count": 4,
-        "wasted_core_hours": 0.1109,
-        "wasted_ram_gb_hours": 0.2773
-      },
-      {
-        "policy": "P1",
-        "label": "Rule-based Heuristic (P1)",
-        "seed": 59,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 6,
-        "retry_events": 6,
-        "oom_rate_pct": 0.6,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 76.98,
-        "cpu_slack_pct": 8.46,
-        "max_concurrency": 76,
-        "pending_sessions_count": 6,
-        "wasted_core_hours": 0.3592,
-        "wasted_ram_gb_hours": 0.898
-      },
-      {
-        "policy": "P1",
-        "label": "Rule-based Heuristic (P1)",
-        "seed": 60,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 6,
-        "retry_events": 6,
-        "oom_rate_pct": 0.6,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 75.54,
-        "cpu_slack_pct": 6.84,
-        "max_concurrency": 77,
-        "pending_sessions_count": 6,
-        "wasted_core_hours": 0.1096,
-        "wasted_ram_gb_hours": 0.2741
-      },
-      {
-        "policy": "P1",
-        "label": "Rule-based Heuristic (P1)",
-        "seed": 61,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 5,
-        "retry_events": 5,
-        "oom_rate_pct": 0.5,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 74.69,
-        "cpu_slack_pct": 6.12,
-        "max_concurrency": 76,
-        "pending_sessions_count": 5,
-        "wasted_core_hours": 0.1143,
-        "wasted_ram_gb_hours": 0.2858
-      },
-      {
-        "policy": "P1",
-        "label": "Rule-based Heuristic (P1)",
-        "seed": 62,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 6,
-        "retry_events": 6,
-        "oom_rate_pct": 0.6,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 76.31,
-        "cpu_slack_pct": 5.42,
-        "max_concurrency": 76,
-        "pending_sessions_count": 6,
-        "wasted_core_hours": 0.2648,
-        "wasted_ram_gb_hours": 0.662
-      },
-      {
-        "policy": "P1",
-        "label": "Rule-based Heuristic (P1)",
-        "seed": 63,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 8,
-        "retry_events": 8,
-        "oom_rate_pct": 0.8,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 74.3,
-        "cpu_slack_pct": 6.15,
-        "max_concurrency": 76,
-        "pending_sessions_count": 8,
-        "wasted_core_hours": 0.0909,
-        "wasted_ram_gb_hours": 0.2272
-      },
-      {
-        "policy": "P1",
-        "label": "Rule-based Heuristic (P1)",
-        "seed": 64,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 7,
-        "retry_events": 7,
-        "oom_rate_pct": 0.7,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 75.49,
-        "cpu_slack_pct": 7.75,
-        "max_concurrency": 77,
-        "pending_sessions_count": 7,
-        "wasted_core_hours": 0.2866,
-        "wasted_ram_gb_hours": 0.7165
-      },
-      {
-        "policy": "P1",
-        "label": "Rule-based Heuristic (P1)",
-        "seed": 65,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 4,
-        "retry_events": 4,
-        "oom_rate_pct": 0.4,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 76.38,
-        "cpu_slack_pct": 8.35,
-        "max_concurrency": 76,
-        "pending_sessions_count": 4,
-        "wasted_core_hours": 0.0699,
-        "wasted_ram_gb_hours": 0.1748
-      },
-      {
-        "policy": "P1",
-        "label": "Rule-based Heuristic (P1)",
-        "seed": 66,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 4,
-        "retry_events": 4,
-        "oom_rate_pct": 0.4,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 75.41,
-        "cpu_slack_pct": 6.37,
-        "max_concurrency": 76,
-        "pending_sessions_count": 4,
-        "wasted_core_hours": 0.1595,
-        "wasted_ram_gb_hours": 0.3987
-      },
-      {
-        "policy": "P1",
-        "label": "Rule-based Heuristic (P1)",
-        "seed": 67,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 7,
-        "retry_events": 7,
-        "oom_rate_pct": 0.7,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 75.88,
-        "cpu_slack_pct": 5.13,
-        "max_concurrency": 76,
-        "pending_sessions_count": 7,
-        "wasted_core_hours": 0.06,
-        "wasted_ram_gb_hours": 0.15
-      },
-      {
-        "policy": "P1",
-        "label": "Rule-based Heuristic (P1)",
-        "seed": 68,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 6,
-        "retry_events": 6,
-        "oom_rate_pct": 0.6,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 78.06,
-        "cpu_slack_pct": 6.64,
-        "max_concurrency": 76,
-        "pending_sessions_count": 6,
-        "wasted_core_hours": 0.305,
-        "wasted_ram_gb_hours": 0.7625
-      },
-      {
-        "policy": "P1",
-        "label": "Rule-based Heuristic (P1)",
-        "seed": 69,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 2,
-        "retry_events": 2,
-        "oom_rate_pct": 0.2,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 74.47,
-        "cpu_slack_pct": 6.78,
-        "max_concurrency": 76,
-        "pending_sessions_count": 2,
-        "wasted_core_hours": 0.0879,
-        "wasted_ram_gb_hours": 0.2197
-      },
-      {
-        "policy": "P1",
-        "label": "Rule-based Heuristic (P1)",
-        "seed": 70,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 4,
-        "retry_events": 4,
-        "oom_rate_pct": 0.4,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 75.83,
-        "cpu_slack_pct": 5.42,
-        "max_concurrency": 76,
-        "pending_sessions_count": 4,
-        "wasted_core_hours": 0.0977,
-        "wasted_ram_gb_hours": 0.2443
-      },
-      {
-        "policy": "P1",
-        "label": "Rule-based Heuristic (P1)",
-        "seed": 71,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 8,
-        "retry_events": 8,
-        "oom_rate_pct": 0.8,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 77.66,
-        "cpu_slack_pct": 8.19,
-        "max_concurrency": 76,
-        "pending_sessions_count": 8,
-        "wasted_core_hours": 0.0933,
-        "wasted_ram_gb_hours": 0.2333
+      "P2": {
+        "strategy": "P2",
+        "total_submitted_sessions": 800,
+        "completed_sessions": 800,
+        "unserved_pending_at_end": 0,
+        "oom_count": 0,
+        "oom_rate_pct": 0.0,
+        "peak_running_concurrency": 151,
+        "avg_running_concurrency": 82.51,
+        "peak_pending_queue": 0,
+        "avg_pending_queue": 0.0,
+        "queued_jobs_count": 0,
+        "queued_jobs_pct": 0.0,
+        "mean_wait_time_minutes": 0.0,
+        "p95_wait_time_minutes": 0.0,
+        "cluster_capacity_stranding_pct": {
+          "cpu": 1.34,
+          "ram": 0.99,
+          "gpu": 0.0
+        },
+        "allocation_slack_pct": {
+          "cpu": 16.27,
+          "ram": 58.78,
+          "gpu": 0.0
+        }
       }
-    ],
-    "B0_0.2:0.3:0.5": [
-      {
-        "policy": "B0_0.2:0.3:0.5",
-        "label": "Manual Defensive (B0, 0.2:0.3:0.5)",
-        "seed": 42,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 14,
-        "retry_events": 14,
-        "oom_rate_pct": 1.4,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 81.22,
-        "cpu_slack_pct": 6.51,
-        "max_concurrency": 77,
-        "pending_sessions_count": 14,
-        "wasted_core_hours": 0.3472,
-        "wasted_ram_gb_hours": 0.868
+    },
+    "45": {
+      "B0": {
+        "strategy": "B0",
+        "total_submitted_sessions": 793,
+        "completed_sessions": 793,
+        "unserved_pending_at_end": 0,
+        "oom_count": 0,
+        "oom_rate_pct": 0.0,
+        "peak_running_concurrency": 100,
+        "avg_running_concurrency": 78.83,
+        "peak_pending_queue": 65,
+        "avg_pending_queue": 14.79,
+        "queued_jobs_count": 460,
+        "queued_jobs_pct": 58.01,
+        "mean_wait_time_minutes": 15.46,
+        "p95_wait_time_minutes": 31.82,
+        "cluster_capacity_stranding_pct": {
+          "cpu": 24.96,
+          "ram": 30.94,
+          "gpu": 70.9
+        },
+        "allocation_slack_pct": {
+          "cpu": 79.17,
+          "ram": 98.11,
+          "gpu": 89.95
+        }
       },
-      {
-        "policy": "B0_0.2:0.3:0.5",
-        "label": "Manual Defensive (B0, 0.2:0.3:0.5)",
-        "seed": 43,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 13,
-        "retry_events": 13,
-        "oom_rate_pct": 1.3,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 80.36,
-        "cpu_slack_pct": 6.5,
-        "max_concurrency": 77,
-        "pending_sessions_count": 13,
-        "wasted_core_hours": 0.365,
-        "wasted_ram_gb_hours": 0.9126
+      "P1": {
+        "strategy": "P1",
+        "total_submitted_sessions": 793,
+        "completed_sessions": 793,
+        "unserved_pending_at_end": 0,
+        "oom_count": 72,
+        "oom_rate_pct": 9.079445145018916,
+        "peak_running_concurrency": 137,
+        "avg_running_concurrency": 73.9,
+        "peak_pending_queue": 0,
+        "avg_pending_queue": 0.0,
+        "queued_jobs_count": 0,
+        "queued_jobs_pct": 0.0,
+        "mean_wait_time_minutes": 0.0,
+        "p95_wait_time_minutes": 0.0,
+        "cluster_capacity_stranding_pct": {
+          "cpu": 5.01,
+          "ram": 6.95,
+          "gpu": 0.0
+        },
+        "allocation_slack_pct": {
+          "cpu": 45.33,
+          "ram": 98.74,
+          "gpu": 0.0
+        }
       },
-      {
-        "policy": "B0_0.2:0.3:0.5",
-        "label": "Manual Defensive (B0, 0.2:0.3:0.5)",
-        "seed": 44,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 16,
-        "retry_events": 16,
-        "oom_rate_pct": 1.6,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 80.73,
-        "cpu_slack_pct": 6.48,
-        "max_concurrency": 77,
-        "pending_sessions_count": 16,
-        "wasted_core_hours": 0.3367,
-        "wasted_ram_gb_hours": 0.8418
-      },
-      {
-        "policy": "B0_0.2:0.3:0.5",
-        "label": "Manual Defensive (B0, 0.2:0.3:0.5)",
-        "seed": 45,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 12,
-        "retry_events": 12,
-        "oom_rate_pct": 1.2,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 81.32,
-        "cpu_slack_pct": 6.07,
-        "max_concurrency": 76,
-        "pending_sessions_count": 12,
-        "wasted_core_hours": 0.3214,
-        "wasted_ram_gb_hours": 0.8035
-      },
-      {
-        "policy": "B0_0.2:0.3:0.5",
-        "label": "Manual Defensive (B0, 0.2:0.3:0.5)",
-        "seed": 46,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 19,
-        "retry_events": 19,
-        "oom_rate_pct": 1.9,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 81.06,
-        "cpu_slack_pct": 6.43,
-        "max_concurrency": 76,
-        "pending_sessions_count": 19,
-        "wasted_core_hours": 0.4281,
-        "wasted_ram_gb_hours": 1.0703
-      },
-      {
-        "policy": "B0_0.2:0.3:0.5",
-        "label": "Manual Defensive (B0, 0.2:0.3:0.5)",
-        "seed": 47,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 14,
-        "retry_events": 14,
-        "oom_rate_pct": 1.4,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 81.13,
-        "cpu_slack_pct": 6.62,
-        "max_concurrency": 76,
-        "pending_sessions_count": 14,
-        "wasted_core_hours": 0.202,
-        "wasted_ram_gb_hours": 0.5049
-      },
-      {
-        "policy": "B0_0.2:0.3:0.5",
-        "label": "Manual Defensive (B0, 0.2:0.3:0.5)",
-        "seed": 48,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 14,
-        "retry_events": 14,
-        "oom_rate_pct": 1.4,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 80.86,
-        "cpu_slack_pct": 5.91,
-        "max_concurrency": 77,
-        "pending_sessions_count": 14,
-        "wasted_core_hours": 0.2958,
-        "wasted_ram_gb_hours": 0.7394
-      },
-      {
-        "policy": "B0_0.2:0.3:0.5",
-        "label": "Manual Defensive (B0, 0.2:0.3:0.5)",
-        "seed": 49,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 17,
-        "retry_events": 17,
-        "oom_rate_pct": 1.7,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 80.34,
-        "cpu_slack_pct": 6.34,
-        "max_concurrency": 76,
-        "pending_sessions_count": 17,
-        "wasted_core_hours": 0.5038,
-        "wasted_ram_gb_hours": 1.2594
-      },
-      {
-        "policy": "B0_0.2:0.3:0.5",
-        "label": "Manual Defensive (B0, 0.2:0.3:0.5)",
-        "seed": 50,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 13,
-        "retry_events": 13,
-        "oom_rate_pct": 1.3,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 81.2,
-        "cpu_slack_pct": 5.93,
-        "max_concurrency": 76,
-        "pending_sessions_count": 13,
-        "wasted_core_hours": 0.3472,
-        "wasted_ram_gb_hours": 0.8681
-      },
-      {
-        "policy": "B0_0.2:0.3:0.5",
-        "label": "Manual Defensive (B0, 0.2:0.3:0.5)",
-        "seed": 51,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 14,
-        "retry_events": 14,
-        "oom_rate_pct": 1.4,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 79.76,
-        "cpu_slack_pct": 6.1,
-        "max_concurrency": 77,
-        "pending_sessions_count": 14,
-        "wasted_core_hours": 0.324,
-        "wasted_ram_gb_hours": 0.8101
-      },
-      {
-        "policy": "B0_0.2:0.3:0.5",
-        "label": "Manual Defensive (B0, 0.2:0.3:0.5)",
-        "seed": 52,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 8,
-        "retry_events": 8,
-        "oom_rate_pct": 0.8,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 80.43,
-        "cpu_slack_pct": 7.11,
-        "max_concurrency": 76,
-        "pending_sessions_count": 8,
-        "wasted_core_hours": 0.1421,
-        "wasted_ram_gb_hours": 0.3553
-      },
-      {
-        "policy": "B0_0.2:0.3:0.5",
-        "label": "Manual Defensive (B0, 0.2:0.3:0.5)",
-        "seed": 53,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 14,
-        "retry_events": 14,
-        "oom_rate_pct": 1.4,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 80.98,
-        "cpu_slack_pct": 7.42,
-        "max_concurrency": 77,
-        "pending_sessions_count": 14,
-        "wasted_core_hours": 0.34,
-        "wasted_ram_gb_hours": 0.85
-      },
-      {
-        "policy": "B0_0.2:0.3:0.5",
-        "label": "Manual Defensive (B0, 0.2:0.3:0.5)",
-        "seed": 54,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 7,
-        "retry_events": 7,
-        "oom_rate_pct": 0.7,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 80.9,
-        "cpu_slack_pct": 5.59,
-        "max_concurrency": 76,
-        "pending_sessions_count": 7,
-        "wasted_core_hours": 0.1267,
-        "wasted_ram_gb_hours": 0.3168
-      },
-      {
-        "policy": "B0_0.2:0.3:0.5",
-        "label": "Manual Defensive (B0, 0.2:0.3:0.5)",
-        "seed": 55,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 13,
-        "retry_events": 13,
-        "oom_rate_pct": 1.3,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 80.91,
-        "cpu_slack_pct": 6.49,
-        "max_concurrency": 77,
-        "pending_sessions_count": 13,
-        "wasted_core_hours": 0.388,
-        "wasted_ram_gb_hours": 0.97
-      },
-      {
-        "policy": "B0_0.2:0.3:0.5",
-        "label": "Manual Defensive (B0, 0.2:0.3:0.5)",
-        "seed": 56,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 13,
-        "retry_events": 13,
-        "oom_rate_pct": 1.3,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 80.73,
-        "cpu_slack_pct": 4.48,
-        "max_concurrency": 76,
-        "pending_sessions_count": 13,
-        "wasted_core_hours": 0.2422,
-        "wasted_ram_gb_hours": 0.6054
-      },
-      {
-        "policy": "B0_0.2:0.3:0.5",
-        "label": "Manual Defensive (B0, 0.2:0.3:0.5)",
-        "seed": 57,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 17,
-        "retry_events": 17,
-        "oom_rate_pct": 1.7,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 81.34,
-        "cpu_slack_pct": 5.33,
-        "max_concurrency": 77,
-        "pending_sessions_count": 17,
-        "wasted_core_hours": 0.4871,
-        "wasted_ram_gb_hours": 1.2177
-      },
-      {
-        "policy": "B0_0.2:0.3:0.5",
-        "label": "Manual Defensive (B0, 0.2:0.3:0.5)",
-        "seed": 58,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 9,
-        "retry_events": 9,
-        "oom_rate_pct": 0.9,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 80.58,
-        "cpu_slack_pct": 4.75,
-        "max_concurrency": 77,
-        "pending_sessions_count": 9,
-        "wasted_core_hours": 0.1566,
-        "wasted_ram_gb_hours": 0.3914
-      },
-      {
-        "policy": "B0_0.2:0.3:0.5",
-        "label": "Manual Defensive (B0, 0.2:0.3:0.5)",
-        "seed": 59,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 9,
-        "retry_events": 9,
-        "oom_rate_pct": 0.9,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 81.42,
-        "cpu_slack_pct": 7.69,
-        "max_concurrency": 76,
-        "pending_sessions_count": 9,
-        "wasted_core_hours": 0.4315,
-        "wasted_ram_gb_hours": 1.0788
-      },
-      {
-        "policy": "B0_0.2:0.3:0.5",
-        "label": "Manual Defensive (B0, 0.2:0.3:0.5)",
-        "seed": 60,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 14,
-        "retry_events": 14,
-        "oom_rate_pct": 1.4,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 80.54,
-        "cpu_slack_pct": 6.55,
-        "max_concurrency": 77,
-        "pending_sessions_count": 14,
-        "wasted_core_hours": 0.2426,
-        "wasted_ram_gb_hours": 0.6066
-      },
-      {
-        "policy": "B0_0.2:0.3:0.5",
-        "label": "Manual Defensive (B0, 0.2:0.3:0.5)",
-        "seed": 61,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 9,
-        "retry_events": 9,
-        "oom_rate_pct": 0.9,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 80.28,
-        "cpu_slack_pct": 5.67,
-        "max_concurrency": 76,
-        "pending_sessions_count": 9,
-        "wasted_core_hours": 0.2371,
-        "wasted_ram_gb_hours": 0.5927
-      },
-      {
-        "policy": "B0_0.2:0.3:0.5",
-        "label": "Manual Defensive (B0, 0.2:0.3:0.5)",
-        "seed": 62,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 17,
-        "retry_events": 17,
-        "oom_rate_pct": 1.7,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 81.03,
-        "cpu_slack_pct": 6.23,
-        "max_concurrency": 76,
-        "pending_sessions_count": 17,
-        "wasted_core_hours": 0.5662,
-        "wasted_ram_gb_hours": 1.4155
-      },
-      {
-        "policy": "B0_0.2:0.3:0.5",
-        "label": "Manual Defensive (B0, 0.2:0.3:0.5)",
-        "seed": 63,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 17,
-        "retry_events": 17,
-        "oom_rate_pct": 1.7,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 80.16,
-        "cpu_slack_pct": 5.73,
-        "max_concurrency": 76,
-        "pending_sessions_count": 17,
-        "wasted_core_hours": 0.1456,
-        "wasted_ram_gb_hours": 0.3639
-      },
-      {
-        "policy": "B0_0.2:0.3:0.5",
-        "label": "Manual Defensive (B0, 0.2:0.3:0.5)",
-        "seed": 64,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 19,
-        "retry_events": 19,
-        "oom_rate_pct": 1.9,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 80.0,
-        "cpu_slack_pct": 7.44,
-        "max_concurrency": 77,
-        "pending_sessions_count": 19,
-        "wasted_core_hours": 0.5212,
-        "wasted_ram_gb_hours": 1.303
-      },
-      {
-        "policy": "B0_0.2:0.3:0.5",
-        "label": "Manual Defensive (B0, 0.2:0.3:0.5)",
-        "seed": 65,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 14,
-        "retry_events": 14,
-        "oom_rate_pct": 1.4,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 80.93,
-        "cpu_slack_pct": 7.55,
-        "max_concurrency": 76,
-        "pending_sessions_count": 14,
-        "wasted_core_hours": 0.4624,
-        "wasted_ram_gb_hours": 1.156
-      },
-      {
-        "policy": "B0_0.2:0.3:0.5",
-        "label": "Manual Defensive (B0, 0.2:0.3:0.5)",
-        "seed": 66,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 12,
-        "retry_events": 12,
-        "oom_rate_pct": 1.2,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 80.75,
-        "cpu_slack_pct": 6.17,
-        "max_concurrency": 76,
-        "pending_sessions_count": 12,
-        "wasted_core_hours": 0.3847,
-        "wasted_ram_gb_hours": 0.9618
-      },
-      {
-        "policy": "B0_0.2:0.3:0.5",
-        "label": "Manual Defensive (B0, 0.2:0.3:0.5)",
-        "seed": 67,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 14,
-        "retry_events": 14,
-        "oom_rate_pct": 1.4,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 81.04,
-        "cpu_slack_pct": 4.94,
-        "max_concurrency": 76,
-        "pending_sessions_count": 14,
-        "wasted_core_hours": 0.2133,
-        "wasted_ram_gb_hours": 0.5334
-      },
-      {
-        "policy": "B0_0.2:0.3:0.5",
-        "label": "Manual Defensive (B0, 0.2:0.3:0.5)",
-        "seed": 68,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 13,
-        "retry_events": 13,
-        "oom_rate_pct": 1.3,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 81.72,
-        "cpu_slack_pct": 6.9,
-        "max_concurrency": 76,
-        "pending_sessions_count": 13,
-        "wasted_core_hours": 0.4608,
-        "wasted_ram_gb_hours": 1.152
-      },
-      {
-        "policy": "B0_0.2:0.3:0.5",
-        "label": "Manual Defensive (B0, 0.2:0.3:0.5)",
-        "seed": 69,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 11,
-        "retry_events": 11,
-        "oom_rate_pct": 1.1,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 79.78,
-        "cpu_slack_pct": 7.68,
-        "max_concurrency": 76,
-        "pending_sessions_count": 11,
-        "wasted_core_hours": 0.2467,
-        "wasted_ram_gb_hours": 0.6169
-      },
-      {
-        "policy": "B0_0.2:0.3:0.5",
-        "label": "Manual Defensive (B0, 0.2:0.3:0.5)",
-        "seed": 70,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 8,
-        "retry_events": 8,
-        "oom_rate_pct": 0.8,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 80.64,
-        "cpu_slack_pct": 4.52,
-        "max_concurrency": 76,
-        "pending_sessions_count": 8,
-        "wasted_core_hours": 0.218,
-        "wasted_ram_gb_hours": 0.545
-      },
-      {
-        "policy": "B0_0.2:0.3:0.5",
-        "label": "Manual Defensive (B0, 0.2:0.3:0.5)",
-        "seed": 71,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 20,
-        "retry_events": 20,
-        "oom_rate_pct": 2.0,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 81.66,
-        "cpu_slack_pct": 7.33,
-        "max_concurrency": 76,
-        "pending_sessions_count": 20,
-        "wasted_core_hours": 0.4046,
-        "wasted_ram_gb_hours": 1.0115
+      "P2": {
+        "strategy": "P2",
+        "total_submitted_sessions": 793,
+        "completed_sessions": 793,
+        "unserved_pending_at_end": 0,
+        "oom_count": 0,
+        "oom_rate_pct": 0.0,
+        "peak_running_concurrency": 143,
+        "avg_running_concurrency": 80.55,
+        "peak_pending_queue": 0,
+        "avg_pending_queue": 0.0,
+        "queued_jobs_count": 0,
+        "queued_jobs_pct": 0.0,
+        "mean_wait_time_minutes": 0.0,
+        "p95_wait_time_minutes": 0.0,
+        "cluster_capacity_stranding_pct": {
+          "cpu": 1.35,
+          "ram": 0.96,
+          "gpu": 0.0
+        },
+        "allocation_slack_pct": {
+          "cpu": 16.74,
+          "ram": 61.1,
+          "gpu": 0.0
+        }
       }
-    ],
-    "B0_0.1:0.2:0.7": [
-      {
-        "policy": "B0_0.1:0.2:0.7",
-        "label": "Manual Defensive (B0, 0.1:0.2:0.7)",
-        "seed": 42,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 8,
-        "retry_events": 8,
-        "oom_rate_pct": 0.8,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 83.81,
-        "cpu_slack_pct": 7.67,
-        "max_concurrency": 77,
-        "pending_sessions_count": 8,
-        "wasted_core_hours": 0.3306,
-        "wasted_ram_gb_hours": 0.8266
+    },
+    "46": {
+      "B0": {
+        "strategy": "B0",
+        "total_submitted_sessions": 800,
+        "completed_sessions": 800,
+        "unserved_pending_at_end": 0,
+        "oom_count": 0,
+        "oom_rate_pct": 0.0,
+        "peak_running_concurrency": 100,
+        "avg_running_concurrency": 79.05,
+        "peak_pending_queue": 83,
+        "avg_pending_queue": 18.51,
+        "queued_jobs_count": 446,
+        "queued_jobs_pct": 55.75,
+        "mean_wait_time_minutes": 19.95,
+        "p95_wait_time_minutes": 36.13,
+        "cluster_capacity_stranding_pct": {
+          "cpu": 24.93,
+          "ram": 30.88,
+          "gpu": 69.45
+        },
+        "allocation_slack_pct": {
+          "cpu": 78.84,
+          "ram": 97.67,
+          "gpu": 87.86
+        }
       },
-      {
-        "policy": "B0_0.1:0.2:0.7",
-        "label": "Manual Defensive (B0, 0.1:0.2:0.7)",
-        "seed": 43,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 5,
-        "retry_events": 5,
-        "oom_rate_pct": 0.5,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 83.76,
-        "cpu_slack_pct": 7.15,
-        "max_concurrency": 76,
-        "pending_sessions_count": 5,
-        "wasted_core_hours": 0.1492,
-        "wasted_ram_gb_hours": 0.373
+      "P1": {
+        "strategy": "P1",
+        "total_submitted_sessions": 800,
+        "completed_sessions": 800,
+        "unserved_pending_at_end": 0,
+        "oom_count": 87,
+        "oom_rate_pct": 10.875,
+        "peak_running_concurrency": 145,
+        "avg_running_concurrency": 72.28,
+        "peak_pending_queue": 0,
+        "avg_pending_queue": 0.0,
+        "queued_jobs_count": 0,
+        "queued_jobs_pct": 0.0,
+        "mean_wait_time_minutes": 0.0,
+        "p95_wait_time_minutes": 0.0,
+        "cluster_capacity_stranding_pct": {
+          "cpu": 5.13,
+          "ram": 7.05,
+          "gpu": 0.0
+        },
+        "allocation_slack_pct": {
+          "cpu": 46.17,
+          "ram": 98.78,
+          "gpu": 0.0
+        }
       },
-      {
-        "policy": "B0_0.1:0.2:0.7",
-        "label": "Manual Defensive (B0, 0.1:0.2:0.7)",
-        "seed": 44,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 6,
-        "retry_events": 6,
-        "oom_rate_pct": 0.6,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 83.21,
-        "cpu_slack_pct": 6.55,
-        "max_concurrency": 76,
-        "pending_sessions_count": 6,
-        "wasted_core_hours": 0.1572,
-        "wasted_ram_gb_hours": 0.393
-      },
-      {
-        "policy": "B0_0.1:0.2:0.7",
-        "label": "Manual Defensive (B0, 0.1:0.2:0.7)",
-        "seed": 45,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 6,
-        "retry_events": 6,
-        "oom_rate_pct": 0.6,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 84.04,
-        "cpu_slack_pct": 6.94,
-        "max_concurrency": 76,
-        "pending_sessions_count": 6,
-        "wasted_core_hours": 0.1668,
-        "wasted_ram_gb_hours": 0.417
-      },
-      {
-        "policy": "B0_0.1:0.2:0.7",
-        "label": "Manual Defensive (B0, 0.1:0.2:0.7)",
-        "seed": 46,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 11,
-        "retry_events": 11,
-        "oom_rate_pct": 1.1,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 83.66,
-        "cpu_slack_pct": 7.23,
-        "max_concurrency": 76,
-        "pending_sessions_count": 11,
-        "wasted_core_hours": 0.3695,
-        "wasted_ram_gb_hours": 0.9236
-      },
-      {
-        "policy": "B0_0.1:0.2:0.7",
-        "label": "Manual Defensive (B0, 0.1:0.2:0.7)",
-        "seed": 47,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 8,
-        "retry_events": 8,
-        "oom_rate_pct": 0.8,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 84.27,
-        "cpu_slack_pct": 6.92,
-        "max_concurrency": 76,
-        "pending_sessions_count": 8,
-        "wasted_core_hours": 0.0212,
-        "wasted_ram_gb_hours": 0.0529
-      },
-      {
-        "policy": "B0_0.1:0.2:0.7",
-        "label": "Manual Defensive (B0, 0.1:0.2:0.7)",
-        "seed": 48,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 6,
-        "retry_events": 6,
-        "oom_rate_pct": 0.6,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 84.01,
-        "cpu_slack_pct": 7.45,
-        "max_concurrency": 76,
-        "pending_sessions_count": 6,
-        "wasted_core_hours": 0.0854,
-        "wasted_ram_gb_hours": 0.2135
-      },
-      {
-        "policy": "B0_0.1:0.2:0.7",
-        "label": "Manual Defensive (B0, 0.1:0.2:0.7)",
-        "seed": 49,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 9,
-        "retry_events": 9,
-        "oom_rate_pct": 0.9,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 83.09,
-        "cpu_slack_pct": 6.48,
-        "max_concurrency": 76,
-        "pending_sessions_count": 9,
-        "wasted_core_hours": 0.4145,
-        "wasted_ram_gb_hours": 1.0363
-      },
-      {
-        "policy": "B0_0.1:0.2:0.7",
-        "label": "Manual Defensive (B0, 0.1:0.2:0.7)",
-        "seed": 50,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 10,
-        "retry_events": 10,
-        "oom_rate_pct": 1.0,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 84.01,
-        "cpu_slack_pct": 6.36,
-        "max_concurrency": 76,
-        "pending_sessions_count": 10,
-        "wasted_core_hours": 0.1633,
-        "wasted_ram_gb_hours": 0.4083
-      },
-      {
-        "policy": "B0_0.1:0.2:0.7",
-        "label": "Manual Defensive (B0, 0.1:0.2:0.7)",
-        "seed": 51,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 8,
-        "retry_events": 8,
-        "oom_rate_pct": 0.8,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 83.3,
-        "cpu_slack_pct": 6.33,
-        "max_concurrency": 77,
-        "pending_sessions_count": 8,
-        "wasted_core_hours": 0.2316,
-        "wasted_ram_gb_hours": 0.5791
-      },
-      {
-        "policy": "B0_0.1:0.2:0.7",
-        "label": "Manual Defensive (B0, 0.1:0.2:0.7)",
-        "seed": 52,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 3,
-        "retry_events": 3,
-        "oom_rate_pct": 0.3,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 83.4,
-        "cpu_slack_pct": 6.94,
-        "max_concurrency": 76,
-        "pending_sessions_count": 3,
-        "wasted_core_hours": 0.013,
-        "wasted_ram_gb_hours": 0.0324
-      },
-      {
-        "policy": "B0_0.1:0.2:0.7",
-        "label": "Manual Defensive (B0, 0.1:0.2:0.7)",
-        "seed": 53,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 9,
-        "retry_events": 9,
-        "oom_rate_pct": 0.9,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 83.98,
-        "cpu_slack_pct": 7.41,
-        "max_concurrency": 77,
-        "pending_sessions_count": 9,
-        "wasted_core_hours": 0.2042,
-        "wasted_ram_gb_hours": 0.5104
-      },
-      {
-        "policy": "B0_0.1:0.2:0.7",
-        "label": "Manual Defensive (B0, 0.1:0.2:0.7)",
-        "seed": 54,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 2,
-        "retry_events": 2,
-        "oom_rate_pct": 0.2,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 83.69,
-        "cpu_slack_pct": 7.14,
-        "max_concurrency": 76,
-        "pending_sessions_count": 2,
-        "wasted_core_hours": 0.0029,
-        "wasted_ram_gb_hours": 0.0073
-      },
-      {
-        "policy": "B0_0.1:0.2:0.7",
-        "label": "Manual Defensive (B0, 0.1:0.2:0.7)",
-        "seed": 55,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 8,
-        "retry_events": 8,
-        "oom_rate_pct": 0.8,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 83.59,
-        "cpu_slack_pct": 7.1,
-        "max_concurrency": 76,
-        "pending_sessions_count": 8,
-        "wasted_core_hours": 0.2271,
-        "wasted_ram_gb_hours": 0.5677
-      },
-      {
-        "policy": "B0_0.1:0.2:0.7",
-        "label": "Manual Defensive (B0, 0.1:0.2:0.7)",
-        "seed": 56,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 7,
-        "retry_events": 7,
-        "oom_rate_pct": 0.7,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 83.54,
-        "cpu_slack_pct": 5.09,
-        "max_concurrency": 76,
-        "pending_sessions_count": 7,
-        "wasted_core_hours": 0.1118,
-        "wasted_ram_gb_hours": 0.2794
-      },
-      {
-        "policy": "B0_0.1:0.2:0.7",
-        "label": "Manual Defensive (B0, 0.1:0.2:0.7)",
-        "seed": 57,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 9,
-        "retry_events": 9,
-        "oom_rate_pct": 0.9,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 84.03,
-        "cpu_slack_pct": 5.85,
-        "max_concurrency": 77,
-        "pending_sessions_count": 9,
-        "wasted_core_hours": 0.1678,
-        "wasted_ram_gb_hours": 0.4194
-      },
-      {
-        "policy": "B0_0.1:0.2:0.7",
-        "label": "Manual Defensive (B0, 0.1:0.2:0.7)",
-        "seed": 58,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 4,
-        "retry_events": 4,
-        "oom_rate_pct": 0.4,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 84.31,
-        "cpu_slack_pct": 6.88,
-        "max_concurrency": 77,
-        "pending_sessions_count": 4,
-        "wasted_core_hours": 0.1109,
-        "wasted_ram_gb_hours": 0.2773
-      },
-      {
-        "policy": "B0_0.1:0.2:0.7",
-        "label": "Manual Defensive (B0, 0.1:0.2:0.7)",
-        "seed": 59,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 6,
-        "retry_events": 6,
-        "oom_rate_pct": 0.6,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 84.02,
-        "cpu_slack_pct": 8.13,
-        "max_concurrency": 76,
-        "pending_sessions_count": 6,
-        "wasted_core_hours": 0.3592,
-        "wasted_ram_gb_hours": 0.898
-      },
-      {
-        "policy": "B0_0.1:0.2:0.7",
-        "label": "Manual Defensive (B0, 0.1:0.2:0.7)",
-        "seed": 60,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 8,
-        "retry_events": 8,
-        "oom_rate_pct": 0.8,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 83.73,
-        "cpu_slack_pct": 7.07,
-        "max_concurrency": 77,
-        "pending_sessions_count": 8,
-        "wasted_core_hours": 0.1469,
-        "wasted_ram_gb_hours": 0.3673
-      },
-      {
-        "policy": "B0_0.1:0.2:0.7",
-        "label": "Manual Defensive (B0, 0.1:0.2:0.7)",
-        "seed": 61,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 6,
-        "retry_events": 6,
-        "oom_rate_pct": 0.6,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 83.44,
-        "cpu_slack_pct": 5.68,
-        "max_concurrency": 76,
-        "pending_sessions_count": 6,
-        "wasted_core_hours": 0.1804,
-        "wasted_ram_gb_hours": 0.451
-      },
-      {
-        "policy": "B0_0.1:0.2:0.7",
-        "label": "Manual Defensive (B0, 0.1:0.2:0.7)",
-        "seed": 62,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 9,
-        "retry_events": 9,
-        "oom_rate_pct": 0.9,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 83.57,
-        "cpu_slack_pct": 7.15,
-        "max_concurrency": 76,
-        "pending_sessions_count": 9,
-        "wasted_core_hours": 0.3413,
-        "wasted_ram_gb_hours": 0.8533
-      },
-      {
-        "policy": "B0_0.1:0.2:0.7",
-        "label": "Manual Defensive (B0, 0.1:0.2:0.7)",
-        "seed": 63,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 8,
-        "retry_events": 8,
-        "oom_rate_pct": 0.8,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 83.9,
-        "cpu_slack_pct": 6.93,
-        "max_concurrency": 76,
-        "pending_sessions_count": 8,
-        "wasted_core_hours": 0.0909,
-        "wasted_ram_gb_hours": 0.2272
-      },
-      {
-        "policy": "B0_0.1:0.2:0.7",
-        "label": "Manual Defensive (B0, 0.1:0.2:0.7)",
-        "seed": 64,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 10,
-        "retry_events": 10,
-        "oom_rate_pct": 1.0,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 83.54,
-        "cpu_slack_pct": 7.0,
-        "max_concurrency": 77,
-        "pending_sessions_count": 10,
-        "wasted_core_hours": 0.379,
-        "wasted_ram_gb_hours": 0.9476
-      },
-      {
-        "policy": "B0_0.1:0.2:0.7",
-        "label": "Manual Defensive (B0, 0.1:0.2:0.7)",
-        "seed": 65,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 7,
-        "retry_events": 7,
-        "oom_rate_pct": 0.7,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 83.54,
-        "cpu_slack_pct": 7.86,
-        "max_concurrency": 76,
-        "pending_sessions_count": 7,
-        "wasted_core_hours": 0.1421,
-        "wasted_ram_gb_hours": 0.3552
-      },
-      {
-        "policy": "B0_0.1:0.2:0.7",
-        "label": "Manual Defensive (B0, 0.1:0.2:0.7)",
-        "seed": 66,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 5,
-        "retry_events": 5,
-        "oom_rate_pct": 0.5,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 83.6,
-        "cpu_slack_pct": 6.46,
-        "max_concurrency": 76,
-        "pending_sessions_count": 5,
-        "wasted_core_hours": 0.16,
-        "wasted_ram_gb_hours": 0.4
-      },
-      {
-        "policy": "B0_0.1:0.2:0.7",
-        "label": "Manual Defensive (B0, 0.1:0.2:0.7)",
-        "seed": 67,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 9,
-        "retry_events": 9,
-        "oom_rate_pct": 0.9,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 84.19,
-        "cpu_slack_pct": 7.69,
-        "max_concurrency": 76,
-        "pending_sessions_count": 9,
-        "wasted_core_hours": 0.1044,
-        "wasted_ram_gb_hours": 0.261
-      },
-      {
-        "policy": "B0_0.1:0.2:0.7",
-        "label": "Manual Defensive (B0, 0.1:0.2:0.7)",
-        "seed": 68,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 7,
-        "retry_events": 7,
-        "oom_rate_pct": 0.7,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 84.1,
-        "cpu_slack_pct": 7.98,
-        "max_concurrency": 76,
-        "pending_sessions_count": 7,
-        "wasted_core_hours": 0.3585,
-        "wasted_ram_gb_hours": 0.8964
-      },
-      {
-        "policy": "B0_0.1:0.2:0.7",
-        "label": "Manual Defensive (B0, 0.1:0.2:0.7)",
-        "seed": 69,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 4,
-        "retry_events": 4,
-        "oom_rate_pct": 0.4,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 83.32,
-        "cpu_slack_pct": 7.5,
-        "max_concurrency": 76,
-        "pending_sessions_count": 4,
-        "wasted_core_hours": 0.1058,
-        "wasted_ram_gb_hours": 0.2644
-      },
-      {
-        "policy": "B0_0.1:0.2:0.7",
-        "label": "Manual Defensive (B0, 0.1:0.2:0.7)",
-        "seed": 70,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 4,
-        "retry_events": 4,
-        "oom_rate_pct": 0.4,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 83.72,
-        "cpu_slack_pct": 6.14,
-        "max_concurrency": 76,
-        "pending_sessions_count": 4,
-        "wasted_core_hours": 0.0977,
-        "wasted_ram_gb_hours": 0.2443
-      },
-      {
-        "policy": "B0_0.1:0.2:0.7",
-        "label": "Manual Defensive (B0, 0.1:0.2:0.7)",
-        "seed": 71,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 8,
-        "retry_events": 8,
-        "oom_rate_pct": 0.8,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 84.34,
-        "cpu_slack_pct": 7.59,
-        "max_concurrency": 76,
-        "pending_sessions_count": 8,
-        "wasted_core_hours": 0.0933,
-        "wasted_ram_gb_hours": 0.2333
+      "P2": {
+        "strategy": "P2",
+        "total_submitted_sessions": 800,
+        "completed_sessions": 800,
+        "unserved_pending_at_end": 0,
+        "oom_count": 0,
+        "oom_rate_pct": 0.0,
+        "peak_running_concurrency": 157,
+        "avg_running_concurrency": 80.71,
+        "peak_pending_queue": 0,
+        "avg_pending_queue": 0.0,
+        "queued_jobs_count": 0,
+        "queued_jobs_pct": 0.0,
+        "mean_wait_time_minutes": 0.0,
+        "p95_wait_time_minutes": 0.0,
+        "cluster_capacity_stranding_pct": {
+          "cpu": 1.25,
+          "ram": 0.98,
+          "gpu": 0.0
+        },
+        "allocation_slack_pct": {
+          "cpu": 15.49,
+          "ram": 56.65,
+          "gpu": 0.0
+        }
       }
-    ],
-    "B0_0.05:0.15:0.8": [
-      {
-        "policy": "B0_0.05:0.15:0.8",
-        "label": "Manual Defensive (B0, 0.05:0.15:0.8)",
-        "seed": 42,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 3,
-        "retry_events": 3,
-        "oom_rate_pct": 0.3,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 85.19,
-        "cpu_slack_pct": 7.55,
-        "max_concurrency": 77,
-        "pending_sessions_count": 3,
-        "wasted_core_hours": 0.1397,
-        "wasted_ram_gb_hours": 0.3493
+    },
+    "47": {
+      "B0": {
+        "strategy": "B0",
+        "total_submitted_sessions": 800,
+        "completed_sessions": 800,
+        "unserved_pending_at_end": 0,
+        "oom_count": 0,
+        "oom_rate_pct": 0.0,
+        "peak_running_concurrency": 100,
+        "avg_running_concurrency": 79.37,
+        "peak_pending_queue": 73,
+        "avg_pending_queue": 19.59,
+        "queued_jobs_count": 569,
+        "queued_jobs_pct": 71.12,
+        "mean_wait_time_minutes": 16.52,
+        "p95_wait_time_minutes": 33.97,
+        "cluster_capacity_stranding_pct": {
+          "cpu": 24.99,
+          "ram": 30.91,
+          "gpu": 70.64
+        },
+        "allocation_slack_pct": {
+          "cpu": 78.73,
+          "ram": 97.35,
+          "gpu": 89.01
+        }
       },
-      {
-        "policy": "B0_0.05:0.15:0.8",
-        "label": "Manual Defensive (B0, 0.05:0.15:0.8)",
-        "seed": 43,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 3,
-        "retry_events": 3,
-        "oom_rate_pct": 0.3,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 85.02,
-        "cpu_slack_pct": 7.68,
-        "max_concurrency": 76,
-        "pending_sessions_count": 3,
-        "wasted_core_hours": 0.0696,
-        "wasted_ram_gb_hours": 0.1741
+      "P1": {
+        "strategy": "P1",
+        "total_submitted_sessions": 800,
+        "completed_sessions": 800,
+        "unserved_pending_at_end": 0,
+        "oom_count": 92,
+        "oom_rate_pct": 11.5,
+        "peak_running_concurrency": 129,
+        "avg_running_concurrency": 70.61,
+        "peak_pending_queue": 0,
+        "avg_pending_queue": 0.0,
+        "queued_jobs_count": 0,
+        "queued_jobs_pct": 0.0,
+        "mean_wait_time_minutes": 0.0,
+        "p95_wait_time_minutes": 0.0,
+        "cluster_capacity_stranding_pct": {
+          "cpu": 4.97,
+          "ram": 6.94,
+          "gpu": 0.0
+        },
+        "allocation_slack_pct": {
+          "cpu": 45.87,
+          "ram": 98.77,
+          "gpu": 0.0
+        }
       },
-      {
-        "policy": "B0_0.05:0.15:0.8",
-        "label": "Manual Defensive (B0, 0.05:0.15:0.8)",
-        "seed": 44,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 4,
-        "retry_events": 4,
-        "oom_rate_pct": 0.4,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 84.68,
-        "cpu_slack_pct": 6.84,
-        "max_concurrency": 76,
-        "pending_sessions_count": 4,
-        "wasted_core_hours": 0.1111,
-        "wasted_ram_gb_hours": 0.2776
-      },
-      {
-        "policy": "B0_0.05:0.15:0.8",
-        "label": "Manual Defensive (B0, 0.05:0.15:0.8)",
-        "seed": 45,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 1,
-        "retry_events": 1,
-        "oom_rate_pct": 0.1,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 85.1,
-        "cpu_slack_pct": 7.18,
-        "max_concurrency": 76,
-        "pending_sessions_count": 1,
-        "wasted_core_hours": 0.0004,
-        "wasted_ram_gb_hours": 0.0011
-      },
-      {
-        "policy": "B0_0.05:0.15:0.8",
-        "label": "Manual Defensive (B0, 0.05:0.15:0.8)",
-        "seed": 46,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 4,
-        "retry_events": 4,
-        "oom_rate_pct": 0.4,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 85.06,
-        "cpu_slack_pct": 7.86,
-        "max_concurrency": 76,
-        "pending_sessions_count": 4,
-        "wasted_core_hours": 0.2419,
-        "wasted_ram_gb_hours": 0.6048
-      },
-      {
-        "policy": "B0_0.05:0.15:0.8",
-        "label": "Manual Defensive (B0, 0.05:0.15:0.8)",
-        "seed": 47,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 4,
-        "retry_events": 4,
-        "oom_rate_pct": 0.4,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 85.17,
-        "cpu_slack_pct": 7.26,
-        "max_concurrency": 76,
-        "pending_sessions_count": 4,
-        "wasted_core_hours": 0.0039,
-        "wasted_ram_gb_hours": 0.0098
-      },
-      {
-        "policy": "B0_0.05:0.15:0.8",
-        "label": "Manual Defensive (B0, 0.05:0.15:0.8)",
-        "seed": 48,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 3,
-        "retry_events": 3,
-        "oom_rate_pct": 0.3,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 85.0,
-        "cpu_slack_pct": 7.36,
-        "max_concurrency": 76,
-        "pending_sessions_count": 3,
-        "wasted_core_hours": 0.0557,
-        "wasted_ram_gb_hours": 0.1393
-      },
-      {
-        "policy": "B0_0.05:0.15:0.8",
-        "label": "Manual Defensive (B0, 0.05:0.15:0.8)",
-        "seed": 49,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 7,
-        "retry_events": 7,
-        "oom_rate_pct": 0.7,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 84.65,
-        "cpu_slack_pct": 6.46,
-        "max_concurrency": 76,
-        "pending_sessions_count": 7,
-        "wasted_core_hours": 0.3737,
-        "wasted_ram_gb_hours": 0.9344
-      },
-      {
-        "policy": "B0_0.05:0.15:0.8",
-        "label": "Manual Defensive (B0, 0.05:0.15:0.8)",
-        "seed": 50,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 5,
-        "retry_events": 5,
-        "oom_rate_pct": 0.5,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 85.07,
-        "cpu_slack_pct": 6.71,
-        "max_concurrency": 76,
-        "pending_sessions_count": 5,
-        "wasted_core_hours": 0.1487,
-        "wasted_ram_gb_hours": 0.3717
-      },
-      {
-        "policy": "B0_0.05:0.15:0.8",
-        "label": "Manual Defensive (B0, 0.05:0.15:0.8)",
-        "seed": 51,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 4,
-        "retry_events": 4,
-        "oom_rate_pct": 0.4,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 84.65,
-        "cpu_slack_pct": 6.44,
-        "max_concurrency": 77,
-        "pending_sessions_count": 4,
-        "wasted_core_hours": 0.0798,
-        "wasted_ram_gb_hours": 0.1994
-      },
-      {
-        "policy": "B0_0.05:0.15:0.8",
-        "label": "Manual Defensive (B0, 0.05:0.15:0.8)",
-        "seed": 52,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 2,
-        "retry_events": 2,
-        "oom_rate_pct": 0.2,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 84.6,
-        "cpu_slack_pct": 6.88,
-        "max_concurrency": 76,
-        "pending_sessions_count": 2,
-        "wasted_core_hours": 0.0102,
-        "wasted_ram_gb_hours": 0.0255
-      },
-      {
-        "policy": "B0_0.05:0.15:0.8",
-        "label": "Manual Defensive (B0, 0.05:0.15:0.8)",
-        "seed": 53,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 6,
-        "retry_events": 6,
-        "oom_rate_pct": 0.6,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 85.02,
-        "cpu_slack_pct": 7.45,
-        "max_concurrency": 77,
-        "pending_sessions_count": 6,
-        "wasted_core_hours": 0.1791,
-        "wasted_ram_gb_hours": 0.4478
-      },
-      {
-        "policy": "B0_0.05:0.15:0.8",
-        "label": "Manual Defensive (B0, 0.05:0.15:0.8)",
-        "seed": 54,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 1,
-        "retry_events": 1,
-        "oom_rate_pct": 0.1,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 84.86,
-        "cpu_slack_pct": 7.52,
-        "max_concurrency": 76,
-        "pending_sessions_count": 1,
-        "wasted_core_hours": 0.002,
-        "wasted_ram_gb_hours": 0.0049
-      },
-      {
-        "policy": "B0_0.05:0.15:0.8",
-        "label": "Manual Defensive (B0, 0.05:0.15:0.8)",
-        "seed": 55,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 2,
-        "retry_events": 2,
-        "oom_rate_pct": 0.2,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 84.95,
-        "cpu_slack_pct": 7.42,
-        "max_concurrency": 76,
-        "pending_sessions_count": 2,
-        "wasted_core_hours": 0.0949,
-        "wasted_ram_gb_hours": 0.2374
-      },
-      {
-        "policy": "B0_0.05:0.15:0.8",
-        "label": "Manual Defensive (B0, 0.05:0.15:0.8)",
-        "seed": 56,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 3,
-        "retry_events": 3,
-        "oom_rate_pct": 0.3,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 84.65,
-        "cpu_slack_pct": 6.02,
-        "max_concurrency": 76,
-        "pending_sessions_count": 3,
-        "wasted_core_hours": 0.0082,
-        "wasted_ram_gb_hours": 0.0205
-      },
-      {
-        "policy": "B0_0.05:0.15:0.8",
-        "label": "Manual Defensive (B0, 0.05:0.15:0.8)",
-        "seed": 57,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 6,
-        "retry_events": 6,
-        "oom_rate_pct": 0.6,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 85.15,
-        "cpu_slack_pct": 6.34,
-        "max_concurrency": 77,
-        "pending_sessions_count": 6,
-        "wasted_core_hours": 0.1585,
-        "wasted_ram_gb_hours": 0.3963
-      },
-      {
-        "policy": "B0_0.05:0.15:0.8",
-        "label": "Manual Defensive (B0, 0.05:0.15:0.8)",
-        "seed": 58,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 2,
-        "retry_events": 2,
-        "oom_rate_pct": 0.2,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 85.42,
-        "cpu_slack_pct": 7.09,
-        "max_concurrency": 76,
-        "pending_sessions_count": 2,
-        "wasted_core_hours": 0.0659,
-        "wasted_ram_gb_hours": 0.1647
-      },
-      {
-        "policy": "B0_0.05:0.15:0.8",
-        "label": "Manual Defensive (B0, 0.05:0.15:0.8)",
-        "seed": 59,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 5,
-        "retry_events": 5,
-        "oom_rate_pct": 0.5,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 85.17,
-        "cpu_slack_pct": 7.73,
-        "max_concurrency": 76,
-        "pending_sessions_count": 5,
-        "wasted_core_hours": 0.319,
-        "wasted_ram_gb_hours": 0.7976
-      },
-      {
-        "policy": "B0_0.05:0.15:0.8",
-        "label": "Manual Defensive (B0, 0.05:0.15:0.8)",
-        "seed": 60,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 3,
-        "retry_events": 3,
-        "oom_rate_pct": 0.3,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 84.84,
-        "cpu_slack_pct": 7.12,
-        "max_concurrency": 77,
-        "pending_sessions_count": 3,
-        "wasted_core_hours": 0.046,
-        "wasted_ram_gb_hours": 0.1149
-      },
-      {
-        "policy": "B0_0.05:0.15:0.8",
-        "label": "Manual Defensive (B0, 0.05:0.15:0.8)",
-        "seed": 61,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 2,
-        "retry_events": 2,
-        "oom_rate_pct": 0.2,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 85.06,
-        "cpu_slack_pct": 7.0,
-        "max_concurrency": 76,
-        "pending_sessions_count": 2,
-        "wasted_core_hours": 0.064,
-        "wasted_ram_gb_hours": 0.16
-      },
-      {
-        "policy": "B0_0.05:0.15:0.8",
-        "label": "Manual Defensive (B0, 0.05:0.15:0.8)",
-        "seed": 62,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 3,
-        "retry_events": 3,
-        "oom_rate_pct": 0.3,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 84.84,
-        "cpu_slack_pct": 6.98,
-        "max_concurrency": 76,
-        "pending_sessions_count": 3,
-        "wasted_core_hours": 0.02,
-        "wasted_ram_gb_hours": 0.0501
-      },
-      {
-        "policy": "B0_0.05:0.15:0.8",
-        "label": "Manual Defensive (B0, 0.05:0.15:0.8)",
-        "seed": 63,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 5,
-        "retry_events": 5,
-        "oom_rate_pct": 0.5,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 85.01,
-        "cpu_slack_pct": 6.86,
-        "max_concurrency": 76,
-        "pending_sessions_count": 5,
-        "wasted_core_hours": 0.0877,
-        "wasted_ram_gb_hours": 0.2193
-      },
-      {
-        "policy": "B0_0.05:0.15:0.8",
-        "label": "Manual Defensive (B0, 0.05:0.15:0.8)",
-        "seed": 64,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 2,
-        "retry_events": 2,
-        "oom_rate_pct": 0.2,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 84.6,
-        "cpu_slack_pct": 7.45,
-        "max_concurrency": 76,
-        "pending_sessions_count": 2,
-        "wasted_core_hours": 0.0013,
-        "wasted_ram_gb_hours": 0.0032
-      },
-      {
-        "policy": "B0_0.05:0.15:0.8",
-        "label": "Manual Defensive (B0, 0.05:0.15:0.8)",
-        "seed": 65,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 2,
-        "retry_events": 2,
-        "oom_rate_pct": 0.2,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 84.84,
-        "cpu_slack_pct": 7.45,
-        "max_concurrency": 76,
-        "pending_sessions_count": 2,
-        "wasted_core_hours": 0.0021,
-        "wasted_ram_gb_hours": 0.0052
-      },
-      {
-        "policy": "B0_0.05:0.15:0.8",
-        "label": "Manual Defensive (B0, 0.05:0.15:0.8)",
-        "seed": 66,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 2,
-        "retry_events": 2,
-        "oom_rate_pct": 0.2,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 85.03,
-        "cpu_slack_pct": 6.92,
-        "max_concurrency": 76,
-        "pending_sessions_count": 2,
-        "wasted_core_hours": 0.0361,
-        "wasted_ram_gb_hours": 0.0904
-      },
-      {
-        "policy": "B0_0.05:0.15:0.8",
-        "label": "Manual Defensive (B0, 0.05:0.15:0.8)",
-        "seed": 67,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 4,
-        "retry_events": 4,
-        "oom_rate_pct": 0.4,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 85.03,
-        "cpu_slack_pct": 7.44,
-        "max_concurrency": 76,
-        "pending_sessions_count": 4,
-        "wasted_core_hours": 0.046,
-        "wasted_ram_gb_hours": 0.1151
-      },
-      {
-        "policy": "B0_0.05:0.15:0.8",
-        "label": "Manual Defensive (B0, 0.05:0.15:0.8)",
-        "seed": 68,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 3,
-        "retry_events": 3,
-        "oom_rate_pct": 0.3,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 85.05,
-        "cpu_slack_pct": 7.61,
-        "max_concurrency": 76,
-        "pending_sessions_count": 3,
-        "wasted_core_hours": 0.2641,
-        "wasted_ram_gb_hours": 0.6602
-      },
-      {
-        "policy": "B0_0.05:0.15:0.8",
-        "label": "Manual Defensive (B0, 0.05:0.15:0.8)",
-        "seed": 69,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 1,
-        "retry_events": 1,
-        "oom_rate_pct": 0.1,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 84.64,
-        "cpu_slack_pct": 7.36,
-        "max_concurrency": 76,
-        "pending_sessions_count": 1,
-        "wasted_core_hours": 0.0355,
-        "wasted_ram_gb_hours": 0.0887
-      },
-      {
-        "policy": "B0_0.05:0.15:0.8",
-        "label": "Manual Defensive (B0, 0.05:0.15:0.8)",
-        "seed": 70,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 1,
-        "retry_events": 1,
-        "oom_rate_pct": 0.1,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 84.87,
-        "cpu_slack_pct": 6.36,
-        "max_concurrency": 76,
-        "pending_sessions_count": 1,
-        "wasted_core_hours": 0.0524,
-        "wasted_ram_gb_hours": 0.131
-      },
-      {
-        "policy": "B0_0.05:0.15:0.8",
-        "label": "Manual Defensive (B0, 0.05:0.15:0.8)",
-        "seed": 71,
-        "total_jobs": 998,
-        "completed_jobs": 998,
-        "oom_events": 5,
-        "retry_events": 5,
-        "oom_rate_pct": 0.5,
-        "queue_wait_p50_s": 0.0,
-        "queue_wait_p95_s": 0.0,
-        "queue_wait_mean_s": 0.0,
-        "ram_slack_pct": 85.1,
-        "cpu_slack_pct": 7.58,
-        "max_concurrency": 76,
-        "pending_sessions_count": 5,
-        "wasted_core_hours": 0.0887,
-        "wasted_ram_gb_hours": 0.2218
+      "P2": {
+        "strategy": "P2",
+        "total_submitted_sessions": 800,
+        "completed_sessions": 800,
+        "unserved_pending_at_end": 0,
+        "oom_count": 0,
+        "oom_rate_pct": 0.0,
+        "peak_running_concurrency": 152,
+        "avg_running_concurrency": 80.32,
+        "peak_pending_queue": 0,
+        "avg_pending_queue": 0.0,
+        "queued_jobs_count": 0,
+        "queued_jobs_pct": 0.0,
+        "mean_wait_time_minutes": 0.0,
+        "p95_wait_time_minutes": 0.0,
+        "cluster_capacity_stranding_pct": {
+          "cpu": 1.2,
+          "ram": 0.98,
+          "gpu": 0.0
+        },
+        "allocation_slack_pct": {
+          "cpu": 14.91,
+          "ram": 53.55,
+          "gpu": 0.0
+        }
       }
-    ]
+    },
+    "48": {
+      "B0": {
+        "strategy": "B0",
+        "total_submitted_sessions": 800,
+        "completed_sessions": 800,
+        "unserved_pending_at_end": 0,
+        "oom_count": 0,
+        "oom_rate_pct": 0.0,
+        "peak_running_concurrency": 100,
+        "avg_running_concurrency": 78.56,
+        "peak_pending_queue": 99,
+        "avg_pending_queue": 23.68,
+        "queued_jobs_count": 500,
+        "queued_jobs_pct": 62.5,
+        "mean_wait_time_minutes": 22.75,
+        "p95_wait_time_minutes": 46.41,
+        "cluster_capacity_stranding_pct": {
+          "cpu": 24.75,
+          "ram": 30.72,
+          "gpu": 68.97
+        },
+        "allocation_slack_pct": {
+          "cpu": 78.75,
+          "ram": 97.75,
+          "gpu": 87.79
+        }
+      },
+      "P1": {
+        "strategy": "P1",
+        "total_submitted_sessions": 800,
+        "completed_sessions": 800,
+        "unserved_pending_at_end": 0,
+        "oom_count": 81,
+        "oom_rate_pct": 10.125,
+        "peak_running_concurrency": 143,
+        "avg_running_concurrency": 73.85,
+        "peak_pending_queue": 0,
+        "avg_pending_queue": 0.0,
+        "queued_jobs_count": 0,
+        "queued_jobs_pct": 0.0,
+        "mean_wait_time_minutes": 0.0,
+        "p95_wait_time_minutes": 0.0,
+        "cluster_capacity_stranding_pct": {
+          "cpu": 5.27,
+          "ram": 7.32,
+          "gpu": 0.0
+        },
+        "allocation_slack_pct": {
+          "cpu": 46.14,
+          "ram": 98.82,
+          "gpu": 0.0
+        }
+      },
+      "P2": {
+        "strategy": "P2",
+        "total_submitted_sessions": 800,
+        "completed_sessions": 800,
+        "unserved_pending_at_end": 0,
+        "oom_count": 0,
+        "oom_rate_pct": 0.0,
+        "peak_running_concurrency": 163,
+        "avg_running_concurrency": 82.03,
+        "peak_pending_queue": 0,
+        "avg_pending_queue": 0.0,
+        "queued_jobs_count": 0,
+        "queued_jobs_pct": 0.0,
+        "mean_wait_time_minutes": 0.0,
+        "p95_wait_time_minutes": 0.0,
+        "cluster_capacity_stranding_pct": {
+          "cpu": 1.24,
+          "ram": 0.99,
+          "gpu": 0.0
+        },
+        "allocation_slack_pct": {
+          "cpu": 15.06,
+          "ram": 57.67,
+          "gpu": 0.0
+        }
+      }
+    },
+    "49": {
+      "B0": {
+        "strategy": "B0",
+        "total_submitted_sessions": 798,
+        "completed_sessions": 798,
+        "unserved_pending_at_end": 0,
+        "oom_count": 0,
+        "oom_rate_pct": 0.0,
+        "peak_running_concurrency": 100,
+        "avg_running_concurrency": 81.08,
+        "peak_pending_queue": 68,
+        "avg_pending_queue": 12.61,
+        "queued_jobs_count": 472,
+        "queued_jobs_pct": 59.15,
+        "mean_wait_time_minutes": 12.84,
+        "p95_wait_time_minutes": 28.46,
+        "cluster_capacity_stranding_pct": {
+          "cpu": 25.65,
+          "ram": 31.77,
+          "gpu": 72.22
+        },
+        "allocation_slack_pct": {
+          "cpu": 79.08,
+          "ram": 97.96,
+          "gpu": 89.07
+        }
+      },
+      "P1": {
+        "strategy": "P1",
+        "total_submitted_sessions": 798,
+        "completed_sessions": 798,
+        "unserved_pending_at_end": 0,
+        "oom_count": 66,
+        "oom_rate_pct": 8.270676691729323,
+        "peak_running_concurrency": 135,
+        "avg_running_concurrency": 75.21,
+        "peak_pending_queue": 0,
+        "avg_pending_queue": 0.0,
+        "queued_jobs_count": 0,
+        "queued_jobs_pct": 0.0,
+        "mean_wait_time_minutes": 0.0,
+        "p95_wait_time_minutes": 0.0,
+        "cluster_capacity_stranding_pct": {
+          "cpu": 5.15,
+          "ram": 7.08,
+          "gpu": 0.0
+        },
+        "allocation_slack_pct": {
+          "cpu": 45.46,
+          "ram": 98.76,
+          "gpu": 0.0
+        }
+      },
+      "P2": {
+        "strategy": "P2",
+        "total_submitted_sessions": 798,
+        "completed_sessions": 798,
+        "unserved_pending_at_end": 0,
+        "oom_count": 0,
+        "oom_rate_pct": 0.0,
+        "peak_running_concurrency": 146,
+        "avg_running_concurrency": 82.43,
+        "peak_pending_queue": 0,
+        "avg_pending_queue": 0.0,
+        "queued_jobs_count": 0,
+        "queued_jobs_pct": 0.0,
+        "mean_wait_time_minutes": 0.0,
+        "p95_wait_time_minutes": 0.0,
+        "cluster_capacity_stranding_pct": {
+          "cpu": 1.34,
+          "ram": 0.99,
+          "gpu": 0.0
+        },
+        "allocation_slack_pct": {
+          "cpu": 16.31,
+          "ram": 59.84,
+          "gpu": 0.0
+        }
+      }
+    },
+    "50": {
+      "B0": {
+        "strategy": "B0",
+        "total_submitted_sessions": 765,
+        "completed_sessions": 765,
+        "unserved_pending_at_end": 0,
+        "oom_count": 0,
+        "oom_rate_pct": 0.0,
+        "peak_running_concurrency": 100,
+        "avg_running_concurrency": 77.16,
+        "peak_pending_queue": 53,
+        "avg_pending_queue": 10.95,
+        "queued_jobs_count": 394,
+        "queued_jobs_pct": 51.5,
+        "mean_wait_time_minutes": 13.35,
+        "p95_wait_time_minutes": 25.54,
+        "cluster_capacity_stranding_pct": {
+          "cpu": 24.42,
+          "ram": 30.3,
+          "gpu": 68.25
+        },
+        "allocation_slack_pct": {
+          "cpu": 79.13,
+          "ram": 98.17,
+          "gpu": 88.46
+        }
+      },
+      "P1": {
+        "strategy": "P1",
+        "total_submitted_sessions": 765,
+        "completed_sessions": 765,
+        "unserved_pending_at_end": 0,
+        "oom_count": 70,
+        "oom_rate_pct": 9.15032679738562,
+        "peak_running_concurrency": 127,
+        "avg_running_concurrency": 71.79,
+        "peak_pending_queue": 0,
+        "avg_pending_queue": 0.0,
+        "queued_jobs_count": 0,
+        "queued_jobs_pct": 0.0,
+        "mean_wait_time_minutes": 0.0,
+        "p95_wait_time_minutes": 0.0,
+        "cluster_capacity_stranding_pct": {
+          "cpu": 4.98,
+          "ram": 6.82,
+          "gpu": 0.0
+        },
+        "allocation_slack_pct": {
+          "cpu": 45.84,
+          "ram": 98.76,
+          "gpu": 0.0
+        }
+      },
+      "P2": {
+        "strategy": "P2",
+        "total_submitted_sessions": 765,
+        "completed_sessions": 765,
+        "unserved_pending_at_end": 0,
+        "oom_count": 0,
+        "oom_rate_pct": 0.0,
+        "peak_running_concurrency": 137,
+        "avg_running_concurrency": 78.06,
+        "peak_pending_queue": 0,
+        "avg_pending_queue": 0.0,
+        "queued_jobs_count": 0,
+        "queued_jobs_pct": 0.0,
+        "mean_wait_time_minutes": 0.0,
+        "p95_wait_time_minutes": 0.0,
+        "cluster_capacity_stranding_pct": {
+          "cpu": 1.29,
+          "ram": 0.93,
+          "gpu": 0.0
+        },
+        "allocation_slack_pct": {
+          "cpu": 16.54,
+          "ram": 62.01,
+          "gpu": 0.0
+        }
+      }
+    },
+    "51": {
+      "B0": {
+        "strategy": "B0",
+        "total_submitted_sessions": 796,
+        "completed_sessions": 796,
+        "unserved_pending_at_end": 0,
+        "oom_count": 0,
+        "oom_rate_pct": 0.0,
+        "peak_running_concurrency": 100,
+        "avg_running_concurrency": 80.19,
+        "peak_pending_queue": 65,
+        "avg_pending_queue": 19.1,
+        "queued_jobs_count": 599,
+        "queued_jobs_pct": 75.25,
+        "mean_wait_time_minutes": 15.32,
+        "p95_wait_time_minutes": 30.11,
+        "cluster_capacity_stranding_pct": {
+          "cpu": 25.33,
+          "ram": 31.39,
+          "gpu": 72.03
+        },
+        "allocation_slack_pct": {
+          "cpu": 78.95,
+          "ram": 97.85,
+          "gpu": 89.82
+        }
+      },
+      "P1": {
+        "strategy": "P1",
+        "total_submitted_sessions": 796,
+        "completed_sessions": 796,
+        "unserved_pending_at_end": 0,
+        "oom_count": 79,
+        "oom_rate_pct": 9.924623115577889,
+        "peak_running_concurrency": 132,
+        "avg_running_concurrency": 73.33,
+        "peak_pending_queue": 0,
+        "avg_pending_queue": 0.0,
+        "queued_jobs_count": 0,
+        "queued_jobs_pct": 0.0,
+        "mean_wait_time_minutes": 0.0,
+        "p95_wait_time_minutes": 0.0,
+        "cluster_capacity_stranding_pct": {
+          "cpu": 4.95,
+          "ram": 6.93,
+          "gpu": 0.0
+        },
+        "allocation_slack_pct": {
+          "cpu": 44.99,
+          "ram": 98.75,
+          "gpu": 0.0
+        }
+      },
+      "P2": {
+        "strategy": "P2",
+        "total_submitted_sessions": 796,
+        "completed_sessions": 796,
+        "unserved_pending_at_end": 0,
+        "oom_count": 0,
+        "oom_rate_pct": 0.0,
+        "peak_running_concurrency": 141,
+        "avg_running_concurrency": 81.19,
+        "peak_pending_queue": 0,
+        "avg_pending_queue": 0.0,
+        "queued_jobs_count": 0,
+        "queued_jobs_pct": 0.0,
+        "mean_wait_time_minutes": 0.0,
+        "p95_wait_time_minutes": 0.0,
+        "cluster_capacity_stranding_pct": {
+          "cpu": 1.28,
+          "ram": 0.98,
+          "gpu": 0.0
+        },
+        "allocation_slack_pct": {
+          "cpu": 15.78,
+          "ram": 58.26,
+          "gpu": 0.0
+        }
+      }
+    },
+    "52": {
+      "B0": {
+        "strategy": "B0",
+        "total_submitted_sessions": 767,
+        "completed_sessions": 767,
+        "unserved_pending_at_end": 0,
+        "oom_count": 0,
+        "oom_rate_pct": 0.0,
+        "peak_running_concurrency": 100,
+        "avg_running_concurrency": 76.31,
+        "peak_pending_queue": 61,
+        "avg_pending_queue": 8.99,
+        "queued_jobs_count": 362,
+        "queued_jobs_pct": 47.2,
+        "mean_wait_time_minutes": 11.92,
+        "p95_wait_time_minutes": 25.67,
+        "cluster_capacity_stranding_pct": {
+          "cpu": 24.09,
+          "ram": 29.83,
+          "gpu": 66.49
+        },
+        "allocation_slack_pct": {
+          "cpu": 78.93,
+          "ram": 97.71,
+          "gpu": 87.13
+        }
+      },
+      "P1": {
+        "strategy": "P1",
+        "total_submitted_sessions": 767,
+        "completed_sessions": 767,
+        "unserved_pending_at_end": 0,
+        "oom_count": 71,
+        "oom_rate_pct": 9.256844850065189,
+        "peak_running_concurrency": 136,
+        "avg_running_concurrency": 68.79,
+        "peak_pending_queue": 0,
+        "avg_pending_queue": 0.0,
+        "queued_jobs_count": 0,
+        "queued_jobs_pct": 0.0,
+        "mean_wait_time_minutes": 0.0,
+        "p95_wait_time_minutes": 0.0,
+        "cluster_capacity_stranding_pct": {
+          "cpu": 5.12,
+          "ram": 7.01,
+          "gpu": 0.0
+        },
+        "allocation_slack_pct": {
+          "cpu": 47.46,
+          "ram": 98.84,
+          "gpu": 0.0
+        }
+      },
+      "P2": {
+        "strategy": "P2",
+        "total_submitted_sessions": 767,
+        "completed_sessions": 767,
+        "unserved_pending_at_end": 0,
+        "oom_count": 0,
+        "oom_rate_pct": 0.0,
+        "peak_running_concurrency": 151,
+        "avg_running_concurrency": 76.79,
+        "peak_pending_queue": 0,
+        "avg_pending_queue": 0.0,
+        "queued_jobs_count": 0,
+        "queued_jobs_pct": 0.0,
+        "mean_wait_time_minutes": 0.0,
+        "p95_wait_time_minutes": 0.0,
+        "cluster_capacity_stranding_pct": {
+          "cpu": 1.21,
+          "ram": 0.93,
+          "gpu": 0.0
+        },
+        "allocation_slack_pct": {
+          "cpu": 15.72,
+          "ram": 56.85,
+          "gpu": 0.0
+        }
+      }
+    },
+    "53": {
+      "B0": {
+        "strategy": "B0",
+        "total_submitted_sessions": 800,
+        "completed_sessions": 800,
+        "unserved_pending_at_end": 0,
+        "oom_count": 0,
+        "oom_rate_pct": 0.0,
+        "peak_running_concurrency": 100,
+        "avg_running_concurrency": 80.09,
+        "peak_pending_queue": 63,
+        "avg_pending_queue": 19.08,
+        "queued_jobs_count": 626,
+        "queued_jobs_pct": 78.25,
+        "mean_wait_time_minutes": 14.65,
+        "p95_wait_time_minutes": 28.48,
+        "cluster_capacity_stranding_pct": {
+          "cpu": 25.29,
+          "ram": 31.25,
+          "gpu": 70.9
+        },
+        "allocation_slack_pct": {
+          "cpu": 78.94,
+          "ram": 97.56,
+          "gpu": 88.53
+        }
+      },
+      "P1": {
+        "strategy": "P1",
+        "total_submitted_sessions": 800,
+        "completed_sessions": 800,
+        "unserved_pending_at_end": 0,
+        "oom_count": 90,
+        "oom_rate_pct": 11.25,
+        "peak_running_concurrency": 125,
+        "avg_running_concurrency": 71.65,
+        "peak_pending_queue": 0,
+        "avg_pending_queue": 0.0,
+        "queued_jobs_count": 0,
+        "queued_jobs_pct": 0.0,
+        "mean_wait_time_minutes": 0.0,
+        "p95_wait_time_minutes": 0.0,
+        "cluster_capacity_stranding_pct": {
+          "cpu": 4.93,
+          "ram": 6.72,
+          "gpu": 0.0
+        },
+        "allocation_slack_pct": {
+          "cpu": 45.56,
+          "ram": 98.72,
+          "gpu": 0.0
+        }
+      },
+      "P2": {
+        "strategy": "P2",
+        "total_submitted_sessions": 800,
+        "completed_sessions": 800,
+        "unserved_pending_at_end": 0,
+        "oom_count": 0,
+        "oom_rate_pct": 0.0,
+        "peak_running_concurrency": 134,
+        "avg_running_concurrency": 80.68,
+        "peak_pending_queue": 0,
+        "avg_pending_queue": 0.0,
+        "queued_jobs_count": 0,
+        "queued_jobs_pct": 0.0,
+        "mean_wait_time_minutes": 0.0,
+        "p95_wait_time_minutes": 0.0,
+        "cluster_capacity_stranding_pct": {
+          "cpu": 1.27,
+          "ram": 0.98,
+          "gpu": 0.0
+        },
+        "allocation_slack_pct": {
+          "cpu": 15.73,
+          "ram": 55.22,
+          "gpu": 0.0
+        }
+      }
+    },
+    "54": {
+      "B0": {
+        "strategy": "B0",
+        "total_submitted_sessions": 788,
+        "completed_sessions": 788,
+        "unserved_pending_at_end": 0,
+        "oom_count": 0,
+        "oom_rate_pct": 0.0,
+        "peak_running_concurrency": 100,
+        "avg_running_concurrency": 76.76,
+        "peak_pending_queue": 66,
+        "avg_pending_queue": 13.55,
+        "queued_jobs_count": 397,
+        "queued_jobs_pct": 50.38,
+        "mean_wait_time_minutes": 16.41,
+        "p95_wait_time_minutes": 31.13,
+        "cluster_capacity_stranding_pct": {
+          "cpu": 24.26,
+          "ram": 29.98,
+          "gpu": 68.37
+        },
+        "allocation_slack_pct": {
+          "cpu": 79.01,
+          "ram": 97.65,
+          "gpu": 89.06
+        }
+      },
+      "P1": {
+        "strategy": "P1",
+        "total_submitted_sessions": 788,
+        "completed_sessions": 788,
+        "unserved_pending_at_end": 0,
+        "oom_count": 83,
+        "oom_rate_pct": 10.532994923857867,
+        "peak_running_concurrency": 143,
+        "avg_running_concurrency": 69.81,
+        "peak_pending_queue": 0,
+        "avg_pending_queue": 0.0,
+        "queued_jobs_count": 0,
+        "queued_jobs_pct": 0.0,
+        "mean_wait_time_minutes": 0.0,
+        "p95_wait_time_minutes": 0.0,
+        "cluster_capacity_stranding_pct": {
+          "cpu": 4.77,
+          "ram": 6.52,
+          "gpu": 0.0
+        },
+        "allocation_slack_pct": {
+          "cpu": 45.42,
+          "ram": 98.7,
+          "gpu": 0.0
+        }
+      },
+      "P2": {
+        "strategy": "P2",
+        "total_submitted_sessions": 788,
+        "completed_sessions": 788,
+        "unserved_pending_at_end": 0,
+        "oom_count": 0,
+        "oom_rate_pct": 0.0,
+        "peak_running_concurrency": 152,
+        "avg_running_concurrency": 78.15,
+        "peak_pending_queue": 0,
+        "avg_pending_queue": 0.0,
+        "queued_jobs_count": 0,
+        "queued_jobs_pct": 0.0,
+        "mean_wait_time_minutes": 0.0,
+        "p95_wait_time_minutes": 0.0,
+        "cluster_capacity_stranding_pct": {
+          "cpu": 1.25,
+          "ram": 0.95,
+          "gpu": 0.0
+        },
+        "allocation_slack_pct": {
+          "cpu": 16.03,
+          "ram": 56.43,
+          "gpu": 0.0
+        }
+      }
+    },
+    "55": {
+      "B0": {
+        "strategy": "B0",
+        "total_submitted_sessions": 800,
+        "completed_sessions": 800,
+        "unserved_pending_at_end": 0,
+        "oom_count": 0,
+        "oom_rate_pct": 0.0,
+        "peak_running_concurrency": 100,
+        "avg_running_concurrency": 79.53,
+        "peak_pending_queue": 50,
+        "avg_pending_queue": 11.14,
+        "queued_jobs_count": 484,
+        "queued_jobs_pct": 60.5,
+        "mean_wait_time_minutes": 11.05,
+        "p95_wait_time_minutes": 21.54,
+        "cluster_capacity_stranding_pct": {
+          "cpu": 25.07,
+          "ram": 31.09,
+          "gpu": 69.47
+        },
+        "allocation_slack_pct": {
+          "cpu": 78.81,
+          "ram": 97.72,
+          "gpu": 87.36
+        }
+      },
+      "P1": {
+        "strategy": "P1",
+        "total_submitted_sessions": 800,
+        "completed_sessions": 800,
+        "unserved_pending_at_end": 0,
+        "oom_count": 82,
+        "oom_rate_pct": 10.25,
+        "peak_running_concurrency": 119,
+        "avg_running_concurrency": 72.49,
+        "peak_pending_queue": 0,
+        "avg_pending_queue": 0.0,
+        "queued_jobs_count": 0,
+        "queued_jobs_pct": 0.0,
+        "mean_wait_time_minutes": 0.0,
+        "p95_wait_time_minutes": 0.0,
+        "cluster_capacity_stranding_pct": {
+          "cpu": 5.37,
+          "ram": 7.45,
+          "gpu": 0.0
+        },
+        "allocation_slack_pct": {
+          "cpu": 47.15,
+          "ram": 98.85,
+          "gpu": 0.0
+        }
+      },
+      "P2": {
+        "strategy": "P2",
+        "total_submitted_sessions": 800,
+        "completed_sessions": 800,
+        "unserved_pending_at_end": 0,
+        "oom_count": 0,
+        "oom_rate_pct": 0.0,
+        "peak_running_concurrency": 135,
+        "avg_running_concurrency": 80.68,
+        "peak_pending_queue": 0,
+        "avg_pending_queue": 0.0,
+        "queued_jobs_count": 0,
+        "queued_jobs_pct": 0.0,
+        "mean_wait_time_minutes": 0.0,
+        "p95_wait_time_minutes": 0.0,
+        "cluster_capacity_stranding_pct": {
+          "cpu": 1.23,
+          "ram": 0.98,
+          "gpu": 0.0
+        },
+        "allocation_slack_pct": {
+          "cpu": 15.21,
+          "ram": 56.91,
+          "gpu": 0.0
+        }
+      }
+    },
+    "56": {
+      "B0": {
+        "strategy": "B0",
+        "total_submitted_sessions": 792,
+        "completed_sessions": 792,
+        "unserved_pending_at_end": 0,
+        "oom_count": 0,
+        "oom_rate_pct": 0.0,
+        "peak_running_concurrency": 100,
+        "avg_running_concurrency": 79.22,
+        "peak_pending_queue": 63,
+        "avg_pending_queue": 14.05,
+        "queued_jobs_count": 495,
+        "queued_jobs_pct": 62.5,
+        "mean_wait_time_minutes": 13.64,
+        "p95_wait_time_minutes": 28.65,
+        "cluster_capacity_stranding_pct": {
+          "cpu": 25.03,
+          "ram": 30.99,
+          "gpu": 68.8
+        },
+        "allocation_slack_pct": {
+          "cpu": 78.99,
+          "ram": 97.8,
+          "gpu": 86.85
+        }
+      },
+      "P1": {
+        "strategy": "P1",
+        "total_submitted_sessions": 792,
+        "completed_sessions": 792,
+        "unserved_pending_at_end": 0,
+        "oom_count": 79,
+        "oom_rate_pct": 9.974747474747476,
+        "peak_running_concurrency": 134,
+        "avg_running_concurrency": 72.16,
+        "peak_pending_queue": 0,
+        "avg_pending_queue": 0.0,
+        "queued_jobs_count": 0,
+        "queued_jobs_pct": 0.0,
+        "mean_wait_time_minutes": 0.0,
+        "p95_wait_time_minutes": 0.0,
+        "cluster_capacity_stranding_pct": {
+          "cpu": 5.54,
+          "ram": 7.6,
+          "gpu": 0.0
+        },
+        "allocation_slack_pct": {
+          "cpu": 48.28,
+          "ram": 98.88,
+          "gpu": 0.0
+        }
+      },
+      "P2": {
+        "strategy": "P2",
+        "total_submitted_sessions": 792,
+        "completed_sessions": 792,
+        "unserved_pending_at_end": 0,
+        "oom_count": 0,
+        "oom_rate_pct": 0.0,
+        "peak_running_concurrency": 150,
+        "avg_running_concurrency": 80.12,
+        "peak_pending_queue": 0,
+        "avg_pending_queue": 0.0,
+        "queued_jobs_count": 0,
+        "queued_jobs_pct": 0.0,
+        "mean_wait_time_minutes": 0.0,
+        "p95_wait_time_minutes": 0.0,
+        "cluster_capacity_stranding_pct": {
+          "cpu": 1.28,
+          "ram": 0.97,
+          "gpu": 0.0
+        },
+        "allocation_slack_pct": {
+          "cpu": 15.92,
+          "ram": 57.84,
+          "gpu": 0.0
+        }
+      }
+    },
+    "57": {
+      "B0": {
+        "strategy": "B0",
+        "total_submitted_sessions": 800,
+        "completed_sessions": 800,
+        "unserved_pending_at_end": 0,
+        "oom_count": 0,
+        "oom_rate_pct": 0.0,
+        "peak_running_concurrency": 100,
+        "avg_running_concurrency": 79.55,
+        "peak_pending_queue": 63,
+        "avg_pending_queue": 13.01,
+        "queued_jobs_count": 472,
+        "queued_jobs_pct": 59.0,
+        "mean_wait_time_minutes": 13.27,
+        "p95_wait_time_minutes": 28.93,
+        "cluster_capacity_stranding_pct": {
+          "cpu": 25.13,
+          "ram": 31.11,
+          "gpu": 69.8
+        },
+        "allocation_slack_pct": {
+          "cpu": 78.98,
+          "ram": 97.76,
+          "gpu": 87.74
+        }
+      },
+      "P1": {
+        "strategy": "P1",
+        "total_submitted_sessions": 800,
+        "completed_sessions": 800,
+        "unserved_pending_at_end": 0,
+        "oom_count": 79,
+        "oom_rate_pct": 9.875,
+        "peak_running_concurrency": 135,
+        "avg_running_concurrency": 73.01,
+        "peak_pending_queue": 0,
+        "avg_pending_queue": 0.0,
+        "queued_jobs_count": 0,
+        "queued_jobs_pct": 0.0,
+        "mean_wait_time_minutes": 0.0,
+        "p95_wait_time_minutes": 0.0,
+        "cluster_capacity_stranding_pct": {
+          "cpu": 5.39,
+          "ram": 7.39,
+          "gpu": 0.0
+        },
+        "allocation_slack_pct": {
+          "cpu": 47.29,
+          "ram": 98.82,
+          "gpu": 0.0
+        }
+      },
+      "P2": {
+        "strategy": "P2",
+        "total_submitted_sessions": 800,
+        "completed_sessions": 800,
+        "unserved_pending_at_end": 0,
+        "oom_count": 0,
+        "oom_rate_pct": 0.0,
+        "peak_running_concurrency": 147,
+        "avg_running_concurrency": 80.95,
+        "peak_pending_queue": 0,
+        "avg_pending_queue": 0.0,
+        "queued_jobs_count": 0,
+        "queued_jobs_pct": 0.0,
+        "mean_wait_time_minutes": 0.0,
+        "p95_wait_time_minutes": 0.0,
+        "cluster_capacity_stranding_pct": {
+          "cpu": 1.29,
+          "ram": 0.98,
+          "gpu": 0.0
+        },
+        "allocation_slack_pct": {
+          "cpu": 15.99,
+          "ram": 57.78,
+          "gpu": 0.0
+        }
+      }
+    },
+    "58": {
+      "B0": {
+        "strategy": "B0",
+        "total_submitted_sessions": 792,
+        "completed_sessions": 792,
+        "unserved_pending_at_end": 0,
+        "oom_count": 0,
+        "oom_rate_pct": 0.0,
+        "peak_running_concurrency": 100,
+        "avg_running_concurrency": 79.14,
+        "peak_pending_queue": 74,
+        "avg_pending_queue": 15.65,
+        "queued_jobs_count": 504,
+        "queued_jobs_pct": 63.64,
+        "mean_wait_time_minutes": 14.92,
+        "p95_wait_time_minutes": 32.32,
+        "cluster_capacity_stranding_pct": {
+          "cpu": 24.97,
+          "ram": 30.93,
+          "gpu": 69.12
+        },
+        "allocation_slack_pct": {
+          "cpu": 78.87,
+          "ram": 97.69,
+          "gpu": 87.34
+        }
+      },
+      "P1": {
+        "strategy": "P1",
+        "total_submitted_sessions": 792,
+        "completed_sessions": 792,
+        "unserved_pending_at_end": 0,
+        "oom_count": 91,
+        "oom_rate_pct": 11.48989898989899,
+        "peak_running_concurrency": 138,
+        "avg_running_concurrency": 71.83,
+        "peak_pending_queue": 0,
+        "avg_pending_queue": 0.0,
+        "queued_jobs_count": 0,
+        "queued_jobs_pct": 0.0,
+        "mean_wait_time_minutes": 0.0,
+        "p95_wait_time_minutes": 0.0,
+        "cluster_capacity_stranding_pct": {
+          "cpu": 5.15,
+          "ram": 7.02,
+          "gpu": 0.0
+        },
+        "allocation_slack_pct": {
+          "cpu": 46.45,
+          "ram": 98.79,
+          "gpu": 0.0
+        }
+      },
+      "P2": {
+        "strategy": "P2",
+        "total_submitted_sessions": 792,
+        "completed_sessions": 792,
+        "unserved_pending_at_end": 0,
+        "oom_count": 0,
+        "oom_rate_pct": 0.0,
+        "peak_running_concurrency": 142,
+        "avg_running_concurrency": 80.33,
+        "peak_pending_queue": 0,
+        "avg_pending_queue": 0.0,
+        "queued_jobs_count": 0,
+        "queued_jobs_pct": 0.0,
+        "mean_wait_time_minutes": 0.0,
+        "p95_wait_time_minutes": 0.0,
+        "cluster_capacity_stranding_pct": {
+          "cpu": 1.24,
+          "ram": 0.97,
+          "gpu": 0.0
+        },
+        "allocation_slack_pct": {
+          "cpu": 15.49,
+          "ram": 56.78,
+          "gpu": 0.0
+        }
+      }
+    },
+    "59": {
+      "B0": {
+        "strategy": "B0",
+        "total_submitted_sessions": 763,
+        "completed_sessions": 763,
+        "unserved_pending_at_end": 0,
+        "oom_count": 0,
+        "oom_rate_pct": 0.0,
+        "peak_running_concurrency": 100,
+        "avg_running_concurrency": 75.14,
+        "peak_pending_queue": 54,
+        "avg_pending_queue": 8.78,
+        "queued_jobs_count": 377,
+        "queued_jobs_pct": 49.41,
+        "mean_wait_time_minutes": 11.19,
+        "p95_wait_time_minutes": 21.38,
+        "cluster_capacity_stranding_pct": {
+          "cpu": 23.7,
+          "ram": 29.36,
+          "gpu": 64.51
+        },
+        "allocation_slack_pct": {
+          "cpu": 78.85,
+          "ram": 97.69,
+          "gpu": 85.85
+        }
+      },
+      "P1": {
+        "strategy": "P1",
+        "total_submitted_sessions": 763,
+        "completed_sessions": 763,
+        "unserved_pending_at_end": 0,
+        "oom_count": 77,
+        "oom_rate_pct": 10.091743119266056,
+        "peak_running_concurrency": 123,
+        "avg_running_concurrency": 68.08,
+        "peak_pending_queue": 0,
+        "avg_pending_queue": 0.0,
+        "queued_jobs_count": 0,
+        "queued_jobs_pct": 0.0,
+        "mean_wait_time_minutes": 0.0,
+        "p95_wait_time_minutes": 0.0,
+        "cluster_capacity_stranding_pct": {
+          "cpu": 5.38,
+          "ram": 7.35,
+          "gpu": 0.0
+        },
+        "allocation_slack_pct": {
+          "cpu": 48.83,
+          "ram": 98.9,
+          "gpu": 0.0
+        }
+      },
+      "P2": {
+        "strategy": "P2",
+        "total_submitted_sessions": 763,
+        "completed_sessions": 763,
+        "unserved_pending_at_end": 0,
+        "oom_count": 0,
+        "oom_rate_pct": 0.0,
+        "peak_running_concurrency": 135,
+        "avg_running_concurrency": 75.9,
+        "peak_pending_queue": 0,
+        "avg_pending_queue": 0.0,
+        "queued_jobs_count": 0,
+        "queued_jobs_pct": 0.0,
+        "mean_wait_time_minutes": 0.0,
+        "p95_wait_time_minutes": 0.0,
+        "cluster_capacity_stranding_pct": {
+          "cpu": 1.17,
+          "ram": 0.92,
+          "gpu": 0.0
+        },
+        "allocation_slack_pct": {
+          "cpu": 15.45,
+          "ram": 56.87,
+          "gpu": 0.0
+        }
+      }
+    },
+    "60": {
+      "B0": {
+        "strategy": "B0",
+        "total_submitted_sessions": 784,
+        "completed_sessions": 784,
+        "unserved_pending_at_end": 0,
+        "oom_count": 0,
+        "oom_rate_pct": 0.0,
+        "peak_running_concurrency": 100,
+        "avg_running_concurrency": 78.59,
+        "peak_pending_queue": 60,
+        "avg_pending_queue": 12.56,
+        "queued_jobs_count": 470,
+        "queued_jobs_pct": 59.95,
+        "mean_wait_time_minutes": 12.85,
+        "p95_wait_time_minutes": 25.01,
+        "cluster_capacity_stranding_pct": {
+          "cpu": 24.81,
+          "ram": 30.73,
+          "gpu": 68.4
+        },
+        "allocation_slack_pct": {
+          "cpu": 78.91,
+          "ram": 97.75,
+          "gpu": 87.03
+        }
+      },
+      "P1": {
+        "strategy": "P1",
+        "total_submitted_sessions": 784,
+        "completed_sessions": 784,
+        "unserved_pending_at_end": 0,
+        "oom_count": 81,
+        "oom_rate_pct": 10.331632653061225,
+        "peak_running_concurrency": 125,
+        "avg_running_concurrency": 71.67,
+        "peak_pending_queue": 0,
+        "avg_pending_queue": 0.0,
+        "queued_jobs_count": 0,
+        "queued_jobs_pct": 0.0,
+        "mean_wait_time_minutes": 0.0,
+        "p95_wait_time_minutes": 0.0,
+        "cluster_capacity_stranding_pct": {
+          "cpu": 5.52,
+          "ram": 7.65,
+          "gpu": 0.0
+        },
+        "allocation_slack_pct": {
+          "cpu": 48.26,
+          "ram": 98.89,
+          "gpu": 0.0
+        }
+      },
+      "P2": {
+        "strategy": "P2",
+        "total_submitted_sessions": 784,
+        "completed_sessions": 784,
+        "unserved_pending_at_end": 0,
+        "oom_count": 0,
+        "oom_rate_pct": 0.0,
+        "peak_running_concurrency": 139,
+        "avg_running_concurrency": 79.65,
+        "peak_pending_queue": 0,
+        "avg_pending_queue": 0.0,
+        "queued_jobs_count": 0,
+        "queued_jobs_pct": 0.0,
+        "mean_wait_time_minutes": 0.0,
+        "p95_wait_time_minutes": 0.0,
+        "cluster_capacity_stranding_pct": {
+          "cpu": 1.25,
+          "ram": 0.96,
+          "gpu": 0.0
+        },
+        "allocation_slack_pct": {
+          "cpu": 15.64,
+          "ram": 57.41,
+          "gpu": 0.0
+        }
+      }
+    },
+    "61": {
+      "B0": {
+        "strategy": "B0",
+        "total_submitted_sessions": 800,
+        "completed_sessions": 800,
+        "unserved_pending_at_end": 0,
+        "oom_count": 0,
+        "oom_rate_pct": 0.0,
+        "peak_running_concurrency": 100,
+        "avg_running_concurrency": 77.76,
+        "peak_pending_queue": 57,
+        "avg_pending_queue": 10.89,
+        "queued_jobs_count": 467,
+        "queued_jobs_pct": 58.38,
+        "mean_wait_time_minutes": 11.21,
+        "p95_wait_time_minutes": 20.55,
+        "cluster_capacity_stranding_pct": {
+          "cpu": 24.56,
+          "ram": 30.45,
+          "gpu": 67.76
+        },
+        "allocation_slack_pct": {
+          "cpu": 78.97,
+          "ram": 97.9,
+          "gpu": 87.13
+        }
+      },
+      "P1": {
+        "strategy": "P1",
+        "total_submitted_sessions": 800,
+        "completed_sessions": 800,
+        "unserved_pending_at_end": 0,
+        "oom_count": 81,
+        "oom_rate_pct": 10.125,
+        "peak_running_concurrency": 130,
+        "avg_running_concurrency": 70.83,
+        "peak_pending_queue": 0,
+        "avg_pending_queue": 0.0,
+        "queued_jobs_count": 0,
+        "queued_jobs_pct": 0.0,
+        "mean_wait_time_minutes": 0.0,
+        "p95_wait_time_minutes": 0.0,
+        "cluster_capacity_stranding_pct": {
+          "cpu": 5.29,
+          "ram": 7.25,
+          "gpu": 0.0
+        },
+        "allocation_slack_pct": {
+          "cpu": 47.53,
+          "ram": 98.84,
+          "gpu": 0.0
+        }
+      },
+      "P2": {
+        "strategy": "P2",
+        "total_submitted_sessions": 800,
+        "completed_sessions": 800,
+        "unserved_pending_at_end": 0,
+        "oom_count": 0,
+        "oom_rate_pct": 0.0,
+        "peak_running_concurrency": 142,
+        "avg_running_concurrency": 78.27,
+        "peak_pending_queue": 0,
+        "avg_pending_queue": 0.0,
+        "queued_jobs_count": 0,
+        "queued_jobs_pct": 0.0,
+        "mean_wait_time_minutes": 0.0,
+        "p95_wait_time_minutes": 0.0,
+        "cluster_capacity_stranding_pct": {
+          "cpu": 1.24,
+          "ram": 0.94,
+          "gpu": 0.0
+        },
+        "allocation_slack_pct": {
+          "cpu": 15.9,
+          "ram": 58.8,
+          "gpu": 0.0
+        }
+      }
+    },
+    "62": {
+      "B0": {
+        "strategy": "B0",
+        "total_submitted_sessions": 800,
+        "completed_sessions": 800,
+        "unserved_pending_at_end": 0,
+        "oom_count": 0,
+        "oom_rate_pct": 0.0,
+        "peak_running_concurrency": 100,
+        "avg_running_concurrency": 79.85,
+        "peak_pending_queue": 48,
+        "avg_pending_queue": 11.54,
+        "queued_jobs_count": 528,
+        "queued_jobs_pct": 66.0,
+        "mean_wait_time_minutes": 10.49,
+        "p95_wait_time_minutes": 21.86,
+        "cluster_capacity_stranding_pct": {
+          "cpu": 25.22,
+          "ram": 31.33,
+          "gpu": 71.92
+        },
+        "allocation_slack_pct": {
+          "cpu": 78.98,
+          "ram": 98.1,
+          "gpu": 90.07
+        }
+      },
+      "P1": {
+        "strategy": "P1",
+        "total_submitted_sessions": 800,
+        "completed_sessions": 800,
+        "unserved_pending_at_end": 0,
+        "oom_count": 68,
+        "oom_rate_pct": 8.5,
+        "peak_running_concurrency": 122,
+        "avg_running_concurrency": 73.84,
+        "peak_pending_queue": 0,
+        "avg_pending_queue": 0.0,
+        "queued_jobs_count": 0,
+        "queued_jobs_pct": 0.0,
+        "mean_wait_time_minutes": 0.0,
+        "p95_wait_time_minutes": 0.0,
+        "cluster_capacity_stranding_pct": {
+          "cpu": 4.78,
+          "ram": 6.67,
+          "gpu": 0.0
+        },
+        "allocation_slack_pct": {
+          "cpu": 43.91,
+          "ram": 98.72,
+          "gpu": 0.0
+        }
+      },
+      "P2": {
+        "strategy": "P2",
+        "total_submitted_sessions": 800,
+        "completed_sessions": 800,
+        "unserved_pending_at_end": 0,
+        "oom_count": 0,
+        "oom_rate_pct": 0.0,
+        "peak_running_concurrency": 129,
+        "avg_running_concurrency": 80.63,
+        "peak_pending_queue": 0,
+        "avg_pending_queue": 0.0,
+        "queued_jobs_count": 0,
+        "queued_jobs_pct": 0.0,
+        "mean_wait_time_minutes": 0.0,
+        "p95_wait_time_minutes": 0.0,
+        "cluster_capacity_stranding_pct": {
+          "cpu": 1.28,
+          "ram": 0.97,
+          "gpu": 0.0
+        },
+        "allocation_slack_pct": {
+          "cpu": 15.89,
+          "ram": 61.23,
+          "gpu": 0.0
+        }
+      }
+    },
+    "63": {
+      "B0": {
+        "strategy": "B0",
+        "total_submitted_sessions": 800,
+        "completed_sessions": 800,
+        "unserved_pending_at_end": 0,
+        "oom_count": 0,
+        "oom_rate_pct": 0.0,
+        "peak_running_concurrency": 100,
+        "avg_running_concurrency": 79.58,
+        "peak_pending_queue": 54,
+        "avg_pending_queue": 13.41,
+        "queued_jobs_count": 495,
+        "queued_jobs_pct": 61.88,
+        "mean_wait_time_minutes": 13.03,
+        "p95_wait_time_minutes": 22.78,
+        "cluster_capacity_stranding_pct": {
+          "cpu": 25.1,
+          "ram": 31.2,
+          "gpu": 70.52
+        },
+        "allocation_slack_pct": {
+          "cpu": 78.84,
+          "ram": 98.02,
+          "gpu": 88.61
+        }
+      },
+      "P1": {
+        "strategy": "P1",
+        "total_submitted_sessions": 800,
+        "completed_sessions": 800,
+        "unserved_pending_at_end": 0,
+        "oom_count": 72,
+        "oom_rate_pct": 9.0,
+        "peak_running_concurrency": 127,
+        "avg_running_concurrency": 73.58,
+        "peak_pending_queue": 0,
+        "avg_pending_queue": 0.0,
+        "queued_jobs_count": 0,
+        "queued_jobs_pct": 0.0,
+        "mean_wait_time_minutes": 0.0,
+        "p95_wait_time_minutes": 0.0,
+        "cluster_capacity_stranding_pct": {
+          "cpu": 5.04,
+          "ram": 7.04,
+          "gpu": 0.0
+        },
+        "allocation_slack_pct": {
+          "cpu": 45.15,
+          "ram": 98.77,
+          "gpu": 0.0
+        }
+      },
+      "P2": {
+        "strategy": "P2",
+        "total_submitted_sessions": 800,
+        "completed_sessions": 800,
+        "unserved_pending_at_end": 0,
+        "oom_count": 0,
+        "oom_rate_pct": 0.0,
+        "peak_running_concurrency": 139,
+        "avg_running_concurrency": 80.41,
+        "peak_pending_queue": 0,
+        "avg_pending_queue": 0.0,
+        "queued_jobs_count": 0,
+        "queued_jobs_pct": 0.0,
+        "mean_wait_time_minutes": 0.0,
+        "p95_wait_time_minutes": 0.0,
+        "cluster_capacity_stranding_pct": {
+          "cpu": 1.24,
+          "ram": 0.97,
+          "gpu": 0.0
+        },
+        "allocation_slack_pct": {
+          "cpu": 15.37,
+          "ram": 60.43,
+          "gpu": 0.0
+        }
+      }
+    },
+    "64": {
+      "B0": {
+        "strategy": "B0",
+        "total_submitted_sessions": 762,
+        "completed_sessions": 762,
+        "unserved_pending_at_end": 0,
+        "oom_count": 0,
+        "oom_rate_pct": 0.0,
+        "peak_running_concurrency": 100,
+        "avg_running_concurrency": 77.29,
+        "peak_pending_queue": 50,
+        "avg_pending_queue": 9.34,
+        "queued_jobs_count": 439,
+        "queued_jobs_pct": 57.61,
+        "mean_wait_time_minutes": 10.23,
+        "p95_wait_time_minutes": 19.97,
+        "cluster_capacity_stranding_pct": {
+          "cpu": 24.44,
+          "ram": 30.22,
+          "gpu": 69.71
+        },
+        "allocation_slack_pct": {
+          "cpu": 79.05,
+          "ram": 97.76,
+          "gpu": 90.19
+        }
+      },
+      "P1": {
+        "strategy": "P1",
+        "total_submitted_sessions": 762,
+        "completed_sessions": 762,
+        "unserved_pending_at_end": 0,
+        "oom_count": 75,
+        "oom_rate_pct": 9.84251968503937,
+        "peak_running_concurrency": 122,
+        "avg_running_concurrency": 69.78,
+        "peak_pending_queue": 0,
+        "avg_pending_queue": 0.0,
+        "queued_jobs_count": 0,
+        "queued_jobs_pct": 0.0,
+        "mean_wait_time_minutes": 0.0,
+        "p95_wait_time_minutes": 0.0,
+        "cluster_capacity_stranding_pct": {
+          "cpu": 4.65,
+          "ram": 6.45,
+          "gpu": 0.0
+        },
+        "allocation_slack_pct": {
+          "cpu": 44.84,
+          "ram": 98.7,
+          "gpu": 0.0
+        }
+      },
+      "P2": {
+        "strategy": "P2",
+        "total_submitted_sessions": 762,
+        "completed_sessions": 762,
+        "unserved_pending_at_end": 0,
+        "oom_count": 0,
+        "oom_rate_pct": 0.0,
+        "peak_running_concurrency": 133,
+        "avg_running_concurrency": 77.57,
+        "peak_pending_queue": 0,
+        "avg_pending_queue": 0.0,
+        "queued_jobs_count": 0,
+        "queued_jobs_pct": 0.0,
+        "mean_wait_time_minutes": 0.0,
+        "p95_wait_time_minutes": 0.0,
+        "cluster_capacity_stranding_pct": {
+          "cpu": 1.26,
+          "ram": 0.94,
+          "gpu": 0.0
+        },
+        "allocation_slack_pct": {
+          "cpu": 16.24,
+          "ram": 57.45,
+          "gpu": 0.0
+        }
+      }
+    },
+    "65": {
+      "B0": {
+        "strategy": "B0",
+        "total_submitted_sessions": 787,
+        "completed_sessions": 787,
+        "unserved_pending_at_end": 0,
+        "oom_count": 0,
+        "oom_rate_pct": 0.0,
+        "peak_running_concurrency": 100,
+        "avg_running_concurrency": 81.38,
+        "peak_pending_queue": 48,
+        "avg_pending_queue": 12.54,
+        "queued_jobs_count": 557,
+        "queued_jobs_pct": 70.78,
+        "mean_wait_time_minutes": 10.82,
+        "p95_wait_time_minutes": 21.0,
+        "cluster_capacity_stranding_pct": {
+          "cpu": 25.8,
+          "ram": 31.75,
+          "gpu": 73.29
+        },
+        "allocation_slack_pct": {
+          "cpu": 79.28,
+          "ram": 97.55,
+          "gpu": 90.06
+        }
+      },
+      "P1": {
+        "strategy": "P1",
+        "total_submitted_sessions": 787,
+        "completed_sessions": 787,
+        "unserved_pending_at_end": 0,
+        "oom_count": 84,
+        "oom_rate_pct": 10.673443456162643,
+        "peak_running_concurrency": 118,
+        "avg_running_concurrency": 73.1,
+        "peak_pending_queue": 0,
+        "avg_pending_queue": 0.0,
+        "queued_jobs_count": 0,
+        "queued_jobs_pct": 0.0,
+        "mean_wait_time_minutes": 0.0,
+        "p95_wait_time_minutes": 0.0,
+        "cluster_capacity_stranding_pct": {
+          "cpu": 5.04,
+          "ram": 6.85,
+          "gpu": 0.0
+        },
+        "allocation_slack_pct": {
+          "cpu": 46.08,
+          "ram": 98.71,
+          "gpu": 0.0
+        }
+      },
+      "P2": {
+        "strategy": "P2",
+        "total_submitted_sessions": 787,
+        "completed_sessions": 787,
+        "unserved_pending_at_end": 0,
+        "oom_count": 0,
+        "oom_rate_pct": 0.0,
+        "peak_running_concurrency": 133,
+        "avg_running_concurrency": 82.41,
+        "peak_pending_queue": 0,
+        "avg_pending_queue": 0.0,
+        "queued_jobs_count": 0,
+        "queued_jobs_pct": 0.0,
+        "mean_wait_time_minutes": 0.0,
+        "p95_wait_time_minutes": 0.0,
+        "cluster_capacity_stranding_pct": {
+          "cpu": 1.41,
+          "ram": 1.0,
+          "gpu": 0.0
+        },
+        "allocation_slack_pct": {
+          "cpu": 17.1,
+          "ram": 55.24,
+          "gpu": 0.0
+        }
+      }
+    },
+    "66": {
+      "B0": {
+        "strategy": "B0",
+        "total_submitted_sessions": 800,
+        "completed_sessions": 800,
+        "unserved_pending_at_end": 0,
+        "oom_count": 0,
+        "oom_rate_pct": 0.0,
+        "peak_running_concurrency": 100,
+        "avg_running_concurrency": 80.02,
+        "peak_pending_queue": 84,
+        "avg_pending_queue": 20.1,
+        "queued_jobs_count": 594,
+        "queued_jobs_pct": 74.25,
+        "mean_wait_time_minutes": 16.26,
+        "p95_wait_time_minutes": 34.38,
+        "cluster_capacity_stranding_pct": {
+          "cpu": 25.26,
+          "ram": 31.2,
+          "gpu": 71.92
+        },
+        "allocation_slack_pct": {
+          "cpu": 78.92,
+          "ram": 97.46,
+          "gpu": 89.87
+        }
+      },
+      "P1": {
+        "strategy": "P1",
+        "total_submitted_sessions": 800,
+        "completed_sessions": 800,
+        "unserved_pending_at_end": 0,
+        "oom_count": 91,
+        "oom_rate_pct": 11.375,
+        "peak_running_concurrency": 132,
+        "avg_running_concurrency": 72.25,
+        "peak_pending_queue": 0,
+        "avg_pending_queue": 0.0,
+        "queued_jobs_count": 0,
+        "queued_jobs_pct": 0.0,
+        "mean_wait_time_minutes": 0.0,
+        "p95_wait_time_minutes": 0.0,
+        "cluster_capacity_stranding_pct": {
+          "cpu": 4.99,
+          "ram": 6.98,
+          "gpu": 0.0
+        },
+        "allocation_slack_pct": {
+          "cpu": 45.65,
+          "ram": 98.76,
+          "gpu": 0.0
+        }
+      },
+      "P2": {
+        "strategy": "P2",
+        "total_submitted_sessions": 800,
+        "completed_sessions": 800,
+        "unserved_pending_at_end": 0,
+        "oom_count": 0,
+        "oom_rate_pct": 0.0,
+        "peak_running_concurrency": 150,
+        "avg_running_concurrency": 81.67,
+        "peak_pending_queue": 0,
+        "avg_pending_queue": 0.0,
+        "queued_jobs_count": 0,
+        "queued_jobs_pct": 0.0,
+        "mean_wait_time_minutes": 0.0,
+        "p95_wait_time_minutes": 0.0,
+        "cluster_capacity_stranding_pct": {
+          "cpu": 1.28,
+          "ram": 1.0,
+          "gpu": 0.0
+        },
+        "allocation_slack_pct": {
+          "cpu": 15.66,
+          "ram": 54.24,
+          "gpu": 0.0
+        }
+      }
+    },
+    "67": {
+      "B0": {
+        "strategy": "B0",
+        "total_submitted_sessions": 800,
+        "completed_sessions": 800,
+        "unserved_pending_at_end": 0,
+        "oom_count": 0,
+        "oom_rate_pct": 0.0,
+        "peak_running_concurrency": 100,
+        "avg_running_concurrency": 80.64,
+        "peak_pending_queue": 113,
+        "avg_pending_queue": 28.32,
+        "queued_jobs_count": 578,
+        "queued_jobs_pct": 72.25,
+        "mean_wait_time_minutes": 23.54,
+        "p95_wait_time_minutes": 52.02,
+        "cluster_capacity_stranding_pct": {
+          "cpu": 25.56,
+          "ram": 31.55,
+          "gpu": 71.63
+        },
+        "allocation_slack_pct": {
+          "cpu": 79.26,
+          "ram": 97.83,
+          "gpu": 88.83
+        }
+      },
+      "P1": {
+        "strategy": "P1",
+        "total_submitted_sessions": 800,
+        "completed_sessions": 800,
+        "unserved_pending_at_end": 0,
+        "oom_count": 77,
+        "oom_rate_pct": 9.625,
+        "peak_running_concurrency": 147,
+        "avg_running_concurrency": 74.56,
+        "peak_pending_queue": 0,
+        "avg_pending_queue": 0.0,
+        "queued_jobs_count": 0,
+        "queued_jobs_pct": 0.0,
+        "mean_wait_time_minutes": 0.0,
+        "p95_wait_time_minutes": 0.0,
+        "cluster_capacity_stranding_pct": {
+          "cpu": 5.16,
+          "ram": 6.97,
+          "gpu": 0.0
+        },
+        "allocation_slack_pct": {
+          "cpu": 46.04,
+          "ram": 98.71,
+          "gpu": 0.0
+        }
+      },
+      "P2": {
+        "strategy": "P2",
+        "total_submitted_sessions": 800,
+        "completed_sessions": 800,
+        "unserved_pending_at_end": 0,
+        "oom_count": 0,
+        "oom_rate_pct": 0.0,
+        "peak_running_concurrency": 164,
+        "avg_running_concurrency": 82.49,
+        "peak_pending_queue": 0,
+        "avg_pending_queue": 0.0,
+        "queued_jobs_count": 0,
+        "queued_jobs_pct": 0.0,
+        "mean_wait_time_minutes": 0.0,
+        "p95_wait_time_minutes": 0.0,
+        "cluster_capacity_stranding_pct": {
+          "cpu": 1.41,
+          "ram": 0.99,
+          "gpu": 0.0
+        },
+        "allocation_slack_pct": {
+          "cpu": 17.03,
+          "ram": 58.36,
+          "gpu": 0.0
+        }
+      }
+    },
+    "68": {
+      "B0": {
+        "strategy": "B0",
+        "total_submitted_sessions": 799,
+        "completed_sessions": 799,
+        "unserved_pending_at_end": 0,
+        "oom_count": 0,
+        "oom_rate_pct": 0.0,
+        "peak_running_concurrency": 100,
+        "avg_running_concurrency": 79.22,
+        "peak_pending_queue": 77,
+        "avg_pending_queue": 14.21,
+        "queued_jobs_count": 413,
+        "queued_jobs_pct": 51.69,
+        "mean_wait_time_minutes": 16.54,
+        "p95_wait_time_minutes": 35.66,
+        "cluster_capacity_stranding_pct": {
+          "cpu": 24.97,
+          "ram": 30.96,
+          "gpu": 68.14
+        },
+        "allocation_slack_pct": {
+          "cpu": 78.82,
+          "ram": 97.71,
+          "gpu": 86.01
+        }
+      },
+      "P1": {
+        "strategy": "P1",
+        "total_submitted_sessions": 799,
+        "completed_sessions": 799,
+        "unserved_pending_at_end": 0,
+        "oom_count": 83,
+        "oom_rate_pct": 10.387984981226534,
+        "peak_running_concurrency": 152,
+        "avg_running_concurrency": 72.4,
+        "peak_pending_queue": 0,
+        "avg_pending_queue": 0.0,
+        "queued_jobs_count": 0,
+        "queued_jobs_pct": 0.0,
+        "mean_wait_time_minutes": 0.0,
+        "p95_wait_time_minutes": 0.0,
+        "cluster_capacity_stranding_pct": {
+          "cpu": 5.49,
+          "ram": 7.48,
+          "gpu": 0.0
+        },
+        "allocation_slack_pct": {
+          "cpu": 47.74,
+          "ram": 98.86,
+          "gpu": 0.0
+        }
+      },
+      "P2": {
+        "strategy": "P2",
+        "total_submitted_sessions": 799,
+        "completed_sessions": 799,
+        "unserved_pending_at_end": 0,
+        "oom_count": 0,
+        "oom_rate_pct": 0.0,
+        "peak_running_concurrency": 159,
+        "avg_running_concurrency": 80.73,
+        "peak_pending_queue": 0,
+        "avg_pending_queue": 0.0,
+        "queued_jobs_count": 0,
+        "queued_jobs_pct": 0.0,
+        "mean_wait_time_minutes": 0.0,
+        "p95_wait_time_minutes": 0.0,
+        "cluster_capacity_stranding_pct": {
+          "cpu": 1.23,
+          "ram": 0.98,
+          "gpu": 0.0
+        },
+        "allocation_slack_pct": {
+          "cpu": 15.25,
+          "ram": 56.94,
+          "gpu": 0.0
+        }
+      }
+    },
+    "69": {
+      "B0": {
+        "strategy": "B0",
+        "total_submitted_sessions": 800,
+        "completed_sessions": 800,
+        "unserved_pending_at_end": 0,
+        "oom_count": 0,
+        "oom_rate_pct": 0.0,
+        "peak_running_concurrency": 100,
+        "avg_running_concurrency": 77.78,
+        "peak_pending_queue": 52,
+        "avg_pending_queue": 7.84,
+        "queued_jobs_count": 374,
+        "queued_jobs_pct": 46.75,
+        "mean_wait_time_minutes": 10.05,
+        "p95_wait_time_minutes": 22.06,
+        "cluster_capacity_stranding_pct": {
+          "cpu": 24.53,
+          "ram": 30.32,
+          "gpu": 68.16
+        },
+        "allocation_slack_pct": {
+          "cpu": 78.85,
+          "ram": 97.44,
+          "gpu": 87.64
+        }
+      },
+      "P1": {
+        "strategy": "P1",
+        "total_submitted_sessions": 800,
+        "completed_sessions": 800,
+        "unserved_pending_at_end": 0,
+        "oom_count": 89,
+        "oom_rate_pct": 11.125,
+        "peak_running_concurrency": 128,
+        "avg_running_concurrency": 69.36,
+        "peak_pending_queue": 0,
+        "avg_pending_queue": 0.0,
+        "queued_jobs_count": 0,
+        "queued_jobs_pct": 0.0,
+        "mean_wait_time_minutes": 0.0,
+        "p95_wait_time_minutes": 0.0,
+        "cluster_capacity_stranding_pct": {
+          "cpu": 5.07,
+          "ram": 6.95,
+          "gpu": 0.0
+        },
+        "allocation_slack_pct": {
+          "cpu": 46.92,
+          "ram": 98.8,
+          "gpu": 0.0
+        }
+      },
+      "P2": {
+        "strategy": "P2",
+        "total_submitted_sessions": 800,
+        "completed_sessions": 800,
+        "unserved_pending_at_end": 0,
+        "oom_count": 0,
+        "oom_rate_pct": 0.0,
+        "peak_running_concurrency": 140,
+        "avg_running_concurrency": 78.22,
+        "peak_pending_queue": 0,
+        "avg_pending_queue": 0.0,
+        "queued_jobs_count": 0,
+        "queued_jobs_pct": 0.0,
+        "mean_wait_time_minutes": 0.0,
+        "p95_wait_time_minutes": 0.0,
+        "cluster_capacity_stranding_pct": {
+          "cpu": 1.21,
+          "ram": 0.96,
+          "gpu": 0.0
+        },
+        "allocation_slack_pct": {
+          "cpu": 15.42,
+          "ram": 54.41,
+          "gpu": 0.0
+        }
+      }
+    },
+    "70": {
+      "B0": {
+        "strategy": "B0",
+        "total_submitted_sessions": 777,
+        "completed_sessions": 777,
+        "unserved_pending_at_end": 0,
+        "oom_count": 0,
+        "oom_rate_pct": 0.0,
+        "peak_running_concurrency": 100,
+        "avg_running_concurrency": 77.8,
+        "peak_pending_queue": 50,
+        "avg_pending_queue": 10.5,
+        "queued_jobs_count": 427,
+        "queued_jobs_pct": 54.95,
+        "mean_wait_time_minutes": 11.81,
+        "p95_wait_time_minutes": 22.16,
+        "cluster_capacity_stranding_pct": {
+          "cpu": 24.6,
+          "ram": 30.5,
+          "gpu": 67.53
+        },
+        "allocation_slack_pct": {
+          "cpu": 79.06,
+          "ram": 97.99,
+          "gpu": 86.79
+        }
+      },
+      "P1": {
+        "strategy": "P1",
+        "total_submitted_sessions": 777,
+        "completed_sessions": 777,
+        "unserved_pending_at_end": 0,
+        "oom_count": 75,
+        "oom_rate_pct": 9.652509652509652,
+        "peak_running_concurrency": 128,
+        "avg_running_concurrency": 71.47,
+        "peak_pending_queue": 0,
+        "avg_pending_queue": 0.0,
+        "queued_jobs_count": 0,
+        "queued_jobs_pct": 0.0,
+        "mean_wait_time_minutes": 0.0,
+        "p95_wait_time_minutes": 0.0,
+        "cluster_capacity_stranding_pct": {
+          "cpu": 5.45,
+          "ram": 7.46,
+          "gpu": 0.0
+        },
+        "allocation_slack_pct": {
+          "cpu": 48.11,
+          "ram": 98.86,
+          "gpu": 0.0
+        }
+      },
+      "P2": {
+        "strategy": "P2",
+        "total_submitted_sessions": 777,
+        "completed_sessions": 777,
+        "unserved_pending_at_end": 0,
+        "oom_count": 0,
+        "oom_rate_pct": 0.0,
+        "peak_running_concurrency": 137,
+        "avg_running_concurrency": 78.36,
+        "peak_pending_queue": 0,
+        "avg_pending_queue": 0.0,
+        "queued_jobs_count": 0,
+        "queued_jobs_pct": 0.0,
+        "mean_wait_time_minutes": 0.0,
+        "p95_wait_time_minutes": 0.0,
+        "cluster_capacity_stranding_pct": {
+          "cpu": 1.27,
+          "ram": 0.94,
+          "gpu": 0.0
+        },
+        "allocation_slack_pct": {
+          "cpu": 16.22,
+          "ram": 59.65,
+          "gpu": 0.0
+        }
+      }
+    },
+    "71": {
+      "B0": {
+        "strategy": "B0",
+        "total_submitted_sessions": 784,
+        "completed_sessions": 784,
+        "unserved_pending_at_end": 0,
+        "oom_count": 0,
+        "oom_rate_pct": 0.0,
+        "peak_running_concurrency": 100,
+        "avg_running_concurrency": 77.24,
+        "peak_pending_queue": 39,
+        "avg_pending_queue": 9.01,
+        "queued_jobs_count": 416,
+        "queued_jobs_pct": 53.06,
+        "mean_wait_time_minutes": 10.42,
+        "p95_wait_time_minutes": 19.16,
+        "cluster_capacity_stranding_pct": {
+          "cpu": 24.44,
+          "ram": 30.29,
+          "gpu": 67.34
+        },
+        "allocation_slack_pct": {
+          "cpu": 79.1,
+          "ram": 98.03,
+          "gpu": 87.18
+        }
+      },
+      "P1": {
+        "strategy": "P1",
+        "total_submitted_sessions": 784,
+        "completed_sessions": 784,
+        "unserved_pending_at_end": 0,
+        "oom_count": 71,
+        "oom_rate_pct": 9.056122448979592,
+        "peak_running_concurrency": 118,
+        "avg_running_concurrency": 70.57,
+        "peak_pending_queue": 0,
+        "avg_pending_queue": 0.0,
+        "queued_jobs_count": 0,
+        "queued_jobs_pct": 0.0,
+        "mean_wait_time_minutes": 0.0,
+        "p95_wait_time_minutes": 0.0,
+        "cluster_capacity_stranding_pct": {
+          "cpu": 5.21,
+          "ram": 7.08,
+          "gpu": 0.0
+        },
+        "allocation_slack_pct": {
+          "cpu": 47.37,
+          "ram": 98.83,
+          "gpu": 0.0
+        }
+      },
+      "P2": {
+        "strategy": "P2",
+        "total_submitted_sessions": 784,
+        "completed_sessions": 784,
+        "unserved_pending_at_end": 0,
+        "oom_count": 0,
+        "oom_rate_pct": 0.0,
+        "peak_running_concurrency": 129,
+        "avg_running_concurrency": 77.39,
+        "peak_pending_queue": 0,
+        "avg_pending_queue": 0.0,
+        "queued_jobs_count": 0,
+        "queued_jobs_pct": 0.0,
+        "mean_wait_time_minutes": 0.0,
+        "p95_wait_time_minutes": 0.0,
+        "cluster_capacity_stranding_pct": {
+          "cpu": 1.27,
+          "ram": 0.93,
+          "gpu": 0.0
+        },
+        "allocation_slack_pct": {
+          "cpu": 16.39,
+          "ram": 60.31,
+          "gpu": 0.0
+        }
+      }
+    }
   }
 }

@@ -1,10 +1,867 @@
 {
-  "capacity_source": "KUBERNETES_NODE_STATUS_ALLOCATABLE",
-  "concurrent_cluster_evidence": false,
+  "schema_version": "protocol-v5-resource-efficiency-capacity-result-v1.0.0",
   "evidence_label": "SIMULATED_DETERMINISTIC_REQUEST_PACKING",
   "evidence_type": "SIMULATED_CAPACITY",
-  "reason": "NODE_CAPACITY_NOT_FROZEN",
+  "capacity_source": "KUBERNETES_NODE_STATUS_ALLOCATABLE",
   "scheduler_input": "OBSERVED_POD_RESOURCE_REQUESTS",
-  "schema_version": "protocol-v5-resource-efficiency-capacity-result-v1.0.0",
-  "status": "NOT_EXECUTED"
+  "concurrent_cluster_evidence": false,
+  "status": "SIMULATED",
+  "warning": "Request-packing simulation only; it is not real concurrent-cluster performance evidence.",
+  "workload_mix": "ONE_SESSION_PER_EACH_OF_16_FROZEN_FAMILIES",
+  "packing_algorithm": "multidimensional-first-fit-decreasing-v1",
+  "tie_breaking": [
+    "maximum_normalized_pressure_descending",
+    "total_normalized_pressure_descending",
+    "family_id_ascending"
+  ],
+  "capacity": {
+    "cpu_m": 8000,
+    "memory_mib": 7993,
+    "gpu_count": 0,
+    "gpu_resource": null
+  },
+  "homogeneous_family_density": [
+    {
+      "family_id": "bitmix_saturation_sweep",
+      "condition": "STATIC_LARGE",
+      "schedulable_sessions": 5,
+      "capacity_gain_sessions_vs_static_large": 0,
+      "capacity_gain_fraction_vs_static_large": 0.0,
+      "dominant_constraint": "TIED:CPU+MEMORY"
+    },
+    {
+      "family_id": "bitmix_saturation_sweep",
+      "condition": "P1_CATALOG",
+      "schedulable_sessions": 31,
+      "capacity_gain_sessions_vs_static_large": 26,
+      "capacity_gain_fraction_vs_static_large": 5.2,
+      "dominant_constraint": "MEMORY"
+    },
+    {
+      "family_id": "bitmix_saturation_sweep",
+      "condition": "P2_CATALOG",
+      "schedulable_sessions": 31,
+      "capacity_gain_sessions_vs_static_large": 26,
+      "capacity_gain_fraction_vs_static_large": 5.2,
+      "dominant_constraint": "MEMORY"
+    },
+    {
+      "family_id": "bitmix_saturation_sweep",
+      "condition": "P2_DYNAMIC",
+      "schedulable_sessions": 6,
+      "capacity_gain_sessions_vs_static_large": 1,
+      "capacity_gain_fraction_vs_static_large": 0.19999999999999996,
+      "dominant_constraint": "MEMORY"
+    },
+    {
+      "family_id": "bounded_producer_consumer",
+      "condition": "STATIC_LARGE",
+      "schedulable_sessions": 5,
+      "capacity_gain_sessions_vs_static_large": 0,
+      "capacity_gain_fraction_vs_static_large": 0.0,
+      "dominant_constraint": "TIED:CPU+MEMORY"
+    },
+    {
+      "family_id": "bounded_producer_consumer",
+      "condition": "P1_CATALOG",
+      "schedulable_sessions": 31,
+      "capacity_gain_sessions_vs_static_large": 26,
+      "capacity_gain_fraction_vs_static_large": 5.2,
+      "dominant_constraint": "MEMORY"
+    },
+    {
+      "family_id": "bounded_producer_consumer",
+      "condition": "P2_CATALOG",
+      "schedulable_sessions": 10,
+      "capacity_gain_sessions_vs_static_large": 5,
+      "capacity_gain_fraction_vs_static_large": 1.0,
+      "dominant_constraint": "MEMORY"
+    },
+    {
+      "family_id": "bounded_producer_consumer",
+      "condition": "P2_DYNAMIC",
+      "schedulable_sessions": 6,
+      "capacity_gain_sessions_vs_static_large": 1,
+      "capacity_gain_fraction_vs_static_large": 0.19999999999999996,
+      "dominant_constraint": "MEMORY"
+    },
+    {
+      "family_id": "categorical_encoding",
+      "condition": "STATIC_LARGE",
+      "schedulable_sessions": 5,
+      "capacity_gain_sessions_vs_static_large": 0,
+      "capacity_gain_fraction_vs_static_large": 0.0,
+      "dominant_constraint": "TIED:CPU+MEMORY"
+    },
+    {
+      "family_id": "categorical_encoding",
+      "condition": "P1_CATALOG",
+      "schedulable_sessions": 31,
+      "capacity_gain_sessions_vs_static_large": 26,
+      "capacity_gain_fraction_vs_static_large": 5.2,
+      "dominant_constraint": "MEMORY"
+    },
+    {
+      "family_id": "categorical_encoding",
+      "condition": "P2_CATALOG",
+      "schedulable_sessions": 5,
+      "capacity_gain_sessions_vs_static_large": 0,
+      "capacity_gain_fraction_vs_static_large": 0.0,
+      "dominant_constraint": "TIED:CPU+MEMORY"
+    },
+    {
+      "family_id": "categorical_encoding",
+      "condition": "P2_DYNAMIC",
+      "schedulable_sessions": 6,
+      "capacity_gain_sessions_vs_static_large": 1,
+      "capacity_gain_fraction_vs_static_large": 0.19999999999999996,
+      "dominant_constraint": "MEMORY"
+    },
+    {
+      "family_id": "compression_roundtrip",
+      "condition": "STATIC_LARGE",
+      "schedulable_sessions": 5,
+      "capacity_gain_sessions_vs_static_large": 0,
+      "capacity_gain_fraction_vs_static_large": 0.0,
+      "dominant_constraint": "TIED:CPU+MEMORY"
+    },
+    {
+      "family_id": "compression_roundtrip",
+      "condition": "P1_CATALOG",
+      "schedulable_sessions": 31,
+      "capacity_gain_sessions_vs_static_large": 26,
+      "capacity_gain_fraction_vs_static_large": 5.2,
+      "dominant_constraint": "MEMORY"
+    },
+    {
+      "family_id": "compression_roundtrip",
+      "condition": "P2_CATALOG",
+      "schedulable_sessions": 31,
+      "capacity_gain_sessions_vs_static_large": 26,
+      "capacity_gain_fraction_vs_static_large": 5.2,
+      "dominant_constraint": "MEMORY"
+    },
+    {
+      "family_id": "compression_roundtrip",
+      "condition": "P2_DYNAMIC",
+      "schedulable_sessions": 31,
+      "capacity_gain_sessions_vs_static_large": 26,
+      "capacity_gain_fraction_vs_static_large": 5.2,
+      "dominant_constraint": "MEMORY"
+    },
+    {
+      "family_id": "content_deduplication",
+      "condition": "STATIC_LARGE",
+      "schedulable_sessions": 5,
+      "capacity_gain_sessions_vs_static_large": 0,
+      "capacity_gain_fraction_vs_static_large": 0.0,
+      "dominant_constraint": "TIED:CPU+MEMORY"
+    },
+    {
+      "family_id": "content_deduplication",
+      "condition": "P1_CATALOG",
+      "schedulable_sessions": 31,
+      "capacity_gain_sessions_vs_static_large": 26,
+      "capacity_gain_fraction_vs_static_large": 5.2,
+      "dominant_constraint": "MEMORY"
+    },
+    {
+      "family_id": "content_deduplication",
+      "condition": "P2_CATALOG",
+      "schedulable_sessions": 31,
+      "capacity_gain_sessions_vs_static_large": 26,
+      "capacity_gain_fraction_vs_static_large": 5.2,
+      "dominant_constraint": "MEMORY"
+    },
+    {
+      "family_id": "content_deduplication",
+      "condition": "P2_DYNAMIC",
+      "schedulable_sessions": 31,
+      "capacity_gain_sessions_vs_static_large": 26,
+      "capacity_gain_fraction_vs_static_large": 5.2,
+      "dominant_constraint": "MEMORY"
+    },
+    {
+      "family_id": "cpu_bound_iteration",
+      "condition": "STATIC_LARGE",
+      "schedulable_sessions": 5,
+      "capacity_gain_sessions_vs_static_large": 0,
+      "capacity_gain_fraction_vs_static_large": 0.0,
+      "dominant_constraint": "TIED:CPU+MEMORY"
+    },
+    {
+      "family_id": "cpu_bound_iteration",
+      "condition": "P1_CATALOG",
+      "schedulable_sessions": 31,
+      "capacity_gain_sessions_vs_static_large": 26,
+      "capacity_gain_fraction_vs_static_large": 5.2,
+      "dominant_constraint": "MEMORY"
+    },
+    {
+      "family_id": "cpu_bound_iteration",
+      "condition": "P2_CATALOG",
+      "schedulable_sessions": 31,
+      "capacity_gain_sessions_vs_static_large": 26,
+      "capacity_gain_fraction_vs_static_large": 5.2,
+      "dominant_constraint": "MEMORY"
+    },
+    {
+      "family_id": "cpu_bound_iteration",
+      "condition": "P2_DYNAMIC",
+      "schedulable_sessions": 6,
+      "capacity_gain_sessions_vs_static_large": 1,
+      "capacity_gain_fraction_vs_static_large": 0.19999999999999996,
+      "dominant_constraint": "MEMORY"
+    },
+    {
+      "family_id": "dense_array_allocation",
+      "condition": "STATIC_LARGE",
+      "schedulable_sessions": 5,
+      "capacity_gain_sessions_vs_static_large": 0,
+      "capacity_gain_fraction_vs_static_large": 0.0,
+      "dominant_constraint": "TIED:CPU+MEMORY"
+    },
+    {
+      "family_id": "dense_array_allocation",
+      "condition": "P1_CATALOG",
+      "schedulable_sessions": 31,
+      "capacity_gain_sessions_vs_static_large": 26,
+      "capacity_gain_fraction_vs_static_large": 5.2,
+      "dominant_constraint": "MEMORY"
+    },
+    {
+      "family_id": "dense_array_allocation",
+      "condition": "P2_CATALOG",
+      "schedulable_sessions": 5,
+      "capacity_gain_sessions_vs_static_large": 0,
+      "capacity_gain_fraction_vs_static_large": 0.0,
+      "dominant_constraint": "TIED:CPU+MEMORY"
+    },
+    {
+      "family_id": "dense_array_allocation",
+      "condition": "P2_DYNAMIC",
+      "schedulable_sessions": 6,
+      "capacity_gain_sessions_vs_static_large": 1,
+      "capacity_gain_fraction_vs_static_large": 0.19999999999999996,
+      "dominant_constraint": "MEMORY"
+    },
+    {
+      "family_id": "dense_matrix_computation",
+      "condition": "STATIC_LARGE",
+      "schedulable_sessions": 5,
+      "capacity_gain_sessions_vs_static_large": 0,
+      "capacity_gain_fraction_vs_static_large": 0.0,
+      "dominant_constraint": "TIED:CPU+MEMORY"
+    },
+    {
+      "family_id": "dense_matrix_computation",
+      "condition": "P1_CATALOG",
+      "schedulable_sessions": 31,
+      "capacity_gain_sessions_vs_static_large": 26,
+      "capacity_gain_fraction_vs_static_large": 5.2,
+      "dominant_constraint": "MEMORY"
+    },
+    {
+      "family_id": "dense_matrix_computation",
+      "condition": "P2_CATALOG",
+      "schedulable_sessions": 10,
+      "capacity_gain_sessions_vs_static_large": 5,
+      "capacity_gain_fraction_vs_static_large": 1.0,
+      "dominant_constraint": "MEMORY"
+    },
+    {
+      "family_id": "dense_matrix_computation",
+      "condition": "P2_DYNAMIC",
+      "schedulable_sessions": 6,
+      "capacity_gain_sessions_vs_static_large": 1,
+      "capacity_gain_fraction_vs_static_large": 0.19999999999999996,
+      "dominant_constraint": "MEMORY"
+    },
+    {
+      "family_id": "hash_join",
+      "condition": "STATIC_LARGE",
+      "schedulable_sessions": 5,
+      "capacity_gain_sessions_vs_static_large": 0,
+      "capacity_gain_fraction_vs_static_large": 0.0,
+      "dominant_constraint": "TIED:CPU+MEMORY"
+    },
+    {
+      "family_id": "hash_join",
+      "condition": "P1_CATALOG",
+      "schedulable_sessions": 31,
+      "capacity_gain_sessions_vs_static_large": 26,
+      "capacity_gain_fraction_vs_static_large": 5.2,
+      "dominant_constraint": "MEMORY"
+    },
+    {
+      "family_id": "hash_join",
+      "condition": "P2_CATALOG",
+      "schedulable_sessions": 10,
+      "capacity_gain_sessions_vs_static_large": 5,
+      "capacity_gain_fraction_vs_static_large": 1.0,
+      "dominant_constraint": "MEMORY"
+    },
+    {
+      "family_id": "hash_join",
+      "condition": "P2_DYNAMIC",
+      "schedulable_sessions": 6,
+      "capacity_gain_sessions_vs_static_large": 1,
+      "capacity_gain_fraction_vs_static_large": 0.19999999999999996,
+      "dominant_constraint": "MEMORY"
+    },
+    {
+      "family_id": "image_convolution",
+      "condition": "STATIC_LARGE",
+      "schedulable_sessions": 5,
+      "capacity_gain_sessions_vs_static_large": 0,
+      "capacity_gain_fraction_vs_static_large": 0.0,
+      "dominant_constraint": "TIED:CPU+MEMORY"
+    },
+    {
+      "family_id": "image_convolution",
+      "condition": "P1_CATALOG",
+      "schedulable_sessions": 31,
+      "capacity_gain_sessions_vs_static_large": 26,
+      "capacity_gain_fraction_vs_static_large": 5.2,
+      "dominant_constraint": "MEMORY"
+    },
+    {
+      "family_id": "image_convolution",
+      "condition": "P2_CATALOG",
+      "schedulable_sessions": 10,
+      "capacity_gain_sessions_vs_static_large": 5,
+      "capacity_gain_fraction_vs_static_large": 1.0,
+      "dominant_constraint": "MEMORY"
+    },
+    {
+      "family_id": "image_convolution",
+      "condition": "P2_DYNAMIC",
+      "schedulable_sessions": 6,
+      "capacity_gain_sessions_vs_static_large": 1,
+      "capacity_gain_fraction_vs_static_large": 0.19999999999999996,
+      "dominant_constraint": "MEMORY"
+    },
+    {
+      "family_id": "iterative_linear_fit",
+      "condition": "STATIC_LARGE",
+      "schedulable_sessions": 5,
+      "capacity_gain_sessions_vs_static_large": 0,
+      "capacity_gain_fraction_vs_static_large": 0.0,
+      "dominant_constraint": "TIED:CPU+MEMORY"
+    },
+    {
+      "family_id": "iterative_linear_fit",
+      "condition": "P1_CATALOG",
+      "schedulable_sessions": 10,
+      "capacity_gain_sessions_vs_static_large": 5,
+      "capacity_gain_fraction_vs_static_large": 1.0,
+      "dominant_constraint": "MEMORY"
+    },
+    {
+      "family_id": "iterative_linear_fit",
+      "condition": "P2_CATALOG",
+      "schedulable_sessions": 10,
+      "capacity_gain_sessions_vs_static_large": 5,
+      "capacity_gain_fraction_vs_static_large": 1.0,
+      "dominant_constraint": "MEMORY"
+    },
+    {
+      "family_id": "iterative_linear_fit",
+      "condition": "P2_DYNAMIC",
+      "schedulable_sessions": 6,
+      "capacity_gain_sessions_vs_static_large": 1,
+      "capacity_gain_fraction_vs_static_large": 0.19999999999999996,
+      "dominant_constraint": "MEMORY"
+    },
+    {
+      "family_id": "json_normalization",
+      "condition": "STATIC_LARGE",
+      "schedulable_sessions": 5,
+      "capacity_gain_sessions_vs_static_large": 0,
+      "capacity_gain_fraction_vs_static_large": 0.0,
+      "dominant_constraint": "TIED:CPU+MEMORY"
+    },
+    {
+      "family_id": "json_normalization",
+      "condition": "P1_CATALOG",
+      "schedulable_sessions": 31,
+      "capacity_gain_sessions_vs_static_large": 26,
+      "capacity_gain_fraction_vs_static_large": 5.2,
+      "dominant_constraint": "MEMORY"
+    },
+    {
+      "family_id": "json_normalization",
+      "condition": "P2_CATALOG",
+      "schedulable_sessions": 31,
+      "capacity_gain_sessions_vs_static_large": 26,
+      "capacity_gain_fraction_vs_static_large": 5.2,
+      "dominant_constraint": "MEMORY"
+    },
+    {
+      "family_id": "json_normalization",
+      "condition": "P2_DYNAMIC",
+      "schedulable_sessions": 31,
+      "capacity_gain_sessions_vs_static_large": 26,
+      "capacity_gain_fraction_vs_static_large": 5.2,
+      "dominant_constraint": "MEMORY"
+    },
+    {
+      "family_id": "large_hash_map_allocation",
+      "condition": "STATIC_LARGE",
+      "schedulable_sessions": 5,
+      "capacity_gain_sessions_vs_static_large": 0,
+      "capacity_gain_fraction_vs_static_large": 0.0,
+      "dominant_constraint": "TIED:CPU+MEMORY"
+    },
+    {
+      "family_id": "large_hash_map_allocation",
+      "condition": "P1_CATALOG",
+      "schedulable_sessions": 31,
+      "capacity_gain_sessions_vs_static_large": 26,
+      "capacity_gain_fraction_vs_static_large": 5.2,
+      "dominant_constraint": "MEMORY"
+    },
+    {
+      "family_id": "large_hash_map_allocation",
+      "condition": "P2_CATALOG",
+      "schedulable_sessions": 5,
+      "capacity_gain_sessions_vs_static_large": 0,
+      "capacity_gain_fraction_vs_static_large": 0.0,
+      "dominant_constraint": "TIED:CPU+MEMORY"
+    },
+    {
+      "family_id": "large_hash_map_allocation",
+      "condition": "P2_DYNAMIC",
+      "schedulable_sessions": 6,
+      "capacity_gain_sessions_vs_static_large": 1,
+      "capacity_gain_fraction_vs_static_large": 0.19999999999999996,
+      "dominant_constraint": "MEMORY"
+    },
+    {
+      "family_id": "monte_carlo",
+      "condition": "STATIC_LARGE",
+      "schedulable_sessions": 5,
+      "capacity_gain_sessions_vs_static_large": 0,
+      "capacity_gain_fraction_vs_static_large": 0.0,
+      "dominant_constraint": "TIED:CPU+MEMORY"
+    },
+    {
+      "family_id": "monte_carlo",
+      "condition": "P1_CATALOG",
+      "schedulable_sessions": 31,
+      "capacity_gain_sessions_vs_static_large": 26,
+      "capacity_gain_fraction_vs_static_large": 5.2,
+      "dominant_constraint": "MEMORY"
+    },
+    {
+      "family_id": "monte_carlo",
+      "condition": "P2_CATALOG",
+      "schedulable_sessions": 5,
+      "capacity_gain_sessions_vs_static_large": 0,
+      "capacity_gain_fraction_vs_static_large": 0.0,
+      "dominant_constraint": "TIED:CPU+MEMORY"
+    },
+    {
+      "family_id": "monte_carlo",
+      "condition": "P2_DYNAMIC",
+      "schedulable_sessions": 6,
+      "capacity_gain_sessions_vs_static_large": 1,
+      "capacity_gain_fraction_vs_static_large": 0.19999999999999996,
+      "dominant_constraint": "MEMORY"
+    },
+    {
+      "family_id": "relational_transform",
+      "condition": "STATIC_LARGE",
+      "schedulable_sessions": 5,
+      "capacity_gain_sessions_vs_static_large": 0,
+      "capacity_gain_fraction_vs_static_large": 0.0,
+      "dominant_constraint": "TIED:CPU+MEMORY"
+    },
+    {
+      "family_id": "relational_transform",
+      "condition": "P1_CATALOG",
+      "schedulable_sessions": 31,
+      "capacity_gain_sessions_vs_static_large": 26,
+      "capacity_gain_fraction_vs_static_large": 5.2,
+      "dominant_constraint": "MEMORY"
+    },
+    {
+      "family_id": "relational_transform",
+      "condition": "P2_CATALOG",
+      "schedulable_sessions": 31,
+      "capacity_gain_sessions_vs_static_large": 26,
+      "capacity_gain_fraction_vs_static_large": 5.2,
+      "dominant_constraint": "MEMORY"
+    },
+    {
+      "family_id": "relational_transform",
+      "condition": "P2_DYNAMIC",
+      "schedulable_sessions": 6,
+      "capacity_gain_sessions_vs_static_large": 1,
+      "capacity_gain_fraction_vs_static_large": 0.19999999999999996,
+      "dominant_constraint": "MEMORY"
+    },
+    {
+      "family_id": "rolling_timeseries",
+      "condition": "STATIC_LARGE",
+      "schedulable_sessions": 5,
+      "capacity_gain_sessions_vs_static_large": 0,
+      "capacity_gain_fraction_vs_static_large": 0.0,
+      "dominant_constraint": "TIED:CPU+MEMORY"
+    },
+    {
+      "family_id": "rolling_timeseries",
+      "condition": "P1_CATALOG",
+      "schedulable_sessions": 31,
+      "capacity_gain_sessions_vs_static_large": 26,
+      "capacity_gain_fraction_vs_static_large": 5.2,
+      "dominant_constraint": "MEMORY"
+    },
+    {
+      "family_id": "rolling_timeseries",
+      "condition": "P2_CATALOG",
+      "schedulable_sessions": 10,
+      "capacity_gain_sessions_vs_static_large": 5,
+      "capacity_gain_fraction_vs_static_large": 1.0,
+      "dominant_constraint": "MEMORY"
+    },
+    {
+      "family_id": "rolling_timeseries",
+      "condition": "P2_DYNAMIC",
+      "schedulable_sessions": 6,
+      "capacity_gain_sessions_vs_static_large": 1,
+      "capacity_gain_fraction_vs_static_large": 0.19999999999999996,
+      "dominant_constraint": "MEMORY"
+    },
+    {
+      "family_id": "sort_group_reduction",
+      "condition": "STATIC_LARGE",
+      "schedulable_sessions": 5,
+      "capacity_gain_sessions_vs_static_large": 0,
+      "capacity_gain_fraction_vs_static_large": 0.0,
+      "dominant_constraint": "TIED:CPU+MEMORY"
+    },
+    {
+      "family_id": "sort_group_reduction",
+      "condition": "P1_CATALOG",
+      "schedulable_sessions": 31,
+      "capacity_gain_sessions_vs_static_large": 26,
+      "capacity_gain_fraction_vs_static_large": 5.2,
+      "dominant_constraint": "MEMORY"
+    },
+    {
+      "family_id": "sort_group_reduction",
+      "condition": "P2_CATALOG",
+      "schedulable_sessions": 31,
+      "capacity_gain_sessions_vs_static_large": 26,
+      "capacity_gain_fraction_vs_static_large": 5.2,
+      "dominant_constraint": "MEMORY"
+    },
+    {
+      "family_id": "sort_group_reduction",
+      "condition": "P2_DYNAMIC",
+      "schedulable_sessions": 31,
+      "capacity_gain_sessions_vs_static_large": 26,
+      "capacity_gain_fraction_vs_static_large": 5.2,
+      "dominant_constraint": "MEMORY"
+    },
+    {
+      "family_id": "sparse_graph_traversal",
+      "condition": "STATIC_LARGE",
+      "schedulable_sessions": 5,
+      "capacity_gain_sessions_vs_static_large": 0,
+      "capacity_gain_fraction_vs_static_large": 0.0,
+      "dominant_constraint": "TIED:CPU+MEMORY"
+    },
+    {
+      "family_id": "sparse_graph_traversal",
+      "condition": "P1_CATALOG",
+      "schedulable_sessions": 31,
+      "capacity_gain_sessions_vs_static_large": 26,
+      "capacity_gain_fraction_vs_static_large": 5.2,
+      "dominant_constraint": "MEMORY"
+    },
+    {
+      "family_id": "sparse_graph_traversal",
+      "condition": "P2_CATALOG",
+      "schedulable_sessions": 10,
+      "capacity_gain_sessions_vs_static_large": 5,
+      "capacity_gain_fraction_vs_static_large": 1.0,
+      "dominant_constraint": "MEMORY"
+    },
+    {
+      "family_id": "sparse_graph_traversal",
+      "condition": "P2_DYNAMIC",
+      "schedulable_sessions": 6,
+      "capacity_gain_sessions_vs_static_large": 1,
+      "capacity_gain_fraction_vs_static_large": 0.19999999999999996,
+      "dominant_constraint": "MEMORY"
+    },
+    {
+      "family_id": "streaming_statistics",
+      "condition": "STATIC_LARGE",
+      "schedulable_sessions": 5,
+      "capacity_gain_sessions_vs_static_large": 0,
+      "capacity_gain_fraction_vs_static_large": 0.0,
+      "dominant_constraint": "TIED:CPU+MEMORY"
+    },
+    {
+      "family_id": "streaming_statistics",
+      "condition": "P1_CATALOG",
+      "schedulable_sessions": 31,
+      "capacity_gain_sessions_vs_static_large": 26,
+      "capacity_gain_fraction_vs_static_large": 5.2,
+      "dominant_constraint": "MEMORY"
+    },
+    {
+      "family_id": "streaming_statistics",
+      "condition": "P2_CATALOG",
+      "schedulable_sessions": 10,
+      "capacity_gain_sessions_vs_static_large": 5,
+      "capacity_gain_fraction_vs_static_large": 1.0,
+      "dominant_constraint": "MEMORY"
+    },
+    {
+      "family_id": "streaming_statistics",
+      "condition": "P2_DYNAMIC",
+      "schedulable_sessions": 6,
+      "capacity_gain_sessions_vs_static_large": 1,
+      "capacity_gain_fraction_vs_static_large": 0.19999999999999996,
+      "dominant_constraint": "MEMORY"
+    },
+    {
+      "family_id": "text_tfidf",
+      "condition": "STATIC_LARGE",
+      "schedulable_sessions": 5,
+      "capacity_gain_sessions_vs_static_large": 0,
+      "capacity_gain_fraction_vs_static_large": 0.0,
+      "dominant_constraint": "TIED:CPU+MEMORY"
+    },
+    {
+      "family_id": "text_tfidf",
+      "condition": "P1_CATALOG",
+      "schedulable_sessions": 31,
+      "capacity_gain_sessions_vs_static_large": 26,
+      "capacity_gain_fraction_vs_static_large": 5.2,
+      "dominant_constraint": "MEMORY"
+    },
+    {
+      "family_id": "text_tfidf",
+      "condition": "P2_CATALOG",
+      "schedulable_sessions": 10,
+      "capacity_gain_sessions_vs_static_large": 5,
+      "capacity_gain_fraction_vs_static_large": 1.0,
+      "dominant_constraint": "MEMORY"
+    },
+    {
+      "family_id": "text_tfidf",
+      "condition": "P2_DYNAMIC",
+      "schedulable_sessions": 6,
+      "capacity_gain_sessions_vs_static_large": 1,
+      "capacity_gain_fraction_vs_static_large": 0.19999999999999996,
+      "dominant_constraint": "MEMORY"
+    }
+  ],
+  "balanced_family_mix": [
+    {
+      "condition": "STATIC_LARGE",
+      "nodes_required": 4,
+      "sessions": 20,
+      "mean_sessions_per_node": 5.0,
+      "bins": [
+        {
+          "families": [
+            "bitmix_saturation_sweep",
+            "bounded_producer_consumer",
+            "categorical_encoding",
+            "compression_roundtrip",
+            "content_deduplication"
+          ],
+          "used_cpu_m": 7500,
+          "used_memory_mib": 7680,
+          "used_gpu_count": 0,
+          "dominant_constraint": "MEMORY"
+        },
+        {
+          "families": [
+            "cpu_bound_iteration",
+            "dense_array_allocation",
+            "dense_matrix_computation",
+            "hash_join",
+            "image_convolution"
+          ],
+          "used_cpu_m": 7500,
+          "used_memory_mib": 7680,
+          "used_gpu_count": 0,
+          "dominant_constraint": "MEMORY"
+        },
+        {
+          "families": [
+            "iterative_linear_fit",
+            "json_normalization",
+            "large_hash_map_allocation",
+            "monte_carlo",
+            "relational_transform"
+          ],
+          "used_cpu_m": 7500,
+          "used_memory_mib": 7680,
+          "used_gpu_count": 0,
+          "dominant_constraint": "MEMORY"
+        },
+        {
+          "families": [
+            "rolling_timeseries",
+            "sort_group_reduction",
+            "sparse_graph_traversal",
+            "streaming_statistics",
+            "text_tfidf"
+          ],
+          "used_cpu_m": 7500,
+          "used_memory_mib": 7680,
+          "used_gpu_count": 0,
+          "dominant_constraint": "MEMORY"
+        }
+      ],
+      "node_reduction_vs_static_large": 0,
+      "density_gain_vs_static_large": 0.0
+    },
+    {
+      "condition": "P1_CATALOG",
+      "nodes_required": 1,
+      "sessions": 20,
+      "mean_sessions_per_node": 20.0,
+      "bins": [
+        {
+          "families": [
+            "iterative_linear_fit",
+            "bitmix_saturation_sweep",
+            "bounded_producer_consumer",
+            "categorical_encoding",
+            "compression_roundtrip",
+            "content_deduplication",
+            "cpu_bound_iteration",
+            "dense_array_allocation",
+            "dense_matrix_computation",
+            "hash_join",
+            "image_convolution",
+            "json_normalization",
+            "large_hash_map_allocation",
+            "monte_carlo",
+            "relational_transform",
+            "rolling_timeseries",
+            "sort_group_reduction",
+            "sparse_graph_traversal",
+            "streaming_statistics",
+            "text_tfidf"
+          ],
+          "used_cpu_m": 2400,
+          "used_memory_mib": 5632,
+          "used_gpu_count": 0,
+          "dominant_constraint": "MEMORY"
+        }
+      ],
+      "node_reduction_vs_static_large": 3,
+      "density_gain_vs_static_large": 3.0
+    },
+    {
+      "condition": "P2_CATALOG",
+      "nodes_required": 2,
+      "sessions": 20,
+      "mean_sessions_per_node": 10.0,
+      "bins": [
+        {
+          "families": [
+            "categorical_encoding",
+            "dense_array_allocation",
+            "large_hash_map_allocation",
+            "monte_carlo",
+            "bounded_producer_consumer",
+            "dense_matrix_computation",
+            "bitmix_saturation_sweep"
+          ],
+          "used_cpu_m": 7100,
+          "used_memory_mib": 7936,
+          "used_gpu_count": 0,
+          "dominant_constraint": "MEMORY"
+        },
+        {
+          "families": [
+            "hash_join",
+            "image_convolution",
+            "iterative_linear_fit",
+            "rolling_timeseries",
+            "sparse_graph_traversal",
+            "streaming_statistics",
+            "text_tfidf",
+            "compression_roundtrip",
+            "content_deduplication",
+            "cpu_bound_iteration",
+            "json_normalization",
+            "relational_transform",
+            "sort_group_reduction"
+          ],
+          "used_cpu_m": 4100,
+          "used_memory_mib": 6912,
+          "used_gpu_count": 0,
+          "dominant_constraint": "MEMORY"
+        }
+      ],
+      "node_reduction_vs_static_large": 2,
+      "density_gain_vs_static_large": 1.0
+    },
+    {
+      "condition": "P2_DYNAMIC",
+      "nodes_required": 3,
+      "sessions": 20,
+      "mean_sessions_per_node": 6.666666666666667,
+      "bins": [
+        {
+          "families": [
+            "bitmix_saturation_sweep",
+            "bounded_producer_consumer",
+            "categorical_encoding",
+            "cpu_bound_iteration",
+            "dense_array_allocation",
+            "dense_matrix_computation",
+            "compression_roundtrip"
+          ],
+          "used_cpu_m": 6700,
+          "used_memory_mib": 7936,
+          "used_gpu_count": 0,
+          "dominant_constraint": "MEMORY"
+        },
+        {
+          "families": [
+            "hash_join",
+            "image_convolution",
+            "iterative_linear_fit",
+            "large_hash_map_allocation",
+            "monte_carlo",
+            "relational_transform",
+            "content_deduplication"
+          ],
+          "used_cpu_m": 6700,
+          "used_memory_mib": 7936,
+          "used_gpu_count": 0,
+          "dominant_constraint": "MEMORY"
+        },
+        {
+          "families": [
+            "rolling_timeseries",
+            "sparse_graph_traversal",
+            "streaming_statistics",
+            "text_tfidf",
+            "json_normalization",
+            "sort_group_reduction"
+          ],
+          "used_cpu_m": 4600,
+          "used_memory_mib": 5632,
+          "used_gpu_count": 0,
+          "dominant_constraint": "MEMORY"
+        }
+      ],
+      "node_reduction_vs_static_large": 1,
+      "density_gain_vs_static_large": 0.3333333333333335
+    }
+  ]
 }

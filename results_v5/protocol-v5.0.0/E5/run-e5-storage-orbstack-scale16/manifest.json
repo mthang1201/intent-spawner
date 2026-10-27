@@ -1,0 +1,88 @@
+{
+  "backend_system_versions": {
+    "B0": "jupyterhub-default-selection",
+    "P1": "rule-based-v1",
+    "P2": "p2-pipeline-v1.0.0"
+  },
+  "candidate_catalog": {
+    "catalog_sha256": "b6ed61bb8a9d7aea3d8d7d5c69c4a58db2af8df3f6b31c3c13acfcc8527e68c3",
+    "catalog_version": "2026-10-24.1",
+    "corpus_sha256": "a2779dee4e83b81f7c8a0f03045c2728f13c8776bb4cd6de650254f81bb57dba",
+    "corpus_version": "environment-candidate-corpus-v1"
+  },
+  "constraint_ranking_configuration": {
+    "constraint_evaluator_version": "p2-deterministic-constraint-evaluator-v1.1.0",
+    "constraint_policy_version": "p2-constraint-policy-v1.0.0",
+    "ranker_version": "p2-deterministic-ranker-v2.0.0",
+    "retrieval_rank_weight": 0.6,
+    "soft_preference_weight": 0.25
+  },
+  "dataset_identity": {
+    "dataset_id": "frozen-catalog",
+    "dataset_sha256": "b6ed61bb8a9d7aea3d8d7d5c69c4a58db2af8df3f6b31c3c13acfcc8527e68c3"
+  },
+  "embedding_indexes": {
+    "dense_index_sha256": "5d2cbd59aeee87a904a20b9dea6bd1e1457f79c4bb07fac76f3623866e671405",
+    "dense_index_version": "environment-dense-index-v1",
+    "embedding_model_id": "intent-spawner-local-feature-hash",
+    "embedding_model_revision": "feature-hash-embedding-v1.0.0",
+    "hybrid_index_sha256": "5615d4e60e6b7ea52e7ac2f98469dd93d07697eabeeea70476c58aab74fdb277",
+    "hybrid_index_version": "environment-hybrid-index-v1",
+    "sparse_index_sha256": "bc6d5c6f0557880ce2e819c0df0bdc03e0ce74b1556f229618d7bec7c6cb3358",
+    "sparse_index_version": "environment-sparse-index-v1"
+  },
+  "environment_identity": {
+    "architecture": "arm64",
+    "environment_id": "e5-storage-darwin-arm64",
+    "git_info": {
+      "git_dirty": true,
+      "git_revision": "00eca1ee4d4fe3f7a9fef370a94aa9453718dcc8"
+    },
+    "measurement_method": "docker manifest inspect OCI layer digest accounting (platform: linux/arm64)",
+    "operating_system": "linux",
+    "platform_details": "macOS-15.3.2-arm64-arm-64bit-Mach-O",
+    "python_version": "3.14.6 (main, Jun 10 2026, 10:03:53) [Clang 17.0.0 (clang-1700.6.4.2)]",
+    "runtime": "docker",
+    "size_domain": "compressed_oci_manifest_layer_bytes",
+    "storage_collector": {
+      "collector_name": "docker-manifest-inspect",
+      "collector_version": "storage-collector-v1.0.0",
+      "evidence_classification": "REAL_OBSERVATION",
+      "origin": "REAL_REGISTRY",
+      "raw_observation_count": 16,
+      "schema_version": "protocol-v5-storage-collector-v1.0.0"
+    }
+  },
+  "execution_status": "OBSERVED",
+  "execution_timestamp_utc": "2026-10-24T09:43:18.441329Z",
+  "experiment_id": "E5",
+  "extractor": {
+    "extractor_model_id": "lightweight-nlp-pipeline-v2.0.0-python-3.14",
+    "extractor_name": "p2-local-nlp-extractor",
+    "extractor_prompt_sha256": "eda2685c931a53246c4a430443365bedba99c5040213aea640689a12b467ac4a",
+    "extractor_prompt_version": "local-nlp-contract-v2.0.0",
+    "extractor_version": "local-nlp-extractor-v2.0.0"
+  },
+  "git_revision": "00eca1ee4d4fe3f7a9fef370a94aa9453718dcc8",
+  "p3_reranker_version": null,
+  "protocol_version": "5.0.0",
+  "random_seeds": [
+    42
+  ],
+  "retrieval_configuration": {
+    "dense_top_k": 10,
+    "dense_weight": 1.0,
+    "retriever_version": "reciprocal-rank-fusion-hybrid-retriever-v1",
+    "rrf_k": 60.0,
+    "sparse_top_k": 10,
+    "sparse_weight": 1.0,
+    "top_k": 10
+  },
+  "run_id": "e5-storage-scalability-20261024T094314Z",
+  "schema_version": "protocol-v5-manifest-v1.0.0",
+  "split_identity": {
+    "split_id": "frozen-catalog",
+    "stage": "development"
+  },
+  "structured_intent_schema_version": "structured-intent-v1"
+}

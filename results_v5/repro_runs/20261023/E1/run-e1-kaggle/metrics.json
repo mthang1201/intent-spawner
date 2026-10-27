@@ -1,0 +1,172 @@
+{
+  "evaluation_timestamp": "2026-10-23T13:06:36.892096+00:00",
+  "total_items": 1000,
+  "vocabulary_stats": {
+    "corpus_vocab_size": 128,
+    "kaggle_vocab_size": 126,
+    "shared_vocab_size": 22,
+    "kaggle_coverage_ratio": 0.1746,
+    "top_oov_tokens": [
+      [
+        "customer",
+        480
+      ],
+      [
+        "churn",
+        480
+      ],
+      [
+        "pneumonia",
+        480
+      ],
+      [
+        "chest",
+        480
+      ],
+      [
+        "problem",
+        460
+      ],
+      [
+        "exploratory",
+        440
+      ],
+      [
+        "energy",
+        440
+      ],
+      [
+        "demand",
+        440
+      ],
+      [
+        "forecasting",
+        440
+      ],
+      [
+        "temperature",
+        400
+      ],
+      [
+        "prediction",
+        240
+      ],
+      [
+        "statement",
+        240
+      ],
+      [
+        "goal",
+        240
+      ],
+      [
+        "predict",
+        240
+      ],
+      [
+        "telecommunications",
+        240
+      ],
+      [
+        "gradient",
+        240
+      ],
+      [
+        "boosted",
+        240
+      ],
+      [
+        "decision",
+        240
+      ],
+      [
+        "trees",
+        240
+      ],
+      [
+        "handle",
+        240
+      ],
+      [
+        "missing",
+        240
+      ],
+      [
+        "values",
+        240
+      ],
+      [
+        "optimize",
+        240
+      ],
+      [
+        "hyperparameters",
+        240
+      ],
+      [
+        "detection",
+        240
+      ]
+    ]
+  },
+  "retrieval_metrics": {
+    "BM25 (Sparse)": {
+      "hit_1": 90.0,
+      "hit_3": 90.0,
+      "hit_5": 90.0,
+      "mrr": 0.91,
+      "category_hit_1": {
+        "tabular_ml": 100.0,
+        "deep_learning_pytorch": 100.0,
+        "deep_learning_tensorflow": 100.0,
+        "eda_visualization": 100.0,
+        "specialized_data": 0.0
+      }
+    },
+    "Local Embeddings (Dense)": {
+      "hit_1": 70.0,
+      "hit_3": 90.0,
+      "hit_5": 90.0,
+      "mrr": 0.8143,
+      "category_hit_1": {
+        "tabular_ml": 100.0,
+        "deep_learning_pytorch": 100.0,
+        "deep_learning_tensorflow": 100.0,
+        "eda_visualization": 0.0,
+        "specialized_data": 0.0
+      }
+    },
+    "Hybrid RRF (Sparse + Dense)": {
+      "hit_1": 90.0,
+      "hit_3": 90.0,
+      "hit_5": 90.0,
+      "mrr": 0.9167,
+      "category_hit_1": {
+        "tabular_ml": 100.0,
+        "deep_learning_pytorch": 100.0,
+        "deep_learning_tensorflow": 100.0,
+        "eda_visualization": 100.0,
+        "specialized_data": 0.0
+      }
+    }
+  },
+  "proposed_match_terms": {
+    "scipy-data-science": [
+      "plotly",
+      "polars",
+      "hyperparameter"
+    ],
+    "pytorch-deep-learning": [
+      "torchvision",
+      "timm",
+      "transformer"
+    ],
+    "tensorflow-deep-learning": [
+      "lstm",
+      "bidirectional"
+    ],
+    "minimal-python": [
+      "script"
+    ]
+  }
+}
