@@ -1,15 +1,15 @@
-\begin{table}[ht]{Observed compressed OCI layer-byte accounting and deduplication across four images}
+\begin{table}[ht]{Observed compressed OCI layer-byte accounting and deduplication across catalog scales (4, 8, and 16 images)}
 \label{tab:e5-storage}
 \centering
 \small
-\begin{tabular}{lr}
+\begin{tabular}{lrrr}
 \toprule
-Accounting quantity & Byte count \\
+Accounting quantity & Scale 4 (4 images) & Scale 8 (8 images) & Scale 16 (16 images) \\
 \midrule
-Logical ordered layer descriptor total & 11,392,935,522 \\
-Unique content-addressed layer blob total & 8,247,431,025 \\
-Logical-minus-unique difference (deduplicated) & 3,145,504,497 \\
-Deduplication difference as share of logical total & 27.61\% \\
+Logical ordered layer descriptor total & 11,392,935,522 & 17,490,144,287 & 33,668,458,552 \\
+Unique content-addressed layer blob total & 8,247,431,025 & 12,147,583,516 & 21,189,364,400 \\
+Logical-minus-unique difference (deduplicated) & 3,145,504,497 & 5,342,560,771 & 12,479,094,152 \\
+Deduplication volume savings ratio & 27.61\% & 30.55\% & 37.06\% \\
 \bottomrule
 \end{tabular}
 \end{table}

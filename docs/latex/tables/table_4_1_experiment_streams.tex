@@ -6,13 +6,13 @@
 \toprule
 Stream & Pillar & Evaluated Construct & Input Workload & Testbed Environment & Output Artifact & Scope / Status \\
 \midrule
-E1 & Pillar 1: Recommendation & Algorithmic ranking accuracy, profile \& image acceptability & Benchmark v1 test split (471 cases across 157 families) \& DistilKaggle (1,000 queries) & Offline evaluation harness & Ranked candidate lists, JSON recommendations, Confusion matrices & 471 test cases, cgroup v2 ground truth \\
+E1 & Pillar 1: Recommendation & Algorithmic ranking accuracy, profile \& image acceptability & Benchmark v1 test split (471 cases across 157 families) \& DistilKaggle (1,000 queries) & Offline evaluation harness & Ranked candidate lists, JSON recommendations, Confusion matrices & 471 test cases, cgroups v2 ground truth \\
 \addlinespace
 E2 & Pillar 1: Robustness & Linguistic robustness, cross-lingual transfer (EN vs.\ VI vs.\ Noisy) & 157 Canonical EN, 157 Informal/Noisy, and 157 Vietnamese prompts & Offline NLP evaluation harness & Semantic Robustness Rate (SRR), Cross-lingual invariance & 471 variants across 157 families \\
 \addlinespace
-E4 & Pillar 2: Resources & Resource allocation, safe envelopes, large-scale cluster simulation & 20 empirical workloads (800 physical Pods) \& Alibaba PAI GPU Trace (50 nodes) & Active K8s cluster (OrbStack ARM64) \& Discrete-Event Simulator & Pod execution records, cgroups v2 telemetry logs, simulation curves & Live K8s trials \& 50-node cluster trace simulation \\
+E4 & Pillar 2: Resources & Resource allocation, safe envelopes, large-scale cluster simulation & 20 empirical workloads (800 physical Pods) \& Alibaba PAI GPU Trace (50 nodes) & Active K8s cluster (OrbStack ARM64) \& Discrete-Event Simulator & Pod execution records, cgroups v2 telemetry logs, simulation curves & Live K8s trials (800 Pods) \& 50-node cluster trace simulation (30 seeds, 24,000 sessions) \\
 \addlinespace
-E5 & Pillar 3: Storage \& OCI & Container capability execution, OCI layer deduplication & 166 recommendation cases, 4 approved OCI images & Docker container sandbox \& OCI registry API & Isolated probe exit codes, layer SHA-256 manifests & 166 functional probes, 27.61\% OCI layer sharing \\
+E5 & Pillar 3: Storage \& OCI & Container capability execution, OCI layer deduplication & 166 recommendation cases, 16 approved OCI images across scales 4, 8, 16 & Docker container sandbox \& OCI registry API & Isolated probe exit codes, layer SHA-256 manifests & 166 functional probe cases (100\% pass), 27.61\% to 37.06\% OCI layer sharing across 4, 8, 16 images \\
 \bottomrule
 \end{tabular}
 \end{table}

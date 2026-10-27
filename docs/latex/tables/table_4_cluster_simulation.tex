@@ -1,33 +1,33 @@
-\begin{table}[ht]{Large-scale cluster multi-tenancy simulation metrics across allocation strategies (1,000 vCPU, 100 GPU, 2,000 GB RAM, 800 Sessions)}
+\begin{table}[ht]{Large-scale cluster multi-tenancy simulation metrics across allocation strategies (1,000 vCPU, 100 GPU, 2,000 GB RAM across 50 nodes; 30-seed bootstrap evaluation, $N=800$ sessions/seed)}
 \label{tab:cluster_simulation}
 \centering
 \small
-\begin{tabular}{p{5.0cm}p{2.6cm}p{2.6cm}p{2.8cm}}
+\begin{tabular}{p{4.8cm}p{2.7cm}p{2.7cm}p{2.8cm}}
 \toprule
 Evaluation Metric & B0 (Static Large) & P1 (Heuristic) & P2 (Intent-Spawner) \\
 \midrule
 Submitted sessions ($N$) & 800 & 800 & 800 \\
 Completed sessions & 800 & 800 & 800 \\
-Out-of-Memory (OOM) failures & 0 & 84 & 0 \\
-OOM failure rate (\%) & 0.00\% & 10.50\% & \textbf{0.00\%} \\
-Peak running concurrency (Pods) & 100 & 121 & \textbf{130} \\
-Average running concurrency (Pods) & 78.88 & 71.30 & \textbf{79.51} \\
-Queued sessions (delayed admission) & 405 (50.62\%) & 0 (0.00\%) & \textbf{0 (0.00\%)} \\
-Peak pending queue length & 49 Pods & 0 Pods & \textbf{0 Pods} \\
-Mean admission wait time & 10.73\,min & 0.00\,min & \textbf{0.00\,min} \\
-P95 admission wait time & 21.30\,min & 0.00\,min & \textbf{0.00\,min} \\
+Out-of-Memory (OOM) failures & 0 $\pm$ 0 & 79.6 $\pm$ 7.2 & \textbf{0 $\pm$ 0} \\
+OOM failure rate (\%) & 0.00\% & 10.06\% [9.75, 10.36] & \textbf{0.00\%} \\
+Peak running concurrency (Pods) & 100 $\pm$ 0 & 131.1 $\pm$ 8.9 & \textbf{143.5 $\pm$ 9.8} \\
+Average running concurrency (Pods) & 78.80 & 71.97 & \textbf{79.91} \\
+Queued sessions (delayed admission) & 475.1 (60.0\%) & 0 (0.00\%) & \textbf{0 (0.00\%)} \\
+Peak pending queue length & 63.6 $\pm$ 15.9 Pods & 0 Pods & \textbf{0 Pods} \\
+Mean admission wait time & 13.99\,min & 0.00\,min & \textbf{0.00\,min} \\
+P95 admission wait time & 28.25\,min & 0.00\,min & \textbf{0.00\,min} \\
 \midrule
 \textbf{Capacity Stranding (\% of Cluster)} & & & \\
-\quad CPU stranding & 24.48\% & 4.44\% & \textbf{0.82\%} \\
-\quad RAM stranding & 30.80\% & 6.74\% & \textbf{0.97\%} \\
-\quad GPU stranding & 70.34\% & 0.00\% & \textbf{0.00\%} \\
+\quad CPU stranding & 24.89\% & 5.15\% & \textbf{1.27\%} \\
+\quad RAM stranding & 30.82\% & 7.10\% & \textbf{0.97\%} \\
+\quad GPU stranding & 69.47\% & 0.00\% & \textbf{0.00\%} \\
 \midrule
 \textbf{Allocation Slack (\% within Pods)} & & & \\
-\quad CPU allocation slack & 77.58\% & 41.31\% & \textbf{10.30\%} \\
-\quad RAM allocation slack & 97.60\% & 98.72\% & \textbf{55.79\%} \\
-\quad GPU allocation slack & 89.17\% & 0.00\% & \textbf{0.00\%} \\
+\quad CPU allocation slack & 78.96\% & 46.48\% & \textbf{15.83\%} \\
+\quad RAM allocation slack & 97.77\% & 98.79\% & \textbf{57.68\%} \\
+\quad GPU allocation slack & 88.14\% & 0.00\% & \textbf{0.00\%} \\
 \midrule
-Observed peak concurrency multiplier & 1.00$\times$ (100 Pods) & 1.21$\times$ (121 Pods) & \textbf{1.30$\times$} (130 Pods) \\
+Observed peak concurrency multiplier & 1.00$\times$ (100 Pods) & 1.31$\times$ & \textbf{1.44$\times$} \\
 Theoretical saturation multiplier & 1.00$\times$ (100 Pods) & 1.20$\times$ ($\approx$120 Pods) & \textbf{5.56$\times$} ($\approx$520 Pods) \\
 \bottomrule
 \end{tabular}

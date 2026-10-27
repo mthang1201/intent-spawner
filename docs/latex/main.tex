@@ -57,9 +57,9 @@ The problem addressed in this thesis is the selection of a suitable resource pro
 
 The proposed approach, implemented as Intent-Spawner, combines structured intent extraction, hybrid information retrieval, deterministic constraint evaluation, and trusted catalog resolution. A user's workload description is converted into a schema-validated structured intent containing task characteristics, software requirements, resource constraints, and preferences. Candidate environments are then retrieved using two complementary retrieval channels: BM25-based sparse retrieval for exact technical terminology and dense semantic retrieval for semantically related workload descriptions. Their ranked results are combined using Reciprocal Rank Fusion (RRF). Retrieved candidates are subsequently evaluated against hard constraints, including GPU availability, minimum CPU and memory requirements, dataset size, and forbidden features. Candidates that violate hard constraints are excluded before deterministic preference ranking is applied.
 
-The resulting recommendation is resolved through an administrator-owned candidate catalog rather than allowing the recommendation model to directly specify an image or Kubernetes resource configuration. Approved notebook images are identified by immutable digest-pinned references, while resource profiles are restricted to administrator-defined configurations. A preview and confirmation mechanism binds the displayed recommendation to the authenticated user and to a single-use, time-limited token. The JupyterHub pre-spawn hook validates this state before applying the selected configuration, without performing new recommendation or model inference during pod creation. The system was evaluated through controlled experiment protocols covering recommendation behavior, system integration, resource-related measurements, and environment functionality. The evaluation distinguishes workload families as the semantic experimental unit and separates repeated executions used for stability analysis from independent recommendation cases.
+The resulting recommendation is resolved through an administrator-owned candidate catalog rather than allowing the recommendation model to directly specify an image or Kubernetes resource configuration. Approved notebook images are identified by immutable digest-pinned references, while resource profiles are restricted to administrator-defined configurations. A preview and confirmation mechanism binds the displayed recommendation to the authenticated user and to a single-use, time-limited token. The JupyterHub pre-spawn hook validates this state before applying the selected configuration, without performing new recommendation or model inference during pod creation. The system was evaluated through controlled experiments covering recommendation behavior, system integration, resource-related measurements, and environment functionality. The evaluation distinguishes workload families as the semantic experimental unit and separates repeated executions used for stability analysis from independent recommendation cases.
 
-The experimental evaluation examined recommendation quality and linguistic robustness on Benchmark v1 (471 test cases across 157 families with empirical Linux cgroups v2 ground truth), resource outcomes across 800 physical Kubernetes Pod trials and a 50-node cluster multi-tenancy simulation under Alibaba PAI GPU traces (Stream E4), and image capability through deterministic probes and OCI layer accounting for four approved images (Stream E5). P2 achieved 73.46\% Candidate Accuracy@3 and 81.32\% Profile Accuracy@3 (+47.13\% gain over rule heuristics), while linguistic robustness evaluation demonstrated consistent stability across Canonical English, Informal/Noisy text, and localized Vietnamese queries ($|\Delta| \le 1.28\%$). The evaluation also established the functional integration of recommendation preview, policy validation, user confirmation, and pre-spawn application within JupyterHub, including enforcement of approved profiles and digest-pinned images.
+The experimental evaluation examined recommendation quality and linguistic robustness on Benchmark v1 (471 test cases across 157 families with empirical Linux cgroups v2 ground truth), resource outcomes across 800 physical Kubernetes Pod trials on OrbStack and a 50-node cluster multi-tenancy simulation under Alibaba PAI GPU traces across 30 seeds (Stream E4), and image capability through deterministic probes and OCI layer accounting across catalog scales of 4, 8, and 16 approved images (Stream E5, achieving 27.61\% to 37.06\% deduplication savings). In multi-candidate discovery, P2 Local achieved 73.46\% Candidate Accuracy@3 and 81.32\% Profile Accuracy@3 (+47.13\% gain over rule heuristics), while P2 LLM Mode achieved 27.39\% Candidate Accuracy@1 and 79.19\% JointAccept@1. Linguistic robustness evaluation demonstrated consistent stability across Canonical English, Informal/Noisy text, and localized Vietnamese queries ($|\Delta| \le 1.28\%$). The evaluation also established the functional integration of recommendation preview, policy validation, user confirmation, and pre-spawn application within JupyterHub, including enforcement of approved profiles and digest-pinned images.
 
 These results indicate that intent-aware environment selection can be integrated into JupyterHub while maintaining a separation between language-based recommendation and authoritative infrastructure configuration. Hybrid retrieval provides a mechanism for combining exact technical vocabulary with semantic similarity, whereas deterministic constraints prevent soft relevance signals from overriding explicit resource or policy requirements. The architecture therefore provides a bounded form of decision support in which natural-language interaction reduces configuration effort without transferring deployment authority to the recommendation model.
 
@@ -88,8 +88,11 @@ I would also like to thank my friends, and family for their valuable discussions
 \begin{contentlistingsection}{Abbreviations}
 \begin{tabular}{ll}
 API & Application Programming Interface\\
+AST & Abstract Syntax Tree\\
 BM25 & Best Matching 25\\
+cgroups & Control Groups (Linux kernel telemetry and resource isolation)\\
 CPU & Central Processing Unit\\
+DFA & Deterministic Finite Automaton\\
 GPU & Graphics Processing Unit\\
 HCI & Human-Computer Interaction\\
 IR & Information Retrieval\\
@@ -97,9 +100,9 @@ LLM & Large Language Model\\
 MRR & Mean Reciprocal Rank\\
 nDCG & Normalized Discounted Cumulative Gain\\
 OCI & Open Container Initiative\\
-POD & Plain Old Data / Kubernetes Pod (context dependent)\\
+OOM & Out of Memory\\
+Pod & Atomic Kubernetes execution unit\\
 RRF & Reciprocal Rank Fusion\\
-RQ & Research Question\\
 TTL & Time to Live\\
 VPA & Vertical Pod Autoscaler\\
 \end{tabular}

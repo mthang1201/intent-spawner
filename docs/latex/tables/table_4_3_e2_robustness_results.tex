@@ -1,17 +1,19 @@
-\begin{table}[ht]{Observed E2 semantic and linguistic robustness metrics across prompt variations on Benchmark v1}
+\begin{table}[ht]{Observed E2 linguistic robustness metrics across prompt variations on Benchmark v1 (471 cases, 157 per class)}
 \label{tab:e2-results}
 \centering
 \small
-\begin{tabular}{p{3.8cm}p{2.6cm}p{2.6cm}p{2.6cm}p{2.0cm}}
+\begin{tabular}{lcccccc}
 \toprule
-Variant Class & P1 Cand Acc@1 & P1 Joint Accept & P2 Cand Acc@1 & P2 Joint Accept \\
+& \multicolumn{2}{c}{P1 Baseline} & \multicolumn{2}{c}{P2 Local (Deterministic)} & \multicolumn{2}{c}{P2 LLM (Gemini 3.5 Flash-Lite)} \\
+\cmidrule(lr){2-3} \cmidrule(lr){4-5} \cmidrule(lr){6-7}
+Variant Class & Cand Acc@1 & Joint Accept & Cand Acc@1 & Joint Accept & Cand Acc@1 & Joint Accept \\
 \midrule
-Canonical EN & 25.48\% & 84.08\% & 22.29\% & 66.88\% \\
-Informal / Noisy EN & 26.11\% & 84.08\% & 24.84\% & 64.97\% \\
-Vietnamese (Localized) & 27.39\% & 84.71\% & 23.57\% & 66.24\% \\
+Canonical EN & 25.48\% & 84.08\% & 22.29\% & 66.88\% & 26.75\% & 79.62\% \\
+Informal / Noisy EN & 26.11\% & 84.08\% & 24.84\% & 64.97\% & 26.11\% & 78.34\% \\
+Vietnamese (Localized) & 27.39\% & 84.71\% & 23.57\% & 66.24\% & 29.30\% & 79.62\% \\
 \midrule
-Cross-Lingual Gap ($|\Delta|$) & 1.91\% & 0.63\% & 1.28\% & 0.64\% \\
-Sample Basis & \multicolumn{4}{c}{471 variants (157 per class across 157 disjoint families)} \\
+Max Class Gap ($|\Delta|$) & 1.91\% & 0.63\% & 1.28\% & 0.64\% & 2.55\% & 1.28\% \\
+Sample Denominator & \multicolumn{6}{c}{471 variants (157 per class across 157 disjoint workload families)} \\
 \bottomrule
 \end{tabular}
 \end{table}

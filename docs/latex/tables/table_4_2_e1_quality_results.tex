@@ -2,21 +2,21 @@
 \label{tab:e1-results}
 \centering
 \small
-\begin{tabular}{p{4.2cm}p{3.2cm}p{3.4cm}p{2.8cm}}
+\begin{tabular}{p{4.6cm}p{2.5cm}p{2.7cm}p{2.7cm}}
 \toprule
-Metric & P1 Baseline (Rule-Based) & P2 (Intent-Spawner Local) & Relative Gain \\
+Metric & P1 Baseline (Rule-Based) & P2 Local (Deterministic) & P2 LLM (Gemini 3.5 Flash-Lite) \\
 \midrule
-Candidate Accuracy@1 & 26.33\% & 23.57\% & $-2.76\%$ \\
-Candidate Accuracy@3 & 26.33\% & 73.46\% & $+47.13\%$ \\
-Profile Accuracy@1 & 33.97\% & 26.75\% & $-7.22\%$ \\
-Profile Accuracy@3 & 33.97\% & 81.32\% & $+47.35\%$ \\
-Image Accuracy@1 & 91.72\% & 85.14\% & $-6.58\%$ \\
-Image Accuracy@3 & 91.72\% & 90.23\% & $-1.49\%$ \\
+Candidate Accuracy@1 & 26.33\% & 23.57\% & \textbf{27.39\%} \\
+Candidate Accuracy@3 & 26.33\% & \textbf{73.46\%} & 31.42\% \\
+Profile Accuracy@1 & 33.97\% & 26.75\% & \textbf{35.03\%} \\
+Profile Accuracy@3 & 33.97\% & \textbf{81.32\%} & 39.07\% \\
+Image Accuracy@1 & \textbf{91.72\%} & 85.14\% & 90.23\% \\
+Image Accuracy@3 & 91.72\% & 90.23\% & \textbf{92.14\%} \\
 \addlinespace
-Joint Acceptability@1 & 84.29\% & 66.03\% & $-18.26\%$ \\
-Under-provision Rate (OOM Hazard) & 3.19\% (15/471) & 4.67\% (22/471) & $+1.49\%$ \\
-Over-provision Rate (Resource Waste) & 62.85\% (296/471) & 68.58\% (323/471) & $+5.73\%$ \\
-Execution Latency (Mean) & 0.06 ms & 2.28 ms & $+2.22$ ms \\
+Joint Acceptability@1 & \textbf{84.29\%} & 66.03\% & 79.19\% \\
+Under-provision Rate (OOM Hazard) & \textbf{3.19\%} (15/471) & 4.67\% (22/471) & 6.37\% (30/471) \\
+Over-provision Rate (Resource Waste) & 62.85\% (296/471) & 68.58\% (323/471) & \textbf{58.60\%} (276/471) \\
+Execution Latency (Mean) & \textbf{0.06 ms} & 2.28 ms & 1,508 ms \\
 \bottomrule
 \end{tabular}
 \end{table}

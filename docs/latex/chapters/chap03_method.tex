@@ -153,7 +153,9 @@ The architectural design of the local NLP extraction pipeline satisfies four str
 \subsection{Retrieval pipeline architecture}
 \label{subsec:retrieval_architecture}
 
-P2 searches an administrator-managed catalog $C$ containing pre-built container images and resource profiles. Relying solely on keywords fails when users describe tasks informally. Conversely, relying solely on vector embeddings often misses exact package names and version tags. We therefore deploy a dual-channel hybrid retriever that combines sparse lexical search with dense semantic search in parallel (Figure~\ref{fig:p2_retrieval_pipeline}).
+P2 searches an administrator-managed catalog $C$ containing pre-built container images and resource profiles. Table~\ref{tab:candidate_catalog_spec} details the representative profile allocations and approved container images in the catalog. Relying solely on keywords fails when users describe tasks informally. Conversely, relying solely on vector embeddings often misses exact package names and version tags. We therefore deploy a dual-channel hybrid retriever that combines sparse lexical search with dense semantic search in parallel (Figure~\ref{fig:p2_retrieval_pipeline}).
+
+\input{tables/table_3_2_catalog_profiles}
 
 \begin{figure}[ht]{Hybrid candidate retrieval pipeline combining sparse lexical and dense semantic channels with Reciprocal Rank Fusion}
 \centering
