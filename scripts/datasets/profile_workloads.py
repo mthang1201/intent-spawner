@@ -92,7 +92,7 @@ def get_sorted_profiles(
 @dataclass
 class TrialResult:
     profile_tried: str
-    outcome: str  # "completed" | "oom" | "timeout" | "error"
+    outcome: str  # "completed" | "oom" | "timeout" | "error" | "infra_error"
     peak_mib: Optional[float]
     cpu_seconds: Optional[float]
     wall_seconds: Optional[float]
@@ -110,7 +110,7 @@ class TrialResult:
             "cpu_seconds": self.cpu_seconds,
             "wall_seconds": self.wall_seconds,
         }
-        if self.outcome == "error" and self.error_traceback:
+        if self.outcome in ("error", "infra_error") and self.error_traceback:
             data["error_traceback"] = self.error_traceback[:500]
         return data
 
@@ -353,6 +353,34 @@ print(json.dumps(result))
 '''
 
 
+def check_docker_daemon(timeout: float = 3.0) -> Tuple[bool, str]:
+    """Check whether the Docker daemon is responding within timeout seconds.
+
+    Returns:
+        (True, version_or_info) if daemon is reachable and responding.
+        (False, error_message) if Docker CLI is missing, daemon is stopped,
+        socket is unreachable, or health check timed out.
+    """
+    if not shutil.which("docker"):
+        return False, "Docker CLI binary not found on PATH"
+    try:
+        proc = subprocess.run(
+            ["docker", "info", "--format", "{{.ServerVersion}}"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            timeout=timeout,
+        )
+        if proc.returncode == 0:
+            return True, proc.stdout.strip()
+        err_msg = (proc.stderr or proc.stdout).strip()
+        return False, f"Docker daemon not ready (exit code {proc.returncode}): {err_msg}"
+    except subprocess.TimeoutExpired:
+        return False, f"Docker daemon health check timed out after {timeout}s"
+    except Exception as exc:
+        return False, f"Docker daemon health check error: {exc}"
+
+
 class DockerWorkloadRunner(BaseWorkloadRunner):
     """Executes workload in actual Docker container with cgroup v2 limits."""
 
@@ -381,6 +409,25 @@ class DockerWorkloadRunner(BaseWorkloadRunner):
         work_dir: Optional[Path] = None,
         input_files: Optional[Dict[str, Any]] = None,
     ) -> TrialResult:
+        # Lazy daemon connectivity check with fast timeout before container lifecycle
+        daemon_ok, daemon_msg = check_docker_daemon(timeout=3.0)
+        if not daemon_ok:
+            logger.warning(
+                "Docker daemon check failed for problem '%s' profile '%s': %s",
+                problem_id,
+                profile.slug,
+                daemon_msg,
+            )
+            return TrialResult(
+                profile_tried=profile.slug,
+                outcome="infra_error",
+                peak_mib=None,
+                cpu_seconds=None,
+                wall_seconds=0.0,
+                peak_method="memory.peak",
+                error_traceback=f"Infrastructure error (Docker daemon unavailable): {daemon_msg}",
+            )
+
         container_name = f"profile-{problem_id.replace('_', '-').lower()}-{profile.slug}-{uuid.uuid4().hex[:6]}"
         tmpdir = Path(tempfile.mkdtemp(prefix="profile_run_"))
 
@@ -497,6 +544,30 @@ class DockerWorkloadRunner(BaseWorkloadRunner):
 
             # Fallback if exit code non-zero without result.json
             if exit_code != 0:
+                # Distinguish Infra error vs OOM vs Code Error
+                infra_keywords = (
+                    "cannot connect to the docker daemon",
+                    "is the docker daemon running",
+                    "error during connect",
+                    "unable to find image",
+                    "error response from daemon",
+                    "connection refused",
+                    "broken pipe",
+                    "no space left on device",
+                    "failed to create shim task",
+                )
+                stderr_lower = stderr.lower()
+                if any(kw in stderr_lower for kw in infra_keywords):
+                    return TrialResult(
+                        profile_tried=profile.slug,
+                        outcome="infra_error",
+                        peak_mib=None,
+                        cpu_seconds=None,
+                        wall_seconds=round(wall_seconds, 6),
+                        peak_method="memory.peak",
+                        error_traceback=f"Infrastructure error: {stderr.strip()[:1000]}",
+                    )
+
                 # Distinguish OOM vs Error
                 if "OOM" in stderr or "Killed" in stderr or exit_code == 137:
                     return TrialResult(
@@ -563,6 +634,9 @@ class DockerWorkloadRunner(BaseWorkloadRunner):
         timeout_seconds: int = 60,
     ) -> float:
         """Measure baseline memory peak for idle kernel + imports 5 times and return median."""
+        daemon_ok, daemon_msg = check_docker_daemon(timeout=3.0)
+        if not daemon_ok:
+            raise RuntimeError(f"Cannot measure baseline: Docker daemon unavailable ({daemon_msg})")
         peaks: List[float] = []
         logger.info(
             "Measuring BASELINE for image '%s' (%s) across %d runs...",
@@ -839,6 +913,7 @@ def profile_single_problem(
     min_passing_per_repeat: List[str] = []
     problem_had_error = False
     problem_had_timeout = False
+    problem_had_infra_error = False
     all_peaks: List[float] = []
     all_anon_peaks: List[float] = []
     last_peak_method = "memory.peak"
@@ -872,6 +947,10 @@ def profile_single_problem(
             elif trial.outcome == "oom":
                 # Advance to next larger profile
                 continue
+            elif trial.outcome == "infra_error":
+                # Infrastructure failure (daemon down, socket disconnected): abort repeat
+                problem_had_infra_error = True
+                break
             elif trial.outcome == "error":
                 # Non-memory code error: DO NOT step up, stop repeat
                 problem_had_error = True
@@ -882,6 +961,9 @@ def profile_single_problem(
 
         if repeat_min_passing:
             min_passing_per_repeat.append(repeat_min_passing)
+        if problem_had_infra_error:
+            # Stop remaining repeats immediately if infrastructure failed
+            break
 
     # Determine final_min_passing_profile (= largest profile among passing repeats)
     # Order: small (0) < medium (1) < large (2)
@@ -894,6 +976,8 @@ def profile_single_problem(
             min_passing_per_repeat, key=lambda s: profile_ranks.get(s, -1)
         )
         status = "ok"
+    elif problem_had_infra_error:
+        status = "infra_error"
     elif problem_had_error:
         status = "error"
     elif problem_had_timeout:
@@ -1027,6 +1111,7 @@ def run_pipeline(
     limit: Optional[int] = None,
     resume: bool = False,
     pilot: bool = False,
+    pilot_report_path: Optional[Path] = None,
     runner: Optional[BaseWorkloadRunner] = None,
     custom_profiles: Optional[Dict[str, Any]] = None,
     catalog_path: Path = DEFAULT_CATALOG_PATH,
@@ -1144,7 +1229,11 @@ def run_pipeline(
             )
 
     if pilot:
-        report_path = PROJECT_ROOT / "docs" / "reports" / f"profile_pilot_{source}.md"
+        report_path = (
+            pilot_report_path
+            if pilot_report_path is not None
+            else PROJECT_ROOT / "docs" / "reports" / f"profile_pilot_{source}.md"
+        )
         report_content = generate_pilot_markdown_report(
             source=source,
             records=processed_records,
@@ -1173,6 +1262,12 @@ def main(argv: Optional[List[str]] = None) -> int:
     parser.add_argument("--limit", type=int, default=None, help="Limit number of problems to evaluate")
     parser.add_argument("--resume", action="store_true", help="Resume from existing output JSONL")
     parser.add_argument("--pilot", action="store_true", help="Print pilot distribution statistics and write markdown report")
+    parser.add_argument(
+        "--pilot-report-path",
+        type=Path,
+        default=None,
+        help="Custom output path for pilot markdown report (default: docs/reports/profile_pilot_{source}.md)",
+    )
 
     args = parser.parse_args(argv)
 
@@ -1186,6 +1281,7 @@ def main(argv: Optional[List[str]] = None) -> int:
             limit=args.limit,
             resume=args.resume,
             pilot=args.pilot,
+            pilot_report_path=args.pilot_report_path,
         )
         return 0
     except Exception as exc:

@@ -353,7 +353,7 @@ def generate_source_distribution_report(
         "| :--- | :--- | :---: |",
         f"| **Input Records** | Total records parsed | {total_input} |",
         f"| **Labeled Records** | status in (`ok`, `infeasible_over_capacity`) | {num_labeled} |",
-        f"| **Excluded Records** | status in (`error`, `timeout`) | {len(skipped_records)} |",
+        f"| **Excluded Records** | status in (`error`, `timeout`, `infra_error`) | {len(skipped_records)} |",
     ]
 
     for st, c in sorted(skip_status_counts.items()):

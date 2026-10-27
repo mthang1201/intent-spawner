@@ -397,6 +397,7 @@ def test_cli_main_execution(tmp_path):
 
     in_file = tmp_path / "cli_input.jsonl"
     out_file = tmp_path / "cli_output.jsonl"
+    report_file = tmp_path / "cli_pilot_report.md"
 
     items = [{"problem_id": "P_CLI_1", "image": "scipy-data-science", "reference_code": "x = 1"}]
     in_file.write_text(json.dumps(items[0]) + "\n", encoding="utf-8")
@@ -410,10 +411,12 @@ def test_cli_main_execution(tmp_path):
             "--repeats", "1",
             "--limit", "1",
             "--pilot",
+            "--pilot-report-path", str(report_file),
         ])
 
     assert exit_code == 0
     assert out_file.is_file()
+    assert report_file.is_file()
 
 
 def test_baseline_by_profile_selection(test_profiles):
@@ -472,7 +475,16 @@ def test_real_docker_oom_escalation_medium():
     if not shutil.which("docker"):
         pytest.skip("Docker CLI not available")
 
-    from scripts.datasets.profile_workloads import DockerWorkloadRunner, get_sorted_profiles
+    from scripts.datasets.profile_workloads import (
+        DockerWorkloadRunner,
+        check_docker_daemon,
+        get_sorted_profiles,
+    )
+
+    daemon_ok, daemon_msg = check_docker_daemon(timeout=3.0)
+    if not daemon_ok:
+        pytest.skip(f"Docker/OrbStack daemon not responding ({daemon_msg})")
+
     profiles = get_sorted_profiles()
     runner = DockerWorkloadRunner()
     image_ref = "quay.io/jupyter/scipy-notebook@sha256:1a91a693c8cb086f3607f2ed38a2743ecd53dd1dac2d3e84e6cd647b33fd2bba"
@@ -503,6 +515,80 @@ s = arr.sum()
     assert record["repeats"][0]["outcome"] == "oom"
     assert record["repeats"][1]["profile_tried"] == "medium"
     assert record["repeats"][1]["outcome"] == "completed"
+
+
+def test_classify_infra_error_stops_execution(test_profiles):
+    """When Docker runner encounters infra error (e.g. daemon down), status must be infra_error."""
+    problem_id = "test_infra_down"
+    behavior = {
+        (f"{problem_id}-r1", "small"): TrialResult(
+            profile_tried="small",
+            outcome="infra_error",
+            peak_mib=None,
+            cpu_seconds=None,
+            wall_seconds=0.0,
+            peak_method="memory.peak",
+            error_traceback="Infrastructure error: Cannot connect to Docker daemon",
+        ),
+    }
+    runner = FakeWorkloadRunner(behavior_map=behavior)
+
+    res = profile_single_problem(
+        problem_id=problem_id,
+        source="ds1000",
+        image_id="scipy-data-science",
+        image_reference="quay.io/jupyter/scipy-notebook@sha256:1a91a693c8cb086f3607f2ed38a2743ecd53dd1dac2d3e84e6cd647b33fd2bba",
+        code_to_run="print('hello')",
+        input_files=None,
+        runner=runner,
+        profiles=test_profiles,
+        repeats=3,
+        baseline_median=100.0,
+    )
+
+    assert res["status"] == "infra_error"
+    assert res["final_min_passing_profile"] is None
+    # Must immediately abort after repeat 1, only 1 trial recorded
+    assert len(res["repeats"]) == 1
+    assert res["repeats"][0]["outcome"] == "infra_error"
+
+
+def test_check_docker_daemon_timeout():
+    """Verify check_docker_daemon returns (bool, str) and respects fast timeout."""
+    from scripts.datasets.profile_workloads import check_docker_daemon
+    ok, msg = check_docker_daemon(timeout=2.0)
+    assert isinstance(ok, bool)
+    assert isinstance(msg, str)
+
+
+def test_reports_dir_not_polluted_by_tests(tmp_path):
+    """Verify that running CLI with explicit report path leaves docs/reports untouched."""
+    from scripts.datasets.profile_workloads import main
+
+    reports_dir = Path("docs/reports")
+    initial_mtimes = {f: f.stat().st_mtime for f in reports_dir.glob("*.md")}
+
+    in_file = tmp_path / "in.jsonl"
+    out_file = tmp_path / "out.jsonl"
+    custom_report = tmp_path / "custom_report.md"
+
+    in_file.write_text(json.dumps({"problem_id": "P_SAFE", "image": "scipy-data-science", "reference_code": "x = 1"}) + "\n")
+
+    from unittest.mock import patch
+    with patch("scripts.datasets.profile_workloads.DockerWorkloadRunner", return_value=FakeWorkloadRunner()):
+        main([
+            "--input", str(in_file),
+            "--source", "ds1000",
+            "--output", str(out_file),
+            "--repeats", "1",
+            "--limit", "1",
+            "--pilot",
+            "--pilot-report-path", str(custom_report),
+        ])
+
+    assert custom_report.is_file()
+    for f, initial_mtime in initial_mtimes.items():
+        assert f.stat().st_mtime == initial_mtime, f"File {f} was unexpectedly modified!"
 
 
 def test_anon_peak_measurement(test_profiles):
@@ -537,4 +623,36 @@ def test_anon_peak_measurement(test_profiles):
     assert res["peak_mib_max"] == 350.0
     assert res["anon_peak_mib_max"] == 210.0
     assert res["repeats"][0]["anon_peak_mib"] == 210.0
+
+
+def test_docker_workload_runner_lazy_check_when_daemon_stopped(test_profiles):
+    """Verify DockerWorkloadRunner initializes cleanly without daemon, but fails lazily on execution."""
+    from unittest.mock import patch
+    from scripts.datasets.profile_workloads import DockerWorkloadRunner
+
+    with patch("scripts.datasets.profile_workloads.check_docker_daemon", return_value=(False, "Docker daemon stopped")):
+        # 1. Initialization must NOT raise RuntimeError
+        runner = DockerWorkloadRunner()
+        assert runner is not None
+
+        # 2. run_trial returns outcome="infra_error" lazily
+        res = runner.run_trial(
+            problem_id="TestDaemonDown",
+            image_reference="scipy:latest",
+            profile=test_profiles[0],
+            code_to_run="print('test')",
+            timeout_seconds=10,
+        )
+        assert res.outcome == "infra_error"
+        assert "Docker daemon stopped" in (res.error_traceback or "")
+
+        # 3. measure_baseline raises RuntimeError lazily
+        with pytest.raises(RuntimeError, match="Docker daemon unavailable"):
+            runner.measure_baseline(
+                image_id="scipy",
+                image_reference="scipy:latest",
+                import_code="import sys",
+                profile=test_profiles[0],
+            )
+
 
