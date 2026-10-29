@@ -1115,7 +1115,7 @@ def test_end_to_end_with_verified_recommendation_run(
     )
 
     metrics_raw = json.loads((out_dir / "derived" / "functional_metrics.json").read_text(encoding="utf-8"))
-    assert metrics_raw["total_evaluations"] == 36
+    assert metrics_raw["total_evaluations"] == 166
     assert "P1" in metrics_raw["systems"]
     assert "P2" in metrics_raw["systems"]
 
@@ -1486,8 +1486,8 @@ def test_e5_same_recommendation_input_yields_deterministic_classification(
     p1_recs = [r for r in raw_recs if r.get("system_id") == "P1"]
     p2_recs = [r for r in raw_recs if r.get("system_id") == "P2"]
 
-    assert len(p1_recs) == 18
-    assert len(p2_recs) == 18
+    assert len(p1_recs) == 83
+    assert len(p2_recs) == 83
 
     # Verify that every single row has non-null predicted_image_id
     for r in p1_recs:

@@ -103,25 +103,10 @@
     \scriptsize 100\% probe pass (eligible) $\cdot$ 11.39 GB logical vs 8.25 GB unique (27.61\% reuse)
 };
 
-% Stream E3 (Supplementary / Protocols)
-\node[decision, right=0.6cm of e5_stream] (aux_stream) {
-    \textbf{Stream E3: Human Study Protocol}\\
-    \scriptsize User interaction evaluation protocol
-};
-\node[eval, below=0.6cm of aux_stream] (aux_eval) {
-    \textbf{Harness \& Protocol}\\
-    \scriptsize Within-subject counterbalanced design (E3)
-};
-\node[metric, below=0.6cm of aux_eval] (aux_metric) {
-    \textbf{Evidence Status}\\
-    \scriptsize E3: Protocol only (no participants)
-};
-
 % Connections
 \draw[->, line width=0.8pt] (input.south -| e1_stream.north) -- (e1_stream.north);
 \draw[->, line width=0.8pt] (input.south -| e4_stream.north) -- (e4_stream.north);
 \draw[->, line width=0.8pt] (input.south -| e5_stream.north) -- (e5_stream.north);
-\draw[->, line width=0.8pt] (input.south -| aux_stream.north) -- (aux_stream.north);
 
 \draw[->, line width=0.8pt] (e1_stream) -- (e1_eval);
 \draw[->, line width=0.8pt] (e1_eval) -- (e1_metric);
@@ -132,15 +117,11 @@
 \draw[->, line width=0.8pt] (e5_stream) -- (e5_eval);
 \draw[->, line width=0.8pt] (e5_eval) -- (e5_metric);
 
-\draw[->, line width=0.8pt] (aux_stream) -- (aux_eval);
-\draw[->, line width=0.8pt] (aux_eval) -- (aux_metric);
-
 % Group background
 \begin{scope}[on background layer]
     \node[group, fit=(e1_stream)(e1_metric), label=below:{\scriptsize \textbf{Stream E1 / E2: Offline Quality}}] {};
     \node[group, fit=(e4_stream)(e4_metric), label=below:{\scriptsize \textbf{Stream E4: Cluster Resources}}] {};
     \node[group, fit=(e5_stream)(e5_metric), label=below:{\scriptsize \textbf{Stream E5: Image \& Storage}}] {};
-    \node[group, fit=(aux_stream)(aux_metric), label=below:{\scriptsize \textbf{Stream E3: User Study Protocol}}] {};
 \end{scope}
 
 \end{tikzpicture}

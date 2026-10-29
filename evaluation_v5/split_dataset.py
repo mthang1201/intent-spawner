@@ -305,14 +305,23 @@ class SplitManifest:
             )
         creation = CreationMetadata.from_dict(payload["creation_metadata"])
         freeze = FreezeMetadata.from_dict(payload["freeze_metadata"])
-        created = datetime.fromisoformat(
-            creation.created_at_utc.replace("Z", "+00:00")
-        )
-        frozen = datetime.fromisoformat(freeze.frozen_at_utc.replace("Z", "+00:00"))
-        if frozen < created:
-            raise SplitBundleValidationError(
-                "freeze_metadata.frozen_at_utc cannot precede creation"
+        try:
+            created = datetime.fromisoformat(
+                creation.created_at_utc.replace("Z", "+00:00")
             )
+            frozen = datetime.fromisoformat(freeze.frozen_at_utc.replace("Z", "+00:00"))
+            if created.tzinfo is None or frozen.tzinfo is None:
+                raise SplitBundleValidationError(
+                    "creation_metadata and freeze_metadata timestamps must be ISO 8601 UTC with timezone"
+                )
+            if frozen < created:
+                raise SplitBundleValidationError(
+                    "freeze_metadata.frozen_at_utc cannot precede creation"
+                )
+        except (ValueError, TypeError) as exc:
+            raise SplitBundleValidationError(
+                f"Invalid timestamp in split_manifest metadata: {exc}"
+            ) from exc
         return cls(
             dataset_id=_safe_id(payload["dataset_id"], "split_manifest.dataset_id"),
             split_id=_safe_id(payload["split_id"], "split_manifest.split_id"),
