@@ -10,7 +10,7 @@ The thesis registry defines B0, P1, and P2. P2 is the main proposed method.
 
 | System ID | Name / Description | Pipeline Summary | Research Role |
 | :--- | :--- | :--- | :--- |
-| **B0** | **Default JupyterHub** | Manual administrator-configured `profileList` selection; no automated recommendation or intent parsing. | Manual baseline for the E3 human study (RQ3); no ranking metrics. |
+| **B0** | **Default JupyterHub** | Manual administrator-configured `profileList` selection; no automated recommendation or intent parsing. | Manual baseline comparator for cluster simulation (E4) and usability pilot (E3); no ranking metrics. |
 | **P1** | **Rule-Based Recommender** | Deterministic lexical keyword and heuristic scoring over intent text, dataset size, and code context. | Comparator for E1/E2 (RQ1/RQ2) and fallback backend. |
 | **P2** | **Structured Intent + Hybrid Retrieval + Deterministic Constraints** | Natural language request → `StructuredIntent` → BM25 sparse + dense embeddings retrieval → Reciprocal Rank Fusion (RRF) → deterministic hard-constraint filtering → deterministic ranking → corpus resolution. | **Main proposed method**; comparisons are specified in E1–E5. |
 
@@ -163,9 +163,11 @@ Experiments E1–E5 and cross-experiment research analysis have been executed an
 tracked under `results_v5/protocol-v5.0.0/`. The harness supports both local
 deterministic regex extraction and LLM semantic extraction, storing outputs
 in dedicated partitioned directories (e.g., `run-e1-local`, `run-e1-llm-*`).
-Results for all 5 streams (E1 recommendation quality, E2 robustness, E3 user study,
-E4 Kubernetes resource sizing, E5 image storage & functional probes) are fully
-recorded with their manifests, metrics, and synthesis reports.
+Results for the 4 core thesis streams (E1 recommendation quality, E2 robustness,
+E4 Kubernetes resource sizing, E5 image storage & functional probes) alongside
+E3 usability pilot protocols are fully recorded with their manifests, metrics,
+and synthesis reports. (In the finalized graduation thesis, live-cohort usability
+trials are categorized as Future Work).
 
 Historical Protocol-v4 evidence and P2 integration evaluation remain
 historical/formative evidence. Their samples, comparators, and RQ numbering must

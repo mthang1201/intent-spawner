@@ -18,10 +18,11 @@ All legacy administrative gatekeeping (mandatory reviewer sign-offs, immutable S
 | **Cluster Trace FIFO Simulation (E4)** | `PYTHONPATH=. .venv/bin/python -m evaluation_v5.analysis.cluster_trace_simulator` | 30-seed bootstrap evaluation; exports CSV & JSON to `results_v5/` |
 | **Run with Custom Dataset** | `make eval-dataset DATASET=path/to/dataset.yaml` | Evaluation report on the specified benchmark dataset |
 | **Natural Language Robustness Overview (E2)** | `make eval-robustness` | Analysis report on 68 variants and cross-lingual robustness |
-| **User Study Smoke Test (E3)** | `make v5-user-study-smoke` | Verifies harness integrity and counterbalanced Latin square allocation flow |
+| **User Study Smoke Test (E3 Pilot)** | `make v5-user-study-smoke` | Verifies harness integrity and counterbalanced Latin square allocation flow |
 | **Kubernetes Cluster Preflight Check (E4)** | `make v5-e4-preflight` | Confirms Kubernetes cluster readiness (OrbStack/Kind/K3s/Minikube) |
 | **E5 Image Storage Measurement (Storage)** | `PYTHONPATH=. .venv/bin/python -m evaluation_v5.image_storage --experiment storage --mode docker --stage development` | OCI layer deduplication and storage footprint report |
 | **E5 Image Functional Verification (Functional)** | `PYTHONPATH=. .venv/bin/python -m evaluation_v5.image_storage --experiment functional --recommendation-run results_v5/protocol-v5.0.0/E1/run-e1-local --mode docker --pull-policy missing` | Container startup and core library probe verification results |
+| **Compile Graduation Thesis PDF** | `make pdf` | Compiles full 114-page Vietnamese thesis to `docs/latex/main.pdf` via LuaLaTeX |
 
 ---
 
@@ -71,6 +72,9 @@ Measures the stability of the Intent Extractor across paraphrases, colloquial ph
 ---
 
 ### 3. Experiment E3 — Human Usability Study (B0 vs P2 Protocol)
+
+> **Thesis Scope Note:** Experiment E3 provides the exploratory user-study protocol, terminal harness, and Latin square allocation methodology. In the finalized graduation thesis (`docs/latex`), formal empirical evaluation focuses on **Streams E1, E2, E4, and E5**, with large-cohort live user studies officially classified under **Future Work** (Chapter 5).
+
 Evaluates practical usability and decision latency when data scientists select environments in the JupyterHub UI:
 * **B0 (Manual Selection):** Users manually browse dropdown menus to pick profile sizing and container images.
 * **P2 (Intent-Spawner):** Users enter free-form text describing their task; the system infers and recommends optimal configurations.

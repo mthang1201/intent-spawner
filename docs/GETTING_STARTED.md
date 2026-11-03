@@ -67,6 +67,9 @@ make simulate-large-cluster
 
 # Cross-experiment claim adjudication & synthesis:
 make research-analysis
+
+# Compile the graduation thesis document (114 pages PDF):
+make pdf
 ```
 
 Run the core software test suite for recommender logic:
@@ -90,7 +93,8 @@ external, isolation-verified dataset (see `evaluation_v5/isolation.py` and
 `--dataset`/`PROTOCOL_V5_CONFIRMATORY_DATASET`) — this check exists to prevent
 train/confirmatory-split data leakage, not to gate approval.
 
-E3 (user study) needs real participants and E4/E5 cluster runs need a
+E3 (user study) was executed as an exploratory pilot run (with multi-user live
+cohorts classified as Future Work in the thesis), and E4/E5 cluster runs need a
 disposable Kubernetes cluster; see the module-specific `--help` output for
 each experiment's exact requirements.
 

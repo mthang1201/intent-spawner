@@ -44,7 +44,7 @@ results_v5/
 | :--- | :--- | :--- | :--- |
 | **E1** | Recommendation Quality | `baseline_benchmark_v1/SUMMARY.md`, `metrics.json` | Top-1 & Top-3 Profile/Image Match, Joint Acceptability, OOM Risk, Resource Waste |
 | **E2** | NL Robustness | `E2/run-e2-local/ROBUSTNESS_REPORT.md` | Variant Stability, Paraphrase Consistency, Multilingual (EN/VI) |
-| **E3** | Human Usability Study | `E3/run-e3-observed/USER_STUDY_REPORT.md` | Decision Time, Selection Correctness, Task Completion, SUS Score |
+| **E3** | Human Usability Study (Pilot) | `E3/run-e3-observed/USER_STUDY_REPORT.md` | Decision Time, Selection Correctness, Task Completion, SUS Score (Future Work in thesis) |
 | **E4** | Resource Allocation & Simulation | `cluster_simulation_summary.csv`, `figure_large_cluster_simulation.pdf` | OOM Cascades, Queuing Delay, Resource Utilization, Safe Envelopes |
 | **E5** | Image Footprint & Probes | `E5/run-e5-storage-orbstack/`, `E5/run-e5-functional-orbstack/` | Layer Deduplication Ratio, Pull Latency, Functional Probe Pass Rate |
 | **Research** | Thesis Synthesis | `thesis-results.md`, `claim-matrix.md`, `THREATS_TO_VALIDITY.md` | Formal Hypotheses H1–H8 Status across Local and LLM models |

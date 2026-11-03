@@ -22,21 +22,16 @@ tracks no family-authored gold dataset or generated confirmatory material.
 
 ## Tracked development data
 
-`v5-development.yaml` contains 18 historical/formative development cases in 10
-workload families:
+`v5-development.yaml` contains 83 development cases in 18 workload families,
+expanded from the formative 18-case / 10-family subset to provide rich coverage
+across machine learning, deep learning, data processing, negative constraints,
+and infeasibility bounds.
 
-- the 12 `development` cases from `benchmarks/intent-gold-v4.yaml`; and
-- all six cases from `benchmarks/p2-infeasible-supplement-v1.yaml`.
-
-No Protocol-v4 `test` case is copied into this bundle. Every case retains its
-source dataset ID, schema version, case ID, source split, original provenance,
-and the classification `historical_formative_development_only`.
-
-The bundle uses `protocol-v5-split-bundle-v1.0.0`; its structural contract is
-`protocol-v5-split-bundle-v1.schema.json`. Runtime validation additionally
-enforces cross-record invariants that JSON Schema cannot fully express: unique
-case IDs, sorted and exact family IDs, exact case/family counts, gold
-consistency, and the canonical checksum.
+The compiled bundle uses `protocol-v5-split-bundle-v2.0.0`; its schema preserves
+complete structured-intent, candidate, profile, image, policy, and family
+metadata in each evaluator case. Runtime validation enforces cross-record
+invariants: unique case IDs, sorted family IDs, gold label consistency, and the
+canonical bundle checksum.
 
 ## Checksum scope
 
@@ -46,11 +41,9 @@ object is encoded as UTF-8 JSON with Unicode preserved, object keys sorted, and
 separators `,` and `:` without extra whitespace. YAML formatting, comments, and
 mapping order therefore do not affect the canonical digest.
 
-The existing tracked development bundle remains on v1. A manually frozen,
-human-reviewed family dataset may compile to
-`protocol-v5-split-bundle-v2.0.0`, which retains the same manifest/checksum
-rules while preserving complete structured-intent, candidate, profile, image,
-policy, and family metadata in each flat evaluator case.
+The tracked development bundle conforms to `protocol-v5-split-bundle-v2.0.0`,
+retaining strict manifest/checksum rules while ensuring full compatibility
+across offline evaluation and isolation checking.
 
 ## Confirmatory data boundary
 

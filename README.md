@@ -10,7 +10,7 @@ Users express their analytical goals in natural language (English or Vietnamese)
 
 | System | Mode | Description | Research Role |
 | :--- | :--- | :--- | :--- |
-| **B0** | Manual Static | Standard JupyterHub dropdown selection (Small / Medium / Large static sizing). | Baseline comparator for human study (E3) and cluster simulation (E4). |
+| **B0** | Manual Static | Standard JupyterHub dropdown selection (Small / Medium / Large static sizing). | Baseline comparator for cluster simulation (E4) and pilot usability exploration (E3). |
 | **P1** | Rule-Based | Deterministic keyword/heuristic profile and image matcher. | Zero-dependency baseline comparator for E1/E2. |
 | **P2 Local** | NLP Hybrid | **Proposed Method (Offline)**: Domain ontology + bilingual intent parser + BM25 & dense retrieval + deterministic constraint filtering. Zero API cost, ~1ms latency. | Primary proposed system evaluated across E1–E5. |
 | **P2 LLM** | LLM Hybrid | **Proposed Method (Semantic)**: Few-shot LLM semantic extractor (Gemini / OpenAI / Ollama) + hybrid retrieval + constraint filtering. | Evaluates semantic extraction under complex / ambiguous phrasing. |
@@ -256,6 +256,15 @@ make report
 
 # Adjudicate formal research claims (H1–H8) across all experiments:
 make research-analysis
+```
+
+### 📄 Compiling Graduation Thesis PDF
+
+The repository includes the complete Vietnamese graduation thesis source in `docs/latex/`. You can compile the finalized 114-page PDF document with LuaLaTeX and BibTeX via:
+
+```bash
+make pdf
+# Generates: docs/latex/main.pdf
 ```
 
 ---
