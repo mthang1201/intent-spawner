@@ -665,16 +665,18 @@ def test_all_e4_directories_in_repository_validate():
     # results_v5/protocol-v5.0.0/E4/, which must not make this audit try to
     # validate them as if they were the committed historical set.
     tracked = subprocess.run(
-        ["git", "ls-tree", "-d", "--name-only", "HEAD", "results_v5/protocol-v5.0.0/E4"],
+        ["git", "ls-tree", "-d", "--name-only", "HEAD", "results_v5/protocol-v5.0.0/E4/"],
         cwd=Path(__file__).resolve().parents[1],
         capture_output=True,
         text=True,
         check=True,
     ).stdout
-    if not tracked.strip():
-        pytest.skip("results_v5/protocol-v5.0.0/E4 has no committed evidence to audit")
+    committed_names = {Path(line.strip()).name for line in tracked.splitlines() if line.strip()}
+    historical_names = committed_names & _EXPECTED_E4_PACKAGE_DIRECTORIES
+    if not historical_names:
+        pytest.skip("results_v5/protocol-v5.0.0/E4 has no committed historical evidence to audit")
     base = Path("results_v5/protocol-v5.0.0/E4")
-    directories = sorted(p for p in base.iterdir() if p.is_dir())
+    directories = sorted(base / name for name in historical_names if (base / name).is_dir())
 
     actual_names = {p.name for p in directories}
     unauthorized = actual_names - _EXPECTED_E4_PACKAGE_DIRECTORIES

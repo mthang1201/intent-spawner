@@ -100,11 +100,15 @@ else
 fi
 
 if command -v kubectl >/dev/null 2>&1; then
-  run_check "Kubernetes manifest client dry-run" kubectl apply --dry-run=client --validate=false \
-    -f "$ROOT_DIR/k8s/idle-large-pod.yaml" \
-    -f "$ROOT_DIR/k8s/idle-small-pod.yaml" \
-    -f "$ROOT_DIR/k8s/resource-quota.yaml" \
-    -f "$ROOT_DIR/k8s/mock-llm.yaml"
+  if kubectl version --request-timeout='2s' >/dev/null 2>&1; then
+    run_check "Kubernetes manifest client dry-run" kubectl apply --dry-run=client --validate=false \
+      -f "$ROOT_DIR/k8s/idle-large-pod.yaml" \
+      -f "$ROOT_DIR/k8s/idle-small-pod.yaml" \
+      -f "$ROOT_DIR/k8s/resource-quota.yaml" \
+      -f "$ROOT_DIR/k8s/mock-llm.yaml"
+  else
+    skip_check "Kubernetes manifest client dry-run" "Kubernetes cluster is not currently running or reachable."
+  fi
 else
   skip_check "Kubernetes manifest client dry-run" "kubectl is not installed or is not on PATH."
 fi

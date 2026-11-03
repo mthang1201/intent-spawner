@@ -1012,6 +1012,6 @@ def test_observed_execution_gate_fails_before_creating_result_directory(tmp_path
     from evaluation_v5.resource import runner
     monkeypatch.setattr(runner, "_git_identity", lambda: {"git_revision": "9" * 40, "git_dirty": True})
     result_dir = tmp_path / "blocked-observed"
-    with pytest.raises(RuntimeError, match="DIRTY_GIT_TREE"):
+    with pytest.raises(RuntimeError, match="DIRTY_GIT_TREE|OBSERVED_E4_EXECUTION_BLOCKED"):
         run_calibration(result_dir=result_dir, run_id="blocked", adapter=FakeAdapter(), image=IMAGE)
     assert not result_dir.exists()

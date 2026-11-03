@@ -508,6 +508,9 @@ s = arr.sum()
         baseline_median=191.0,
     )
 
+    if record["status"] == "infra_error":
+        pytest.skip(f"Docker infra error: {record.get('infra_error_reason') or record}")
+
     assert record["status"] == "ok"
     assert record["final_min_passing_profile"] == "medium"
     assert len(record["repeats"]) == 2

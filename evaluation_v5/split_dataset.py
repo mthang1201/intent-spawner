@@ -305,10 +305,15 @@ class SplitManifest:
             )
         creation = CreationMetadata.from_dict(payload["creation_metadata"])
         freeze = FreezeMetadata.from_dict(payload["freeze_metadata"])
-        created = datetime.fromisoformat(
-            creation.created_at_utc.replace("Z", "+00:00")
-        )
-        frozen = datetime.fromisoformat(freeze.frozen_at_utc.replace("Z", "+00:00"))
+        try:
+            created = datetime.fromisoformat(
+                creation.created_at_utc.replace("Z", "+00:00")
+            )
+            frozen = datetime.fromisoformat(freeze.frozen_at_utc.replace("Z", "+00:00"))
+        except (ValueError, TypeError) as exc:
+            raise SplitBundleValidationError(
+                f"invalid ISO-8601 timestamp in split manifest: {exc}"
+            ) from exc
         if frozen < created:
             raise SplitBundleValidationError(
                 "freeze_metadata.frozen_at_utc cannot precede creation"
