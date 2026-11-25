@@ -1,4 +1,4 @@
-# Profile Recommendation Extension for JupyterHub (Profile-Spawner)
+# Intent- and Context-Aware Profile Recommendation for JupyterHub (Intent-Spawner)
 
 An end-to-end research prototype and evaluation framework for **intent- and context-aware resource profile recommendation in JupyterHub**. 
 
@@ -29,8 +29,8 @@ Users express their analytical goals in natural language (English or Vietnamese)
 
 ```bash
 # Clone repository
-git clone https://github.com/mthang1201/profile-spawner.git
-cd profile-spawner
+git clone https://github.com/mthang1201/intent-spawner.git
+cd intent-spawner
 
 # Run automated virtual environment setup and dependency installation
 bash scripts/setup.sh

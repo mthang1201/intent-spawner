@@ -34,8 +34,8 @@ See the [artifact index](ARTIFACT_MANIFEST.md) for detailed contracts.
 ### Clone & Install Dependencies:
 
 ```bash
-git clone https://github.com/mthang1201/profile-spawner.git
-cd profile-spawner
+git clone https://github.com/mthang1201/intent-spawner.git
+cd intent-spawner
 
 # Create virtual environment and install dependencies
 bash scripts/setup.sh
